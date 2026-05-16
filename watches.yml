@@ -1,0 +1,16 @@
+# Topic-watch registry.
+#
+# Each entry is polled every 4 hours by the Watch routine (see RemoteTrigger).
+# On positive match -> ntfy push, `last_fired` written back to this file.
+# Suppressed for `cooldown_days` after the last fire.
+#
+# To add a watch: append an entry with a unique `id`, a `query` for WebSearch,
+# and a `match_when` sentence the model evaluates against result snippets.
+# Set `last_fired: null` for a fresh watch.
+
+watches:
+  - id: meteoswiss-inca
+    query: "MeteoSwiss INCA nowcasting Switzerland public API release"
+    match_when: "MeteoSwiss has publicly released INCA nowcasting data through an API or download endpoint accessible without a government account"
+    cooldown_days: 14
+    last_fired: null
