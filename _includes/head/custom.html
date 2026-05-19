@@ -43,7 +43,9 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
 (function () {
   if (typeof window === 'undefined' || !window.fetch || !('IntersectionObserver' in window)) return;
-  var CACHE = 'autoPreview:';
+  // sessionStorage key prefix; bump suffix to force-invalidate prior entries
+  // when the unfurl backend or response shape changes.
+  var CACHE = 'autoPreview:v2:';
   var favicon = function (url) {
     try {
       var h = new URL(url).hostname;
