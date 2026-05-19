@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
   };
   var unfurl = function (url) {
     return fetch('https://api.microlink.io/?url=' + encodeURIComponent(url) +
-                 '&audio=false&video=false&iframe=false&palette=false&meta=false')
+                 '&audio=false&video=false&iframe=false&palette=false')
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) {
         return j && j.data && j.data.image && j.data.image.url ? j.data.image.url : null;
