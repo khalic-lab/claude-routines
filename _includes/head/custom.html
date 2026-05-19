@@ -1,0 +1,90 @@
+<style>
+  .auto-preview {
+    display: inline-block;
+    width: auto;
+    max-width: 140px;
+    max-height: 90px;
+    margin: 0 0.4em;
+    vertical-align: middle;
+    border-radius: 4px;
+    object-fit: cover;
+  }
+  .auto-preview.fav { max-width: 16px; max-height: 16px; border-radius: 2px; }
+</style>
+<script>
+// Workaround for minimal-mistakes assuming .page__content always exists.
+// Theme's main.min.js does `document.querySelector(".page__content").querySelectorAll(...)`
+// which throws on layouts without that wrapper (e.g. layout: home). Stub it in.
+document.addEventListener('DOMContentLoaded', function () {
+  if (!document.querySelector('.page__content')) {
+    var stub = document.createElement('div');
+    stub.className = 'page__content';
+    stub.style.display = 'none';
+    document.body.appendChild(stub);
+  }
+}, { once: true });
+</script>
+<script>
+(function () {
+  if (typeof window === 'undefined' || !window.fetch || !('IntersectionObserver' in window)) return;
+  var CACHE = 'autoPreview:';
+  var favicon = function (url) {
+    try {
+      var h = new URL(url).hostname;
+      return 'https://www.google.com/s2/favicons?domain=' + h + '&sz=64';
+    } catch (e) { return null; }
+  };
+  var unfurl = function (url) {
+    return fetch('https://api.microlink.io/?url=' + encodeURIComponent(url) +
+                 '&audio=false&video=false&iframe=false&palette=false&meta=false')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        return j && j.data && j.data.image && j.data.image.url ? j.data.image.url : null;
+      })
+      .catch(function () { return null; });
+  };
+  var render = function (link, src, isFavicon) {
+    if (!src) return;
+    var img = document.createElement('img');
+    img.className = 'auto-preview' + (isFavicon ? ' fav' : '');
+    img.loading = 'lazy';
+    img.referrerPolicy = 'no-referrer';
+    img.src = src;
+    img.alt = '';
+    link.parentNode.insertBefore(img, link.nextSibling);
+  };
+  var attach = function (link) {
+    if (link.dataset.previewed) return;
+    link.dataset.previewed = '1';
+    var href = link.href;
+    var cached = sessionStorage.getItem(CACHE + href);
+    if (cached !== null) {
+      if (cached) render(link, cached, cached.indexOf('s2/favicons') !== -1);
+      return;
+    }
+    unfurl(href).then(function (src) {
+      var fb = favicon(href);
+      var final = src || fb;
+      try { sessionStorage.setItem(CACHE + href, final || ''); } catch (e) {}
+      render(link, final, !src && !!fb);
+    });
+  };
+  document.addEventListener('DOMContentLoaded', function () {
+    var content = document.querySelector('.page__content');
+    if (!content) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          attach(e.target);
+          io.unobserve(e.target);
+        }
+      });
+    }, { rootMargin: '300px 0px' });
+    content.querySelectorAll('a[href^="http"]').forEach(function (l) {
+      if (l.closest('.page__share') || l.closest('nav')) return;
+      if (l.host === window.location.host) return;
+      io.observe(l);
+    });
+  });
+})();
+</script>
