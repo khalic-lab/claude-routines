@@ -35,12 +35,9 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (e) { return null; }
   };
   var unfurl = function (url) {
-    return fetch('https://api.microlink.io/?url=' + encodeURIComponent(url) +
-                 '&audio=false&video=false&iframe=false&palette=false')
+    return fetch('https://og-proxy.khalic-lab.workers.dev/?url=' + encodeURIComponent(url))
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) {
-        return j && j.data && j.data.image && j.data.image.url ? j.data.image.url : null;
-      })
+      .then(function (j) { return j && j.image ? j.image : null; })
       .catch(function () { return null; });
   };
   var render = function (link, src, isFavicon) {
