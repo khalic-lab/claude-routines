@@ -10,6 +10,22 @@
     object-fit: cover;
   }
   .auto-preview.fav { max-width: 16px; max-height: 16px; border-radius: 2px; }
+  a.auto-preview.pdf {
+    display: inline-block;
+    max-width: none; max-height: none;
+    font-size: 0.7em;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    background: #b80000;
+    padding: 3px 5px;
+    border-radius: 3px;
+    text-decoration: none;
+    margin: 0 0.4em;
+    vertical-align: middle;
+    object-fit: initial;
+  }
+  a.auto-preview.pdf:hover { background: #8d0000; }
 </style>
 <script>
 // Workaround for minimal-mistakes assuming .page__content always exists.
@@ -50,9 +66,30 @@ document.addEventListener('DOMContentLoaded', function () {
     img.alt = '';
     link.parentNode.insertBefore(img, link.nextSibling);
   };
+  // arxiv.org sets the same logo as og:image for every paper. The og-proxy
+  // returns nothing useful, so skip the unfurl and render a small "PDF" chip
+  // linking directly to the paper PDF instead.
+  var ARXIV_HOSTS = { 'arxiv.org': 1, 'www.arxiv.org': 1, 'export.arxiv.org': 1 };
+  var ARXIV_PATH = /^\/(?:abs|pdf|html)\/([\w.-]+?)(?:v\d+)?(?:\.pdf)?\/?$/;
+  var arxivPdfUrl = function (link) {
+    if (!ARXIV_HOSTS[link.hostname]) return null;
+    var m = link.pathname.match(ARXIV_PATH);
+    return m ? 'https://arxiv.org/pdf/' + m[1] + '.pdf' : null;
+  };
+  var renderPdfChip = function (link, pdfHref) {
+    var a = document.createElement('a');
+    a.className = 'auto-preview pdf';
+    a.href = pdfHref;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = 'PDF';
+    link.parentNode.insertBefore(a, link.nextSibling);
+  };
   var attach = function (link) {
     if (link.dataset.previewed) return;
     link.dataset.previewed = '1';
+    var pdf = arxivPdfUrl(link);
+    if (pdf) { renderPdfChip(link, pdf); return; }
     var href = link.href;
     var cached = sessionStorage.getItem(CACHE + href);
     if (cached !== null) {

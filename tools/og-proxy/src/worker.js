@@ -10,6 +10,7 @@ const UA =
 const FETCH_TIMEOUT_MS = 6000;
 const MAX_BYTES = 512 * 1024; // 512 KB cap before parsing
 const CACHE_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
+const CACHE_VERSION = "v2"; // bump to bust the edge cache
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -217,10 +218,10 @@ export default {
       return text("blocked target", 400);
     }
 
-    // Edge-cache key normalised to just the target URL so query-string
-    // ordering doesn't fragment the cache. We use a fixed canonical form.
+    // Edge-cache key normalised to just the target URL + cache version, so
+    // bumping CACHE_VERSION busts everything cleanly.
     const cacheUrl = new URL(request.url);
-    cacheUrl.search = `?url=${encodeURIComponent(target.toString())}`;
+    cacheUrl.search = `?v=${CACHE_VERSION}&url=${encodeURIComponent(target.toString())}`;
     const cacheKey = new Request(cacheUrl.toString(), { method: "GET" });
     const cached = await caches.default.match(cacheKey);
     if (cached) return cached;
