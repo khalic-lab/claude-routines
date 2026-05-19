@@ -1,18 +1,32 @@
 <style>
-  .auto-preview {
+  /* favicon badge stays inline next to its link */
+  img.auto-preview.fav {
     display: inline-block;
-    width: auto;
-    max-width: 140px;
-    max-height: 90px;
-    margin: 0 0.4em;
+    width: 16px; height: 16px;
+    margin: 0 0.3em;
     vertical-align: middle;
+    border-radius: 2px;
+  }
+  /* real article thumbnails float right of the containing bullet/paragraph */
+  .auto-preview-wrap {
+    float: right;
+    margin: 0.2em 0 0.5em 1em;
+    shape-outside: margin-box;
+    clear: right;
+  }
+  .auto-preview-wrap img.auto-preview {
+    display: block;
+    max-width: 180px;
+    max-height: 120px;
     border-radius: 4px;
     object-fit: cover;
   }
-  .auto-preview.fav { max-width: 16px; max-height: 16px; border-radius: 2px; }
+  /* clear floats at the end of each bullet so consecutive thumbnails stack */
+  .page__content li::after,
+  .page__content p::after { content: ""; display: block; clear: right; }
+  /* arxiv PDF chip — inline pill */
   a.auto-preview.pdf {
     display: inline-block;
-    max-width: none; max-height: none;
     font-size: 0.7em;
     font-weight: 700;
     line-height: 1;
@@ -23,7 +37,6 @@
     text-decoration: none;
     margin: 0 0.4em;
     vertical-align: middle;
-    object-fit: initial;
   }
   a.auto-preview.pdf:hover { background: #8d0000; }
 </style>
@@ -58,6 +71,12 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(function (j) { return j && j.image ? j.image : null; })
       .catch(function () { return null; });
   };
+  // Real article thumbnails float right of the containing bullet/paragraph,
+  // one per container. Favicons stay inline after the link as small badges.
+  var IMAGED = '__autoPreviewImaged';
+  var bulletContainer = function (el) {
+    return el.closest('li') || el.closest('p') || el.parentNode;
+  };
   var render = function (link, src, isFavicon) {
     if (!src) return;
     var img = document.createElement('img');
@@ -66,7 +85,17 @@ document.addEventListener('DOMContentLoaded', function () {
     img.referrerPolicy = 'no-referrer';
     img.src = src;
     img.alt = '';
-    link.parentNode.insertBefore(img, link.nextSibling);
+    if (isFavicon) {
+      link.parentNode.insertBefore(img, link.nextSibling);
+      return;
+    }
+    var bullet = bulletContainer(link);
+    if (!bullet || bullet[IMAGED]) return; // one image per bullet
+    bullet[IMAGED] = true;
+    var wrap = document.createElement('span');
+    wrap.className = 'auto-preview-wrap';
+    wrap.appendChild(img);
+    bullet.insertBefore(wrap, bullet.firstChild);
   };
   // arxiv.org sets the same logo as og:image for every paper. The og-proxy
   // returns nothing useful, so skip the unfurl and render a small "PDF" chip
