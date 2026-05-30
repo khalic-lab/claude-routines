@@ -16,20 +16,15 @@
 ║                                                                                      ║
 ║  env_018zypSdRSdGdrZ8J5usqCWA   (network settings changed 2026-05-25 → Custom)        ║
 ║  ┌────────────────────────────────────────────────────────────────────────────┐     ║
-║  │ WRITERS (claude-sonnet-4-6)    cron (UTC)       output file          MCP       │    ║
+║  │ WRITERS (claude-opus-4-8)      cron (UTC)       output file          MCP       │    ║
 ║  │  • Morning Overview          30 4 * * *     _posts/{d}-overview.md   D,H,G      │    ║
-║  │  • Markets                   30 18 * * 1-5  _posts/{d}-markets.md    D          │    ║
 ║  │  • AI/ML                     30 19 * * *    _posts/{d}-ai-ml.md      D,H        │    ║
 ║  │  • Cyber+Papers (Evening)    0 17 * * *     _posts/{d}-cyber-papers  D,H,G ◀── consolidated
 ║  │  • Weekend Deep Read         30 7 * * 6     _posts/{d}-weekend.md    D,H,G      │   evening EMAIL
-║  │  WATCH                       0 */4 * * *    pending-notifications/   D,H,G,Cal  │    ║
+║  │  WATCH (claude-sonnet-4-6)   0 */4 * * *    pending-notifications/   D,H,G,Cal  │    ║
 ║  │      reads watches.yml → on match writes stub + updates last_fired              │    ║
-║  └────────────────────────────────────────────────────────────────────────────┘     ║
-║                                                                                      ║
-║  env_011CUNry3hmavNvADoLNP9D4   (OLD settings — NOT migrated ⚠)                       ║
-║  ┌────────────────────────────────────────────────────────────────────────────┐     ║
-║  │  • Weekly Evaluator (claude-opus-4-7)  30 9 * * 0   _posts/{d}-evaluator.md  D,G │   ║
-║  │      reads last 7d of _posts → Health table + Patch proposals (human-applied)    │   ║
+║  │  EVALUATOR (claude-opus-4-7) 30 9 * * 0     _posts/{d}-evaluator.md  D,G         │    ║
+║  │      reads last 7d of _posts → Health table + Patch proposals (human-applied)   │    ║
 ║  └────────────────────────────────────────────────────────────────────────────┘     ║
 ║   MCP legend: D=Google-Drive  H=Hugging-Face  G=Gmail  Cal=Google-Calendar            ║
 ╚═══════════════════════════════════════╤══════════════════════════════════════════════╝
@@ -67,6 +62,19 @@
    │  30-day edge cache                │               └────────────────────────────────────┘
    └──────────────────────────────────┘
 ```
+
+> **Retired 2026-05-30:** Dedicated Markets routine (was `trig_01GBugAS5qw88yQK3tv8kKWx`, cron `30 18 * * 1-5`).
+> Disabled (not deleted) — `enabled:false`, config preserved for possible revival.
+> Reason: user feedback that "random articles don't cut it" in current form.
+> Morning Overview still emits a 3-item pre-open snapshot; the consolidated evening email
+> now covers three streams (World/Switzerland, AI/ML, Cyber+Papers), not four.
+
+> **Changed 2026-05-30:** Writers (Overview, AI/ML, Cyber+Papers, Weekend) moved
+> `claude-sonnet-4-6` → `claude-opus-4-8` (latest Opus) for reader-facing quality. Watch
+> (`claude-sonnet-4-6`) and the Evaluator (`claude-opus-4-7`) are left on their current tiers
+> pending the model-tiering review in `SPIKE-model-tiering.md`. Same date: the pedagogical-tone
+> block's "hardest case" rule was tightened — pure-math / hep-th / quant-ph results must now be
+> explained (stakes + concrete anchor + honest scope), not flagged-and-skipped.
 
 ### 1.2 Data model (what lives where)
 
@@ -267,11 +275,9 @@ Bilaterals-III / Google-I-O / EU-AI-Act repeats as a labeled test set).
 3. **Embeddings provider: Voyage / Workers-AI / LLM-judgment (no cloud embeddings).** §4.
    This is the highest-leverage decision — it changes whether the cloud side touches
    embeddings at all.
-4. **Evaluator still on env_011 ⚠.** The 6 writers + Watch are on env_018 with the new
-   network settings; the Weekly Evaluator was left on env_011 (old settings). Its Sunday
-   link-health probes will keep 403'ing and it can't see any new feeds. Migrate it to
-   env_018 (preserve `claude-opus-4-7`) — independent of this whole design, but a live
-   loose end from the egress fix.
+4. **Evaluator env migration — RESOLVED (2026-05-30).** The Weekly Evaluator now runs on
+   env_018 with `claude-opus-4-7` preserved, alongside the writers + Watch. Its Sunday
+   link-health probes run under the same network settings; the env_011 loose end is closed.
 5. **Story decomposition: who writes the `stories/*.jsonl`?** Either the writer emits it as
    a side artifact during compose, or a post-commit job parses the markdown brief into
    story items. Former is cleaner (writer knows the structure); latter decouples but must
