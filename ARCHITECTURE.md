@@ -23,7 +23,7 @@
 ║  │  • Weekend Deep Read         30 7 * * 6     _posts/{d}-weekend.md    D,H,G      │   evening EMAIL
 ║  │  WATCH (claude-haiku-4-5)    0 */4 * * *    pending-notifications/   D,H,G,Cal  │    ║
 ║  │      reads watches.yml → on match writes stub + updates last_fired              │    ║
-║  │  EVALUATOR (claude-opus-4-7) 30 9 * * 0     _posts/{d}-evaluator.md  D,G         │    ║
+║  │  EVALUATOR (claude-opus-4-8) 30 9 * * 0     _posts/{d}-evaluator.md  D,G         │    ║
 ║  │      reads last 7d of _posts → Health table + Patch proposals (human-applied)   │    ║
 ║  └────────────────────────────────────────────────────────────────────────────┘     ║
 ║   MCP legend: D=Google-Drive  H=Hugging-Face  G=Gmail  Cal=Google-Calendar            ║
@@ -72,7 +72,7 @@
 > **Changed 2026-05-30:** Per-routine model tiers split by job (see `SPIKE-model-tiering.md`):
 > **writing** — the 4 writers (Overview, AI/ML, Cyber+Papers, Weekend) moved
 > `claude-sonnet-4-6` → `claude-opus-4-8` (latest Opus) for reader-facing quality;
-> **analysis** — the Weekly Evaluator stays on `claude-opus-4-7` (weekly QA backstop);
+> **analysis** — the Weekly Evaluator moved `claude-opus-4-7` → `claude-opus-4-8` (weekly QA backstop);
 > **polling** — Watch moved `claude-sonnet-4-6` → `claude-haiku-4-5` (high-frequency,
 > mechanical snippet judgment — does not write or analyze briefs). Same date: the
 > pedagogical-tone block's "hardest case" rule was tightened — pure-math / hep-th / quant-ph
@@ -278,7 +278,7 @@ Bilaterals-III / Google-I-O / EU-AI-Act repeats as a labeled test set).
    This is the highest-leverage decision — it changes whether the cloud side touches
    embeddings at all.
 4. **Evaluator env migration — RESOLVED (2026-05-30).** The Weekly Evaluator now runs on
-   env_018 with `claude-opus-4-7` preserved, alongside the writers + Watch. Its Sunday
+   env_018 (model `claude-opus-4-8` as of 2026-05-30), alongside the writers + Watch. Its Sunday
    link-health probes run under the same network settings; the env_011 loose end is closed.
 5. **Story decomposition: who writes the `stories/*.jsonl`?** Either the writer emits it as
    a side artifact during compose, or a post-commit job parses the markdown brief into

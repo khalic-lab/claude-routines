@@ -103,7 +103,7 @@ really are. Raise as a follow-up if cost is a live concern.
 |---|---|---|
 | 4 writers | **Opus (latest)** | Reader-facing quality; user-fixed |
 | Watch poll | **Haiku** | High-frequency, mechanical, conservative-guarded |
-| Weekly Evaluator | **Opus** (your call) | Weekly QA backstop; cost negligible at 1 run/wk |
+| Weekly Evaluator | **Opus (latest, 4-8)** | Weekly QA backstop; cost negligible at 1 run/wk |
 | Dedup embeddings | n/a (`bge-m3`) | Not an LLM call |
 
 ## Decision needed from you
@@ -120,5 +120,6 @@ Split by job — polling, writing, and analysis are separate routines, so they t
 - **Polling** (Watch): `claude-sonnet-4-6` → `claude-haiku-4-5-20251001`. Done. Mechanical
   snippet judgment, never writes/analyzes a brief — Haiku has no effect on output quality.
   2-week audit pending: check fired stubs for false positives + spot-check expected fires.
-- **Analysis** (Weekly Evaluator): kept on `claude-opus-4-7` (weekly QA backstop; cost negligible).
+- **Analysis** (Weekly Evaluator): `claude-opus-4-7` → `claude-opus-4-8` (latest Opus, matching
+  the writers; weekly run so the cost delta is negligible).
 - **Follow-up spike** on writer output caps / skip-on-empty: approved → `SPIKE-writer-token-levers.md`.
