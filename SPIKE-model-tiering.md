@@ -111,3 +111,14 @@ really are. Raise as a follow-up if cost is a live concern.
 1. **Watch → Haiku?** (recommended yes, with a 2-week audit.)
 2. **Evaluator: keep `opus-4-7`, bump to `opus-4-8`, or drop to `sonnet-4-6`?** (recommend keep/bump.)
 3. **Want a follow-up spike on the real levers** (writer output caps / skip-on-empty)?
+
+## Decisions taken (2026-05-30)
+
+Split by job — polling, writing, and analysis are separate routines, so they tier independently:
+
+- **Writing** (4 writers): `claude-opus-4-8`. Done.
+- **Polling** (Watch): `claude-sonnet-4-6` → `claude-haiku-4-5-20251001`. Done. Mechanical
+  snippet judgment, never writes/analyzes a brief — Haiku has no effect on output quality.
+  2-week audit pending: check fired stubs for false positives + spot-check expected fires.
+- **Analysis** (Weekly Evaluator): kept on `claude-opus-4-7` (weekly QA backstop; cost negligible).
+- **Follow-up spike** on writer output caps / skip-on-empty: approved → `SPIKE-writer-token-levers.md`.

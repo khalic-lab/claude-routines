@@ -21,7 +21,7 @@
 ║  │  • AI/ML                     30 19 * * *    _posts/{d}-ai-ml.md      D,H        │    ║
 ║  │  • Cyber+Papers (Evening)    0 17 * * *     _posts/{d}-cyber-papers  D,H,G ◀── consolidated
 ║  │  • Weekend Deep Read         30 7 * * 6     _posts/{d}-weekend.md    D,H,G      │   evening EMAIL
-║  │  WATCH (claude-sonnet-4-6)   0 */4 * * *    pending-notifications/   D,H,G,Cal  │    ║
+║  │  WATCH (claude-haiku-4-5)    0 */4 * * *    pending-notifications/   D,H,G,Cal  │    ║
 ║  │      reads watches.yml → on match writes stub + updates last_fired              │    ║
 ║  │  EVALUATOR (claude-opus-4-7) 30 9 * * 0     _posts/{d}-evaluator.md  D,G         │    ║
 ║  │      reads last 7d of _posts → Health table + Patch proposals (human-applied)   │    ║
@@ -69,12 +69,14 @@
 > Morning Overview still emits a 3-item pre-open snapshot; the consolidated evening email
 > now covers three streams (World/Switzerland, AI/ML, Cyber+Papers), not four.
 
-> **Changed 2026-05-30:** Writers (Overview, AI/ML, Cyber+Papers, Weekend) moved
-> `claude-sonnet-4-6` → `claude-opus-4-8` (latest Opus) for reader-facing quality. Watch
-> (`claude-sonnet-4-6`) and the Evaluator (`claude-opus-4-7`) are left on their current tiers
-> pending the model-tiering review in `SPIKE-model-tiering.md`. Same date: the pedagogical-tone
-> block's "hardest case" rule was tightened — pure-math / hep-th / quant-ph results must now be
-> explained (stakes + concrete anchor + honest scope), not flagged-and-skipped.
+> **Changed 2026-05-30:** Per-routine model tiers split by job (see `SPIKE-model-tiering.md`):
+> **writing** — the 4 writers (Overview, AI/ML, Cyber+Papers, Weekend) moved
+> `claude-sonnet-4-6` → `claude-opus-4-8` (latest Opus) for reader-facing quality;
+> **analysis** — the Weekly Evaluator stays on `claude-opus-4-7` (weekly QA backstop);
+> **polling** — Watch moved `claude-sonnet-4-6` → `claude-haiku-4-5` (high-frequency,
+> mechanical snippet judgment — does not write or analyze briefs). Same date: the
+> pedagogical-tone block's "hardest case" rule was tightened — pure-math / hep-th / quant-ph
+> results must now be explained (stakes + concrete anchor + honest scope), not flagged-and-skipped.
 
 ### 1.2 Data model (what lives where)
 
