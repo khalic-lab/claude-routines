@@ -9,4 +9,3 @@ Stories are deduped against a rolling embeddings index so the same item isn't re
 - **How it works / current state:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
 - **Working in this repo (for agents):** [`CLAUDE.md`](CLAUDE.md)
 - **Design proposals & decisions:** `SPIKE-*.md`
-- **Historical rationale:** [`HANDOFF.md`](HANDOFF.md)

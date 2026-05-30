@@ -8,8 +8,6 @@ bridge → ntfy), and dedupe stories against a rolling embeddings index under `i
 - **`ARCHITECTURE.md`** — current verified state: components, per-routine **models** + schedules,
   data flow, data model. **Single source of truth for anything that changes.** Check it first.
 - **`SPIKE-*.md`** — proposals and decisions (model tiering, writer token levers).
-- **`HANDOFF.md`** — historical rationale only (the *why* behind feed-first/curl-first).
-  Superseded by the two above for any current fact.
 
 > Don't duplicate mutable facts (models, schedules) into this file — they live in
 > `ARCHITECTURE.md` only. Past drift came from copies going stale.

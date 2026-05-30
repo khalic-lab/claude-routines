@@ -118,6 +118,14 @@ protocol, which the HTTP proxy blocks. So the compute-time index must be one of:
 
 This does **not** kill the pgvector idea — it relocates it. See §3.
 
+**Fetch-path quirk (why writers curl before WebFetch).** Inside the sandbox `WebFetch` 403s on
+public feeds it should reach (arXiv RSS, Nature, ECB FX, …), while `Bash{curl -fsSL}` egresses
+through a different path and usually succeeds. A 2026-05-03 audit found 0/18 direct fetches in a
+Morning Overview run under HTML-first sourcing; the pipeline pivoted to **feed-first** (machine-
+readable RSS/JSON on separate infra) and **curl-before-WebFetch**. The per-brief Coverage footer
+(`Direct fetches: N | via-snippet: M`, `Feeds hit: {ok via curl | ok via WebFetch | fail — HTTP NNN}`)
+is the only signal this still works — if curl *also* starts failing, the egress proxy is the wall.
+
 ---
 
 ## 3. Target: two-plane hybrid
