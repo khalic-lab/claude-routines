@@ -22,9 +22,14 @@ candidate, across ALL sections of the brief):
 
 ```json
 {"candidates":[
-  {"id":"1","headline":"<the bold headline you plan to use>","summary":"<one neutral sentence>"}
+  {"id":"1","headline":"<the bold headline you plan to use>","summary":"<one neutral sentence>",
+   "url":"<primary source URL — include it whenever you have one>"}
 ]}
 ```
+
+**Always include `url`** when you have a primary source. The check uses an exact canonical-URL /
+arXiv-id match as a deterministic REPEAT signal (zero judgment): if a candidate cites the same
+paper or page already covered, it is dropped regardless of how the headline is worded.
 
 Run the check:
 
@@ -37,22 +42,32 @@ python3 tools/dedup/dedup.py check --candidates /tmp/cand.json --since 30 \
 ```
 
 `/tmp/verdicts.json` has one result per candidate: `verdict` (NEW | ONGOING | REPEAT), `score`,
-and for non-NEW a `matched` object with `date`, `headline`, `thread_id`, `first_seen_date`.
+an optional `match_reason` (`exact-url` | `exact-arxiv` | `snapshot-collapse`), and for non-NEW a
+`matched` object with `date`, `headline`, `thread_id`, `first_seen_date`.
 
 ## Step B — apply verdicts while composing
 
-- **REPEAT** → DROP the story. Already covered with no material change.
-- **ONGOING** → include ONLY if there is genuine *new development* since
-  `matched.first_seen_date`. Frame it as an update and append `[ongoing since {first_seen_date}]`
-  to the bullet. If there is no real new information, drop it.
+- **REPEAT** → ALWAYS DROP the story. Already covered, no exceptions. (`match_reason` explains why:
+  `exact-url`/`exact-arxiv` = same primary source already covered; `snapshot-collapse` = a
+  recurring market snapshot — see below; absent = near-verbatim rerun by similarity.)
+- **`match_reason: snapshot-collapse`** → this was a recurring FX/index/session snapshot. The daily
+  market glance belongs ONLY in the dedicated pre-open snapshot section, never as a standalone
+  repeated story — so dropping it here is correct even though "the number changed."
+- **ONGOING** → **DEFAULTS TO DROP.** Include ONLY when there is a NAMED, dated, concrete new
+  fact since `matched.first_seen_date` — a specific number, a ruling, a release, a benchmark
+  result. A fresh angle, a new framing, or a re-summary of the same facts is explicitly **NOT**
+  new development and must be dropped. When you do include it, frame it as an update, lead with
+  the new fact, and append `[ongoing since {first_seen_date}]` to the bullet.
 - **NEW** → cover normally.
 - **check unavailable** → compose normally; add "dedup unavailable" to the Gaps footer.
 
 ## Step C — record what you published (AFTER writing the brief file)
 
 So future briefs dedup against today. Build `/tmp/final.json` from the stories you actually
-kept (carry `thread_id`/`first_seen_date` through from the matched ONGOING result; omit both
-for NEW stories):
+kept. **`thread_id`/`first_seen_date` are now auto-assigned by `record`** (it re-embeds each
+story and inherits the thread from its best recent match), so carrying them through by hand is a
+safety net, not a requirement — supply them if you already have them, otherwise omit both and
+`record` will link threads for you:
 
 ```json
 {"stories":[

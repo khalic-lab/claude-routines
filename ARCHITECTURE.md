@@ -269,8 +269,20 @@ writer fires
 local sync cron → pull new partitions → upsert into pgvector
 ```
 
-`T_high`/`T_low` are tunables (start ~0.88 / ~0.78, calibrate against the known
-Bilaterals-III / Google-I-O / EU-AI-Act repeats as a labeled test set).
+`check` decides in precedence order (see `decide_verdict`): **(1)** deterministic exact-source
+match — same canonical URL or arXiv id as a recent story → REPEAT, cosine-independent; **(2)** cosine
+vs the recent index → REPEAT/ONGOING/NEW; **(3)** snapshot-genre collapse — a recurring FX/index/session
+snapshot matching a prior one ≥ `SNAPSHOT_T_HIGH=0.85` → REPEAT (the daily glance lives only in the
+dedicated pre-open section).
+
+`T_high`/`T_low` **calibrated 2026-05-31** against a 485-pair hand-labelled gold set: `T_high=0.945`,
+`T_low=0.72`. Key finding: **cosine does not separate "same story restated" (REPEAT) from "same story
+with a real update" (ONGOING)** — they overlap across 0.6–0.95 — so the cosine threshold alone catches
+almost no reruns. Repeat-suppression therefore rests on the **deterministic (1)+(3) layers** (offline-replay:
+78 cross-day reruns auto-dropped vs 6 cosine-only, `exact-url` dominating) **plus** the `DEDUP.md` Step-B
+ONGOING-defaults-to-drop policy (writer judgment). Thread auto-linking in `record` is gated separately
+at `AUTOLINK_MIN=0.93`, above the observed 0.914 DISTINCT ceiling, to avoid false merges. See
+`tools/dedup/dedup.py`, `tools/dedup/test_dedup_calibration.py`, and `DEDUP-DIAGNOSIS-2026-05-31.md`.
 
 ---
 

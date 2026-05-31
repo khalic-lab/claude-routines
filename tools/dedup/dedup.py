@@ -13,14 +13,24 @@ Subcommands
   backfill  decompose existing _posts/*.md -> seed the index + calibration set
   selftest  offline checks (no network): slugify, cosine, brief extraction
 
+`check` decides each candidate in precedence order (see decide_verdict):
+  1. exact-source match (same canonical URL / arXiv id) -> REPEAT, cosine-independent;
+  2. cosine vs the recent index -> REPEAT / ONGOING / NEW;
+  3. snapshot-genre collapse (recurring FX/index snapshot) -> REPEAT.
+Because cosine cannot separate a restated rerun from a genuinely-developing story
+(both span ~0.6-0.95), most repeat-suppression is the (1)+(3) deterministic layers plus
+the DEDUP.md ONGOING-defaults-to-drop policy — NOT the cosine threshold. See the
+calibration note at T_HIGH_DEFAULT and DEDUP-DIAGNOSIS-2026-05-31.md.
+
 Embedding access (check / record / backfill):
   --worker  embed-proxy URL   (or env EMBED_WORKER_URL)
   --token   bearer token      (or env EMBED_TOKEN)
 
 Thresholds (check):
-  --t-high  REPEAT  at/above this cosine   (default 0.88)
-  --t-low   ONGOING in [t-low, t-high)     (default 0.78)
-  --since   window in days to compare against (default 30)
+  --t-high           REPEAT  at/above this cosine     (default 0.945)
+  --t-low            ONGOING in [t-low, t-high)       (default 0.72)
+  --snapshot-t-high  collapse recurring snapshots     (default 0.85)
+  --since            window in days to compare against (default 30)
 
 Index record schema (one JSON object per line), per ARCHITECTURE.md 5.1:
   {id, date, stream, headline, summary, url, source_domain, tier, tags,
@@ -46,11 +56,32 @@ INDEX_DIR = os.path.join(REPO, "index", "stories")
 POSTS_DIR = os.path.join(REPO, "_posts")
 EMBED_MODEL = "bge-m3"
 EMBED_DIM = 1024
-# Calibrated 2026-05-25 against bge-m3 on the seed index: paraphrased repeats
-# scored 0.76-0.87, same-topic-but-different stories 0.59-0.65, far-novel <0.50.
-# T_LOW=0.72 sits in the gap; T_HIGH=0.92 hard-drops only near-identical reruns.
-T_HIGH_DEFAULT = 0.92
+# Calibrated 2026-05-31 against a hand-labelled gold set of cross-day story pairs.
+# Finding: cosine does NOT separate TRUE-REPEAT from TRUE-ONGOING — both span the
+# whole useful range (REPEAT 0.635-0.952, ONGOING 0.605-0.944), because mechanical
+# daily series (FX/futures/index snapshots) embed near-identically yet each carries
+# a genuinely new dated number. T_HIGH=0.945 sits just above the ONGOING ceiling
+# (0.9443): zero ONGOING->REPEAT and zero DISTINCT->REPEAT, so it auto-drops only the
+# clearly-identical near-verbatim reruns. The ~84% of real repeats that fall in the
+# ONGOING band are NOT caught by the threshold (no defensible t_high can, without
+# silently dropping developing stories) — they are handled by the tightened
+# DEDUP.md Step B ONGOING-defaults-to-drop policy. T_LOW=0.72 unchanged: its boundary
+# errors are all cheap (never silently drop a story).
+T_HIGH_DEFAULT = 0.945
 T_LOW_DEFAULT = 0.72
+# Thread continuity (autolink in cmd_record) is deliberately conservative. The same
+# gold set shows DISTINCT story pairs reach cosine 0.914 (mechanical daily snapshots —
+# different trading sessions that embed near-identically), so inheriting a thread
+# anywhere in the inseparable [T_LOW, 0.92] band would stamp a false thread_id +
+# "[ongoing since …]" onto ~1-in-4 genuinely distinct stories. AUTOLINK_MIN sits ABOVE
+# that observed DISTINCT ceiling: we link only on a near-identical match. A missed link
+# merely starts a fresh thread (harmless); a false link corrupts provenance (not).
+AUTOLINK_MIN_DEFAULT = 0.93
+# Snapshot-genre collapse threshold (see is_snapshot_genre). Lower than T_HIGH: a
+# recurring FX/index snapshot that matches a prior snapshot at >= this is dropped as
+# REPEAT even though it carries a "new number" — for this genre the new number is the
+# noise the reader wants gone, not a development worth re-surfacing.
+SNAPSHOT_T_HIGH_DEFAULT = 0.85
 SINCE_DEFAULT = 30
 KEEP_DAYS_DEFAULT = 40  # in-repo index window; older files pruned (Phase 2 archives full history)
 _CACHE_PATH = os.path.join(tempfile.gettempdir(), "dedup-embcache.json")
@@ -112,6 +143,76 @@ def source_domain(url):
         return None
     m = re.match(r"https?://([^/]+)/?", url)
     return m.group(1).lower().lstrip("www.") if m else None
+
+
+# --------------------------------------------------------------------------- #
+# deterministic exact-source match (zero-judgment REPEAT) + snapshot genre
+# --------------------------------------------------------------------------- #
+# arXiv id shape YYMM.NNNNN with MM a real month (01-12) so we don't match prices
+# like "13.452" or versions. Optional arxiv:/abs//pdf/ prefix, optional vN suffix.
+_ARXIV_RE = re.compile(r"(?:arxiv:|abs/|pdf/)?\b(\d{2}(?:0[1-9]|1[0-2])\.\d{4,5})(?:v\d+)?\b", re.I)
+
+
+def arxiv_ids(*texts):
+    """Extract arXiv ids (e.g. 2605.18753) from any of the given strings."""
+    ids = set()
+    for t in texts:
+        if t:
+            ids.update(m.group(1) for m in _ARXIV_RE.finditer(t))
+    return ids
+
+
+def canon_url(url):
+    """Canonical key for exact-match dedup: lowercased host (www. stripped) + path,
+    no scheme/query/fragment/trailing-slash. None if not a URL."""
+    if not url:
+        return None
+    m = re.match(r"https?://([^/?#]+)([^?#]*)", url.strip(), re.I)
+    if not m:
+        return None
+    host = m.group(1).lower()
+    if host.startswith("www."):
+        host = host[4:]
+    return host + re.sub(r"/+$", "", m.group(2))
+
+
+def exact_keys(headline, summary, url):
+    """Zero-judgment identity keys for a story: its canonical URL and any arXiv ids
+    in its headline/summary/url. An exact key match across days = same primary source
+    = same story, regardless of cosine (the reworded-headline case cosine can miss)."""
+    keys = set()
+    cu = canon_url(url)
+    # Require a path: a bare host (swebench.com, a company blog index, a living
+    # leaderboard) is not a unique story identity and would falsely collide distinct
+    # stories that happen to cite the same homepage. Only permalink-style URLs key.
+    if cu and "/" in cu:
+        keys.add("url:" + cu)
+    for aid in arxiv_ids(headline, summary, url):
+        keys.add("arxiv:" + aid)
+    return keys
+
+
+# Recurring quantitative market-snapshot genre (FX quotes, index closes, session
+# recaps). These embed near-identically day to day yet each carries a fresh dated
+# number, so cosine cannot tell a rerun from a new day's snapshot (DISTINCT pairs hit
+# 0.914). They are low-value recurring noise per editorial direction: collapse them to
+# REPEAT above SNAPSHOT_T_HIGH rather than re-run as stories — the dedicated pre-open
+# snapshot section carries the daily glance.
+_SNAPSHOT_RE = re.compile("|".join([
+    r"\b[A-Z]{3}/[A-Z]{3}\b",                                       # currency pairs EUR/CHF
+    r"\b(?:asian?|european?|us|wall\s*street)\s+(?:close|session|open)",
+    r"\b(?:pre-?open|overnight|midday\s+snapshot|intraday)\b",
+    r"\bfutures?\b",
+    r"\b(?:SMI|DAX|CAC|Nikkei|S&P\s*500|Dow|Nasdaq|FTSE|Hang\s*Seng|Stoxx|Topix)\b",
+    r"\b(?:crude|brent|wti|gold|silver)\b[^.]*?[+\-]?\d",
+    r"(?:close[ds]?|edges?|drops?|gains?|rall(?:y|ies)|slips?|falls?)\b[^.]*?[+\-]?\d+(?:\.\d+)?\s*%",
+]), re.I)
+
+
+def is_snapshot_genre(headline, summary=""):
+    """True for recurring market-snapshot items (FX quotes, index closes, session
+    recaps) — see _SNAPSHOT_RE. Used to collapse the genre rather than thread/keep it."""
+    return bool(_SNAPSHOT_RE.search(f"{headline or ''} {summary or ''}"))
 
 
 # --------------------------------------------------------------------------- #
@@ -308,9 +409,67 @@ def classify(vec, recent, t_high, t_low):
     return res
 
 
+def autolink(vec, recent, min_sim=None):
+    """Thread continuity for `record`: inherit (thread_id, first_seen_date) from a
+    recent story ONLY on a near-identical match (cosine >= AUTOLINK_MIN_DEFAULT);
+    else None. Empty/missing index -> None.
+
+    Gated well ABOVE the REPEAT/ONGOING publish thresholds on purpose: cosine cannot
+    separate same-story from distinct-story in the [T_LOW, 0.92] band (DISTINCT pairs
+    reach 0.914), so threading there would falsely merge distinct stories. Conservative
+    by design — a missed link just starts a fresh thread. Makes continuity automatic so
+    it no longer depends on the writer carrying DEDUP.md Step C by hand. Pure (no I/O),
+    offline-testable."""
+    if not recent:
+        return None
+    min_sim = AUTOLINK_MIN_DEFAULT if min_sim is None else min_sim
+    res = classify(vec, recent, T_HIGH_DEFAULT, T_LOW_DEFAULT)
+    if res.get("score", 0.0) >= min_sim and "matched" in res:
+        return res["matched"]["thread_id"], res["matched"]["first_seen_date"]
+    return None
+
+
 # --------------------------------------------------------------------------- #
 # subcommands
 # --------------------------------------------------------------------------- #
+def _build_exact_index(recent):
+    """Map exact identity key -> earliest matching record (recent is date-ascending,
+    so setdefault keeps the first-seen)."""
+    idx = {}
+    for rec in recent:
+        for k in exact_keys(rec.get("headline"), rec.get("summary"), rec.get("url")):
+            idx.setdefault(k, rec)
+    return idx
+
+
+def _matched_obj(rec):
+    return {"id": rec.get("id"), "date": rec.get("date"), "headline": rec.get("headline"),
+            "thread_id": rec.get("thread_id") or rec.get("id"),
+            "first_seen_date": rec.get("first_seen_date") or rec.get("date")}
+
+
+def decide_verdict(cand, vec, recent, exact, t_high, t_low, snapshot_t_high):
+    """Per-candidate verdict, in precedence order. Pure (used by cmd_check + tests):
+    1. Deterministic exact-source match (same canonical URL / arXiv id) -> REPEAT,
+       cosine-independent — catches reworded-headline reruns cosine would miss.
+    2. Cosine classify -> REPEAT/ONGOING/NEW.
+    3. Snapshot-genre collapse: a recurring FX/index snapshot matching a prior snapshot
+       at >= snapshot_t_high is dropped as REPEAT even with a fresh number."""
+    hit_keys = [k for k in exact_keys(cand.get("headline"), cand.get("summary"), cand.get("url"))
+                if k in exact]
+    if hit_keys:
+        return {"verdict": "REPEAT", "score": 1.0,
+                "match_reason": "exact-arxiv" if any(k.startswith("arxiv:") for k in hit_keys) else "exact-url",
+                "matched": _matched_obj(exact[hit_keys[0]])}
+    r = classify(vec, recent, t_high, t_low)
+    if (r["verdict"] != "REPEAT" and r.get("score", 0.0) >= snapshot_t_high
+            and is_snapshot_genre(cand.get("headline", ""), cand.get("summary", ""))
+            and r.get("matched") and is_snapshot_genre(r["matched"].get("headline", ""))):
+        r["verdict"] = "REPEAT"
+        r["match_reason"] = "snapshot-collapse"
+    return r
+
+
 def cmd_check(args):
     with open(args.candidates) as f:
         cands = json.load(f)
@@ -319,15 +478,17 @@ def cmd_check(args):
     texts = [embed_text(c.get("headline", ""), c.get("summary", "")) for c in cands]
     vecs = embed(texts, args.worker, args.token)
     recent = load_recent_index(args.since, as_of=_parse_date(args.as_of))
+    exact = _build_exact_index(recent)
     results = []
     for c, v in zip(cands, vecs):
-        r = classify(v, recent, args.t_high, args.t_low)
+        r = decide_verdict(c, v, recent, exact, args.t_high, args.t_low, args.snapshot_t_high)
         r["headline"] = c.get("headline", "")
         if "id" in c:
             r["id"] = c["id"]
         results.append(r)
     out = {"window_days": args.since, "compared_against": len(recent),
-           "t_high": args.t_high, "t_low": args.t_low, "results": results}
+           "t_high": args.t_high, "t_low": args.t_low,
+           "snapshot_t_high": args.snapshot_t_high, "results": results}
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
 
@@ -340,9 +501,20 @@ def cmd_record(args):
     slug = args.slug
     texts = [embed_text(s.get("headline", ""), s.get("summary", "")) for s in stories]
     vecs = embed(texts, args.worker, args.token)
+    # Auto-link threads so continuity no longer depends on the writer carrying
+    # DEDUP.md Step C through by hand: for any story the writer didn't already
+    # thread, inherit thread_id/first_seen_date from its best recent match.
+    # Harmless if the index is missing/empty (autolink returns None).
+    recent = load_recent_index(SINCE_DEFAULT, as_of=_parse_date(date))
     records = []
     for s, v in zip(stories, vecs):
         hid = s.get("id") or f"{date}-{slug}-{slugify(s.get('headline',''))}"
+        thread_id = s.get("thread_id")
+        first_seen_date = s.get("first_seen_date")
+        if not thread_id:
+            link = autolink(v, recent)
+            if link:
+                thread_id, first_seen_date = link
         records.append({
             "id": hid,
             "date": date,
@@ -353,8 +525,8 @@ def cmd_record(args):
             "source_domain": s.get("source_domain") or source_domain(s.get("url")),
             "tier": s.get("tier"),
             "tags": s.get("tags", []),
-            "thread_id": s.get("thread_id") or hid,
-            "first_seen_date": s.get("first_seen_date") or date,
+            "thread_id": thread_id or hid,
+            "first_seen_date": first_seen_date or date,
             "embedding_model": EMBED_MODEL,
             "emb": encode_vec(v),
         })
@@ -446,6 +618,9 @@ def main():
     c.add_argument("--since", type=int, default=SINCE_DEFAULT)
     c.add_argument("--t-high", type=float, default=T_HIGH_DEFAULT, dest="t_high")
     c.add_argument("--t-low", type=float, default=T_LOW_DEFAULT, dest="t_low")
+    c.add_argument("--snapshot-t-high", type=float, default=SNAPSHOT_T_HIGH_DEFAULT,
+                   dest="snapshot_t_high",
+                   help="collapse recurring market-snapshot reruns to REPEAT at/above this cosine")
     c.add_argument("--as-of", default=None, help="YYYY-MM-DD; defaults to today")
     add_embed_args(c)
     c.set_defaults(func=cmd_check)
