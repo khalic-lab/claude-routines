@@ -217,7 +217,10 @@ the model's judgment over ~a few hundred recent headlines rather than a similari
   "tier": "T1",
   "tags": ["switzerland"],
   "thread_id": "bilaterals-iii",          // assigned when matched to a prior story
-  "first_seen_date": "2026-05-03",          // earliest member of the thread
+  "first_seen_date": "2026-05-03",          // earliest member of the thread (first COVERAGE)
+  "event_date": "2026-05-02",               // when the event HAPPENED (nullable; ISO 8601 reduced
+                                            //   precision YYYY|YYYY-MM|YYYY-MM-DD). Distinct from
+                                            //   `date` (compose) and `first_seen_date` (coverage).
   "embedding_model": "voyage-3",
   "embedding": [0.01, -0.04, ...]           // omitted from jsonl if stored in parquet
 }
@@ -239,6 +242,7 @@ CREATE TABLE stories (
   tags            text[],
   thread_id       text,
   first_seen_date date,
+  event_date      date,        -- when the event happened (nullable); != date/first_seen_date
   embedding       vector(1024)
 );
 CREATE INDEX ON stories USING hnsw (embedding vector_cosine_ops);
@@ -283,6 +287,19 @@ almost no reruns. Repeat-suppression therefore rests on the **deterministic (1)+
 ONGOING-defaults-to-drop policy (writer judgment). Thread auto-linking in `record` is gated separately
 at `AUTOLINK_MIN=0.93`, above the observed 0.914 DISTINCT ceiling, to avoid false merges. See
 `tools/dedup/dedup.py`, `tools/dedup/test_dedup_calibration.py`, and `DEDUP-DIAGNOSIS-2026-05-31.md`.
+
+**Added 2026-06-08 (see `REVIEW-2026-06-08-feedback-and-dates.md`).** Threading now also has an
+**arXiv distinct-paper guard** (`_distinct_paper`): a candidate carrying an arXiv id the match is not
+about is not threaded to it. It runs in three places — `cmd_record` **validates writer-supplied
+`thread_id`s** (the load-bearing fix: the 2026-06-06 SASA "[ongoing since 2026-05-14]" was a *writer
+hand-set* thread onto a distinct paper — cosine was only 0.71, so autolink never saw it), `autolink`
+applies it as defense-in-depth, and `check`/`decide_verdict` strips the misleading continuation
+(`continuation:false`, `first_seen_date:null`, `match_reason:distinct-paper`) so a writer is handed no
+since-date. Restricted to arXiv (CVE/product sagas are left to editorial judgment); offline replay
+confirms it touches exactly 2 historical index records. A new nullable **`event_date`** field records
+when the event happened (deterministic `YYYY-MM` from arXiv ids, else writer-supplied day precision,
+else null) — the date `[ongoing since]` should bind to. A `lint` subcommand flags adjacent
+weekday-vs-date slips (deterministic, offline).
 
 ---
 

@@ -11,6 +11,7 @@ Subcommands
   check     candidates JSON -> per-candidate verdict NEW | ONGOING | REPEAT
   record    final-stories JSON -> writes index/stories/{date}-{slug}.jsonl
   backfill  decompose existing _posts/*.md -> seed the index + calibration set
+  lint      post-compose date checks on a brief (weekday-vs-date consistency)
   selftest  offline checks (no network): slugify, cosine, brief extraction
 
 `check` decides each candidate in precedence order (see decide_verdict):
@@ -34,7 +35,14 @@ Thresholds (check):
 
 Index record schema (one JSON object per line), per ARCHITECTURE.md 5.1:
   {id, date, stream, headline, summary, url, source_domain, tier, tags,
-   thread_id, first_seen_date, embedding_model, embedding:[float x1024]}
+   thread_id, first_seen_date, event_date, embedding_model, embedding:[float x1024]}
+
+`date` is the brief/compose date, `first_seen_date` the earliest brief in the thread
+(first COVERAGE), and `event_date` (nullable, ISO 8601 reduced precision YYYY |
+YYYY-MM | YYYY-MM-DD) when the described thing actually HAPPENED — three distinct
+dates a story carries (cf. GDELT SQLDATE vs DATEADDED). event_date is writer-supplied
+at day precision when known, else deterministically derived from an arXiv id
+(YYYY-MM submission month), else null.
 """
 
 import argparse
@@ -190,6 +198,42 @@ def exact_keys(headline, summary, url):
     for aid in arxiv_ids(headline, summary, url):
         keys.add("arxiv:" + aid)
     return keys
+
+
+def arxiv_event_date(*texts):
+    """Coarse, deterministic event date (YYYY-MM, the submission month) from an arXiv
+    id, which encodes YYMM; the day is not in the id, so month precision is the most we
+    can get offline. None if no arXiv id present. The only event date derivable with no
+    network — used to seed `event_date` for ID-bearing records (record / backfill)."""
+    ids = sorted(arxiv_ids(*texts))
+    if not ids:
+        return None
+    yymm = ids[0][:4]  # e.g. "2606" from 2606.06333
+    return f"20{yymm[:2]}-{yymm[2:]}"
+
+
+def _distinct_paper(cand, match):
+    """True when `cand` is a specific arXiv paper that `match` is NOT about — two
+    different papers on the same narrow topic. This is the identity check behind the
+    SASA/SoftSAE false merge (2026-06-06-weekend.md): arXiv 2606.06333 was threaded onto
+    a distinct May SAE paper and tagged "[ongoing since 2026-05-14]". (That link was
+    writer-SUPPLIED, not cosine — the two embed at only 0.71 — so the real fix is
+    validating writer threads in cmd_record; this guard also covers the autolink path.)
+
+    Deliberately restricted to arXiv — the genre where same-topic distinct artifacts get
+    conflated and an arXiv id is an unambiguous paper identity. CVE/product "sagas" are
+    left to editorial judgment (a differing CVE on the same product is genuinely
+    ambiguous to thread, and id-incidental stories like a project update that merely
+    mentions a CVE must not be broken).
+
+    A candidate with no arXiv id -> False (news/CVE threading untouched). The same
+    arXiv id present in both -> False (a genuine same-paper update still threads;
+    arXiv v1/v2 share a base id). cand/match are story dicts (headline/summary/url)."""
+    cand_ids = arxiv_ids(cand.get("headline"), cand.get("summary"), cand.get("url"))
+    if not cand_ids:
+        return False
+    match_ids = arxiv_ids(match.get("headline"), match.get("summary"), match.get("url"))
+    return cand_ids.isdisjoint(match_ids)
 
 
 # Recurring quantitative market-snapshot genre (FX quotes, index closes, session
@@ -403,13 +447,16 @@ def classify(vec, recent, t_high, t_low):
             "id": best_rec.get("id"),
             "date": best_rec.get("date"),
             "headline": best_rec.get("headline"),
+            "summary": best_rec.get("summary"),
+            "url": best_rec.get("url"),
             "thread_id": best_rec.get("thread_id") or best_rec.get("id"),
             "first_seen_date": best_rec.get("first_seen_date") or best_rec.get("date"),
+            "event_date": best_rec.get("event_date"),
         }
     return res
 
 
-def autolink(vec, recent, min_sim=None):
+def autolink(vec, recent, min_sim=None, cand=None):
     """Thread continuity for `record`: inherit (thread_id, first_seen_date) from a
     recent story ONLY on a near-identical match (cosine >= AUTOLINK_MIN_DEFAULT);
     else None. Empty/missing index -> None.
@@ -419,14 +466,113 @@ def autolink(vec, recent, min_sim=None):
     reach 0.914), so threading there would falsely merge distinct stories. Conservative
     by design — a missed link just starts a fresh thread. Makes continuity automatic so
     it no longer depends on the writer carrying DEDUP.md Step C by hand. Pure (no I/O),
-    offline-testable."""
+    offline-testable.
+
+    When `cand` (the story dict being recorded) is given, the arXiv distinct-paper
+    guard (_distinct_paper) suppresses the link if the candidate is a specific paper the
+    best match is not about — even above the cosine gate. Defense-in-depth against a
+    cosine-driven distinct-paper merge (the observed SASA/SoftSAE merge was actually
+    writer-supplied, validated separately in cmd_record). cmd_record always passes cand."""
     if not recent:
         return None
     min_sim = AUTOLINK_MIN_DEFAULT if min_sim is None else min_sim
-    res = classify(vec, recent, T_HIGH_DEFAULT, T_LOW_DEFAULT)
-    if res.get("score", 0.0) >= min_sim and "matched" in res:
-        return res["matched"]["thread_id"], res["matched"]["first_seen_date"]
-    return None
+    best, best_rec = 0.0, None
+    for rec in recent:
+        c = cosine(vec, rec["embedding"])
+        if c > best:
+            best, best_rec = c, rec
+    if best_rec is None or best < min_sim:
+        return None
+    if cand is not None and _distinct_paper(cand, best_rec):
+        return None
+    return (best_rec.get("thread_id") or best_rec.get("id"),
+            best_rec.get("first_seen_date") or best_rec.get("date"))
+
+
+# --------------------------------------------------------------------------- #
+# date checks (lint) — deterministic, offline
+# --------------------------------------------------------------------------- #
+_ISO_PARTIAL_RE = re.compile(r"^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$")
+_MONTHS = {m: i for i, m in enumerate(
+    ["jan", "feb", "mar", "apr", "may", "jun",
+     "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
+_WDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+_WDAYS_FULL = ["Monday", "Tuesday", "Wednesday", "Thursday",
+               "Friday", "Saturday", "Sunday"]
+_MONTH_ALT = "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)"
+_WD_ALT = "(?:mon|tue|wed|thu|fri|sat|sun)"
+# Four adjacency forms binding a weekday to a day+month (named groups so extraction is
+# uniform regardless of order). Catches "Wednesday 11 June", "Wed, June 11",
+# "11 June (Wednesday)", "June 11, Wednesday".
+_WD_PATTERNS = [
+    re.compile(rf"\b(?P<wd>{_WD_ALT})[a-z]*\.?,?\s+(?P<day>\d{{1,2}})(?:st|nd|rd|th)?\s+(?P<mon>{_MONTH_ALT})[a-z]*", re.I),
+    re.compile(rf"\b(?P<wd>{_WD_ALT})[a-z]*\.?,?\s+(?P<mon>{_MONTH_ALT})[a-z]*\s+(?P<day>\d{{1,2}})(?:st|nd|rd|th)?", re.I),
+    re.compile(rf"\b(?P<day>\d{{1,2}})(?:st|nd|rd|th)?\s+(?P<mon>{_MONTH_ALT})[a-z]*\s*[(,]\s*(?P<wd>{_WD_ALT})[a-z]*", re.I),
+    re.compile(rf"\b(?P<mon>{_MONTH_ALT})[a-z]*\s+(?P<day>\d{{1,2}})(?:st|nd|rd|th)?\s*[(,]\s*(?P<wd>{_WD_ALT})[a-z]*", re.I),
+]
+
+
+def parse_event_date(s):
+    """Parse an ISO date at reduced precision (YYYY | YYYY-MM | YYYY-MM-DD) ->
+    (date, precision). Reduced precision resolves to the FIRST day of the period; ISO
+    8601 reduced precision is intentionally allowed so an arXiv-derived YYYY-MM and a
+    writer-supplied YYYY-MM-DD coexist in `event_date`. None if empty/unparseable."""
+    if not s:
+        return None
+    m = _ISO_PARTIAL_RE.match(s.strip())
+    if not m:
+        return None
+    y, mo, d = int(m.group(1)), int(m.group(2) or 1), int(m.group(3) or 1)
+    try:
+        return dt.date(y, mo, d), ("day" if m.group(3) else "month" if m.group(2) else "year")
+    except ValueError:
+        return None
+
+
+def days_since(event_date, as_of):
+    """Whole days from event_date (any ISO precision) to as_of (a date). None if the
+    event date can't be parsed. Reduced precision counts from the period's first day."""
+    p = parse_event_date(event_date)
+    if not p or as_of is None:
+        return None
+    return (as_of - p[0]).days
+
+
+def weekday_flags(text, brief_date):
+    """Find 'weekday + day + month' mentions whose stated weekday doesn't match the real
+    calendar weekday. brief_date anchors the year (nearest year to the brief, so Dec/Jan
+    boundaries and near-future dates resolve correctly). Pure + offline.
+
+    Catches the ADJACENT-form weekday slip (e.g. "Wednesday 11 June" when June 11 is a
+    Thursday — the 2026-06-07-ai-ml.md SPCX error class). It does NOT catch a weekday and
+    date split across distant clauses; the injected as-of dated-weekday block is the
+    primary defense for that (see DEDUP.md). Returns a list of flag dicts."""
+    flags, seen = [], set()
+    if brief_date is None:
+        return flags
+    for pat in _WD_PATTERNS:
+        for m in pat.finditer(text or ""):
+            wd = m.group("wd").lower()[:3]
+            day = int(m.group("day"))
+            mon = _MONTHS[m.group("mon").lower()[:3]]
+            best = None
+            for yr in (brief_date.year - 1, brief_date.year, brief_date.year + 1):
+                try:
+                    c = dt.date(yr, mon, day)
+                except ValueError:
+                    continue
+                if best is None or abs((c - brief_date).days) < abs((best - brief_date).days):
+                    best = c
+            if best is None or _WDAYS[best.weekday()] == wd:
+                continue
+            key = (wd, best.isoformat())
+            if key in seen:
+                continue
+            seen.add(key)
+            flags.append({"snippet": re.sub(r"\s+", " ", m.group(0)).strip(),
+                          "stated_weekday": wd, "date": best.isoformat(),
+                          "actual_weekday": _WDAYS_FULL[best.weekday()]})
+    return flags
 
 
 # --------------------------------------------------------------------------- #
@@ -445,7 +591,8 @@ def _build_exact_index(recent):
 def _matched_obj(rec):
     return {"id": rec.get("id"), "date": rec.get("date"), "headline": rec.get("headline"),
             "thread_id": rec.get("thread_id") or rec.get("id"),
-            "first_seen_date": rec.get("first_seen_date") or rec.get("date")}
+            "first_seen_date": rec.get("first_seen_date") or rec.get("date"),
+            "event_date": rec.get("event_date")}
 
 
 def decide_verdict(cand, vec, recent, exact, t_high, t_low, snapshot_t_high):
@@ -467,6 +614,16 @@ def decide_verdict(cand, vec, recent, exact, t_high, t_low, snapshot_t_high):
             and r.get("matched") and is_snapshot_genre(r["matched"].get("headline", ""))):
         r["verdict"] = "REPEAT"
         r["match_reason"] = "snapshot-collapse"
+    # arXiv distinct-paper guard (check side): an ONGOING that is topically close but a
+    # DIFFERENT paper must not hand the writer "[ongoing since <other paper's date>]".
+    # Keep ONGOING (it IS related — the writer may still mention it) but flag the match
+    # as a non-continuation and drop the misleading since-date. Mirrors autolink's
+    # record-side guard so the index and the writer agree.
+    if (r["verdict"] == "ONGOING" and r.get("matched")
+            and _distinct_paper(cand, r["matched"])):
+        r["matched"]["continuation"] = False
+        r["matched"]["first_seen_date"] = None
+        r["match_reason"] = "distinct-paper"
     return r
 
 
@@ -506,15 +663,30 @@ def cmd_record(args):
     # thread, inherit thread_id/first_seen_date from its best recent match.
     # Harmless if the index is missing/empty (autolink returns None).
     recent = load_recent_index(SINCE_DEFAULT, as_of=_parse_date(date))
+    recent_by_id = {r.get("id"): r for r in recent}
     records = []
     for s, v in zip(stories, vecs):
         hid = s.get("id") or f"{date}-{slug}-{slugify(s.get('headline',''))}"
         thread_id = s.get("thread_id")
         first_seen_date = s.get("first_seen_date")
+        # Validate a WRITER-SUPPLIED thread before trusting it. The SASA/SoftSAE false
+        # merge (2026-06-06-weekend.md) was NOT a cosine error — the two papers embed at
+        # only 0.71, so autolink never linked them. The writer hand-set thread_id onto a
+        # same-TOPIC but DISTINCT paper and tagged "[ongoing since 2026-05-14]". If the
+        # candidate is a distinct arXiv paper from the thread genesis, reject the manual
+        # thread -> fresh thread. (genesis must be in the recent window to validate.)
+        if thread_id:
+            genesis = recent_by_id.get(thread_id)
+            if genesis is not None and _distinct_paper(s, genesis):
+                thread_id = first_seen_date = None
         if not thread_id:
-            link = autolink(v, recent)
+            link = autolink(v, recent, cand=s)
             if link:
                 thread_id, first_seen_date = link
+        # event_date: writer-supplied (day precision) wins; else deterministic arXiv
+        # submission month; else null. Distinct from `date` (compose) / first_seen.
+        event_date = s.get("event_date") or arxiv_event_date(
+            s.get("headline", ""), s.get("summary", ""), s.get("url", "") or "")
         records.append({
             "id": hid,
             "date": date,
@@ -527,6 +699,7 @@ def cmd_record(args):
             "tags": s.get("tags", []),
             "thread_id": thread_id or hid,
             "first_seen_date": first_seen_date or date,
+            "event_date": event_date,
             "embedding_model": EMBED_MODEL,
             "emb": encode_vec(v),
         })
@@ -566,6 +739,10 @@ def cmd_backfill(args):
                 "headline": s["headline"], "summary": s["summary"], "url": s["url"],
                 "source_domain": source_domain(s["url"]), "tier": None, "tags": [],
                 "thread_id": hid, "first_seen_date": date,
+                # deterministic only (no network at backfill): arXiv submission month
+                # where an id is present, else null. Retroactively arms event_date for
+                # ID-bearing records without re-research.
+                "event_date": arxiv_event_date(s["headline"], s["summary"], s["url"] or ""),
                 "embedding_model": EMBED_MODEL if not args.no_embed else None,
                 "emb": encode_vec(v) if v else None,
             })
@@ -574,6 +751,28 @@ def cmd_backfill(args):
         total += len(records)
         print(f"  {date}-{slug}: {len(records)} stories")
     print(f"backfill done: {total} stories across {written} briefs -> {INDEX_DIR}")
+
+
+def cmd_lint(args):
+    """Post-compose date checks on a brief markdown file. Currently: weekday-vs-date
+    consistency (deterministic). Prints one line per issue; exits non-zero if any, so a
+    writer can gate its commit on `lint OK`."""
+    with open(args.brief) as f:
+        text = f.read()
+    date = _parse_date(args.date)
+    if date is None:
+        d = _date_from_name(args.brief)
+        date = _parse_date(d) if d else None
+    issues = [
+        f"WEEKDAY: \"{fl['snippet']}\" — {fl['date']} is a {fl['actual_weekday']}"
+        for fl in weekday_flags(text, date)
+    ]
+    for msg in issues:
+        print(msg)
+    if issues:
+        print(f"lint: {len(issues)} date issue(s) — fix before commit", file=sys.stderr)
+        sys.exit(1)
+    print("lint OK")
 
 
 def cmd_selftest(_args):
@@ -596,6 +795,29 @@ def cmd_selftest(_args):
     assert stories[0]["url"] == "https://swissinfo.ch/x"
     assert source_domain("https://www.aljazeera.com/x") == "aljazeera.com"
     assert embed_text("Headline here", "Headline here. extra").startswith("Headline here")
+    # event_date derivation + ISO-partial parsing + days-since.
+    assert arxiv_event_date("see arXiv:2606.06333 abstract") == "2026-06", \
+        arxiv_event_date("see arXiv:2606.06333")
+    assert arxiv_event_date("no id here") is None
+    assert parse_event_date("2026-06")[1] == "month"
+    assert parse_event_date("2026-06-02")[1] == "day"
+    assert parse_event_date("not-a-date") is None
+    assert days_since("2026-06-02", dt.date(2026, 6, 5)) == 3
+    assert days_since("2026-06", dt.date(2026, 6, 5)) == 4  # month -> first of month
+    # arXiv distinct-paper guard: SASA (2606.06333) vs an id-less SAE listing record.
+    sasa = {"headline": "Subspace-aware sparse autoencoders cut feature splitting",
+            "summary": "", "url": "https://arxiv.org/abs/2606.06333"}
+    softsae = {"headline": "SoftSAE: Dynamic Top-K Selection for Adaptive SAEs",
+               "summary": "(cs.LG, May 2026 batch)", "url": "https://arxiv.org/list/cs.LG/current"}
+    assert _distinct_paper(sasa, softsae) is True, "SASA vs id-less SAE record must be distinct"
+    assert _distinct_paper(sasa, sasa) is False, "same arXiv id must NOT be distinct"
+    assert _distinct_paper({"headline": "no id", "summary": "", "url": None}, sasa) is False, \
+        "candidate without an arXiv id never triggers the guard"
+    # Weekday lint: the SPCX error class (adjacent form) flags; the correct weekday doesn't.
+    wf = weekday_flags("the IPO prices Wednesday 11 June at a fixed price", dt.date(2026, 6, 7))
+    assert wf and wf[0]["actual_weekday"] == "Thursday", wf
+    assert weekday_flags("trading begins Friday 12 June", dt.date(2026, 6, 7)) == [], \
+        "a correct weekday must not flag"
     print("selftest OK")
 
 
@@ -640,6 +862,12 @@ def main():
     b.add_argument("--no-embed", action="store_true", help="extract only; empty vectors (debug)")
     add_embed_args(b)
     b.set_defaults(func=cmd_backfill)
+
+    ln = sub.add_parser("lint", help="post-compose date checks on a brief (no network)")
+    ln.add_argument("--brief", required=True, help="path to the brief markdown file")
+    ln.add_argument("--date", default=None,
+                    help="YYYY-MM-DD brief date (anchors the year); defaults to the filename date")
+    ln.set_defaults(func=cmd_lint)
 
     s = sub.add_parser("selftest", help="offline logic checks (no network)")
     s.set_defaults(func=cmd_selftest)

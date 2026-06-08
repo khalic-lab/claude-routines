@@ -45,6 +45,14 @@ FIXTURES = {
     # verdict-band autolink would falsely thread it; AUTOLINK_MIN must sit above 0.914.
     "ussess_21": ("2026-05-21-markets.jsonl", "midday snapshot"),
     "ussess_04": ("2026-05-04-markets.jsonl", "us session"),
+    # DISTINCT PAPERS, mis-threaded by the WRITER (not cosine): SASA (arXiv 2606.06333)
+    # was hand-threaded onto the May-14 SoftSAE SAE paper and tagged "[ongoing since
+    # 2026-05-14]". The two embed at only 0.71, so autolink never linked them — the fix
+    # is the writer-thread validation in cmd_record, gated by the arXiv distinct-paper
+    # guard. SoftSAE's url is an arXiv LISTING page (no paper id), so only the
+    # candidate-side arXiv id distinguishes them.
+    "sasa":    ("2026-06-06-weekend.jsonl", "subspace-aware sparse autoencoders"),
+    "softsae": ("2026-05-14-overview.jsonl", "softsae"),
 }
 
 
@@ -201,6 +209,46 @@ def main():
         th, tl, dedup.SNAPSHOT_T_HIGH_DEFAULT)
     assert nsres.get("match_reason") != "snapshot-collapse", \
         f"non-snapshot story must not be snapshot-collapsed: {nsres}"
+
+    # --- arXiv distinct-paper guard: the SASA/SoftSAE false-merge regression. ---
+    sasa, softsae = fx["sasa"], fx["softsae"]
+    cand = {"headline": sasa["headline"], "summary": sasa.get("summary", ""),
+            "url": sasa.get("url"), "thread_id": softsae["id"],
+            "first_seen_date": softsae.get("first_seen_date") or softsae["date"]}
+    # The real records ARE recognized as distinct papers (candidate carries arXiv
+    # 2606.06333; the SoftSAE genesis carries none).
+    assert dedup._distinct_paper(cand, softsae) is True, \
+        "SASA must be distinct from the id-less SoftSAE record"
+    # This merge was WRITER-supplied, not cosine: confirm cosine is well below the gate
+    # so the writer-thread validation (not autolink) is the load-bearing fix.
+    assert dedup.cosine(sasa["embedding"], softsae["embedding"]) < dedup.AUTOLINK_MIN_DEFAULT, \
+        "fixture drift: SASA/SoftSAE now embed above the autolink gate"
+    # Simulate cmd_record's writer-thread validation: a supplied thread to a distinct
+    # paper is rejected -> fresh thread.
+    genesis = {softsae["id"]: softsae}.get(cand["thread_id"])
+    assert genesis is not None and dedup._distinct_paper(cand, genesis), \
+        "WRITER-THREAD VALIDATION REGRESSION: the SASA mis-thread would survive"
+    # ...but a same-paper thread (shared arXiv id) is NOT stripped (no over-fire).
+    same = dict(softsae, url="https://arxiv.org/abs/2606.06333")
+    assert dedup._distinct_paper(cand, same) is False, \
+        "guard over-fired: a shared arXiv id must remain threadable"
+    # autolink arXiv guard (synthetic high-cosine distinct papers): identical vector, so
+    # cosine 1.0 >= gate; without cand it links, with a different-id cand it suppresses.
+    vec = fx["quad_02"]["embedding"]
+    match_rec = dict(fx["quad_02"], headline="Paper A", url="https://arxiv.org/abs/2501.11111")
+    cand_b = {"headline": "Paper B", "summary": "", "url": "https://arxiv.org/abs/2502.22222"}
+    assert dedup.autolink(vec, [match_rec]) is not None, "no-guard control should link"
+    assert dedup.autolink(vec, [match_rec], cand=cand_b) is None, \
+        "AUTOLINK GUARD REGRESSION: distinct arXiv papers linked despite the guard"
+    # check-side branch: force the ONGOING band with a test-local t_low (real cosine
+    # 0.71) so the distinct-paper continuation-strip is exercised on real records.
+    dv = dedup.decide_verdict(cand, sasa["embedding"], [softsae], {}, th, 0.70,
+                              dedup.SNAPSHOT_T_HIGH_DEFAULT)
+    assert dv["verdict"] == "ONGOING", f"expected ONGOING with t_low=0.70: {dv['verdict']}"
+    assert (dv["matched"].get("continuation") is False
+            and dv["matched"]["first_seen_date"] is None
+            and dv.get("match_reason") == "distinct-paper"), \
+        f"distinct-paper ONGOING must strip continuation + since-date: {dv}"
 
     print("calibration test OK")
 
