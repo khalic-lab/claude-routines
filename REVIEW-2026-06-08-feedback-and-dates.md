@@ -32,9 +32,16 @@ loops + temporal grounding, and a feedback-mechanism design grounded in the live
 - The historical `first_seen_date` propagation bug (every record `thread_id == id`,
   `first_seen_date == date`, per `DEDUP-DIAGNOSIS-2026-05-31.md`) **is FIXED**. `autolink()`
   fires regularly: **87 / 1,260 index records (6.9%)** carry an inherited earlier `first_seen_date`.
-- **Exactly one reader-actionable error** in the whole audit: `2026-06-07-ai-ml.md:113` says the
-  SPCX IPO "prices **11 June**" on "**Wednesday**" — June 11 2026 is a **Thursday**. Forward
-  weekday arithmetic, off by one.
+- **Reader-actionable errors (corrected count — the audit UNDER-counted).** (1) `2026-06-07-ai-ml.md:113`
+  the SPCX IPO "prices **11 June**" on "**Wednesday**" — June 11 is a **Thursday** (weekday arithmetic).
+  (2) **The serious one the audit MISSED** (surfaced by Rafael 2026-06-08): both **June-6** briefs put
+  the SVP "No 10-million Switzerland" federal vote on the wrong weekend —
+  `2026-06-06-cyber-papers.md:20` "Federal vote **tomorrow** … votes **Sunday 7 June**" and
+  `2026-06-06-weekend.md:19` "votes **this weekend** … result lands **Sunday**". **The vote is 14 June**
+  (a Sunday), stated correctly in ~15 May briefs. June 6 = Sat, June 7 = Sun, June 14 = Sun: the writer
+  re-derived "it's a Sunday vote + it's the weekend → this Sunday" instead of reading the established
+  date. The weekday lint cannot catch this (June 7 *is* a Sunday — internally consistent, wrong event).
+  See §2.5.
 - **One wrong `[ongoing since]` tag** (`2026-06-06-weekend.md:73`), and it is **not** the old
   propagation bug — nor (per the Correction above) a cosine merge. It is a **writer-supplied
   mis-thread**: the writer hand-set `thread_id` to place a distinct paper (SASA, arXiv 2606.06333)
@@ -129,6 +136,29 @@ Verified-correct patterns (don't "fix" these):
 **No instance** of the dangerous failure modes: no date fabricated without a cited source, no event
 misdated to the wrong month, no coverage window claiming dates it manifestly doesn't cover.
 
+### 2.5 Finding E — the audit's own miss (the scheduled-event re-derivation bug)
+
+**Surfaced by Rafael (2026-06-08), not the audit.** Both **June-6** briefs misdated the SVP "No
+10-million Switzerland" federal vote to **Sunday 7 June** ("votes tomorrow" / "this weekend") when the
+vote is **14 June** — a date the pipeline had published correctly in ~15 May briefs (and which the
+official État de Vaud / admin.ch pages confirm). June 6 = Saturday, June 7 = Sunday, June 14 = Sunday.
+
+**Why the audit missed it, and why it changes the fix:**
+- It is **not** an internal-consistency or weekday error — "Sunday 7 June" is *correct* as a weekday
+  (June 7 is a Sunday). The weekday lint (§3.1 lever C+) passes it. So **no amount of as-of /
+  dated-weekday-calendar injection prevents this** — the writer wasn't wrong about *today* or about
+  what weekday the 7th is; it re-derived *which Sunday the vote is* and got it wrong.
+- The only thing that prevents it is **carrying the event's established date** (14 June) so the writer
+  reads it instead of re-deriving — i.e. **`event_date` (lever B), propagated along the thread**, plus a
+  lint that flags scheduling language ("this weekend / tomorrow / Sunday N / next week") that
+  contradicts the story's `event_date`.
+- This **promotes `event_date` from "nice structural v2" to THE primary date fix**, and **demotes the
+  C+ weekday block to secondary** (it only ever fixed the minor SPCX-class slip). It also exposes an
+  audit blind spot: cross-checking a *scheduled event's* framing against the date the pipeline itself
+  established (in-thread) is a check the audit did not run. The vote is a correctly-threaded ONGOING
+  story (`[ongoing since 2026-05-23]`) whose continuity date was right but whose **event date was
+  re-guessed each run** — exactly the conflation `event_date` exists to kill.
+
 ### 2.4 Root causes (mapped)
 
 | Root cause | Findings | Note |
@@ -137,7 +167,8 @@ misdated to the wrong month, no coverage window claiming dates it manifestly doe
 | Mental arithmetic on a rolling window | D | Eyeballed "72 h" vs actual ~94 h |
 | Prior-day events absorbed into today's voice | C | Cited dates visible; prose implies currency |
 | Can't fetch primary source → stale snippet | B | 403 wall; disclosed but citation stays in body. **Sourcing, not date-handling** |
-| **False cosine merge of distinct arXiv IDs** | wrong `[ongoing since]` | Two SAE papers > 0.93; writer's prose correctly called it distinct; index overrode |
+| **Re-derives a SCHEDULED event's date instead of reading the established one** | **E (vote)** | "Sunday vote + it's the weekend → this Sunday" ⇒ June 7 not June 14. The **dominant** failure mode; what the user actually feels. |
+| Writer-supplied mis-thread (not cosine) | wrong `[ongoing since]` | Distinct paper hand-filed into a topic thread; writer prose correctly called it distinct; index overrode. See Correction banner. |
 
 ---
 
