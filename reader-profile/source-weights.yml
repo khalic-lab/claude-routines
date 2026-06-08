@@ -1,0 +1,22 @@
+# Source weights — writer-read, HUMAN-GATED.
+#
+# Writers consult this at compose time alongside reader-profile.md. It changes ONLY via a
+# patch the Weekly Evaluator proposes from feedback/*.jsonl and Rafael applies — never
+# auto-mutated from a tap. Match on source_domain (as dedup.py's source_domain() yields:
+# lowercased host, leading "www." stripped).
+#
+# never:   hard pre-filter — drop stories whose primary source is one of these domains.
+#          Use only for sources that repeatedly lie / mislead (the credibility-tag goal).
+# reduce:  soft penalty — keep only when the story is clearly significant; otherwise demote.
+#          Use for low-signal / aggregator-heavy / PR-lead sources.
+
+never: []
+# Example:
+# never:
+#   - example-fabricates-news.com   # 2026-06-20: fabricated a quote (see feedback)
+
+reduce: []
+# Example:
+# reduce:
+#   - prnewswire.com                # vendor PR wire — never a lead
+#   - some-aggregator.com           # 2026-06-15: 2× 👎 "could get this from HN"

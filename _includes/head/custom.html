@@ -160,3 +160,109 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 })();
 </script>
+
+{%- if page.date and page.categories -%}
+<script>
+  // Injected by Jekyll on post pages only: the brief's index slug, e.g.
+  // "2026-06-07-overview". Matches the _posts filename + index/stories key, so per-story
+  // feedback (v2) can key the same id the dedup index uses.
+  window.__BRIEF = { slug: "{{ page.date | date: '%Y-%m-%d' }}-{{ page.categories | first }}" };
+</script>
+{%- endif -%}
+
+<style>
+  .fb-box {
+    margin: 2.5em 0 1em; padding: 0.9em 1.1em;
+    border: 1px solid rgba(255,255,255,0.14); border-radius: 8px;
+    background: rgba(255,255,255,0.03); font-size: 0.85em;
+  }
+  .fb-box .fb-row { display: flex; align-items: center; gap: 0.6em; flex-wrap: wrap; }
+  .fb-box .fb-q { opacity: 0.8; margin-right: 0.2em; }
+  .fb-btn {
+    cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: transparent;
+    color: inherit; border-radius: 6px; padding: 0.25em 0.6em; font-size: 1em; line-height: 1;
+  }
+  .fb-btn:hover { background: rgba(255,255,255,0.08); }
+  .fb-btn.fb-on { background: rgba(120,170,255,0.25); border-color: rgba(120,170,255,0.6); }
+  .fb-reason { display: none; width: 100%; margin-top: 0.6em; }
+  .fb-reason textarea {
+    width: 100%; box-sizing: border-box; min-height: 3em; resize: vertical;
+    background: rgba(0,0,0,0.25); color: inherit; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px; padding: 0.4em 0.6em; font: inherit;
+  }
+  .fb-send { margin-top: 0.5em; }
+  .fb-status { opacity: 0.75; margin-left: 0.3em; }
+</style>
+<script>
+(function () {
+  // --- configure after deploying feedback-sink (README step 5) -----------------
+  var FEEDBACK_ENABLED = false; // flip to true AFTER the Worker is deployed + URL confirmed
+  var FEEDBACK_URL = "https://feedback-sink.khalic-lab.workers.dev"; // <- confirm subdomain
+  var FEEDBACK_KEY = ""; // optional WIDGET_KEY; leave "" if the Worker has none
+  // -----------------------------------------------------------------------------
+  // Dormant until enabled: keeps the published site from showing a widget that posts to
+  // a Worker that doesn't exist yet.
+  if (!FEEDBACK_ENABLED || !window.__BRIEF || !window.__BRIEF.slug || !window.fetch) return;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var content = document.querySelector('.page__content');
+    if (!content) return;
+
+    var vote = 0; // 0 = none, +1, -1
+    var box = document.createElement('div');
+    box.className = 'fb-box';
+    box.innerHTML =
+      '<div class="fb-row">' +
+        '<span class="fb-q">Useful?</span>' +
+        '<button class="fb-btn" data-v="1" aria-label="thumbs up">👍</button>' +
+        '<button class="fb-btn" data-v="-1" aria-label="thumbs down">👎</button>' +
+        '<span class="fb-status"></span>' +
+      '</div>' +
+      '<div class="fb-reason">' +
+        '<textarea placeholder="optional: why? (what to do more / less of)"></textarea>' +
+        '<div><button class="fb-btn fb-send">Send</button></div>' +
+      '</div>';
+    content.appendChild(box);
+
+    var status = box.querySelector('.fb-status');
+    var reasonWrap = box.querySelector('.fb-reason');
+    var textarea = box.querySelector('textarea');
+    var thumbs = box.querySelectorAll('.fb-btn[data-v]');
+
+    function setVote(v) {
+      vote = v;
+      thumbs.forEach(function (b) { b.classList.toggle('fb-on', +b.dataset.v === v); });
+      reasonWrap.style.display = 'block';
+      textarea.focus();
+    }
+
+    function send(done) {
+      if (!vote) { status.textContent = 'pick 👍 or 👎 first'; return; }
+      var headers = { 'Content-Type': 'application/json' };
+      if (FEEDBACK_KEY) headers['X-Widget-Key'] = FEEDBACK_KEY;
+      status.textContent = 'sending…';
+      fetch(FEEDBACK_URL + '/submit', {
+        method: 'POST', headers: headers,
+        body: JSON.stringify({
+          brief: window.__BRIEF.slug, vote: vote,
+          reason: (textarea.value || '').trim(), story_id: null, surface: 'web'
+        })
+      }).then(function (r) {
+        status.textContent = r.ok ? 'thanks ✓' : 'failed (' + r.status + ')';
+        if (r.ok && done) done();
+      }).catch(function () { status.textContent = 'offline — try again later'; });
+    }
+
+    thumbs.forEach(function (b) {
+      b.addEventListener('click', function () {
+        setVote(+b.dataset.v);
+        // a thumb with no reason is still a signal: fire immediately, reason can follow.
+        send(null);
+      });
+    });
+    box.querySelector('.fb-send').addEventListener('click', function () {
+      send(function () { reasonWrap.style.display = 'none'; });
+    });
+  });
+})();
+</script>

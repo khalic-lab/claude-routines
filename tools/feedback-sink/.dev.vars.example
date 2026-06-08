@@ -1,0 +1,9 @@
+# Copy to .dev.vars (gitignored) for `wrangler dev`, and set the same via
+# `wrangler secret put` for production. See README.md.
+
+# Bearer for /drain and /ack — a REAL secret (lives only on the Mac bridge + Worker).
+FEEDBACK_TOKEN=replace-with-a-long-random-string
+
+# Optional deterrence key the widget sends on /submit (NOT a secret — visible in the
+# page JS; just deters drive-by bots). Leave unset to accept any submit.
+WIDGET_KEY=
