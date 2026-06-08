@@ -538,6 +538,26 @@ def days_since(event_date, as_of):
     return (as_of - p[0]).days
 
 
+def scheduled_event_date(rec):
+    """A thread's event_date worth CARRYING FORWARD to later members: present AND in the
+    future relative to the thread's first coverage — a FIXED scheduled event (a vote, an
+    IPO pricing, a conference) whose date doesn't move. Returns the event_date string,
+    else None. Evolving threads (a war, a saga — where event_date ~ each day's coverage)
+    return None so a stale date never propagates. This is the fix for the 2026-06-06
+    'vote this weekend' error: once the SVP vote carries event_date 2026-06-14, every later
+    brief inherits it instead of re-deriving 'which Sunday'."""
+    ed = rec.get("event_date")
+    if not ed:
+        return None
+    p = parse_event_date(ed)
+    anchor = rec.get("first_seen_date") or rec.get("date")
+    try:
+        a = dt.date.fromisoformat(anchor) if anchor else None
+    except (ValueError, TypeError):
+        a = None
+    return ed if (p and a and p[0] > a) else None
+
+
 def weekday_flags(text, brief_date):
     """Find 'weekday + day + month' mentions whose stated weekday doesn't match the real
     calendar weekday. brief_date anchors the year (nearest year to the brief, so Dec/Jan
@@ -572,6 +592,48 @@ def weekday_flags(text, brief_date):
             flags.append({"snippet": re.sub(r"\s+", " ", m.group(0)).strip(),
                           "stated_weekday": wd, "date": best.isoformat(),
                           "actual_weekday": _WDAYS_FULL[best.weekday()]})
+    return flags
+
+
+# Relative scheduling phrases that should carry an ABSOLUTE date when describing a dated
+# event. Deliberately NOT "this week"/"today" (too common + benign). "this weekend",
+# "tomorrow", "this/next/coming <weekday>" are the high-signal ones that misdated the
+# 2026-06-06 vote ("votes this weekend" / "vote tomorrow").
+# Trailing (?!['’]s) drops the possessive ("tomorrow's reveal", "tomorrow's Overview" =
+# the next brief) — narrative, not a scheduling claim. The dangerous form is bare
+# "vote tomorrow" / "votes this weekend".
+_SCHED_RE = re.compile(
+    r"\b(?:(?:this|next|coming)\s+(?:weekend|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun)"
+    r"|over\s+the\s+weekend|tomorrow|tonight)(?!['’]s)\b", re.I)
+_ABS_DATE_RE = re.compile(
+    rf"\b\d{{1,2}}(?:st|nd|rd|th)?\s+{_MONTH_ALT}[a-z]*\b"      # 14 June
+    rf"|\b{_MONTH_ALT}[a-z]*\s+\d{{1,2}}(?:st|nd|rd|th)?\b"     # June 14
+    rf"|\b\d{{4}}-\d{{2}}-\d{{2}}\b", re.I)                     # 2026-06-14
+
+
+def scheduling_flags(text):
+    """Flag relative scheduling phrases ("this weekend", "tomorrow", "this Sunday") with
+    no ABSOLUTE date NEARBY. ADVISORY: it forces the writer to commit to a concrete date
+    for a scheduled event — the framing that misdated the 2026-06-06 'vote this weekend'
+    (June 7) when the vote was 14 June. It does NOT verify the date is correct (event_date
+    carry-through does that); it just refuses bare relative framing. A phrase already
+    accompanied by a date (e.g. "opens tomorrow (8 June)") is not flagged.
+
+    Proximity, NOT same-sentence: a brief bullet trails markdown citations carrying ISO
+    dates (2026-06-06, [ongoing since …]) that would otherwise mask a far-away scheduling
+    phrase. Only a date within a short window of the phrase counts. Pure + offline."""
+    flags, seen = [], set()
+    for m in _SCHED_RE.finditer(text or ""):
+        window = text[max(0, m.start() - 25): m.end() + 55]
+        if _ABS_DATE_RE.search(window):
+            continue
+        phrase = re.sub(r"\s+", " ", m.group(0)).strip()
+        snip = re.sub(r"\s+", " ", text[max(0, m.start() - 30): m.end() + 70]).strip()
+        key = (phrase.lower(), snip[:40])
+        if key in seen:
+            continue
+        seen.add(key)
+        flags.append({"phrase": phrase, "snippet": snip[:160]})
     return flags
 
 
@@ -684,9 +746,14 @@ def cmd_record(args):
             if link:
                 thread_id, first_seen_date = link
         # event_date: writer-supplied (day precision) wins; else deterministic arXiv
-        # submission month; else null. Distinct from `date` (compose) / first_seen.
+        # submission month; else inherit the thread's SCHEDULED date (fixed future event
+        # like a vote, so it isn't re-derived); else null. Distinct from `date`/first_seen.
         event_date = s.get("event_date") or arxiv_event_date(
             s.get("headline", ""), s.get("summary", ""), s.get("url", "") or "")
+        if not event_date and thread_id:
+            genesis = recent_by_id.get(thread_id)
+            if genesis is not None:
+                event_date = scheduled_event_date(genesis)
         records.append({
             "id": hid,
             "date": date,
@@ -754,25 +821,27 @@ def cmd_backfill(args):
 
 
 def cmd_lint(args):
-    """Post-compose date checks on a brief markdown file. Currently: weekday-vs-date
-    consistency (deterministic). Prints one line per issue; exits non-zero if any, so a
-    writer can gate its commit on `lint OK`."""
+    """Post-compose date checks on a brief markdown file (deterministic, no network):
+      * WEEKDAY (hard, exits 1): a weekday named next to a date it doesn't match.
+      * SCHEDULE (advisory): relative framing ("this weekend"/"tomorrow") with no
+        absolute date — state the concrete date for scheduled events.
+    Writers can gate their commit on `lint OK`; advisory flags print but don't fail."""
     with open(args.brief) as f:
         text = f.read()
     date = _parse_date(args.date)
     if date is None:
         d = _date_from_name(args.brief)
         date = _parse_date(d) if d else None
-    issues = [
-        f"WEEKDAY: \"{fl['snippet']}\" — {fl['date']} is a {fl['actual_weekday']}"
-        for fl in weekday_flags(text, date)
-    ]
-    for msg in issues:
+    hard = [f"WEEKDAY: \"{fl['snippet']}\" — {fl['date']} is a {fl['actual_weekday']}"
+            for fl in weekday_flags(text, date)]
+    advisory = [f"SCHEDULE [advisory]: \"{fl['phrase']}\" with no absolute date — {fl['snippet']}"
+                for fl in scheduling_flags(text)]
+    for msg in hard + advisory:
         print(msg)
-    if issues:
-        print(f"lint: {len(issues)} date issue(s) — fix before commit", file=sys.stderr)
+    if hard:
+        print(f"lint: {len(hard)} weekday error(s) — fix before commit", file=sys.stderr)
         sys.exit(1)
-    print("lint OK")
+    print("lint OK" + (f" — {len(advisory)} advisory scheduling flag(s) above to review" if advisory else ""))
 
 
 def cmd_selftest(_args):
@@ -818,6 +887,19 @@ def cmd_selftest(_args):
     assert wf and wf[0]["actual_weekday"] == "Thursday", wf
     assert weekday_flags("trading begins Friday 12 June", dt.date(2026, 6, 7)) == [], \
         "a correct weekday must not flag"
+    # scheduled-event date carry: future-vs-coverage = scheduled (carry); else evolving.
+    assert scheduled_event_date({"event_date": "2026-06-14", "first_seen_date": "2026-05-23"}) == "2026-06-14"
+    assert scheduled_event_date({"event_date": "2026-05-02", "first_seen_date": "2026-05-02"}) is None
+    assert scheduled_event_date({"first_seen_date": "2026-05-23"}) is None
+    # scheduling lint: bare relative framing flags; with an absolute date it does not.
+    assert scheduling_flags("Switzerland votes this weekend on the initiative."), "'this weekend' should flag"
+    assert scheduling_flags("Federal vote tomorrow: foreign attention."), "'tomorrow' should flag"
+    assert scheduling_flags("WWDC opens tomorrow (Monday 8 June) with the keynote.") == [], \
+        "'tomorrow (8 June)' has an absolute date — must not flag"
+    assert scheduling_flags("this week's open-weight drops were quiet.") == [], \
+        "'this week' is benign — must not flag"
+    assert scheduling_flags("it will land in tomorrow's Overview brief.") == [], \
+        "possessive 'tomorrow's' is narrative — must not flag"
     print("selftest OK")
 
 

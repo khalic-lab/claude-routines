@@ -70,6 +70,14 @@ and for non-NEW a `matched` object with `date`, `headline`, `thread_id`, `first_
   papers, two different CVEs, or two different filings are distinct threads even when closely
   related. Tag continuity only when the new item shares the prior's **arXiv id / canonical URL**;
   otherwise it is NEW and any "still developing" framing lives in prose.
+- **Scheduled events (votes, IPO pricings, conferences, deadlines): state the ABSOLUTE date, and
+  read it from `matched.event_date` — never re-derive it.** A 2026-06-06 brief put the SVP "No
+  10-million Switzerland" federal vote on "**this weekend**" / "**Sunday 7 June**" when the vote is
+  **14 June** — it re-guessed "which Sunday" instead of reading the date the pipeline had already
+  established. `record` carries a scheduled (future) `event_date` forward along the thread, so once
+  it's set, `matched.event_date` gives you the real date every run. Never write "this weekend" /
+  "tomorrow" for a dated event without the absolute date next to it (the `lint` SCHEDULE check flags
+  this). When you know a scheduled event's date, put it in the story's `event_date` (Step C).
 - **NEW** → cover normally.
 - **check unavailable** → compose normally; add "dedup unavailable" to the Gaps footer.
 
@@ -112,10 +120,14 @@ This writes `index/stories/{YYYY-MM-DD}-{SLUG}.jsonl` and prunes index files old
 
 ## Step C.5 — lint the brief for date slips (optional, no network)
 
-A deterministic backstop that flags a weekday named next to a date it doesn't match (e.g. "Wednesday
-11 June" when June 11 is a Thursday). It only catches the **adjacent** form — a weekday and date in
-the same clause; it cannot catch a weekday and date split across distant sentences (use the injected
-as-of dated-weekday block for those). Run it on the brief you just wrote and fix any flag:
+A deterministic backstop with two checks:
+- **WEEKDAY (hard, non-zero exit):** a weekday named next to a date it doesn't match (e.g. "Wednesday
+  11 June" — June 11 is a Thursday). Adjacent form only; a weekday and date split across distant
+  sentences need the injected as-of dated-weekday block.
+- **SCHEDULE (advisory):** relative framing of a dated event with no absolute date nearby ("votes
+  **this weekend**", "vote **tomorrow**"). This is what misdated the 14-June vote to "Sunday 7 June".
+  The lint can't tell you the right date — it refuses the bare framing so you **state the absolute
+  date** (and read it from `matched.event_date`, never re-derive "which Sunday").
 
 ```bash
 python3 tools/dedup/dedup.py lint --brief _posts/{YYYY-MM-DD}-{SLUG}.md || echo "fix the date flags above"

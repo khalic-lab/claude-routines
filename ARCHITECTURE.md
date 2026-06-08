@@ -298,8 +298,13 @@ applies it as defense-in-depth, and `check`/`decide_verdict` strips the misleadi
 since-date. Restricted to arXiv (CVE/product sagas are left to editorial judgment); offline replay
 confirms it touches exactly 2 historical index records. A new nullable **`event_date`** field records
 when the event happened (deterministic `YYYY-MM` from arXiv ids, else writer-supplied day precision,
-else null) — the date `[ongoing since]` should bind to. A `lint` subcommand flags adjacent
-weekday-vs-date slips (deterministic, offline).
+else null) — the date `[ongoing since]` should bind to. For a **scheduled** event (a future,
+fixed date — vote/IPO/conference, detected as `event_date` after the thread's first coverage),
+`record` **carries `event_date` forward** along the thread so later briefs read it instead of
+re-deriving (the fix for the 2026-06-06 "vote this weekend" misdating — the 14-June vote was put on
+"Sunday 7 June" twice). A `lint` subcommand flags adjacent weekday-vs-date slips (hard) and bare
+relative framing of a dated event with no absolute date nearby — "votes this weekend" / "vote
+tomorrow" (advisory). All deterministic + offline.
 
 ---
 

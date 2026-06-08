@@ -250,6 +250,21 @@ def main():
             and dv.get("match_reason") == "distinct-paper"), \
         f"distinct-paper ONGOING must strip continuation + since-date: {dv}"
 
+    # --- scheduling lint: the real 2026-06-06 vote misdating must flag. ---
+    # Both June-6 briefs put the 14-June SVP vote on the wrong weekend; the lint refuses
+    # the bare relative framing that caused it.
+    for fname, phrase in [("2026-06-06-weekend.md", "this weekend"),
+                          ("2026-06-06-cyber-papers.md", "tomorrow")]:
+        ppath = os.path.join(REPO, "_posts", fname)
+        if os.path.exists(ppath):
+            with open(ppath) as f:
+                got = dedup.scheduling_flags(f.read())
+            assert any(phrase in fl["phrase"].lower() for fl in got), \
+                f"SCHEDULING LINT REGRESSION: {fname} no longer flags '{phrase}' (the vote misdating)"
+    # --- event_date forward-carry: a scheduled (future) thread date carries; evolving doesn't. ---
+    assert dedup.scheduled_event_date({"event_date": "2026-06-14", "first_seen_date": "2026-05-23"}) == "2026-06-14"
+    assert dedup.scheduled_event_date({"event_date": "2026-05-02", "first_seen_date": "2026-05-02"}) is None
+
     print("calibration test OK")
 
 
