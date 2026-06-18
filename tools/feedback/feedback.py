@@ -100,8 +100,13 @@ def _append(records):
     return written
 
 
+# Cloudflare's edge 403s the default "Python-urllib/x.y" UA before the request reaches the
+# Worker (verified 2026-06-18). Send an honest, identifiable UA so drain/ack get through.
+_UA = "news-brief-feedback-bridge/1.0 (+https://khalic-lab.github.io/claude-routines/)"
+
+
 def _request(url, token, data=None):
-    headers = {"Authorization": f"Bearer {token}"}
+    headers = {"Authorization": f"Bearer {token}", "User-Agent": _UA}
     if data is not None:
         headers["Content-Type"] = "application/json"
         data = json.dumps(data).encode("utf-8")
