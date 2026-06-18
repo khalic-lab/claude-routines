@@ -128,6 +128,18 @@ readable RSS/JSON on separate infra) and **curl-before-WebFetch**. The per-brief
 (`Direct fetches: N | via-snippet: M`, `Feeds hit: {ok via curl | ok via WebFetch | fail — HTTP NNN}`)
 is the only signal this still works — if curl *also* starts failing, the egress proxy is the wall.
 
+**Fetch proxy (added 2026-06-18) — the real 403 fix.** The bulk of the chronic 403s (lab blogs,
+CNBC/TechCrunch/Bloomberg/Fortune, etc.) were NOT the WebFetch quirk and NOT anti-bot — they were
+simply hosts **not on the env_018 allowlist** (only the ~11 feed hosts in §7.1 are). The fix is
+`tools/fetch-proxy/` — a Cloudflare Worker (`https://fetch-proxy.khalic-lab.workers.dev`, twin of
+og-proxy/embed-proxy, bearer-gated) that fetches any public URL from Cloudflare's edge with a real
+browser User-Agent. The sandbox reaches **one** allowlisted host (the worker) instead of enumerating
+fifty news/lab domains, and the browser-UA-from-edge bypasses the datacenter-IP anti-bot 403s on
+Cloudflare/Akamai-fronted sites. All 4 writers route non-allowlisted hosts through it (direct curl
+stays for the feed hosts; arXiv stays direct per its rate-limit ask). The proxy mirrors upstream
+status, so `curl -fsSL` keeps fail→snippet semantics; footers mark proxied fetches `{ok via proxy}`.
+Hard Cloudflare Bot-Management / JS-challenge sites can still block even the proxy.
+
 ---
 
 ## 3. Target: two-plane hybrid
@@ -311,11 +323,13 @@ tomorrow" (advisory). All deterministic + offline.
 
 ## 7. Open questions / preconditions (must resolve before building)
 
-1. **env_018 allowlist contents.** The design assumes the sandbox can reach the
-   compute-time store + embeddings host. You switched env_018 to **Custom** today — I don't
-   know what's in the allowed-domains list now (did you keep the default package-manager
-   set? add anything?). Need the current list. If we pick S3 → must include the S3 endpoint;
-   if Voyage → `api.voyageai.com`; if Worker → `*.workers.dev`.
+1. **env_018 allowlist contents — RESOLVED (2026-06-18).** The Custom allowed-domains list is:
+   `export.arxiv.org`, `services.nvd.nist.gov`, `www.cisa.gov`, `www.quantamagazine.org`,
+   `embed-proxy.khalic-lab.workers.dev`, `www.nature.com`, `www.aljazeera.com`, `www.ecb.europa.eu`
+   (now dead — markets removed; safe to drop), `api.semanticscholar.org`, `www.srf.ch`,
+   `www.letemps.ch`, plus `fetch-proxy.khalic-lab.workers.dev` (added 2026-06-18). The chronic AI/ML
+   403s were this list not covering lab/news hosts — now solved via the fetch-proxy (§2) rather than
+   by enumerating every domain.
 2. **Compute-time index store: A (S3) / B (in-repo parquet) / C (Worker-fronted).** §3.1.
 3. **Embeddings provider: Voyage / Workers-AI / LLM-judgment (no cloud embeddings).** §4.
    This is the highest-leverage decision — it changes whether the cloud side touches
