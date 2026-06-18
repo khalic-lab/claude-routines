@@ -30,7 +30,6 @@ Assumed relative output-token cost (approx): **Opus ≈ 5 · Sonnet ≈ 20 · Ha
 | Weekend Deep Read | `30 7 * * 6` | 1 | **opus-4-8** | ~12 | Heaviest: long-form deep read |
 | Watch poll | `0 */4 * * *` | 42 | sonnet-4-6 | ~1.5 | Light: snippet judgment over `watches.yml`, conservative match |
 | Weekly Evaluator | `30 9 * * 0` | 1 | opus-4-7 | ~12 | Heavy: reads ~21 posts → health table + patch proposals |
-| ~~Markets~~ | retired | 0 | — | — | Disabled 2026-05-30 |
 
 Writers were `sonnet-4-6` until 2026-05-30; the user fixed them at the latest Opus
 ("always use the latest opus for writing"). That is a **constraint, not a variable** here.

@@ -49,7 +49,9 @@ no stale temp files) rather than hand-escaping ~10 KB of JSON.
   - Weekend Deep Read — `trig_01XKzge4DxP6wTjLwtkoYeqj`
   - Weekly Evaluator — `trig_01F5npsKTQTLKekAZ5BczKtG`
   - Watch (topic poll) — `trig_01FgrFMfsreu597nKUXEEQMt`
-  - Markets — `trig_01GBugAS5qw88yQK3tv8kKWx` — **retired 2026-05-30** (`enabled:false`, revivable)
+  - (Markets — `trig_01GBugAS5qw88yQK3tv8kKWx` — **removed 2026-06-18**; trigger left disabled
+    server-side, all market content dropped from the pipeline. Do not revive without re-adding the
+    snapshot machinery in `dedup.py`.)
 - ntfy delivery is configured in the local bridge `.env` (`/usr/local/src/news-brief-ntfy-bridge/.env`).
 
 ## Layout

@@ -18,8 +18,7 @@
   and working in Switzerland get more space than equal-weight world news.
 
 ## Demote / cut
-- Vendor PR and launch-marketing as a *lead* (fine as context); recurring market-snapshot noise
-  outside the dedicated pre-open glance.
+- Vendor PR and launch-marketing as a *lead* (fine as context).
 - Re-summaries of already-covered stories with no new dated fact (see `tools/dedup/DEDUP.md`).
 
 ## Tone
@@ -28,4 +27,4 @@
 
 ## Learned preferences (Evaluator-maintained — append below)
 <!-- The Weekly Evaluator proposes additions here from feedback; Rafael applies them. e.g.:
-- 2026-06-15: less SpaceX/markets detail on weekends (3× 👎, "too long"). -->
+- 2026-06-15: less SpaceX launch detail on weekends (3× 👎, "too long"). -->

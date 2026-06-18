@@ -39,12 +39,6 @@ FIXTURES = {
     "meta":      ("2026-05-27-ai-ml.jsonl", "meta raises"),
     "llamacpp":  ("2026-05-27-ai-ml.jsonl", "llama.cpp"),
     "euaiact":   ("2026-05-27-ai-ml.jsonl", "eu ai act"),
-    # TRUE-DISTINCT but HIGH cosine: two different US trading sessions (05-21 vs
-    # 05-04) embed at 0.914 — the worst-case distinct pair in the gold set. This is
-    # the autolink-gate guard: classify() puts it in the ONGOING band (>=T_LOW), so a
-    # verdict-band autolink would falsely thread it; AUTOLINK_MIN must sit above 0.914.
-    "ussess_21": ("2026-05-21-markets.jsonl", "midday snapshot"),
-    "ussess_04": ("2026-05-04-markets.jsonl", "us session"),
     # DISTINCT PAPERS, mis-threaded by the WRITER (not cosine): SASA (arXiv 2606.06333)
     # was hand-threaded onto the May-14 SoftSAE SAE paper and tagged "[ongoing since
     # 2026-05-14]". The two embed at only 0.71, so autolink never linked them — the fix
@@ -131,25 +125,11 @@ def main():
     # ...a clearly-distinct story does not link...
     assert dedup.autolink(fx["anthropic"]["embedding"], [fx["meta"]]) is None, \
         "autolink: distinct story should not inherit a thread"
-    # ...the WORST-CASE high-cosine distinct pair must NOT link. Two different US
-    # trading sessions sit at cosine 0.914 (ONGOING band), so the old verdict-band
-    # autolink (>=T_LOW=0.72) would falsely thread them; the AUTOLINK_MIN gate must
-    # reject them. This is the regression guard for the gate (the low-cosine case
-    # above passes at any gate and would not catch a band-gated regression).
-    ong = dedup.classify(fx["ussess_21"]["embedding"], [fx["ussess_04"]], th, tl)
-    assert ong["verdict"] == "ONGOING", (
-        f"fixture drift: US-session pair expected ONGOING band, got {ong['verdict']} "
-        f"(cosine {ong['score']}); regenerate the gate fixture"
-    )
-    assert ong["score"] >= 0.90, (
-        f"fixture drift: US-session pair cosine {ong['score']} < 0.90; pick a higher "
-        "distinct pair so the gate is genuinely exercised"
-    )
-    assert dedup.autolink(fx["ussess_21"]["embedding"], [fx["ussess_04"]]) is None, (
-        f"autolink GATE REGRESSION: distinct US-session pair (cosine {ong['score']}) "
-        f"linked — AUTOLINK_MIN_DEFAULT ({dedup.AUTOLINK_MIN_DEFAULT}) is at/below the "
-        "0.914 DISTINCT ceiling and will falsely merge distinct stories"
-    )
+    # NOTE: the worst-case high-cosine *distinct* autolink-gate fixture (two different US
+    # trading sessions at cosine 0.914) was removed 2026-06-18 with the Markets stream.
+    # The AUTOLINK_MIN gate (0.93) is still exercised by the synthetic arXiv-guard control
+    # below; when the gold set is refixtured, re-key this gate regression to a non-market
+    # high-cosine distinct pair drawn from the current index.
     # ...and an empty/missing index is harmless.
     assert dedup.autolink(fx["anthropic"]["embedding"], []) is None, \
         "autolink: empty index must return None (no crash)"
@@ -157,8 +137,8 @@ def main():
     # --- Deterministic exact-source match (zero-judgment REPEAT). ---
     assert dedup.arxiv_ids("DashAttention arXiv:2605.18753 · May 2026") == {"2605.18753"}, \
         "arxiv_ids: should extract 2605.18753"
-    assert dedup.arxiv_ids("SMI drops 1.29% to 13.452") == set(), \
-        "arxiv_ids: must NOT match price-like 13.452 (month 45 invalid)"
+    assert dedup.arxiv_ids("build bumped to 13.452 in the changelog") == set(), \
+        "arxiv_ids: must NOT match version-like 13.452 (month 45 invalid)"
     assert dedup.canon_url("https://www.Arxiv.org/abs/2605.18753v2?x=1#sec") == "arxiv.org/abs/2605.18753v2", \
         f"canon_url normalization wrong: {dedup.canon_url('https://www.Arxiv.org/abs/2605.18753v2?x=1#sec')!r}"
     # A bare host is NOT a story identity key (living leaderboards / blog indexes).
@@ -175,40 +155,13 @@ def main():
     exact = dedup._build_exact_index([prior])
     cand = {"headline": "A faster long-context kernel lands",  # reworded headline, same paper
             "summary": "see paper", "url": "https://arxiv.org/abs/2605.18753"}
-    res = dedup.decide_verdict(cand, fx["meta"]["embedding"], [prior], exact,
-                               th, tl, dedup.SNAPSHOT_T_HIGH_DEFAULT)
+    res = dedup.decide_verdict(cand, fx["meta"]["embedding"], [prior], exact, th, tl)
     assert res["verdict"] == "REPEAT" and res["match_reason"] == "exact-arxiv", \
         f"exact-arxiv match should be REPEAT, got {res}"
     # A different paper id is NOT an exact match (falls through to cosine -> not REPEAT here).
     cand2 = {"headline": "Unrelated paper", "summary": "x", "url": "https://arxiv.org/abs/2605.99999"}
-    res2 = dedup.decide_verdict(cand2, fx["meta"]["embedding"], [prior], exact,
-                                th, tl, dedup.SNAPSHOT_T_HIGH_DEFAULT)
+    res2 = dedup.decide_verdict(cand2, fx["meta"]["embedding"], [prior], exact, th, tl)
     assert res2["verdict"] != "REPEAT", f"different arXiv id must not exact-match: {res2}"
-
-    # --- Snapshot-genre collapse (treat FX/index snapshots specially). ---
-    assert dedup.is_snapshot_genre("US session — midday snapshot (markets still open)"), "snapshot: US session"
-    assert dedup.is_snapshot_genre("EUR/CHF 0.9099; USD/CHF ~0.7815 — franc firm"), "snapshot: FX pair"
-    assert dedup.is_snapshot_genre("European equities close higher, DAX +0.50%"), "snapshot: index close"
-    assert not dedup.is_snapshot_genre("Anthropic launches Claude Opus 4.8 with Copilot GA"), "story not snapshot"
-    assert not dedup.is_snapshot_genre("CVE-2026-0257 unauth RCE in PAN-OS, CVSS 9.8"), "CVE not snapshot"
-    assert not dedup.is_snapshot_genre("DashAttention: a faster long-context attention kernel"), "paper not snapshot"
-    # The worst-case distinct-but-similar FX pair (0.914): cosine alone calls it ONGOING, but
-    # snapshot-collapse correctly drops it as REPEAT (the daily glance lives in its own section).
-    exact_empty = {}
-    sres = dedup.decide_verdict(
-        {"headline": fx["ussess_21"]["headline"], "summary": fx["ussess_21"].get("summary", "")},
-        fx["ussess_21"]["embedding"], [fx["ussess_04"]], exact_empty,
-        th, tl, dedup.SNAPSHOT_T_HIGH_DEFAULT)
-    assert sres["verdict"] == "REPEAT" and sres["match_reason"] == "snapshot-collapse", \
-        f"snapshot pair should collapse to REPEAT, got {sres}"
-    # A non-snapshot pair at the same cosine must NOT be collapsed (genre-gated, not score-gated):
-    # the quadsqueezing repeat is a real story, so it stays a similarity REPEAT (no snapshot reason).
-    nsres = dedup.decide_verdict(
-        {"headline": fx["quad_05"]["headline"], "summary": ""},
-        fx["quad_05"]["embedding"], [fx["quad_02"]], exact_empty,
-        th, tl, dedup.SNAPSHOT_T_HIGH_DEFAULT)
-    assert nsres.get("match_reason") != "snapshot-collapse", \
-        f"non-snapshot story must not be snapshot-collapsed: {nsres}"
 
     # --- arXiv distinct-paper guard: the SASA/SoftSAE false-merge regression. ---
     sasa, softsae = fx["sasa"], fx["softsae"]
@@ -242,8 +195,7 @@ def main():
         "AUTOLINK GUARD REGRESSION: distinct arXiv papers linked despite the guard"
     # check-side branch: force the ONGOING band with a test-local t_low (real cosine
     # 0.71) so the distinct-paper continuation-strip is exercised on real records.
-    dv = dedup.decide_verdict(cand, sasa["embedding"], [softsae], {}, th, 0.70,
-                              dedup.SNAPSHOT_T_HIGH_DEFAULT)
+    dv = dedup.decide_verdict(cand, sasa["embedding"], [softsae], {}, th, 0.70)
     assert dv["verdict"] == "ONGOING", f"expected ONGOING with t_low=0.70: {dv['verdict']}"
     assert (dv["matched"].get("continuation") is False
             and dv["matched"]["first_seen_date"] is None

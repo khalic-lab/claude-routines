@@ -63,11 +63,13 @@
    └──────────────────────────────────┘
 ```
 
-> **Retired 2026-05-30:** Dedicated Markets routine (was `trig_01GBugAS5qw88yQK3tv8kKWx`, cron `30 18 * * 1-5`).
-> Disabled (not deleted) — `enabled:false`, config preserved for possible revival.
-> Reason: user feedback that "random articles don't cut it" in current form.
-> Morning Overview still emits a 3-item pre-open snapshot; the consolidated evening email
-> now covers three streams (World/Switzerland, AI/ML, Cyber+Papers), not four.
+> **Removed 2026-06-18:** the dedicated Markets routine and all market content. The Markets
+> routine (was `trig_01GBugAS5qw88yQK3tv8kKWx`, cron `30 18 * * 1-5`) had been disabled since
+> 2026-05-30; on 2026-06-18 the Morning Overview's pre-open market snapshot section was dropped
+> too, and the dedup snapshot-genre collapse machinery removed — so **no brief emits market
+> content**. The consolidated evening email covers three streams (World/Switzerland, AI/ML,
+> Cyber+Papers). Published May market briefs are kept as a frozen archive; the disabled trigger
+> config is retained server-side (the RemoteTrigger API exposes no delete).
 
 > **Changed 2026-05-30:** Per-routine model tiers split by job (see `SPIKE-model-tiering.md`):
 > **writing** — the 4 writers (Overview, AI/ML, Cyber+Papers, Weekend) moved
@@ -119,7 +121,7 @@ protocol, which the HTTP proxy blocks. So the compute-time index must be one of:
 This does **not** kill the pgvector idea — it relocates it. See §3.
 
 **Fetch-path quirk (why writers curl before WebFetch).** Inside the sandbox `WebFetch` 403s on
-public feeds it should reach (arXiv RSS, Nature, ECB FX, …), while `Bash{curl -fsSL}` egresses
+public feeds it should reach (arXiv RSS, Nature, …), while `Bash{curl -fsSL}` egresses
 through a different path and usually succeeds. A 2026-05-03 audit found 0/18 direct fetches in a
 Morning Overview run under HTML-first sourcing; the pipeline pivoted to **feed-first** (machine-
 readable RSS/JSON on separate infra) and **curl-before-WebFetch**. The per-brief Coverage footer
@@ -275,14 +277,13 @@ local sync cron → pull new partitions → upsert into pgvector
 
 `check` decides in precedence order (see `decide_verdict`): **(1)** deterministic exact-source
 match — same canonical URL or arXiv id as a recent story → REPEAT, cosine-independent; **(2)** cosine
-vs the recent index → REPEAT/ONGOING/NEW; **(3)** snapshot-genre collapse — a recurring FX/index/session
-snapshot matching a prior one ≥ `SNAPSHOT_T_HIGH=0.85` → REPEAT (the daily glance lives only in the
-dedicated pre-open section).
+vs the recent index → REPEAT/ONGOING/NEW. (A third snapshot-genre collapse layer, which dropped
+recurring FX/index/session market snapshots, was removed 2026-06-18 with the Markets stream.)
 
 `T_high`/`T_low` **calibrated 2026-05-31** against a 485-pair hand-labelled gold set: `T_high=0.945`,
 `T_low=0.72`. Key finding: **cosine does not separate "same story restated" (REPEAT) from "same story
 with a real update" (ONGOING)** — they overlap across 0.6–0.95 — so the cosine threshold alone catches
-almost no reruns. Repeat-suppression therefore rests on the **deterministic (1)+(3) layers** (offline-replay:
+almost no reruns. Repeat-suppression therefore rests on the **deterministic (1) exact-source layer** (offline-replay:
 78 cross-day reruns auto-dropped vs 6 cosine-only, `exact-url` dominating) **plus** the `DEDUP.md` Step-B
 ONGOING-defaults-to-drop policy (writer judgment). Thread auto-linking in `record` is gated separately
 at `AUTOLINK_MIN=0.93`, above the observed 0.914 DISTINCT ceiling, to avoid false merges. See

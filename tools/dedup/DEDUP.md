@@ -4,7 +4,7 @@ Each writer routine follows this on every run so a story isn't re-run for days (
 "same story for a month" problem). It is **best-effort**: if any step errors, compose the
 brief normally and note "dedup unavailable" in the Gaps footer — never abort the brief.
 
-The routine that invokes this passes its **slug** (one of `overview`, `markets`, `ai-ml`,
+The routine that invokes this passes its **slug** (one of `overview`, `ai-ml`,
 `cyber-papers`, `weekend`) and today's date `{YYYY-MM-DD}` (Europe/Zurich).
 
 Fixed endpoint (this is a low-value token — gates only Workers-AI embedding spend on our own
@@ -42,7 +42,7 @@ python3 tools/dedup/dedup.py check --candidates /tmp/cand.json --since 30 \
 ```
 
 `/tmp/verdicts.json` has one result per candidate: `verdict` (NEW | ONGOING | REPEAT), `score`,
-an optional `match_reason` (`exact-url` | `exact-arxiv` | `snapshot-collapse` | `distinct-paper`),
+an optional `match_reason` (`exact-url` | `exact-arxiv` | `distinct-paper`),
 and for non-NEW a `matched` object with `date`, `headline`, `thread_id`, `first_seen_date`,
 `event_date`, and — when the match is a *different artifact* — `continuation: false` with
 `first_seen_date: null`.
@@ -50,11 +50,8 @@ and for non-NEW a `matched` object with `date`, `headline`, `thread_id`, `first_
 ## Step B — apply verdicts while composing
 
 - **REPEAT** → ALWAYS DROP the story. Already covered, no exceptions. (`match_reason` explains why:
-  `exact-url`/`exact-arxiv` = same primary source already covered; `snapshot-collapse` = a
-  recurring market snapshot — see below; absent = near-verbatim rerun by similarity.)
-- **`match_reason: snapshot-collapse`** → this was a recurring FX/index/session snapshot. The daily
-  market glance belongs ONLY in the dedicated pre-open snapshot section, never as a standalone
-  repeated story — so dropping it here is correct even though "the number changed."
+  `exact-url`/`exact-arxiv` = same primary source already covered; absent = near-verbatim rerun by
+  similarity.)
 - **ONGOING** → **DEFAULTS TO DROP.** Include ONLY when there is a NAMED, dated, concrete new
   fact since `matched.first_seen_date` — a specific number, a ruling, a release, a benchmark
   result. A fresh angle, a new framing, or a re-summary of the same facts is explicitly **NOT**

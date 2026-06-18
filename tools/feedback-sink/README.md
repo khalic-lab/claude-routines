@@ -60,7 +60,7 @@ TOKEN=<the FEEDBACK_TOKEN you set>
 
 # Submit (public) — expect {ok:true,id:...}
 curl -s -XPOST "$WORKER/submit" -H 'Content-Type: application/json' \
-  -d '{"brief":"2026-06-07-overview","vote":-1,"reason":"markets snapshot too long on weekends"}'
+  -d '{"brief":"2026-06-07-overview","vote":-1,"reason":"weekend brief too long"}'
 
 # Drain (bearer) — expect the record back with its KV key
 curl -s "$WORKER/drain" -H "Authorization: Bearer $TOKEN" | jq
