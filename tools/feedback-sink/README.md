@@ -1,5 +1,10 @@
 # feedback-sink — Cloudflare Worker (reader feedback)
 
+> **Deployed 2026-06-18** → `https://feedback-sink.khalic-lab.workers.dev` (khalic-lab CF account;
+> KV `FEEDBACK_KV`, secret `FEEDBACK_TOKEN`). Widget + bridge + writers/Evaluator all wired and
+> verified — the loop is LIVE (see `feedback/FEEDBACK.md`). The steps below are the original
+> one-time deploy guide, kept for reference / redeploy.
+
 Captures reader thumbs (+1 / −1) and an optional free-text reason from the published Jekyll
 briefs, holds them in **Cloudflare KV**, and lets the local bridge drain them into the git repo
 (`feedback/*.jsonl`) on its existing cron tick. Twin of `tools/embed-proxy` / `tools/og-proxy`.

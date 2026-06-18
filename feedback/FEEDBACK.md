@@ -4,6 +4,19 @@ Thumbs (+1 / −1) and an optional free-text reason from Rafael on the briefs, c
 Jekyll site, landed in this directory, and folded into the writers' editorial guidance **through a
 human gate**. Design + rationale: `REVIEW-2026-06-08-feedback-and-dates.md`.
 
+## Status — LIVE (2026-06-18)
+
+The whole loop is wired and verified end-to-end (was BUILT + DORMANT until then):
+- **Worker deployed** → `https://feedback-sink.khalic-lab.workers.dev` (khalic-lab CF account; KV
+  `FEEDBACK_KV`, secret `FEEDBACK_TOKEN`). All four routes verified (submit/drain/ack/401).
+- **Widget enabled** → `_includes/head/custom.html` `FEEDBACK_ENABLED=true` (renders on every brief).
+- **Bridge wired** → `.env` has `FEEDBACK_WORKER_URL`+`FEEDBACK_TOKEN`; `bridge.sh` drains before its
+  commit and acks after push (and now commits feedback even on no-notification ticks).
+- **Consumers wired** (RemoteTrigger, byte-verified) → Evaluator reads last-7d feedback and proposes
+  profile patches; all 4 writers read `reader-profile.md` + `source-weights.yml` at compose time.
+- Gotcha baked into `feedback.py`: Cloudflare 403s the default `Python-urllib` UA — it sends an
+  identifiable UA instead.
+
 ## Flow
 
 ```
@@ -86,5 +99,5 @@ and re-drain next tick; the append skips ids already on disk, so no duplicates.
   `reader-profile/source-weights.yml` to each routine's `session_context.sources` so they weight by
   the reader profile and honor the never/reduce lists at compose time.
 
-These wiring changes are **live RemoteTrigger edits** — staged and applied separately, not by this
-directory.
+These wiring changes are **live RemoteTrigger edits** — APPLIED 2026-06-18 (see Status above),
+byte-verified against all five prompts.

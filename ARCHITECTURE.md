@@ -87,10 +87,12 @@
 | Brief | `_posts/{YYYY-MM-DD}-{slug}.md` | front-matter (`layout,title,date,categories`) + body + Coverage footer | writer → Jekyll + Evaluator |
 | Notification stub | `pending-notifications/{ts}-{slug}.json` | `{title, click, body, tags}` | writer/watch → bridge (then deleted) |
 | Watch registry | `watches.yml` | `[{id, query, match_when, cooldown_days, last_fired}]` | user + Watch (writes `last_fired`) |
-| Bridge config | `/usr/local/src/news-brief-ntfy-bridge/.env` | `NTFY_TOPIC, NTFY_SERVER, REPO` | bridge.sh |
+| Bridge config | `/usr/local/src/news-brief-ntfy-bridge/.env` | `NTFY_TOPIC, NTFY_SERVER, REPO, FEEDBACK_WORKER_URL, FEEDBACK_TOKEN` | bridge.sh |
 | Git creds | `…/git-credentials` (mode 600) | `https://x-access-token:<tok>@github.com` | bridge git push |
 | Legacy briefs | `briefs/{stream}/{date}.md` | pre-Pages layout, **only May 2–4, orphaned** | nothing — dead weight |
 | Coverage footer | inside each brief | `Direct fetches: N \| via-snippet: M`, `Feeds hit`, `Gaps` | **the only health signal** |
+| Reader feedback | `feedback/{YYYY-MM}.jsonl` | `{id, ts, reader, brief, story_id, vote±1, reason, surface, source_domain, consumed}` | widget→Worker→bridge → Evaluator |
+| Reader profile | `reader-profile.md` + `reader-profile/source-weights.yml` (`never:`/`reduce:`) | NL editorial brief + domain lists | Evaluator proposes (human-gated) → writers read |
 
 ### 1.3 Dedup today — the whole of it
 
@@ -102,9 +104,35 @@ Same-day · same stream-pair · arXiv-ID-only · exact-string match. Nothing spa
 nothing spans other streams, nothing matches *stories* (only arXiv IDs). This is why
 "Bilaterals III" ran every few days from May 3 → May 24 untouched.
 
----
+### 1.4 Reader feedback loop (LIVE 2026-06-18)
 
-## 2. The constraint that shapes everything
+Human-gated, web-widget-only, per-brief v1. Captures 👍/👎 + an optional free-text reason
+and folds it into the writers' editorial guidance **through a human gate** (never auto-mutated
+from a tap — the documented n=1 sycophancy trap).
+
+```
+brief page widget (_includes/head/custom.html, FEEDBACK_ENABLED=true)
+  │  POST /submit (CORS, public)
+  ▼
+feedback-sink Worker (tools/feedback-sink/) ── Cloudflare KV   [khalic-lab CF acct;
+  │                                                             bearer FEEDBACK_TOKEN on /drain+/ack]
+  ▼  bridge tick: drain (GET /drain) → feedback/{YYYY-MM}.jsonl, commit, push, then ack (POST /ack)
+GitHub main  ──┬─ RAW ungated: feedback/*.jsonl (append-only, dedup by id)
+               │
+               ├─ Weekly Evaluator: reads last 7d feedback → PROPOSES patches to
+               │     reader-profile.md / source-weights.yml (Patch-proposals section); flips
+               │     consumed:true. ◀── HUMAN GATE (Rafael applies)
+               └─ Writers (Overview/AI-ML/Cyber/Weekend): read reader-profile.md +
+                     source-weights.yml at compose time (favor/demote; never:/reduce:).
+```
+
+- **Worker:** `https://feedback-sink.khalic-lab.workers.dev` — `/submit` public (shape-capped,
+  no bearer: a browser can't keep one), `/drain`+`/ack` bearer-gated (two-phase delete-on-ack so a
+  missed bridge tick neither loses nor double-commits). Not on the env_018 allowlist — it's called
+  by the *browser* and the *Mac bridge*, never the routine sandbox.
+- **Bridge:** `feedback.py drain` before commit (rides the "Drained N" commit), `ack` after push.
+  `feedback.py` sends an identifiable User-Agent — Cloudflare 403s the default `Python-urllib` UA.
+- **Privacy:** reason text routes through the private Worker + private repo, never an ntfy topic.
 
 **The dedup check must run inside the cloud sandbox, at compose time.** That is the only
 moment a writer can decide "skip this story / thread it as ongoing." And the cloud sandbox:
