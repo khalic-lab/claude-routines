@@ -387,9 +387,9 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <!-- ============================================================================
-     Editorial restyle v2 — refined type, light + dark, freed images.
+     Editorial restyle v3 — single column, real headlines, large figures, light+dark.
      Layered over minimal-mistakes "default" skin; loads last in <head>.
-     Knobs: the CSS variables in :root (light) and the prefers-color-scheme block (dark).
+     Knobs: the CSS variables in :root (light) + the prefers-color-scheme block (dark).
      ========================================================================= -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
   html,body{ background:var(--paper); color:var(--ink); }
   body{ font-family:var(--serif); text-rendering:optimizeLegibility; -webkit-font-smoothing:antialiased; }
   #main,.initial-content,.page,.archive,.masthead,.greedy-nav,.greedy-nav .visible-links{ background:var(--paper); }
-  .page__content{ font-size:1.05rem; line-height:1.5; max-width:40em; }
+  .page__content{ font-size:1.06rem; line-height:1.5; max-width:42em; }
   .page__content p{ margin:0 0 .85em; }
   a,.page__content a{ color:var(--ink); text-decoration:underline; text-decoration-thickness:1px;
     text-underline-offset:2px; text-decoration-color:var(--hair); }
@@ -435,24 +435,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
   /* section headers — tracked sans kicker, rule above (leading emoji stripped by the script below) */
   .page__content h2{ font-family:var(--sans); font-weight:600; text-transform:uppercase; letter-spacing:.14em;
-    font-size:.82em; color:var(--muted); margin:2.2em 0 1.05em; padding-top:1em; border-top:1px solid var(--rule); }
+    font-size:.82em; color:var(--muted); margin:2.4em 0 1.2em; padding-top:1em; border-top:1px solid var(--rule); }
   .page__content h2:first-of-type{ margin-top:.7em; }
   .page__content h3{ font-family:var(--display); font-weight:600; font-size:1.25em; line-height:1.25; margin:1.6em 0 .4em; }
 
-  /* stories as rows: text left, image its own column right (no text-wrap); nested lists drop full-width below */
+  /* one story per row, SINGLE column — generous separation, no flex split, no void */
   .page__content > ul{ list-style:none; padding-left:0; margin:0; }
-  .page__content > ul > li{ display:flex; flex-wrap:wrap; align-items:flex-start; gap:1.6em;
-    padding-bottom:1.25em; margin-bottom:1.25em; border-bottom:1px solid var(--hair); }
+  .page__content > ul > li{ display:flex; flex-direction:column; padding-bottom:1.6em; margin-bottom:1.6em;
+    border-bottom:1px solid var(--hair); }
   .page__content > ul > li:last-child{ border-bottom:0; }
-  .page__content > ul > li::after, .page__content > ul > li > p::after{ content:none; }  /* kill old float-clear pseudo (would be a stray flex item) */
-  .page__content > ul > li > *{ min-width:0; }
-  .page__content > ul > li > p{ flex:1 1 58%; margin:0; }
-  .page__content > ul > li > .auto-preview-wrap{ order:2; flex:0 0 clamp(160px,30%,280px); }
-  .page__content > ul > li > ul{ order:3; flex:1 1 100%; }
+  .page__content > ul > li::after, .page__content > ul > li > p::after{ content:none; }  /* kill old float-clear pseudo */
+  .page__content > ul > li > p{ margin:0; }
   .page__content ul ul{ list-style:disc; margin:.4em 0 0; }
+  .page__content > ul > li > ul{ order:3; }
 
-  /* lead headline: display face, lighter than a bold blob */
-  .page__content > ul > li p:first-child > strong:first-child{ font-family:var(--display); font-weight:600; font-size:1.06em; }
+  /* HEADLINE: the lead bold becomes a real display headline on its own line */
+  .page__content > ul > li > p:first-of-type > strong:first-child{
+    display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
+    letter-spacing:-.005em; color:var(--ink); margin:0 0 .35em; }
+  /* arXiv / paper items (they carry a PDF chip): the ID+date 1st-bold is small meta, the 2nd-bold IS the title */
+  .page__content > ul > li:has(a.auto-preview.pdf) > p:first-of-type > strong:first-child{
+    display:inline; font-family:var(--sans); font-weight:500; font-size:.7em; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--muted); }
+  .page__content > ul > li:has(a.auto-preview.pdf) > p:first-of-type > strong:nth-of-type(2){
+    display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
+    letter-spacing:-.005em; color:var(--ink); margin:.2em 0 .35em; }
 
   /* tags as delicate pills */
   .page__content code{ font-family:var(--sans); font-size:.72em; font-weight:500; text-transform:uppercase;
@@ -461,17 +468,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   .page__content blockquote{ border-left:2px solid var(--accent); background:var(--panel); font-style:italic;
     margin:1.1em 0; padding:.5em 1.1em; color:var(--ink); }
-  .page__content hr{ border:0; border-top:1px solid var(--rule); margin:2.2em 0; }
+  .page__content hr{ border:0; border-top:1px solid var(--rule); margin:2.4em 0; }
 
-  /* freed images: own column, soft frame; stack full-width on mobile */
-  a.auto-preview-wrap{ display:block; margin:.2em 0; }
-  .auto-preview-wrap img.auto-preview{ width:100%; max-width:280px; max-height:210px; object-fit:cover;
-    border:1px solid var(--frame); background:var(--field); padding:4px; box-shadow:none; }
+  /* LARGE figures: real size (natural, never upscaled), framed, below the story; full-width on mobile */
+  a.auto-preview-wrap{ order:2; align-self:flex-start; display:block; margin:1em 0 0; cursor:zoom-in; }
+  .auto-preview-wrap img.auto-preview{ display:block; width:auto; max-width:100%; max-height:420px;
+    border:1px solid var(--frame); background:var(--field); padding:5px; box-shadow:none; }
+  a.auto-preview-wrap:hover img.auto-preview{ opacity:.9; }
   img.auto-preview.fav{ display:inline-block; width:16px; height:16px; border:0; padding:0; vertical-align:middle; }
   @media (max-width:680px){
-    .page__content > ul > li{ flex-direction:column; gap:.55em; }
-    .page__content > ul > li > .auto-preview-wrap{ flex-basis:auto; }
-    .auto-preview-wrap img.auto-preview{ max-width:100%; max-height:none; }
+    .auto-preview-wrap img.auto-preview{ width:100%; max-height:none; }
     .page__title{ font-size:1.9em; }
   }
 
@@ -497,6 +503,7 @@ document.addEventListener('DOMContentLoaded', function () {
   .fb-t.fb-on{ filter:none; color:var(--accent); }
   .fb-irzn button{ border:1px solid var(--frame); }
   .fb-q,.fb-status,.fb-ist{ font-family:var(--sans); }
+  .fb-inline{ display:block; margin:.6em 0 0; }  /* per-story thumbs on their own line under the story */
 </style>
 <script>
   // Strip the leading section-header emoji for a cleaner editorial look; the tracked kicker
