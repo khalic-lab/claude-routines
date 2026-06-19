@@ -246,8 +246,13 @@ document.addEventListener('DOMContentLoaded', function () {
   function storyIdFor(headline) { return SLUG + '-' + slugify(headline); }
 
   function post(payload, onStatus) {
-    var headers = { 'Content-Type': 'application/json' };
-    if (FEEDBACK_KEY) headers['X-Widget-Key'] = FEEDBACK_KEY;
+    var key = window.__siteKey && window.__siteKey.get();
+    if (!key) {
+      if (onStatus) onStatus('🔒 unlock first');
+      if (window.__siteKey) window.__siteKey.prompt();
+      return Promise.resolve(false);
+    }
+    var headers = { 'Content-Type': 'application/json', 'X-Widget-Key': key };
     if (onStatus) onStatus('sending…');
     return fetch(FEEDBACK_URL + '/submit', {
       method: 'POST', headers: headers,
@@ -257,6 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
         story_id: payload.story_id || null, surface: 'web'
       })
     }).then(function (r) {
+      if (r.status === 403 && window.__siteKey) { window.__siteKey.clear(); window.__siteKey.prompt(); if (onStatus) onStatus('🔒 wrong key'); return false; }
       if (onStatus) onStatus(r.ok ? 'thanks ✓' : 'failed (' + r.status + ')');
       return r.ok;
     }).catch(function () { if (onStatus) onStatus('offline — try later'); return false; });
@@ -548,3 +554,103 @@ document.addEventListener('DOMContentLoaded', function () {
     font-size:.66em; color:var(--muted); margin:0; }
   .entries-list .archive__item-excerpt{ display:none; }  /* sequence stays clean: title + date only */
 </style>
+
+<style>
+  /* ---- shared-key unlock modal + propose-a-brief form ---- */
+  .site-unlock{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.45); z-index:9999; }
+  .site-unlock.on{ display:flex; }
+  .site-unlock__box{ position:relative; width:90%; max-width:23em; background:var(--paper); color:var(--ink);
+    border:1px solid var(--rule); padding:1.6em 1.5em; box-shadow:0 8px 44px rgba(0,0,0,.32); }
+  .site-unlock__x{ position:absolute; top:.3em; right:.45em; background:none; border:0; font-size:1.5em;
+    line-height:1; cursor:pointer; color:var(--muted); }
+  .site-unlock__title{ font-family:var(--display); font-weight:700; font-size:1.4em; margin-bottom:.15em; }
+  .site-unlock__sub{ font-family:var(--serif); font-size:.85em; color:var(--muted); margin:0 0 1em; }
+  /* present for password managers, kept off-screen (a password-only form confuses them) */
+  .site-unlock__user{ position:absolute; left:-9999px; top:0; width:1px; height:1px; opacity:0; }
+  .site-unlock__pw{ width:100%; box-sizing:border-box; font:inherit; font-size:1em; padding:.5em .6em;
+    background:var(--field); color:var(--ink); border:1px solid var(--frame); border-radius:6px; }
+  .site-unlock__go{ margin-top:.85em; }
+  .site-unlock__msg{ display:block; font-family:var(--sans); font-size:.8em; color:var(--muted); margin-top:.5em; min-height:1em; }
+
+  .propose{ max-width:44em; margin:2.4em auto; }
+  .propose__form{ display:flex; flex-direction:column; gap:.6em; }
+  .propose__topic, .propose__detail{ width:100%; box-sizing:border-box; font:inherit; padding:.5em .6em;
+    background:var(--field); color:var(--ink); border:1px solid var(--frame); border-radius:6px; }
+  .propose__topic{ font-family:var(--display); font-size:1.05em; }
+  .propose__detail{ min-height:4em; resize:vertical; font-family:var(--serif); }
+  .propose__form .fb-btn{ align-self:flex-start; }
+  .propose__msg{ font-family:var(--sans); font-size:.8em; color:var(--muted); margin-left:.5em; }
+</style>
+<script>
+(function () {
+  if (typeof window === 'undefined' || !window.fetch || !window.localStorage) return;
+  var WORKER = "https://feedback-sink.khalic-lab.workers.dev";
+  var LS = "siteKey";
+  var panel = null, pending = null;
+
+  function get(){ try { return localStorage.getItem(LS) || ''; } catch (e) { return ''; } }
+  function set(v){ try { localStorage.setItem(LS, v); } catch (e) {} }
+  function clear(){ try { localStorage.removeItem(LS); } catch (e) {} }
+
+  function build(){
+    panel = document.createElement('div');
+    panel.className = 'site-unlock';
+    panel.innerHTML =
+      '<form class="site-unlock__box" action="#" autocomplete="on">' +
+        '<button type="button" class="site-unlock__x" aria-label="close">×</button>' +
+        '<div class="site-unlock__title">Unlock to interact</div>' +
+        '<p class="site-unlock__sub">Enter the shared site key to give feedback or propose a brief. It stays in this browser.</p>' +
+        '<input type="text" name="username" value="khalic-lab" autocomplete="username" class="site-unlock__user" readonly tabindex="-1" aria-hidden="true">' +
+        '<input type="password" name="password" autocomplete="current-password" class="site-unlock__pw" placeholder="site key" aria-label="site key" required>' +
+        '<button type="submit" class="fb-btn site-unlock__go">Unlock</button>' +
+        '<span class="site-unlock__msg"></span>' +
+      '</form>';
+    document.body.appendChild(panel);
+    var pw = panel.querySelector('.site-unlock__pw');
+    panel.querySelector('.site-unlock__x').addEventListener('click', hide);
+    panel.addEventListener('click', function (e) { if (e.target === panel) hide(); });
+    panel.querySelector('form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = (pw.value || '').trim();
+      if (!v) return;
+      set(v); hide();
+      var cb = pending; pending = null;
+      if (cb) cb();
+    });
+  }
+  function show(){ if (!panel) build(); panel.classList.add('on');
+    var pw = panel.querySelector('.site-unlock__pw'); pw.value = ''; setTimeout(function(){ pw.focus(); }, 30); }
+  function hide(){ if (panel) panel.classList.remove('on'); }
+
+  window.__siteKey = { get: get, set: set, clear: clear, prompt: function (retry) { pending = retry || null; show(); } };
+
+  // Propose-a-brief form (home page only)
+  document.addEventListener('DOMContentLoaded', function () {
+    var form = document.querySelector('.propose__form');
+    if (!form) return;
+    var topic = form.querySelector('[name=topic]');
+    var detail = form.querySelector('[name=detail]');
+    var msg = form.querySelector('.propose__msg');
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var t = (topic.value || '').trim();
+      if (!t) { topic.focus(); return; }
+      (function send(){
+        var key = get();
+        if (!key) { msg.textContent = '🔒 unlock first'; window.__siteKey.prompt(send); return; }
+        msg.textContent = 'sending…';
+        fetch(WORKER + '/propose', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Widget-Key': key },
+          body: JSON.stringify({ topic: t, detail: (detail.value || '').trim(), surface: 'web' })
+        }).then(function (r) {
+          if (r.status === 403) { clear(); msg.textContent = '🔒 wrong key'; window.__siteKey.prompt(send); return; }
+          if (r.ok) { msg.textContent = 'proposed — thanks ✓'; topic.value = ''; detail.value = ''; }
+          else msg.textContent = 'failed (' + r.status + ')';
+        }).catch(function () { msg.textContent = 'offline — try again later'; });
+      })();
+    });
+  });
+})();
+</script>

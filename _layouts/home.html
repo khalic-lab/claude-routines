@@ -20,6 +20,15 @@ layout: archive
     <span class="home-hero__meta">{{ latest.date | date: "%A, %B %-d, %Y" }}</span>
   </a>
 
+  <section class="propose">
+    <h3 class="archive__subtitle">Propose a brief</h3>
+    <form class="propose__form" action="#">
+      <input type="text" name="topic" class="propose__topic" placeholder="A topic or beat you'd want covered" maxlength="300" required>
+      <textarea name="detail" class="propose__detail" placeholder="Optional — why it matters, sources, the angle"></textarea>
+      <div><button type="submit" class="fb-btn">Propose</button><span class="propose__msg"></span></div>
+    </form>
+  </section>
+
   <h3 class="archive__subtitle">More editions</h3>
   <div class="entries-list">
     {% for post in posts offset:1 %}

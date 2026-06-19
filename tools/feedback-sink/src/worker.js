@@ -1,24 +1,28 @@
-// feedback-sink: capture reader thumbs +/- and an optional free-text reason from the
-// published Jekyll briefs, hold them in Cloudflare KV, and let the local bridge drain
-// them into the git repo (feedback/*.jsonl) on its existing cron tick.
+// feedback-sink: capture reader feedback (thumbs +/- + optional reason) AND brief
+// proposals from the published Jekyll site, hold them in Cloudflare KV, and let the
+// local bridge drain them into the git repo on its cron tick.
 //
-// Three routes:
-//   POST /submit  (public, CORS)  -- the brief page widget posts one feedback record.
-//                                    No bearer: a browser cannot keep one secret. The
-//                                    real defense is shape caps + the downstream HUMAN
-//                                    gate (the Weekly Evaluator). Optional WIDGET_KEY
-//                                    deters drive-by bots (deterrence, not security).
-//   GET  /drain   (bearer)        -- list queued records (does NOT delete). Bridge reads.
-//   POST /ack     (bearer)        -- delete the given KV keys. Bridge calls AFTER it has
-//                                    committed+pushed, so a missed tick neither loses nor
-//                                    double-commits (two-phase, delete-on-ack).
+// Routes:
+//   POST /submit   (site key)  -- the brief page widget posts one feedback record.
+//   POST /propose  (site key)  -- the home page form posts one brief proposal.
+//   GET  /drain    (bearer)    -- list queued records (does NOT delete). Bridge reads.
+//   POST /ack      (bearer)    -- delete the given KV keys. Bridge calls AFTER commit+push.
 //
-// Twin of tools/embed-proxy; same CORS/json/text helper shape. Needs a KV namespace
-// bound as FEEDBACK_KV and a secret FEEDBACK_TOKEN (see README).
+// Public writes (/submit, /propose) require the shared SITE KEY in the `X-Widget-Key`
+// header — the website password, set as the Worker secret WIDGET_KEY. It is a SHARED
+// secret (no per-user identity): anyone given the password can write; rotate the secret
+// to revoke. It is entered by the visitor and kept in their browser localStorage, never
+// baked into the page source. Privileged reads/deletes (/drain, /ack) use the separate
+// bearer FEEDBACK_TOKEN. Both write kinds share the `fb:` KV prefix so one drain/ack
+// handles them; the bridge routes by `kind` on write (proposal -> proposals/).
+//
+// Twin of tools/embed-proxy. Needs KV bound as FEEDBACK_KV, secret FEEDBACK_TOKEN
+// (drain/ack bearer), and secret WIDGET_KEY (the shared site password). See README.
 
-const MAX_REASON = 2000; // chars of free-text reason
+const MAX_REASON = 2000; // chars of free-text reason / proposal detail
+const MAX_TOPIC = 300; // chars of a proposal topic line
 const MAX_FIELD = 200; // chars for brief / story_id / surface
-const DRAIN_LIMIT = 200; // records per drain (n=1: a day's taps are a handful)
+const DRAIN_LIMIT = 200; // records per drain (n=few: a day's writes are a handful)
 const KEY_PREFIX = "fb:";
 
 const CORS = {
@@ -42,7 +46,7 @@ function text(body, status, extra = {}) {
   });
 }
 
-// length-guarded constant-ish compare (bridge bearer; a real secret on the Mac + Worker)
+// length-guarded constant-ish compare (bridge bearer; drain/ack only)
 function bearerOk(request, env) {
   const expected = env.FEEDBACK_TOKEN;
   if (!expected) return false; // fail closed if unset
@@ -53,15 +57,24 @@ function bearerOk(request, env) {
   return diff === 0;
 }
 
+// shared site password for public writes (sent in X-Widget-Key). Fail closed if unset.
+function keyOk(request, env) {
+  const expected = env.WIDGET_KEY;
+  if (!expected) return false;
+  return (request.headers.get("X-Widget-Key") || "") === expected;
+}
+
 function clip(v, n) {
   return typeof v === "string" ? v.slice(0, n) : v;
 }
 
+async function putRecord(env, rec) {
+  // Key sorts by time so /drain returns roughly chronological order.
+  await env.FEEDBACK_KV.put(`${KEY_PREFIX}${rec.ts}:${rec.id}`, JSON.stringify(rec));
+}
+
 async function handleSubmit(request, env) {
-  // Optional deterrence key (not a secret; visible in the widget JS).
-  if (env.WIDGET_KEY && (request.headers.get("X-Widget-Key") || "") !== env.WIDGET_KEY) {
-    return text("forbidden", 403);
-  }
+  if (!keyOk(request, env)) return text("locked: site key required", 403);
   let p;
   try {
     p = await request.json();
@@ -80,11 +93,9 @@ async function handleSubmit(request, env) {
   if (reason.length > MAX_REASON) {
     return json({ error: `reason too long (max ${MAX_REASON})` }, 400);
   }
-  const id = crypto.randomUUID();
-  const ts = new Date().toISOString();
   const rec = {
-    id,
-    ts,
+    id: crypto.randomUUID(),
+    ts: new Date().toISOString(),
     reader: clip(typeof p.reader === "string" && p.reader ? p.reader : "rafael", MAX_FIELD),
     brief: clip(brief, MAX_FIELD),
     story_id: typeof p.story_id === "string" && p.story_id ? clip(p.story_id, MAX_FIELD) : null,
@@ -92,9 +103,39 @@ async function handleSubmit(request, env) {
     reason,
     surface: clip(typeof p.surface === "string" && p.surface ? p.surface : "web", MAX_FIELD),
   };
-  // Key sorts by time so /drain returns roughly chronological order.
-  await env.FEEDBACK_KV.put(`${KEY_PREFIX}${ts}:${id}`, JSON.stringify(rec));
-  return json({ ok: true, id });
+  await putRecord(env, rec);
+  return json({ ok: true, id: rec.id });
+}
+
+async function handlePropose(request, env) {
+  if (!keyOk(request, env)) return text("locked: site key required", 403);
+  let p;
+  try {
+    p = await request.json();
+  } catch {
+    return json({ error: "invalid JSON body" }, 400);
+  }
+  const topic = p && p.topic;
+  if (typeof topic !== "string" || !topic.trim()) {
+    return json({ error: "body must include a non-empty `topic`" }, 400);
+  }
+  if (topic.length > MAX_TOPIC) {
+    return json({ error: `topic too long (max ${MAX_TOPIC})` }, 400);
+  }
+  const detail = typeof p.detail === "string" ? p.detail : "";
+  if (detail.length > MAX_REASON) {
+    return json({ error: `detail too long (max ${MAX_REASON})` }, 400);
+  }
+  const rec = {
+    id: crypto.randomUUID(),
+    ts: new Date().toISOString(),
+    kind: "proposal",
+    topic: clip(topic.trim(), MAX_TOPIC),
+    detail,
+    surface: clip(typeof p.surface === "string" && p.surface ? p.surface : "web", MAX_FIELD),
+  };
+  await putRecord(env, rec);
+  return json({ ok: true, id: rec.id });
 }
 
 async function handleDrain(env) {
@@ -146,6 +187,10 @@ export default {
     if (path === "/submit") {
       if (request.method !== "POST") return text("method not allowed", 405);
       return handleSubmit(request, env);
+    }
+    if (path === "/propose") {
+      if (request.method !== "POST") return text("method not allowed", 405);
+      return handlePropose(request, env);
     }
     if (path === "/drain") {
       if (request.method !== "GET") return text("method not allowed", 405);

@@ -34,6 +34,7 @@ import uuid
 
 REPO = os.environ.get("REPO") or os.getcwd()
 FEEDBACK_DIR = os.path.join(REPO, "feedback")
+PROPOSALS_DIR = os.path.join(REPO, "proposals")  # brief proposals (kind=="proposal"), drained here
 _ACK_STASH = os.path.join(tempfile.gettempdir(), "feedback-ack.json")
 
 
@@ -42,9 +43,9 @@ def _month_path(ts):
     return os.path.join(FEEDBACK_DIR, f"{ts[:7]}.jsonl")
 
 
-def _existing_ids():
+def _existing_ids(dirpath=FEEDBACK_DIR):
     ids = set()
-    for path in glob.glob(os.path.join(FEEDBACK_DIR, "*.jsonl")):
+    for path in glob.glob(os.path.join(dirpath, "*.jsonl")):
         with open(path) as f:
             for line in f:
                 line = line.strip()
@@ -100,6 +101,43 @@ def _append(records):
     return written
 
 
+def _normalize_proposal(rec):
+    """Brief-proposal schema -> proposals/{YYYY-MM}.jsonl (distinct from feedback)."""
+    return {
+        "id": rec.get("id") or str(uuid.uuid4()),
+        "ts": rec.get("ts") or dt.datetime.now().astimezone().isoformat(timespec="seconds"),
+        "kind": "proposal",
+        "topic": rec.get("topic", "") or "",
+        "detail": rec.get("detail", "") or "",
+        "surface": rec.get("surface") or "web",
+        "consumed": bool(rec.get("consumed", False)),
+    }
+
+
+def _append_proposals(records):
+    """Append proposal records to proposals/{YYYY-MM}.jsonl, skipping ids already there."""
+    if not records:
+        return 0
+    os.makedirs(PROPOSALS_DIR, exist_ok=True)
+    seen = _existing_ids(PROPOSALS_DIR)
+    written = 0
+    handles = {}
+    try:
+        for raw in records:
+            rec = _normalize_proposal(raw)
+            if rec["id"] in seen:
+                continue
+            seen.add(rec["id"])
+            path = os.path.join(PROPOSALS_DIR, f"{rec['ts'][:7]}.jsonl")
+            fh = handles.get(path) or handles.setdefault(path, open(path, "a"))
+            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            written += 1
+    finally:
+        for fh in handles.values():
+            fh.close()
+    return written
+
+
 # Cloudflare's edge 403s the default "Python-urllib/x.y" UA before the request reaches the
 # Worker (verified 2026-06-18). Send an honest, identifiable UA so drain/ack get through.
 _UA = "news-brief-feedback-bridge/1.0 (+https://khalic-lab.github.io/claude-routines/)"
@@ -132,12 +170,16 @@ def cmd_drain(args):
     resp = _request(args.worker.rstrip("/") + "/drain", args.token)
     records = resp.get("records", [])
     keys = [r["key"] for r in records if r.get("key")]
-    written = _append([{k: v for k, v in r.items() if k != "key"} for r in records])
+    clean = [{k: v for k, v in r.items() if k != "key"} for r in records]
+    proposals = [r for r in clean if r.get("kind") == "proposal"]
+    feedback = [r for r in clean if r.get("kind") != "proposal"]
+    written = _append(feedback)
+    written_p = _append_proposals(proposals)
     # Stash the drained keys so `ack` deletes them only after a successful commit+push.
     with open(_ACK_STASH, "w") as f:
         json.dump({"keys": keys, "worker": args.worker, "ts": dt.datetime.now().isoformat()}, f)
-    print(f"drained {len(records)} record(s) ({written} new) from the Worker; "
-          f"{len(keys)} key(s) staged for ack"
+    print(f"drained {len(records)} record(s) ({written} feedback + {written_p} proposal new) "
+          f"from the Worker; {len(keys)} key(s) staged for ack"
           + ("  [TRUNCATED — more remain]" if resp.get("truncated") else ""))
 
 
