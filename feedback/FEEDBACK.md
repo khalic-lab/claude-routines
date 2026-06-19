@@ -16,6 +16,13 @@ The whole loop is wired and verified end-to-end (was BUILT + DORMANT until then)
   profile patches; all 4 writers read `reader-profile.md` + `source-weights.yml` at compose time.
 - Gotcha baked into `feedback.py`: Cloudflare 403s the default `Python-urllib` UA — it sends an
   identifiable UA instead.
+- **Per-STORY feedback live (2026-06-19):** each brief story now carries its own inline 👍/👎
+  (faint, brightens on hover; 👎 reveals an optional "why?" box). The bottom box stays as a
+  brief-level "Overall" note (`story_id == null`). Per-story `story_id` = `{slug}-{slugify(bold
+  lead)}` — the visible `<strong>` headline run through dedup's exact `slugify`. It is NOT the
+  dedup index `id` (the writer curates a separate, shorter index `headline`), but both the widget
+  and the Evaluator derive the key from the *same* source — the brief's bold leads — so they join
+  deterministically. Frontend-only change in `_includes/head/custom.html`; Worker/bridge unchanged.
 
 ## Flow
 
@@ -52,7 +59,8 @@ files move only through the Evaluator's human-applied patches.
   "ts": "2026-06-08T07:14:32+02:00",  // ISO-8601 w/ offset (capture time)
   "reader": "rafael",                  // constant at n=1; kept for forward-compat
   "brief": "2026-06-07-overview",      // post slug — stable v1 key (always present)
-  "story_id": null,                    // index id when per-story (v2); null for per-brief (v1)
+  "story_id": "2026-06-07-overview-stem-cell-transplant-keeps-a-severe-autoimmune-d", // per-story
+                                       // (v2, web): "{slug}-{slugify(bold lead)}"; null = brief-level
   "vote": -1,                          // +1 | -1
   "reason": "markets snapshot too long on weekends",  // optional free text; "" if thumb-only
   "surface": "web",                    // "web" | "cli"

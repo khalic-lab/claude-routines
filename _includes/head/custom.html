@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
 {%- endif -%}
 
 <style>
+  /* bottom-of-brief OVERALL box (brief-level feedback, story_id == null) */
   .fb-box {
     margin: 2.5em 0 1em; padding: 0.9em 1.1em;
     border: 1px solid rgba(255,255,255,0.14); border-radius: 8px;
@@ -192,6 +193,31 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   .fb-send { margin-top: 0.5em; }
   .fb-status { opacity: 0.75; margin-left: 0.3em; }
+
+  /* per-STORY inline thumbs (story_id set) — faint until you hover the bullet */
+  .fb-inline {
+    margin-left: 0.45em; white-space: nowrap; user-select: none;
+    font-size: 0.92em; opacity: 0.3; transition: opacity 0.12s ease; vertical-align: baseline;
+  }
+  li:hover .fb-inline, .fb-inline.fb-live { opacity: 0.95; }
+  .fb-t {
+    cursor: pointer; border: none; background: transparent; color: inherit;
+    padding: 0 0.12em; font-size: 1em; line-height: 1; opacity: 0.85;
+  }
+  .fb-t:hover { opacity: 1; }
+  .fb-t.fb-on { opacity: 1; filter: drop-shadow(0 0 2px rgba(120,170,255,0.9)); }
+  .fb-t.fb-off { opacity: 0.3; }
+  .fb-ist { font-size: 0.8em; opacity: 0.7; margin-left: 0.3em; }
+  .fb-irzn { display: none; margin: 0.4em 0 0.2em; }
+  .fb-irzn input {
+    width: min(420px, 100%); box-sizing: border-box;
+    background: rgba(0,0,0,0.25); color: inherit; border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px; padding: 0.3em 0.5em; font: inherit; font-size: 0.9em;
+  }
+  .fb-irzn button {
+    cursor: pointer; margin-left: 0.4em; border: 1px solid rgba(255,255,255,0.2);
+    background: transparent; color: inherit; border-radius: 6px; padding: 0.25em 0.6em; font: inherit;
+  }
 </style>
 <script>
 (function () {
@@ -204,22 +230,128 @@ document.addEventListener('DOMContentLoaded', function () {
   // a Worker that doesn't exist yet.
   if (!FEEDBACK_ENABLED || !window.__BRIEF || !window.__BRIEF.slug || !window.fetch) return;
 
+  var SLUG = window.__BRIEF.slug; // "{date}-{stream}", e.g. "2026-06-19-overview"
+
+  // slugify() reproduces tools/dedup/dedup.py slugify() EXACTLY:
+  //   re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:48].strip("-") or "story"
+  function slugify(s) {
+    s = (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    s = s.slice(0, 48).replace(/-+$/, '');
+    return s || 'story';
+  }
+  // Per-story id = "{SLUG}-{slugify(visible bold lead)}". Keyed on the rendered bold lead
+  // (the story's <strong> title) — NOT the dedup index `headline`, which the writer curates
+  // separately and does not match the lead. The Evaluator joins by slugifying the same bold
+  // leads from the brief markdown, so both sides derive the id from one shared source.
+  function storyIdFor(headline) { return SLUG + '-' + slugify(headline); }
+
+  function post(payload, onStatus) {
+    var headers = { 'Content-Type': 'application/json' };
+    if (FEEDBACK_KEY) headers['X-Widget-Key'] = FEEDBACK_KEY;
+    if (onStatus) onStatus('sending…');
+    return fetch(FEEDBACK_URL + '/submit', {
+      method: 'POST', headers: headers,
+      body: JSON.stringify({
+        brief: SLUG, vote: payload.vote,
+        reason: (payload.reason || '').trim(),
+        story_id: payload.story_id || null, surface: 'web'
+      })
+    }).then(function (r) {
+      if (onStatus) onStatus(r.ok ? 'thanks ✓' : 'failed (' + r.status + ')');
+      return r.ok;
+    }).catch(function () { if (onStatus) onStatus('offline — try later'); return false; });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var content = document.querySelector('.page__content');
     if (!content) return;
 
+    // ---- per-STORY inline thumbs ------------------------------------------------
+    // A "story" bullet leads with the bold <strong> headline (mirrors dedup _BULLET_RE
+    // `^- **...**`). kramdown renders the (loose) story list as <li><p><strong>…</strong>…,
+    // and a tight list as <li><strong>…, so accept both shapes. Footer / "Gaps:" bullets
+    // have no leading <strong>, so they're skipped automatically.
+    function skipWrap(n) {
+      while (n && n.classList && n.classList.contains('auto-preview-wrap')) n = n.nextElementSibling;
+      return n;
+    }
+    // Stop at the Coverage footer (mirrors dedup extract_stories): bullets after that
+    // heading are meta-commentary / Gaps, not stories.
+    var footer = null;
+    content.querySelectorAll('h1,h2,h3,h4').forEach(function (h) {
+      if (!footer && /coverage footer/i.test(h.textContent || '')) footer = h;
+    });
+    content.querySelectorAll('li').forEach(function (li) {
+      if (li.__fb) return;
+      if (footer && (footer.compareDocumentPosition(li) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
+      var node = skipWrap(li.firstElementChild);
+      if (node && node.tagName === 'P') node = skipWrap(node.firstElementChild);
+      if (!node || node.tagName !== 'STRONG') return;
+      var headline = (node.textContent || '').trim();
+      if (!headline) return;
+      li.__fb = true;
+      var sid = storyIdFor(headline);
+      var container = node.parentNode; // <p> in a loose list, the <li> in a tight one
+
+      var bar = document.createElement('span');
+      bar.className = 'fb-inline';
+      bar.innerHTML =
+        '<button class="fb-t" data-v="1" title="useful" aria-label="useful">👍</button>' +
+        '<button class="fb-t" data-v="-1" title="not useful" aria-label="not useful">👎</button>' +
+        '<span class="fb-ist"></span>';
+      var ist = bar.querySelector('.fb-ist');
+      var up = bar.querySelector('.fb-t[data-v="1"]');
+      var down = bar.querySelector('.fb-t[data-v="-1"]');
+
+      var rzn = document.createElement('span');
+      rzn.className = 'fb-irzn';
+      rzn.innerHTML =
+        '<input type="text" placeholder="why? (optional)" maxlength="500" />' +
+        '<button type="button">send</button>';
+      var input = rzn.querySelector('input');
+      var sendBtn = rzn.querySelector('button');
+
+      function mark(v) {
+        bar.classList.add('fb-live');
+        up.classList.toggle('fb-on', v === 1); up.classList.toggle('fb-off', v === -1);
+        down.classList.toggle('fb-on', v === -1); down.classList.toggle('fb-off', v === 1);
+      }
+      up.addEventListener('click', function () {
+        mark(1); rzn.style.display = 'none';
+        post({ vote: 1, story_id: sid }, function (m) { ist.textContent = m; });
+      });
+      down.addEventListener('click', function () {
+        mark(-1);
+        // the thumb itself is signal — fire now; a reason can follow.
+        post({ vote: -1, story_id: sid }, function (m) { ist.textContent = m; });
+        rzn.style.display = 'inline-block'; input.focus();
+      });
+      function sendReason() {
+        var why = (input.value || '').trim();
+        if (!why) { rzn.style.display = 'none'; return; }
+        post({ vote: -1, story_id: sid, reason: why }, function (m) { ist.textContent = m; });
+        rzn.style.display = 'none';
+      }
+      sendBtn.addEventListener('click', sendReason);
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') sendReason(); });
+
+      container.appendChild(bar);
+      container.appendChild(rzn);
+    });
+
+    // ---- bottom OVERALL box (brief-level, story_id == null) ---------------------
     var vote = 0; // 0 = none, +1, -1
     var box = document.createElement('div');
     box.className = 'fb-box';
     box.innerHTML =
       '<div class="fb-row">' +
-        '<span class="fb-q">Useful?</span>' +
+        '<span class="fb-q">Overall — useful?</span>' +
         '<button class="fb-btn" data-v="1" aria-label="thumbs up">👍</button>' +
         '<button class="fb-btn" data-v="-1" aria-label="thumbs down">👎</button>' +
         '<span class="fb-status"></span>' +
       '</div>' +
       '<div class="fb-reason">' +
-        '<textarea placeholder="optional: why? (what to do more / less of)"></textarea>' +
+        '<textarea placeholder="optional: about the brief as a whole (what to do more / less of)"></textarea>' +
         '<div><button class="fb-btn fb-send">Send</button></div>' +
       '</div>';
     content.appendChild(box);
@@ -235,24 +367,11 @@ document.addEventListener('DOMContentLoaded', function () {
       reasonWrap.style.display = 'block';
       textarea.focus();
     }
-
     function send(done) {
       if (!vote) { status.textContent = 'pick 👍 or 👎 first'; return; }
-      var headers = { 'Content-Type': 'application/json' };
-      if (FEEDBACK_KEY) headers['X-Widget-Key'] = FEEDBACK_KEY;
-      status.textContent = 'sending…';
-      fetch(FEEDBACK_URL + '/submit', {
-        method: 'POST', headers: headers,
-        body: JSON.stringify({
-          brief: window.__BRIEF.slug, vote: vote,
-          reason: (textarea.value || '').trim(), story_id: null, surface: 'web'
-        })
-      }).then(function (r) {
-        status.textContent = r.ok ? 'thanks ✓' : 'failed (' + r.status + ')';
-        if (r.ok && done) done();
-      }).catch(function () { status.textContent = 'offline — try again later'; });
+      post({ vote: vote, reason: textarea.value || '' }, function (m) { status.textContent = m; })
+        .then(function (ok) { if (ok && done) done(); });
     }
-
     thumbs.forEach(function (b) {
       b.addEventListener('click', function () {
         setVote(+b.dataset.v);
