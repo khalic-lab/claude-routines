@@ -1,0 +1,31 @@
+---
+layout: archive
+---
+
+{{ content }}
+
+{% if site.description %}<p class="home-tagline">{{ site.description }}</p>{% endif %}
+
+{% if paginator %}
+  {% assign posts = paginator.posts %}
+{% else %}
+  {% assign posts = site.posts %}
+{% endif %}
+
+{% if posts.size > 0 %}
+  {% assign latest = posts | first %}
+  <a class="home-hero" href="{{ latest.url | relative_url }}">
+    <span class="home-hero__kicker">Latest edition{% if latest.categories %} &middot; {{ latest.categories | first | replace: '-', ' ' }}{% endif %}</span>
+    <span class="home-hero__title">{{ latest.title }}</span>
+    <span class="home-hero__meta">{{ latest.date | date: "%A, %B %-d, %Y" }}</span>
+  </a>
+
+  <h3 class="archive__subtitle">More editions</h3>
+  <div class="entries-list">
+    {% for post in posts offset:1 %}
+      {% include archive-single.html type='list' %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% include paginator.html %}
