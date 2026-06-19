@@ -79,7 +79,11 @@ A successful feed fetch (curl OR WebFetch returning 200 with feed XML/JSON) coun
 | Nature (general + journals) | `https://www.nature.com/nature.rss` (also `nphys.rss`, `natastron.rss`, `nm.rss`) | RSS |
 | Semantic Scholar paper search | `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors&limit=10` | JSON |
 
-**Confirmed unavailable / blocked from sandbox; do NOT waste fetch cycles:** bioRxiv, medRxiv, Science.org, Reuters, Yahoo Finance, HuggingFace papers, Le Monde RSS.
+**Confirmed unavailable / blocked from sandbox; do NOT waste fetch cycles:** Reuters, Yahoo Finance, HuggingFace papers, Le Monde RSS.
+
+**Reachable via the fetch-proxy (verified 2026-06-19) — USE these in the Science section, don't skip them:** route through the proxy exactly as shown above.
+- bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv` for medRxiv); returns title, abstract, DOI, and date per paper for the window — an ideal primary source.
+- Science.org → its RSS feeds (e.g. `https://www.science.org/rss/news_current.xml`, plus journal feeds); Science's article HTML 403s even through the proxy, so use the feed and cite the DOI / article landing URL.
 
 **Coverage footer accounting (strict):**
 - `Direct fetches: N` = count of citations from publisher infrastructure (feed XML/JSON via curl or WebFetch, working HTML, official API).

@@ -98,7 +98,11 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 | SRF (DE Swiss) | `https://www.srf.ch/news/bnf/rss/1646` | RSS 2.0 | DE-language Swiss |
 | Le Temps (FR Swiss) | `https://www.letemps.ch/articles.rss` | RSS 2.0 | FR-language Swiss |
 
-**Confirmed unavailable from this sandbox (do not waste cycles):** bioRxiv, medRxiv, Science.org, RTS.ch, NZZ (paywall 402), FAZ, Spiegel, swissinfo.ch, Reuters, Yahoo Finance, HuggingFace papers (no public feed), Le Monde RSS, NCSC.ch RSS.
+**Confirmed unavailable from this sandbox (do not waste cycles):** RTS.ch, NZZ (paywall 402), FAZ, Spiegel, swissinfo.ch, Reuters, Yahoo Finance, HuggingFace papers (no public feed), Le Monde RSS, NCSC.ch RSS.
+
+**Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** route through the proxy.
+- bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv`); returns title, abstract, DOI, and date per paper for the window — ideal for the Biology & Fundamental-science sections.
+- Science.org → its RSS feeds (e.g. `https://www.science.org/rss/news_current.xml`, journal feeds); Science's article HTML 403s even through the proxy, so use the feed and cite the DOI / landing URL.
 
 **Coverage footer accounting:**
 - A citation that came from a feed/API fetch (curl OR WebFetch) counts as a **direct fetch**.
@@ -181,7 +185,7 @@ What changed this week in MLX, llama.cpp, on-device inference. New benchmarks on
 - **Nature Methods RSS**: `https://www.nature.com/nm.rss`.
 - **Quanta Magazine RSS** — covers biology features.
 
-T1 (HTML, often 403, fallback): nature.com, science.org, cell.com, nejm.org. (bioRxiv and medRxiv confirmed unavailable — do not attempt.)
+T1 (HTML, often 403, fallback): nature.com, science.org, cell.com, nejm.org. (bioRxiv/medRxiv: use their JSON API via the proxy — see "Reachable via the fetch-proxy" above; Science via its RSS.)
 T2: asimov.press, statnews.com, endpts.com, neurosciencenews.com.
 
 5–10 items.
