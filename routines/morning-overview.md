@@ -198,7 +198,7 @@ Use the Write tool to create `pending-notifications/{TIMESTAMP}-overview.json` w
 }
 ```
 
-`{teaser}` rules: ≤200 chars. The single most interesting item from this brief — typically a major scientific finding, an arresting ML paper from the first arXiv batch, or a notable pre-open market move. Concrete and specific (e.g. "JWST resolves missing-baryon problem; Anthropic releases CORE-RL benchmark; Nikkei +1.8% on chip rally"), not generic. Escape any `"` inside the teaser as `\"`.
+`{teaser}` rules: ≤200 chars. The single most interesting item from this brief — typically a major scientific finding or an arresting ML paper from the first arXiv batch. Concrete and specific (e.g. "JWST resolves the missing-baryon problem; a new RLVR theorem-proving method tops the MATH benchmark in today's arXiv batch"), not generic. Escape any `"` inside the teaser as `\"`.
 
 ### 3. Commit and push
 
