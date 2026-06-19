@@ -16,6 +16,11 @@ bridge → ntfy), and dedupe stories against a rolling embeddings index under `i
 Use the `RemoteTrigger` tool (OAuth handled in-tool), never curl. The prompt + model live under
 `job_config.ccr`.
 
+**The live prompts are mirrored in `routines/` — that directory is the source of truth.** Edit
+`routines/<slug>.md` first, then mirror it to RemoteTrigger; `routines/MANIFEST.md` holds each
+trigger's id + full `session_context` (and notes the redacted fetch-proxy token to re-substitute).
+After ANY RemoteTrigger edit, re-snapshot the file so the repo doesn't drift from live.
+
 1. `RemoteTrigger get <id>` first. Copy `events[0].data.message.content`, the **full**
    `session_context`, and `environment_id`.
 2. Send the update wrapped as `{"job_config":{"ccr":{environment_id, events, session_context}}}`.
@@ -28,8 +33,11 @@ Use the `RemoteTrigger` tool (OAuth handled in-tool), never curl. The prompt + m
    proves the value is *stored*, not that the env *executes* it — that only shows at the next
    routine fire.
 
-For big prompts, delegate the GET→edit→update→verify to a sub-agent (one per trigger, fresh GET,
-no stale temp files) rather than hand-escaping ~10 KB of JSON.
+`RemoteTrigger` is **main-session-only** — sub-agents can't load it (it isn't in their tool grant),
+so the GET→edit→update→verify must run in the main session. For a big prompt, don't hand-escape
+~10 KB of JSON: pull the exact current content from the session transcript JSONL, edit it
+programmatically (string-insert against a unique anchor), send the update, then re-GET and
+**byte-diff** the stored content against the intended text — retry if it differs.
 
 ## Git conventions
 - **Commit or push only when the user asks.** Direct commits to `main` are this repo's
