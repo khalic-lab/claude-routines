@@ -296,7 +296,7 @@ Use the Write tool to create `_posts/{YYYY-MM-DD}-weekend.md`. The file MUST sta
 ---
 layout: single
 title: "Weekend Deep Read — {YYYY-MM-DD}"
-date: {YYYY-MM-DD}
+date: {full ISO 8601 timestamp WITH timezone offset, identical to the _Generated line — e.g. 2026-06-21T09:39:44+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
 categories: [weekend]
 ---
 ```

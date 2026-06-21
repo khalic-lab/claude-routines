@@ -1,7 +1,7 @@
 ---
 layout: single
 title: "Weekly Review — 2026-05-02"
-date: 2026-05-02
+date: 2026-05-02T12:00:00+02:00
 categories: [evaluator]
 ---
 

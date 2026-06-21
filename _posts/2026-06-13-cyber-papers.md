@@ -1,7 +1,7 @@
 ---
 layout: single
 title: "Evening Brief — 2026-06-13"
-date: 2026-06-13
+date: 2026-06-13T19:08:00+02:00
 categories: [cyber-papers]
 ---
 

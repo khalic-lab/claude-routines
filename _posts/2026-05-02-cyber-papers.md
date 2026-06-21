@@ -1,7 +1,7 @@
 ---
 layout: single
 title: "Cyber + Papers — 2026-05-02"
-date: 2026-05-02
+date: 2026-05-02T19:45:00+02:00
 categories: [cyber-papers]
 ---
 

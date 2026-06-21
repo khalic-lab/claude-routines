@@ -240,7 +240,7 @@ Use the Write tool to create `_posts/{YYYY-MM-DD}-cyber-papers.md`. The file MUS
 ---
 layout: single
 title: "Evening Brief — {YYYY-MM-DD}"
-date: {YYYY-MM-DD}
+date: {full ISO 8601 timestamp WITH timezone offset, identical to the _Generated line — e.g. 2026-06-21T19:09:59+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
 categories: [cyber-papers]
 ---
 ```

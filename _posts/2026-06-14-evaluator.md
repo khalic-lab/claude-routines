@@ -1,7 +1,7 @@
 ---
 layout: single
 title: "Weekly Pipeline Review — 2026-06-14"
-date: 2026-06-14
+date: 2026-06-14T12:00:00+02:00
 categories: [evaluator]
 ---
 

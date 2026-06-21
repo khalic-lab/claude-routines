@@ -249,7 +249,7 @@ Use the Write tool to create `_posts/{YYYY-MM-DD}-evaluator.md`. The file MUST s
 ---
 layout: single
 title: "Weekly Pipeline Review — {YYYY-MM-DD}"
-date: {YYYY-MM-DD}
+date: {full ISO 8601 timestamp WITH timezone offset — the current Europe/Zurich time, e.g. 2026-06-21T12:00:00+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
 categories: [evaluator]
 ---
 ```
