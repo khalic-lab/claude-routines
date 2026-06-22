@@ -1,18 +1,9 @@
 <style>
-  /* favicon badge stays inline next to its link */
-  img.auto-preview.fav {
-    display: inline-block;
-    width: 16px; height: 16px;
-    margin: 0 0.3em;
-    vertical-align: middle;
-    border-radius: 2px;
-  }
-  /* real article thumbnails float right of the containing bullet/paragraph */
+  /* article thumbnail wrapper (full v3 layout — order/size — lives in the editorial block;
+     the fav badge is styled there too). Float/shape-outside/clear removed: the wrap is a flex
+     item below the story now, so they were dead. */
   a.auto-preview-wrap {
-    float: right;
     margin: 0.2em 0 0.5em 1em;
-    shape-outside: margin-box;
-    clear: right;
     display: block;
     text-decoration: none;
     cursor: zoom-in;
@@ -25,9 +16,6 @@
     border-radius: 4px;
     object-fit: cover;
   }
-  /* clear floats at the end of each bullet so consecutive thumbnails stack */
-  .page__content li::after,
-  .page__content p::after { content: ""; display: block; clear: right; }
   /* arxiv PDF chip — inline pill */
   a.auto-preview.pdf {
     display: inline-block;
@@ -35,14 +23,14 @@
     font-weight: 700;
     line-height: 1;
     color: #fff;
-    background: #b80000;
+    background: var(--accent-chip);
     padding: 3px 5px;
     border-radius: 3px;
     text-decoration: none;
     margin: 0 0.4em;
     vertical-align: middle;
   }
-  a.auto-preview.pdf:hover { background: #8d0000; }
+  a.auto-preview.pdf:hover { background: var(--accent-chip-hover); }
 </style>
 <script>
 // Workaround for minimal-mistakes assuming .page__content always exists.
@@ -57,16 +45,19 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 }, { once: true });
 
-// Normalize TIGHT story lists to the LOOSE shape so one CSS path serves both.
-// kramdown emits <li><strong>…</strong> text…  (no <p>) when story bullets aren't
-// blank-separated; .page__content > ul > li{display:flex;flex-direction:column} then drops
-// every inline run (each <strong>/<em>/text node) onto its own line, and the
-// `> p:first-of-type` headline rule can't match (no <p>). Wrap each tight story <li>'s
-// inline run in a generated <p class="story-body">, inserted BEFORE the figure wrap and any
-// nested <ul>/<ol> so the figure (order:2) + sub-bullets (order:3) ordering is preserved.
-// Registered here (before the figure observer and the feedback pass) so they see the
-// normalized DOM. No-op on already-loose bullets (lead is <p>), non-story bullets (lead node
-// isn't <strong>), and Coverage-footer / "Gaps:" bullets (footer-position + lead-text guard).
+// Normalize the story list and tag real story bullets with `.story` so the editorial CSS
+// targets ONLY stories (not the Coverage-footer / "Gaps:" list, which must render as plain
+// prose). Two things happen here:
+//   1. TIGHT lists: kramdown emits <li><strong>…</strong> text…  (no <p>) when story bullets
+//      aren't blank-separated; .page__content > ul > li.story{display:flex;flex-direction:column}
+//      would drop every inline run (each <strong>/<em>/text node) onto its own line, and the
+//      `> p` headline rule can't match. So wrap each tight story's inline run in a generated
+//      <p class="story-body">, BEFORE the figure wrap and any nested <ul>/<ol> so the
+//      figure (order:2) + sub-bullets (order:3) ordering is preserved.
+//   2. LOOSE story bullets already have a <p>; just tag them.
+// Either way the <li> gets `.story`; footer/non-story bullets get nothing → they fall out of
+// the flex/headline rules and render as ordinary prose (no fragmentation, no false headline).
+// Runs before the figure observer + feedback pass (registration order) so they see the result.
 document.addEventListener('DOMContentLoaded', function () {
   var content = document.querySelector('.page__content');
   if (!content) return;
@@ -78,14 +69,25 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   content.querySelectorAll(':scope > ul > li').forEach(function (li) {
     if (footer && (footer.compareDocumentPosition(li) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
-    // The lead must be the bold headline itself: skip leading whitespace and any (async)
-    // figure wrap; a leading text run like "Gaps: " or an existing <p> (loose) means skip.
+    // Resolve the lead element: skip leading whitespace and any (async) figure wrap.
     var lead = li.firstChild;
     while (lead && (
       (lead.nodeType === 3 && !lead.nodeValue.trim()) ||
       (lead.nodeType === 1 && lead.classList && lead.classList.contains('auto-preview-wrap'))
     )) lead = lead.nextSibling;
-    if (!lead || lead.nodeType !== 1 || lead.tagName !== 'STRONG') return;
+    if (!lead || lead.nodeType !== 1) return;
+
+    if (lead.tagName === 'P') {
+      // Already loose: a story iff its <p> leads with <strong>. A leading text run
+      // (e.g. "Gaps: ") means it's not a story — leave it untagged.
+      var pLead = lead.firstChild;
+      while (pLead && pLead.nodeType === 3 && !pLead.nodeValue.trim()) pLead = pLead.nextSibling;
+      if (pLead && pLead.nodeType === 1 && pLead.tagName === 'STRONG') li.classList.add('story');
+      return;
+    }
+    if (lead.tagName !== 'STRONG') return;   // tight non-story bullet → leave as plain prose
+
+    // Tight story: wrap the inline run in a <p>, before the figure wrap and any sub-list.
     var p = document.createElement('p');
     p.className = 'story-body';
     var node = li.firstChild;
@@ -99,6 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     var sub = li.querySelector(':scope > ul, :scope > ol');
     li.insertBefore(p, sub || null);       // <p> before any nested sub-list
+    li.classList.add('story');
   });
 });
 </script>
@@ -147,6 +150,8 @@ document.addEventListener('DOMContentLoaded', function () {
     wrap.target = '_blank';
     wrap.rel = 'noopener noreferrer';
     wrap.appendChild(img);
+    wrap.setAttribute('aria-hidden', 'true');   // decorative: opens the raw og:image, keep out of the tab order
+    wrap.setAttribute('tabindex', '-1');
     bullet.insertBefore(wrap, bullet.firstChild);
   };
   // arxiv.org sets the same logo as og:image for every paper. The og-proxy
@@ -197,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
     }, { rootMargin: '300px 0px' });
-    content.querySelectorAll('a[href^="http"]').forEach(function (l) {
+    content.querySelectorAll('a[href^="http"], a[href^="//"]').forEach(function (l) {
       if (l.closest('.page__share') || l.closest('nav')) return;
       if (l.host === window.location.host) return;
       io.observe(l);
@@ -216,52 +221,59 @@ document.addEventListener('DOMContentLoaded', function () {
 {%- endif -%}
 
 <style>
+  /* Feedback widgets — LAYOUT/TYPOGRAPHY only. All colors (borders/backgrounds/accents) live in
+     the variable-driven block lower down so light/dark follow one source of truth. */
   /* bottom-of-brief OVERALL box (brief-level feedback, story_id == null) */
   .fb-box {
     margin: 2.5em 0 1em; padding: 0.9em 1.1em;
-    border: 1px solid rgba(255,255,255,0.14); border-radius: 8px;
-    background: rgba(255,255,255,0.03); font-size: 0.85em;
+    border-radius: 8px; font-size: 0.85em;
   }
   .fb-box .fb-row { display: flex; align-items: center; gap: 0.6em; flex-wrap: wrap; }
   .fb-box .fb-q { opacity: 0.8; margin-right: 0.2em; }
   .fb-btn {
-    cursor: pointer; border: 1px solid rgba(255,255,255,0.2); background: transparent;
+    cursor: pointer; background: transparent;
     color: inherit; border-radius: 6px; padding: 0.25em 0.6em; font-size: 1em; line-height: 1;
   }
-  .fb-btn:hover { background: rgba(255,255,255,0.08); }
-  .fb-btn.fb-on { background: rgba(120,170,255,0.25); border-color: rgba(120,170,255,0.6); }
   .fb-reason { display: none; width: 100%; margin-top: 0.6em; }
   .fb-reason textarea {
     width: 100%; box-sizing: border-box; min-height: 3em; resize: vertical;
-    background: rgba(0,0,0,0.25); color: inherit; border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 6px; padding: 0.4em 0.6em; font: inherit;
+    color: inherit; border-radius: 6px; padding: 0.4em 0.6em; font: inherit;
   }
   .fb-send { margin-top: 0.5em; }
   .fb-status { opacity: 0.75; margin-left: 0.3em; }
 
-  /* per-STORY inline thumbs (story_id set) — faint until you hover the bullet */
+  /* per-STORY inline thumbs (story_id set) — faint until you hover OR keyboard-focus the bullet */
   .fb-inline {
     margin-left: 0.45em; white-space: nowrap; user-select: none;
-    font-size: 0.92em; opacity: 0.3; transition: opacity 0.12s ease; vertical-align: baseline;
+    font-size: 0.92em; opacity: 0.45; transition: opacity 0.12s ease; vertical-align: baseline;
   }
-  li:hover .fb-inline, .fb-inline.fb-live { opacity: 0.95; }
+  li:hover .fb-inline, li:focus-within .fb-inline, .fb-inline:focus-within,
+  .fb-inline.fb-live { opacity: 0.95; }
+  @media (hover: none) { .fb-inline { opacity: 0.7; } }            /* always visible on touch */
+  @media (prefers-reduced-motion: reduce) { .fb-inline { transition: none; } }
   .fb-t {
     cursor: pointer; border: none; background: transparent; color: inherit;
     padding: 0 0.12em; font-size: 1em; line-height: 1; opacity: 0.85;
   }
   .fb-t:hover { opacity: 1; }
-  .fb-t.fb-on { opacity: 1; filter: drop-shadow(0 0 2px rgba(120,170,255,0.9)); }
+  .fb-t.fb-on { opacity: 1; }
   .fb-t.fb-off { opacity: 0.3; }
   .fb-ist { font-size: 0.8em; opacity: 0.7; margin-left: 0.3em; }
-  .fb-irzn { display: none; margin: 0.4em 0 0.2em; }
+  .fb-irzn { display: none; gap: 0.4em; align-items: center; flex-wrap: wrap; margin: 0.4em 0 0.2em; }
   .fb-irzn input {
-    width: min(420px, 100%); box-sizing: border-box;
-    background: rgba(0,0,0,0.25); color: inherit; border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 6px; padding: 0.3em 0.5em; font: inherit; font-size: 0.9em;
+    flex: 1 1 180px; min-width: 0; box-sizing: border-box;
+    color: inherit; border-radius: 6px; padding: 0.3em 0.5em; font: inherit; font-size: 1em;
   }
   .fb-irzn button {
-    cursor: pointer; margin-left: 0.4em; border: 1px solid rgba(255,255,255,0.2);
-    background: transparent; color: inherit; border-radius: 6px; padding: 0.25em 0.6em; font: inherit;
+    cursor: pointer; flex: 0 0 auto; background: transparent;
+    color: inherit; border-radius: 6px; padding: 0.25em 0.6em; font: inherit;
+  }
+  /* keyboard focus affordance (WCAG 2.4.7) across every interactive control */
+  .fb-t:focus-visible, .fb-btn:focus-visible,
+  .site-unlock__x:focus-visible, .site-unlock__pw:focus-visible, .site-unlock__go:focus-visible,
+  .fb-irzn input:focus-visible, .fb-reason textarea:focus-visible,
+  .propose__topic:focus-visible, .propose__detail:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
   }
 </style>
 <script>
@@ -349,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function () {
       bar.innerHTML =
         '<button class="fb-t" data-v="1" title="useful" aria-label="useful">👍</button>' +
         '<button class="fb-t" data-v="-1" title="not useful" aria-label="not useful">👎</button>' +
-        '<span class="fb-ist"></span>';
+        '<span class="fb-ist" aria-live="polite"></span>';
       var ist = bar.querySelector('.fb-ist');
       var up = bar.querySelector('.fb-t[data-v="1"]');
       var down = bar.querySelector('.fb-t[data-v="-1"]');
@@ -357,10 +369,11 @@ document.addEventListener('DOMContentLoaded', function () {
       var rzn = document.createElement('span');
       rzn.className = 'fb-irzn';
       rzn.innerHTML =
-        '<input type="text" placeholder="why? (optional)" maxlength="500" />' +
+        '<input type="text" placeholder="why? (optional)" maxlength="500" aria-label="Reason for thumbs-down (optional)" />' +
         '<button type="button">send</button>';
       var input = rzn.querySelector('input');
       var sendBtn = rzn.querySelector('button');
+      sendBtn.setAttribute('aria-label', 'Send reason for: ' + headline);
 
       function mark(v) {
         bar.classList.add('fb-live');
@@ -375,13 +388,14 @@ document.addEventListener('DOMContentLoaded', function () {
         mark(-1);
         // the thumb itself is signal — fire now; a reason can follow.
         post({ vote: -1, story_id: sid }, function (m) { ist.textContent = m; });
-        rzn.style.display = 'inline-block'; input.focus();
+        rzn.style.display = 'flex'; input.focus();
       });
       function sendReason() {
         var why = (input.value || '').trim();
-        if (!why) { rzn.style.display = 'none'; return; }
+        if (!why) { rzn.style.display = 'none'; down.focus(); return; }
         post({ vote: -1, story_id: sid, reason: why }, function (m) { ist.textContent = m; });
         rzn.style.display = 'none';
+        down.focus();   // return focus to the bullet's control, not the void
       }
       sendBtn.addEventListener('click', sendReason);
       input.addEventListener('keydown', function (e) { if (e.key === 'Enter') sendReason(); });
@@ -399,10 +413,10 @@ document.addEventListener('DOMContentLoaded', function () {
         '<span class="fb-q">Overall — useful?</span>' +
         '<button class="fb-btn" data-v="1" aria-label="thumbs up">👍</button>' +
         '<button class="fb-btn" data-v="-1" aria-label="thumbs down">👎</button>' +
-        '<span class="fb-status"></span>' +
+        '<span class="fb-status" aria-live="polite"></span>' +
       '</div>' +
       '<div class="fb-reason">' +
-        '<textarea placeholder="optional: about the brief as a whole (what to do more / less of)"></textarea>' +
+        '<textarea aria-label="Feedback about the whole brief" placeholder="optional: about the brief as a whole (what to do more / less of)"></textarea>' +
         '<div><button class="fb-btn fb-send">Send</button></div>' +
       '</div>';
     content.appendChild(box);
@@ -431,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
     box.querySelector('.fb-send').addEventListener('click', function () {
-      send(function () { reasonWrap.style.display = 'none'; });
+      send(function () { reasonWrap.style.display = 'none'; thumbs[0].focus(); });
     });
   });
 })();
@@ -447,29 +461,35 @@ document.addEventListener('DOMContentLoaded', function () {
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,900&family=Inter:wght@400;500;600&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap">
 <style>
   :root{
-    --paper:#f3efe7; --panel:#eae4d8; --ink:#26241f; --muted:#736b5d;
+    --paper:#f3efe7; --panel:#eae4d8; --ink:#26241f; --muted:#736b5d; --muted-ui:#6a6356;
     --rule:rgba(38,36,31,.82); --hair:rgba(38,36,31,.13); --field:#fffdf8;
     --frame:rgba(38,36,31,.42); --accent:#9c3b2c;
+    --accent-chip:#b80000; --accent-chip-hover:#8d0000;
     --serif:'Source Serif 4',Charter,Georgia,'Times New Roman',serif;
     --display:'Fraunces','Source Serif 4',Georgia,serif;
     --sans:'Inter',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
   }
   @media (prefers-color-scheme: dark){
     :root{
-      --paper:#16140f; --panel:#201d16; --ink:#e8e2d3; --muted:#9c9482;
+      --paper:#16140f; --panel:#201d16; --ink:#e8e2d3; --muted:#9c9482; --muted-ui:#b3ab97;
       --rule:rgba(232,226,211,.5); --hair:rgba(232,226,211,.12); --field:rgba(255,255,255,.05);
       --frame:rgba(232,226,211,.28); --accent:#d98a5b;
+      --accent-chip:#c0392b; --accent-chip-hover:#a93226;
     }
   }
 
   html,body{ background:var(--paper); color:var(--ink); }
   body{ font-family:var(--serif); text-rendering:optimizeLegibility; -webkit-font-smoothing:antialiased; }
   #main,.initial-content,.page,.archive,.masthead,.greedy-nav,.greedy-nav .visible-links{ background:var(--paper); }
-  .page__content{ font-size:1.06rem; line-height:1.5; max-width:42em; }
+  /* secondary theme surfaces that otherwise flash the stock white skin in dark mode */
+  .greedy-nav .hidden-links{ background:var(--paper); }
+  .sidebar,.toc__menu,.notice,.notice--primary,.notice--info,.notice--warning{ background:var(--panel); color:var(--ink); }
+  .page__content{ font-size:1.06rem; line-height:1.5; max-width:42em; margin-left:auto; margin-right:auto; }
   .page__content p{ margin:0 0 .85em; }
-  a,.page__content a{ color:var(--ink); text-decoration:underline; text-decoration-thickness:1px;
-    text-underline-offset:2px; text-decoration-color:var(--hair); }
-  a:hover,.page__content a:hover{ color:var(--accent); text-decoration-color:var(--accent); }
+  /* prose links only — leave theme chrome (pagination/taxonomy/breadcrumbs) to the skin */
+  .page__content a{ color:var(--ink); text-decoration:underline; text-decoration-thickness:1px;
+    text-underline-offset:2px; text-decoration-color:var(--frame); }
+  .page__content a:hover{ color:var(--accent); text-decoration-color:var(--accent); }
   strong,.page__content strong{ font-weight:600; }
 
   /* masthead — quiet, sans nav */
@@ -482,26 +502,27 @@ document.addEventListener('DOMContentLoaded', function () {
   .page__title{ font-family:var(--display); font-weight:900; line-height:1.05; letter-spacing:-.015em;
     font-size:2.3em; margin:.1em 0 .35em; }
   .page__meta{ font-family:var(--sans); text-transform:uppercase; letter-spacing:.08em; font-weight:500;
-    font-size:.7em; color:var(--muted); border:0; padding:0; margin:0 0 1.6em; }
+    font-size:.7em; color:var(--muted-ui); border:0; padding:0; margin:0 0 1.6em; }
 
   /* section headers — tracked sans kicker, rule above (leading emoji stripped by the script below) */
   .page__content h2{ font-family:var(--sans); font-weight:600; text-transform:uppercase; letter-spacing:.14em;
-    font-size:.82em; color:var(--muted); margin:2.4em 0 1.2em; padding-top:1em; border-top:1px solid var(--rule); }
+    font-size:.82em; color:var(--muted-ui); margin:2.4em 0 1.2em; padding-top:1em; border-top:1px solid var(--rule); }
   .page__content h2:first-of-type{ margin-top:.7em; }
   .page__content h3{ font-family:var(--display); font-weight:600; font-size:1.25em; line-height:1.25; margin:1.6em 0 .4em; }
 
-  /* one story per row, SINGLE column — generous separation, no flex split, no void */
+  /* one story per row, SINGLE column — generous separation. `.story` is tagged by the JS
+     normalizer above, so this styling targets ONLY real story bullets — never the
+     Coverage-footer / "Gaps:" list, which stays as ordinary prose. */
   .page__content > ul{ list-style:none; padding-left:0; margin:0; }
-  .page__content > ul > li{ display:flex; flex-direction:column; padding-bottom:1.6em; margin-bottom:1.6em;
+  .page__content > ul > li.story{ display:flex; flex-direction:column; padding-bottom:1.6em; margin-bottom:1.6em;
     border-bottom:1px solid var(--hair); }
-  .page__content > ul > li:last-child{ border-bottom:0; }
-  .page__content > ul > li::after, .page__content > ul > li > p::after{ content:none; }  /* kill old float-clear pseudo */
-  .page__content > ul > li > p{ margin:0; }
+  .page__content > ul > li.story:last-child{ border-bottom:0; }
+  .page__content > ul > li.story > p{ margin:0; }
   .page__content ul ul{ list-style:disc; margin:.4em 0 0; }
-  .page__content > ul > li > ul{ order:3; }
+  .page__content > ul > li.story > ul{ order:3; }
 
   /* HEADLINE: the lead bold becomes a real display headline on its own line */
-  .page__content > ul > li > p:first-of-type > strong:first-child{
+  .page__content > ul > li.story > p:first-of-type > strong:first-child{
     display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
     letter-spacing:-.005em; color:var(--ink); margin:0 0 .35em; }
   /* arXiv / paper items. Two writer markup shapes occur in the corpus, both keyed on the STATIC
@@ -511,18 +532,18 @@ document.addEventListener('DOMContentLoaded', function () {
      (A): demote the id+date 1st strong to small grey meta, promote the 2nd strong to the headline.
      (B): promote the single strong to the headline, demote its inner <code> id to small grey meta.
      Disambiguated by whether a 2nd strong exists, so each rule fires only on its own shape. */
-  .page__content > ul > li:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:nth-of-type(2)) > p:first-of-type > strong:first-child{
+  .page__content > ul > li.story:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:nth-of-type(2)) > p:first-of-type > strong:first-child{
     display:inline; font-family:var(--sans); font-weight:500; font-size:.7em; text-transform:uppercase;
-    letter-spacing:.05em; color:var(--muted); }
-  .page__content > ul > li:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:nth-of-type(2)) > p:first-of-type > strong:nth-of-type(2){
+    letter-spacing:.05em; color:var(--muted-ui); }
+  .page__content > ul > li.story:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:nth-of-type(2)) > p:first-of-type > strong:nth-of-type(2){
     display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
     letter-spacing:-.005em; color:var(--ink); margin:.2em 0 .35em; }
-  .page__content > ul > li:has(a[href*="arxiv.org"]):not(:has(> p:first-of-type > strong:nth-of-type(2))) > p:first-of-type > strong:first-child{
+  .page__content > ul > li.story:has(a[href*="arxiv.org"]):not(:has(> p:first-of-type > strong:nth-of-type(2))) > p:first-of-type > strong:first-child{
     display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
     letter-spacing:-.005em; color:var(--ink); margin:0 0 .35em; }
-  .page__content > ul > li:has(a[href*="arxiv.org"]):not(:has(> p:first-of-type > strong:nth-of-type(2))) > p:first-of-type > strong:first-child code{
+  .page__content > ul > li.story:has(a[href*="arxiv.org"]):not(:has(> p:first-of-type > strong:nth-of-type(2))) > p:first-of-type > strong:first-child code{
     display:inline; font-family:var(--sans); font-size:.62em; font-weight:500; text-transform:uppercase;
-    letter-spacing:.05em; color:var(--muted); background:transparent; border:0; padding:0; }
+    letter-spacing:.05em; color:var(--muted-ui); background:transparent; border:0; padding:0; }
 
   /* tags as delicate pills */
   .page__content code{ font-family:var(--sans); font-size:.72em; font-weight:500; text-transform:uppercase;
@@ -538,10 +559,15 @@ document.addEventListener('DOMContentLoaded', function () {
   .auto-preview-wrap img.auto-preview{ display:block; width:auto; max-width:100%; max-height:420px;
     border:1px solid var(--frame); background:var(--field); padding:5px; box-shadow:none; }
   a.auto-preview-wrap:hover img.auto-preview{ opacity:.9; }
-  img.auto-preview.fav{ display:inline-block; width:16px; height:16px; border:0; padding:0; vertical-align:middle; }
+  img.auto-preview.fav{ display:inline-block; width:16px; height:16px; margin:0 .3em; border:0;
+    border-radius:2px; padding:0; vertical-align:middle; }
   @media (max-width:680px){
-    .auto-preview-wrap img.auto-preview{ width:100%; max-height:none; }
+    .auto-preview-wrap img.auto-preview{ width:100%; max-height:56vw; object-fit:cover; }  /* ~16:9, no viewport-eating portraits */
     .page__title{ font-size:1.9em; }
+    /* comfortable tap targets (>=44px) without shifting layout (padding offset by negative margin) */
+    .fb-t{ padding:.7em .55em; margin:-.55em -.55em; }
+    .fb-btn{ padding:.6em 1em; min-height:44px; display:inline-flex; align-items:center; }
+    .site-unlock__x{ padding:.5em; top:0; right:0; }
   }
 
   /* home / archive contents list */
@@ -553,9 +579,10 @@ document.addEventListener('DOMContentLoaded', function () {
     color:var(--muted); border-bottom:1px solid var(--rule); }
 
   /* footer — small sans, recedes */
-  .page__footer{ background:var(--paper); border-top:1px solid var(--rule); color:var(--muted);
+  .page__footer{ background:var(--paper); border-top:1px solid var(--rule); color:var(--muted-ui);
     font-family:var(--sans); font-size:.8em; }
-  .page__footer a,.page__footer-copyright{ color:var(--muted); }
+  .page__footer a,.page__footer-copyright{ color:var(--muted-ui); }
+  .page__footer a{ text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; }
 
   /* feedback widget — variable-driven, follows light/dark automatically */
   .fb-box{ border:1px solid var(--hair); background:var(--panel); }
@@ -567,13 +594,21 @@ document.addEventListener('DOMContentLoaded', function () {
   .fb-irzn button{ border:1px solid var(--frame); }
   .fb-q,.fb-status,.fb-ist{ font-family:var(--sans); }
   .fb-inline{ display:block; margin:.6em 0 0; }  /* per-story thumbs on their own line under the story */
+  /* readable placeholders (the stock ~50% grey fails AA in light mode) */
+  .fb-reason textarea::placeholder, .fb-irzn input::placeholder,
+  .site-unlock__pw::placeholder, .propose__topic::placeholder, .propose__detail::placeholder{
+    color:var(--muted-ui); opacity:1; }
 </style>
 <script>
   // Strip the leading section-header emoji for a cleaner editorial look; the tracked kicker
   // styling carries the hierarchy. Only mutates the rendered page — source briefs are untouched.
   document.addEventListener('DOMContentLoaded', function () {
     var c = document.querySelector('.page__content'); if (!c) return;
-    var LEAD = /^[\s←-⯿☀-➿\uD800-\uDFFF️‍]+/;
+    // Strip a leading emoji run (incl. variation selectors / ZWJ sequences) + trailing space.
+    // Prefer Unicode property escapes; fall back to the legacy literal range on old engines.
+    var LEAD;
+    try { LEAD = /^(?:\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*\s*)+/u; }
+    catch (e) { LEAD = /^[\s←-⯿☀-➿\uD800-\uDFFF️‍]+/; }
     c.querySelectorAll('h2, h3').forEach(function (h) {
       var n = h.firstChild;
       if (n && n.nodeType === 3) n.nodeValue = n.nodeValue.replace(LEAD, '');
@@ -644,7 +679,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof window === 'undefined' || !window.fetch || !window.localStorage) return;
   var WORKER = "https://feedback-sink.khalic-lab.workers.dev";
   var LS = "siteKey";
-  var panel = null, pending = null;
+  var panel = null, pending = null, lastFocus = null;
 
   function get(){ try { return localStorage.getItem(LS) || ''; } catch (e) { return ''; } }
   function set(v){ try { localStorage.setItem(LS, v); } catch (e) {} }
@@ -654,9 +689,9 @@ document.addEventListener('DOMContentLoaded', function () {
     panel = document.createElement('div');
     panel.className = 'site-unlock';
     panel.innerHTML =
-      '<form class="site-unlock__box" action="#" autocomplete="on">' +
+      '<form class="site-unlock__box" role="dialog" aria-modal="true" aria-labelledby="unlock-dlg-title" action="#" autocomplete="on">' +
         '<button type="button" class="site-unlock__x" aria-label="close">×</button>' +
-        '<div class="site-unlock__title">Unlock to interact</div>' +
+        '<div class="site-unlock__title" id="unlock-dlg-title">Unlock to interact</div>' +
         '<p class="site-unlock__sub">Enter the shared site key to give feedback or propose a brief. It stays in this browser.</p>' +
         '<input type="text" name="username" value="khalic-lab" autocomplete="username" class="site-unlock__user" readonly tabindex="-1" aria-hidden="true">' +
         '<input type="password" name="password" autocomplete="current-password" class="site-unlock__pw" placeholder="site key" aria-label="site key" required>' +
@@ -667,6 +702,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var pw = panel.querySelector('.site-unlock__pw');
     panel.querySelector('.site-unlock__x').addEventListener('click', hide);
     panel.addEventListener('click', function (e) { if (e.target === panel) hide(); });
+    // Escape closes; Tab/Shift+Tab is trapped inside the dialog (×, key field, Unlock).
+    panel.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { hide(); return; }
+      if (e.key !== 'Tab') return;
+      var f = [panel.querySelector('.site-unlock__x'), pw, panel.querySelector('.site-unlock__go')];
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
     panel.querySelector('form').addEventListener('submit', function (e) {
       e.preventDefault();
       var v = (pw.value || '').trim();
@@ -676,9 +720,10 @@ document.addEventListener('DOMContentLoaded', function () {
       if (cb) cb();
     });
   }
-  function show(){ if (!panel) build(); panel.classList.add('on');
+  function show(){ lastFocus = document.activeElement; if (!panel) build(); panel.classList.add('on');
     var pw = panel.querySelector('.site-unlock__pw'); pw.value = ''; setTimeout(function(){ pw.focus(); }, 30); }
-  function hide(){ if (panel) panel.classList.remove('on'); }
+  function hide(){ if (panel) panel.classList.remove('on');
+    if (lastFocus && lastFocus.focus) { lastFocus.focus(); lastFocus = null; } }
 
   window.__siteKey = { get: get, set: set, clear: clear, prompt: function (retry) { pending = retry || null; show(); } };
 
