@@ -7,7 +7,8 @@ bridge → ntfy), and dedupe stories against a rolling embeddings index under `i
 ## Docs — read in this order
 - **`ARCHITECTURE.md`** — current verified state: components, per-routine **models** + schedules,
   data flow, data model. **Single source of truth for anything that changes.** Check it first.
-- **`SPIKE-*.md`** — proposals and decisions (model tiering, writer token levers).
+- **`docs/SPIKE-*.md`** — design proposals and decisions (model tiering, writer token levers).
+- **`docs/archive/`** — dated point-in-time analysis (audits, prior-art, reviews); historical, not live.
 
 > Don't duplicate mutable facts (models, schedules) into this file — they live in
 > `ARCHITECTURE.md` only. Past drift came from copies going stale.
@@ -16,10 +17,19 @@ bridge → ntfy), and dedupe stories against a rolling embeddings index under `i
 Use the `RemoteTrigger` tool (OAuth handled in-tool), never curl. The prompt + model live under
 `job_config.ccr`.
 
-**The live prompts are mirrored in `routines/` — that directory is the source of truth.** Edit
-`routines/<slug>.md` first, then mirror it to RemoteTrigger; `routines/MANIFEST.md` holds each
+**The live prompts are mirrored in `routines/` — that directory is the source of truth.** The four
+writer prompts (`overview`, `ai-ml`, `cyber-papers`, `weekend`) are **generated**: their
+stream-specific bodies live in `routines/src/<slug>.md`, and the five byte-identical shared sections
+(Newsroom ethos, Reader profile + source weights, Format, Pedagogical tone, Date discipline) live
+once in `routines/_shared/*.md`, pulled in via `<!-- include: _shared/<name>.md -->` placeholders.
+Edit the source (or the shared partial — a one-place edit now hits all four writers), run
+`python3 routines/assemble.py` to regenerate `routines/<slug>.md`, then mirror that to RemoteTrigger.
+`python3 routines/assemble.py check` is the drift guard (run before mirroring): non-zero exit means a
+generated prompt no longer matches its sources. Watch and Evaluator are **not** assembled — edit
+`routines/watch.md` / `routines/weekly-evaluator.md` directly. `routines/MANIFEST.md` holds each
 trigger's id + full `session_context` (and notes the redacted fetch-proxy token to re-substitute).
-After ANY RemoteTrigger edit, re-snapshot the file so the repo doesn't drift from live.
+After ANY RemoteTrigger edit, re-run `assemble.py` (or re-snapshot a non-assembled routine) so the
+repo doesn't drift from live.
 
 1. `RemoteTrigger get <id>` first. Copy `events[0].data.message.content`, the **full**
    `session_context`, and `environment_id`.
@@ -68,3 +78,7 @@ programmatically (string-insert against a unique anchor), send the update, then 
 - Notifications: `pending-notifications/{ts}-{slug}.json` → local bridge → ntfy (then deleted).
 - Dedup: `tools/dedup/` (see its `DEDUP.md`); embeddings index under `index/`.
 - Topic watches: `watches.yml` (user owns entries; the Watch routine writes only `last_fired`).
+- Routine prompts: `routines/<slug>.md` (generated, == live) ← `routines/src/<slug>.md` + shared
+  `routines/_shared/*.md`, composed by `routines/assemble.py`. Internal design docs live under
+  `docs/` (proposals) and `docs/archive/` (dated). Both, plus `routines/`, are excluded from the
+  published Jekyll site in `_config.yml`.
