@@ -1,9 +1,12 @@
 # News Brief Pipeline — Architecture
 
-> Written 2026-05-25. Section 1 (current state) is read from live trigger
-> configs, `bridge.sh`, the user crontab, `_config.yml`, and `_includes/head/custom.html`
-> — not inferred. Sections 2–7 are a proposed target design (hybrid embeddings /
-> vector store) and are NOT yet built. Decisions still open are in §7.
+> Written 2026-05-25; §3–§7 status updated 2026-06-22. §1 (current state) is read from live trigger
+> configs, `bridge.sh`, the user crontab, `_config.yml`, and `_includes/head/custom.html` — not
+> inferred. The two-plane design in §3–§7 is now **partially built**: **Phase 1 — the compose-time
+> embeddings dedup (online plane)** is LIVE (`tools/dedup/dedup.py`, the `embed-proxy` Worker, the
+> in-repo `index/stories/` index; calibrated 2026-05-31). **Phase 2 — the local pgvector analytical
+> plane + S3 datalake** is NOT yet built and remains the target. Most §7 open questions are now
+> RESOLVED (marked inline).
 
 ---
 
@@ -71,7 +74,7 @@
 > Cyber+Papers). Published May market briefs are kept as a frozen archive; the disabled trigger
 > config is retained server-side (the RemoteTrigger API exposes no delete).
 
-> **Changed 2026-05-30:** Per-routine model tiers split by job (see `SPIKE-model-tiering.md`):
+> **Changed 2026-05-30:** Per-routine model tiers split by job (see `docs/SPIKE-model-tiering.md`):
 > **writing** — the 4 writers (Overview, AI/ML, Cyber+Papers, Weekend) moved
 > `claude-sonnet-4-6` → `claude-opus-4-8` (latest Opus) for reader-facing quality;
 > **analysis** — the Weekly Evaluator moved `claude-opus-4-7` → `claude-opus-4-8` (weekly QA backstop);
@@ -94,15 +97,17 @@
 | Reader feedback | `feedback/{YYYY-MM}.jsonl` | `{id, ts, reader, brief, story_id, vote±1, reason, surface, source_domain, consumed}` | widget→Worker→bridge → Evaluator |
 | Reader profile | `reader-profile.md` + `reader-profile/source-weights.yml` (`never:`/`reduce:`) | NL editorial brief + domain lists | Evaluator proposes (human-gated) → writers read |
 
-### 1.3 Dedup today — the whole of it
+### 1.3 Dedup today
 
-One mechanism, in the Cyber+Papers prompt only:
+The compose-time embeddings dedup (`tools/dedup/dedup.py` + the `embed-proxy` Worker + the in-repo
+`index/stories/*.jsonl`) is **live**: each writer embeds its candidate stories, compares them against
+the recent index, and drops/threads repeats. See §3–§6 for the design and §6 for the verdict logic
++ calibration.
 
-> *"Overview dedup: read today's Overview brief if it exists, then exclude any arXiv IDs it already cited."*
-
-Same-day · same stream-pair · arXiv-ID-only · exact-string match. Nothing spans days,
-nothing spans other streams, nothing matches *stories* (only arXiv IDs). This is why
-"Bilaterals III" ran every few days from May 3 → May 24 untouched.
+This superseded the **original** mechanism — a same-day, same-stream-pair, arXiv-ID-only
+exact-string exclusion in the Cyber+Papers prompt ("read today's Overview brief, exclude any arXiv
+IDs it already cited"). That spanned no days, no other streams, and matched only arXiv IDs (not
+*stories*), which is why "Bilaterals III" ran every few days from May 3 → May 24 untouched.
 
 ### 1.4 Reader feedback loop (LIVE 2026-06-18)
 
@@ -172,6 +177,12 @@ Hard Cloudflare Bot-Management / JS-challenge sites can still block even the pro
 
 ## 3. Target: two-plane hybrid
 
+> **Status (2026-06-22):** Phase 1 — the online-plane compose-time dedup below — is **BUILT and
+> LIVE** (`tools/dedup/dedup.py`, `embed-proxy`, `index/stories/`). The analytical plane (local
+> pgvector + S3 datalake — the right-hand side here and §5.2) is **Phase 2, not built**. This
+> resolves the §7 store/provider questions: store = **in-repo `index/stories/`** (option B);
+> embeddings = **Workers-AI `bge-m3`** via the `embed-proxy` Worker.
+
 Split the system into an **online plane** (compute-time, cloud, must be allowlisted) and an
 **analytical plane** (offline, local Mac, where pgvector lives and gives the "superpowers").
 The datalake (S3) is the seam between them.
@@ -211,7 +222,10 @@ The datalake (S3) is the seam between them.
 Key property: **embeddings are computed once** (online, at ingest) and stored in the parquet
 index; the local plane just *loads* them into pgvector. No double-embedding, no drift.
 
-### 3.1 Where the compute-time index lives — pick one (§7 Q2)
+### 3.1 Where the compute-time index lives — RESOLVED → B (§7 Q2)
+
+> **RESOLVED (2026-06-22):** built on **option B** — the in-repo `index/stories/*.jsonl`. The A/B/C
+> trade-offs below are retained as the original rationale; **A (S3) is the Phase-2 migration path**.
 
 | Option | Cloud-reachable via | Pros | Cons |
 |---|---|---|---|
@@ -225,7 +239,10 @@ exclusive: the repo file can be mirrored to S3 by the local sync job.
 
 ---
 
-## 4. Embeddings provider — must be named, not assumed (§7 Q3)
+## 4. Embeddings provider — RESOLVED → Workers-AI bge-m3 (§7 Q3)
+
+> **RESOLVED (2026-06-22):** the pipeline uses **Workers-AI `@cf/baai/bge-m3`** (1024-dim) via the
+> `embed-proxy` Worker — the table's middle row. Voyage / LLM-judgment were considered, not adopted.
 
 The routines' existing **Hugging-Face MCP does NOT expose an embeddings endpoint** (it's
 hub/papers/spaces queries). So compute-time embeddings need one of:
@@ -263,7 +280,7 @@ the model's judgment over ~a few hundred recent headlines rather than a similari
   "event_date": "2026-05-02",               // when the event HAPPENED (nullable; ISO 8601 reduced
                                             //   precision YYYY|YYYY-MM|YYYY-MM-DD). Distinct from
                                             //   `date` (compose) and `first_seen_date` (coverage).
-  "embedding_model": "voyage-3",
+  "embedding_model": "bge-m3",
   "embedding": [0.01, -0.04, ...]           // omitted from jsonl if stored in parquet
 }
 ```
@@ -294,7 +311,7 @@ CREATE INDEX ON stories (thread_id);
 
 ---
 
-## 6. Compose-time sequence (target)
+## 6. Compose-time sequence (BUILT — `tools/dedup/dedup.py`)
 
 ```
 writer fires
@@ -327,9 +344,9 @@ almost no reruns. Repeat-suppression therefore rests on the **deterministic (1) 
 78 cross-day reruns auto-dropped vs 6 cosine-only, `exact-url` dominating) **plus** the `DEDUP.md` Step-B
 ONGOING-defaults-to-drop policy (writer judgment). Thread auto-linking in `record` is gated separately
 at `AUTOLINK_MIN=0.93`, above the observed 0.914 DISTINCT ceiling, to avoid false merges. See
-`tools/dedup/dedup.py`, `tools/dedup/test_dedup_calibration.py`, and `DEDUP-DIAGNOSIS-2026-05-31.md`.
+`tools/dedup/dedup.py`, `tools/dedup/test_dedup_calibration.py`, and `docs/archive/DEDUP-DIAGNOSIS-2026-05-31.md`.
 
-**Added 2026-06-08 (see `REVIEW-2026-06-08-feedback-and-dates.md`).** Threading now also has an
+**Added 2026-06-08 (see `docs/archive/REVIEW-2026-06-08-feedback-and-dates.md`).** Threading now also has an
 **arXiv distinct-paper guard** (`_distinct_paper`): a candidate carrying an arXiv id the match is not
 about is not threaded to it. It runs in three places — `cmd_record` **validates writer-supplied
 `thread_id`s** (the load-bearing fix: the 2026-06-06 SASA "[ongoing since 2026-05-14]" was a *writer
@@ -349,7 +366,7 @@ tomorrow" (advisory). All deterministic + offline.
 
 ---
 
-## 7. Open questions / preconditions (must resolve before building)
+## 7. Open questions / preconditions (Phase 1 items RESOLVED — see inline)
 
 1. **env_018 allowlist contents — RESOLVED (2026-06-18).** The Custom allowed-domains list is:
    `export.arxiv.org`, `services.nvd.nist.gov`, `www.cisa.gov`, `www.quantamagazine.org`,
@@ -358,10 +375,10 @@ tomorrow" (advisory). All deterministic + offline.
    `www.letemps.ch`, plus `fetch-proxy.khalic-lab.workers.dev` (added 2026-06-18). The chronic AI/ML
    403s were this list not covering lab/news hosts — now solved via the fetch-proxy (§2) rather than
    by enumerating every domain.
-2. **Compute-time index store: A (S3) / B (in-repo parquet) / C (Worker-fronted).** §3.1.
-3. **Embeddings provider: Voyage / Workers-AI / LLM-judgment (no cloud embeddings).** §4.
-   This is the highest-leverage decision — it changes whether the cloud side touches
-   embeddings at all.
+2. **Compute-time index store — RESOLVED (2026-06-22): option B**, the in-repo
+   `index/stories/*.jsonl`; A (S3) is the Phase-2 migration path. §3.1.
+3. **Embeddings provider — RESOLVED (2026-06-22): Workers-AI `@cf/baai/bge-m3`** (1024-dim) via the
+   `embed-proxy` Worker. Voyage / LLM-judgment were considered but not adopted. §4.
 4. **Evaluator env migration — RESOLVED (2026-05-30).** The Weekly Evaluator now runs on
    env_018 (model `claude-opus-4-8` as of 2026-05-30), alongside the writers + Watch. Its Sunday
    link-health probes run under the same network settings; the env_011 loose end is closed.
