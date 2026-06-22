@@ -41,8 +41,8 @@ From this directory (`tools/feedback-sink`):
    ```
    wrangler secret put FEEDBACK_TOKEN
    ```
-   Optionally set a widget deterrence key (must match the `FEEDBACK_KEY` constant in
-   `_includes/head/custom.html`):
+   Optionally set a widget deterrence key — it must match the shared site key visitors enter in
+   the unlock modal (sent as the `X-Widget-Key` header; kept in the browser's localStorage):
    ```
    wrangler secret put WIDGET_KEY
    ```

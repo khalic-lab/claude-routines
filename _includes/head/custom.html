@@ -1,22 +1,7 @@
 <style>
-  /* article thumbnail wrapper (full v3 layout — order/size — lives in the editorial block;
-     the fav badge is styled there too). Float/shape-outside/clear removed: the wrap is a flex
-     item below the story now, so they were dead. */
-  a.auto-preview-wrap {
-    margin: 0.2em 0 0.5em 1em;
-    display: block;
-    text-decoration: none;
-    cursor: zoom-in;
-  }
-  a.auto-preview-wrap:hover img.auto-preview { opacity: 0.85; }
-  .auto-preview-wrap img.auto-preview {
-    display: block;
-    max-width: 180px;
-    max-height: 120px;
-    border-radius: 4px;
-    object-fit: cover;
-  }
-  /* arxiv PDF chip — inline pill */
+  /* arXiv PDF chip — inline pill. (The thumbnail-wrapper rules that used to lead this block were
+     dead — fully superseded by the editorial figure block lower down — so they were removed; their
+     two surviving declarations, border-radius + object-fit, were folded into that block.) */
   a.auto-preview.pdf {
     display: inline-block;
     font-size: 0.7em;
@@ -33,6 +18,19 @@
   a.auto-preview.pdf:hover { background: var(--accent-chip-hover); }
 </style>
 <script>
+// Shared helpers (used by the story-tagger below AND the feedback IIFE further down): find the
+// Coverage-footer heading, and test whether a node sits after it (meta/Gaps content, not a story).
+function findCoverageFooter(content) {
+  var footer = null;
+  content.querySelectorAll('h1,h2,h3,h4').forEach(function (h) {
+    if (!footer && /coverage footer/i.test(h.textContent || '')) footer = h;
+  });
+  return footer;
+}
+function afterFooter(footer, el) {
+  return !!(footer && (footer.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING));
+}
+
 // Workaround for minimal-mistakes assuming .page__content always exists.
 // Theme's main.min.js does `document.querySelector(".page__content").querySelectorAll(...)`
 // which throws on layouts without that wrapper (e.g. layout: home). Stub it in.
@@ -61,14 +59,10 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
   var content = document.querySelector('.page__content');
   if (!content) return;
-  // Stop at the Coverage footer — bullets after it are meta/Gaps, not stories
-  // (mirrors the feedback pass's footer guard below).
-  var footer = null;
-  content.querySelectorAll('h1,h2,h3,h4').forEach(function (h) {
-    if (!footer && /coverage footer/i.test(h.textContent || '')) footer = h;
-  });
+  // Stop at the Coverage footer — bullets after it are meta/Gaps, not stories.
+  var footer = findCoverageFooter(content);
   content.querySelectorAll(':scope > ul > li').forEach(function (li) {
-    if (footer && (footer.compareDocumentPosition(li) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
+    if (afterFooter(footer, li)) return;
     // Resolve the lead element: skip leading whitespace and any (async) figure wrap.
     var lead = li.firstChild;
     while (lead && (
@@ -278,13 +272,11 @@ document.addEventListener('DOMContentLoaded', function () {
 </style>
 <script>
 (function () {
-  // --- configure after deploying feedback-sink (README step 5) -----------------
+  // --- feedback-sink config — see tools/feedback-sink/README.md for redeploy ----
   var FEEDBACK_ENABLED = true; // LIVE 2026-06-18 — feedback-sink Worker deployed + verified
   var FEEDBACK_URL = "https://feedback-sink.khalic-lab.workers.dev"; // deployed, confirmed
-  var FEEDBACK_KEY = ""; // no WIDGET_KEY set on the Worker
   // -----------------------------------------------------------------------------
-  // Dormant until enabled: keeps the published site from showing a widget that posts to
-  // a Worker that doesn't exist yet.
+  // Kill switch: set FEEDBACK_ENABLED to false to hide the widget site-wide.
   if (!FEEDBACK_ENABLED || !window.__BRIEF || !window.__BRIEF.slug || !window.fetch) return;
 
   var SLUG = window.__BRIEF.slug; // "{date}-{stream}", e.g. "2026-06-19-overview"
@@ -340,13 +332,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     // Stop at the Coverage footer (mirrors dedup extract_stories): bullets after that
     // heading are meta-commentary / Gaps, not stories.
-    var footer = null;
-    content.querySelectorAll('h1,h2,h3,h4').forEach(function (h) {
-      if (!footer && /coverage footer/i.test(h.textContent || '')) footer = h;
-    });
+    var footer = findCoverageFooter(content);
     content.querySelectorAll('li').forEach(function (li) {
       if (li.__fb) return;
-      if (footer && (footer.compareDocumentPosition(li) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
+      if (afterFooter(footer, li)) return;
       var node = skipWrap(li.firstElementChild);
       if (node && node.tagName === 'P') node = skipWrap(node.firstElementChild);
       if (!node || node.tagName !== 'STRONG') return;
@@ -530,20 +519,18 @@ document.addEventListener('DOMContentLoaded', function () {
        (A) two <strong>:  `arXiv:ID · submitted DATE` <code>[preprint]</code> — `Real Title`
        (B) one  <strong>: `<code>arXiv:ID</code> (date) — Title`
      (A): demote the id+date 1st strong to small grey meta, promote the 2nd strong to the headline.
-     (B): promote the single strong to the headline, demote its inner <code> id to small grey meta.
-     Disambiguated by whether a 2nd strong exists, so each rule fires only on its own shape. */
+     (B): the single strong is already the headline via the default rule above; here we only
+          demote its inner <code> id to small grey meta.
+     Shape-A rules are gated on a 2nd strong; the shape-B code rule on its absence. */
   .page__content > ul > li.story:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:nth-of-type(2)) > p:first-of-type > strong:first-child{
     display:inline; font-family:var(--sans); font-weight:500; font-size:.7em; text-transform:uppercase;
     letter-spacing:.05em; color:var(--muted-ui); }
   .page__content > ul > li.story:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:nth-of-type(2)) > p:first-of-type > strong:nth-of-type(2){
     display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
     letter-spacing:-.005em; color:var(--ink); margin:.2em 0 .35em; }
-  .page__content > ul > li.story:has(a[href*="arxiv.org"]):not(:has(> p:first-of-type > strong:nth-of-type(2))) > p:first-of-type > strong:first-child{
-    display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
-    letter-spacing:-.005em; color:var(--ink); margin:0 0 .35em; }
   .page__content > ul > li.story:has(a[href*="arxiv.org"]):not(:has(> p:first-of-type > strong:nth-of-type(2))) > p:first-of-type > strong:first-child code{
     display:inline; font-family:var(--sans); font-size:.62em; font-weight:500; text-transform:uppercase;
-    letter-spacing:.05em; color:var(--muted-ui); background:transparent; border:0; padding:0; }
+    letter-spacing:.05em; color:var(--muted-ui); border:0; padding:0; }
 
   /* tags as delicate pills */
   .page__content code{ font-family:var(--sans); font-size:.72em; font-weight:500; text-transform:uppercase;
@@ -557,7 +544,8 @@ document.addEventListener('DOMContentLoaded', function () {
   /* LARGE figures: real size (natural, never upscaled), framed, below the story; full-width on mobile */
   a.auto-preview-wrap{ order:2; align-self:flex-start; display:block; margin:1em 0 0; cursor:zoom-in; }
   .auto-preview-wrap img.auto-preview{ display:block; width:auto; max-width:100%; max-height:420px;
-    border:1px solid var(--frame); background:var(--field); padding:5px; box-shadow:none; }
+    border:1px solid var(--frame); border-radius:4px; background:var(--field); padding:5px;
+    box-shadow:none; object-fit:cover; }
   a.auto-preview-wrap:hover img.auto-preview{ opacity:.9; }
   img.auto-preview.fav{ display:inline-block; width:16px; height:16px; margin:0 .3em; border:0;
     border-radius:2px; padding:0; vertical-align:middle; }
@@ -640,7 +628,7 @@ document.addEventListener('DOMContentLoaded', function () {
   .entries-list{ max-width:44em; margin:0 auto; }
   .entries-list .list__item{ border-bottom:1px solid var(--hair); padding:.85em 0; margin:0; }
   .entries-list .archive__item-title{ font-family:var(--display); font-weight:600; font-size:1.2em; margin:0 0 .1em; }
-  .entries-list .archive__item-title a{ text-decoration:none; color:var(--ink); }
+  .entries-list .archive__item-title a{ color:var(--ink); }
   .entries-list .archive__item-title a:hover{ color:var(--accent); }
   .entries-list .page__meta{ font-family:var(--sans); text-transform:uppercase; letter-spacing:.08em;
     font-size:.66em; color:var(--muted); margin:0; }
