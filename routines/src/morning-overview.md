@@ -101,6 +101,7 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage window: ~16:00 prior day to n
 ## Coverage footer
 - Sources used: T1 = N items, T2 = N items, T3 = 0 (per policy)
 - Direct fetches: N | via-snippet citations: N
+- Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
 - Feeds hit (with reachability and method): arXiv RSS cs.LG {ok via curl|ok via WebFetch|fail — HTTP 403}, Quanta RSS {...}, Nature RSS {...}
 - Gaps: things you tried to find but couldn't.
 ```

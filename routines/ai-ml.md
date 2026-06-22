@@ -136,12 +136,13 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: ~06:30 to now._
 - Sources used: T1 = N, T2 = N, T3 = 0
 - Vendor PR items: N (tagged inline)
 - Direct fetches: N | via-snippet citations: N
+- Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
 - Gaps: ...
 ```
 
 # Constraints
 
-- This is the AI/ML home — comprehensive coverage of today's industry/lab activity. 2000–4000 words target.
+- This is the AI/ML home — comprehensive coverage of today's industry/lab activity. 1500–2500 words target.
 - Don't cover ML research papers here — those go to Morning Overview (1st arXiv batch) and Cyber+Papers (2nd arXiv batch).
 - Tag `[vendor PR]` aggressively — most lab blog posts are PR.
 - For benchmark claims: state the methodology if known. "Beats GPT-X on Y" is meaningless without knowing Y.

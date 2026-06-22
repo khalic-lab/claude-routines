@@ -188,6 +188,7 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: full day._
 - Cyber items: N (CVEs: N, advisories: N, threat intel: N)
 - Papers: N (filtered from M reviewed)
 - Direct fetches: N | via-snippet citations: N
+- Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
 - Feeds hit (with reachability and method): NVD JSON {ok via curl|ok via WebFetch|fail — HTTP 403}, CISA KEV JSON {...}, arXiv RSS cs.LG {...}, SRF RSS {...}, Le Temps RSS {...}, Al Jazeera RSS {...}
 - Gaps: ...
 ```
@@ -195,7 +196,7 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: full day._
 # Constraints
 
 - Cybersecurity section: numbers and identifiers matter. Always include CVE IDs when applicable. Always link to the NVD entry (preferred) or vendor advisory.
-- Length: 2500–5000 words. Swiss and World expand the volume vs the old Cyber+Papers brief; cyber drives the variability; a skipped ML papers section is fine.
+- Length: 2000–3500 words. Swiss and World expand the volume vs the old Cyber+Papers brief; cyber drives the variability; a skipped ML papers section is fine.
 - Don't cover non-cyber tech (AI industry, markets) — those are owned by other routines.
 
 # Pedagogical tone (added 2026-05-30 per user feedback)

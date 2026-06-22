@@ -152,6 +152,9 @@ Scan all citations for any domain in the writers' "Confirmed unavailable" list. 
 
 Flag streams below their range. The patch proposal is usually: add a feed source the writer is missing, or fix a feed URL that's wrong.
 
+## L. Output volume (token-cost proxy)
+Parse each Coverage footer's `Word count: N` line (added 2026-06-22; if absent, mark `pre-rollout`). Per stream: report the mean word count for the week and the trend vs the previous review. Flag any stream whose mean grew >25% week-over-week with no matching rise in story count (Opus output tokens scale with words — this is the spend proxy until real token accounting exists). Cross-reference §I repetition: a stream that is both repetitive and long is the prime candidate for the output-cap / quiet-day levers (see docs/SPIKE-writer-token-levers.md).
+
 # Output structure
 
 ```markdown
