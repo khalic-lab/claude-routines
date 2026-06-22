@@ -56,6 +56,51 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.appendChild(stub);
   }
 }, { once: true });
+
+// Normalize TIGHT story lists to the LOOSE shape so one CSS path serves both.
+// kramdown emits <li><strong>…</strong> text…  (no <p>) when story bullets aren't
+// blank-separated; .page__content > ul > li{display:flex;flex-direction:column} then drops
+// every inline run (each <strong>/<em>/text node) onto its own line, and the
+// `> p:first-of-type` headline rule can't match (no <p>). Wrap each tight story <li>'s
+// inline run in a generated <p class="story-body">, inserted BEFORE the figure wrap and any
+// nested <ul>/<ol> so the figure (order:2) + sub-bullets (order:3) ordering is preserved.
+// Registered here (before the figure observer and the feedback pass) so they see the
+// normalized DOM. No-op on already-loose bullets (lead is <p>), non-story bullets (lead node
+// isn't <strong>), and Coverage-footer / "Gaps:" bullets (footer-position + lead-text guard).
+document.addEventListener('DOMContentLoaded', function () {
+  var content = document.querySelector('.page__content');
+  if (!content) return;
+  // Stop at the Coverage footer — bullets after it are meta/Gaps, not stories
+  // (mirrors the feedback pass's footer guard below).
+  var footer = null;
+  content.querySelectorAll('h1,h2,h3,h4').forEach(function (h) {
+    if (!footer && /coverage footer/i.test(h.textContent || '')) footer = h;
+  });
+  content.querySelectorAll(':scope > ul > li').forEach(function (li) {
+    if (footer && (footer.compareDocumentPosition(li) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
+    // The lead must be the bold headline itself: skip leading whitespace and any (async)
+    // figure wrap; a leading text run like "Gaps: " or an existing <p> (loose) means skip.
+    var lead = li.firstChild;
+    while (lead && (
+      (lead.nodeType === 3 && !lead.nodeValue.trim()) ||
+      (lead.nodeType === 1 && lead.classList && lead.classList.contains('auto-preview-wrap'))
+    )) lead = lead.nextSibling;
+    if (!lead || lead.nodeType !== 1 || lead.tagName !== 'STRONG') return;
+    var p = document.createElement('p');
+    p.className = 'story-body';
+    var node = li.firstChild;
+    while (node) {
+      var next = node.nextSibling;
+      var isBlock = node.nodeType === 1 && (
+        (node.classList && node.classList.contains('auto-preview-wrap')) ||
+        node.tagName === 'UL' || node.tagName === 'OL');
+      if (!isBlock) p.appendChild(node);   // move the inline run into the <p>
+      node = next;
+    }
+    var sub = li.querySelector(':scope > ul, :scope > ol');
+    li.insertBefore(p, sub || null);       // <p> before any nested sub-list
+  });
+});
 </script>
 <script>
 (function () {
@@ -459,13 +504,25 @@ document.addEventListener('DOMContentLoaded', function () {
   .page__content > ul > li > p:first-of-type > strong:first-child{
     display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
     letter-spacing:-.005em; color:var(--ink); margin:0 0 .35em; }
-  /* arXiv / paper items (they carry a PDF chip): the ID+date 1st-bold is small meta, the 2nd-bold IS the title */
-  .page__content > ul > li:has(a.auto-preview.pdf) > p:first-of-type > strong:first-child{
+  /* arXiv / paper items. Two writer markup shapes occur in the corpus, both keyed on the STATIC
+     citation anchor a[href*="arxiv.org"] (present at build time — no chip FOUC):
+       (A) two <strong>:  `arXiv:ID · submitted DATE` <code>[preprint]</code> — `Real Title`
+       (B) one  <strong>: `<code>arXiv:ID</code> (date) — Title`
+     (A): demote the id+date 1st strong to small grey meta, promote the 2nd strong to the headline.
+     (B): promote the single strong to the headline, demote its inner <code> id to small grey meta.
+     Disambiguated by whether a 2nd strong exists, so each rule fires only on its own shape. */
+  .page__content > ul > li:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:nth-of-type(2)) > p:first-of-type > strong:first-child{
     display:inline; font-family:var(--sans); font-weight:500; font-size:.7em; text-transform:uppercase;
     letter-spacing:.05em; color:var(--muted); }
-  .page__content > ul > li:has(a.auto-preview.pdf) > p:first-of-type > strong:nth-of-type(2){
+  .page__content > ul > li:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:nth-of-type(2)) > p:first-of-type > strong:nth-of-type(2){
     display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
     letter-spacing:-.005em; color:var(--ink); margin:.2em 0 .35em; }
+  .page__content > ul > li:has(a[href*="arxiv.org"]):not(:has(> p:first-of-type > strong:nth-of-type(2))) > p:first-of-type > strong:first-child{
+    display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
+    letter-spacing:-.005em; color:var(--ink); margin:0 0 .35em; }
+  .page__content > ul > li:has(a[href*="arxiv.org"]):not(:has(> p:first-of-type > strong:nth-of-type(2))) > p:first-of-type > strong:first-child code{
+    display:inline; font-family:var(--sans); font-size:.62em; font-weight:500; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--muted); background:transparent; border:0; padding:0; }
 
   /* tags as delicate pills */
   .page__content code{ font-family:var(--sans); font-size:.72em; font-weight:500; text-transform:uppercase;
