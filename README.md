@@ -8,4 +8,4 @@ Stories are deduped against a rolling embeddings index so the same item isn't re
 - **Briefs:** `_posts/{YYYY-MM-DD}-{slug}.md` (`overview`, `ai-ml`, `cyber-papers`, `weekend`, `evaluator`)
 - **How it works / current state:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
 - **Working in this repo (for agents):** [`CLAUDE.md`](CLAUDE.md)
-- **Design proposals & decisions:** `SPIKE-*.md`
+- **Design proposals & decisions:** `docs/SPIKE-*.md` · **Dated archive:** `docs/archive/`

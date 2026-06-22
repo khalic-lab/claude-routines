@@ -20,7 +20,7 @@ Subcommands
 Because cosine cannot separate a restated rerun from a genuinely-developing story
 (both span ~0.6-0.95), most repeat-suppression is the (1) deterministic exact-source
 layer plus the DEDUP.md ONGOING-defaults-to-drop policy — NOT the cosine threshold. See
-the calibration note at T_HIGH_DEFAULT and DEDUP-DIAGNOSIS-2026-05-31.md.
+the calibration note at T_HIGH_DEFAULT and docs/archive/DEDUP-DIAGNOSIS-2026-05-31.md.
 
 Embedding access (check / record / backfill):
   --worker  embed-proxy URL   (or env EMBED_WORKER_URL)

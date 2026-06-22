@@ -2,7 +2,7 @@
 
 Thumbs (+1 / −1) and an optional free-text reason from Rafael on the briefs, captured on the
 Jekyll site, landed in this directory, and folded into the writers' editorial guidance **through a
-human gate**. Design + rationale: `REVIEW-2026-06-08-feedback-and-dates.md`.
+human gate**. Design + rationale: `docs/archive/REVIEW-2026-06-08-feedback-and-dates.md`.
 
 ## Status — LIVE (2026-06-18)
 
