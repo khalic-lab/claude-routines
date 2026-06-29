@@ -514,18 +514,23 @@ document.addEventListener('DOMContentLoaded', function () {
   .page__content > ul > li.story > p:first-of-type > strong:first-child{
     display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
     letter-spacing:-.005em; color:var(--ink); margin:0 0 .35em; }
-  /* arXiv / paper items. Two writer markup shapes occur in the corpus, both keyed on the STATIC
-     citation anchor a[href*="arxiv.org"] (present at build time — no chip FOUC):
-       (A) two <strong>:  `arXiv:ID · submitted DATE` <code>[preprint]</code> — `Real Title`
-       (B) one  <strong>: `<code>arXiv:ID</code> (date) — Title`
-     (A): demote the id+date 1st strong to small grey meta, promote the 2nd strong to the headline.
-     (B): the single strong is already the headline via the default rule above; here we only
-          demote its inner <code> id to small grey meta.
-     Shape-A rules are gated on a 2nd strong; the shape-B code rule on its absence. */
-  .page__content > ul > li.story:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:nth-of-type(2)) > p:first-of-type > strong:first-child{
+  /* arXiv / paper items. The writer emits SEVERAL bold-markup shapes; only the canonical
+     citation-led shape gets special treatment, detected by its STRUCTURAL signature: the lead
+     <strong> (the `arXiv:ID · date` meta) is immediately followed by the `[preprint]`/citation
+     <code> badge — i.e. `strong:first-child + code`. Gating on THAT (not merely "a 2nd strong
+     exists") is essential: headline-led items use a later **bold** for ordinary inline emphasis,
+     and the old 2nd-strong gate wrongly promoted that emphasis to a block headline while demoting
+     the real headline to meta (the "line break around emphasis" bug). Keyed on the static
+     a[href*="arxiv.org"] anchor (present at build time — no chip FOUC):
+       Citation-led:  `arXiv:ID · submitted DATE` <code>[preprint]</code> — `Real Title`
+         → demote the id+date lead strong to small grey meta, promote the 2nd strong (title) to headline.
+       Headline-led:  `Real Title.` … (no code after the lead strong) → falls through to the
+         default headline rule above; any later **bold** stays inline emphasis.
+     The shape-B rule (single strong wrapping a <code> id) only demotes that inner id code. */
+  .page__content > ul > li.story:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:first-child + code) > p:first-of-type > strong:first-child{
     display:inline; font-family:var(--sans); font-weight:500; font-size:.7em; text-transform:uppercase;
     letter-spacing:.05em; color:var(--muted-ui); }
-  .page__content > ul > li.story:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:nth-of-type(2)) > p:first-of-type > strong:nth-of-type(2){
+  .page__content > ul > li.story:has(a[href*="arxiv.org"]):has(> p:first-of-type > strong:first-child + code) > p:first-of-type > strong:nth-of-type(2){
     display:block; font-family:var(--display); font-weight:600; font-size:1.32em; line-height:1.18;
     letter-spacing:-.005em; color:var(--ink); margin:.2em 0 .35em; }
   .page__content > ul > li.story:has(a[href*="arxiv.org"]):not(:has(> p:first-of-type > strong:nth-of-type(2))) > p:first-of-type > strong:first-child code{
