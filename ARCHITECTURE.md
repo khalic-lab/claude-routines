@@ -19,14 +19,16 @@
 ║                                                                                      ║
 ║  env_018zypSdRSdGdrZ8J5usqCWA   (network settings changed 2026-05-25 → Custom)        ║
 ║  ┌────────────────────────────────────────────────────────────────────────────┐     ║
-║  │ WRITERS (claude-opus-4-8)      cron (UTC)       output file          MCP       │    ║
-║  │  • Morning Overview          30 4 * * *     _posts/{d}-overview.md   D,H,G      │    ║
-║  │  • AI/ML                     30 19 * * *    _posts/{d}-ai-ml.md      D,H        │    ║
-║  │  • Cyber+Papers (Evening)    0 17 * * *     _posts/{d}-cyber-papers  D,H,G ◀── consolidated
-║  │  • Weekend Deep Read         30 7 * * 6     _posts/{d}-weekend.md    D,H,G      │   evening EMAIL
-║  │  WATCH (claude-haiku-4-5)    0 */4 * * *    pending-notifications/   D,H,G,Cal  │    ║
+║  │ WRITERS (claude-opus-4-8)      cron (UTC)        output file          email     │    ║
+║  │  • News (CH + world, eve)     0 17 * * *     _posts/{d}-news.md       weekday    │   ║
+║  │  • AI/ML (+ arXiv papers)     0 10 * * 2,5   _posts/{d}-ai-ml.md      none       │   ║
+║  │  • Science (non-AI, weekly)   0 15 * * 3     _posts/{d}-science.md    none       │   ║
+║  │  • Weekend Deep Read          30 7 * * 6     _posts/{d}-weekend.md    digest     │   ║
+║  │  WATCH (claude-haiku-4-5)     0 */4 * * *    pending-notifications/   —          │   ║
 ║  │      reads watches.yml → on match writes stub + updates last_fired              │    ║
-║  │  EVALUATOR (claude-opus-4-8) 30 9 * * 0     _posts/{d}-evaluator.md  D,G         │    ║
+║  │  EVALUATOR (claude-opus-4-8)  30 9 * * 0     _posts/{d}-evaluator.md  digest     │   ║
+║  │  ⮑ all triggers (except Watch) are BOOTSTRAP SHIMS → git pull + read              │   ║
+║  │     routines/<slug>.md at fire time (see routines/MANIFEST.md)                    │   ║
 ║  │      reads last 7d of _posts → Health table + Patch proposals (human-applied)   │    ║
 ║  └────────────────────────────────────────────────────────────────────────────┘     ║
 ║   MCP legend: D=Google-Drive  H=Hugging-Face  G=Gmail  Cal=Google-Calendar            ║
@@ -73,6 +75,18 @@
 > content**. The consolidated evening email covers three streams (World/Switzerland, AI/ML,
 > Cyber+Papers). Published May market briefs are kept as a frozen archive; the disabled trigger
 > config is retained server-side (the RemoteTrigger API exposes no delete).
+
+> **Redesigned 2026-06-29 (cadence + topics — `docs/SPIKE-2026-06-29-cadence-redesign.md`).** Replaced the
+> old daily Overview + Cyber+Papers + AI/ML cadence with the per-topic lineup above: **News** (daily evening,
+> CH+world — retargets the Morning Overview trigger), **AI/ML** (Tue+Fri midday, now also carries ALL arXiv
+> ML papers + author affiliations), **Science** (NEW weekly Wed, non-AI science — retargets the Cyber+Papers
+> trigger), **Weekend** (now the in-depth weekly revisit; dedup scoped to its own slug via `--only-slug`).
+> **Security/cyber dropped pipeline-wide; the consolidated evening email is gone** (News = News-only weekday
+> email; AI/ML + Science = none; Weekend keeps its digest). Trigger IDs are REUSED (no delete API); the
+> `overview`/`cyber-papers` slugs are retired (old posts + index files kept as archive). **Triggers now run
+> BOOTSTRAP SHIMS** (except Watch) that `git pull` + read `routines/<slug>.md` at fire time — so prompt edits
+> are repo-only, no RemoteTrigger mirror (see `routines/MANIFEST.md` + CLAUDE.md "Editing a routine").
+> Affiliations: Semantic Scholar `authors.affiliations` on AI/ML, Science, Weekend paper items.
 
 > **Changed 2026-05-30:** Per-routine model tiers split by job (see `docs/SPIKE-model-tiering.md`):
 > **writing** — the 4 writers (Overview, AI/ML, Cyber+Papers, Weekend) moved

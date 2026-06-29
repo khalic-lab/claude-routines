@@ -1,191 +1,113 @@
 # Routine manifest — claude.ai RemoteTrigger config
 
-Byte-faithful snapshots of the live routine prompts (`*.md` beside this file), **except** the
-fetch-proxy bearer is redacted to `Bearer ${FETCH_PROXY_TOKEN}` in the four writer prompts —
-substitute the real value (the `fetch-proxy` Worker bearer; lives in the Worker secret +
-`tools/fetch-proxy/.dev.vars`) when mirroring back to RemoteTrigger. All routines share
-`environment_id = env_018zypSdRSdGdrZ8J5usqCWA`.
+**The live trigger prompts are BOOTSTRAP SHIMS, not full prompts (changed 2026-06-29).** Each
+writer/evaluator trigger's `events[0].data.message.content` is a small shim that tells the routine to
+`git pull` and read its real prompt from `routines/<file>.md` in the cloned repo, then execute it. The shim
+also injects the fetch-proxy bearer, so the repo keeps the `${FETCH_PROXY_TOKEN}` placeholder and the real
+token lives only in the trigger shim + the Worker secret.
 
-These are NOT auto-synced. To change a routine: edit the file here, mirror it to RemoteTrigger
-(`RemoteTrigger update`, full `session_context` from below), then byte-verify (see `../CLAUDE.md`).
+**Consequence — to change a routine's PROMPT, just edit `routines/src/<slug>.md` (or a shared partial), run
+`python3 routines/assemble.py`, and commit + push. NO `RemoteTrigger update` needed.** The routine reads the
+latest file at fire time. A `RemoteTrigger update` is only needed to change a trigger's **schedule**
+(`cron_expression`), **display name**, **session_context** (tools/model/sources), or the **shim text /
+injected token** itself. All routines share `environment_id = env_018zypSdRSdGdrZ8J5usqCWA`.
 
-| Routine | file | trigger_id | cron | model | enabled |
+The `*.md` files beside this manifest ARE the live prompts (read at runtime via the shim); the four writer
+prompts are generated from `src/` + `_shared/` (see `assemble.py`). `watch.md` is the exception — Watch
+still carries its full prompt inline in the trigger (not shimmed).
+
+| Routine | prompt file | trigger_id | cron (UTC / CEST) | model | shim? |
 |---|---|---|---|---|---|
-| News: Morning Overview | `morning-overview.md` | `trig_012KfuF2Fc8KxNRS9KT1iuYb` | `30 4 * * *` (daily 04:30 UTC (06:30 CEST)) | `claude-opus-4-8` | True |
-| News: AI/ML | `ai-ml.md` | `trig_01QVL6eSmHTUrmnSLHrpNN9Q` | `30 19 * * *` (daily 19:30 UTC (21:30 CEST)) | `claude-opus-4-8` | True |
-| News: Cyber + Papers | `cyber-papers.md` | `trig_01YLiCr5YJ2XNh2QyPbkyzQP` | `0 17 * * *` (daily 17:00 UTC (19:00 CEST)) | `claude-opus-4-8` | True |
-| News: Weekend Deep Read | `weekend.md` | `trig_01XKzge4DxP6wTjLwtkoYeqj` | `30 7 * * 6` (Saturdays 07:30 UTC (09:30 CEST)) | `claude-opus-4-8` | True |
-| News: Weekly Evaluator | `weekly-evaluator.md` | `trig_01F5npsKTQTLKekAZ5BczKtG` | `30 9 * * 0` (Sundays 09:30 UTC (11:30 CEST)) | `claude-opus-4-8` | True |
-| Watch | `watch.md` | `trig_01FgrFMfsreu597nKUXEEQMt` | `0 */4 * * *` (every 4h) | `claude-haiku-4-5-20251001` | True |
+| News | `news.md` | `trig_012KfuF2Fc8KxNRS9KT1iuYb` | `0 17 * * *` (17:00 / 19:00, daily) | `claude-opus-4-8` | yes |
+| AI/ML | `ai-ml.md` | `trig_01QVL6eSmHTUrmnSLHrpNN9Q` | `0 10 * * 2,5` (10:00 / 12:00, Tue+Fri) | `claude-opus-4-8` | yes |
+| Science | `science.md` | `trig_01YLiCr5YJ2XNh2QyPbkyzQP` | `0 15 * * 3` (15:00 / 17:00, Wed) | `claude-opus-4-8` | yes |
+| Weekend Deep Read | `weekend.md` | `trig_01XKzge4DxP6wTjLwtkoYeqj` | `30 7 * * 6` (07:30 / 09:30, Sat) | `claude-opus-4-8` | yes |
+| Weekly Evaluator | `weekly-evaluator.md` | `trig_01F5npsKTQTLKekAZ5BczKtG` | `30 9 * * 0` (09:30 / 11:30, Sun) | `claude-opus-4-8` | yes |
+| Watch | `watch.md` | `trig_01FgrFMfsreu597nKUXEEQMt` | `0 */4 * * *` (every 4h) | `claude-haiku-4-5-20251001` | no (full inline) |
 
-## Full `session_context` per routine (verbatim — required to reconstruct the update body)
+> **Retired 2026-06-29** (trigger IDs REUSED above): `morning-overview.md` → retargeted to **News** (evening
+> daily, CH+world); `cyber-papers.md` → retargeted to **Science** (weekly Wed, non-AI science). Security
+> dropped pipeline-wide; the old consolidated evening email and the AI/ML/science split are gone. The
+> Markets trigger (`trig_01GBugAS5qw88yQK3tv8kKWx`) remains disabled.
 
-### morning-overview
+## Bootstrap shim (the live trigger content, verbatim shape)
+
+Each shimmed trigger's `content` is (Name/file vary per routine):
+
+```
+You are the {Name} routine for the claude-routines news pipeline. Your complete, authoritative
+instructions live in the repo, not in this message.
+
+1. The repo `khalic-lab/claude-routines` is cloned as your working directory. Run
+   `git pull --ff-only origin main` to get the latest.
+2. Read `routines/{file}.md` with the Read tool. That file is your FULL prompt for this run -- execute it
+   exactly, top to bottom, as if its contents were this message. Do not summarize or describe it; follow it.
+3. Wherever that file shows the literal placeholder ${FETCH_PROXY_TOKEN}, use this bearer token instead:
+   <the fetch-proxy Worker bearer — in the Worker secret + tools/fetch-proxy/.dev.vars>
+
+If `git pull` fails or `routines/{file}.md` is missing or unreadable, do NOT fabricate a brief: write a
+short post (and a notification stub) noting the routine prompt was unreadable, then stop.
+```
+
+The **Weekly Evaluator** shim omits step 3's token line (it makes no fetch-proxy calls) and says "review"
+rather than "brief".
+
+## Full `session_context` per routine (verbatim — required to reconstruct a schedule/shim/session update)
+
+### news (trigger `trig_012KfuF2Fc8KxNRS9KT1iuYb`)
 ```json
 {
-  "allowed_tools": [
-    "WebFetch",
-    "WebSearch",
-    "Read",
-    "Write",
-    "Bash",
-    "Edit",
-    "Glob",
-    "Grep"
-  ],
+  "allowed_tools": ["WebFetch", "WebSearch", "Read", "Write", "Bash", "Edit", "Glob", "Grep"],
   "model": "claude-opus-4-8",
-  "sources": [
-    {
-      "git_repository": {
-        "url": "https://github.com/khalic-lab/claude-routines"
-      }
-    }
-  ]
+  "sources": [{"git_repository": {"url": "https://github.com/khalic-lab/claude-routines"}}]
 }
 ```
 
-### ai-ml
+### ai-ml (trigger `trig_01QVL6eSmHTUrmnSLHrpNN9Q`)
 ```json
 {
-  "allowed_tools": [
-    "WebFetch",
-    "WebSearch",
-    "Read",
-    "Write",
-    "Bash",
-    "Edit",
-    "Glob",
-    "Grep"
-  ],
+  "allowed_tools": ["WebFetch", "WebSearch", "Read", "Write", "Bash", "Edit", "Glob", "Grep"],
   "model": "claude-opus-4-8",
-  "sources": [
-    {
-      "git_repository": {
-        "url": "https://github.com/khalic-lab/claude-routines"
-      }
-    }
-  ]
+  "sources": [{"git_repository": {"url": "https://github.com/khalic-lab/claude-routines"}}]
 }
 ```
 
-### cyber-papers
+### science (trigger `trig_01YLiCr5YJ2XNh2QyPbkyzQP`)
 ```json
 {
-  "allowed_tools": [
-    "WebFetch",
-    "WebSearch",
-    "Read",
-    "Write",
-    "Bash",
-    "Edit",
-    "Glob",
-    "Grep"
-  ],
+  "allowed_tools": ["WebFetch", "WebSearch", "Read", "Write", "Bash", "Edit", "Glob", "Grep"],
   "model": "claude-opus-4-8",
-  "sources": [
-    {
-      "git_repository": {
-        "url": "https://github.com/khalic-lab/claude-routines"
-      }
-    }
-  ]
+  "sources": [{"git_repository": {"url": "https://github.com/khalic-lab/claude-routines"}}]
 }
 ```
 
-### weekend
+### weekend (trigger `trig_01XKzge4DxP6wTjLwtkoYeqj`)
 ```json
 {
-  "allowed_tools": [
-    "WebFetch",
-    "WebSearch",
-    "Read",
-    "Write",
-    "Bash",
-    "Edit",
-    "Glob",
-    "Grep"
-  ],
+  "allowed_tools": ["WebFetch", "WebSearch", "Read", "Write", "Bash", "Edit", "Glob", "Grep"],
   "model": "claude-opus-4-8",
-  "sources": [
-    {
-      "git_repository": {
-        "url": "https://github.com/khalic-lab/claude-routines"
-      }
-    }
-  ]
+  "sources": [{"git_repository": {"url": "https://github.com/khalic-lab/claude-routines"}}]
 }
 ```
 
-### weekly-evaluator
+### weekly-evaluator (trigger `trig_01F5npsKTQTLKekAZ5BczKtG`)
 ```json
 {
-  "allowed_tools": [
-    "WebFetch",
-    "WebSearch",
-    "Read",
-    "Write",
-    "Bash",
-    "Edit",
-    "Glob",
-    "Grep"
-  ],
+  "allowed_tools": ["WebFetch", "WebSearch", "Read", "Write", "Bash", "Edit", "Glob", "Grep"],
   "autofix_on_pr_create": false,
   "model": "claude-opus-4-8",
-  "outcomes": [
-    {
-      "git_repository": {
-        "git_info": {
-          "branches": [
-            "claude/admiring-edison"
-          ],
-          "repo": "khalic-lab/claude-routines"
-        }
-      }
-    }
-  ],
-  "sources": [
-    {
-      "git_repository": {
-        "url": "https://github.com/khalic-lab/claude-routines"
-      }
-    }
-  ]
+  "outcomes": [{"git_repository": {"git_info": {"branches": ["claude/admiring-edison"], "repo": "khalic-lab/claude-routines"}}}],
+  "sources": [{"git_repository": {"url": "https://github.com/khalic-lab/claude-routines"}}]
 }
 ```
 
-### watch
+### watch (trigger `trig_01FgrFMfsreu597nKUXEEQMt`)
 ```json
 {
-  "allowed_tools": [
-    "WebFetch",
-    "WebSearch",
-    "Read",
-    "Write",
-    "Bash",
-    "Edit",
-    "Glob",
-    "Grep"
-  ],
+  "allowed_tools": ["WebFetch", "WebSearch", "Read", "Write", "Bash", "Edit", "Glob", "Grep"],
   "autofix_on_pr_create": false,
   "model": "claude-haiku-4-5-20251001",
-  "outcomes": [
-    {
-      "git_repository": {
-        "git_info": {
-          "branches": [
-            "claude/serene-mayer"
-          ],
-          "repo": "khalic-lab/claude-routines"
-        }
-      }
-    }
-  ],
-  "sources": [
-    {
-      "git_repository": {
-        "url": "https://github.com/khalic-lab/claude-routines"
-      }
-    }
-  ]
+  "outcomes": [{"git_repository": {"git_info": {"branches": ["claude/serene-mayer"], "repo": "khalic-lab/claude-routines"}}}],
+  "sources": [{"git_repository": {"url": "https://github.com/khalic-lab/claude-routines"}}]
 }
 ```

@@ -13,41 +13,40 @@ bridge → ntfy), and dedupe stories against a rolling embeddings index under `i
 > Don't duplicate mutable facts (models, schedules) into this file — they live in
 > `ARCHITECTURE.md` only. Past drift came from copies going stale.
 
-## Editing a routine (`RemoteTrigger` tool) — read before any update
-Use the `RemoteTrigger` tool (OAuth handled in-tool), never curl. The prompt + model live under
-`job_config.ccr`.
+## Editing a routine — read before any change (BOOTSTRAP-SHIM model, since 2026-06-29)
+**The live triggers no longer hold the full prompt.** Each writer/evaluator trigger's
+`events[0].data.message.content` is a small **bootstrap shim**: it tells the routine to `git pull` and read
+its real prompt from `routines/<file>.md` in the cloned repo, then execute it, injecting the fetch-proxy
+bearer wherever the file shows `${FETCH_PROXY_TOKEN}` (so the repo keeps the placeholder; the real token
+lives only in the shim + the Worker secret). `routines/MANIFEST.md` documents the shim shape + each
+trigger's id, cron, and full `session_context`.
 
-**The live prompts are mirrored in `routines/` — that directory is the source of truth.** The four
-writer prompts (`overview`, `ai-ml`, `cyber-papers`, `weekend`) are **generated**: their
-stream-specific bodies live in `routines/src/<slug>.md`, and the five byte-identical shared sections
-(Newsroom ethos, Reader profile + source weights, Format, Pedagogical tone, Date discipline) live
-once in `routines/_shared/*.md`, pulled in via `<!-- include: _shared/<name>.md -->` placeholders.
-Edit the source (or the shared partial — a one-place edit now hits all four writers), run
-`python3 routines/assemble.py` to regenerate `routines/<slug>.md`, then mirror that to RemoteTrigger.
-`python3 routines/assemble.py check` is the drift guard (run before mirroring): non-zero exit means a
-generated prompt no longer matches its sources. Watch and Evaluator are **not** assembled — edit
-`routines/watch.md` / `routines/weekly-evaluator.md` directly. `routines/MANIFEST.md` holds each
-trigger's id + full `session_context` (and notes the redacted fetch-proxy token to re-substitute).
-After ANY RemoteTrigger edit, re-run `assemble.py` (or re-snapshot a non-assembled routine) so the
-repo doesn't drift from live.
+**To change a routine's PROMPT (the common case): edit the repo, do NOT touch RemoteTrigger.**
+- Writer prompts (`news`, `ai-ml`, `science`, `weekend`) are **generated**: edit the stream body in
+  `routines/src/<slug>.md`, or a shared partial in `routines/_shared/*.md` (one edit hits all four), then
+  `python3 routines/assemble.py` to regenerate `routines/<slug>.md`. `python3 routines/assemble.py check`
+  is the drift guard (non-zero exit = a generated file no longer matches its sources).
+- Evaluator (`routines/weekly-evaluator.md`) is **not** assembled — edit it directly. Watch is the only
+  routine still NOT shimmed (full prompt inline in the trigger) — to change it you must use RemoteTrigger
+  (below) and edit `routines/watch.md` to match.
+- Then **commit + push** (the shim `git pull`s at fire time and reads the new file). That's the whole edit
+  — no mirroring, no byte-diff, no token substitution.
 
-1. `RemoteTrigger get <id>` first. Copy `events[0].data.message.content`, the **full**
-   `session_context`, and `environment_id`.
-2. Send the update wrapped as `{"job_config":{"ccr":{environment_id, events, session_context}}}`.
-   Event shape: `{"data":{"type":"user","message":{"role":"user","content":"…"}}}`.
-   Send the **complete** `session_context` — every key (`allowed_tools`, `model`, `sources`, and
-   any extras like `outcomes` / `autofix_on_pr_create`). A model change = swap only
-   `session_context.model`, keep everything else verbatim.
-3. **Verify with a follow-up `get`.** Traps: unwrapped top-level fields return HTTP 200 but
-   silently no-op the prompt; a partial `session_context` clobbers the omitted keys. The re-GET
-   proves the value is *stored*, not that the env *executes* it — that only shows at the next
-   routine fire.
+**Use `RemoteTrigger update` ONLY to change a trigger's schedule (`cron_expression`), display `name`,
+`session_context` (tools/model/sources), or the shim/injected-token itself.** Protocol:
+1. `RemoteTrigger get <id>` first; copy the **full** `session_context` + `environment_id` (+ shim content if
+   not changing it).
+2. Update body: top-level `cron_expression` / `name` as needed, plus
+   `{"job_config":{"ccr":{environment_id, events, session_context}}}`. Event shape:
+   `{"data":{"type":"user","message":{"role":"user","content":"…"}}}`. Send the **complete**
+   `session_context` — a partial clobbers omitted keys (e.g. the Evaluator's `outcomes` /
+   `autofix_on_pr_create`). The `update` response echoes the stored trigger, so it doubles as the verify.
+3. Keep the shim **small** — full ~20 KB prompts CANNOT be inlined through the tool (the JSON body fails to
+   parse / truncates around ~10–24 KB); the shim model exists precisely so trigger bodies stay tiny. Use
+   ASCII-only in the shim to avoid unicode-escape issues.
 
-`RemoteTrigger` is **main-session-only** — sub-agents can't load it (it isn't in their tool grant),
-so the GET→edit→update→verify must run in the main session. For a big prompt, don't hand-escape
-~10 KB of JSON: pull the exact current content from the session transcript JSONL, edit it
-programmatically (string-insert against a unique anchor), send the update, then re-GET and
-**byte-diff** the stored content against the intended text — retry if it differs.
+`RemoteTrigger` is **main-session-only** — sub-agents can't load it. The re-GET/echo proves the value is
+*stored*, not that the env *executes* it — that only shows at the next routine fire.
 
 ## Git conventions
 - **Commit or push only when the user asks.** Direct commits to `main` are this repo's
@@ -60,12 +59,12 @@ programmatically (string-insert against a unique anchor), send the update, then 
 - Repo `github.com/khalic-lab/claude-routines` (private), branch `main`. Site:
   `https://khalic-lab.github.io/claude-routines/`.
 - Environment (all routines): `env_018zypSdRSdGdrZ8J5usqCWA`.
-- Trigger IDs:
-  - Morning Overview — `trig_012KfuF2Fc8KxNRS9KT1iuYb`
-  - AI/ML — `trig_01QVL6eSmHTUrmnSLHrpNN9Q`
-  - Cyber+Papers (Evening) — `trig_01YLiCr5YJ2XNh2QyPbkyzQP`
-  - Weekend Deep Read — `trig_01XKzge4DxP6wTjLwtkoYeqj`
-  - Weekly Evaluator — `trig_01F5npsKTQTLKekAZ5BczKtG`
+- Trigger IDs (names/targets after the 2026-06-29 redesign; IDs are stable — old streams retargeted):
+  - News (daily evening; ex–Morning Overview) — `trig_012KfuF2Fc8KxNRS9KT1iuYb`
+  - AI/ML (Tue+Fri midday) — `trig_01QVL6eSmHTUrmnSLHrpNN9Q`
+  - Science (weekly Wed; ex–Cyber+Papers, security dropped) — `trig_01YLiCr5YJ2XNh2QyPbkyzQP`
+  - Weekend Deep Read (Sat) — `trig_01XKzge4DxP6wTjLwtkoYeqj`
+  - Weekly Evaluator (Sun) — `trig_01F5npsKTQTLKekAZ5BczKtG`
   - Watch (topic poll) — `trig_01FgrFMfsreu597nKUXEEQMt`
   - (Markets — `trig_01GBugAS5qw88yQK3tv8kKWx` — **removed 2026-06-18**; trigger left disabled
     server-side, all market content dropped from the pipeline. Do not revive without re-adding the
@@ -73,8 +72,9 @@ programmatically (string-insert against a unique anchor), send the update, then 
 - ntfy delivery is configured in the local bridge `.env` (`/usr/local/src/news-brief-ntfy-bridge/.env`).
 
 ## Layout
-- Briefs: `_posts/{YYYY-MM-DD}-{slug}.md`; slugs `overview`, `ai-ml`, `cyber-papers`, `weekend`,
-  `evaluator`. (Legacy top-level `briefs/` is dead.)
+- Briefs: `_posts/{YYYY-MM-DD}-{slug}.md`; slugs `news`, `ai-ml`, `science`, `weekend`,
+  `evaluator`. (Old `overview`/`cyber-papers` slugs retired 2026-06-29; their posts kept as archive.
+  Legacy top-level `briefs/` is dead.)
 - Notifications: `pending-notifications/{ts}-{slug}.json` → local bridge → ntfy (then deleted).
 - Dedup: `tools/dedup/` (see its `DEDUP.md`); embeddings index under `index/`.
 - Topic watches: `watches.yml` (user owns entries; the Watch routine writes only `last_fired`).
