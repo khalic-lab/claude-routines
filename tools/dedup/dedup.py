@@ -90,7 +90,7 @@ KEEP_DAYS_DEFAULT = 40  # in-repo index window; older files pruned (Phase 2 arch
 _CACHE_PATH = os.path.join(tempfile.gettempdir(), "dedup-embcache.json")
 
 # Daily-stream slugs we treat as briefs (mirrors _posts naming).
-KNOWN_SLUGS = ("overview", "ai-ml", "cyber-papers", "weekend", "evaluator")
+KNOWN_SLUGS = ("news", "ai-ml", "science", "weekend", "evaluator")
 _FILENAME_RE = re.compile(r"(\d{4}-\d{2}-\d{2})-(.+)\.(?:md|jsonl)$")
 _BULLET_RE = re.compile(r"^-\s+\*\*(.+?)\*\*\.?\s*(.*)$")
 _URL_RE = re.compile(r"\]\((https?://[^)]+)\)")
@@ -301,14 +301,22 @@ def _date_from_name(path):
     return m.group(1) if m else None
 
 
-def load_recent_index(since_days, as_of=None):
-    """Load index records from the last `since_days` (by file date)."""
+def load_recent_index(since_days, as_of=None, only_slug=None):
+    """Load index records from the last `since_days` (by file date).
+
+    If `only_slug` is set, restrict to that stream's own index files. The Weekend
+    edition passes `only_slug="weekend"` so it dedups against prior Weekend editions
+    only — a story a daily edition covered earlier in the week is NOT a repeat for
+    Weekend, which is where the week's biggest stories get the in-depth treatment."""
     as_of = as_of or dt.date.today()
     cutoff = as_of - dt.timedelta(days=since_days)
     records = []
     for path in sorted(glob.glob(os.path.join(INDEX_DIR, "*.jsonl"))):
-        d = _date_from_name(path)
-        if not d:
+        m = _FILENAME_RE.search(os.path.basename(path))
+        if not m:
+            continue
+        d, fslug = m.group(1), m.group(2)
+        if only_slug and fslug != only_slug:
             continue
         try:
             fdate = dt.date.fromisoformat(d)
@@ -661,7 +669,7 @@ def cmd_check(args):
         cands = cands["candidates"]
     texts = [embed_text(c.get("headline", ""), c.get("summary", "")) for c in cands]
     vecs = embed(texts, args.worker, args.token)
-    recent = load_recent_index(args.since, as_of=_parse_date(args.as_of))
+    recent = load_recent_index(args.since, as_of=_parse_date(args.as_of), only_slug=args.only_slug)
     exact = _build_exact_index(recent)
     results = []
     for c, v in zip(cands, vecs):
@@ -887,6 +895,9 @@ def main():
     c.add_argument("--t-high", type=float, default=T_HIGH_DEFAULT, dest="t_high")
     c.add_argument("--t-low", type=float, default=T_LOW_DEFAULT, dest="t_low")
     c.add_argument("--as-of", default=None, help="YYYY-MM-DD; defaults to today")
+    c.add_argument("--only-slug", default=None, dest="only_slug",
+                   help="restrict the comparison index to this stream's own history; "
+                        "Weekend passes --only-slug weekend to dedup only vs prior Weekend editions")
     add_embed_args(c)
     c.set_defaults(func=cmd_check)
 

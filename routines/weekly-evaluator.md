@@ -6,7 +6,7 @@ The repo (`khalic-lab/claude-routines`) is cloned as your working directory. Bef
 git pull --ff-only origin main
 ```
 
-Briefs now live in this repo at `_posts/{YYYY-MM-DD}-{slug}.md` where slug is one of: `overview`, `ai-ml`, `cyber-papers`, `weekend`, `evaluator`. No Drive reads anywhere in this prompt.
+Briefs now live in this repo at `_posts/{YYYY-MM-DD}-{slug}.md` where slug is one of: `news`, `ai-ml`, `science`, `weekend`, `evaluator`. No Drive reads anywhere in this prompt.
 
 # Pipeline-cold precheck (run BEFORE anything else)
 
@@ -21,9 +21,9 @@ Briefs now live in this repo at `_posts/{YYYY-MM-DD}-{slug}.md` where slug is on
 _Pipeline cold — no inputs in window._
 
 Files checked under `_posts/` (all absent for {today-6} to {today}):
-- *-overview.md
+- *-news.md
 - *-ai-ml.md
-- *-cyber-papers.md
+- *-science.md
 - *-weekend.md (most recent)
 
 Likely causes (for human investigation):
@@ -40,19 +40,21 @@ Write that to `_posts/{YYYY-MM-DD}-evaluator.md` (with front-matter), drop the c
 
 # Mission
 
-Mechanical analysis of the past 7 days of briefs across the 3 daily streams plus the most recent weekend brief. Identify drift, source staleness, citation failures, structural problems. Propose specific patches to the five other prompts. The user reviews and applies manually — you do not and cannot modify any routine.
+Mechanical analysis of the past 7 days of briefs across the current stream lineup plus the most recent weekend brief. Identify drift, source staleness, citation failures, structural problems. Propose specific patches to the five other prompts. The user reviews and applies manually — you do not and cannot modify any routine.
 
-A major axis of evaluation in this version is the **feed-first source-quality recovery**: the writers were re-pointed at machine-readable RSS/JSON feeds (arXiv, NVD, CISA KEV, Quanta, Nature, ECB, etc.) to bypass the HTTP 403 wall on HTML pages. Recent observations show that WebFetch in the routine sandbox has been returning 403 on those feeds even though they're public, so writers were further patched to try Bash{curl} BEFORE WebFetch. The Coverage footer of each brief now reports `Direct fetches: N | via-snippet citations: M` and a `Feeds hit` line distinguishing `{ok via curl}` / `{ok via WebFetch}` / `{fail — HTTP NNN}`. Track this aggressively — it's the binding-constraint metric for actual brief quality.
+**Stream cadence (new as of 2026-06-29):** News fires daily (every day, evening); AI/ML fires twice a week (Tuesday & Friday midday); Science fires once a week (Wednesday afternoon); Weekend fires once a week (Saturday). This means the evaluator should expect up to 7 News briefs, ~2 AI/ML briefs, ~1 Science brief, and 1 Weekend brief in any 7-day window. AI/ML appearing only twice and Science appearing only once is the **expected cadence, not a failure** — Section D (vitality) and the cold-precheck must not penalize it.
+
+A major axis of evaluation in this version is the **feed-first source-quality recovery**: the writers were re-pointed at machine-readable RSS/JSON feeds (arXiv, Quanta, Nature, bioRxiv/medRxiv, SRF, Le Temps, Al Jazeera, Semantic Scholar, etc.) to bypass the HTTP 403 wall on HTML pages. Recent observations show that WebFetch in the routine sandbox has been returning 403 on those feeds even though they're public, so writers were further patched to try Bash{curl} BEFORE WebFetch. The Coverage footer of each brief now reports `Direct fetches: N | via-snippet citations: M` and a `Feeds hit` line distinguishing `{ok via curl}` / `{ok via WebFetch}` / `{fail — HTTP NNN}`. Track this aggressively — it's the binding-constraint metric for actual brief quality.
 
 # Inputs to read from git
 
 For each date D in the window [today-6, today-5, ..., today], use the Read tool on the following if they exist:
 
-1. **Morning Overview**: `_posts/{D}-overview.md`
-2. **AI/ML**: `_posts/{D}-ai-ml.md`
-3. **Cyber + Papers**: `_posts/{D}-cyber-papers.md`
+1. **News** (daily): `_posts/{D}-news.md` — expect up to 7 files (fires every day).
+2. **AI/ML** (Tue & Fri): `_posts/{D}-ai-ml.md` — expect ~2 files per 7-day window; absence on other days is correct cadence, not a gap.
+3. **Science** (Wed): `_posts/{D}-science.md` — expect ~1 file per 7-day window; absence on other days is correct cadence, not a gap.
 
-Up to 3 × 7 = 21 distinct (slug, date) reads. Today's may be partial — the evaluator runs Sunday at 09:30, so only that day's Overview is written by then; the rest fire later. Skip missing.
+Up to ~10 distinct (slug, date) reads in the typical week. Today's may be partial — the evaluator runs Sunday at 11:30, so News from Saturday is the latest daily brief; no same-day News yet. AI/ML and Science do not fire on Sunday. Skip missing files without flagging as failures.
 
 Plus:
 5. **Most recent weekend brief**: glob `_posts/*-weekend.md`, sort, read the latest.
@@ -68,14 +70,15 @@ When computing metrics, segment by stream.
 
 The writer routines were patched to prefer machine-readable feeds over HTML scraping, AND to try Bash{curl} before WebFetch since WebFetch in the sandbox often 403s on public feeds.
 
-**Verified-reachable feeds (live 2026-05-04, used by writers):**
+**Verified-reachable feeds (current lineup, used by writers):**
 - arXiv RSS per category and Atom API
-- NVD CVEs JSON 2.0
-- CISA KEV JSON
 - Quanta RSS, Nature RSS (nature.rss, nphys.rss, natastron.rss, nm.rss)
-- Al Jazeera RSS, ECB FX XML, SRF DE RSS, Le Temps FR RSS, Semantic Scholar API
+- bioRxiv/medRxiv JSON, Science.org (Science edition)
+- Al Jazeera RSS, SRF DE RSS, Le Temps FR RSS, Semantic Scholar API
 
-**Confirmed unavailable (writers told to skip):** bioRxiv, medRxiv, Science.org, RTS.ch, NZZ, FAZ, Spiegel, swissinfo.ch, Reuters, Yahoo Finance, HuggingFace papers, Le Monde RSS, NCSC.ch RSS.
+**Dropped feeds (security + markets pipeline removed 2026-06-18/2026-06-29):** NVD CVEs JSON 2.0, CISA KEV JSON, ECB FX XML — writers must not reference these.
+
+**Confirmed unavailable (writers told to skip):** RTS.ch, NZZ, FAZ, Spiegel, swissinfo.ch, Reuters, Yahoo Finance, HuggingFace papers, Le Monde RSS, NCSC.ch RSS.
 
 Use this list to evaluate dimension K below, and to flag if writers are still citing confirmed-unavailable domains.
 
@@ -100,7 +103,7 @@ For each, compute a metric and flag if outside healthy range.
 - For each: confirm the URL resolves (try Bash{curl -sI} first, then WebFetch as fallback).
 - For 8 of those: spot-check that the cited claim is actually in the source.
 - Report: links broken / fabrications detected / overall pass rate per stream.
-- Note: if your environment hits HTTP 403 across most fetches, report this as **unmeasurable**. Try the feed URLs (arXiv RSS, NVD JSON, CISA KEV JSON) via curl as part of the sample — those should NOT 403, and if they do, that's a regression to flag.
+- Note: if your environment hits HTTP 403 across most fetches, report this as **unmeasurable**. Try the feed URLs (arXiv RSS, Nature RSS, bioRxiv JSON) via curl as part of the sample — those should NOT 403, and if they do, that's a regression to flag.
 
 ## D. Section vitality
 For each section across all briefs, count items per run and empty runs. Flag sections empty ≥3 times that week.
@@ -145,9 +148,9 @@ If any brief includes a `Feeds hit` line with feed-level ok/fail flags AND metho
 Scan all citations for any domain in the writers' "Confirmed unavailable" list. Citations to those domains can ONLY be `[via snippet]`. If they appear without `[via snippet]`, flag.
 
 **Healthy ranges (post-feed-rollout):**
-- Overview direct-fetch ratio ≥ 0.30 (target 0.50 by week 2)
-- Cyber+Papers direct-fetch ratio ≥ 0.50 (NVD + CISA KEV are highly reliable when curl works)
+- News direct-fetch ratio ≥ 0.30 (SRF/Le Temps/Al Jazeera RSS via curl)
 - AI/ML direct-fetch ratio ≥ 0.40 (arXiv RSS via curl is reliable)
+- Science direct-fetch ratio ≥ 0.30 (Nature/bioRxiv/medRxiv via curl)
 - Weekend direct-fetch ratio ≥ 0.30
 
 Flag streams below their range. The patch proposal is usually: add a feed source the writer is missing, or fix a feed URL that's wrong.
@@ -161,7 +164,7 @@ Parse each Coverage footer's `Word count: N` line (added 2026-06-22; if absent, 
 # Weekly Brief Pipeline Review — {YYYY-MM-DD}
 
 _Coverage: briefs from {date 6 days ago} to {today}._
-_Files read: N morning, N AI/ML, N cyber, 1 weekend, prior review {found|not found}._
+_Files read: N news, N AI/ML (expect ~2), N science (expect ~1), 1 weekend, prior review {found|not found}._
 
 ## Health summary
 
@@ -176,9 +179,9 @@ _Files read: N morning, N AI/ML, N cyber, 1 weekend, prior review {found|not fou
 | Single-source rate (portfolio)  |       | <20%   | 🟢🟡🔴 |
 | Empty section instances         |       | <5     | 🟢🟡🔴 |
 | Direct-fetch ratio (portfolio)  |       | ≥0.35  | 🟢🟡🔴 |
-| Direct-fetch ratio (Overview)   |       | ≥0.30  | 🟢🟡🔴 |
-| Direct-fetch ratio (Cyber+Papers) |     | ≥0.50  | 🟢🟡🔴 |
+| Direct-fetch ratio (News)       |       | ≥0.30  | 🟢🟡🔴 |
 | Direct-fetch ratio (AI/ML)      |       | ≥0.40  | 🟢🟡🔴 |
+| Direct-fetch ratio (Science)    |       | ≥0.30  | 🟢🟡🔴 |
 | Feeds with >50% fail rate       |       | 0      | 🟢🟡🔴 |
 | Citations to confirmed-blocked domains without [via snippet] | | 0 | 🟢🟡🔴 |
 | curl vs WebFetch advantage on feeds | | curl wins | 🟢🟡🔴 |
@@ -192,7 +195,7 @@ _Files read: N morning, N AI/ML, N cyber, 1 weekend, prior review {found|not fou
 For each issue identified, propose ONE specific edit to ONE specific prompt. Format each as a diff-style block:
 
 ### Patch 1 — [short title]
-**Target prompt:** Morning brief / AI-ML / Cyber-Papers / Weekend brief
+**Target prompt:** News / AI-ML / Science / Weekend
 **Section affected:** [section name]
 **Issue:** [1–2 sentences]
 **Proposed change:**

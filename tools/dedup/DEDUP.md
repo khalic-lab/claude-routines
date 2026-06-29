@@ -4,8 +4,8 @@ Each writer routine follows this on every run so a story isn't re-run for days (
 "same story for a month" problem). It is **best-effort**: if any step errors, compose the
 brief normally and note "dedup unavailable" in the Gaps footer — never abort the brief.
 
-The routine that invokes this passes its **slug** (one of `overview`, `ai-ml`,
-`cyber-papers`, `weekend`) and today's date `{YYYY-MM-DD}` (Europe/Zurich).
+The routine that invokes this passes its **slug** (one of `news`, `ai-ml`,
+`science`, `weekend`) and today's date `{YYYY-MM-DD}` (Europe/Zurich).
 
 Fixed endpoint (this is a low-value token — gates only Workers-AI embedding spend on our own
 account; the repo is private and this file is excluded from the published site):
@@ -40,6 +40,14 @@ python3 tools/dedup/dedup.py check --candidates /tmp/cand.json --since 30 \
   > /tmp/verdicts.json 2>/tmp/dedup.err && cat /tmp/verdicts.json \
   || echo "DEDUP UNAVAILABLE: $(cat /tmp/dedup.err)"
 ```
+
+**Weekend edition only:** if your slug is `weekend`, append `--only-slug weekend` to the check
+command above. Weekend revisits the week's most important stories *in depth*, so it must dedup
+**only against prior `weekend` editions** — a story a daily edition (`news`/`ai-ml`/`science`)
+already covered earlier this week is **not** a repeat for Weekend, it's exactly what Weekend
+exists to go deeper on. Every other slug omits the flag (cross-edition dedup). With the flag, any
+REPEAT verdict is by construction a prior-Weekend repeat, so Step B's "REPEAT → ALWAYS DROP" still
+applies unchanged — no special-casing of the verdicts is needed.
 
 `/tmp/verdicts.json` has one result per candidate: `verdict` (NEW | ONGOING | REPEAT), `score`,
 an optional `match_reason` (`exact-url` | `exact-arxiv` | `distinct-paper`),
@@ -114,6 +122,13 @@ python3 tools/dedup/dedup.py record --stories /tmp/final.json --date {YYYY-MM-DD
 ```
 
 This writes `index/stories/{YYYY-MM-DD}-{SLUG}.jsonl` and prunes index files older than 40 days.
+
+Cadence per slug:
+- **`news`** — daily
+- **`ai-ml`** — 2x/week
+- **`science`** — weekly
+- **`weekend`** — weekly
+- **`evaluator`** — weekly
 
 ## Step C.5 — lint the brief for date slips (optional, no network)
 

@@ -8,7 +8,9 @@ git pull --ff-only origin main
 
 # Mission
 
-Today's AI/ML industry activity, lab releases, and ecosystem moves. Coverage window: ~06:30 today to now. This routine owns ALL AI/ML topics for the day except research papers (which are split: first batch in Morning Overview, second batch in Cyber+Papers routine).
+AI/ML industry activity, lab releases, ecosystem moves, AND research papers. This routine owns **ALL** AI/ML topics — including ML/AI research preprints (the arXiv stuff IS ML/AI, so it lives here, not in any other brief).
+
+**Coverage window: since the last AI/ML edition.** This routine runs Tuesday and Friday midday, so the window spans multiple days — Friday→Tuesday or Tuesday→Friday — never just "today." Scope every section (industry news and papers alike) to that full multi-day span, not to the last few hours.
 
 <!-- include: _shared/newsroom-ethos.md -->
 
@@ -19,8 +21,8 @@ Today's AI/ML industry activity, lab releases, and ecosystem moves. Coverage win
 3. **Triangulation.** Significant claims need two independent sources where feasible. Single-sourced → mark `[single-source]`. Disagreements → surface both versions explicitly.
 4. **Diversification.** Within each section, span geographic/linguistic sources.
 5. **Tags.** Preprints → `[preprint]`. Vendor announcements → `[vendor PR]`. Single source → `[single-source]`. Contested → `[disputed]`.
-6. **No fabrication.** Never invent a URL, author, date, or quote.
-7. **Volume cap.** 4–7 items per section. Better to omit than dilute.
+6. **No fabrication.** Never invent a URL, author, date, or quote. **The no-fabrication rule extends to date claims**: a paper from last month is NOT in this window. If you cannot verify a paper was submitted inside the coverage window, do not include it under a section that claims recent content.
+7. **Volume cap.** 4–7 items per non-paper section (the papers section runs larger — see below). Better to omit than dilute.
 8. **Fetch transparency.** Anthropic, OpenAI, DeepMind, and most lab blog pages return HTTP 403 to the routine sandbox. When you successfully fetch a URL and confirm content, no marker. When the citation is based only on a search-engine snippet, append `[via snippet]` to the citation. Applies to T1 and T2 alike.
 
 <!-- include: _shared/reader-profile-source-weights.md -->
@@ -29,6 +31,8 @@ Today's AI/ML industry activity, lab releases, and ecosystem moves. Coverage win
 
 The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Many of those same sources publish RSS / Atom / JSON feeds on different infrastructure that IS reachable. **Attempt the feed first for any source that has one; fall back to HTML or search-engine snippet only on failure.**
 
+**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds (arXiv RSS, Nature RSS, etc.). When attempting any feed below, FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch.
+
 A successful feed fetch (you opened the feed URL and read the article title/date/excerpt from publisher XML/JSON) counts as a "direct fetch" — no `[via snippet]` tag needed even if the article HTML page itself returned 403, because the metadata came from the publisher's own feed.
 
 **Verified-reachable feeds (live 2026-05-04):**
@@ -36,46 +40,67 @@ A successful feed fetch (you opened the feed URL and read the article title/date
 | Domain | Feed URL | Format |
 |---|---|---|
 | arXiv categories | `https://export.arxiv.org/rss/cs.LG` (also `cs.AI`, `cs.CL`, `cs.CV`, `stat.ML`) | RSS 2.0 |
-| arXiv date-filtered API | `https://export.arxiv.org/api/query?search_query=cat:cs.LG&max_results=20&sortBy=submittedDate&sortOrder=descending` | Atom 1.0 |
+| arXiv date-filtered API | `https://export.arxiv.org/api/query?search_query=cat:cs.LG&max_results=30&sortBy=submittedDate&sortOrder=descending` | Atom 1.0 |
 | Quanta Magazine | `https://www.quantamagazine.org/feed/` | RSS 2.0 |
 | Nature (general + journals) | `https://www.nature.com/nature.rss` (also `nphys.rss`, `natastron.rss`, `nm.rss`) | RSS |
-| Al Jazeera | `https://www.aljazeera.com/xml/rss/all.xml` | RSS |
-| ECB FX rates | `https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml` | XML (gesmes/2002) |
-| NVD CVEs (date-range) | `https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=YYYY-MM-DDT00:00:00.000&pubEndDate=YYYY-MM-DDT23:59:59.999` | JSON |
-| CISA KEV catalog | `https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json` | JSON |
-| Semantic Scholar paper search | `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors&limit=10` | JSON |
-| SRF (DE Swiss public broadcaster) | `https://www.srf.ch/news/bnf/rss/1646` | RSS 2.0 |
-| Le Temps (FR Swiss daily, paywall flag per item) | `https://www.letemps.ch/articles.rss` | RSS 2.0 |
+| Semantic Scholar paper search | `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations&limit=10` | JSON |
 
-**Confirmed unavailable / blocked from sandbox; do NOT waste fetch cycles:** bioRxiv, medRxiv, Science.org, RTS.ch homepage, NZZ (paywall 402), FAZ, Spiegel, swissinfo.ch homepage, Reuters, Yahoo Finance, HuggingFace papers (no public feed found), Le Monde RSS, NCSC.ch RSS.
+**Confirmed unavailable / blocked from sandbox; do NOT waste fetch cycles:** Reuters, Yahoo Finance, HuggingFace papers HTML (no public feed found — snippet/MCP only).
 
 **Coverage footer accounting (strict):**
 - `Direct fetches: N` = count of citations where you read the source from publisher infrastructure.
 - `Via-snippet citations: M` = count where you only have a search-engine result excerpt.
 - Report both honestly. `N + M` should equal total citation count.
+- In the `Feeds hit` line, distinguish between `{ok via curl}`, `{ok via WebFetch}`, and `{fail — HTTP NNN}`.
 
-**Specific application for AI/ML:** This routine's primary feed-first targets are arXiv RSS (covers benchmark/method paper drops in cs.LG/cs.AI/cs.CL/cs.CV/stat.ML — every paper from those feeds includes arXiv ID and submission date) and Semantic Scholar API (use for broader keyword search beyond arXiv, e.g. "new SOTA on benchmark X"). Lab blogs (Anthropic, OpenAI, DeepMind, Mistral, Apple) 403 on direct curl — fetch them THROUGH the fetch proxy (above); a 200 proxy body is a direct fetch, not a snippet.
+**Specific application for AI/ML:** This routine's highest-value feed-first target is **arXiv** (covers the benchmark/method/RL/interpretability/agent paper drops in cs.LG/cs.AI/cs.CL/cs.CV/stat.ML — every paper from those feeds carries an arXiv ID and submission date). Hit arXiv RSS via curl first, then the Atom date-API, then the fallback chain (HF papers snippet → Semantic Scholar API → `site:arxiv.org` search). Semantic Scholar is also useful for broader keyword search beyond arXiv (e.g. "new SOTA on benchmark X") and for author affiliations. Lab blogs (Anthropic, OpenAI, DeepMind, Mistral, Apple) 403 on direct curl — fetch them THROUGH the fetch proxy (above); a 200 proxy body is a direct fetch, not a snippet.
 
 # Research methodology (apply to every section)
 
 Routines don't have access to Claude.ai's Research mode. Approximate it:
-1. **Broad query first** (1–2 keywords). Scan results.
-2. **Refine and re-query** based on what surfaced. At least one refinement per non-trivial topic.
-3. **Fetch full pages**, not just search snippets, when a story matters. If fetch fails, fall back to snippets and tag with `[via snippet]`.
-4. **Cross-reference** when a claim is significant — find the original source if you reached it via T2.
-5. **Stop when triangulated** or leads exhausted (record exhausted leads in gaps footer).
+1. **Feed sweep first** via Bash{curl}, then WebFetch fallback.
+2. **Broad query** (1–2 keywords). Scan results.
+3. **Refine and re-query** based on what surfaced. At least one refinement per non-trivial topic.
+4. **Fetch full pages**, not just search snippets, when a story matters. If fetch fails, fall back to snippets and tag with `[via snippet]`.
+5. **Cross-reference** when a claim is significant — find the original source if you reached it via T2.
+6. **Stop when triangulated** or leads exhausted (record exhausted leads in gaps footer).
 
 # Sections (in order)
+
+## 📄 ML/AI research (arXiv)
+
+The reader's most-valued content — give it room. This consolidates what used to be split across the Morning Overview ("first arXiv batch") and Cyber+Papers ("second arXiv batch") into one section: the arXiv stuff IS ML/AI and lives here now.
+
+**Feed-first sourcing (try Bash{curl} BEFORE WebFetch, and before any HTML listing):**
+- **arXiv RSS per category:** `https://export.arxiv.org/rss/cs.LG`, `cs.AI`, `cs.CL`, `cs.CV`, `stat.ML`. Hit all five.
+- **arXiv Atom API for date confirmation:** `https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending` (swap the category as needed).
+- **Fallback chain (only if the above fail):** HF papers (`huggingface.co/papers`) via search-engine snippet → Semantic Scholar API (`…&fields=title,abstract,year,authors,authors.affiliations`, see feed table) → `site:arxiv.org` search.
+
+T2 commentary (discovery + framing, never the primary cite): simonwillison.net, karpathy.bearblog.dev, dnhkng.github.io, lilianweng.github.io, huggingface.co/blog.
+
+**Inaccessibility rule (read first):** With the curl-first feed approach, arXiv RSS should normally succeed. Before populating this section, attempt arXiv RSS for all five categories via curl, then fall back to WebFetch, then the fallback chain. Then evaluate:
+- If you have at least one paper whose submission date you can directly verify as falling inside the coverage window (since the last AI/ML edition — a multi-day span; arXiv batches roll over at 20:00 ET), proceed normally.
+- **If curl AND WebFetch both fail for the RSS feeds, the Atom API, AND huggingface.co/papers** (HTTP 403 / network error / empty), OR every candidate paper has an unverifiable or clearly-out-of-window date, output ONLY this as the section content:
+  > _arXiv batch inaccessible — attempted: export.arxiv.org/rss/cs.LG, cs.AI, cs.CL, cs.CV, stat.ML, the Atom API, and huggingface.co/papers via both curl and WebFetch. N papers reviewed but none confirmed inside the coverage window. Skipped per no-fabrication rule._
+
+  Replace N with the actual count. Do NOT substitute older/stale papers to fill the section.
+
+If you DO have papers inside the window: because this is a multi-day window (two fires/week), target **~8–12 papers** — bias toward RL, efficient inference, interpretability, agents, and novel architectures. Dedup by arXiv ID within this batch so no paper appears twice.
+
+**Affiliations (required for every paper):** after the author list, surface the lead authors' institutional affiliations from the Semantic Scholar `authors.affiliations` field (fall back to arXiv `<arxiv:affiliation>`). If no affiliation is retrievable, write `(affiliation not listed)` — never fabricate.
+
+Format each paper as:
+**[arXiv:ID](URL)** · F. Last, A. Other et al. (MIT; Google DeepMind) · `[preprint]` — 1-line why-interesting + submission date.
 
 ## 🏢 Lab blogs & official releases
 T1: anthropic.com/news, openai.com/news, deepmind.google/discover/blog, ai.meta.com/blog, research.google, microsoft.com/en-us/research/blog, mistral.ai/news, qwenlm.github.io/blog, allenai.org/blog, machinelearning.apple.com.
 T2: arstechnica.com, theverge.com, ft.com/technology, simonwillison.net.
-Today's posts from major AI labs. Tag vendor PR. Lab pages 403 on direct curl — fetch them through the fetch proxy (see Feed-first source order above); only tag `[via snippet]` if the proxy also returns non-200.
+Posts from major AI labs within the coverage window. Tag vendor PR. Lab pages 403 on direct curl — fetch them through the fetch proxy (see Feed-first source order above); only tag `[via snippet]` if the proxy also returns non-200.
 
 ## 🚀 New models, datasets, & open weights
 T1: huggingface.co/models?sort=trending, huggingface.co/datasets?sort=trending, github.com/<org>/<repo>/releases (lab repos), model cards directly. **Feed:** arXiv RSS for accompanying paper announcements.
 T2: huggingface.co/blog, simonwillison.net.
-Notable releases today: model name, parameters, license, base, brief purpose, link to model card. Include MLX/GGUF ports if any (relevant to Apple Silicon use).
+Notable releases in the window: model name, parameters, license, base, brief purpose, link to model card. Include MLX/GGUF ports if any (relevant to Apple Silicon use).
 
 ## 📊 Benchmarks & evaluations
 T1: model card claims, paper-with-code releases, official benchmark sites (lmarena.ai, livebench.ai, swe-bench.com, etc.). **Feed:** Semantic Scholar API for triangulating benchmark-paper claims.
@@ -87,16 +112,16 @@ T1: SEC filings (S-1, 10-Q for AI public companies), official announcements, EU/
 T2: ft.com/technology, reuters.com/technology, bloomberg.com (AI desk), techcrunch.com (use with caution — frequently rewrites press releases).
 Funding rounds, acquisitions, hiring, executive moves, regulatory actions, lawsuits, policy news. Distinguish primary announcements from rumor.
 
-## 🍎 Apple Silicon / on-device (light, daily)
+## 🍎 Apple Silicon / on-device
 T1: github.com/ml-explore/mlx/releases, github.com/ml-explore/mlx-lm, github.com/ggerganov/llama.cpp/releases, machinelearning.apple.com.
-Anything notable from the local-inference ecosystem today. Most weeks this section is empty — that's fine, the Weekend brief covers depth here.
+Anything notable from the local-inference ecosystem in the window. Include this section only if there's genuinely new substance; otherwise omit it (the Weekend brief covers depth here).
 
 # Format
 
 ```
 # AI/ML Brief — {YYYY-MM-DD}
 
-_Generated {ISO timestamp} Europe/Zurich. Coverage: ~06:30 to now._
+_Generated {ISO timestamp} Europe/Zurich. Coverage: since the last AI/ML edition (multi-day window)._
 
 [sections]
 
@@ -104,24 +129,26 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: ~06:30 to now._
 
 ## Coverage footer
 - Sources used: T1 = N, T2 = N, T3 = 0
-- Vendor PR items: N (tagged inline)
+- Papers: N (filtered from M reviewed) | Vendor PR items: N (tagged inline)
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
+- Feeds hit (with reachability and method): arXiv RSS cs.LG {ok via curl|ok via WebFetch|fail — HTTP 403}, arXiv RSS cs.AI {...}, arXiv Atom API {...}, Semantic Scholar {...}, HF papers {...}
 - Gaps: ...
 ```
 
 # Constraints
 
-- This is the AI/ML home — comprehensive coverage of today's industry/lab activity. 1500–2500 words target.
-- Don't cover ML research papers here — those go to Morning Overview (1st arXiv batch) and Cyber+Papers (2nd arXiv batch).
+- This is the AI/ML home — comprehensive coverage of the window's industry/lab activity AND research papers. 1500–2500 words target.
+- A section appears ONLY if it has genuinely new substance for the window; otherwise omit it entirely — no placeholder, no "nothing notable in this window" line.
 - Tag `[vendor PR]` aggressively — most lab blog posts are PR.
 - For benchmark claims: state the methodology if known. "Beats GPT-X on Y" is meaningless without knowing Y.
+- **T3 deny-list — never cite (low-signal AI-spam):** aiweekly.co, aitoolsrecap.com, codersera.com, techtimes.com. Discovery-only at best; click through to the primary source or drop the item.
 
 <!-- include: _shared/pedagogical-tone.md -->
 
 # Story deduplication (best-effort — never abort the brief on failure)
 
-Before composing AND after writing the brief, follow `tools/dedup/DEDUP.md` exactly. It dedupes your candidate stories against the rolling embeddings index so a story isn't re-run for days. **This routine's slug is `ai-ml`.** If any dedup step errors, compose normally and note "dedup unavailable" in the Gaps footer.
+Before composing AND after writing the brief, follow `tools/dedup/DEDUP.md` exactly. It dedupes your candidate stories against the rolling embeddings index so a story isn't re-run for days. **This routine's slug is `ai-ml`.** For papers, also apply exact arXiv-ID dedup within this batch (no paper twice). If any dedup step errors, compose normally and note "dedup unavailable" in the Gaps footer.
 
 <!-- include: _shared/date-discipline.md -->
 
@@ -153,7 +180,7 @@ categories: [ai-ml]
 }
 ```
 
-`{teaser}` rules: ≤200 chars. Most interesting item from this brief — typically a major lab release, notable open-weight model drop, significant benchmark result, or regulatory/funding event. Concrete and specific (e.g. "Anthropic ships Claude Opus 4.8; DeepSeek releases V4 base weights; EU AI Office opens probe into Meta"), not generic. Escape any `"` inside the teaser as `\"`.
+`{teaser}` rules: ≤200 chars. Most interesting item from this brief — typically a striking arXiv paper, a major lab release, a notable open-weight model drop, a significant benchmark result, or a regulatory/funding event. Concrete and specific (e.g. "New RLVR method tops MATH in today's arXiv batch; Anthropic ships Claude Opus 4.8; EU AI Office opens probe into Meta"), not generic. Escape any `"` inside the teaser as `\"`.
 
 3. **Commit and push** via Bash:
 

@@ -8,7 +8,7 @@ git pull --ff-only origin main
 
 # Mission
 
-A long-form weekly digest. Coverage window: past 7 days. This is NOT a recap of dailies — it's a substantive read with deeper analysis, paper summaries, and connection-drawing across stories.
+A long-form weekly digest. Coverage window: past 7 days. **This is the in-depth revisit of the week's most important stories** — the place where the week's biggest items get the *deep* treatment. Select and go deep on the strongest items across the past 7 days regardless of which day they broke, **including stories the daily editions (News / AI/ML / Science) already flagged this week.** Do NOT avoid a story just because a daily edition mentioned it — this is exactly where it gets revisited: go deeper than the daily did, with fuller analysis, the complete paper summary, and connection-drawing across stories.
 
 Bias the content toward:
 1. **ML/AI research** (heaviest), with RL prioritized
@@ -42,10 +42,10 @@ Light news/politics — just a brief "what mattered this week" section at the to
 
 The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Many of those publishers also offer machine-readable feeds (RSS, Atom, JSON) that are reachable. **Always attempt the feed/API before the HTML page.**
 
-**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds (NVD JSON, CISA KEV JSON, arXiv RSS, etc.). When attempting any feed below, FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch. This is the binding-constraint workaround for the 403 wall.
+**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds (arXiv RSS, arXiv Atom API, Nature RSS, etc.). When attempting any feed below, FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch. This is the binding-constraint workaround for the 403 wall.
 
 **Order of attempts per topic, in priority:**
-1. Verified-reachable feed below (or arXiv/NVD/CISA/Semantic Scholar APIs) via Bash{curl}.
+1. Verified-reachable feed below (or arXiv/Semantic Scholar APIs) via Bash{curl}.
 2. Same feed via WebFetch fallback.
 3. The publisher's HTML page.
 4. Web search snippet (last resort, tag the citation `[via snippet]`).
@@ -61,14 +61,12 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 | Nature Physics | `https://www.nature.com/nphys.rss` | RSS | Physics journal |
 | Nature Astronomy | `https://www.nature.com/natastron.rss` | RSS | Astronomy journal |
 | Nature Methods | `https://www.nature.com/nm.rss` | RSS | Methods journal (biology-adjacent) |
-| NVD CVEs (date-windowed) | `https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=...&pubEndDate=...` | JSON | Cybersecurity research section, CVE base |
-| CISA KEV catalog | `https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json` | JSON | Active-exploitation watch |
 | Al Jazeera | `https://www.aljazeera.com/xml/rss/all.xml` | RSS | World politics (week-in-headlines) |
-| Semantic Scholar API | `https://api.semanticscholar.org/graph/v1/paper/search?query=...` | JSON | Paper triangulation, citation counts (1000 req/sec free) |
+| Semantic Scholar API | `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations` | JSON | Paper triangulation, citation counts, author affiliations (1000 req/sec free) |
 | SRF (DE Swiss) | `https://www.srf.ch/news/bnf/rss/1646` | RSS 2.0 | DE-language Swiss |
 | Le Temps (FR Swiss) | `https://www.letemps.ch/articles.rss` | RSS 2.0 | FR-language Swiss |
 
-**Confirmed unavailable from this sandbox (do not waste cycles):** RTS.ch, NZZ (paywall 402), FAZ, Spiegel, swissinfo.ch, Reuters, Yahoo Finance, HuggingFace papers (no public feed), Le Monde RSS, NCSC.ch RSS.
+**Confirmed unavailable from this sandbox (do not waste cycles):** RTS.ch, NZZ (paywall 402), FAZ, Spiegel, swissinfo.ch, Reuters, Yahoo Finance, HuggingFace papers (no public feed), Le Monde RSS.
 
 **Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** route through the proxy.
 - bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv`); returns title, abstract, DOI, and date per paper for the window — ideal for the Biology & Fundamental-science sections.
@@ -89,7 +87,7 @@ The weekend brief warrants more aggressive iteration than the dailies. Per topic
 5. **Triangulate aggressively.** Significant findings should appear across at least 2 independent sources or be confirmable from primary docs.
 6. **Don't trust your own first take.** Re-query with different framings to surface what your first query missed.
 7. **Document exhausted leads** in the gaps footer.
-8. **Sibling-brief consultation (do BEFORE tagging items `[single-source]`).** Read the daily briefs from the past 7 days, which now live in the local repo at `_posts/`. For each date D in {today-6, today-5, ..., today-1} (today=Saturday is the current run, so don't include it), check for `_posts/{D}-overview.md`, `_posts/{D}-ai-ml.md`, `_posts/{D}-cyber-papers.md` (the dedicated Markets brief has been retired). Use the Read tool on each that exists. If any sibling brief covered the same story with multiple independent sources, do NOT tag it `[single-source]` here. If sibling briefs are unavailable, proceed and note in Gaps.
+8. **Sibling-brief consultation (do BEFORE tagging items `[single-source]`).** Read the daily briefs from the past 7 days, which now live in the local repo at `_posts/`. For each date D in {today-6, today-5, ..., today-1} (today=Saturday is the current run, so don't include it), check for `_posts/{D}-news.md`, `_posts/{D}-ai-ml.md`, `_posts/{D}-science.md`. Use the Read tool on each that exists. If any sibling brief covered the same story with multiple independent sources, do NOT tag it `[single-source]` here. (Note: sibling coverage informs sourcing/triangulation only — it is NOT a reason to drop or skip a story; see the dedup-relaxation note below.) If sibling briefs are unavailable, proceed and note in Gaps.
 
 # Sections (in order)
 
@@ -115,7 +113,7 @@ Pull 8–12 ML/AI papers. Bias allocation:
 - ~15% applied (anomaly detection, code, vision-language, multimodal)
 
 For each paper:
-- Title + arXiv ID + authors (first 3 + et al.)
+- Title + arXiv ID + authors (first 3 + et al.) **with institutional affiliations** — e.g. `F. Last, A. Other et al. (MIT; CERN)`. Surface the lead authors' affiliations from the Semantic Scholar `authors.affiliations` field (fall back to arXiv `<arxiv:affiliation>` when populated). If no affiliation is retrievable, write `(affiliation not listed)` — never fabricate.
 - 3–5 sentence summary in your own words: contribution, method, key result.
 - One line: "why this is interesting".
 - Direct link to abstract.
@@ -138,7 +136,7 @@ Pull 5–8 papers across the fundamental sciences. Aim for breadth:
 - ~15% mathematics (major proofs, conjecture progress, surveys)
 - ~10% adjacent (chemistry, climate physics, computational)
 
-For each paper, same format as ML papers section. Math papers may need a 2-line "context" note.
+For each paper, same format as ML papers section (including the institutional-affiliations line — Semantic Scholar `authors.affiliations`, arXiv `<arxiv:affiliation>` fallback, `(affiliation not listed)` if absent, never fabricated). Math papers may need a 2-line "context" note.
 
 ## 🚀 Models & datasets released this week
 T1: huggingface.co/models?sort=trending&period=7day, huggingface.co/datasets, lab announcement blogs, GitHub release pages.
@@ -171,17 +169,6 @@ T1/T2: simonwillison.net, karpathy.bearblog.dev, dnhkng.github.io, lilianweng.gi
 
 Long-form pieces published this week. 5–10 items. Each: title, author, 2–3 sentence summary, your read on whether it's worth the time.
 
-## 🛡️ Cybersecurity research of the week
-
-**Feed-first sources (curl first):**
-- **CISA KEV JSON**: filter `dateAdded` for the past 7 days.
-- **NVD JSON 2.0** for high-CVSS CVEs from the week if needed (date-windowed query).
-
-T1: published security research papers, vendor post-incident writeups.
-T2: therecord.media, mandiant.com/resources, unit42.paloaltonetworks.com, research.checkpoint.com, sentinelone.com/labs.
-
-Substantial threat research, novel TTPs, post-mortem writeups. Skip the daily CVE churn.
-
 ## 🧠 Cross-cutting threads
 A short final section: 2–4 themes you noticed across this week's content. This is the section where synthesis adds real value beyond aggregation.
 
@@ -198,7 +185,7 @@ _Coverage: {date 7 days ago} to {today}. Generated {timestamp} Europe/Zurich._
 ## 📄 Papers of the week
 
 ### [Paper title]
-**[arXiv:XXXX.XXXXX](URL)** · Authors et al. · `[preprint]`
+**[arXiv:XXXX.XXXXX](URL)** · F. Last, A. Other et al. (MIT; CERN) · `[preprint]`
 3–5 sentence summary.
 *Why this matters:* one-line take.
 
@@ -211,7 +198,7 @@ _Coverage: {date 7 days ago} to {today}. Generated {timestamp} Europe/Zurich._
 - Languages: EN, FR, DE, ...
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
-- Feeds hit (with reachability and method): arXiv RSS cs.LG {ok via curl|ok via WebFetch|fail — HTTP NNN}, arXiv API {...}, Quanta RSS {...}, Nature RSS {...}, NVD {...}, CISA KEV {...}, Al Jazeera {...}, ...
+- Feeds hit (with reachability and method): arXiv RSS cs.LG {ok via curl|ok via WebFetch|fail — HTTP NNN}, arXiv API {...}, Quanta RSS {...}, Nature RSS {...}, Al Jazeera {...}, ...
 - Sibling consultation: {performed | skipped — reason}
 - Gaps: ...
 - Things I deliberately cut: ...
@@ -230,6 +217,8 @@ _Coverage: {date 7 days ago} to {today}. Generated {timestamp} Europe/Zurich._
 # Story deduplication (best-effort — never abort the brief on failure)
 
 Before composing AND after writing the brief, follow `tools/dedup/DEDUP.md` exactly. It dedupes your candidate stories against the rolling embeddings index so a story isn't re-run for days. **This routine's slug is `weekend`.** If any dedup step errors, compose normally and note "dedup unavailable" in the Gaps footer.
+
+**Weekend dedup is deliberately scoped to Weekend's own history.** Weekend exists to revisit the week's most important stories *in depth*, so a daily edition having already touched a story is expected — not a reason to drop it. Per `DEDUP.md` Step A, **append `--only-slug weekend` to the check command** so dedup compares your candidates ONLY against prior *Weekend* editions: a `news`/`ai-ml`/`science` story from earlier this week therefore never comes back as a REPEAT — it's exactly the story to revisit and go deeper than the daily did. Then apply the Step-B verdicts normally — with the flag, any REPEAT is a genuine prior-Weekend repeat to skip, so no special-casing is needed.
 
 <!-- include: _shared/date-discipline.md -->
 
