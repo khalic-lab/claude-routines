@@ -531,14 +531,20 @@ document.addEventListener('DOMContentLoaded', function () {
   .page__content ul ul{ list-style:disc; margin:.4em 0 0; }
   .page__content > ul > li.story > ul{ order:3; }
 
-  /* arXiv-format briefs (ai-ml / science / weekend) author each paper as a plain <p> that leads
-     with `**[arXiv:ID](arxiv.org/…)** · …`, so the `.story` headline/flex treatment never engages
-     and 10+ dense papers run together as one wall. Give each paper paragraph real separation +
-     lift its arXiv-id anchor so the eye can find paper boundaries. (Stopgap: the cleaner fix is to
-     have the writer emit the `- **headline**` story format the news brief uses.) */
+  /* Legacy arXiv-WALL posts (old ai-ml editions) author each paper as a plain <p> leading with
+     `**[arXiv:ID](arxiv.org/…)** · …` with no per-paper heading, so papers run together. Give each
+     such paragraph real separation + lift its arXiv-id anchor. (Current ai-ml uses `.story` bullets;
+     science/weekend use `### H3` paper headings — both opt out below.) */
   .page__content > p:has(> strong:first-child > a[href*="arxiv.org"]){
     margin-top:1.7em; padding-top:1.3em; border-top:1px solid var(--hair); }
   .page__content > p:has(> strong:first-child > a[href*="arxiv.org"]) > strong:first-child{ font-size:1.06em; }
+  /* …but in the H3-heading format (science/weekend) the arXiv line is the paper's CITATION sitting
+     directly under its `### title`, not a new paper — so don't draw a divider between a heading and
+     its own citation. */
+  .page__content > h2 + p:has(> strong:first-child > a[href*="arxiv.org"]),
+  .page__content > h3 + p:has(> strong:first-child > a[href*="arxiv.org"]),
+  .page__content > h4 + p:has(> strong:first-child > a[href*="arxiv.org"]){
+    margin-top:0; padding-top:0; border-top:0; }
 
   /* HEADLINE: the lead bold becomes a real display headline on its own line */
   .page__content > ul > li.story > p:first-of-type > strong:first-child{
