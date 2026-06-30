@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
   /* per-STORY inline thumbs (story_id set) — faint until you hover OR keyboard-focus the bullet */
   .fb-inline {
     margin-left: 0.45em; white-space: nowrap; user-select: none;
-    font-size: 0.92em; opacity: 0.45; transition: opacity 0.12s ease; vertical-align: baseline;
+    font-size: 0.92em; opacity: 0.6; transition: opacity 0.12s ease; vertical-align: baseline;
   }
   li:hover .fb-inline, li:focus-within .fb-inline, .fb-inline:focus-within,
   .fb-inline.fb-live { opacity: 0.95; }
@@ -473,11 +473,11 @@ document.addEventListener('DOMContentLoaded', function () {
   /* secondary theme surfaces that otherwise flash the stock white skin in dark mode */
   .greedy-nav .hidden-links{ background:var(--paper); }
   .sidebar,.toc__menu,.notice,.notice--primary,.notice--info,.notice--warning{ background:var(--panel); color:var(--ink); }
-  .page__content{ font-size:1.06rem; line-height:1.5; max-width:42em; margin-left:auto; margin-right:auto; }
-  .page__content p{ margin:0 0 .85em; }
+  .page__content{ font-size:1.06rem; line-height:1.6; max-width:40em; margin-left:auto; margin-right:auto; }
+  .page__content p{ margin:0 0 1em; }
   /* prose links only — leave theme chrome (pagination/taxonomy/breadcrumbs) to the skin */
   .page__content a{ color:var(--ink); text-decoration:underline; text-decoration-thickness:1px;
-    text-underline-offset:2px; text-decoration-color:var(--frame); }
+    text-underline-offset:2px; text-decoration-color:var(--muted-ui); }
   .page__content a:hover{ color:var(--accent); text-decoration-color:var(--accent); }
   strong,.page__content strong{ font-weight:600; }
 
@@ -498,6 +498,21 @@ document.addEventListener('DOMContentLoaded', function () {
     font-size:.82em; color:var(--muted-ui); margin:2.4em 0 1.2em; padding-top:1em; border-top:1px solid var(--rule); }
   .page__content h2:first-of-type{ margin-top:.7em; }
   .page__content h3{ font-family:var(--display); font-weight:600; font-size:1.25em; line-height:1.25; margin:1.6em 0 .4em; }
+  /* Headings must use --ink. Two theme traps to override:
+     (1) the skin colors h1..h6 + .page__title, and our dark-mode block only swaps the --ink
+         *variable* (not these rules) — so any heading we don't explicitly style (h1, h3, h4) could
+         keep a dark theme color and vanish on the dark paper; and
+     (2) .page__title wraps its whole text in a self-permalink <a>, which the theme colors #3d4144
+         (slate). That LINK, not the h1, is the visible title — measured 1.79:1 on dark paper — so it
+         must be re-inked too. The theme's `.page__title a` rule ties our specificity and wins on
+         source order (and :visited is sticky), so force it with !important. h2 keeps its muted
+         kicker color (set above, excluded here on purpose). */
+  .page__title,
+  .page__content h1, .page__content h3, .page__content h4, .page__content h5, .page__content h6{ color:var(--ink); }
+  .page__title a, .page__title a:visited{ color:var(--ink) !important; }
+  /* The brief's first in-body H1 (e.g. "AI/ML Brief — {date}") repeats the masthead page title
+     verbatim — two loud stacked titles. Demote it so the masthead title leads the hierarchy. */
+  .page__content h1{ font-size:1.5em; line-height:1.2; margin:.2em 0 .6em; }
 
   /* one story per row, SINGLE column — generous separation. `.story` is tagged by the JS
      normalizer above, so this styling targets ONLY real story bullets — never the
@@ -509,6 +524,15 @@ document.addEventListener('DOMContentLoaded', function () {
   .page__content > ul > li.story > p{ margin:0; }
   .page__content ul ul{ list-style:disc; margin:.4em 0 0; }
   .page__content > ul > li.story > ul{ order:3; }
+
+  /* arXiv-format briefs (ai-ml / science / weekend) author each paper as a plain <p> that leads
+     with `**[arXiv:ID](arxiv.org/…)** · …`, so the `.story` headline/flex treatment never engages
+     and 10+ dense papers run together as one wall. Give each paper paragraph real separation +
+     lift its arXiv-id anchor so the eye can find paper boundaries. (Stopgap: the cleaner fix is to
+     have the writer emit the `- **headline**` story format the news brief uses.) */
+  .page__content > p:has(> strong:first-child > a[href*="arxiv.org"]){
+    margin-top:1.7em; padding-top:1.3em; border-top:1px solid var(--hair); }
+  .page__content > p:has(> strong:first-child > a[href*="arxiv.org"]) > strong:first-child{ font-size:1.06em; }
 
   /* HEADLINE: the lead bold becomes a real display headline on its own line */
   .page__content > ul > li.story > p:first-of-type > strong:first-child{
@@ -541,6 +565,10 @@ document.addEventListener('DOMContentLoaded', function () {
   .page__content code{ font-family:var(--sans); font-size:.72em; font-weight:500; text-transform:uppercase;
     letter-spacing:.04em; color:var(--muted); background:transparent; border:1px solid var(--hair);
     border-radius:999px; padding:.12em .6em; }
+  /* the theme tags inline code as `.highlighter-rouge` with a light #fafafa background at higher
+     specificity (code.language-plaintext.highlighter-rouge), which bleeds a glaring light pill into
+     dark mode behind chips like [preprint] / [ongoing since] — measured 2.89:1. Re-assert transparent. */
+  .page__content code.highlighter-rouge{ background:transparent; }
 
   .page__content blockquote{ border-left:2px solid var(--accent); background:var(--panel); font-style:italic;
     margin:1.1em 0; padding:.5em 1.1em; color:var(--ink); }
@@ -578,13 +606,15 @@ document.addEventListener('DOMContentLoaded', function () {
   .page__footer a{ text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; }
 
   /* feedback widget — variable-driven, follows light/dark automatically */
-  .fb-box{ border:1px solid var(--hair); background:var(--panel); }
-  .fb-btn{ border:1px solid var(--frame); }
+  /* lift the box off the page (--hair was ~1.3:1, invisible) and give controls a >=3:1 border
+     (--frame was ~2.2:1, below WCAG 1.4.11 for interactive controls) so the widget is usable. */
+  .fb-box{ border:1px solid var(--frame); background:var(--panel); }
+  .fb-btn{ border:1px solid var(--muted-ui); }
   .fb-btn:hover{ background:var(--hair); }
   .fb-btn.fb-on{ background:transparent; border-color:var(--accent); color:var(--accent); }
-  .fb-reason textarea,.fb-irzn input{ background:var(--field); border:1px solid var(--frame); color:var(--ink); }
+  .fb-reason textarea,.fb-irzn input{ background:var(--field); border:1px solid var(--muted-ui); color:var(--ink); }
   .fb-t.fb-on{ filter:none; color:var(--accent); }
-  .fb-irzn button{ border:1px solid var(--frame); }
+  .fb-irzn button{ border:1px solid var(--muted-ui); }
   .fb-q,.fb-status,.fb-ist{ font-family:var(--sans); }
   .fb-inline{ display:block; margin:.6em 0 0; }  /* per-story thumbs on their own line under the story */
   /* readable placeholders (the stock ~50% grey fails AA in light mode) */
@@ -600,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Strip a leading emoji run (incl. variation selectors / ZWJ sequences) + trailing space.
     // Prefer Unicode property escapes; fall back to the legacy literal range on old engines.
     var LEAD;
-    try { LEAD = /^(?:\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*\s*)+/u; }
+    try { LEAD = /^(?:(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|‍\p{Extended_Pictographic})*\s*)+/u; }
     catch (e) { LEAD = /^[\s←-⯿☀-➿\uD800-\uDFFF️‍]+/; }
     c.querySelectorAll('h2, h3').forEach(function (h) {
       var n = h.firstChild;
@@ -620,6 +650,11 @@ document.addEventListener('DOMContentLoaded', function () {
   .home-hero{ display:block; max-width:60em; margin:0 auto 2.6em; padding:1.9em 1em;
     text-align:center; text-decoration:none; color:var(--ink);
     border-top:2px solid var(--rule); border-bottom:2px solid var(--rule); }
+  /* the hero links to the latest edition, so for the owner it is ALWAYS :visited — and the theme's
+     `a:visited{color:#4e91a5}` (teal) outranks `.home-hero{color:var(--ink)}`, painting the single
+     most prominent element cold off-palette teal (3.0:1 in light). Same bug family as the page title;
+     re-ink the visited state (specificity 0,2,0 beats the theme's 0,1,1). */
+  .home-hero:visited, .home-hero:visited .home-hero__title{ color:var(--ink); }
   .home-hero:hover .home-hero__title{ color:var(--accent); }
   .home-hero__kicker{ display:block; font-family:var(--sans); text-transform:uppercase; letter-spacing:.18em;
     font-size:.72em; font-weight:600; color:var(--accent); margin-bottom:.55em; }

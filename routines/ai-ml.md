@@ -123,8 +123,16 @@ If you DO have papers inside the window: because this is a multi-day window (two
 
 **Affiliations (required for every paper):** after the author list, surface the lead authors' institutional affiliations from the Semantic Scholar `authors.affiliations` field (fall back to arXiv `<arxiv:affiliation>`). If no affiliation is retrievable, write `(affiliation not listed)` — never fabricate.
 
-Format each paper as:
-**[arXiv:ID](URL)** · F. Last, A. Other et al. (MIT; Google DeepMind) · `[preprint]` — 1-line why-interesting + submission date.
+Format each paper as a **story bullet** (one `-` per paper, so the section is a bulleted list, not
+paragraphs) — the same headline-led shape the News brief uses, so each paper renders as its own real
+headline with a scan anchor instead of blurring into a wall of dense paragraphs. **Lead with a bold
+plain-language headline** stating the paper's key claim or result (NOT the arXiv id); then, on the same
+line, give the citation, authors + affiliations, the tag, the pedagogical why-it-matters, and the
+submission date:
+
+- **{Key result in plain words}** — [arXiv:ID](URL) · F. Last, A. Other et al. (MIT; Google DeepMind) · `[preprint]` — why it matters, explaining the central method/term (submitted {date}).
+
+(The bold headline is also the `headline` you pass to the dedup candidate; the arXiv URL is the `url`.)
 
 ## 🏢 Lab blogs & official releases
 T1: anthropic.com/news, openai.com/news, deepmind.google/discover/blog, ai.meta.com/blog, research.google, microsoft.com/en-us/research/blog, mistral.ai/news, qwenlm.github.io/blog, allenai.org/blog, machinelearning.apple.com.
