@@ -522,6 +522,12 @@ document.addEventListener('DOMContentLoaded', function () {
     border-bottom:1px solid var(--hair); }
   .page__content > ul > li.story:last-child{ border-bottom:0; }
   .page__content > ul > li.story > p{ margin:0; }
+  /* multi-paragraph stories (arXiv papers: headline+byline / explanation / why-it-matters) — the
+     rule above zeroes every story <p>, so give the 2nd+ paragraphs real separation. */
+  .page__content > ul > li.story > p + p{ margin-top:.7em; }
+  /* make the "Why it matters:" lead-in read as a small label, not body emphasis */
+  .page__content > ul > li.story > p + p > strong:first-child{ font-family:var(--sans); font-weight:600;
+    font-size:.82em; text-transform:uppercase; letter-spacing:.04em; color:var(--muted-ui); }
   .page__content ul ul{ list-style:disc; margin:.4em 0 0; }
   .page__content > ul > li.story > ul{ order:3; }
 

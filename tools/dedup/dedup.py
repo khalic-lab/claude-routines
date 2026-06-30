@@ -389,7 +389,21 @@ def extract_stories(md_text):
             j = i + 1
             while j < len(lines):
                 nxt = lines[j]
-                if not nxt.strip() or nxt.lstrip().startswith("- ") or nxt.startswith("#"):
+                if nxt.startswith("#"):
+                    break
+                if not nxt.strip():
+                    # Blank line: a story bullet may be multi-paragraph (e.g. arXiv papers render as
+                    # headline / explanation / why-it-matters). The bullet continues only if the next
+                    # non-blank line is an INDENTED continuation (not a new top-level "- " bullet).
+                    k = j + 1
+                    while k < len(lines) and not lines[k].strip():
+                        k += 1
+                    if (k < len(lines) and lines[k][:1] in (" ", "\t")
+                            and not lines[k].lstrip().startswith("- ")):
+                        j += 1
+                        continue
+                    break
+                if nxt.lstrip().startswith("- "):
                     break
                 body.append(nxt.strip())
                 j += 1
