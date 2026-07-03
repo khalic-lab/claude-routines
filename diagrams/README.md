@@ -5,6 +5,9 @@ names, trigger IDs, environment, Worker bindings). They render on GitHub and in 
 viewer. Mutable facts (models, schedules) ultimately live in [`../ARCHITECTURE.md`](../ARCHITECTURE.md);
 if a diagram and `ARCHITECTURE.md` disagree, the latter wins.
 
+> **Last verified against the code: 2026-07-03** (01+02 refreshed for the 2026-06-29 cadence
+> redesign + the News midday move). Diagrams drift silently between refreshes — check this date.
+
 | # | File | What it shows |
 |---|------|---------------|
 | 01 | [system-overview](01-system-overview.md) | Components & end-to-end data flow (cloud → repo → Pages / bridge → phone) |

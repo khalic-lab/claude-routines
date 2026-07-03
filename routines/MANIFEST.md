@@ -18,15 +18,15 @@ still carries its full prompt inline in the trigger (not shimmed).
 
 | Routine | prompt file | trigger_id | cron (UTC / CEST) | model | shim? |
 |---|---|---|---|---|---|
-| News | `news.md` | `trig_012KfuF2Fc8KxNRS9KT1iuYb` | `0 17 * * *` (17:00 / 19:00, daily) | `claude-opus-4-8` | yes |
+| News | `news.md` | `trig_012KfuF2Fc8KxNRS9KT1iuYb` | `0 10 * * *` (10:00 / 12:00, daily — moved from `0 17` on 2026-07-03) | `claude-opus-4-8` | yes |
 | AI/ML | `ai-ml.md` | `trig_01QVL6eSmHTUrmnSLHrpNN9Q` | `0 10 * * 2,5` (10:00 / 12:00, Tue+Fri) | `claude-opus-4-8` | yes |
 | Science | `science.md` | `trig_01YLiCr5YJ2XNh2QyPbkyzQP` | `0 15 * * 3` (15:00 / 17:00, Wed) | `claude-opus-4-8` | yes |
 | Weekend Deep Read | `weekend.md` | `trig_01XKzge4DxP6wTjLwtkoYeqj` | `30 7 * * 6` (07:30 / 09:30, Sat) | `claude-opus-4-8` | yes |
 | Weekly Evaluator | `weekly-evaluator.md` | `trig_01F5npsKTQTLKekAZ5BczKtG` | `30 9 * * 0` (09:30 / 11:30, Sun) | `claude-opus-4-8` | yes |
 | Watch | `watch.md` | `trig_01FgrFMfsreu597nKUXEEQMt` | `0 */4 * * *` (every 4h) | `claude-haiku-4-5-20251001` | no (full inline) |
 
-> **Retired 2026-06-29** (trigger IDs REUSED above): `morning-overview.md` → retargeted to **News** (evening
-> daily, CH+world); `cyber-papers.md` → retargeted to **Science** (weekly Wed, non-AI science). Security
+> **Retired 2026-06-29** (trigger IDs REUSED above): `morning-overview.md` → retargeted to **News** (daily,
+> CH+world — evening until 2026-07-03, midday since); `cyber-papers.md` → retargeted to **Science** (weekly Wed, non-AI science). Security
 > dropped pipeline-wide; the old consolidated evening email and the AI/ML/science split are gone. The
 > Markets trigger (`trig_01GBugAS5qw88yQK3tv8kKWx`) remains disabled.
 

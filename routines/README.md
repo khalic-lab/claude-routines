@@ -1,42 +1,41 @@
 # `routines/` — the source of truth for the claude.ai routine prompts
 
-The remote claude.ai routines (Morning Overview, AI/ML, Cyber+Papers/Evening, Weekend, Weekly
-Evaluator, Watch) run prompts that live in each trigger's `job_config.ccr` **server-side**. The
-claude.ai RemoteTrigger API has no bulk export and no version history, so until now the actual
-editorial content of this pipeline was untracked — one bad edit or a lost environment and there
-was no recovering it. These files fix that: they are **byte-faithful snapshots of the live
-prompts**, version-controlled here, so the repo is the canonical record and a backup.
+**Since 2026-06-29 the live triggers are BOOTSTRAP SHIMS**: each writer/evaluator trigger's stored
+prompt is a small shim that `git pull`s this repo and reads its real prompt from `routines/<slug>.md`
+at fire time. The files here are not snapshots that can drift — they ARE the live prompts. See
+`MANIFEST.md` for the shim shape and per-trigger config, and `../CLAUDE.md` → "Editing a routine".
 
 ## Files
 
-- `morning-overview.md`, `ai-ml.md`, `cyber-papers.md`, `weekend.md`, `weekly-evaluator.md`,
-  `watch.md` — one file per routine, containing that routine's full prompt verbatim.
-- `MANIFEST.md` — per-routine `trigger_id`, cron, model, `enabled`, and the **full
+- `news.md`, `ai-ml.md`, `science.md`, `weekend.md` — the four writer prompts, **generated**:
+  edit `src/<slug>.md` (stream-specific body) or `_shared/*.md` (partials shared by all four),
+  then run `python3 routines/assemble.py` to regenerate. Never hand-edit the generated files —
+  `python3 routines/assemble.py check` is the drift guard (non-zero exit = generated file no
+  longer matches its sources).
+- `weekly-evaluator.md` — the Evaluator prompt; **not** assembled, edit directly.
+- `watch.md` — the Watch prompt. **The one exception:** Watch is not shimmed; its full prompt
+  lives inline in the trigger. To change it, use `RemoteTrigger update` AND edit `watch.md` to match.
+- `MANIFEST.md` — per-routine `trigger_id`, cron, model, shim shape, and the **full
   `session_context`** (required to reconstruct a RemoteTrigger update body). Shared
   `environment_id = env_018zypSdRSdGdrZ8J5usqCWA`.
+- `src/`, `_shared/`, `assemble.py` — the assembly layer for the four writer prompts.
 
 ## One redaction
 
-The four writer prompts embed the `fetch-proxy` Worker bearer in a `curl` example. It is redacted
-here to `Bearer ${FETCH_PROXY_TOKEN}`. The real value is the Worker secret (also in the git-ignored
-`tools/fetch-proxy/.dev.vars`). Substitute it back when mirroring a writer prompt to RemoteTrigger.
-The Evaluator and Watch prompts carry no secret and are fully verbatim.
+The four writer prompts reference the `fetch-proxy` Worker bearer as the literal placeholder
+`${FETCH_PROXY_TOKEN}`. The real value lives only in each trigger's shim (step 3) and the Worker
+secret (also in the git-ignored `tools/fetch-proxy/.dev.vars`) — the repo never holds it, so
+these files are safe to commit as-is.
 
-## Not auto-synced — the workflow
+## The edit workflow
 
-There is no automatic repo→claude.ai push. These snapshots and the live config can drift if someone
-edits one without the other. The convention (see `../CLAUDE.md`):
+1. Edit `src/<slug>.md` or `_shared/*.md` (or `weekly-evaluator.md` directly).
+2. `python3 routines/assemble.py` (writers only), then `python3 routines/assemble.py check`.
+3. **Commit + push.** Done — the shim reads the new file at the next fire. No RemoteTrigger call,
+   no mirroring, no byte-verify.
 
-1. **Edit the prompt here first** (the repo file is the source of truth).
-2. **Mirror it to RemoteTrigger** with `RemoteTrigger update`, wrapped in `job_config.ccr`, sending
-   the **complete** `session_context` from `MANIFEST.md` (substitute the real fetch-proxy token in
-   writer prompts).
-3. **Byte-verify** the stored result against the file (re-GET, diff) — RemoteTrigger silently no-ops
-   unwrapped fields and clobbers an omitted `session_context` key.
-4. Commit the repo change.
-
-When in doubt about whether the repo matches live, re-snapshot: `RemoteTrigger get` each trigger and
-overwrite the file (re-applying the token redaction).
+`RemoteTrigger update` is needed ONLY for a trigger's schedule (`cron_expression`), display name,
+`session_context`, or the shim text/token itself — see `MANIFEST.md` for the protocol and traps.
 
 ## Excluded from Jekyll
 

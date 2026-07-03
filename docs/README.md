@@ -4,6 +4,9 @@ Not published (the whole `docs/` tree is in `_config.yml` `exclude:`). These ref
 environment ID, trigger IDs and Worker URLs, so they stay off the public Pages site.
 
 ## Live design docs / decisions
+- [`SPIKE-2026-06-29-cadence-redesign.md`](SPIKE-2026-06-29-cadence-redesign.md) — the per-topic
+  lineup (News / AI/ML / Science / Weekend), slug renames, bootstrap-shim prompt model.
+  **Decisions taken + implemented 2026-06-29.**
 - [`SPIKE-model-tiering.md`](SPIKE-model-tiering.md) — per-routine model tiers; why writers are
   on Opus, Watch on Haiku. **Decisions taken 2026-05-30.**
 - [`SPIKE-writer-token-levers.md`](SPIKE-writer-token-levers.md) — the real token spend is the

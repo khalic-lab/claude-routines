@@ -51,9 +51,10 @@ applies unchanged — no special-casing of the verdicts is needed.
 
 `/tmp/verdicts.json` has one result per candidate: `verdict` (NEW | ONGOING | REPEAT), `score`,
 an optional `match_reason` (`exact-url` | `exact-arxiv` | `distinct-paper`),
-and for non-NEW a `matched` object with `date`, `headline`, `thread_id`, `first_seen_date`,
-`event_date`, and — when the match is a *different artifact* — `continuation: false` with
-`first_seen_date: null`.
+and for non-NEW a `matched` object with `id`, `date`, `headline`, `summary`, `url`, `thread_id`,
+`first_seen_date`, `event_date`, and — when the match is a *different artifact* —
+`continuation: false` with `first_seen_date: null`. (`matched.summary`/`matched.url` are the prior
+coverage's own summary and source — lean on them when framing an ONGOING update.)
 
 ## Step B — apply verdicts while composing
 

@@ -64,7 +64,9 @@ files move only through the Evaluator's human-applied patches.
   "vote": -1,                          // +1 | -1
   "reason": "markets snapshot too long on weekends",  // optional free text; "" if thumb-only
   "surface": "web",                    // "web" | "cli"
-  "source_domain": null,               // set when the reason names a source -> source-weights.yml
+  "source_domain": null,               // reserved for source-weights.yml wiring; nothing populates it
+                                       //   yet (no code derives it from the reason text) — manual
+                                       //   `feedback.py add --source-domain` only
   "consumed": false                    // Evaluator flips true when folded into a patch proposal
 }
 ```
@@ -103,7 +105,7 @@ and re-drain next tick; the append skips ids already on disk, so no duplicates.
 - **Weekly Evaluator** (`trig_01F5npsKTQTLKekAZ5BczKtG`): add to its prompt — read the last 7 days of
   `feedback/*.jsonl`, and propose concrete patches to `reader-profile.md` /
   `reader-profile/source-weights.yml` (flipping the consumed records' `consumed: true`). Human-applied.
-- **Writers** (Overview / AI-ML / Cyber+Papers / Weekend): add `reader-profile.md` and
+- **Writers** (News / AI-ML / Science / Weekend; pre-2026-06-29 names: Overview / Cyber+Papers): add `reader-profile.md` and
   `reader-profile/source-weights.yml` to each routine's `session_context.sources` so they weight by
   the reader profile and honor the never/reduce lists at compose time.
 

@@ -8,7 +8,7 @@ client-side enrichments and the feedback sink. `main` is the single source of tr
 flowchart TB
   subgraph cloud["Anthropic Cloud · routines · env_018zypSdRSdGdrZ8J5usqCWA"]
     direction TB
-    W["Writers — claude-opus-4-8<br/>Overview · AI/ML · Cyber+Papers · Weekend<br/>Write _posts/{date}-{slug}.md"]
+    W["Writers — claude-opus-4-8<br/>News · AI/ML · Science · Weekend<br/>Write _posts/{date}-{slug}.md"]
     WA["Watch — claude-haiku-4-5<br/>reads watches.yml every 4h<br/>writes pending-notifications/*.json"]
     EV["Weekly Evaluator — claude-opus-4-8<br/>reads 7d of _posts + feedback/*.jsonl<br/>writes _posts/{date}-evaluator.md"]
     step["per run: clone → git pull → curl/WebFetch + MCP → Write → commit → push main"]
@@ -29,7 +29,7 @@ flowchart TB
   end
 
   subgraph mac["Local Mac"]
-    BR["bridge.sh — cron */10 7-22<br/>pull · drain notifs → ntfy · drain feedback · commit · push"]
+    BR["bridge.sh — cron */10 7-22<br/>pull · drain notifs → ntfy · drain feedback · commit · push · Pages self-heal"]
   end
 
   NTFY["ntfy.sh · topic khalic"]

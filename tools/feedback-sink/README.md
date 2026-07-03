@@ -16,9 +16,13 @@ human-applied patch proposals — never auto-mutated from a tap. See `feedback/F
 ## API
 
 ```
-POST /submit            (public, CORS)  body: {brief, vote, reason?, story_id?, surface?}
+POST /submit            (site key, CORS) body: {brief, vote, reason?, story_id?, surface?}
   -> {ok:true, id}                       writes one record to KV. No bearer (browser can't keep one);
-                                         optional X-Widget-Key header if WIDGET_KEY is set.
+                                         requires the X-Widget-Key header (fails closed with 403 if
+                                         WIDGET_KEY is unset or wrong).
+POST /propose           (site key, CORS) body: {topic, detail?, surface?}
+  -> {ok:true, id}                       writes one kind:"proposal" record to KV (the home-page
+                                         "Propose a brief" form); bridge routes it to proposals/.
 GET  /drain             (Bearer)         -> {count, truncated, records:[{key, ...record}]}
                                          lists queued records; does NOT delete.
 POST /ack               (Bearer)         body: {keys:[...]}  -> {ok, deleted}
@@ -41,8 +45,9 @@ From this directory (`tools/feedback-sink`):
    ```
    wrangler secret put FEEDBACK_TOKEN
    ```
-   Optionally set a widget deterrence key — it must match the shared site key visitors enter in
-   the unlock modal (sent as the `X-Widget-Key` header; kept in the browser's localStorage):
+   Set the shared site key — **required** (the Worker fails closed: /submit and /propose return
+   403 for every request while WIDGET_KEY is unset). It must match the key visitors enter in the
+   unlock modal (sent as the `X-Widget-Key` header; kept in the browser's localStorage):
    ```
    wrangler secret put WIDGET_KEY
    ```
@@ -63,9 +68,10 @@ From this directory (`tools/feedback-sink`):
 WORKER=https://feedback-sink.<account>.workers.dev
 TOKEN=<the FEEDBACK_TOKEN you set>
 
-# Submit (public) — expect {ok:true,id:...}
+# Submit (site key) — expect {ok:true,id:...}; without X-Widget-Key expect 403 (fail closed)
 curl -s -XPOST "$WORKER/submit" -H 'Content-Type: application/json' \
-  -d '{"brief":"2026-06-07-overview","vote":-1,"reason":"weekend brief too long"}'
+  -H "X-Widget-Key: <the WIDGET_KEY you set>" \
+  -d '{"brief":"2026-07-03-news","vote":-1,"reason":"too long"}'
 
 # Drain (bearer) — expect the record back with its KV key
 curl -s "$WORKER/drain" -H "Authorization: Bearer $TOKEN" | jq

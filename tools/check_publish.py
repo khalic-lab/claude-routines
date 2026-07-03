@@ -18,7 +18,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Paths that MUST be excluded from the published site.
 REQUIRED_EXCLUDES = {
     "CLAUDE.md", "ARCHITECTURE.md", "README.md", "reader-profile.md", "reader-profile",
-    "docs", "diagrams", "tools", "routines", "feedback", "proposals",
+    "docs", "diagrams", "tools", "routines", "feedback", "proposals", "briefs",
     "index/stories", "watches.yml", "pending-notifications", "bridge.sh", "HANDOFF.md",
 }
 

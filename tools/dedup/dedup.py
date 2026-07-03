@@ -31,9 +31,11 @@ Thresholds (check):
   --t-low            ONGOING in [t-low, t-high)       (default 0.72)
   --since            window in days to compare against (default 30)
 
-Index record schema (one JSON object per line), per ARCHITECTURE.md 5.1:
+Index record schema (one JSON object per line), per ARCHITECTURE.md 5.1; on disk the
+vector is stored as `emb` (base64-packed float16, see encode_vec/decode_vec) and only
+decoded to an in-memory `embedding` list by load_recent_index():
   {id, date, stream, headline, summary, url, source_domain, tier, tags,
-   thread_id, first_seen_date, event_date, embedding_model, embedding:[float x1024]}
+   thread_id, first_seen_date, event_date, embedding_model, emb:"<b64 f16 x1024>"}
 
 `date` is the brief/compose date, `first_seen_date` the earliest brief in the thread
 (first COVERAGE), and `event_date` (nullable, ISO 8601 reduced precision YYYY |
@@ -145,7 +147,12 @@ def source_domain(url):
     if not url:
         return None
     m = re.match(r"https?://([^/]+)/?", url)
-    return m.group(1).lower().lstrip("www.") if m else None
+    if not m:
+        return None
+    host = m.group(1).lower()
+    # NOT lstrip("www.") — that strips CHARACTERS {w,.}, mangling w-initial hosts
+    # (washingtonpost.com -> ashingtonpost.com); it corrupted index records until 2026-07-03.
+    return host[4:] if host.startswith("www.") else host
 
 
 # --------------------------------------------------------------------------- #
@@ -656,8 +663,10 @@ def decide_verdict(cand, vec, recent, exact, t_high, t_low):
     1. Deterministic exact-source match (same canonical URL / arXiv id) -> REPEAT,
        cosine-independent — catches reworded-headline reruns cosine would miss.
     2. Cosine classify -> REPEAT/ONGOING/NEW."""
-    hit_keys = [k for k in exact_keys(cand.get("headline"), cand.get("summary"), cand.get("url"))
-                if k in exact]
+    # sorted: exact_keys is a set, so bare iteration order is arbitrary — sorting makes the
+    # reported match deterministic (and prefers "arxiv:" over "url:" when both hit).
+    hit_keys = sorted(k for k in exact_keys(cand.get("headline"), cand.get("summary"), cand.get("url"))
+                      if k in exact)
     if hit_keys:
         return {"verdict": "REPEAT", "score": 1.0,
                 "match_reason": "exact-arxiv" if any(k.startswith("arxiv:") for k in hit_keys) else "exact-url",
@@ -849,6 +858,9 @@ def cmd_selftest(_args):
     assert stories[0]["headline"].startswith("Bilaterals III")
     assert stories[0]["url"] == "https://swissinfo.ch/x"
     assert source_domain("https://www.aljazeera.com/x") == "aljazeera.com"
+    # w-initial hosts must survive www-stripping (the lstrip("www.") regression).
+    assert source_domain("https://www.washingtonpost.com/x") == "washingtonpost.com"
+    assert source_domain("https://wired.com/story") == "wired.com"
     assert embed_text("Headline here", "Headline here. extra").startswith("Headline here")
     # event_date derivation + ISO-partial parsing + days-since.
     assert arxiv_event_date("see arXiv:2606.06333 abstract") == "2026-06", \

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Offline regression test guarding the dedup calibration (2026-05-31 gold set).
 
-Stdlib only, NO network: it never calls the embed Worker. It pulls the STORED
-bge-m3 vectors out of index/stories/*.jsonl via dedup.decode_vec and asserts that
-classify()/autolink(), at the shipped T_HIGH_DEFAULT/T_LOW_DEFAULT, still:
+Stdlib only, NO network: it never calls the embed Worker. It reads the STORED
+bge-m3 vectors from the frozen gold records in tools/dedup/fixtures/*.jsonl
+(extracted byte-exact from index/stories/ on 2026-07-03, before the rolling
+40-day prune aged the May files out) and asserts that classify()/autolink(),
+at the shipped T_HIGH_DEFAULT/T_LOW_DEFAULT, still:
 
   * tag the two clearly-identical near-verbatim reruns (Oxford "quadsqueezing",
     cosine 0.9494 / 0.9518) as REPEAT, and
@@ -24,11 +26,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import dedup  # noqa: E402
 
 REPO = dedup.REPO
-INDEX_DIR = dedup.INDEX_DIR
+FIXTURES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
 
-# Clear-cut gold fixtures, keyed by (index file, lowercased headline substring).
-# Stored vectors only — immune to embedding-model drift, but regenerate if the
-# index is pruned past these dates (the loader raises a clear message if so).
+# Clear-cut gold fixtures, keyed by (fixture file, lowercased headline substring).
+# The files are frozen copies of the matching index/stories/ records (stored
+# vectors only — immune to embedding-model drift AND to the index's 40-day
+# prune, which deleted the original May files on 2026-07-03 and broke the test
+# while it still read the live index).
 FIXTURES = {
     # TRUE-REPEAT: Oxford "quadsqueezing" re-run near-verbatim across overview days.
     "quad_02": ("2026-05-02-overview.jsonl", "quadsqueez"),
@@ -51,12 +55,12 @@ FIXTURES = {
 
 
 def _load_fixture(fname, needle):
-    """Return one index record (with decoded `embedding`) matching `needle`."""
-    path = os.path.join(INDEX_DIR, fname)
+    """Return one gold record (with decoded `embedding`) matching `needle`."""
+    path = os.path.join(FIXTURES_DIR, fname)
     if not os.path.exists(path):
         raise SystemExit(
-            f"FIXTURE MISSING: {path} not found (index pruned?). "
-            "Regenerate the gold fixture from a current index file."
+            f"FIXTURE MISSING: {path} not found. Restore tools/dedup/fixtures/ "
+            "from git — the gold records are frozen there, not in the live index."
         )
     with open(path) as f:
         for line in f:
@@ -218,6 +222,12 @@ def main():
     assert dedup.scheduled_event_date({"event_date": "2026-05-02", "first_seen_date": "2026-05-02"}) is None
 
     print("calibration test OK")
+
+
+# pytest collects this wrapper (a bare `pytest tools/` would otherwise find 0 tests in a
+# file named test_* and report success without running anything); `python3 <file>` still works.
+def test_calibration():
+    main()
 
 
 if __name__ == "__main__":

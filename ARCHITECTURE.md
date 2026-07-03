@@ -31,7 +31,6 @@
 ║  │     routines/<slug>.md at fire time (see routines/MANIFEST.md)                    │   ║
 ║  │      reads last 7d of _posts → Health table + Patch proposals (human-applied)   │    ║
 ║  └────────────────────────────────────────────────────────────────────────────┘     ║
-║   MCP legend: D=Google-Drive  H=Hugging-Face  G=Gmail  Cal=Google-Calendar            ║
 ╚═══════════════════════════════════════╤══════════════════════════════════════════════╝
    per run: clone → git pull → WebSearch/curl/WebFetch + MCP → Write → commit → push main
                                          │   (+ Gmail create_draft → DRAFTS, never auto-sent)
@@ -40,7 +39,7 @@
             │  GitHub: khalic-lab/claude-routines (private)         │
             │  main = single source of truth                        │
             │  _posts/*.md · pending-notifications/*.json ·         │
-            │  watches.yml · briefs/* (LEGACY May2-4, dead)         │
+            │  watches.yml · feedback/*.jsonl · index/              │
             └───────┬──────────────────────────────────┬───────────┘
           Pages build│                                   │ pull --rebase / commit / push
                      ▼                                   ▼
@@ -62,7 +61,7 @@
    └──────────┬────────────────────────┘             └─────────────┘
               ▼                                        ┌────────────────────────────────────┐
    ┌──────────────────────────────────┐               │ Gmail (DRAFTS → rflnogueira@me.com)  │
-   │ Cloudflare Worker (og-proxy)      │               │  evening digest + weekly review;     │
+   │ Cloudflare Worker (og-proxy)      │               │  News weekday + Weekend/Eval digests │
    │  fetch article HTML → og:image    │               │  user sends manually                 │
    │  30-day edge cache                │               └────────────────────────────────────┘
    └──────────────────────────────────┘
@@ -119,7 +118,7 @@
 | Watch registry | `watches.yml` | `[{id, query, match_when, cooldown_days, last_fired}]` | user + Watch (writes `last_fired`) |
 | Bridge config | `/usr/local/src/news-brief-ntfy-bridge/.env` | `NTFY_TOPIC, NTFY_SERVER, REPO, FEEDBACK_WORKER_URL, FEEDBACK_TOKEN` | bridge.sh |
 | Git creds | `…/git-credentials` (mode 600) | `https://x-access-token:<tok>@github.com` | bridge git push |
-| Legacy briefs | `briefs/{stream}/{date}.md` | pre-Pages layout, **only May 2–4, orphaned** | nothing — dead weight |
+| Legacy briefs | `briefs/{stream}/{date}.md` | pre-Pages layout, only May 2–4 | **deleted 2026-07-03** (recoverable from git history) |
 | Coverage footer | inside each brief | `Direct fetches: N \| via-snippet: M`, `Feeds hit`, `Gaps` | **the only health signal** |
 | Reader feedback | `feedback/{YYYY-MM}.jsonl` | `{id, ts, reader, brief, story_id, vote±1, reason, surface, source_domain, consumed}` | widget→Worker→bridge → Evaluator |
 | Reader profile | `reader-profile.md` + `reader-profile/source-weights.yml` (`never:`/`reduce:`) | NL editorial brief + domain lists | Evaluator proposes (human-gated) → writers read |
@@ -154,7 +153,7 @@ GitHub main  ──┬─ RAW ungated: feedback/*.jsonl (append-only, dedup by i
                ├─ Weekly Evaluator: reads last 7d feedback → PROPOSES patches to
                │     reader-profile.md / source-weights.yml (Patch-proposals section); flips
                │     consumed:true. ◀── HUMAN GATE (Rafael applies)
-               └─ Writers (Overview/AI-ML/Cyber/Weekend): read reader-profile.md +
+               └─ Writers (News/AI-ML/Science/Weekend): read reader-profile.md +
                      source-weights.yml at compose time (favor/demote; never:/reduce:).
 ```
 
@@ -289,7 +288,7 @@ the model's judgment over ~a few hundred recent headlines rather than a similari
 
 ## 5. Schemas
 
-### 5.1 Story item (the dedup unit) — `stories/{date}/{slug}.jsonl`, one per line
+### 5.1 Story item (the dedup unit) — `index/stories/{date}-{slug}.jsonl` (flat, dash-joined), one per line
 
 ```json
 {
@@ -308,7 +307,10 @@ the model's judgment over ~a few hundred recent headlines rather than a similari
                                             //   precision YYYY|YYYY-MM|YYYY-MM-DD). Distinct from
                                             //   `date` (compose) and `first_seen_date` (coverage).
   "embedding_model": "bge-m3",
-  "embedding": [0.01, -0.04, ...]           // omitted from jsonl if stored in parquet
+  "emb": "<base64 float16 x1024>"           // packed via dedup.py encode_vec (~8x smaller than
+                                            //   float text); decoded to an in-memory `embedding`
+                                            //   list by load_recent_index(). The raw-float
+                                            //   `embedding` column is the Phase-2 parquet shape.
 }
 ```
 
@@ -400,7 +402,7 @@ tomorrow" (advisory). All deterministic + offline.
    `embed-proxy.khalic-lab.workers.dev`, `www.nature.com`, `www.aljazeera.com`, `www.ecb.europa.eu`
    (now dead — markets removed; safe to drop), `api.semanticscholar.org`, `www.srf.ch`,
    `www.letemps.ch`, plus `fetch-proxy.khalic-lab.workers.dev` (added 2026-06-18). The chronic AI/ML
-   403s were this list not covering lab/news hosts — now solved via the fetch-proxy (§2) rather than
+   403s were this list not covering lab/news hosts — now solved via the fetch-proxy (§1.4) rather than
    by enumerating every domain.
 2. **Compute-time index store — RESOLVED (2026-06-22): option B**, the in-repo
    `index/stories/*.jsonl`; A (S3) is the Phase-2 migration path. §3.1.
@@ -421,5 +423,5 @@ tomorrow" (advisory). All deterministic + offline.
 ## 8. Out of scope (explicitly deferred)
 
 - Closing the Evaluator loop (auto-PR of patches) — separate track.
-- Migrating the legacy `briefs/` dir — it's dead; delete or ignore, not part of this.
+- Migrating the legacy `briefs/` dir — resolved 2026-07-03: deleted (was dead weight; git history keeps it).
 - Replacing ntfy / Gmail-draft delivery — unchanged by this design.

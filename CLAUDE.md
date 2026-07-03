@@ -59,8 +59,9 @@ trigger's id, cron, and full `session_context`.
 - Repo `github.com/khalic-lab/claude-routines` (private), branch `main`. Site:
   `https://khalic-lab.github.io/claude-routines/`.
 - Environment (all routines): `env_018zypSdRSdGdrZ8J5usqCWA`.
-- Trigger IDs (names/targets after the 2026-06-29 redesign; IDs are stable — old streams retargeted):
-  - News (daily evening; ex–Morning Overview) — `trig_012KfuF2Fc8KxNRS9KT1iuYb`
+- Trigger IDs (names/targets after the 2026-06-29 redesign; IDs are stable — old streams retargeted;
+  schedules live in ARCHITECTURE.md §1.1 + `routines/MANIFEST.md`, not here):
+  - News (daily; ex–Morning Overview) — `trig_012KfuF2Fc8KxNRS9KT1iuYb`
   - AI/ML (Tue+Fri midday) — `trig_01QVL6eSmHTUrmnSLHrpNN9Q`
   - Science (weekly Wed; ex–Cyber+Papers, security dropped) — `trig_01YLiCr5YJ2XNh2QyPbkyzQP`
   - Weekend Deep Read (Sat) — `trig_01XKzge4DxP6wTjLwtkoYeqj`
@@ -74,7 +75,7 @@ trigger's id, cron, and full `session_context`.
 ## Layout
 - Briefs: `_posts/{YYYY-MM-DD}-{slug}.md`; slugs `news`, `ai-ml`, `science`, `weekend`,
   `evaluator`. (Old `overview`/`cyber-papers` slugs retired 2026-06-29; their posts kept as archive.
-  Legacy top-level `briefs/` is dead.)
+  Legacy top-level `briefs/` deleted 2026-07-03 — recoverable from git history.)
 - Notifications: `pending-notifications/{ts}-{slug}.json` → local bridge → ntfy (then deleted).
 - Dedup: `tools/dedup/` (see its `DEDUP.md`); embeddings index under `index/`.
 - Topic watches: `watches.yml` (user owns entries; the Watch routine writes only `last_fired`).

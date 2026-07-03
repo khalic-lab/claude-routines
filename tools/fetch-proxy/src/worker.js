@@ -68,8 +68,12 @@ function isBlockedHost(hostname) {
     if (a === 172 && b >= 16 && b <= 31) return true;
     if (a === 192 && b === 168) return true;
   }
-  // IPv6 loopback / link-local / unique-local.
-  if (h === "::1" || h.startsWith("fe80:") || h.startsWith("fc") || h.startsWith("fd")) return true;
+  // IPv6 loopback / link-local / unique-local. URL.hostname keeps the brackets on IPv6
+  // literals ("[::1]"), so match the bracketed forms (unbracketed startsWith("fc"/"fd")
+  // never matched an IPv6 literal AND false-blocked hostnames like fcbarcelona.com).
+  if (h === "::1" || h === "[::1]") return true;
+  if (h.startsWith("[fe8") || h.startsWith("[fe9") || h.startsWith("[fea") || h.startsWith("[feb")) return true;
+  if (h.startsWith("[fc") || h.startsWith("[fd")) return true;
   return false;
 }
 

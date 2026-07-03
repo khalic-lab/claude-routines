@@ -5,15 +5,15 @@ The four writer prompts share five byte-identical sections (Newsroom ethos, Read
 source weights, Format, Pedagogical tone, Date discipline). Those live once in
 `routines/_shared/*.md`; each writer's stream-specific body lives in `routines/src/<slug>.md`
 with `<!-- include: _shared/<name>.md -->` placeholders. This script expands the placeholders
-to (re)generate the canonical `routines/<slug>.md` — the file that is mirrored to the live
-RemoteTrigger prompt (see CLAUDE.md → "Editing a routine").
+to (re)generate the canonical `routines/<slug>.md` — the file the live trigger's bootstrap shim
+reads at fire time (see CLAUDE.md → "Editing a routine"; no mirroring since 2026-06-29).
 
 Usage:
   python3 routines/assemble.py            # regenerate routines/<slug>.md from src/ + _shared/
-  python3 routines/assemble.py check      # verify routines/<slug>.md == assemble(src) (CI/pre-mirror)
+  python3 routines/assemble.py check      # verify routines/<slug>.md == assemble(src) (pre-commit)
 
-Workflow: edit routines/src/<slug>.md or routines/_shared/*.md → `assemble.py` → mirror the
-regenerated routines/<slug>.md to RemoteTrigger. `assemble.py check` is the drift guard:
+Workflow: edit routines/src/<slug>.md or routines/_shared/*.md → `assemble.py` → commit + push
+(the shim `git pull`s and reads the regenerated file). `assemble.py check` is the drift guard:
 non-zero exit means a committed prompt no longer matches its sources (someone hand-edited the
 generated file, or forgot to re-run assemble).
 """

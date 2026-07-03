@@ -8,7 +8,7 @@
 ## Who the reader is
 - Based in **Switzerland** (Europe/Zurich); cares about Swiss federal/cantonal politics and how
   EU–CH relations (Bilaterals III, free movement) actually affect life and work here.
-- Works in **software / AI**; reads the AI-ML and Cyber+Papers briefs for signal, not hype.
+- Works in **software / AI**; reads the AI-ML and Science briefs for signal, not hype.
 
 ## Favor (lead with these)
 - **Primary sources and new developments** — labs, papers, official releases, court/gov filings —

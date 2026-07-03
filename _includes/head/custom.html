@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
 {%- if page.date and page.categories -%}
 <script>
   // Injected by Jekyll on post pages only: the brief's index slug, e.g.
-  // "2026-06-07-overview". Matches the _posts filename + index/stories key, so per-story
+  // "2026-07-03-news". Matches the _posts filename + index/stories key, so per-story
   // feedback (v2) can key the same id the dedup index uses.
   window.__BRIEF = { slug: "{{ page.date | date: '%Y-%m-%d' }}-{{ page.categories | first }}" };
 </script>
@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Kill switch: set FEEDBACK_ENABLED to false to hide the widget site-wide.
   if (!FEEDBACK_ENABLED || !window.__BRIEF || !window.__BRIEF.slug || !window.fetch) return;
 
-  var SLUG = window.__BRIEF.slug; // "{date}-{stream}", e.g. "2026-06-19-overview"
+  var SLUG = window.__BRIEF.slug; // "{date}-{stream}", e.g. "2026-07-03-news"
 
   // slugify() reproduces tools/dedup/dedup.py slugify() EXACTLY:
   //   re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:48].strip("-") or "story"

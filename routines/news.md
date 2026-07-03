@@ -1,4 +1,4 @@
-Write my evening news brief and publish it via the git pipeline. Use today's date in Europe/Zurich.
+Write my midday news brief and publish it via the git pipeline. Use today's date in Europe/Zurich.
 
 The repo (`khalic-lab/claude-routines`) is cloned as your working directory. Before doing anything else, sync:
 
@@ -8,7 +8,7 @@ git pull --ff-only origin main
 
 # Mission
 
-A tight evening read of the day's major **local (Switzerland & Vaud)** and **world** news. Coverage window: the full day (overnight through evening) — federal/cantonal developments, Swiss-relevant EU moves, and the day's notable geopolitics, conflicts, elections, and diplomacy across all time zones.
+A tight midday read of the major **local (Switzerland & Vaud)** and **world** news since yesterday's edition. Coverage window: the last ~24 hours (yesterday midday through this morning) — federal/cantonal developments, Swiss-relevant EU moves, and the notable geopolitics, conflicts, elections, and diplomacy across all time zones.
 
 This is the daily news edition. **AI/ML, science, and the weekend deep-read are SEPARATE editions** (AI/ML Tue+Fri midday, Science Wed, Weekend Sat) — do NOT cover ML/AI, research papers, science, or cybersecurity here. Duplicating them is noise.
 
@@ -100,7 +100,7 @@ A successful feed fetch (curl OR WebFetch returning 200 with feed XML/JSON) coun
 
 ## 🇨🇭 Switzerland & Vaud
 
-Federal politics, cantonal Vaud, Swiss-relevant EU moves, and notable economy/society stories. Coverage window: full day (overnight through evening).
+Federal politics, cantonal Vaud, Swiss-relevant EU moves, and notable economy/society stories. Coverage window: the last ~24 hours (yesterday midday through this morning).
 
 T1: admin.ch, parlament.ch, vd.ch, Keystone-SDA via rts.ch. **Feed (try via curl first):** SRF.ch RSS (DE-language).
 T2: rts.ch, **letemps.ch (RSS via curl — paywalled items still cite-able by URL)**, nzz.ch, tagesanzeiger.ch, 24heures.ch, tdg.ch, swissinfo.ch, heidi.news.
@@ -109,7 +109,7 @@ Avoid 20min/Blick as primary. **Non-English-source quota:** at least one DE or F
 
 ## 🌍 World politics & geopolitics
 
-The day's notable developments, full window (overnight through this evening, all time zones — not just US/Europe).
+The notable developments of the last ~24 hours (all time zones — not just US/Europe).
 
 T1: reuters.com, apnews.com, afp.com, gov/court filings, White House press releases.
 T2: bbc.com, ft.com, nytimes.com, lemonde.fr, spiegel.de/international, politico.eu, **aljazeera.com (RSS via curl)** (MENA), scmp.com / caixinglobal.com (China), thehindu.com (India).
@@ -121,7 +121,7 @@ Span at least 3 different countries' coverage. Focus on geopolitics, conflicts, 
 ```
 # News — {YYYY-MM-DD}
 
-_Generated {ISO timestamp} Europe/Zurich. Coverage: full day._
+_Generated {ISO timestamp} Europe/Zurich. Coverage: last ~24h._
 
 ## 🇨🇭 Switzerland & Vaud
 - ...
@@ -221,7 +221,7 @@ If `git push` still fails after the rebase retry, append `git push failed: <reas
 
 **Weekend gate:** if today is Saturday or Sunday in Europe/Zurich, SKIP the email step entirely. The brief is still written to git on weekends and the push notification still fires.
 
-Otherwise (Monday–Friday), compose a News-only evening email via Gmail (`create_draft` only). There is NO consolidated cross-stream email — this email carries News content only.
+Otherwise (Monday–Friday), compose a News-only midday email via Gmail (`create_draft` only). There is NO consolidated cross-stream email — this email carries News content only.
 - **To:** rflnogueira@me.com
 - **Subject:** "News — {YYYY-MM-DD}"
 - **Body:** ~250–350 words, plain text or simple markdown. Two labeled sections in this order: 🇨🇭 Switzerland & Vaud, 🌍 World. For each, 2–4 highlight bullets (top items only). End with: `Full brief: {POST_URL}`.
