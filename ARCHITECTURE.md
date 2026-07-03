@@ -20,7 +20,7 @@
 ║  env_018zypSdRSdGdrZ8J5usqCWA   (network settings changed 2026-05-25 → Custom)        ║
 ║  ┌────────────────────────────────────────────────────────────────────────────┐     ║
 ║  │ WRITERS (claude-opus-4-8)      cron (UTC)        output file          email     │    ║
-║  │  • News (CH + world, eve)     0 17 * * *     _posts/{d}-news.md       weekday    │   ║
+║  │  • News (CH + world, noon)    0 10 * * *     _posts/{d}-news.md       weekday    │   ║
 ║  │  • AI/ML (+ arXiv papers)     0 10 * * 2,5   _posts/{d}-ai-ml.md      none       │   ║
 ║  │  • Science (non-AI, weekly)   0 15 * * 3     _posts/{d}-science.md    none       │   ║
 ║  │  • Weekend Deep Read          30 7 * * 6     _posts/{d}-weekend.md    digest     │   ║
@@ -77,7 +77,7 @@
 > config is retained server-side (the RemoteTrigger API exposes no delete).
 
 > **Redesigned 2026-06-29 (cadence + topics — `docs/SPIKE-2026-06-29-cadence-redesign.md`).** Replaced the
-> old daily Overview + Cyber+Papers + AI/ML cadence with the per-topic lineup above: **News** (daily evening,
+> old daily Overview + Cyber+Papers + AI/ML cadence with the per-topic lineup above: **News** (daily midday,
 > CH+world — retargets the Morning Overview trigger), **AI/ML** (Tue+Fri midday, now also carries ALL arXiv
 > ML papers + author affiliations), **Science** (NEW weekly Wed, non-AI science — retargets the Cyber+Papers
 > trigger), **Weekend** (now the in-depth weekly revisit; dedup scoped to its own slug via `--only-slug`).
