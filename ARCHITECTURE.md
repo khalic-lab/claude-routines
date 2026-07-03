@@ -51,7 +51,7 @@
    │     claude-routines               │   │   2 each pending-notifications/*.json →        │
    │  permalink /:y/:m/:d/:title/      │   │       curl -d body  $NTFY_SERVER/$NTFY_TOPIC   │
    └──────────┬────────────────────────┘   │   3 git rm drained + commit "Drained N"        │
-              │ browser                     │   4 push if ahead                              │
+              │ browser                     │   4 push if ahead / Pages self-heal            │
               ▼                             │  creds: store --file=git-credentials (600)     │
    ┌──────────────────────────────────┐   └───────────────────┬────────────────────────────┘
    │ custom.html JS (client-side)      │                       │ HTTP POST
@@ -67,6 +67,19 @@
    │  30-day edge cache                │               └────────────────────────────────────┘
    └──────────────────────────────────┘
 ```
+
+> **Added 2026-07-03: Pages deploy self-heal + News moved to midday.** News trigger cron `0 17 * * *`
+> → `0 10 * * *` (UTC) — 19:00 → 12:00 Bern (summer; fixed-UTC cron, so 11:00 Bern in winter). See the
+> writers table above. Separately: a transient GitHub Pages deploy failure poisons the current commit
+> SHA (Pages deployments are keyed by SHA, and **nothing retries a failed Pages build**), freezing the
+> site on the last good deploy — this stranded 2026-07-02's brief for ~15h because no later commit was
+> pushed overnight to advance the SHA. The **bridge now self-heals** (`bridge.sh` step 4): after its
+> normal push, on a *quiet* tick (nothing else advanced the SHA) it queries the Pages status API and, if
+> `errored`, pushes an empty commit to mint a fresh deployment ID (rate-limited to ≤1 retry / 25 min;
+> pings ntfy). The manual fix is the same — a **new commit**; rebuilding the *same* SHA (`POST
+> /pages/builds` or a workflow rerun) just re-collides with the failed record ("Deployment failed, try
+> again later"). Caveat: the bridge runs 07–22h, so a post-22:00 Pages failure heals at 07:00. See the
+> `pages-deploy-wedge` memory for the full diagnosis.
 
 > **Removed 2026-06-18:** the dedicated Markets routine and all market content. The Markets
 > routine (was `trig_01GBugAS5qw88yQK3tv8kKWx`, cron `30 18 * * 1-5`) had been disabled since
