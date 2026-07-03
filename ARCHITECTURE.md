@@ -80,6 +80,14 @@
 > again later"). Caveat: the bridge runs 07–22h, so a post-22:00 Pages failure heals at 07:00. See the
 > `pages-deploy-wedge` memory for the full diagnosis.
 
+> **Fixed 2026-07-03: Evaluator + Watch `outcomes` stranding.** Both triggers carried a
+> `session_context.outcomes.git_repository.branches` key the writers don't have; it silently diverted
+> each run's output onto a fresh `claude/{admiring-edison,serene-mayer}-*` branch while the session
+> believed its `git push origin main` succeeded. Every Sunday review since 2026-05-31 (except 06-14)
+> stranded that way — the Evaluator wasn't dead, its delivery was hijacked — along with one 06-17
+> Watch fire. The four reviews + their `consumed:true` feedback flips were recovered to main and the
+> `outcomes` / `autofix_on_pr_create` keys removed from both triggers (see `routines/MANIFEST.md`).
+
 > **Removed 2026-06-18:** the dedicated Markets routine and all market content. The Markets
 > routine (was `trig_01GBugAS5qw88yQK3tv8kKWx`, cron `30 18 * * 1-5`) had been disabled since
 > 2026-05-30; on 2026-06-18 the Morning Overview's pre-open market snapshot section was dropped

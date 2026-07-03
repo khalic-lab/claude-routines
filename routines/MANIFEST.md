@@ -94,20 +94,24 @@ rather than "brief".
 ```json
 {
   "allowed_tools": ["WebFetch", "WebSearch", "Read", "Write", "Bash", "Edit", "Glob", "Grep"],
-  "autofix_on_pr_create": false,
   "model": "claude-opus-4-8",
-  "outcomes": [{"git_repository": {"git_info": {"branches": ["claude/admiring-edison"], "repo": "khalic-lab/claude-routines"}}}],
   "sources": [{"git_repository": {"url": "https://github.com/khalic-lab/claude-routines"}}]
 }
 ```
+> **`outcomes` + `autofix_on_pr_create` REMOVED 2026-07-03.** The `outcomes.git_repository.branches`
+> key diverted every run's push onto a fresh `claude/admiring-edison-*` branch — four Sunday reviews
+> (05-31 → 06-28) stranded there invisibly (recovered to main 2026-07-03) while the session believed
+> its `git push origin main` succeeded. Do NOT re-add `outcomes` to any routine that must publish
+> to main.
 
 ### watch (trigger `trig_01FgrFMfsreu597nKUXEEQMt`)
 ```json
 {
   "allowed_tools": ["WebFetch", "WebSearch", "Read", "Write", "Bash", "Edit", "Glob", "Grep"],
-  "autofix_on_pr_create": false,
   "model": "claude-haiku-4-5-20251001",
-  "outcomes": [{"git_repository": {"git_info": {"branches": ["claude/serene-mayer"], "repo": "khalic-lab/claude-routines"}}}],
   "sources": [{"git_repository": {"url": "https://github.com/khalic-lab/claude-routines"}}]
 }
 ```
+> **`outcomes` + `autofix_on_pr_create` REMOVED 2026-07-03** (same stranding defect as the
+> Evaluator — a 2026-06-17 `Watch fired: meteoswiss-inca` commit sat only on
+> `claude/serene-mayer-25muf9`; its notification never reached the phone).

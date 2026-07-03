@@ -39,8 +39,10 @@ trigger's id, cron, and full `session_context`.
 2. Update body: top-level `cron_expression` / `name` as needed, plus
    `{"job_config":{"ccr":{environment_id, events, session_context}}}`. Event shape:
    `{"data":{"type":"user","message":{"role":"user","content":"…"}}}`. Send the **complete**
-   `session_context` — a partial clobbers omitted keys (e.g. the Evaluator's `outcomes` /
-   `autofix_on_pr_create`). The `update` response echoes the stored trigger, so it doubles as the verify.
+   `session_context` — a partial clobbers omitted keys. The `update` response echoes the stored
+   trigger, so it doubles as the verify. **Never add an `outcomes` key to a routine that must
+   publish to main** — it silently diverts every run's push onto a fresh `claude/*` branch (this
+   stranded four Evaluator reviews until 2026-07-03; see `routines/MANIFEST.md`).
 3. Keep the shim **small** — full ~20 KB prompts CANNOT be inlined through the tool (the JSON body fails to
    parse / truncates around ~10–24 KB); the shim model exists precisely so trigger bodies stay tiny. Use
    ASCII-only in the shim to avoid unicode-escape issues.
