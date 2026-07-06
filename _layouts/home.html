@@ -32,7 +32,7 @@ sized by how much it matters, filterable by beat.</p>
           <a class="fcard__beat" href="{{ s.permalink | relative_url }}" title="{{ s.stream_label }} brief · {{ s.date_label }}"><span class="ff-dot"></span>{{ s.topic_label }}</a>
           <span class="fcard__rank" data-imp="{{ s.importance }}"></span>
         </div>
-        {% if s.has_plate %}<canvas class="fplate" role="img" aria-label="Halftone illustration" data-seed="{{ s.seed }}"{% if s.is_lead %} data-big="1"{% endif %}></canvas>{% endif %}
+        {% if s.has_plate %}<canvas class="fplate" role="img" aria-label="Illustration" data-seed="{{ s.seed }}" data-url="{{ s.url }}"{% if s.is_lead %} data-big="1"{% endif %}></canvas>{% endif %}
         <h2 class="fcard__hl">{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.headline }}</a>{% else %}{{ s.headline }}{% endif %}</h2>
         {% if s.summary != "" %}<p class="fcard__sum">{{ s.summary }}</p>{% endif %}
         <div class="fcard__line">
@@ -133,6 +133,13 @@ sized by how much it matters, filterable by beat.</p>
   .fplate{ display:block; width:100%; height:120px; border:1px solid var(--hair); background:var(--panel); }
   .fcard.imp2 .fplate{ height:104px; }
   .fcard.lead .fplate{ height:210px; }
+  /* real article image (og:image via og-proxy) — replaces the halftone once it loads. Same box as
+     the plate so the masonry height is unchanged; a light desaturation sits it in the Folio palette. */
+  .fimg{ display:block; width:100%; height:120px; object-fit:cover; border:1px solid var(--hair);
+    background:var(--panel); filter:saturate(.9); }
+  .fcard.imp2 .fimg{ height:104px; }
+  .fcard.lead .fimg{ height:210px; }
+  @media (prefers-color-scheme:dark){ .fimg{ filter:saturate(.85) brightness(.92); } }
 
   .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.14; margin:0; text-wrap:balance;
     font-size:1.16rem; color:var(--ink); }
@@ -280,6 +287,48 @@ sized by how much it matters, filterable by beat.</p>
     if (!was){ b.classList.add('on'); postFb(box, +b.dataset.v, function(m){ note.textContent = m; }); }
     else { note.textContent = ''; }
   });
+
+  // ---- real article images: unfurl each story's og:image via og-proxy and swap it in for the
+  //      halftone placeholder. arXiv/paper cards keep the halftone (their og:image is just a logo).
+  //      Lazy (IntersectionObserver) + sessionStorage-cached; on any failure the halftone stays. ----
+  var OG = "https://og-proxy.khalic-lab.workers.dev/?url=";
+  var OGC = "homeOg:v1:";
+  function swapImage(card){
+    var plate = card.querySelector(".fplate");
+    if (!plate || plate.dataset.done) return;
+    plate.dataset.done = "1";
+    var url = plate.dataset.url;
+    if (!url) return;
+    var host; try { host = new URL(url).hostname; } catch (e) { return; }
+    if (/(^|\.)arxiv\.org$/.test(host)) return;            // papers: keep the halftone
+    function apply(src){
+      if (!src) return;
+      var img = new Image();
+      img.onload = function(){
+        img.className = "fimg"; img.alt = ""; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
+        plate.parentNode.insertBefore(img, plate);
+        plate.style.display = "none";
+        reflow();
+      };
+      img.src = src;
+    }
+    var cached = null;
+    try { cached = sessionStorage.getItem(OGC + url); } catch (e) {}
+    if (cached !== null) { apply(cached); return; }        // "" = known no-image
+    if (!window.fetch) return;
+    fetch(OG + encodeURIComponent(url)).then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){
+        var src = (j && j.image) ? j.image : "";
+        try { sessionStorage.setItem(OGC + url, src); } catch (e) {}
+        apply(src);
+      }).catch(function(){});
+  }
+  if ("IntersectionObserver" in window){
+    var imgIo = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if (e.isIntersecting){ swapImage(e.target); imgIo.unobserve(e.target); } });
+    }, { rootMargin: "500px 0px" });
+    cards.forEach(function(c){ if (c.querySelector(".fplate")) imgIo.observe(c); });
+  }
 
   // ---- init + reflow triggers ----
   var rt;
