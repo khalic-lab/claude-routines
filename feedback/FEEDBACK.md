@@ -60,10 +60,12 @@ files move only through the Evaluator's human-applied patches.
   "reader": "rafael",                  // constant at n=1; kept for forward-compat
   "brief": "2026-06-07-overview",      // post slug — stable v1 key (always present)
   "story_id": "2026-06-07-overview-stem-cell-transplant-keeps-a-severe-autoimmune-d", // per-story
-                                       // (v2, web): "{slug}-{slugify(bold lead)}"; null = brief-level
+                                       // (v2): "{slug}-{slugify(headline)}"; null = brief-level.
+                                       //   headline = the bullet's bold lead (news/ai-ml/weekend
+                                       //   headlines) or the ### heading (science/weekend papers)
   "vote": -1,                          // +1 | -1
   "reason": "markets snapshot too long on weekends",  // optional free text; "" if thumb-only
-  "surface": "web",                    // "web" | "cli"
+  "surface": "web",                    // "web" (brief page) | "home" (front-page grid) | "cli"
   "source_domain": null,               // reserved for source-weights.yml wiring; nothing populates it
                                        //   yet (no code derives it from the reason text) — manual
                                        //   `feedback.py add --source-domain` only

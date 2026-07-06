@@ -26,23 +26,23 @@ sized by how much it matters, filterable by beat.</p>
   <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
   <div class="folio-grid" id="folioGrid" aria-live="polite">
     {% for s in feed.stories %}
-    <article class="fcard imp{{ s.importance }}{% if s.is_lead %} lead{% endif %}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}">
+    <article class="fcard imp{{ s.importance }}{% if s.is_lead %} lead{% endif %}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}"{% if s.url and s.importance > 1 %} data-ogurl="{{ s.url }}"{% endif %}>
       <div class="fcard__in" style="--tc:{{ s.topic_color }}">
         <div class="fcard__top">
           <a class="fcard__beat" href="{{ s.permalink | relative_url }}" title="{{ s.stream_label }} brief · {{ s.date_label }}"><span class="ff-dot"></span>{{ s.topic_label }}</a>
           <span class="fcard__rank" data-imp="{{ s.importance }}"></span>
         </div>
-        {% if s.has_plate %}<canvas class="fplate" role="img" aria-label="Illustration" data-seed="{{ s.seed }}" data-url="{{ s.url }}"{% if s.is_lead %} data-big="1"{% endif %}></canvas>{% endif %}
         <h2 class="fcard__hl">{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.headline }}</a>{% else %}{{ s.headline }}{% endif %}</h2>
         {% if s.summary != "" %}<p class="fcard__sum">{{ s.summary }}</p>{% endif %}
+        {% if s.why and s.why != "" %}<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>{{ s.why }}</p>{% endif %}
         <div class="fcard__line">
           <span class="fcard__src">{{ s.source_domain }}</span>
-          {% if s.fresh %}<span class="fcard__fresh">Just in</span>{% endif %}
+          {% if s.fresh and s.importance > 1 %}<span class="fcard__fresh">Just in</span>{% endif %}
           <span class="fcard__date">{{ s.date_label }}</span>
         </div>
         <div class="fcard__fb" data-story="{{ s.id }}" data-brief="{{ s.date }}-{{ s.stream }}">
-          <button class="ffb-t" type="button" data-v="1" aria-label="Useful">👍</button>
-          <button class="ffb-t" type="button" data-v="-1" aria-label="Not useful">👎</button>
+          <button class="ffb-t" type="button" data-v="1" aria-label="Useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+          <button class="ffb-t ffb-down" type="button" data-v="-1" aria-label="Not useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
           <span class="ffb-note" aria-live="polite"></span>
         </div>
       </div>
@@ -65,17 +65,23 @@ sized by how much it matters, filterable by beat.</p>
 </section>
 
 <style>
-  /* ===== Folio masonry front page (2026-07-06) — replaces the hero + edition list. Reads
+  /* ===== Folio masonry front page (2026-07-06; packing + media rewrite same day). Reads
      _data/homefeed.json (built by tools/build_stories_feed.py). Uses the global Folio tokens set
      in _includes/head/custom.html; only structural rules live here. Classes are f-/ff-/folio-
-     prefixed to avoid colliding with the theme and the post-page .fb-* feedback widgets. ===== */
+     prefixed to avoid colliding with the theme and the post-page .fb-* feedback widgets.
+
+     Masonry is JS-placed (absolute cards, per-column stacking with notch backfill) because CSS
+     grid row-spans + `dense` cannot pack around 2-column leads: with cards this tall nothing
+     fits the hole a lead leaves in the shorter column, so 300px+ voids appeared. Progressive:
+     without JS the grid stays normal block flow (single column, everything readable). ===== */
 
   /* reclaim full width: minimal-mistakes reserves the right-sidebar gutter on .archive even when
      no sidebar renders here (author_profile:false) — it does so with padding-right:300px (x-large)
      / 200px (large), NOT width, so we must zero the padding too or the grid sits 300px short and
-     reads as a narrow left-aligned column. */
+     reads as a narrow left-aligned column. #main's own max-width (1280) is lifted a step so wide
+     monitors get a 4th column instead of dead margin. */
   .layout--home .archive{ width:100%; float:none; margin:0; padding-left:0; padding-right:0; }
-  .layout--home .page__title{ font-weight:700; }
+  .layout--home #main{ max-width:1680px; }
 
   .folio-filters{ display:flex; align-items:center; gap:8px 6px; flex-wrap:wrap; margin:1.4em 0 0;
     padding:12px 0 8px; position:sticky; top:0; z-index:20; background:var(--paper);
@@ -86,7 +92,8 @@ sized by how much it matters, filterable by beat.</p>
     gap:.5em; line-height:1; transition:border-color .15s, background .15s, color .15s; }
   .ff-chip:hover{ border-color:var(--rule); }
   .ff-chip[aria-pressed="true"]{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
-  .ff-all[aria-pressed="true"]{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  /* var(--paper), not #fff: dark-mode --accent is a light indigo and white-on-it measured 2.36:1 */
+  .ff-all[aria-pressed="true"]{ background:var(--accent); border-color:var(--accent); color:var(--paper); }
   .ff-dot{ width:7px; height:7px; border-radius:50%; background:var(--tc,var(--muted)); flex:0 0 auto; }
   .ff-chip[aria-pressed="true"] .ff-dot{ box-shadow:0 0 0 1.5px var(--paper); }
   .ff-ct{ font-variant-numeric:tabular-nums; opacity:.6; }
@@ -105,14 +112,16 @@ sized by how much it matters, filterable by beat.</p>
   .ff-crop.bl{ bottom:0; left:-6px; transform:scaleY(-1); } .ff-crop.br{ bottom:0; right:-6px; transform:scale(-1); }
   @media (max-width:640px){ .ff-crop{ display:none; } }
 
-  /* native-responsive columns (no JS width-reading): auto-fill tracks reflow from ~4 down to 1 as
-     the viewport narrows. JS only computes the per-card row-span for the masonry packing. */
-  .folio-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); grid-auto-rows:8px;
-    grid-auto-flow:row dense; gap:20px; align-items:start; }
-  .fcard{ min-width:0; }
-  .fcard.lead{ grid-column:span 2; }
-  @media (max-width:700px){ .fcard.lead{ grid-column:span 1; } }   /* one column → lead can't span 2 */
+  /* pre-JS (and no-JS): plain block flow, cards full-width, still readable. The .on class,
+     added by the script before first paint, switches to absolute placement. */
+  .folio-grid{ position:relative; }
+  .folio-grid:not(.on) .fcard{ max-width:44em; margin:0 auto 20px; }
+  .folio-grid.on{ height:0; }                       /* JS sets the real height */
+  .folio-grid.on .fcard{ position:absolute; top:0; left:0; margin:0; }
+  .folio-grid.on.ready .fcard{ transition:transform .28s ease, opacity .2s ease; }
+  @media (prefers-reduced-motion:reduce){ .folio-grid.on.ready .fcard{ transition:none; } }
 
+  .fcard{ min-width:0; }
   .fcard__in{ background:var(--card); border:1px solid var(--hair); padding:16px 16px 15px;
     display:flex; flex-direction:column; gap:9px; transition:transform .18s ease, box-shadow .18s ease; }
   .fcard.lead .fcard__in{ padding:22px 22px 20px; border-top:2px solid var(--accent); }
@@ -130,26 +139,34 @@ sized by how much it matters, filterable by beat.</p>
   .fcard__rank[data-imp="2"]{ color:var(--muted); } .fcard__rank[data-imp="2"]::after{ content:"Feature"; }
   .fcard__rank[data-imp="1"]{ color:var(--muted); opacity:.7; } .fcard__rank[data-imp="1"]::after{ content:"Brief"; }
 
-  .fplate{ display:block; width:100%; height:120px; border:1px solid var(--hair); background:var(--panel); }
-  .fcard.imp2 .fplate{ height:104px; }
-  .fcard.lead .fplate{ height:210px; }
-  /* real article image (og:image via og-proxy) — replaces the halftone once it loads. Same box as
-     the plate so the masonry height is unchanged; a light desaturation sits it in the Folio palette. */
-  .fimg{ display:block; width:100%; height:120px; object-fit:cover; border:1px solid var(--hair);
+  /* real article image (og:image via og-proxy), natural news-photo proportions — no letterboxed
+     strips, no generated placeholder. Cards without a usable image stay text-only, which is how
+     a broadsheet treats most stories anyway. */
+  .fimg{ display:block; width:100%; aspect-ratio:16/10; object-fit:cover; border:1px solid var(--hair);
     background:var(--panel); filter:saturate(.9); }
-  .fcard.imp2 .fimg{ height:104px; }
-  .fcard.lead .fimg{ height:210px; }
+  .fcard.lead .fimg{ aspect-ratio:21/9; }
   @media (prefers-color-scheme:dark){ .fimg{ filter:saturate(.85) brightness(.92); } }
 
-  .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.14; margin:0; text-wrap:balance;
-    font-size:1.16rem; color:var(--ink); }
+  /* headline scale carries the hierarchy: brief < feature < lead */
+  .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.16; margin:0; text-wrap:balance;
+    font-size:1.04rem; color:var(--ink); }
+  .fcard.imp2 .fcard__hl{ font-size:1.24rem; line-height:1.12; }
   .fcard.lead .fcard__hl{ font-size:clamp(1.5rem,2.6vw,2.05rem); line-height:1.05; letter-spacing:-.005em; }
   .fcard__hl a{ color:inherit; text-decoration:none; }
   .fcard__hl a:hover{ color:var(--accent); text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; }
 
   /* full summary on every card, at a readable size — no truncation, no shrinking. */
   .fcard__sum{ font-family:var(--serif); margin:0; color:var(--ink); opacity:.9; font-size:1rem; line-height:1.5; }
-  .fcard.lead .fcard__sum{ font-size:1.08rem; }
+  .fcard.lead .fcard__sum{ font-size:1.05rem; }
+  /* a lead spanning two columns sets its body in two text columns, like a print splash —
+     halves the card height and keeps the measure readable. .span2 is set by the layout JS. */
+  .fcard.span2 .fcard__sum{ column-count:2; column-gap:28px; }
+
+  /* the writers' "Why it matters" paragraph — kept as its own labelled block, like on the briefs */
+  .fcard__why{ font-family:var(--serif); margin:0; font-size:.95rem; line-height:1.5; color:var(--ink);
+    opacity:.88; border-left:2px solid var(--accent); padding-left:10px; }
+  .fcard__why-lbl{ display:block; font-family:var(--sans); font-weight:700; font-size:.56rem;
+    text-transform:uppercase; letter-spacing:.13em; color:var(--accent); margin-bottom:2px; }
 
   .fcard__line{ display:flex; align-items:baseline; gap:.6em; margin-top:auto; padding-top:9px;
     border-top:1px solid var(--hair); font-family:var(--sans); font-size:.6rem; letter-spacing:.04em; color:var(--muted); }
@@ -161,9 +178,12 @@ sized by how much it matters, filterable by beat.</p>
     border-top:1px solid var(--hair); opacity:.42; transition:opacity .15s ease; }
   .fcard__in:hover .fcard__fb, .fcard__fb:focus-within{ opacity:1; }
   @media (hover:none){ .fcard__fb{ opacity:.82; } }
-  .ffb-t{ cursor:pointer; background:transparent; border:1px solid var(--hair); color:var(--ink);
-    font-size:.82rem; line-height:1; padding:.3em .52em; }
-  .ffb-t:hover{ border-color:var(--rule); }
+  .ffb-t{ cursor:pointer; background:transparent; border:1px solid var(--hair); color:var(--muted-ui);
+    line-height:0; padding:.34em .5em; }
+  .ffb-t svg{ width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:1.8;
+    stroke-linecap:round; stroke-linejoin:round; }
+  .ffb-t.ffb-down svg{ transform:rotate(180deg); }
+  .ffb-t:hover{ border-color:var(--rule); color:var(--ink); }
   .ffb-t.on{ border-color:var(--accent); color:var(--accent); }
   .ffb-t:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
   .ffb-note{ font-family:var(--sans); font-size:.56rem; text-transform:uppercase; letter-spacing:.11em; color:var(--accent); margin-left:.35em; }
@@ -178,76 +198,94 @@ sized by how much it matters, filterable by beat.</p>
 (function () {
   var grid = document.getElementById('folioGrid');
   if (!grid) return;
+  grid.classList.add('on');                      // switch from block-flow fallback to JS placement
   var empty = document.getElementById('folioEmpty');
   var filters = document.getElementById('folioFilters');
-  var root = document.documentElement;
   var cards = Array.prototype.slice.call(grid.querySelectorAll('.fcard'));
   var active = new Set();
+  var GAP = 20;
 
-  // ---- generated halftone plates (seeded per headline; a duotone stand-in for the og:image) ----
-  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
-  function drawHalftone(cv, seed, dot, paper, dpr){
-    var ctx = cv.getContext('2d'); var W = cv.width, H = cv.height;
-    ctx.fillStyle = paper || '#fff'; ctx.fillRect(0,0,W,H);
-    if (!W || !H) return;
-    var rnd = mulberry32(seed || 1);
-    var a1 = rnd()*6.283, a2 = rnd()*6.283, f1 = 1.4+rnd()*3.6, f2 = 1.4+rnd()*3.6;
-    var fx = 0.22+rnd()*0.56, fy = 0.18+rnd()*0.6;
-    var step = Math.max(5, Math.round(6*dpr));
-    ctx.fillStyle = dot || '#111';
-    for (var y = step/2; y < H; y += step){
-      for (var x = step/2; x < W; x += step){
-        var u = x/W, v = y/H;
-        var val = 0.5 + 0.5*Math.sin(u*f1*Math.PI + a1)*Math.cos(v*f2*Math.PI + a2);
-        var d = Math.hypot(u-fx, v-fy);
-        val = val*0.55 + (1 - Math.min(1, d*1.7))*0.45;
-        var r = (1-val)*(step*0.6);
-        if (r > 0.35){ ctx.beginPath(); ctx.arc(x,y,r,0,6.283); ctx.fill(); }
-      }
-    }
-  }
-  function paintPlates(){
-    var st = getComputedStyle(root);
-    var ink = st.getPropertyValue('--ink').trim();
-    var paper = st.getPropertyValue('--card').trim();
-    var accent = st.getPropertyValue('--accent').trim();
-    var dpr = Math.min(2, window.devicePixelRatio || 1);
-    grid.querySelectorAll('.fplate').forEach(function(cv){
-      if (cv.offsetParent === null) return;            // skip filtered-out (display:none) cards
-      var w = cv.clientWidth, h = cv.clientHeight;
-      if (!w || !h) return;
-      cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
-      drawHalftone(cv, +cv.dataset.seed, cv.dataset.big === '1' ? accent : ink, paper, dpr);
-    });
-  }
-
-  // ---- JS-measured grid masonry (row-span from measured height; importance drives col-span) ----
+  /* ---- masonry: absolute placement, shortest-column stacking. A 2-col lead levels the two
+     columns it covers; the void that leaves in the shorter one is remembered as a "notch" and
+     backfilled by the next 1-col cards that fit — so no dead zones. Batched (write widths →
+     read heights → write positions) to avoid layout thrash across ~80 cards.
+     The min column width tracks the ROOT font-size (the theme steps it 16→22px across
+     breakpoints), so the reading measure stays constant instead of shrinking on wide screens. ---- */
   function layout(){
-    var cs = getComputedStyle(grid);            // columns are pure CSS (auto-fill); JS only sets row-spans
-    var row = parseFloat(cs.gridAutoRows) || 8;
-    var gap = parseFloat(cs.rowGap) || 20;
-    cards.forEach(function(card){
-      if (card.style.display === 'none') return;
-      var inner = card.firstElementChild;
-      var h = inner.getBoundingClientRect().height;
-      var span = Math.max(1, Math.ceil((h + gap) / (row + gap)));
-      card.style.gridRowEnd = 'span ' + span;
-    });
-  }
-  function reflow(){ layout(); paintPlates(); }
+    var W = grid.clientWidth;
+    if (!W) return;
+    var rootFs = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    var minCol = 20.5 * rootFs;                         // ≈330px at the 16px base
+    var n = Math.max(1, Math.floor((W + GAP) / (minCol + GAP)));
+    var colW = (W - GAP * (n - 1)) / n;
+    var visible = cards.filter(function(c){ return c.style.display !== 'none'; });
 
-  // ---- topic filters (multi-select; a card matches if ANY of its topics is active) ----
+    visible.forEach(function(card){                       // pass 1: widths (+span class)
+      var span = (card.classList.contains('lead') && n >= 2) ? 2 : 1;
+      card.__span = span;
+      card.classList.toggle('span2', span === 2);
+      card.style.width = (colW * span + GAP * (span - 1)) + 'px';
+    });
+    var heights = visible.map(function(card){ return card.offsetHeight; });   // pass 2: read
+
+    var col = []; for (var i = 0; i < n; i++) col.push(0);
+    var notches = [];
+    visible.forEach(function(card, k){                    // pass 3: place
+      var h = heights[k], x, y;
+      if (card.__span === 2){
+        var best = 0, bestY = Infinity;
+        for (var i = 0; i + 1 < n; i++){
+          var top = Math.max(col[i], col[i+1]);
+          if (top < bestY){ bestY = top; best = i; }
+        }
+        var short_ = col[best] <= col[best+1] ? best : best + 1;
+        if (bestY - col[short_] > 40) notches.push({ col: short_, top: col[short_], room: bestY - col[short_] });
+        x = best * (colW + GAP); y = bestY;
+        col[best] = col[best+1] = y + h + GAP;
+      } else {
+        var placed = false;
+        for (var j = 0; j < notches.length; j++){
+          var nt = notches[j];
+          if (h + GAP <= nt.room + 0.5){
+            x = nt.col * (colW + GAP); y = nt.top;
+            nt.top += h + GAP; nt.room -= h + GAP;
+            placed = true; break;
+          }
+        }
+        if (!placed){
+          var c = 0;
+          for (var m = 1; m < n; m++) if (col[m] < col[c] - 0.5) c = m;
+          x = c * (colW + GAP); y = col[c];
+          col[c] = y + h + GAP;
+        }
+      }
+      card.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    });
+    grid.style.height = Math.max(0, Math.max.apply(null, col.concat([0])) - GAP) + 'px';
+    if (!grid.classList.contains('ready'))
+      setTimeout(function(){ grid.classList.add('ready'); }, 80);   // no fly-in on first paint
+  }
+  /* microtask-coalesced, NOT requestAnimationFrame: rAF is throttled/paused in occluded or
+     background windows, which left stale card positions (overlaps) until the tab repainted. */
+  var pending = false;
+  function reflow(){
+    if (pending) return;
+    pending = true;
+    Promise.resolve().then(function(){ pending = false; layout(); });
+  }
+
+  /* ---- topic filters (multi-select; a card matches if ANY of its topics is active) ---- */
   function matches(card){
     if (!active.size) return true;
     var ts = (card.dataset.topics || '').split(' ');
-    for (var i=0;i<ts.length;i++){ if (active.has(ts[i])) return true; }
+    for (var i = 0; i < ts.length; i++){ if (active.has(ts[i])) return true; }
     return false;
   }
   function apply(){
     var shown = 0;
     cards.forEach(function(c){ var m = matches(c); c.style.display = m ? '' : 'none'; if (m) shown++; });
     empty.hidden = shown > 0;
-    requestAnimationFrame(reflow);
+    reflow();
   }
   function sync(){
     filters.querySelectorAll('.ff-chip').forEach(function(c){
@@ -264,79 +302,87 @@ sized by how much it matters, filterable by beat.</p>
     });
   });
 
-  // ---- per-story feedback (same site-key unlock + feedback-sink as the brief pages) ----
-  var FB = "https://feedback-sink.khalic-lab.workers.dev";
+  /* ---- per-story feedback: same site-key unlock + feedback-sink + kill switch as the brief
+     pages (custom.html exposes both on window.__FB). The sink is append-only, so like the brief
+     pages there is no un-vote: clicking the same thumb again is a no-op, switching thumbs posts
+     the new vote. ---- */
+  function fbConf(){ return window.__FB || { enabled: true, url: "https://feedback-sink.khalic-lab.workers.dev" }; }
   function postFb(box, vote, note){
+    var conf = fbConf();
+    if (!conf.enabled){ if (note) note(''); return; }
     var key = window.__siteKey && window.__siteKey.get();
-    if (!key){ if (note) note('🔒 unlock'); if (window.__siteKey) window.__siteKey.prompt(); return; }
+    if (!key){ if (note) note('unlock first'); if (window.__siteKey) window.__siteKey.prompt(); return; }
     if (note) note('sending…');
-    fetch(FB + '/submit', {
+    fetch(conf.url + '/submit', {
       method: 'POST', headers: { 'Content-Type':'application/json', 'X-Widget-Key': key },
       body: JSON.stringify({ brief: box.dataset.brief, vote: vote, reason: '',
         story_id: box.dataset.story || null, surface: 'home' })
     }).then(function(r){
-      if (r.status === 403 && window.__siteKey){ window.__siteKey.clear(); window.__siteKey.prompt(); if (note) note('🔒 wrong key'); return; }
+      if (r.status === 403 && window.__siteKey){ window.__siteKey.clear(); window.__siteKey.prompt(); if (note) note('wrong key'); return; }
       if (note) note(r.ok ? 'thanks ✓' : 'failed (' + r.status + ')');
     }).catch(function(){ if (note) note('offline — try later'); });
   }
+  if (!fbConf().enabled) grid.classList.add('fb-off');
   grid.addEventListener('click', function(e){
     var b = e.target.closest('.ffb-t'); if (!b) return;
+    if (b.classList.contains('on')) return;              // append-only backend: no un-vote
     var box = b.closest('.fcard__fb'); var note = box.querySelector('.ffb-note');
-    var was = b.classList.contains('on');
     box.querySelectorAll('.ffb-t').forEach(function(x){ x.classList.remove('on'); });
-    if (!was){ b.classList.add('on'); postFb(box, +b.dataset.v, function(m){ note.textContent = m; }); }
-    else { note.textContent = ''; }
+    b.classList.add('on');
+    postFb(box, +b.dataset.v, function(m){ note.textContent = m; reflow(); });
   });
 
-  // ---- real article images: unfurl each story's og:image via og-proxy and swap it in for the
-  //      halftone placeholder. arXiv/paper cards keep the halftone (their og:image is just a logo).
-  //      Lazy (IntersectionObserver) + sessionStorage-cached; on any failure the halftone stays. ----
+  /* ---- real article images: unfurl each lead/feature story's og:image via og-proxy. arXiv
+     cards stay text-only (their og:image is just the arXiv logo). Lazy (IntersectionObserver) +
+     sessionStorage-cached; on any failure the card simply stays text-only. Each successful
+     insert changes the card's height, so it triggers a re-layout (coalesced per microtask). ---- */
   var OG = "https://og-proxy.khalic-lab.workers.dev/?url=";
-  var OGC = "homeOg:v1:";
+  var OGC = "homeOg:v2:";
   function swapImage(card){
-    var plate = card.querySelector(".fplate");
-    if (!plate || plate.dataset.done) return;
-    plate.dataset.done = "1";
-    var url = plate.dataset.url;
+    if (card.dataset.ogDone) return;
+    card.dataset.ogDone = "1";
+    var url = card.dataset.ogurl;
     if (!url) return;
     var host; try { host = new URL(url).hostname; } catch (e) { return; }
-    if (/(^|\.)arxiv\.org$/.test(host)) return;            // papers: keep the halftone
-    function apply(src){
+    if (/(^|\.)arxiv\.org$/.test(host)) return;
+    function place(src){
       if (!src) return;
       var img = new Image();
       img.onload = function(){
         img.className = "fimg"; img.alt = ""; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
-        plate.parentNode.insertBefore(img, plate);
-        plate.style.display = "none";
+        var top = card.querySelector('.fcard__top');
+        top.insertAdjacentElement('afterend', img);
         reflow();
       };
       img.src = src;
     }
     var cached = null;
     try { cached = sessionStorage.getItem(OGC + url); } catch (e) {}
-    if (cached !== null) { apply(cached); return; }        // "" = known no-image
+    if (cached !== null) { place(cached); return; }        // "" = known no-image
     if (!window.fetch) return;
     fetch(OG + encodeURIComponent(url)).then(function(r){ return r.ok ? r.json() : null; })
       .then(function(j){
         var src = (j && j.image) ? j.image : "";
         try { sessionStorage.setItem(OGC + url, src); } catch (e) {}
-        apply(src);
+        place(src);
       }).catch(function(){});
   }
   if ("IntersectionObserver" in window){
     var imgIo = new IntersectionObserver(function(es){
       es.forEach(function(e){ if (e.isIntersecting){ swapImage(e.target); imgIo.unobserve(e.target); } });
-    }, { rootMargin: "500px 0px" });
-    cards.forEach(function(c){ if (c.querySelector(".fplate")) imgIo.observe(c); });
+    }, { rootMargin: "600px 0px" });
+    cards.forEach(function(c){ if (c.dataset.ogurl) imgIo.observe(c); });
   }
 
-  // ---- init + reflow triggers ----
+  /* ---- init + reflow triggers ---- */
   var rt;
   window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(reflow, 120); });
-  var mq = matchMedia('(prefers-color-scheme: dark)');
-  (mq.addEventListener ? mq.addEventListener.bind(mq,'change') : mq.addListener.bind(mq))(function(){ paintPlates(); });
-  if (document.readyState !== 'loading') requestAnimationFrame(reflow);
-  else document.addEventListener('DOMContentLoaded', function(){ requestAnimationFrame(reflow); });
+  if (document.readyState !== 'loading') reflow();
+  else document.addEventListener('DOMContentLoaded', reflow);
   window.addEventListener('load', reflow);   // catch late metrics
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(reflow);
 })();
 </script>
+<style>
+  .folio-grid.fb-off .fcard__fb{ display:none; }   /* feedback kill switch (window.__FB.enabled) */
+</style>

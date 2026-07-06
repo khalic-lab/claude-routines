@@ -8,8 +8,15 @@ importance-sized cards. It shows the writers' actual explanatory prose — so th
 recent stories into `_data/homefeed.json` that the `home` layout iterates at build time.
 
 Per-story `topics` + `importance` come from the dedup index record when the writer supplied them
-(joined by story id); otherwise they're derived — topic from the brief's section heading (falling
-back to keywords), importance from position within the brief. Pure stdlib, no network.
+— joined by canonical URL first (stable across both sides), story-id slug second (the post's bold
+lead and the record's `headline` are worded independently, so the slug join alone missed ~72% of
+stories). The join rate is printed on every run so a silent regression is visible. When no record
+matches, they're derived: topic from the brief's section heading (falling back to keywords),
+importance from position within the brief. Pure stdlib, no network.
+
+The `--max` cap is per-edition-quota'd: over the cap, the largest editions lose their
+least-important tail stories first, and no edition drops below MIN_PER_EDITION — so a dense
+Weekend brief can't evict the weekly Science edition from the page.
 
 Run after `dedup.py record` (DEDUP.md Step D) and commit the result with the brief.
 Usage: python3 tools/build_stories_feed.py [--days 14] [--max 80] [--out _data/homefeed.json]
@@ -31,8 +38,10 @@ _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
 STREAM_LABEL = {"news": "News", "ai-ml": "AI/ML", "science": "Science", "weekend": "Weekend"}
 CURRENT_STREAMS = {"news", "ai-ml", "science", "weekend"}
 
-# controlled topic vocabulary (mirrors routines/_shared/story-tagging in newsroom-ethos). key ->
-# (label, dot color). Colors are per-beat MARKERS only, never the page accent.
+# controlled topic vocabulary — MUST mirror the tagging rubric in
+# routines/_shared/newsroom-ethos.md and DEDUP.md Step C (an out-of-vocab writer tag is dropped
+# by topic_for's validity filter and falls back to keywords). key -> (label, dot color).
+# Colors are per-beat MARKERS only, never the page accent.
 TOPICS = {
     "switzerland": ("Switzerland", "#c2454a"),
     "geopolitics": ("Geopolitics", "#c0563b"),
@@ -57,12 +66,14 @@ _SECTION_RULES = [
                      "medicine", "neuroscience", "biotech", "fundamental science"]),
 ]
 # per-story keyword fallback for mixed sections (Week in headlines, Cross-cutting threads, ...).
+# geopolitics is checked BEFORE security: war coverage mentions drones/strikes constantly, and the
+# bare 'drone' keyword was misfiling Russia-Ukraine stories under Security.
 _KEYWORD_RULES = [
     ("switzerland", ["swiss", "switzerland", "bern", " vaud", "geneva", "zurich", "ticino", "canton", "srf"]),
-    ("security",    ["drone", "cyber", "espionage", "hack", "breach", "spyware"]),
-    ("ai-ml",       ["arxiv", " llm", "transformer", "gpt", "deepseek", "neural", "rlhf", "fine-tun"]),
     ("geopolitics", ["nato", "china", "russia", "ukraine", "iran", "israel", "gaza", "missile",
                      "summit", "war", "kyiv", "treaty", "settlement"]),
+    ("security",    ["drone", "cyber", "espionage", "hack", "breach", "spyware"]),
+    ("ai-ml",       ["arxiv", " llm", "transformer", "gpt", "deepseek", "neural", "rlhf", "fine-tun"]),
     ("politics",    ["election", "trump", "president", "parliament", "impeachment", "senate", "midterm"]),
     ("economy",     ["job", "inflation", "market", "credit", "tax", "trade", "payroll", "fund", "bn "]),
     ("health",      ["vaccine", "hiv", "antibody", "cancer", "clinical", "disease", "outbreak", "primate"]),
@@ -119,9 +130,13 @@ def _is_meta(p):
         return True
     if re.match(r"^[—–]\s*\**\[", p):        # em-dash INTO a citation: "— [arXiv…] · authors" (not "— prose")
         return True
+    low = p.lower()
+    # author-list shapes, with or without a middot delimiter (peer-reviewed papers' bylines have
+    # no `· [preprint]` tag, so requiring the middot let 'A, B, C et al. (…)' pass as story prose)
+    if re.search(r"\bet al\b|affiliations not listed|senior author", low):
+        return True
     if " · " in p:                                      # middot-separated byline / citation line
-        low = p.lower()
-        if re.search(r"arxiv|preprint|published|submitted|reported|affiliation|et al|university|institute", low):
+        if re.search(r"arxiv|preprint|published|submitted|reported|affiliation|university|institute", low):
             return True
         if p.count(" · ") >= 2:                         # author · source · date
             return True
@@ -132,17 +147,31 @@ def _is_meta(p):
     return False
 
 
+_WHY_RE = re.compile(r"^\*{1,2}\s*Why (?:it|this) matters:?\s*\*{0,2}\s*", re.I)
+
+
 def _pick_body(paras):
     for p in paras:
-        if _is_meta(p):
+        if _is_meta(p) or _WHY_RE.match(p.strip()):     # the why-block is its own field, not the body
             continue
         c = clean_body(p)
         if len(c) >= 40:
             return c
     for p in paras:                                     # relax the length floor
+        if _WHY_RE.match(p.strip()):
+            continue
         c = clean_body(p)
         if c:
             return c
+    return ""
+
+
+def _pick_why(paras):
+    """The writers' `**Why it matters:**` (ai-ml) / `*Why it matters:*` (science) paragraph."""
+    for p in paras:
+        m = _WHY_RE.match(p.strip())
+        if m:
+            return clean_body(p.strip()[m.end():])
     return ""
 
 
@@ -152,10 +181,13 @@ def parse_post(md):
     out, section, in_footer, i, n = [], "", False, 0, len(lines)
 
     def emit(headline, paras):
+        if headline.replace("*", "").rstrip().endswith(":"):
+            return                                      # '**Datasets:** …' roundup label, not a story
         raw = " ".join(paras)
         urls = _URL_RE.findall(raw)
         out.append({"section": section, "headline": _strip_md(headline),
-                    "body": _pick_body(paras), "url": urls[0] if urls else None, "raw": raw})
+                    "body": _pick_body(paras), "why": _pick_why(paras),
+                    "url": urls[0] if urls else None, "raw": raw})
 
     while i < n:
         line = lines[i]
@@ -256,13 +288,6 @@ def importance_for(pos, lead_pos, single_source, index_importance):
     return 2 if pos <= 3 else 1
 
 
-def fnv1a(s):
-    h = 2166136261
-    for ch in s:
-        h = ((h ^ ord(ch)) * 16777619) & 0xFFFFFFFF
-    return h
-
-
 def date_label(d):
     y, m, day = d.split("-")
     return "%s %d" % (_MONTHS[int(m) - 1], int(day))
@@ -278,9 +303,26 @@ def source_domain(url):
     return host[4:] if host.startswith("www.") else host
 
 
+def norm_url(url):
+    """Canonicalize for the feed↔index join: scheme/www/fragment/utm-insensitive."""
+    if not url:
+        return None
+    u = url.strip().split("#", 1)[0]
+    u = re.sub(r"^https?://(www\.)?", "", u, flags=re.I)
+    if "?" in u:
+        base, q = u.split("?", 1)
+        keep = [p for p in q.split("&") if p and not p.lower().startswith(("utm_", "ref=", "fbclid"))]
+        u = base + ("?" + "&".join(keep) if keep else "")
+    return u.rstrip("/").lower()
+
+
 def load_index_meta(window_dates):
-    """id -> {topics, importance} from the dedup index, for authoritative overlay."""
-    meta = {}
+    """(by_url, by_id) -> {topics, importance} from the dedup index, for authoritative overlay.
+
+    URL is the primary join key: the post's bold lead and the record's `headline` are written
+    independently by the routine, so slugified-headline ids only agree ~28% of the time. Both
+    sides cite the same primary-source URL, which survives the round trip."""
+    by_url, by_id = {}, {}
     for path in glob.glob(os.path.join(INDEX_DIR, "*.jsonl")):
         base = os.path.basename(path)
         if not any(base.startswith(d) for d in window_dates):
@@ -290,9 +332,13 @@ def load_index_meta(window_dates):
                 if not ln.strip():
                     continue
                 r = json.loads(ln)
+                m = {"topics": r.get("topics"), "importance": r.get("importance")}
                 if r.get("id"):
-                    meta[r["id"]] = {"topics": r.get("topics"), "importance": r.get("importance")}
-    return meta
+                    by_id[r["id"]] = m
+                nu = norm_url(r.get("url"))
+                if nu:
+                    by_url[nu] = m
+    return by_url, by_id
 
 
 def load_recent(days):
@@ -306,9 +352,9 @@ def load_recent(days):
     max_date = max(p[0] for p in posts)
     cutoff = (_dt.date.fromisoformat(max_date) - _dt.timedelta(days=days)).isoformat()
     window = sorted(p for p in posts if p[0] >= cutoff)
-    idx_meta = load_index_meta({d for d, _, _ in window})
+    idx_by_url, idx_by_id = load_index_meta({d for d, _, _ in window})
 
-    stories = []
+    stories, seen_urls, joined = [], set(), 0
     for date, stream, path in window:
         with open(path) as fh:
             parsed = parse_post(fh.read())
@@ -319,24 +365,69 @@ def load_recent(days):
         for pos, s in enumerate(parsed):
             if not s["body"]:
                 continue
+            nu = norm_url(s["url"])
+            if nu and nu in seen_urls:
+                continue                                # same primary source already on the page
+            if nu:
+                seen_urls.add(nu)
             hid = "%s-%s-%s" % (date, stream, slugify(s["headline"]))
-            im = idx_meta.get(hid, {})
+            im = (nu and idx_by_url.get(nu)) or idx_by_id.get(hid) or {}
+            if im.get("topics") or im.get("importance"):
+                joined += 1
             topics = topic_for(s, stream, im.get("topics"))
             imp = importance_for(pos, lead_pos, singles[pos], im.get("importance"))
             primary = topics[0]
             label, color = TOPICS.get(primary, (primary.title(), "#6b6f76"))
             y, mo, dy = date.split("-")
             stories.append({
-                "id": hid, "headline": s["headline"], "summary": s["body"],
+                "id": hid, "headline": s["headline"], "summary": s["body"], "why": s["why"],
                 "url": s["url"], "source_domain": source_domain(s["url"]),
                 "date": date, "date_label": date_label(date),
                 "stream": stream, "stream_label": STREAM_LABEL.get(stream, stream.title()),
                 "topics": topics, "topic_primary": primary, "topic_label": label, "topic_color": color,
-                "importance": imp, "is_lead": imp == 3, "has_plate": imp >= 2,
+                "importance": imp, "is_lead": imp == 3,
                 "permalink": "/%s/%s/%s/%s/" % (y, mo, dy, stream),
-                "seed": fnv1a(s["headline"]),
             })
-    return stories, max_date
+    return stories, max_date, joined
+
+
+MIN_LATEST_EDITION = 6   # each stream's NEWEST edition keeps at least this many stories
+
+
+def apply_cap(stories, cap):
+    """Global newest-first truncation let one dense Weekend brief erase whole streams from the
+    window (Science was entirely absent). Instead: repeatedly drop the least-important tail
+    story from the edition with the most droppable stories (oldest first on ties). Each stream's
+    latest edition is floored at MIN_LATEST_EDITION so every live stream stays on the page;
+    older editions can drain fully — their briefs remain in the archive."""
+    if not cap or len(stories) <= cap:
+        return stories
+    pos = {id(s): i for i, s in enumerate(stories)}
+    editions = {}
+    for s in stories:
+        editions.setdefault((s["date"], s["stream"]), []).append(s)
+    latest = {}
+    for date, stream in editions:
+        latest[stream] = max(latest.get(stream, ""), date)
+
+    def floor(key):
+        date, stream = key
+        return MIN_LATEST_EDITION if date == latest[stream] else 0
+
+    # drop order within an edition: lowest importance first, later position first
+    for ed in editions.values():
+        ed.sort(key=lambda s: (s["importance"], -pos[id(s)]))
+    dropped = set()
+    total = len(stories)
+    while total > cap:
+        key = max((k for k, ed in editions.items() if len(ed) > floor(k)),
+                  key=lambda k: (len(editions[k]) - floor(k), [-ord(c) for c in k[0]]),
+                  default=None)
+        if key is None:
+            break                                        # everything at its floor; accept > cap
+        dropped.add(id(editions[key].pop(0)))
+        total -= 1
+    return [s for s in stories if id(s) not in dropped]
 
 
 def main():
@@ -346,10 +437,10 @@ def main():
     ap.add_argument("--out", default=DEFAULT_OUT)
     args = ap.parse_args()
 
-    stories, max_date = load_recent(args.days)
+    stories, max_date, joined = load_recent(args.days)
+    n_parsed = len(stories)
     stories.sort(key=lambda s: (s["date"], s["importance"]), reverse=True)   # newest + lead first
-    if args.cap and len(stories) > args.cap:
-        stories = stories[:args.cap]
+    stories = apply_cap(stories, args.cap)
     for s in stories:
         s["fresh"] = s["date"] == max_date
 
@@ -366,8 +457,12 @@ def main():
         json.dump(feed, fh, ensure_ascii=False, indent=1)
         fh.write("\n")
     by = {i: sum(1 for s in stories if s["importance"] == i) for i in (3, 2, 1)}
-    print("wrote %d stories (%d beats) -> %s  [lead=%d standard=%d brief=%d, through %s]"
-          % (len(stories), len(topics), os.path.relpath(args.out, ROOT), by[3], by[2], by[1], max_date))
+    streams = sorted({s["stream"] for s in stories})
+    print("wrote %d/%d stories (%d beats, streams: %s) -> %s  [lead=%d standard=%d brief=%d, through %s]"
+          % (len(stories), n_parsed, len(topics), ",".join(streams),
+             os.path.relpath(args.out, ROOT), by[3], by[2], by[1], max_date))
+    print("index overlay: %d/%d stories carry writer-supplied topics/importance"
+          % (joined, n_parsed))                      # 0 is EXPECTED until routines start tagging
 
 
 if __name__ == "__main__":

@@ -310,7 +310,10 @@ the model's judgment over ~a few hundred recent headlines rather than a similari
   "tier": "T1",
   "tags": ["switzerland"],
   "topics": ["switzerland"],              // homepage beat(s), 1-2 from the controlled vocabulary;
-                                          //   writer-supplied (newsroom-ethos rubric), [] if omitted
+                                          //   writer-supplied (newsroom-ethos rubric), [] if omitted.
+                                          //   NOTE: no record carries these yet (added 2026-07-06;
+                                          //   they flow in as routines fire) — the feed's join-rate
+                                          //   line shows when they start landing
   "importance": 3,                        // homepage card size: 3=lead 2=standard 1=brief; null if
                                           //   the writer didn't score it (feed derives a fallback)
   "thread_id": "bilaterals-iii",          // assigned when matched to a prior story
@@ -327,12 +330,19 @@ the model's judgment over ~a few hundred recent headlines rather than a similari
 ```
 
 **Homepage feed — `_data/homefeed.json`.** The front page (`_layouts/home.html`) is a per-STORY
-masonry grid (topic filters + importance-sized cards + generated halftone plates), not the old
-edition list. Jekyll can't read the excluded `index/stories/`, so `tools/build_stories_feed.py`
-flattens the four live streams' recent index records into `_data/homefeed.json` (sorted newest+lead
-first, capped for the front page); `topics`/`importance` are taken from the record when present,
-else derived (topic from stream+keywords, importance from brief position). Writers regenerate and
-commit it after `record` (DEDUP.md Step D; `_data/` is in their publish `git add`).
+masonry grid (topic filters, importance-sized cards, real og:images lazy-loaded via og-proxy with
+text-only fallback, per-story thumbs posting `surface:"home"`), not the old edition list.
+`tools/build_stories_feed.py` **parses the recent `_posts/*.md` briefs** for each story's real
+prose (headline, body, and the writers' `Why it matters` paragraph — the dedup summary is a terse
+embedding one-liner, deliberately not used for display), then overlays `topics`/`importance` from
+the matching `index/stories/*.jsonl` record — **joined by canonical URL** (slugified headlines
+diverge between the post's bold lead and the record's curated headline), slug-id as fallback; the
+build prints the join rate. Unmatched stories get derived tags (topic from section+keywords,
+importance from brief position). Output is URL-deduped across streams, sorted newest+lead first,
+and capped per-edition (each stream's latest edition keeps ≥6 stories, so weekly Science never
+vanishes). Writers regenerate and commit it after `record` (DEDUP.md Step D; `_data/` is in their
+publish `git add`, and their push-retry regenerates it on a rebase conflict — two editions firing
+the same minute both rewrite this whole file).
 
 ### 5.2 Local pgvector
 

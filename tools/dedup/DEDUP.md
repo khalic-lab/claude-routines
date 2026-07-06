@@ -130,25 +130,6 @@ python3 tools/dedup/dedup.py record --stories /tmp/final.json --date {YYYY-MM-DD
 
 This writes `index/stories/{YYYY-MM-DD}-{SLUG}.jsonl` and prunes index files older than 40 days.
 
-## Step D — refresh the homepage feed (AFTER record)
-
-The front page renders individual stories as a masonry grid from a flattened feed. Regenerate it so
-today's brief shows up; it's committed with the brief (the publish step's `git add` includes `_data/`):
-
-```bash
-python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
-```
-
-No network — it only reshapes `index/stories/*.jsonl` into `_data/homefeed.json` (the four live
-streams, most-recent stories, capped for the front page).
-
-Cadence per slug:
-- **`news`** — daily
-- **`ai-ml`** — 2x/week
-- **`science`** — weekly
-- **`weekend`** — weekly
-- **`evaluator`** — weekly
-
 ## Step C.5 — lint the brief for date slips (optional, no network)
 
 A deterministic backstop with two checks:
@@ -164,10 +145,33 @@ A deterministic backstop with two checks:
 python3 tools/dedup/dedup.py lint --brief _posts/{YYYY-MM-DD}-{SLUG}.md || echo "fix the date flags above"
 ```
 
-## Step D — commit the index
+## Step D — refresh the homepage feed (AFTER record, BEFORE commit)
 
-Your existing commit step must also stage the index, e.g.:
+The front page renders individual stories as a masonry grid from a flattened feed. Regenerate it so
+today's brief shows up:
 
 ```bash
-git add _posts/ pending-notifications/ index/
+python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
 ```
+
+No network — it re-reads the recent `_posts/*.md` briefs (for each story's real prose) plus
+`index/stories/*.jsonl` (for writer-supplied `topics`/`importance`, joined by canonical URL) and
+writes `_data/homefeed.json` (the four live streams, most-recent stories, per-edition-capped for
+the front page). It prints a join-rate line — `0/N carry writer-supplied topics/importance` is
+expected only until recorded stories start carrying the Step C fields.
+
+Every writer slug (`news`, `ai-ml`, `science`, `weekend`) runs this on every fire; the evaluator
+does not (it never touches this procedure).
+
+## Step E — commit everything
+
+Your commit step must stage the brief, the index, **and the regenerated feed**:
+
+```bash
+git add _posts/ pending-notifications/ index/ _data/
+```
+
+If the later `git push` retry hits a rebase conflict on `_data/homefeed.json` (two editions firing
+at the same minute both rewrite the whole file), the resolution is always: re-run
+`python3 tools/build_stories_feed.py` on the merged tree, `git add _data/homefeed.json`, continue.
+Your routine's publish step spells out the exact sequence.

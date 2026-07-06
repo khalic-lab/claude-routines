@@ -208,8 +208,10 @@ document.addEventListener('DOMContentLoaded', function () {
 {%- if page.date and page.categories -%}
 <script>
   // Injected by Jekyll on post pages only: the brief's index slug, e.g.
-  // "2026-07-03-news". Matches the _posts filename + index/stories key, so per-story
-  // feedback (v2) can key the same id the dedup index uses.
+  // "2026-07-03-news". Matches the _posts filename (and the index/stories FILE name). Note the
+  // per-story feedback id built from it is slugified from the post's visible bold lead — it does
+  // NOT match the dedup index's per-story id, which slugifies the writer's separately-worded
+  // record headline (see the storyIdFor comment below; the homepage feed joins on URL instead).
   window.__BRIEF = { slug: "{{ page.date | date: '%Y-%m-%d' }}-{{ page.categories | first }}" };
 </script>
 {%- endif -%}
@@ -277,6 +279,9 @@ document.addEventListener('DOMContentLoaded', function () {
   var FEEDBACK_URL = "https://feedback-sink.khalic-lab.workers.dev"; // deployed, confirmed
   // -----------------------------------------------------------------------------
   // Kill switch: set FEEDBACK_ENABLED to false to hide the widget site-wide.
+  // Exposed on window.__FB so the homepage grid (layouts/home.html) honors the same switch —
+  // it used to hardcode its own URL and ignore the kill switch entirely.
+  window.__FB = { enabled: FEEDBACK_ENABLED, url: FEEDBACK_URL };
   if (!FEEDBACK_ENABLED || !window.__BRIEF || !window.__BRIEF.slug || !window.fetch) return;
 
   var SLUG = window.__BRIEF.slug; // "{date}-{stream}", e.g. "2026-07-03-news"
@@ -658,33 +663,9 @@ document.addEventListener('DOMContentLoaded', function () {
   .home-tagline{ text-align:center; font-family:var(--sans); font-size:.8em; letter-spacing:.03em;
     color:var(--muted); max-width:34em; margin:0 auto 1.8em; line-height:1.5; }
 
-  /* the most recent edition — an extra-wide hero, wider than the list below it */
-  .home-hero{ display:block; max-width:60em; margin:0 auto 2.6em; padding:1.9em 1em;
-    text-align:center; text-decoration:none; color:var(--ink);
-    border-top:2px solid var(--rule); border-bottom:2px solid var(--rule); }
-  /* the hero links to the latest edition, so for the owner it is ALWAYS :visited — and the theme's
-     `a:visited{color:#4e91a5}` (teal) outranks `.home-hero{color:var(--ink)}`, painting the single
-     most prominent element cold off-palette teal (3.0:1 in light). Same bug family as the page title;
-     re-ink the visited state (specificity 0,2,0 beats the theme's 0,1,1). */
-  .home-hero:visited, .home-hero:visited .home-hero__title{ color:var(--ink); }
-  .home-hero:hover .home-hero__title{ color:var(--accent); }
-  .home-hero__kicker{ display:block; font-family:var(--sans); text-transform:uppercase; letter-spacing:.18em;
-    font-size:.72em; font-weight:600; color:var(--accent); margin-bottom:.55em; }
-  .home-hero__title{ display:block; font-family:var(--display); font-weight:900;
-    font-size:clamp(2.1em,5.5vw,3.4em); line-height:1.04; letter-spacing:-.02em; }
-  .home-hero__meta{ display:block; font-family:var(--sans); text-transform:uppercase; letter-spacing:.12em;
-    font-size:.72em; color:var(--muted); margin-top:.7em; }
-
-  /* the rest, in sequence — a clean reading-width column, titles + dates only */
+  /* (the old front page's hero + edition-list CSS lived here until 2026-07-06; the masonry
+     redesign in _layouts/home.html removed the markup, so the rules were dropped too.) */
   .layout--home .archive__subtitle{ max-width:44em; margin:0 auto .4em; text-align:left; }
-  .entries-list{ max-width:44em; margin:0 auto; }
-  .entries-list .list__item{ border-bottom:1px solid var(--hair); padding:.85em 0; margin:0; }
-  .entries-list .archive__item-title{ font-family:var(--display); font-weight:600; font-size:1.2em; margin:0 0 .1em; }
-  .entries-list .archive__item-title a{ color:var(--ink); }
-  .entries-list .archive__item-title a:hover{ color:var(--accent); }
-  .entries-list .page__meta{ font-family:var(--sans); text-transform:uppercase; letter-spacing:.08em;
-    font-size:.66em; color:var(--muted); margin:0; }
-  .entries-list .archive__item-excerpt{ display:none; }  /* sequence stays clean: title + date only */
 </style>
 
 <style>

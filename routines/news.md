@@ -216,7 +216,18 @@ Use the Write tool to create `pending-notifications/{TIMESTAMP}-news.json` where
 ```bash
 git add _posts/ pending-notifications/ index/ _data/
 git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "News — {YYYY-MM-DD}"
-git push origin main || (git pull --rebase origin main && git push origin main)
+git push origin main || (
+  # Concurrent editions (News + AI/ML fire the same minute Tue/Fri) both rewrite the whole
+  # _data/homefeed.json, so the rebase can stop on a content conflict there. The resolution is
+  # always: REGENERATE the feed from the merged tree (it now has both briefs), then continue.
+  git pull --rebase origin main || true
+  python3 tools/build_stories_feed.py || true
+  git add _data/homefeed.json
+  GIT_EDITOR=true git rebase --continue \
+    || git -c user.email=routine@khalic-lab -c user.name="News Routine" commit --amend --no-edit \
+    || true
+  git push origin main
+)
 ```
 
 If `git push` still fails after the rebase retry, append `git push failed: <reason>` to the brief's Coverage footer and continue.
