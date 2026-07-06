@@ -71,8 +71,10 @@ sized by how much it matters, filterable by beat.</p>
      prefixed to avoid colliding with the theme and the post-page .fb-* feedback widgets. ===== */
 
   /* reclaim full width: minimal-mistakes reserves the right-sidebar gutter on .archive even when
-     no sidebar renders here (author_profile:false) — the masonry wants the whole column. */
-  .layout--home .archive{ width:100%; float:none; margin-right:0; }
+     no sidebar renders here (author_profile:false) — it does so with padding-right:300px (x-large)
+     / 200px (large), NOT width, so we must zero the padding too or the grid sits 300px short and
+     reads as a narrow left-aligned column. */
+  .layout--home .archive{ width:100%; float:none; margin:0; padding-left:0; padding-right:0; }
   .layout--home .page__title{ font-weight:700; }
 
   .folio-filters{ display:flex; align-items:center; gap:8px 6px; flex-wrap:wrap; margin:1.4em 0 0;
@@ -103,11 +105,13 @@ sized by how much it matters, filterable by beat.</p>
   .ff-crop.bl{ bottom:0; left:-6px; transform:scaleY(-1); } .ff-crop.br{ bottom:0; right:-6px; transform:scale(-1); }
   @media (max-width:640px){ .ff-crop{ display:none; } }
 
-  .folio-grid{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); grid-auto-rows:8px;
+  /* native-responsive columns (no JS width-reading): auto-fill tracks reflow from ~4 down to 1 as
+     the viewport narrows. JS only computes the per-card row-span for the masonry packing. */
+  .folio-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); grid-auto-rows:8px;
     grid-auto-flow:row dense; gap:20px; align-items:start; }
   .fcard{ min-width:0; }
   .fcard.lead{ grid-column:span 2; }
-  @media (max-width:600px){ .fcard.lead{ grid-column:span 1; } }
+  @media (max-width:700px){ .fcard.lead{ grid-column:span 1; } }   /* one column → lead can't span 2 */
 
   .fcard__in{ background:var(--card); border:1px solid var(--hair); padding:16px 16px 15px;
     display:flex; flex-direction:column; gap:9px; transition:transform .18s ease, box-shadow .18s ease; }
@@ -130,18 +134,15 @@ sized by how much it matters, filterable by beat.</p>
   .fcard.imp2 .fplate{ height:104px; }
   .fcard.lead .fplate{ height:210px; }
 
-  .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.1; margin:0; text-wrap:balance;
-    font-size:1.05rem; color:var(--ink); }
-  .fcard.imp2 .fcard__hl{ font-size:1.12rem; }
-  .fcard.lead .fcard__hl{ font-size:clamp(1.4rem,2.4vw,1.85rem); line-height:1.05; letter-spacing:-.005em; }
+  .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.14; margin:0; text-wrap:balance;
+    font-size:1.16rem; color:var(--ink); }
+  .fcard.lead .fcard__hl{ font-size:clamp(1.5rem,2.6vw,2.05rem); line-height:1.05; letter-spacing:-.005em; }
   .fcard__hl a{ color:inherit; text-decoration:none; }
   .fcard__hl a:hover{ color:var(--accent); text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; }
 
-  .fcard__sum{ font-family:var(--serif); margin:0; color:var(--ink); opacity:.82; font-size:.95rem; line-height:1.48;
-    display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; }
-  .fcard.imp1 .fcard__sum{ display:none; }
-  .fcard.imp2 .fcard__sum{ -webkit-line-clamp:3; }
-  .fcard.lead .fcard__sum{ -webkit-line-clamp:6; font-size:1.06rem; }
+  /* full summary on every card, at a readable size — no truncation, no shrinking. */
+  .fcard__sum{ font-family:var(--serif); margin:0; color:var(--ink); opacity:.9; font-size:1rem; line-height:1.5; }
+  .fcard.lead .fcard__sum{ font-size:1.08rem; }
 
   .fcard__line{ display:flex; align-items:baseline; gap:.6em; margin-top:auto; padding-top:9px;
     border-top:1px solid var(--hair); font-family:var(--sans); font-size:.6rem; letter-spacing:.04em; color:var(--muted); }
@@ -215,10 +216,7 @@ sized by how much it matters, filterable by beat.</p>
 
   // ---- JS-measured grid masonry (row-span from measured height; importance drives col-span) ----
   function layout(){
-    var W = grid.clientWidth;
-    var cols = Math.max(1, Math.min(5, Math.floor((W + 20) / 320)));
-    grid.style.setProperty('--cols', cols);
-    var cs = getComputedStyle(grid);
+    var cs = getComputedStyle(grid);            // columns are pure CSS (auto-fill); JS only sets row-spans
     var row = parseFloat(cs.gridAutoRows) || 8;
     var gap = parseFloat(cs.rowGap) || 20;
     cards.forEach(function(card){
