@@ -214,6 +214,9 @@ Use the Write tool to create `pending-notifications/{TIMESTAMP}-news.json` where
 ### 3. Commit and push
 
 ```bash
+# refresh the homepage feed HERE, unconditionally — not only via DEDUP.md Step D — so a skipped
+# step can't freeze the front page while the commit still stages a stale _data/
+python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
 git add _posts/ pending-notifications/ index/ _data/
 git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "News — {YYYY-MM-DD}"
 git push origin main || (
