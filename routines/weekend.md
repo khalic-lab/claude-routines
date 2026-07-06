@@ -33,6 +33,10 @@ In practice: go to the primary source and read it yourself; report what it actua
 
 **Omit, don't fill.** A section — or the whole brief — earns its place only with genuinely new substance. If a desk has nothing new since it last ran, leave it out entirely: no placeholder, no "nothing notable today" line, no restating something already covered. A short, honest brief beats a padded one.
 
+**Tag every story you keep with a beat and an importance.** The homepage renders individual stories as a filterable, importance-sized grid, so each story you record (`DEDUP.md` Step C) carries two extra fields:
+- `topics`: a list of 1–2 beats from this controlled set (lowercase, exact): `switzerland`, `geopolitics`, `politics`, `economy`, `ai-ml`, `science`, `health`, `security`, `tech`, `world`. Pick the most specific that fits; use `world` only when none of the others do.
+- `importance`: an integer 1–3 for how much the story matters — **3** = the edition's lead or a major development, **2** = a solid standard item, **1** = a brief or minor note. Judge genuine significance to the reader, not section order: most stories are 1 or 2, and only a couple per edition earn a 3.
+
 # Sourcing rules (non-negotiable)
 
 1. **Tiers.** T1 = primary (wire, official, preprint, filing, vendor advisory, lab blog). T2 = quality secondary. T3 = discovery only (HN/Reddit/Lobsters/X) — used to find stories, NEVER cited. Click through and cite the underlying T1/T2. **A quality outlet's news report or feature *about* a study is T2 secondary, never T1 — even when that outlet also publishes primary research.** Nature news/features (URLs of the form `nature.com/articles/d41586-…`) are journalism about papers, not the papers themselves; the primary source is the underlying paper or preprint. When you cover a study, locate and cite that **primary paper** — read its abstract — and use the news write-up only as a secondary pointer or for triangulation. A bullet whose sole citation is a `d41586` Nature-news piece (or any equivalent secondary report) is mis-sourced: find the paper, or if you genuinely cannot, frame it as 'as reported by …' and tag `[single-source]` — never present secondary journalism as the primary.
@@ -314,7 +318,7 @@ Use the Write tool to create `pending-notifications/{TIMESTAMP}-weekend.json` wh
 Via Bash:
 
 ```bash
-git add _posts/ pending-notifications/ index/
+git add _posts/ pending-notifications/ index/ _data/
 git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "Weekend Deep Read — {YYYY-MM-DD}"
 git push origin main || (git pull --rebase origin main && git push origin main)
 ```

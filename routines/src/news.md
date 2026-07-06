@@ -157,7 +157,7 @@ Use the Write tool to create `pending-notifications/{TIMESTAMP}-news.json` where
 ### 3. Commit and push
 
 ```bash
-git add _posts/ pending-notifications/ index/
+git add _posts/ pending-notifications/ index/ _data/
 git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "News — {YYYY-MM-DD}"
 git push origin main || (git pull --rebase origin main && git push origin main)
 ```

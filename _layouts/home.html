@@ -4,37 +4,292 @@ layout: archive
 
 {{ content }}
 
-{% if site.description %}<p class="home-tagline">{{ site.description }}</p>{% endif %}
+{% assign feed = site.data.homefeed %}
+<p class="home-tagline">Every story the desk files, laid straight onto the page — newest at the top,
+sized by how much it matters, filterable by beat.</p>
 
-{% if paginator %}
-  {% assign posts = paginator.posts %}
-{% else %}
-  {% assign posts = site.posts %}
-{% endif %}
+{% if feed and feed.stories and feed.stories.size > 0 %}
+<div class="folio-filters" id="folioFilters">
+  <span class="ff-lbl">Beat</span>
+  <button class="ff-chip ff-all" type="button" data-topic="" aria-pressed="true">All <span class="ff-ct">{{ feed.count }}</span></button>
+  {% for t in feed.topics %}
+  <button class="ff-chip" type="button" data-topic="{{ t.key }}" aria-pressed="false" style="--tc:{{ t.color }}"><span class="ff-dot"></span>{{ t.label }} <span class="ff-ct">{{ t.count }}</span></button>
+  {% endfor %}
+  <span class="ff-legend" aria-hidden="true">
+    <span class="ff-li"><i class="fb b3"></i>Lead</span>
+    <span class="ff-li"><i class="fb b2"></i>Standard</span>
+    <span class="ff-li"><i class="fb b1"></i>Brief</span>
+  </span>
+</div>
 
-{% if posts.size > 0 %}
-  {% assign latest = posts | first %}
-  <a class="home-hero" href="{{ latest.url | relative_url }}">
-    <span class="home-hero__kicker">Latest edition{% if latest.categories %} &middot; {{ latest.categories | first | replace: '-', ' ' }}{% endif %}</span>
-    <span class="home-hero__title">{{ latest.title }}</span>
-    <span class="home-hero__meta">{{ latest.date | date: "%A, %B %-d, %Y" }}</span>
-  </a>
-
-  <section class="propose">
-    <h3 class="archive__subtitle">Propose a brief</h3>
-    <form class="propose__form" action="#">
-      <input type="text" name="topic" class="propose__topic" placeholder="A topic or beat you'd want covered" maxlength="300" required>
-      <textarea name="detail" class="propose__detail" placeholder="Optional — why it matters, sources, the angle"></textarea>
-      <div><button type="submit" class="fb-btn">Propose</button><span class="propose__msg"></span></div>
-    </form>
-  </section>
-
-  <h3 class="archive__subtitle">More editions</h3>
-  <div class="entries-list">
-    {% for post in posts offset:1 %}
-      {% include archive-single.html type='list' %}
+<div class="folio-board">
+  <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
+  <div class="folio-grid" id="folioGrid" aria-live="polite">
+    {% for s in feed.stories %}
+    <article class="fcard imp{{ s.importance }}{% if s.is_lead %} lead{% endif %}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}">
+      <div class="fcard__in" style="--tc:{{ s.topic_color }}">
+        <div class="fcard__top">
+          <a class="fcard__beat" href="{{ s.permalink | relative_url }}" title="{{ s.stream_label }} brief · {{ s.date_label }}"><span class="ff-dot"></span>{{ s.topic_label }}</a>
+          <span class="fcard__rank" data-imp="{{ s.importance }}"></span>
+        </div>
+        {% if s.has_plate %}<canvas class="fplate" role="img" aria-label="Halftone illustration" data-seed="{{ s.seed }}"{% if s.is_lead %} data-big="1"{% endif %}></canvas>{% endif %}
+        <h2 class="fcard__hl">{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.headline }}</a>{% else %}{{ s.headline }}{% endif %}</h2>
+        {% if s.summary != "" %}<p class="fcard__sum">{{ s.summary }}</p>{% endif %}
+        <div class="fcard__line">
+          <span class="fcard__src">{{ s.source_domain }}</span>
+          {% if s.fresh %}<span class="fcard__fresh">Just in</span>{% endif %}
+          <span class="fcard__date">{{ s.date_label }}</span>
+        </div>
+        <div class="fcard__fb" data-story="{{ s.id }}" data-brief="{{ s.date }}-{{ s.stream }}">
+          <button class="ffb-t" type="button" data-v="1" aria-label="Useful">👍</button>
+          <button class="ffb-t" type="button" data-v="-1" aria-label="Not useful">👎</button>
+          <span class="ffb-note" aria-live="polite"></span>
+        </div>
+      </div>
+    </article>
     {% endfor %}
   </div>
+  <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
+</div>
+{% else %}
+<p style="text-align:center; font-family:var(--sans); color:var(--muted);">No stories yet — check back after the next brief.</p>
 {% endif %}
 
-{% include paginator.html %}
+<section class="propose">
+  <h3 class="archive__subtitle">Propose a brief</h3>
+  <form class="propose__form" action="#">
+    <input type="text" name="topic" class="propose__topic" placeholder="A topic or beat you'd want covered" maxlength="300" required>
+    <textarea name="detail" class="propose__detail" placeholder="Optional — why it matters, sources, the angle"></textarea>
+    <div><button type="submit" class="fb-btn">Propose</button><span class="propose__msg"></span></div>
+  </form>
+</section>
+
+<style>
+  /* ===== Folio masonry front page (2026-07-06) — replaces the hero + edition list. Reads
+     _data/homefeed.json (built by tools/build_stories_feed.py). Uses the global Folio tokens set
+     in _includes/head/custom.html; only structural rules live here. Classes are f-/ff-/folio-
+     prefixed to avoid colliding with the theme and the post-page .fb-* feedback widgets. ===== */
+
+  /* reclaim full width: minimal-mistakes reserves the right-sidebar gutter on .archive even when
+     no sidebar renders here (author_profile:false) — the masonry wants the whole column. */
+  .layout--home .archive{ width:100%; float:none; margin-right:0; }
+  .layout--home .page__title{ font-weight:700; }
+
+  .folio-filters{ display:flex; align-items:center; gap:8px 6px; flex-wrap:wrap; margin:1.4em 0 0;
+    padding:12px 0 8px; position:sticky; top:0; z-index:20; background:var(--paper);
+    border-bottom:1px solid var(--hair); }
+  .ff-lbl{ font-family:var(--sans); text-transform:uppercase; letter-spacing:.14em; font-size:.6rem; color:var(--muted); margin-right:2px; }
+  .ff-chip{ font-family:var(--sans); font-size:.72rem; letter-spacing:.02em; cursor:pointer; background:transparent;
+    color:var(--ink); border:1px solid var(--hair); padding:.42em .72em; display:inline-flex; align-items:center;
+    gap:.5em; line-height:1; transition:border-color .15s, background .15s, color .15s; }
+  .ff-chip:hover{ border-color:var(--rule); }
+  .ff-chip[aria-pressed="true"]{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .ff-all[aria-pressed="true"]{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .ff-dot{ width:7px; height:7px; border-radius:50%; background:var(--tc,var(--muted)); flex:0 0 auto; }
+  .ff-chip[aria-pressed="true"] .ff-dot{ box-shadow:0 0 0 1.5px var(--paper); }
+  .ff-ct{ font-variant-numeric:tabular-nums; opacity:.6; }
+  .ff-legend{ margin-left:auto; display:flex; gap:14px; align-items:center; }
+  .ff-li{ font-family:var(--sans); font-size:.58rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted);
+    display:inline-flex; align-items:center; gap:.5em; }
+  .ff-li .fb{ display:inline-block; height:9px; background:var(--accent); }
+  .ff-li .fb.b3{ width:22px; } .ff-li .fb.b2{ width:13px; opacity:.7; } .ff-li .fb.b1{ width:6px; opacity:.45; }
+  @media (max-width:720px){ .ff-legend{ display:none; } }
+
+  .folio-board{ position:relative; padding:22px 0 10px; }
+  .ff-crop{ position:absolute; width:14px; height:14px; pointer-events:none; }
+  .ff-crop::before,.ff-crop::after{ content:""; position:absolute; background:var(--rule); }
+  .ff-crop::before{ width:100%; height:1px; top:0; } .ff-crop::after{ height:100%; width:1px; left:0; }
+  .ff-crop.tl{ top:6px; left:-6px; } .ff-crop.tr{ top:6px; right:-6px; transform:scaleX(-1); }
+  .ff-crop.bl{ bottom:0; left:-6px; transform:scaleY(-1); } .ff-crop.br{ bottom:0; right:-6px; transform:scale(-1); }
+  @media (max-width:640px){ .ff-crop{ display:none; } }
+
+  .folio-grid{ display:grid; grid-template-columns:repeat(var(--cols,3),1fr); grid-auto-rows:8px;
+    grid-auto-flow:row dense; gap:20px; align-items:start; }
+  .fcard{ min-width:0; }
+  .fcard.lead{ grid-column:span 2; }
+  @media (max-width:600px){ .fcard.lead{ grid-column:span 1; } }
+
+  .fcard__in{ background:var(--card); border:1px solid var(--hair); padding:16px 16px 15px;
+    display:flex; flex-direction:column; gap:9px; transition:transform .18s ease, box-shadow .18s ease; }
+  .fcard.lead .fcard__in{ padding:22px 22px 20px; border-top:2px solid var(--accent); }
+  .fcard__in:hover{ transform:translateY(-2px); box-shadow:0 6px 22px rgba(0,0,0,.10); }
+  @media (prefers-color-scheme:dark){ .fcard__in:hover{ box-shadow:0 6px 26px rgba(0,0,0,.5); } }
+
+  .fcard__top{ display:flex; align-items:baseline; gap:.7em; }
+  .fcard__beat{ font-family:var(--sans); text-transform:uppercase; letter-spacing:.1em; font-size:.6rem;
+    color:var(--muted); display:inline-flex; align-items:center; gap:.5em; white-space:nowrap; text-decoration:none; }
+  .fcard__beat:hover{ color:var(--accent); }
+  .fcard__beat .ff-dot{ width:6px; height:6px; }
+  .fcard__rank{ margin-left:auto; font-family:var(--sans); font-weight:700; font-size:.56rem;
+    text-transform:uppercase; letter-spacing:.14em; color:var(--accent); white-space:nowrap; }
+  .fcard__rank[data-imp="3"]::after{ content:"Lead"; }
+  .fcard__rank[data-imp="2"]{ color:var(--muted); } .fcard__rank[data-imp="2"]::after{ content:"Feature"; }
+  .fcard__rank[data-imp="1"]{ color:var(--muted); opacity:.7; } .fcard__rank[data-imp="1"]::after{ content:"Brief"; }
+
+  .fplate{ display:block; width:100%; height:120px; border:1px solid var(--hair); background:var(--panel); }
+  .fcard.imp2 .fplate{ height:104px; }
+  .fcard.lead .fplate{ height:210px; }
+
+  .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.1; margin:0; text-wrap:balance;
+    font-size:1.05rem; color:var(--ink); }
+  .fcard.imp2 .fcard__hl{ font-size:1.12rem; }
+  .fcard.lead .fcard__hl{ font-size:clamp(1.4rem,2.4vw,1.85rem); line-height:1.05; letter-spacing:-.005em; }
+  .fcard__hl a{ color:inherit; text-decoration:none; }
+  .fcard__hl a:hover{ color:var(--accent); text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; }
+
+  .fcard__sum{ font-family:var(--serif); margin:0; color:var(--ink); opacity:.82; font-size:.95rem; line-height:1.48;
+    display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; }
+  .fcard.imp1 .fcard__sum{ display:none; }
+  .fcard.imp2 .fcard__sum{ -webkit-line-clamp:3; }
+  .fcard.lead .fcard__sum{ -webkit-line-clamp:6; font-size:1.06rem; }
+
+  .fcard__line{ display:flex; align-items:baseline; gap:.6em; margin-top:auto; padding-top:9px;
+    border-top:1px solid var(--hair); font-family:var(--sans); font-size:.6rem; letter-spacing:.04em; color:var(--muted); }
+  .fcard__src{ text-transform:lowercase; letter-spacing:.02em; }
+  .fcard__date{ margin-left:auto; font-variant-numeric:tabular-nums; }
+  .fcard__fresh{ color:var(--accent); font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+
+  .fcard__fb{ display:flex; align-items:center; gap:.28em; margin-top:9px; padding-top:9px;
+    border-top:1px solid var(--hair); opacity:.42; transition:opacity .15s ease; }
+  .fcard__in:hover .fcard__fb, .fcard__fb:focus-within{ opacity:1; }
+  @media (hover:none){ .fcard__fb{ opacity:.82; } }
+  .ffb-t{ cursor:pointer; background:transparent; border:1px solid var(--hair); color:var(--ink);
+    font-size:.82rem; line-height:1; padding:.3em .52em; }
+  .ffb-t:hover{ border-color:var(--rule); }
+  .ffb-t.on{ border-color:var(--accent); color:var(--accent); }
+  .ffb-t:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .ffb-note{ font-family:var(--sans); font-size:.56rem; text-transform:uppercase; letter-spacing:.11em; color:var(--accent); margin-left:.35em; }
+
+  .folio-empty{ font-family:var(--sans); color:var(--muted); text-align:center; padding:60px 0; letter-spacing:.06em; }
+  @media (prefers-reduced-motion:reduce){ .fcard__in, .fcard__fb{ transition:none; } }
+
+  .propose{ margin-top:2.6em; }
+</style>
+
+<script>
+(function () {
+  var grid = document.getElementById('folioGrid');
+  if (!grid) return;
+  var empty = document.getElementById('folioEmpty');
+  var filters = document.getElementById('folioFilters');
+  var root = document.documentElement;
+  var cards = Array.prototype.slice.call(grid.querySelectorAll('.fcard'));
+  var active = new Set();
+
+  // ---- generated halftone plates (seeded per headline; a duotone stand-in for the og:image) ----
+  function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function drawHalftone(cv, seed, dot, paper, dpr){
+    var ctx = cv.getContext('2d'); var W = cv.width, H = cv.height;
+    ctx.fillStyle = paper || '#fff'; ctx.fillRect(0,0,W,H);
+    if (!W || !H) return;
+    var rnd = mulberry32(seed || 1);
+    var a1 = rnd()*6.283, a2 = rnd()*6.283, f1 = 1.4+rnd()*3.6, f2 = 1.4+rnd()*3.6;
+    var fx = 0.22+rnd()*0.56, fy = 0.18+rnd()*0.6;
+    var step = Math.max(5, Math.round(6*dpr));
+    ctx.fillStyle = dot || '#111';
+    for (var y = step/2; y < H; y += step){
+      for (var x = step/2; x < W; x += step){
+        var u = x/W, v = y/H;
+        var val = 0.5 + 0.5*Math.sin(u*f1*Math.PI + a1)*Math.cos(v*f2*Math.PI + a2);
+        var d = Math.hypot(u-fx, v-fy);
+        val = val*0.55 + (1 - Math.min(1, d*1.7))*0.45;
+        var r = (1-val)*(step*0.6);
+        if (r > 0.35){ ctx.beginPath(); ctx.arc(x,y,r,0,6.283); ctx.fill(); }
+      }
+    }
+  }
+  function paintPlates(){
+    var st = getComputedStyle(root);
+    var ink = st.getPropertyValue('--ink').trim();
+    var paper = st.getPropertyValue('--card').trim();
+    var accent = st.getPropertyValue('--accent').trim();
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    grid.querySelectorAll('.fplate').forEach(function(cv){
+      if (cv.offsetParent === null) return;            // skip filtered-out (display:none) cards
+      var w = cv.clientWidth, h = cv.clientHeight;
+      if (!w || !h) return;
+      cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+      drawHalftone(cv, +cv.dataset.seed, cv.dataset.big === '1' ? accent : ink, paper, dpr);
+    });
+  }
+
+  // ---- JS-measured grid masonry (row-span from measured height; importance drives col-span) ----
+  function layout(){
+    var W = grid.clientWidth;
+    var cols = Math.max(1, Math.min(5, Math.floor((W + 20) / 320)));
+    grid.style.setProperty('--cols', cols);
+    var cs = getComputedStyle(grid);
+    var row = parseFloat(cs.gridAutoRows) || 8;
+    var gap = parseFloat(cs.rowGap) || 20;
+    cards.forEach(function(card){
+      if (card.style.display === 'none') return;
+      var inner = card.firstElementChild;
+      var h = inner.getBoundingClientRect().height;
+      var span = Math.max(1, Math.ceil((h + gap) / (row + gap)));
+      card.style.gridRowEnd = 'span ' + span;
+    });
+  }
+  function reflow(){ layout(); paintPlates(); }
+
+  // ---- topic filters (multi-select; a card matches if ANY of its topics is active) ----
+  function matches(card){
+    if (!active.size) return true;
+    var ts = (card.dataset.topics || '').split(' ');
+    for (var i=0;i<ts.length;i++){ if (active.has(ts[i])) return true; }
+    return false;
+  }
+  function apply(){
+    var shown = 0;
+    cards.forEach(function(c){ var m = matches(c); c.style.display = m ? '' : 'none'; if (m) shown++; });
+    empty.hidden = shown > 0;
+    requestAnimationFrame(reflow);
+  }
+  function sync(){
+    filters.querySelectorAll('.ff-chip').forEach(function(c){
+      var k = c.dataset.topic;
+      c.setAttribute('aria-pressed', (k ? active.has(k) : active.size === 0) ? 'true' : 'false');
+    });
+  }
+  filters.querySelectorAll('.ff-chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var key = chip.dataset.topic;
+      if (!key) active.clear();
+      else if (active.has(key)) active.delete(key); else active.add(key);
+      sync(); apply();
+    });
+  });
+
+  // ---- per-story feedback (same site-key unlock + feedback-sink as the brief pages) ----
+  var FB = "https://feedback-sink.khalic-lab.workers.dev";
+  function postFb(box, vote, note){
+    var key = window.__siteKey && window.__siteKey.get();
+    if (!key){ if (note) note('🔒 unlock'); if (window.__siteKey) window.__siteKey.prompt(); return; }
+    if (note) note('sending…');
+    fetch(FB + '/submit', {
+      method: 'POST', headers: { 'Content-Type':'application/json', 'X-Widget-Key': key },
+      body: JSON.stringify({ brief: box.dataset.brief, vote: vote, reason: '',
+        story_id: box.dataset.story || null, surface: 'home' })
+    }).then(function(r){
+      if (r.status === 403 && window.__siteKey){ window.__siteKey.clear(); window.__siteKey.prompt(); if (note) note('🔒 wrong key'); return; }
+      if (note) note(r.ok ? 'thanks ✓' : 'failed (' + r.status + ')');
+    }).catch(function(){ if (note) note('offline — try later'); });
+  }
+  grid.addEventListener('click', function(e){
+    var b = e.target.closest('.ffb-t'); if (!b) return;
+    var box = b.closest('.fcard__fb'); var note = box.querySelector('.ffb-note');
+    var was = b.classList.contains('on');
+    box.querySelectorAll('.ffb-t').forEach(function(x){ x.classList.remove('on'); });
+    if (!was){ b.classList.add('on'); postFb(box, +b.dataset.v, function(m){ note.textContent = m; }); }
+    else { note.textContent = ''; }
+  });
+
+  // ---- init + reflow triggers ----
+  var rt;
+  window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(reflow, 120); });
+  var mq = matchMedia('(prefers-color-scheme: dark)');
+  (mq.addEventListener ? mq.addEventListener.bind(mq,'change') : mq.addListener.bind(mq))(function(){ paintPlates(); });
+  if (document.readyState !== 'loading') requestAnimationFrame(reflow);
+  else document.addEventListener('DOMContentLoaded', function(){ requestAnimationFrame(reflow); });
+  window.addEventListener('load', reflow);   // catch late metrics
+})();
+</script>

@@ -206,7 +206,7 @@ categories: [ai-ml]
 3. **Commit and push** via Bash:
 
 ```bash
-git add _posts/ pending-notifications/ index/
+git add _posts/ pending-notifications/ index/ _data/
 git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "AI/ML — {YYYY-MM-DD}"
 git push origin main || (git pull --rebase origin main && git push origin main)
 ```

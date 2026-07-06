@@ -99,6 +99,7 @@ safety net, not a requirement — supply them if you already have them, otherwis
 {"stories":[
   {"headline":"...","summary":"<one sentence>","url":"<primary source url>",
    "tier":"T1","tags":["..."],
+   "topics":["geopolitics"],"importance":3,
    "event_date":"<YYYY-MM-DD when the event actually happened, if known; else omit>",
    "thread_id":"<matched.thread_id — ONLY for a TRUE same-artifact continuation>",
    "first_seen_date":"<matched.first_seen_date — ONLY with a valid thread_id>"}
@@ -109,6 +110,11 @@ safety net, not a requirement — supply them if you already have them, otherwis
   distinct from today's brief date. Supply it at day precision when the source gives it; `record`
   otherwise derives `YYYY-MM` from an arXiv id, else leaves it null. It is what `[ongoing since]`
   should anchor to.
+- **`topics` / `importance`** feed the homepage grid: `topics` is a 1–2 item list from the controlled
+  beat set (`switzerland`, `geopolitics`, `politics`, `economy`, `ai-ml`, `science`, `health`,
+  `security`, `tech`, `world`), `importance` is 1–3 (**3** lead, **2** standard, **1** brief). Score
+  on real significance to the reader (see the tagging rubric in your prompt). If you omit them,
+  `record` stores them empty and `build_stories_feed.py` derives a fallback from position + keywords.
 - **Never hand-set `thread_id` to place a DISTINCT artifact into a topic thread.** A different paper
   / CVE / filing is its own thread even on the same subject — that exact mistake produced the wrong
   "[ongoing since 2026-05-14]" on the June SASA paper. `record` now **validates** writer-supplied
@@ -123,6 +129,18 @@ python3 tools/dedup/dedup.py record --stories /tmp/final.json --date {YYYY-MM-DD
 ```
 
 This writes `index/stories/{YYYY-MM-DD}-{SLUG}.jsonl` and prunes index files older than 40 days.
+
+## Step D — refresh the homepage feed (AFTER record)
+
+The front page renders individual stories as a masonry grid from a flattened feed. Regenerate it so
+today's brief shows up; it's committed with the brief (the publish step's `git add` includes `_data/`):
+
+```bash
+python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
+```
+
+No network — it only reshapes `index/stories/*.jsonl` into `_data/homefeed.json` (the four live
+streams, most-recent stories, capped for the front page).
 
 Cadence per slug:
 - **`news`** — daily

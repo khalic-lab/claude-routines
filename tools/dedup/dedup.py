@@ -759,6 +759,10 @@ def cmd_record(args):
             "source_domain": s.get("source_domain") or source_domain(s.get("url")),
             "tier": s.get("tier"),
             "tags": s.get("tags", []),
+            # homepage grid metadata (writer-supplied; see newsroom-ethos rubric). Persisted
+            # verbatim — build_stories_feed.py derives a fallback for records that lack them.
+            "topics": s.get("topics", []),
+            "importance": s.get("importance"),
             "thread_id": thread_id or hid,
             "first_seen_date": first_seen_date or date,
             "event_date": event_date,
@@ -800,6 +804,7 @@ def cmd_backfill(args):
                 "id": hid, "date": date, "stream": slug,
                 "headline": s["headline"], "summary": s["summary"], "url": s["url"],
                 "source_domain": source_domain(s["url"]), "tier": None, "tags": [],
+                "topics": [], "importance": None,  # backfilled records predate these; feed derives them
                 "thread_id": hid, "first_seen_date": date,
                 # deterministic only (no network at backfill): arXiv submission month
                 # where an id is present, else null. Retroactively arms event_date for
