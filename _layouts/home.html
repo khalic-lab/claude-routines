@@ -303,9 +303,8 @@ sized by how much it matters, filterable by beat.</p>
   });
 
   /* ---- per-story feedback: same site-key unlock + feedback-sink + kill switch as the brief
-     pages (custom.html exposes both on window.__FB). The sink is append-only, so like the brief
-     pages there is no un-vote: clicking the same thumb again is a no-op, switching thumbs posts
-     the new vote. ---- */
+     pages (custom.html exposes both on window.__FB). Clicking the active thumb again RETRACTS
+     (posts vote 0); the sink is append-only and consumers apply last-write-wins. ---- */
   function fbConf(){ return window.__FB || { enabled: true, url: "https://feedback-sink.khalic-lab.workers.dev" }; }
   function postFb(box, vote, note){
     var conf = fbConf();
@@ -325,9 +324,10 @@ sized by how much it matters, filterable by beat.</p>
   if (!fbConf().enabled) grid.classList.add('fb-off');
   grid.addEventListener('click', function(e){
     var b = e.target.closest('.ffb-t'); if (!b) return;
-    if (b.classList.contains('on')) return;              // append-only backend: no un-vote
     var box = b.closest('.fcard__fb'); var note = box.querySelector('.ffb-note');
+    var was = b.classList.contains('on');
     box.querySelectorAll('.ffb-t').forEach(function(x){ x.classList.remove('on'); });
+    if (was){ postFb(box, 0, function(m){ note.textContent = m; reflow(); }); return; }  // retract
     b.classList.add('on');
     postFb(box, +b.dataset.v, function(m){ note.textContent = m; reflow(); });
   });

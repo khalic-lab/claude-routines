@@ -763,6 +763,11 @@ def cmd_record(args):
             # verbatim — build_stories_feed.py derives a fallback for records that lack them.
             "topics": s.get("topics", []),
             "importance": s.get("importance"),
+            # the story's PUBLISHED prose, writer-supplied at record time: the explanatory
+            # paragraph as it appears in the brief, plus the "Why it matters" line if any.
+            # The homepage feed prefers these over re-parsing the markdown post.
+            "display_body": s.get("display_body", ""),
+            "why": s.get("why", ""),
             "thread_id": thread_id or hid,
             "first_seen_date": first_seen_date or date,
             "event_date": event_date,
@@ -805,6 +810,7 @@ def cmd_backfill(args):
                 "headline": s["headline"], "summary": s["summary"], "url": s["url"],
                 "source_domain": source_domain(s["url"]), "tier": None, "tags": [],
                 "topics": [], "importance": None,  # backfilled records predate these; feed derives them
+                "display_body": "", "why": "",     # ditto — feed falls back to parsing the post
                 "thread_id": hid, "first_seen_date": date,
                 # deterministic only (no network at backfill): arXiv submission month
                 # where an id is present, else null. Retroactively arms event_date for

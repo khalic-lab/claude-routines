@@ -332,7 +332,8 @@ def load_index_meta(window_dates):
                 if not ln.strip():
                     continue
                 r = json.loads(ln)
-                m = {"topics": r.get("topics"), "importance": r.get("importance")}
+                m = {"topics": r.get("topics"), "importance": r.get("importance"),
+                     "display_body": r.get("display_body"), "why": r.get("why")}
                 if r.get("id"):
                     by_id[r["id"]] = m
                 nu = norm_url(r.get("url"))
@@ -379,8 +380,12 @@ def load_recent(days):
             primary = topics[0]
             label, color = TOPICS.get(primary, (primary.title(), "#6b6f76"))
             y, mo, dy = date.split("-")
+            # the writer's recorded prose (display_body/why, DEDUP Step C) beats the markdown
+            # re-parse — the record is authored, the parse is recovered.
+            body = _trim(im.get("display_body") or "") or s["body"]
+            why = _trim(im.get("why") or "") or s["why"]
             stories.append({
-                "id": hid, "headline": s["headline"], "summary": s["body"], "why": s["why"],
+                "id": hid, "headline": s["headline"], "summary": body, "why": why,
                 "url": s["url"], "source_domain": source_domain(s["url"]),
                 "date": date, "date_label": date_label(date),
                 "stream": stream, "stream_label": STREAM_LABEL.get(stream, stream.title()),

@@ -213,7 +213,7 @@ def main():
 
     a = sub.add_parser("add", help="append one feedback record locally")
     a.add_argument("--brief", required=True, help="post slug, e.g. 2026-06-07-overview")
-    a.add_argument("--vote", type=int, required=True, choices=(1, -1))
+    a.add_argument("--vote", type=int, required=True, choices=(1, -1, 0))  # 0 = retract prior vote
     a.add_argument("--reason", default="")
     a.add_argument("--story-id", default=None, dest="story_id")
     a.add_argument("--surface", default="cli")

@@ -63,7 +63,10 @@ files move only through the Evaluator's human-applied patches.
                                        // (v2): "{slug}-{slugify(headline)}"; null = brief-level.
                                        //   headline = the bullet's bold lead (news/ai-ml/weekend
                                        //   headlines) or the ### heading (science/weekend papers)
-  "vote": -1,                          // +1 | -1
+  "vote": -1,                          // +1 | -1 | 0 (0 = retraction: the reader un-toggled a thumb,
+                                       //   cancelling their prior vote on this brief/story — the log
+                                       //   is append-only, consumers apply last-write-wins per
+                                       //   (reader, brief, story_id))
   "reason": "markets snapshot too long on weekends",  // optional free text; "" if thumb-only
   "surface": "web",                    // "web" (brief page) | "home" (front-page grid) | "cli"
   "source_domain": null,               // reserved for source-weights.yml wiring; nothing populates it

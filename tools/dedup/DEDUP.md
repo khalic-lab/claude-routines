@@ -100,6 +100,8 @@ safety net, not a requirement — supply them if you already have them, otherwis
   {"headline":"...","summary":"<one sentence>","url":"<primary source url>",
    "tier":"T1","tags":["..."],
    "topics":["geopolitics"],"importance":3,
+   "display_body":"<the story's explanatory paragraph EXACTLY as published in the brief>",
+   "why":"<the story's 'Why it matters' text as published, if it has one; else omit>",
    "event_date":"<YYYY-MM-DD when the event actually happened, if known; else omit>",
    "thread_id":"<matched.thread_id — ONLY for a TRUE same-artifact continuation>",
    "first_seen_date":"<matched.first_seen_date — ONLY with a valid thread_id>"}
@@ -115,6 +117,11 @@ safety net, not a requirement — supply them if you already have them, otherwis
   `security`, `tech`, `world`), `importance` is 1–3 (**3** lead, **2** standard, **1** brief). Score
   on real significance to the reader (see the tagging rubric in your prompt). If you omit them,
   `record` stores them empty and `build_stories_feed.py` derives a fallback from position + keywords.
+- **`display_body` / `why`** are the story's PUBLISHED prose, copied verbatim from the brief you just
+  wrote (the explanatory paragraph, and the "Why it matters" line if the story has one) — plain text,
+  no markdown links or bold. The homepage cards render these directly; when present they beat the
+  feed builder's markdown re-parse, which is a fallback for older records only. Copy, don't rewrite —
+  the reader must see on the front page exactly what the brief says.
 - **Never hand-set `thread_id` to place a DISTINCT artifact into a topic thread.** A different paper
   / CVE / filing is its own thread even on the same subject — that exact mistake produced the wrong
   "[ongoing since 2026-05-14]" on the June SASA paper. `record` now **validates** writer-supplied

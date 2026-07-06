@@ -86,8 +86,11 @@ async function handleSubmit(request, env) {
   if (typeof brief !== "string" || !brief) {
     return json({ error: "body must include a non-empty `brief` (post slug)" }, 400);
   }
-  if (vote !== 1 && vote !== -1) {
-    return json({ error: "`vote` must be 1 or -1" }, 400);
+  // 0 = retraction: the reader un-toggled a thumb, cancelling their prior vote on this
+  // brief/story. The sink stays append-only — consumers (evaluator) apply last-write-wins
+  // per (reader, brief, story_id).
+  if (vote !== 1 && vote !== -1 && vote !== 0) {
+    return json({ error: "`vote` must be 1, -1 or 0 (retract)" }, 400);
   }
   const reason = typeof p.reason === "string" ? p.reason : "";
   if (reason.length > MAX_REASON) {

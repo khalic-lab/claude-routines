@@ -327,10 +327,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!content) return;
 
     // ---- per-STORY inline thumbs ------------------------------------------------
-    // A "story" bullet leads with the bold <strong> headline (mirrors dedup _BULLET_RE
-    // `^- **...**`). kramdown renders the (loose) story list as <li><p><strong>…</strong>…,
-    // and a tight list as <li><strong>…, so accept both shapes. Footer / "Gaps:" bullets
-    // have no leading <strong>, so they're skipped automatically.
+    // Two story shapes get a widget, matching what the homepage renders cards for:
+    //   (a) bullets leading with a bold <strong> headline (news / ai-ml / weekend headlines);
+    //   (b) `### H3`-headed writeups (science + weekend papers) — these collect
+    //       surface:'home' votes on the front page, so the brief page must collect the
+    //       matching surface:'web' signal too.
+    // Clicking the active thumb again RETRACTS (posts vote 0); the sink is append-only
+    // and consumers apply last-write-wins.
     function skipWrap(n) {
       while (n && n.classList && n.classList.contains('auto-preview-wrap')) n = n.nextElementSibling;
       return n;
@@ -338,17 +341,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // Stop at the Coverage footer (mirrors dedup extract_stories): bullets after that
     // heading are meta-commentary / Gaps, not stories.
     var footer = findCoverageFooter(content);
-    content.querySelectorAll('li').forEach(function (li) {
-      if (li.__fb) return;
-      if (afterFooter(footer, li)) return;
-      var node = skipWrap(li.firstElementChild);
-      if (node && node.tagName === 'P') node = skipWrap(node.firstElementChild);
-      if (!node || node.tagName !== 'STRONG') return;
-      var headline = (node.textContent || '').trim();
-      if (!headline) return;
-      li.__fb = true;
+
+    function attachStoryThumbs(container, headline) {
       var sid = storyIdFor(headline);
-      var container = node.parentNode; // <p> in a loose list, the <li> in a tight one
 
       var bar = document.createElement('span');
       bar.className = 'fb-inline';
@@ -374,11 +369,19 @@ document.addEventListener('DOMContentLoaded', function () {
         up.classList.toggle('fb-on', v === 1); up.classList.toggle('fb-off', v === -1);
         down.classList.toggle('fb-on', v === -1); down.classList.toggle('fb-off', v === 1);
       }
+      function retract() {
+        bar.classList.remove('fb-live');
+        [up, down].forEach(function (b) { b.classList.remove('fb-on'); b.classList.remove('fb-off'); });
+        rzn.style.display = 'none';
+        post({ vote: 0, story_id: sid }, function (m) { ist.textContent = m; });
+      }
       up.addEventListener('click', function () {
+        if (up.classList.contains('fb-on')) { retract(); return; }
         mark(1); rzn.style.display = 'none';
         post({ vote: 1, story_id: sid }, function (m) { ist.textContent = m; });
       });
       down.addEventListener('click', function () {
+        if (down.classList.contains('fb-on')) { retract(); return; }
         mark(-1);
         // the thumb itself is signal — fire now; a reason can follow.
         post({ vote: -1, story_id: sid }, function (m) { ist.textContent = m; });
@@ -396,7 +399,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
       container.appendChild(bar);
       container.appendChild(rzn);
+    }
+
+    // (a) bullet stories: kramdown renders the (loose) story list as <li><p><strong>…,
+    // a tight list as <li><strong>…; accept both. Footer / "Gaps:" bullets have no
+    // leading <strong>, so they're skipped automatically.
+    content.querySelectorAll('li').forEach(function (li) {
+      if (li.__fb) return;
+      if (afterFooter(footer, li)) return;
+      var node = skipWrap(li.firstElementChild);
+      if (node && node.tagName === 'P') node = skipWrap(node.firstElementChild);
+      if (!node || node.tagName !== 'STRONG') return;
+      var headline = (node.textContent || '').trim();
+      if (!headline) return;
+      li.__fb = true;
+      attachStoryThumbs(node.parentNode, headline); // <p> in a loose list, the <li> in a tight one
     });
+
+    // (b) H3 stories (science/weekend only — other streams' h3s aren't stories). The widget
+    // lands in the story's LAST paragraph before the next heading, mirroring the bullets'
+    // end-of-story placement. Runs before the emoji-stripper (registration order), so the
+    // headline text here matches the raw markdown heading the homepage feed slugifies.
+    var stream = SLUG.replace(/^\d{4}-\d{2}-\d{2}-/, '');
+    if (stream === 'science' || stream === 'weekend') {
+      content.querySelectorAll('h3').forEach(function (h) {
+        if (h.__fb) return;
+        if (afterFooter(footer, h)) return;
+        var headline = (h.textContent || '').trim();
+        if (!headline) return;
+        var lastP = null, sib = h.nextElementSibling;
+        while (sib && !/^H[1-3]$/.test(sib.tagName)) {
+          if (sib.tagName === 'P') lastP = sib;
+          sib = sib.nextElementSibling;
+        }
+        if (!lastP) return;                    // heading with no body — not a story
+        h.__fb = true;
+        attachStoryThumbs(lastP, headline);
+      });
+    }
 
     // ---- bottom OVERALL box (brief-level, story_id == null) ---------------------
     var vote = 0; // 0 = none, +1, -1

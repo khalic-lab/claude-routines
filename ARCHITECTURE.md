@@ -334,10 +334,13 @@ masonry grid (topic filters, importance-sized cards, real og:images lazy-loaded 
 text-only fallback, per-story thumbs posting `surface:"home"`), not the old edition list.
 `tools/build_stories_feed.py` **parses the recent `_posts/*.md` briefs** for each story's real
 prose (headline, body, and the writers' `Why it matters` paragraph — the dedup summary is a terse
-embedding one-liner, deliberately not used for display), then overlays `topics`/`importance` from
-the matching `index/stories/*.jsonl` record — **joined by canonical URL** (slugified headlines
-diverge between the post's bold lead and the record's curated headline), slug-id as fallback; the
-build prints the join rate. Unmatched stories get derived tags (topic from section+keywords,
+embedding one-liner, deliberately not used for display), then overlays `topics`/`importance` **and
+the writer-recorded `display_body`/`why` prose** from the matching `index/stories/*.jsonl` record —
+**joined by canonical URL** (slugified headlines diverge between the post's bold lead and the
+record's curated headline), slug-id as fallback; the build prints the join rate. Recorded prose
+beats the markdown re-parse (the record is authored, the parse is recovered); as records accumulate
+the parser becomes legacy fallback only. `tools/home_harness.py` renders the layout standalone for
+headless-Chrome smoke tests (geometry self-check included) — no local Jekyll needed. Unmatched stories get derived tags (topic from section+keywords,
 importance from brief position). Output is URL-deduped across streams, sorted newest+lead first,
 and capped per-edition (each stream's latest edition keeps ≥6 stories, so weekly Science never
 vanishes). Writers regenerate and commit it after `record` (DEDUP.md Step D; `_data/` is in their
