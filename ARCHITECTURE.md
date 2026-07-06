@@ -309,6 +309,10 @@ the model's judgment over ~a few hundred recent headlines rather than a similari
   "source_domain": "admin.ch",
   "tier": "T1",
   "tags": ["switzerland"],
+  "topics": ["switzerland"],              // homepage beat(s), 1-2 from the controlled vocabulary;
+                                          //   writer-supplied (newsroom-ethos rubric), [] if omitted
+  "importance": 3,                        // homepage card size: 3=lead 2=standard 1=brief; null if
+                                          //   the writer didn't score it (feed derives a fallback)
   "thread_id": "bilaterals-iii",          // assigned when matched to a prior story
   "first_seen_date": "2026-05-03",          // earliest member of the thread (first COVERAGE)
   "event_date": "2026-05-02",               // when the event HAPPENED (nullable; ISO 8601 reduced
@@ -321,6 +325,14 @@ the model's judgment over ~a few hundred recent headlines rather than a similari
                                             //   `embedding` column is the Phase-2 parquet shape.
 }
 ```
+
+**Homepage feed — `_data/homefeed.json`.** The front page (`_layouts/home.html`) is a per-STORY
+masonry grid (topic filters + importance-sized cards + generated halftone plates), not the old
+edition list. Jekyll can't read the excluded `index/stories/`, so `tools/build_stories_feed.py`
+flattens the four live streams' recent index records into `_data/homefeed.json` (sorted newest+lead
+first, capped for the front page); `topics`/`importance` are taken from the record when present,
+else derived (topic from stream+keywords, importance from brief position). Writers regenerate and
+commit it after `record` (DEDUP.md Step D; `_data/` is in their publish `git add`).
 
 ### 5.2 Local pgvector
 
