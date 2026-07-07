@@ -186,7 +186,7 @@ sized by how much it matters, filterable by beat.</p>
   .fcard__date{ margin-left:auto; font-variant-numeric:tabular-nums; }
   .fcard__fresh{ color:var(--accent); font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 
-  .fcard__fb{ display:flex; align-items:center; gap:.28em; margin-top:9px; padding-top:9px;
+  .fcard__fb{ display:flex; flex-wrap:wrap; align-items:center; gap:.28em; margin-top:9px; padding-top:9px;
     border-top:1px solid var(--hair); opacity:.42; transition:opacity .15s ease; }
   .fcard__in:hover .fcard__fb, .fcard__fb:focus-within{ opacity:1; }
   @media (hover:none){ .fcard__fb{ opacity:.82; } }
@@ -199,6 +199,13 @@ sized by how much it matters, filterable by beat.</p>
   .ffb-t.on{ border-color:var(--accent); color:var(--accent); }
   .ffb-t:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
   .ffb-note{ font-family:var(--sans); font-size:.56rem; text-transform:uppercase; letter-spacing:.11em; color:var(--accent); margin-left:.35em; }
+  .ffb-rzn{ display:none; flex:1 1 100%; gap:6px; margin-top:5px; }
+  .ffb-rzn input{ flex:1; min-width:0; background:var(--field); border:1px solid var(--hair); color:var(--ink);
+    font-family:var(--sans); font-size:.72rem; padding:4px 7px; border-radius:2px; }
+  .ffb-rzn input:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  .ffb-rzn button{ background:transparent; border:1px solid var(--hair); color:var(--muted-ui); cursor:pointer;
+    font-family:var(--sans); font-size:.6rem; text-transform:uppercase; letter-spacing:.1em; padding:4px 9px; border-radius:2px; }
+  .ffb-rzn button:hover{ border-color:var(--rule); color:var(--ink); }
 
   .folio-empty{ font-family:var(--sans); color:var(--muted); text-align:center; padding:60px 0; letter-spacing:.06em; }
   @media (prefers-reduced-motion:reduce){ .fcard__in, .fcard__fb{ transition:none; } }
@@ -318,7 +325,7 @@ sized by how much it matters, filterable by beat.</p>
      pages (custom.html exposes both on window.__FB). Clicking the active thumb again RETRACTS
      (posts vote 0); the sink is append-only and consumers apply last-write-wins. ---- */
   function fbConf(){ return window.__FB || { enabled: true, url: "https://feedback-sink.khalic-lab.workers.dev" }; }
-  function postFb(box, vote, note){
+  function postFb(box, vote, note, reason){
     var conf = fbConf();
     if (!conf.enabled){ if (note) note(''); return; }
     var key = window.__siteKey && window.__siteKey.get();
@@ -326,22 +333,48 @@ sized by how much it matters, filterable by beat.</p>
     if (note) note('sending…');
     fetch(conf.url + '/submit', {
       method: 'POST', headers: { 'Content-Type':'application/json', 'X-Widget-Key': key },
-      body: JSON.stringify({ brief: box.dataset.brief, vote: vote, reason: '',
+      body: JSON.stringify({ brief: box.dataset.brief, vote: vote, reason: (reason || '').trim(),
         story_id: box.dataset.story || null, surface: 'home' })
     }).then(function(r){
       if (r.status === 403 && window.__siteKey){ window.__siteKey.clear(); window.__siteKey.prompt(); if (note) note('wrong key'); return; }
-      if (note) note(r.ok ? 'thanks ✓' : 'failed (' + r.status + ')');
+      if (note) note(r.ok ? (vote === 0 ? 'withdrawn ✓' : 'thanks ✓') : 'failed (' + r.status + ')');
     }).catch(function(){ if (note) note('offline — try later'); });
+  }
+  // down-vote reason input, built lazily per card (mirrors the brief pages' fb-irzn — the
+  // reasoned downvotes are the pipeline's highest-value signal). Posting a second record with
+  // the same vote + a reason is by design: the sink is append-only, consumers last-write-win.
+  function rznFor(box, note){
+    var r = box.querySelector('.ffb-rzn');
+    if (r) return r;
+    r = document.createElement('span');
+    r.className = 'ffb-rzn';
+    r.innerHTML = '<input type="text" placeholder="why? (optional)" maxlength="500" ' +
+      'aria-label="Reason for thumbs-down (optional)"/><button type="button">send</button>';
+    var input = r.querySelector('input');
+    function send(){
+      var why = (input.value || '').trim();
+      r.style.display = 'none'; reflow();
+      if (!why) return;
+      postFb(box, -1, function(m){ note.textContent = m; }, why);
+    }
+    r.querySelector('button').addEventListener('click', send);
+    input.addEventListener('keydown', function(e){ if (e.key === 'Enter') send(); });
+    box.appendChild(r);
+    return r;
   }
   if (!fbConf().enabled) grid.classList.add('fb-off');
   grid.addEventListener('click', function(e){
+    if (e.target.closest('.ffb-rzn')) return;           // typing/sending a reason, not voting
     var b = e.target.closest('.ffb-t'); if (!b) return;
     var box = b.closest('.fcard__fb'); var note = box.querySelector('.ffb-note');
+    var noteFn = function(m){ note.textContent = m; reflow(); };
     var was = b.classList.contains('on');
     box.querySelectorAll('.ffb-t').forEach(function(x){ x.classList.remove('on'); });
-    if (was){ postFb(box, 0, function(m){ note.textContent = m; reflow(); }); return; }  // retract
+    var rz = box.querySelector('.ffb-rzn'); if (rz) rz.style.display = 'none';
+    if (was){ postFb(box, 0, noteFn); reflow(); return; }  // second click on the same thumb = retract
     b.classList.add('on');
-    postFb(box, +b.dataset.v, function(m){ note.textContent = m; reflow(); });
+    postFb(box, +b.dataset.v, noteFn);
+    if (+b.dataset.v === -1){ var r = rznFor(box, note); r.style.display = 'flex'; reflow(); r.querySelector('input').focus(); }
   });
 
   /* ---- real article images: unfurl each lead/feature story's og:image via og-proxy. arXiv

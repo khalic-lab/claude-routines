@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }).then(function (r) {
       if (r.status === 403 && window.__siteKey) { window.__siteKey.clear(); window.__siteKey.prompt(); if (onStatus) onStatus('🔒 wrong key'); return false; }
-      if (onStatus) onStatus(r.ok ? 'thanks ✓' : 'failed (' + r.status + ')');
+      if (onStatus) onStatus(r.ok ? (payload.vote === 0 ? 'withdrawn ✓' : 'thanks ✓') : 'failed (' + r.status + ')');
       return r.ok;
     }).catch(function () { if (onStatus) onStatus('offline — try later'); return false; });
   }
