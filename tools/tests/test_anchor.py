@@ -11,6 +11,7 @@ report-only mode (writes nothing), and the printed 'url -> st-id' table.
 Run: cd /Users/rflnogueira/code/claude-routines && python3 -m unittest discover -s tools/tests -v
 """
 import importlib.util
+import json
 import os
 import re
 import shutil
@@ -247,6 +248,93 @@ class AnchorPrintsTableTests(unittest.TestCase):
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         proc = _run_anchor([path])
         self.assertNotIn("gamma-second", proc.stdout)
+
+
+class AnchorCustomIALTests(unittest.TestCase):
+    """FINDING 3 (MINOR): a heading that already carries a custom kramdown IAL --
+    '### Custom {#my-id}' -- must be left byte-identical. Appending a second IAL
+    ('### Custom {#my-id} {#st-...}') corrupts the heading: kramdown then renders the
+    first '{#my-id}' as literal text instead of consuming it as the id."""
+
+    @classmethod
+    def setUpClass(cls):
+        if not os.path.exists(ANCHOR_PATH):
+            raise AssertionError(f"expected implementation file is missing: {ANCHOR_PATH}")
+
+    def _write_post(self, content):
+        tmp = tempfile.mkdtemp(prefix="anchor-ial-test-")
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        path = os.path.join(tmp, "post.md")
+        with open(path, "w") as f:
+            f.write(content)
+        return path
+
+    def test_heading_with_a_pre_existing_custom_ial_is_left_untouched(self):
+        content = (
+            "### Custom heading {#my-id}\n"
+            "**[Source](https://example.com/custom-ial)**\n"
+            "Some prose citing the source.\n"
+        )
+        path = self._write_post(content)
+        proc = _run_anchor([path])
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        with open(path) as f:
+            out = f.read()
+        self.assertIn("### Custom heading {#my-id}\n", out)
+        self.assertNotIn("{#my-id} {#st-", out,
+                          "a second IAL must never be appended after an existing custom one")
+
+
+class AnchorIndexMatchTests(unittest.TestCase):
+    """FINDING 2 (MAJOR): anchor.py used to key a story's id on the block's FIRST markdown
+    link, while the ledger's `publish` events key on the story's recorded url from the
+    edition's own index/stories/{date}-{slug}.jsonl file -- diverging whenever a bullet's
+    first link is a background/corroborating link rather than the primary source. With
+    --index <that file>, a block's links are matched against the recorded stories' norm_url
+    set and the MATCHED record's own url is used for the id; the block's first link is only
+    a fallback when nothing in it matches a recorded story."""
+
+    @classmethod
+    def setUpClass(cls):
+        if not os.path.exists(ANCHOR_PATH):
+            raise AssertionError(f"expected implementation file is missing: {ANCHOR_PATH}")
+        cls.store = _load_module(STORE_PATH, f"store_anchorindex_{id(cls)}")
+
+    def setUp(self):
+        self.tmp, self.path = _copy_fixture("news-bullets.md")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        # news-bullets.md's gamma bullet cites gamma-first (background) then gamma-second
+        # (the real source) -- the index only records gamma-second, as a real edition's
+        # index/stories/{date}-{slug}.jsonl would.
+        self.index_path = os.path.join(self.tmp, "2026-06-20-news.jsonl")
+        with open(self.index_path, "w") as f:
+            f.write(json.dumps({
+                "id": "2026-06-20-news-x", "date": "2026-06-20", "stream": "news",
+                "headline": "Gamma's real source", "summary": "S.",
+                "url": "https://example.com/gamma-second",
+            }) + "\n")
+
+    def test_index_match_keys_the_id_on_the_records_url_not_the_blocks_first_link(self):
+        proc = _run_anchor(["--index", self.index_path, self.path])
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        with open(self.path) as f:
+            out = f.read()
+        sid_background = self.store.story_id("https://example.com/gamma-first")
+        sid_recorded = self.store.story_id("https://example.com/gamma-second")
+        self.assertIn(f'<a id="{sid_recorded}" class="st-a"></a>', out,
+                       "the gamma bullet's anchor id must match the recorded story's url")
+        self.assertNotIn(f'<a id="{sid_background}" class="st-a"></a>', out,
+                          "must not fall back to the block's first (background) link when "
+                          "the index has a match on a later link")
+
+    def test_without_index_the_same_fixture_falls_back_to_the_first_link(self):
+        """Control proving the fallback (pre-existing, un-indexed behavior) is unchanged."""
+        proc = _run_anchor([self.path])
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        with open(self.path) as f:
+            out = f.read()
+        sid_background = self.store.story_id("https://example.com/gamma-first")
+        self.assertIn(f'<a id="{sid_background}" class="st-a"></a>', out)
 
 
 if __name__ == "__main__":

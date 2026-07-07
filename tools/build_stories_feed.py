@@ -24,6 +24,7 @@ Usage: python3 tools/build_stories_feed.py [--days 14] [--max 80] [--out _data/h
 import argparse
 import datetime as _dt
 import glob
+import importlib.util
 import json
 import os
 import re
@@ -32,6 +33,29 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 POSTS_DIR = os.path.join(ROOT, "_posts")
 INDEX_DIR = os.path.join(ROOT, "index", "stories")
 DEFAULT_OUT = os.path.join(ROOT, "_data", "homefeed.json")
+
+# story_id: st-{sha1(norm_url)[:12]} (SPIKE-2026-07-07 §3.6, store.py::story_id). Loaded by
+# path, not package-imported: tools/ has no __init__.py and this script also runs standalone
+# (python3 tools/build_stories_feed.py) with no package context to import a sibling from.
+_store_spec = importlib.util.spec_from_file_location(
+    "_story_store", os.path.join(os.path.dirname(os.path.abspath(__file__)), "store", "store.py"))
+_store = importlib.util.module_from_spec(_store_spec)
+_store_spec.loader.exec_module(_store)
+story_id = _store.story_id
+
+
+def _safe_story_id(url):
+    """story_id(url), or None for a falsy or degenerate-but-truthy url (e.g. a bare
+    'https://' scheme with no host, which norm_url reduces to an empty string) -- story_id
+    raises ValueError on that, and one malformed link must never crash the whole feed build."""
+    if not url:
+        return None
+    try:
+        return story_id(url)
+    except ValueError:
+        return None
+
+
 _FILE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})-([a-z0-9-]+)\.md$")
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -148,6 +172,10 @@ def _is_meta(p):
 
 
 _WHY_RE = re.compile(r"^\*{1,2}\s*Why (?:it|this) matters:?\s*\*{0,2}\s*", re.I)
+# A '## Why it matters' H2 ROUNDUP section (e.g. 2026-07-01-science.md's weekly takeaways)
+# is prose commentary, not stories -- its bullets must not be harvested as pseudo-stories.
+# Deliberately scoped to the bullet branch only (### paper headings never appear there).
+_WHY_SECTION_RE = re.compile(r"why it matters", re.I)
 
 
 def _pick_body(paras):
@@ -236,7 +264,8 @@ def parse_post(md):
                     break
                 paras.append(nxt.strip())
                 j += 1
-            emit(m.group(1).strip(), paras)
+            if not _WHY_SECTION_RE.search(section):     # skip a why-it-matters roundup's bullets
+                emit(m.group(1).strip(), paras)
             i = j
             continue
         i += 1
@@ -385,7 +414,8 @@ def load_recent(days):
             body = _trim(im.get("display_body") or "") or s["body"]
             why = _trim(im.get("why") or "") or s["why"]
             stories.append({
-                "id": hid, "headline": s["headline"], "summary": body, "why": why,
+                "id": hid, "sid": _safe_story_id(s["url"]),
+                "headline": s["headline"], "summary": body, "why": why,
                 "url": s["url"], "source_domain": source_domain(s["url"]),
                 "date": date, "date_label": date_label(date),
                 "stream": stream, "stream_label": STREAM_LABEL.get(stream, stream.title()),

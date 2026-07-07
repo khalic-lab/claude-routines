@@ -299,6 +299,17 @@ document.addEventListener('DOMContentLoaded', function () {
   // leads from the brief markdown, so both sides derive the id from one shared source.
   function storyIdFor(headline) { return SLUG + '-' + slugify(headline); }
 
+  // Store id (tools/store/anchor.py), when the migrated brief already carries one: an ### paper
+  // heading gets a kramdown IAL putting the id ON the heading itself; a bullet story gets a
+  // child <a id="st-..."> anchor dropped right after the dash (nested under the <li> directly in
+  // a tight list, or under its <p> in a loose one — querySelector finds either). Falls back to
+  // null so callers keep using the legacy slug id on not-yet-anchored briefs.
+  function storeIdFor(el) {
+    if (el && el.id && el.id.indexOf('st-') === 0) return el.id;
+    var a = el && el.querySelector && el.querySelector('a[id^="st-"]');
+    return a ? a.id : null;
+  }
+
   function post(payload, onStatus) {
     var key = window.__siteKey && window.__siteKey.get();
     if (!key) {
@@ -342,8 +353,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // heading are meta-commentary / Gaps, not stories.
     var footer = findCoverageFooter(content);
 
-    function attachStoryThumbs(container, headline) {
-      var sid = storyIdFor(headline);
+    function attachStoryThumbs(container, headline, storeId) {
+      var sid = storeId || storyIdFor(headline);
 
       var bar = document.createElement('span');
       bar.className = 'fb-inline';
@@ -413,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var headline = (node.textContent || '').trim();
       if (!headline) return;
       li.__fb = true;
-      attachStoryThumbs(node.parentNode, headline); // <p> in a loose list, the <li> in a tight one
+      attachStoryThumbs(node.parentNode, headline, storeIdFor(li)); // <p> in a loose list, the <li> in a tight one
     });
 
     // (b) H3 stories (science/weekend only — other streams' h3s aren't stories). The widget
@@ -434,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (!lastP) return;                    // heading with no body — not a story
         h.__fb = true;
-        attachStoryThumbs(lastP, headline);
+        attachStoryThumbs(lastP, headline, storeIdFor(h));
       });
     }
 

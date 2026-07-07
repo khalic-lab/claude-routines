@@ -137,6 +137,49 @@ python3 tools/dedup/dedup.py record --stories /tmp/final.json --date {YYYY-MM-DD
 
 This writes `index/stories/{YYYY-MM-DD}-{SLUG}.jsonl` and prunes index files older than 40 days.
 
+**`record` also dual-writes the story ledger** (`index/ledger/{YYYY-MM-DD}.jsonl`, SPIKE
+§3.1) — one `ev:"seen"` and one `ev:"publish"` event per kept story, each keyed on the story's
+own `st-{sha1(norm_url)[:12]}` id, with the classic `{date}-{slug}-…` id carried along as
+`legacy_ids` so old feedback/feed records still join. **No writer action needed** — this happens
+automatically inside the same `record` call above; the legacy `index/stories/` file it writes is
+unaffected (byte-identical). It's the join key Step C.25 anchors the brief to.
+
+## Step C.25 — anchor the brief + source-lint (report-only, no network)
+
+Right after `record`, stamp the brief file itself with the same `st-…` ids the ledger just used, so
+a reader's feedback click or a homefeed card can target one story instead of the whole brief:
+
+```bash
+python3 tools/store/anchor.py --index index/stories/{YYYY-MM-DD}-{SLUG}.jsonl _posts/{YYYY-MM-DD}-{SLUG}.md || echo "anchor failed (non-fatal)"
+python3 tools/sources/lint.py _posts/{YYYY-MM-DD}-{SLUG}.md || echo "sources lint failed (non-fatal)"
+```
+
+`anchor.py` inserts `<a id="st-…" class="st-a"></a>` right after each story bullet's dash (or a
+kramdown `{#st-…}` after a `### ` heading). `--index` points it at the edition's own
+`index/stories/{YYYY-MM-DD}-{SLUG}.jsonl` (the file Step C's `record` just wrote): for each
+bullet/heading block it matches ANY link in the block against that file's recorded urls and keys
+the id on the MATCHED record's own url — so the anchor lines up with the same url the ledger's
+`publish` events are keyed on, even when a bullet's first link is a background/corroborating
+citation rather than the primary source. It falls back to the block's first URL only when nothing
+in the block matches a recorded story (or when `--index` is omitted). Idempotent — safe to re-run
+on an already-anchored post.
+
+`sources/lint.py` is **report-only** (SPIKE §3.4/§4): caps, discovery quota, and `[new source]`-tag
+integrity are checked deterministically so no model has to self-certify them. Like every other step
+here, a violation goes in the brief's **Gaps** line — it never aborts the brief.
+
+**Discovery footer contract:** per the writer prompt's own Coverage footer template, the brief's
+`## Coverage footer` block ends with exactly one of these as its LAST line (after Sources/Gaps —
+not, as this doc previously said, the last line *before* the `## Coverage footer` heading):
+
+```
+- Discovery: met (<what you found that wasn't already in the registry>)
+- Discovery: waived — <concrete reason, e.g. "quiet news day, no off-list primaries found">
+```
+
+`lint.py` checks for exactly one such line. The waiver is free but counted (it feeds SPIKE §3.4's
+waiver-rate target) — use it honestly rather than claiming `met` with nothing behind it.
+
 ## Step C.5 — lint the brief for date slips (optional, no network)
 
 A deterministic backstop with two checks:
@@ -172,11 +215,20 @@ does not (it never touches this procedure).
 
 ## Step E — commit everything
 
-Your commit step must stage the brief, the index, **and the regenerated feed**:
+Your commit step must stage the brief, the index (legacy files **and** the ledger Step C just
+dual-wrote to), and the regenerated feed:
 
 ```bash
-git add _posts/ pending-notifications/ index/ _data/
+git add _posts/ pending-notifications/ index/ index/ledger/ _data/
+git add sources/ 2>/dev/null || true
 ```
+
+`index/ledger/` is named explicitly even though `index/` already covers it — it's the append-only
+ledger this step's dual-write and Step C.25's anchors key on, worth seeing called out in a `git
+status`. The second line stages `sources/` (the credibility-registry + its append-only
+`candidates.jsonl`/`last-cited.jsonl`) *only once that directory exists* — it lands with this
+migration's registry step; kept on its own line and swallowed on failure so today's commit, before
+that step ships, isn't broken by a `git add` on a path that doesn't exist yet.
 
 If the later `git push` retry hits a rebase conflict on `_data/homefeed.json` (two editions firing
 at the same minute both rewrite the whole file), the resolution is always: re-run

@@ -24,6 +24,7 @@ import contextlib
 import glob
 import hashlib
 import importlib.util
+import io
 import json
 import os
 import random
@@ -41,6 +42,7 @@ GITATTR_PATH = os.path.join(REPO_ROOT, ".gitattributes")
 
 PAYLOAD_PATH = os.path.join(FIXTURES_DIR, "final-payload.json")
 GOLDEN_LEGACY_PATH = os.path.join(FIXTURES_DIR, "golden-legacy.jsonl")
+DEGENERATE_PAYLOAD_PATH = os.path.join(FIXTURES_DIR, "degenerate-url-payload.json")
 RECORD_DATE = "2026-07-08"
 RECORD_SLUG = "news"
 RECORD_EDITION = f"{RECORD_DATE}-{RECORD_SLUG}"
@@ -252,6 +254,56 @@ class LedgerEventTests(unittest.TestCase):
                           "record run over the same payload")
         for sid in expected_ids:
             self.assertEqual(snap["stories"][sid].get("editions"), [RECORD_EDITION])
+
+
+class LedgerFailureNonFatalTests(unittest.TestCase):
+    """FINDING 1: 'a broken ledger must never cost an edition' -- cmd_record's dual-write
+    (per-story story_id derivation + store.append_event) must be exception-guarded so an
+    unwritable ledger dir or a degenerate-but-truthy url never aborts the command after the
+    legacy file has already been written."""
+
+    def setUp(self):
+        self.root = _new_skeleton()
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+
+    def test_unwritable_ledger_dir_does_not_abort_record(self):
+        """An OSError from store.append_event (unwritable index/ledger/ dir) must be caught
+        and printed as a non-fatal warning -- the legacy file must still be written, byte-
+        identical to the pre-migration golden capture."""
+        ledger_dir = os.path.join(self.root, "index", "ledger")
+        os.chmod(ledger_dir, 0o500)  # r-x: directory lookups ok, no new file creation
+        try:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                _run_record(self.root, f"dedup_{id(self)}_unwritable")
+        finally:
+            os.chmod(ledger_dir, 0o700)  # restore before cleanup's rmtree needs to unlink here
+        output = buf.getvalue()
+        self.assertIn("ledger: dual-write failed (non-fatal)", output,
+                      f"expected a non-fatal ledger warning, got stdout:\n{output}")
+        with open(_legacy_path(self.root), "rb") as f:
+            actual = f.read()
+        with open(GOLDEN_LEGACY_PATH, "rb") as f:
+            expected = f.read()
+        self.assertEqual(actual, expected,
+                          "legacy file must be byte-identical even though the ledger write failed")
+
+    def test_degenerate_url_story_id_failure_does_not_abort_record(self):
+        """A degenerate-but-truthy url ('https://') makes store.story_id raise ValueError
+        (norm_url reduces it to an empty string). cmd_record must catch it, print the same
+        non-fatal warning, and still finish writing the legacy file for every story."""
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            _run_record(self.root, f"dedup_{id(self)}_degenerate", payload_path=DEGENERATE_PAYLOAD_PATH)
+        output = buf.getvalue()
+        self.assertIn("ledger: dual-write failed (non-fatal)", output,
+                      f"expected a non-fatal ledger warning, got stdout:\n{output}")
+        with open(_legacy_path(self.root)) as f:
+            records = [json.loads(ln) for ln in f if ln.strip()]
+        self.assertEqual(len(records), 2,
+                          "legacy file must still carry every story despite the ledger failure")
+        self.assertEqual({r["url"] for r in records},
+                          {"https://", "https://example.com/normal-story"})
 
 
 class GitattributesUnionMergeTests(unittest.TestCase):

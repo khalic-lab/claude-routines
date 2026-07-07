@@ -40,7 +40,7 @@ sized by how much it matters, filterable by beat.</p>
           {% if s.fresh and s.importance > 1 %}<span class="fcard__fresh">Just in</span>{% endif %}
           <span class="fcard__date">{{ s.date_label }}</span>
         </div>
-        <div class="fcard__fb" data-story="{{ s.id }}" data-brief="{{ s.date }}-{{ s.stream }}">
+        <div class="fcard__fb" data-story="{{ s.sid | default: s.id }}" data-brief="{{ s.date }}-{{ s.stream }}">
           <button class="ffb-t" type="button" data-v="1" aria-label="Useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
           <button class="ffb-t ffb-down" type="button" data-v="-1" aria-label="Not useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
           <span class="ffb-note" aria-live="polite"></span>

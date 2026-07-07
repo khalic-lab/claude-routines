@@ -116,6 +116,25 @@ def _feedback_raw_lines(root):
     return out
 
 
+def _feedback_records_tolerant(root):
+    """Like `_feedback_records` but silently skips any line that fails to parse as JSON —
+    used only by the corrupt-line resilience tests (FINDING 2), where exactly one bad line is
+    expected to persist by design and must not blow up the assertion helper itself."""
+    out = {}
+    for path in sorted(glob.glob(os.path.join(root, "feedback", "*.jsonl"))):
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except ValueError:
+                    continue
+                out[rec["id"]] = rec
+    return out
+
+
 def _ledger_events(root, ev=None):
     out = []
     for path in sorted(glob.glob(os.path.join(root, "index", "ledger", "*.jsonl"))):
@@ -375,6 +394,177 @@ class FoldOrphanedJuneRealWorldTests(unittest.TestCase):
         recs = _feedback_records(self.root)
         still_unconsumed = [fb_id for fb_id in ORPHANED_JUNE_FB_IDS if not recs[fb_id]["consumed"]]
         self.assertEqual(still_unconsumed, [], f"unresolved orphans remain: {still_unconsumed}")
+
+
+class FoldCrashSafetyTests(unittest.TestCase):
+    """FINDING 1 (CRITICAL): fold.py's docstring promises append-before-rewrite ("a run that
+    appended but died before rewriting feedback/*.jsonl won't double-append on retry") — a
+    crash/error DURING the ledger-append phase must never leave a feedback record flipped
+    consumed:true with no matching ledger event. That's a silently orphaned vote, forever (the
+    exact defect class this tool exists to kill). We force a real append failure by making
+    index/ledger unwritable (chmod), so store.append_event raises for real — no mocking of
+    fold.py's internals, since it runs as a subprocess."""
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="fold-crash-")
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+        self.addCleanup(self._unlock_ledger_dir)
+        os.makedirs(os.path.join(self.root, "feedback"))
+        self.ledger_dir = os.path.join(self.root, "index", "ledger")
+        os.makedirs(self.ledger_dir)
+
+        # seed ledger: one seen story so both feedback records resolve directly (st- prefixed,
+        # no legacy/url lookup needed) — keeps the scenario focused on the append/rewrite race.
+        seed = {"ev": "seen", "ts": "2026-06-25T06:00:00Z", "actor": "news",
+                "story": {"id": "st-crash0001aaaa", "url": "https://example.com/crash-story",
+                          "headline": "H", "summary": "S", "status": "settled",
+                          "first_seen": "2026-06-25T06:00:00Z", "updated": "2026-06-25T06:00:00Z"}}
+        with open(os.path.join(self.ledger_dir, "2026-06-25.jsonl"), "w", encoding="utf-8") as f:
+            f.write(json.dumps(seed, ensure_ascii=False) + "\n")
+
+        self.feedback_path = os.path.join(self.root, "feedback", "2026-06.jsonl")
+        self.records_before = [
+            {"id": "fb-crash-0001", "ts": "2026-06-25T09:00:00.000Z", "reader": "rafael",
+             "brief": "2026-06-25-news", "story_id": "st-crash0001aaaa", "vote": 1, "reason": "",
+             "surface": "web", "source_domain": None, "consumed": False},
+            {"id": "fb-crash-0002", "ts": "2026-06-25T09:01:00.000Z", "reader": "rafael",
+             "brief": "2026-06-25-news", "story_id": "st-crash0001aaaa", "vote": -1, "reason": "",
+             "surface": "web", "source_domain": None, "consumed": False},
+        ]
+        with open(self.feedback_path, "w", encoding="utf-8") as f:
+            for rec in self.records_before:
+                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        with open(self.feedback_path, "rb") as f:
+            self._before_bytes = f.read()
+
+    def _lock_ledger_dir(self):
+        # no write bit -> append_event's open(path, "a") on a not-yet-existing day file raises
+        # PermissionError; read/list/materialize still work (r-x retained).
+        os.chmod(self.ledger_dir, 0o555)
+
+    def _unlock_ledger_dir(self):
+        os.chmod(self.ledger_dir, 0o755)
+
+    def test_append_failure_leaves_feedback_file_byte_untouched_and_appends_no_partial_events(self):
+        self._lock_ledger_dir()
+        try:
+            proc = _run_fold(self.root)
+        finally:
+            self._unlock_ledger_dir()
+
+        self.assertNotEqual(proc.returncode, 0,
+                             "an append failure must surface as a fold.py failure, not be "
+                             "swallowed silently")
+
+        with open(self.feedback_path, "rb") as f:
+            after = f.read()
+        self.assertEqual(after, self._before_bytes,
+                          "FINDING 1: the ledger append must happen BEFORE the feedback file is "
+                          "rewritten — an append failure must leave the feedback file "
+                          "byte-untouched, never consumed:true with no matching ledger event")
+
+        self.assertEqual(_ledger_events(self.root, ev="feedback"), [],
+                          "no partial/orphaned ledger events from a failed append")
+
+    def test_rerun_after_a_cleared_failure_folds_everything_exactly_once(self):
+        self._lock_ledger_dir()
+        try:
+            proc1 = _run_fold(self.root)
+        finally:
+            self._unlock_ledger_dir()
+        self.assertNotEqual(proc1.returncode, 0, "sanity: the induced failure must actually bite")
+
+        proc2 = _run_fold(self.root)
+        self.assertEqual(proc2.returncode, 0,
+                          f"retry after the crash is cleared must succeed: {proc2.stderr}")
+
+        recs = _feedback_records(self.root)
+        self.assertTrue(recs["fb-crash-0001"]["consumed"])
+        self.assertTrue(recs["fb-crash-0002"]["consumed"])
+
+        fb_events = _ledger_events(self.root, ev="feedback")
+        fb_ids = [e["fb_id"] for e in fb_events]
+        self.assertEqual(set(fb_ids), {"fb-crash-0001", "fb-crash-0002"},
+                          "both records must fold on the retry")
+        self.assertEqual(len(fb_ids), len(set(fb_ids)),
+                          "exactly one ledger event per fb_id — never duplicated across the "
+                          "failed attempt and the retry")
+
+        # a third run must be a complete no-op (standard idempotence, re-checked post-crash)
+        proc3 = _run_fold(self.root)
+        self.assertEqual(proc3.returncode, 0)
+        self.assertEqual(_ledger_events(self.root, ev="feedback"), fb_events,
+                          "a clean re-run after the retry must not append anything further")
+
+
+class FoldCorruptLineResilienceTests(unittest.TestCase):
+    """FINDING 2 (MINOR): one corrupt/truncated JSON line anywhere in a feedback/*.jsonl must
+    not abort the whole fold. It must be skipped with a printed warning, every other record in
+    that file (and other files) folds normally, and the corrupt line is preserved
+    byte-identically on rewrite — never dropped, never "fixed"."""
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="fold-corrupt-")
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+        os.makedirs(os.path.join(self.root, "feedback"))
+        os.makedirs(os.path.join(self.root, "index", "ledger"))
+
+        seed = {"ev": "seen", "ts": "2026-06-25T06:00:00Z", "actor": "news",
+                "story": {"id": "st-corruptaaaa1", "url": "https://example.com/corrupt-story",
+                          "headline": "H", "summary": "S", "status": "settled",
+                          "first_seen": "2026-06-25T06:00:00Z", "updated": "2026-06-25T06:00:00Z"}}
+        with open(os.path.join(self.root, "index", "ledger", "2026-06-25.jsonl"),
+                  "w", encoding="utf-8") as f:
+            f.write(json.dumps(seed, ensure_ascii=False) + "\n")
+
+        self.feedback_path = os.path.join(self.root, "feedback", "2026-06.jsonl")
+        # deliberately truncated mid-object — a garbage line sandwiched between two valid ones
+        self.corrupt_line = '{"id": "fb-corrupt-0002", "ts": "2026-06-25T09:0'
+        rec1 = {"id": "fb-corrupt-0001", "ts": "2026-06-25T09:00:00.000Z", "reader": "rafael",
+                "brief": "2026-06-25-news", "story_id": "st-corruptaaaa1", "vote": 1, "reason": "",
+                "surface": "web", "source_domain": None, "consumed": False}
+        rec3 = {"id": "fb-corrupt-0003", "ts": "2026-06-25T09:02:00.000Z", "reader": "rafael",
+                "brief": "2026-06-25-news", "story_id": "st-corruptaaaa1", "vote": -1, "reason": "",
+                "surface": "web", "source_domain": None, "consumed": False}
+        with open(self.feedback_path, "w", encoding="utf-8") as f:
+            f.write(json.dumps(rec1, ensure_ascii=False) + "\n")
+            f.write(self.corrupt_line + "\n")
+            f.write(json.dumps(rec3, ensure_ascii=False) + "\n")
+
+    def test_corrupt_line_does_not_abort_the_fold(self):
+        proc = _run_fold(self.root)
+        self.assertEqual(proc.returncode, 0,
+                          f"a single corrupt line must not crash the whole fold: {proc.stderr}")
+
+        recs = _feedback_records_tolerant(self.root)
+        self.assertTrue(recs["fb-corrupt-0001"]["consumed"],
+                         "the valid record BEFORE the corrupt line must still fold")
+        self.assertTrue(recs["fb-corrupt-0003"]["consumed"],
+                         "the valid record AFTER the corrupt line must still fold")
+
+        fb_events = {e["fb_id"] for e in _ledger_events(self.root, ev="feedback")}
+        self.assertEqual(fb_events, {"fb-corrupt-0001", "fb-corrupt-0003"})
+
+    def test_corrupt_line_prints_a_warning(self):
+        proc = _run_fold(self.root)
+        self.assertEqual(proc.returncode, 0)
+        haystack = (proc.stdout + proc.stderr).lower()
+        self.assertTrue(
+            any(kw in haystack for kw in ("corrupt", "invalid", "malformed", "skip")),
+            f"expected a printed warning naming the bad line, got:\n{proc.stdout}\n{proc.stderr}")
+
+    def test_corrupt_line_preserved_byte_identical_on_rewrite_not_dropped(self):
+        proc = _run_fold(self.root)
+        self.assertEqual(proc.returncode, 0, f"fold.py failed: {proc.stderr}")
+
+        with open(self.feedback_path, "rb") as f:
+            lines = [ln for ln in f.read().split(b"\n") if ln.strip()]
+        self.assertIn(self.corrupt_line.encode("utf-8"), lines,
+                      "the corrupt line must survive the rewrite byte-identical — never dropped, "
+                      "never patched up")
+        self.assertEqual(len(lines), 3,
+                          "no line may vanish: two valid (now folded) records + the one "
+                          "preserved corrupt line")
 
 
 if __name__ == "__main__":

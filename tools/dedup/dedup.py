@@ -50,6 +50,7 @@ import base64
 import datetime as dt
 import glob
 import hashlib
+import importlib.util
 import json
 import math
 import os
@@ -58,6 +59,15 @@ import struct
 import sys
 import tempfile
 import urllib.request
+
+# story-ledger dual-write (SPIKE-2026-07-07 §3.1/§3.3/§5 Step 1): loaded by fixed path,
+# same pattern as tools/store/anchor.py and tools/store/backfill.py, so this keeps working
+# whatever module name dedup.py itself is exec'd under (tests load it via importlib).
+_STORE_HERE = os.path.dirname(os.path.abspath(__file__))
+_store_spec = importlib.util.spec_from_file_location(
+    "_store_for_dedup", os.path.join(_STORE_HERE, "..", "store", "store.py"))
+store = importlib.util.module_from_spec(_store_spec)
+_store_spec.loader.exec_module(store)
 
 REPO = os.environ.get("REPO") or os.getcwd()
 INDEX_DIR = os.path.join(REPO, "index", "stories")
@@ -778,6 +788,49 @@ def cmd_record(args):
     removed = prune_index(args.keep_days, as_of=_parse_date(args.date))
     print(f"wrote {len(records)} stories -> {path}"
           + (f" (pruned {removed} old index file(s))" if removed else ""))
+    try:
+        ledger_events = record_to_ledger(records, date, slug, root=REPO)
+        print(f"ledger: appended {ledger_events} event(s) -> {os.path.join(REPO, 'index', 'ledger')}")
+    except Exception as e:
+        # A broken ledger (unwritable index/ledger/ dir, a degenerate-but-truthy url that
+        # trips store.story_id, etc.) must never cost an edition -- the legacy file above is
+        # already written; the dual-write is additive and best-effort on top of it.
+        print(f"ledger: dual-write failed (non-fatal): {e}")
+
+
+def record_to_ledger(records, date, slug, root=None):
+    """Dual-write (SPIKE §3.1/§3.3.4): one ev:"seen" + one ev:"publish" per kept
+    story, alongside the untouched legacy write above. Additive only — never
+    perturbs index/stories/*.jsonl, and a story missing a URL still gets a stable
+    id via the same legacy-fallback scheme backfill.py uses, so dual-write never
+    drops a kept story just because record()'s hid was url-derived slugify text."""
+    edition = f"{date}-{slug}"
+    now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    n = 0
+    for record in records:
+        lid = record["id"]  # pre-migration hid, e.g. "{date}-{slug}-{slugified headline}"
+        url = record.get("url")
+        sid = store.story_id(url) if url else "st-" + hashlib.sha1(
+            ("legacy:" + lid).encode("utf-8")).hexdigest()[:12]
+        seen_story = dict(record)  # carry every legacy field verbatim (SPIKE Migration posture)
+        seen_story.update({
+            "id": sid,
+            "status": "settled",  # already composed + kept by Step C, not a mid-research candidate
+            "first_seen": now,
+            "updated": now,
+            "legacy_ids": [lid],
+            "editions": [edition],
+            "origin": f"writer:{slug}",
+            "streams": [record.get("stream") or slug],
+        })
+        store.append_event({"ev": "seen", "ts": now, "actor": slug, "story": seen_story}, root=root)
+        store.append_event({"ev": "publish", "ts": now, "actor": slug, "id": sid, "edition": edition,
+                            "fields": {"display_body": record.get("display_body", ""),
+                                       "why": record.get("why", ""),
+                                       "importance": record.get("importance"),
+                                       "status": "settled"}}, root=root)
+        n += 2
+    return n
 
 
 def cmd_backfill(args):

@@ -164,5 +164,70 @@ class FeedSidTests(unittest.TestCase):
         self.assertEqual(store.story_id(bare), store.story_id(canonical))
 
 
+class FeedSidDegenerateUrlTests(unittest.TestCase):
+    """FINDING 3: build_stories_feed.py's sid derivation is guarded only by truthiness
+    (`story_id(s["url"]) if s["url"] else None`) -- a degenerate-but-truthy url like the
+    bare scheme 'https://' (which norm_url reduces to an empty string) makes story_id raise
+    ValueError and would kill the whole feed build. Exercised directly against the helper
+    rather than through a markdown fixture: build_stories_feed.py's own `_URL_RE` cannot
+    actually extract a literal 'https://' from any real markdown link (it requires >=1
+    character after the scheme), so the realistic trigger is a unit-level one, not an
+    end-to-end parse -- this is the 'cheap' test the finding asks for."""
+
+    def setUp(self):
+        self.mod = _load_module(BUILD_FEED_PATH, f"build_feed_degenerate_{id(self)}")
+        self.store = _load_module(STORE_PATH, f"store_degenerate_{id(self)}")
+
+    def test_degenerate_but_truthy_url_yields_null_sid_not_a_crash(self):
+        self.assertIsNone(self.mod._safe_story_id("https://"))
+
+    def test_real_url_still_yields_the_same_sid_as_story_id(self):
+        url = "https://example.com/a-real-story"
+        self.assertEqual(self.mod._safe_story_id(url), self.store.story_id(url))
+
+    def test_falsy_url_yields_null_sid(self):
+        self.assertIsNone(self.mod._safe_story_id(None))
+        self.assertIsNone(self.mod._safe_story_id(""))
+
+
+class ParsePostWhyItMattersSectionTests(unittest.TestCase):
+    """FINDING 4: a '## Why it matters' H2 roundup section's bullets are prose takeaways,
+    not stories -- parse_post must not harvest them as pseudo-stories (real case:
+    2026-07-01-science.md's '## \U0001F9E0 Why it matters' section put 2 of the live
+    homepage's 80 cards there, both headline-only with a null url)."""
+
+    def setUp(self):
+        self.mod = _load_module(BUILD_FEED_PATH, f"build_feed_why_{id(self)}")
+
+    def test_bullets_under_why_it_matters_heading_are_not_harvested(self):
+        md = (
+            "## Physics\n\n"
+            "### A real paper headline\n"
+            "**[Nature](https://example.com/paper)** · authors · published 2026-01-01\n"
+            "Body text about the paper, long enough to pass the body-length floor easily.\n"
+            "*Why it matters:* explanatory line.\n\n"
+            "## \U0001F9E0 Why it matters\n\n"
+            "- **A roundup takeaway.** Some connecting observation across this week's stories.\n"
+            "- **Another takeaway.** More prose, no url.\n"
+        )
+        stories = self.mod.parse_post(md)
+        headlines = [s["headline"] for s in stories]
+        self.assertEqual(headlines, ["A real paper headline"],
+                          f"why-it-matters bullets must be dropped, got {headlines}")
+
+    def test_urlless_bullet_stories_elsewhere_still_survive(self):
+        """A urlless bullet OUTSIDE a why-it-matters section must still be harvested -- the
+        fix must be narrowly scoped to that one heading, not to urlless bullets generally."""
+        md = (
+            "## World\n\n"
+            "- **Local weather turns unseasonably warm.** No source link for this one, "
+            "just a long enough body to clear the parse floor.\n"
+        )
+        stories = self.mod.parse_post(md)
+        self.assertEqual(len(stories), 1)
+        self.assertEqual(stories[0]["headline"], "Local weather turns unseasonably warm")
+        self.assertIsNone(stories[0]["url"])
+
+
 if __name__ == "__main__":
     unittest.main()
