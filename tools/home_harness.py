@@ -74,12 +74,15 @@ def card(s):
     why = ('<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>%s</p>' % e(s["why"])
            if s.get("why") else "")
     fresh = '<span class="fcard__fresh">Just in</span>' if s.get("fresh") and s["importance"] > 1 else ""
+    readbtn = ('<button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read"'
+               ' title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true">'
+               '<path d="M20 6L9 17l-5-5"/></svg></button>')
     return """<article class="fcard imp%(imp)s%(lead)s" data-topics="%(topics)s" data-imp="%(imp)s"%(og)s>
 <div class="fcard__in" style="--tc:%(color)s">
 <div class="fcard__top"><a class="fcard__beat" href="#"><span class="ff-dot"></span>%(tlabel)s</a><span class="fcard__rank" data-imp="%(imp)s"></span></div>
 <h2 class="fcard__hl">%(hl)s</h2>
 %(summ)s%(why)s
-<div class="fcard__line"><span class="fcard__src">%(src)s</span>%(fresh)s<span class="fcard__date">%(dlabel)s</span></div>
+<div class="fcard__line"><span class="fcard__src">%(src)s</span>%(fresh)s<span class="fcard__date">%(dlabel)s</span>%(readbtn)s</div>
 <div class="fcard__fb" data-story="%(id)s" data-brief="%(date)s-%(stream)s">
 <button class="ffb-t" type="button" data-v="1" aria-label="Useful">%(svg)s</button>
 <button class="ffb-t ffb-down" type="button" data-v="-1" aria-label="Not useful">%(svg)s</button>
@@ -88,7 +91,8 @@ def card(s):
         "imp": s["importance"], "lead": lead, "topics": e(" ".join(s["topics"])), "og": og,
         "color": s["topic_color"], "tlabel": e(s["topic_label"]), "hl": hl, "summ": summ, "why": why,
         "src": e(s["source_domain"]), "fresh": fresh, "dlabel": e(s["date_label"]),
-        "id": e(s["id"]), "date": e(s["date"]), "stream": e(s["stream"]), "svg": SVG,
+        "id": e(s.get("sid") or s["id"]), "date": e(s["date"]), "stream": e(s["stream"]), "svg": SVG,
+        "readbtn": readbtn,
     }
 
 
@@ -112,7 +116,7 @@ def main():
 <div class="wrap">
 <div class="folio-filters" id="folioFilters"><span class="ff-lbl">Beat</span>
 <button class="ff-chip ff-all" type="button" data-topic="" aria-pressed="true">All <span class="ff-ct">%d</span></button>
-%s</div>
+%s<span class="ff-read" role="group" aria-label="Read state"><button class="ff-rbtn" type="button" data-rs="" aria-pressed="true">All</button><button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button><button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button></span></div>
 <div class="folio-board">
 <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
 <div class="folio-grid" id="folioGrid">%s</div>

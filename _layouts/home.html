@@ -15,6 +15,11 @@ sized by how much it matters, filterable by beat.</p>
   {% for t in feed.topics %}
   <button class="ff-chip" type="button" data-topic="{{ t.key }}" aria-pressed="false" style="--tc:{{ t.color }}"><span class="ff-dot"></span>{{ t.label }} <span class="ff-ct">{{ t.count }}</span></button>
   {% endfor %}
+  <span class="ff-read" role="group" aria-label="Read state">
+    <button class="ff-rbtn" type="button" data-rs="" aria-pressed="true">All</button>
+    <button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button>
+    <button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button>
+  </span>
   <span class="ff-legend" aria-hidden="true">
     <span class="ff-li"><i class="fb b3"></i>Lead</span>
     <span class="ff-li"><i class="fb b2"></i>Feature</span>
@@ -39,6 +44,7 @@ sized by how much it matters, filterable by beat.</p>
           <span class="fcard__src">{{ s.source_domain }}</span>
           {% if s.fresh and s.importance > 1 %}<span class="fcard__fresh">Just in</span>{% endif %}
           <span class="fcard__date">{{ s.date_label }}</span>
+          <button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read" title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></button>
         </div>
         <div class="fcard__fb" data-story="{{ s.sid | default: s.id }}" data-brief="{{ s.date }}-{{ s.stream }}">
           <button class="ffb-t" type="button" data-v="1" aria-label="Useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
@@ -97,7 +103,15 @@ sized by how much it matters, filterable by beat.</p>
   .ff-dot{ width:7px; height:7px; border-radius:50%; background:var(--tc,var(--muted)); flex:0 0 auto; }
   .ff-chip[aria-pressed="true"] .ff-dot{ box-shadow:0 0 0 1.5px var(--paper); }
   .ff-ct{ font-variant-numeric:tabular-nums; opacity:.6; }
-  .ff-legend{ margin-left:auto; display:flex; gap:14px; align-items:center; }
+  /* read-state segmented toggle + legend share the bar's right edge */
+  .ff-read{ display:inline-flex; margin-left:auto; border:1px solid var(--hair); border-radius:2px; overflow:hidden; }
+  .ff-rbtn{ background:transparent; border:0; border-left:1px solid var(--hair); cursor:pointer; color:var(--muted-ui);
+    font-family:var(--sans); font-size:.6rem; text-transform:uppercase; letter-spacing:.1em; padding:4px 9px; }
+  .ff-rbtn:first-child{ border-left:0; }
+  .ff-rbtn[aria-pressed="true"]{ background:var(--ink); color:var(--paper); }
+  .ff-rbtn:hover:not([aria-pressed="true"]){ color:var(--ink); }
+  .ff-rbtn:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
+  .ff-legend{ margin-left:14px; display:flex; gap:14px; align-items:center; }
   .ff-li{ font-family:var(--sans); font-size:.58rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted);
     display:inline-flex; align-items:center; gap:.5em; }
   /* swatches mirror the tier chips: solid accent / outlined accent / muted hairline */
@@ -180,6 +194,20 @@ sized by how much it matters, filterable by beat.</p>
   .fcard__why-lbl{ display:block; font-family:var(--sans); font-weight:700; font-size:.56rem;
     text-transform:uppercase; letter-spacing:.13em; color:var(--accent); margin-bottom:2px; }
 
+  /* per-card read toggle + read dimming (read/unread lives in localStorage only) */
+  .fcard__read{ margin-left:.15em; cursor:pointer; background:transparent; border:1px solid var(--hair);
+    border-radius:2px; color:var(--muted-ui); width:22px; height:17px; padding:0; display:inline-flex;
+    align-items:center; justify-content:center; align-self:center; flex:none; position:relative; }
+  .fcard__read::before{ content:""; position:absolute; inset:-6px; }  /* ≥24px touch target, visual stays quiet */
+  .fcard__read svg{ width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:2.2;
+    stroke-linecap:round; stroke-linejoin:round; opacity:.35; }
+  .fcard__read:hover{ border-color:var(--rule); color:var(--ink); }
+  .fcard__read:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  .fcard.is-read .fcard__read{ border-color:var(--accent); color:var(--accent); }
+  .fcard.is-read .fcard__read svg{ opacity:1; }
+  .fcard.is-read .fcard__hl{ opacity:.58; }
+  .fcard.is-read .fcard__sum, .fcard.is-read .fcard__why{ opacity:.58; }  /* keeps AA contrast in light theme */
+  .fcard.is-read .fimg{ opacity:.5; }
   .fcard__line{ display:flex; align-items:baseline; gap:.6em; margin-top:auto; padding-top:9px;
     border-top:1px solid var(--hair); font-family:var(--sans); font-size:.6rem; letter-spacing:.04em; color:var(--muted); }
   .fcard__src{ text-transform:lowercase; letter-spacing:.02em; }
@@ -293,8 +321,49 @@ sized by how much it matters, filterable by beat.</p>
     Promise.resolve().then(function(){ pending = false; layout(); });
   }
 
+  /* ---- read/unread — LOCAL-ONLY state in localStorage, keyed by the durable st- story id
+     (data-story). Explicit ✓ toggles; opening the headline or voting marks read implicitly.
+     Implicit reads only dim the card — they never hide it out from under the cursor; the
+     unread filter re-evaluates on the next filter interaction or reload. ---- */
+  var READ_KEY = 'homeRead:v1';
+  var readMap = {};
+  try { readMap = JSON.parse(localStorage.getItem(READ_KEY) || '{}') || {}; } catch (e) {}
+  if (!readMap || typeof readMap !== 'object' || Array.isArray(readMap)) readMap = {};  // a corrupted value must not soft-brick + re-persist
+  function saveRead(){ try { localStorage.setItem(READ_KEY, JSON.stringify(readMap)); } catch (e) {} }
+  (function prune(){                       // feed window is ~14d; 45d keeps the map bounded
+    var cut = Date.now() - 45 * 864e5, dirty = false, k;
+    for (k in readMap){ if (!(readMap[k] > cut)){ delete readMap[k]; dirty = true; } }
+    if (dirty) saveRead();
+  })();
+  function sidOf(card){ var fb = card.querySelector('.fcard__fb'); return (fb && fb.dataset.story) || ''; }
+  function isRead(card){ return !!readMap[sidOf(card)]; }
+  function paintRead(card){
+    var r = isRead(card);
+    card.classList.toggle('is-read', r);
+    var b = card.querySelector('.fcard__read');
+    if (b){
+      // constant label + aria-pressed carries the state (a flipped label would contradict 'pressed')
+      b.setAttribute('aria-pressed', r ? 'true' : 'false');
+      b.title = r ? 'mark as unread' : 'mark as read';
+    }
+  }
+  var readState = '';                      // '' (all) | 'unread' | 'read'
+  function readCounts(){
+    var un = 0; cards.forEach(function(c){ if (!isRead(c)) un++; });
+    var el = filters.querySelector('.ff-uct'); if (el) el.textContent = un;
+  }
+  function setRead(card, v){
+    var s = sidOf(card); if (!s) return;
+    if (v) readMap[s] = Date.now(); else delete readMap[s];
+    saveRead();
+    cards.forEach(function(c){ if (sidOf(c) === s) paintRead(c); });  // repaint sid twins too
+    readCounts();
+  }
+
   /* ---- topic filters (multi-select; a card matches if ANY of its topics is active) ---- */
   function matches(card){
+    if (readState === 'unread' && isRead(card)) return false;
+    if (readState === 'read' && !isRead(card)) return false;
     if (!active.size) return true;
     var ts = (card.dataset.topics || '').split(' ');
     for (var i = 0; i < ts.length; i++){ if (active.has(ts[i])) return true; }
@@ -303,9 +372,46 @@ sized by how much it matters, filterable by beat.</p>
   function apply(){
     var shown = 0;
     cards.forEach(function(c){ var m = matches(c); c.style.display = m ? '' : 'none'; if (m) shown++; });
+    var onBeat = active.size ? ' on that beat' : '';
+    empty.textContent = readState === 'unread' ? 'All caught up — nothing unread' + onBeat + '.'
+                      : readState === 'read'   ? 'Nothing read yet' + onBeat + '.'
+                      : 'No stories on that beat right now.';
     empty.hidden = shown > 0;
     reflow();
   }
+  filters.querySelectorAll('.ff-rbtn').forEach(function(b){
+    b.addEventListener('click', function(){
+      readState = b.dataset.rs;
+      filters.querySelectorAll('.ff-rbtn').forEach(function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      apply();
+    });
+  });
+  cards.forEach(paintRead); readCounts();
+  grid.addEventListener('click', function(e){
+    var rb = e.target.closest('.fcard__read');
+    if (rb){                               // explicit toggle — honors the active filter at once
+      var card = rb.closest('.fcard');
+      setRead(card, !isRead(card));
+      if (readState){
+        apply();
+        if (card.style.display === 'none'){  // the focused button just vanished — keep keyboard focus sane
+          var ab = filters.querySelector('.ff-rbtn[aria-pressed="true"]');
+          if (ab) ab.focus();
+        }
+      }
+      return;
+    }
+    var a = e.target.closest('.fcard__hl a');
+    if (a){                                // opening the article = read (implicit: dim, don't hide)
+      var c2 = a.closest('.fcard');
+      if (!isRead(c2)) setRead(c2, true);
+    }
+  });
+  grid.addEventListener('auxclick', function(e){  // middle-click "open in background tab" counts too
+    if (e.button !== 1) return;
+    var a = e.target.closest('.fcard__hl a');
+    if (a){ var c = a.closest('.fcard'); if (!isRead(c)) setRead(c, true); }
+  });
   function sync(){
     filters.querySelectorAll('.ff-chip').forEach(function(c){
       var k = c.dataset.topic;
@@ -374,6 +480,8 @@ sized by how much it matters, filterable by beat.</p>
     if (was){ postFb(box, 0, noteFn); reflow(); return; }  // second click on the same thumb = retract
     b.classList.add('on');
     postFb(box, +b.dataset.v, noteFn);
+    var vc = b.closest('.fcard');                          // voting = read (implicit: dim only)
+    if (vc && !isRead(vc)) setRead(vc, true);
     if (+b.dataset.v === -1){ var r = rznFor(box, note); r.style.display = 'flex'; reflow(); r.querySelector('input').focus(); }
   });
 
