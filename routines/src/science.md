@@ -35,15 +35,7 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 
 **CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public feeds. Try `curl -fsSL <URL>` first; fall back to WebFetch only on failure. Curl success counts as a direct fetch.
 
-**Verified-reachable feeds (live 2026-05-04):**
-
-| Domain | Feed URL | Format | Use case |
-|---|---|---|---|
-| arXiv non-CS categories | `https://export.arxiv.org/rss/astro-ph` (also `math.*`, `physics.*`, `cond-mat`, `hep-ph`, `hep-th`, `gr-qc`, `quant-ph`, `q-bio.*`) | RSS 2.0 | Latest non-CS preprints per category |
-| arXiv API (date-filtered) | `https://export.arxiv.org/api/query?search_query=cat:astro-ph.CO&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending` — **swap the `cat:` filter** for any non-CS category | Atom 1.0 | Date-confirmable queries; filter `<published>` to the past 7 days |
-| Quanta Magazine | `https://www.quantamagazine.org/feed/` | RSS 2.0 | Math + fundamental-physics + biology features |
-| Nature (flagship + journals) | `https://www.nature.com/nature.rss` (also `nphys.rss`, `natastron.rss`, `nm.rss`, `nchem.rss`) | RSS | Nature primary research (dig to `s41586-…`, not `d41586-…` news) |
-| Semantic Scholar API | `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations` | JSON | Paper triangulation + author affiliations |
+**arXiv mechanics:** use the non-CS RSS per category (`https://export.arxiv.org/rss/astro-ph`, also `math.*`, `physics.*`, `cond-mat`, `hep-ph`, `hep-th`, `gr-qc`, `quant-ph`, `q-bio.*`) and the date-filtered Atom API (`https://export.arxiv.org/api/query?search_query=cat:astro-ph.CO&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending` — **swap the `cat:` filter** for any non-CS category; filter `<published>` to the past 7 days). For Nature journals, dig to the primary research (`s41586-…`), not the `d41586-…` news.
 
 **Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** route through the proxy exactly as the include above shows.
 - bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv` for medRxiv); returns title, abstract, DOI, and date per paper for the window — an ideal primary source for the Biology desk.
@@ -53,8 +45,6 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 
 **Nature-abstract fallback (Patch-4):** when a Nature primary research item (`s41586-…`) has no fetchable abstract from the sandbox, locate the matching arXiv cross-list preprint (search the title via the arXiv API / Semantic Scholar) and summarise *that*, tagged `[preprint]` — do NOT emit a title-only stub.
 
-**Confirmed unavailable from this sandbox (do not waste cycles):** HuggingFace papers (no public feed), Reuters, Le Monde RSS. (bioRxiv/medRxiv and Science.org are reachable via the proxy / JSON API above — use them.)
-
 **Coverage footer accounting:**
 - A citation from a feed/API fetch (curl OR WebFetch OR proxy) = **direct fetch**.
 - A citation from a search-engine snippet = **via-snippet**, tag `[via snippet]` in the item.
@@ -62,11 +52,11 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 
 # Affiliations (every paper / journal item)
 
-For every paper, after the author list, surface the lead authors' institutional affiliations from the Semantic Scholar `authors.affiliations` field (fall back to the arXiv Atom `<author><arxiv:affiliation>` when populated). If no affiliation is retrievable, write `(affiliation not listed)` — never fabricate. Format: after the authors, in parentheses — e.g. `J. Doe, A. Smith et al. (ETH Zürich; CERN)`. The Semantic Scholar URL in the feed table already carries `&fields=…,authors,authors.affiliations`; use it as shown so the field is actually returned.
+For every paper, after the author list, surface the lead authors' institutional affiliations from the Semantic Scholar `authors.affiliations` field (fall back to the arXiv Atom `<author><arxiv:affiliation>` when populated). If no affiliation is retrievable, write `(affiliation not listed)` — never fabricate. Format: after the authors, in parentheses — e.g. `J. Doe, A. Smith et al. (ETH Zürich; CERN)`. Query `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations` — keep the `authors.affiliations` field in the URL so it is actually returned.
 
 # Research methodology
 
-1. **Feed sweep first** per desk, via curl then WebFetch then proxy. Use the arXiv API with date filters; the Nature / Quanta / Science RSS feeds are rolling — filter to the past 7 days client-side.
+1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list per desk, via curl then WebFetch then proxy. Use the arXiv API with date filters; the Nature / Quanta / Science RSS feeds are rolling — filter to the past 7 days client-side.
 2. **Broad query** (1–2 keywords). Scan results.
 3. **Refine and re-query** based on what surfaced.
 4. **Fetch full pages / abstracts** for findings that matter (use the arXiv API for abstracts — the abstract HTML page 403s); on failure, snippet + tag.
@@ -130,8 +120,9 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: {date 7 days ago} to {today}
 - Languages: ...
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
-- Feeds hit (with reachability and method): Nature RSS {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}, Nature Physics/Astronomy/Methods RSS {...}, Quanta RSS {...}, arXiv API astro-ph {...}, arXiv API math/physics {...}, APS PRL/PRX {...}, bioRxiv JSON {...}, Science.org RSS {...}, Semantic Scholar {...}
+- Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan — Nature journals RSS, Quanta RSS, arXiv API per category, APS, bioRxiv JSON, Science.org RSS, Semantic Scholar, …} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
 - Gaps: things you tried to find but couldn't.
+- Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
 ```
 
 # Constraints
@@ -190,7 +181,8 @@ Use the Write tool to create `pending-notifications/{TIMESTAMP}-science.json` wh
 # refresh the homepage feed HERE, unconditionally — not only via DEDUP.md Step D — so a skipped
 # step can't freeze the front page while the commit still stages a stale _data/
 python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
-git add _posts/ pending-notifications/ index/ _data/
+python3 tools/sources/health.py || echo "source health failed (non-fatal)"
+git add _posts/ pending-notifications/ index/ _data/ sources/
 git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "Science — {YYYY-MM-DD}"
 git push origin main || (
   # Concurrent editions (News + AI/ML fire the same minute Tue/Fri) both rewrite the whole
@@ -198,7 +190,8 @@ git push origin main || (
   # always: REGENERATE the feed from the merged tree (it now has both briefs), then continue.
   git pull --rebase origin main || true
   python3 tools/build_stories_feed.py || true
-  git add _data/homefeed.json
+  python3 tools/sources/health.py || true
+  git add _data/
   GIT_EDITOR=true git rebase --continue \
     || git -c user.email=routine@khalic-lab -c user.name="News Routine" commit --amend --no-edit \
     || true

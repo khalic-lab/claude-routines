@@ -33,6 +33,11 @@ In practice: go to the primary source and read it yourself; report what it actua
 - `importance`: an integer 1–3 for how much the story matters — **3** = the edition's lead or a major development, **2** = a solid standard item, **1** = a brief or minor note. Judge genuine significance to the reader across the WHOLE edition, never section order — the brief's template puts the Swiss desk first, and a routine cantonal item that happens to open the file is NOT the lead when a war development sits two sections down. Exactly one 3 per edition unless the day genuinely has two majors; most stories are 1 or 2. Without your score the homepage guesses from position and gets exactly this wrong.
 - `display_body` and `why`: the story's published prose, copied VERBATIM from the brief you just wrote — `display_body` is the explanatory paragraph, `why` is the "Why it matters" text when the story has one (else omit). Plain text, no markdown. These are what the homepage card shows the reader; copy, don't rewrite.
 
+**Discovery footer contract (exactly one line, lint-verified).** Every brief's Coverage footer ends with exactly ONE of:
+- `- Discovery: met (<the genuinely new domain(s) you anchored this edition, each tagged [new source]>)`
+- `- Discovery: waived — <concrete reason>`
+"met" is recomputed against your stream's discovery quota (stated in the preflight plan's discovery section) — never claim it without the tagged citations to back it; a false "met" is a violation, an honest waiver is not. The waiver is free but counted: give a real reason ("pursued X and Y, both paywalled"), not boilerplate. Zero lines, two lines, or any other wording all fail the lint.
+
 # Sourcing rules (non-negotiable)
 
 1. **Tiers.** T1 = primary (wire service, official statement, government/court filing, press release). T2 = quality secondary reporting. T3 = discovery only (HN/Reddit/Lobsters/X) — used to find stories, NEVER cited. Click through and cite the underlying T1/T2. A quality outlet's report *about* an event is fine as T2, but when a primary source exists (the official statement, the filing, the wire dispatch), cite that — not a downstream recap of it.
@@ -59,32 +64,41 @@ SELECT and how you WEIGHT it — not just wording:
 These files are maintained via the Weekly Evaluator under a human gate — treat them as standing
 editorial instruction. If a file is missing or empty, proceed normally.
 
-# Feed-first source order (apply to ALL sections)
+# Source plan (registry-driven) + fetch mechanics (apply to ALL sections)
+
+**FIRST research action — build today's source plan:**
+
+    python3 tools/sources/preflight.py --slug {slug}
+
+(your slug is the one named in your Story-deduplication section). It reads `sources/registry.yml` and prints the plan that is the AUTHORITY on what to fetch and what pressure applies today — not any table in this prompt:
+
+- **Fetch list** — the domains/feeds affine to this stream, each with its probe URL and method (curl or proxy). Sweep these first.
+- **Pressure** — per-domain notes: the max-2-stories-per-outlet-domain cap (hubs like arXiv are exempt) and `saturated` flags. Report-only for now — no story gets dropped for them — but when two sources carry the same story, prefer the unsaturated one.
+- **Discovery** — this stream's discovery quota and `candidates_to_try` (registry candidates and dormant domains worth a probe this run). Work at least the quota's worth of genuinely new or dormant domains into your research; the Discovery footer line reports the outcome.
+
+**EMERGENCY SLATE — degraded mode only (a floor, never the ceiling).** If preflight errors or prints `source-plan unavailable`, fall back to these known-good feeds and note `source-plan unavailable` in the Gaps footer:
+- News desks: SRF `https://www.srf.ch/news/bnf/rss/1646`, Le Temps `https://www.letemps.ch/articles.rss`, Al Jazeera `https://www.aljazeera.com/xml/rss/all.xml`.
+- Science streams: arXiv `https://export.arxiv.org/rss/{category}` + the Atom API, Nature `https://www.nature.com/nature.rss`.
+Still research beyond this floor as the brief demands — the slate is where you start when the plan is missing, never a cap on where you look.
+
+**New-source citation rule.** T3 aggregators (HN/Reddit/X) remain never-cited. But a **genuine primary source discovered through search or a T3 lead MAY be cited immediately even if it is absent from `sources/registry.yml`** — tag it with the literal marker `[new source]` next to the citation. Tag ONLY domains genuinely absent from the registry (grep `sources/registry.yml` for the domain first): the lint at DEDUP Step C.25 recomputes novelty itself, and both a missing tag on an unregistered domain and a `[new source]` tag on a registered one are violations. This is how the registry grows — a tagged citation auto-enters the domain as a `candidate`.
+
+## Fetch mechanics
 
 **Fetch proxy — use it for any source that 403s a direct fetch.** A Cloudflare Worker at `https://fetch-proxy.khalic-lab.workers.dev` fetches a public URL from Cloudflare's edge with a real browser User-Agent and returns the page body; it is on the sandbox allowlist. The routine sandbox's own IP is 403'd on sight by Cloudflare/Akamai-fronted sites (lab blogs, most news HTML), so route those through the proxy:
 
     curl -fsSL -G "https://fetch-proxy.khalic-lab.workers.dev/" --data-urlencode "url=<TARGET URL>" -H "Authorization: Bearer ${FETCH_PROXY_TOKEN}"
 
 - **Direct `curl` first for the allowlisted feed hosts** (`export.arxiv.org`, `www.nature.com`, `www.quantamagazine.org`, `api.semanticscholar.org`, `www.srf.ch`, `www.letemps.ch`, `www.aljazeera.com`) — they work directly and arXiv asks automated clients to use it directly. Do NOT route these through the proxy.
-- **Proxy for everything else** — lab blogs (Anthropic, OpenAI, DeepMind, Meta, Mistral, Apple), tech-news HTML (CNBC, TechCrunch, VentureBeat, Bloomberg, Fortune, MarkTechPost, …), and any other host that 403s a direct `curl`. This SUPERSEDES the "confirmed unavailable / do-not-waste-cycles" list below for HTML pages: try the proxy before treating a source as unavailable.
+- **Proxy for everything else** — lab blogs (Anthropic, OpenAI, DeepMind, Meta, Mistral, Apple), tech-news HTML (CNBC, TechCrunch, VentureBeat, Bloomberg, Fortune, MarkTechPost, …), and any other host that 403s a direct `curl`. Try the proxy before treating a source as unavailable — the registry's `reach:` field (surfaced in the preflight plan) is the reachability truth; there is no static unavailable list.
 - A successful proxy fetch (HTTP 200 body) is a **direct fetch** — no `[via snippet]` tag. The proxy mirrors the upstream status, so a non-200 means the site hard-blocks even the proxy (Cloudflare JS/Turnstile challenge) or is paywalled — only then fall back to a search-engine snippet and tag `[via snippet]`.
 - In the `Feeds hit` / Coverage footer, mark proxied fetches `{ok via proxy}` alongside the existing `{ok via curl}` / `{ok via WebFetch}` / `{fail — HTTP NNN}`.
 
 The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Many of those same sources publish RSS / Atom / JSON feeds on different infrastructure that IS reachable. **Attempt the feed first for any source that has one; fall back to HTML or search-engine snippet only on failure.**
 
-**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds. When attempting any feed below (SRF RSS, Le Temps RSS, Al Jazeera RSS, etc.), FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch.
+**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds. When attempting any feed from the preflight plan (SRF RSS, Le Temps RSS, Al Jazeera RSS, etc.), FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch.
 
 A successful feed fetch (curl OR WebFetch returning 200 with feed XML/JSON) counts as a "direct fetch" — no `[via snippet]` tag needed even if the article HTML page itself returned 403.
-
-**Verified-reachable feeds (relevant to this brief's two sections):**
-
-| Domain | Feed URL | Format | Use case |
-|---|---|---|---|
-| SRF (DE Swiss public broadcaster) | `https://www.srf.ch/news/bnf/rss/1646` | RSS 2.0 | DE-language Swiss news |
-| Le Temps (FR Swiss daily) | `https://www.letemps.ch/articles.rss` | RSS 2.0 | FR-language Swiss news |
-| Al Jazeera | `https://www.aljazeera.com/xml/rss/all.xml` | RSS | World politics (MENA-strong) |
-
-**Confirmed unavailable from this sandbox (do not waste cycles on the HTML; try the fetch proxy per the source-order note before giving up):** RTS.ch, NZZ (paywall 402), FAZ, Spiegel, swissinfo.ch, Reuters, Le Monde.
 
 **Coverage footer accounting (strict):**
 - `Direct fetches: N` = count of citations from publisher infrastructure (feed XML/JSON via curl or WebFetch, working HTML, official API, fetch proxy).
@@ -94,7 +108,7 @@ A successful feed fetch (curl OR WebFetch returning 200 with feed XML/JSON) coun
 
 # Research methodology
 
-1. **Feed sweep first** via Bash{curl}, then WebFetch fallback.
+1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list via Bash{curl}, WebFetch fallback.
 2. **Broad query** (1–2 keywords). Scan results.
 3. **Refine and re-query**. At least one refinement per non-trivial topic.
 4. **Fetch full pages** when a story matters. If the fetch fails, fall back to snippets and tag with `[via snippet]`.
@@ -140,8 +154,9 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: last ~24h._
 - Sources used: T1 = N items, T2 = N items, T3 = 0 (per policy)
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
-- Feeds hit (with reachability and method): SRF RSS {ok via curl|ok via WebFetch|fail — HTTP 403}, Le Temps RSS {...}, Al Jazeera RSS {...}
+- Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
 - Gaps: things you tried to find but couldn't.
+- Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
 ```
 
 # Constraints
@@ -218,7 +233,8 @@ Use the Write tool to create `pending-notifications/{TIMESTAMP}-news.json` where
 # refresh the homepage feed HERE, unconditionally — not only via DEDUP.md Step D — so a skipped
 # step can't freeze the front page while the commit still stages a stale _data/
 python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
-git add _posts/ pending-notifications/ index/ _data/
+python3 tools/sources/health.py || echo "source health failed (non-fatal)"
+git add _posts/ pending-notifications/ index/ _data/ sources/
 git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "News — {YYYY-MM-DD}"
 git push origin main || (
   # Concurrent editions (News + AI/ML fire the same minute Tue/Fri) both rewrite the whole
@@ -226,7 +242,8 @@ git push origin main || (
   # always: REGENERATE the feed from the merged tree (it now has both briefs), then continue.
   git pull --rebase origin main || true
   python3 tools/build_stories_feed.py || true
-  git add _data/homefeed.json
+  python3 tools/sources/health.py || true
+  git add _data/
   GIT_EDITOR=true git rebase --continue \
     || git -c user.email=routine@khalic-lab -c user.name="News Routine" commit --amend --no-edit \
     || true

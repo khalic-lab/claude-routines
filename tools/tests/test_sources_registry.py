@@ -126,6 +126,44 @@ class BootstrapLiveStreamsOnlyTest(unittest.TestCase):
         self.assertEqual(self.registry["reuters.com"]["last_cited"], "2026-06-30")
 
 
+class BootstrapRetiredDomainsNeverBootstrapTest(unittest.TestCase):
+    """SPIKE 3.4 Bootstrap, review fix C18: nvd.nist.gov, cisa.gov, and ecb.europa.eu are the
+    retired security/markets pipeline's domains, excluded from bootstrap BY NAME ('would
+    otherwise fossilize the deleted security pipeline into the founding registry') -- not merely
+    because they're absent from the live-stream fixture files. A single genuine citation landing
+    in a LIVE stream (e.g. weekend, as actually happened) must still not be enough to bootstrap
+    one of them in; they may re-enter later only via the candidate lane (sync)."""
+
+    def setUp(self):
+        self.root, self.registry = _bootstrap_registry(self, extra_index_files={
+            "2026-07-02-weekend-retired-leak.jsonl": [
+                {"id": "leak-nvd", "date": "2026-07-02", "stream": "weekend",
+                 "headline": "Story leak-nvd from nvd.nist.gov", "summary": "Summary of leak-nvd.",
+                 "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-9999",
+                 "source_domain": "nvd.nist.gov", "tier": "T2", "tags": [],
+                 "thread_id": "leak-nvd", "first_seen_date": "2026-07-02", "event_date": "2026-07-02"},
+                {"id": "leak-cisa", "date": "2026-07-02", "stream": "weekend",
+                 "headline": "Story leak-cisa from cisa.gov", "summary": "Summary of leak-cisa.",
+                 "url": "https://www.cisa.gov/advisories/a99",
+                 "source_domain": "cisa.gov", "tier": "T2", "tags": [],
+                 "thread_id": "leak-cisa", "first_seen_date": "2026-07-02", "event_date": "2026-07-02"},
+                {"id": "leak-ecb", "date": "2026-07-02", "stream": "weekend",
+                 "headline": "Story leak-ecb from ecb.europa.eu", "summary": "Summary of leak-ecb.",
+                 "url": "https://www.ecb.europa.eu/press/pr/a1",
+                 "source_domain": "ecb.europa.eu", "tier": "T2", "tags": [],
+                 "thread_id": "leak-ecb", "first_seen_date": "2026-07-02", "event_date": "2026-07-02"},
+            ],
+        })
+
+    def test_retired_domains_absent_despite_single_genuine_live_citation(self):
+        """Each of the three named retired domains gets exactly one genuine LIVE (weekend)
+        citation here -- exactly the scenario that leaked them into the real registry.yml --
+        and must still never appear."""
+        for domain in ("nvd.nist.gov", "cisa.gov", "ecb.europa.eu"):
+            with self.subTest(domain=domain):
+                self.assertNotIn(domain, self.registry)
+
+
 class BootstrapClassingTest(unittest.TestCase):
     """SPIKE 3.4: class hub for {arxiv.org, hf.co, huggingface.co, github.com, doi.org,
     biorxiv.org}; institutional for {*.gov, *.europa.eu, admin.ch}; else outlet."""
@@ -216,6 +254,13 @@ class BootstrapProbeBlocksTest(unittest.TestCase):
         carry a probe block."""
         reuters = self.registry.get("reuters.com", {})
         self.assertIn(reuters.get("probe"), (None, {}), "reuters.com should not get a fabricated probe block")
+
+    def test_srf_probe_url_is_the_rss_feed_not_the_html_section_page(self):
+        """The feed the prompts actually poll (routines/news.md) is the RSS endpoint
+        https://www.srf.ch/news/bnf/rss/1646, not the bare HTML section page /news/bnf."""
+        probe = self.registry["srf.ch"]["probe"]
+        self.assertTrue(probe["url"].endswith("/rss/1646"),
+                         "srf.ch probe url %r should end with /rss/1646" % probe["url"])
 
 
 class BootstrapLastCitedAndStreamsTest(unittest.TestCase):

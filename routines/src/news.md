@@ -33,19 +33,9 @@ Broad coverage of major local + world news, light filter — include items even 
 
 The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Many of those same sources publish RSS / Atom / JSON feeds on different infrastructure that IS reachable. **Attempt the feed first for any source that has one; fall back to HTML or search-engine snippet only on failure.**
 
-**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds. When attempting any feed below (SRF RSS, Le Temps RSS, Al Jazeera RSS, etc.), FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch.
+**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds. When attempting any feed from the preflight plan (SRF RSS, Le Temps RSS, Al Jazeera RSS, etc.), FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch.
 
 A successful feed fetch (curl OR WebFetch returning 200 with feed XML/JSON) counts as a "direct fetch" — no `[via snippet]` tag needed even if the article HTML page itself returned 403.
-
-**Verified-reachable feeds (relevant to this brief's two sections):**
-
-| Domain | Feed URL | Format | Use case |
-|---|---|---|---|
-| SRF (DE Swiss public broadcaster) | `https://www.srf.ch/news/bnf/rss/1646` | RSS 2.0 | DE-language Swiss news |
-| Le Temps (FR Swiss daily) | `https://www.letemps.ch/articles.rss` | RSS 2.0 | FR-language Swiss news |
-| Al Jazeera | `https://www.aljazeera.com/xml/rss/all.xml` | RSS | World politics (MENA-strong) |
-
-**Confirmed unavailable from this sandbox (do not waste cycles on the HTML; try the fetch proxy per the source-order note before giving up):** RTS.ch, NZZ (paywall 402), FAZ, Spiegel, swissinfo.ch, Reuters, Le Monde.
 
 **Coverage footer accounting (strict):**
 - `Direct fetches: N` = count of citations from publisher infrastructure (feed XML/JSON via curl or WebFetch, working HTML, official API, fetch proxy).
@@ -55,7 +45,7 @@ A successful feed fetch (curl OR WebFetch returning 200 with feed XML/JSON) coun
 
 # Research methodology
 
-1. **Feed sweep first** via Bash{curl}, then WebFetch fallback.
+1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list via Bash{curl}, WebFetch fallback.
 2. **Broad query** (1–2 keywords). Scan results.
 3. **Refine and re-query**. At least one refinement per non-trivial topic.
 4. **Fetch full pages** when a story matters. If the fetch fails, fall back to snippets and tag with `[via snippet]`.
@@ -101,8 +91,9 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: last ~24h._
 - Sources used: T1 = N items, T2 = N items, T3 = 0 (per policy)
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
-- Feeds hit (with reachability and method): SRF RSS {ok via curl|ok via WebFetch|fail — HTTP 403}, Le Temps RSS {...}, Al Jazeera RSS {...}
+- Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
 - Gaps: things you tried to find but couldn't.
+- Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
 ```
 
 # Constraints
@@ -160,7 +151,8 @@ Use the Write tool to create `pending-notifications/{TIMESTAMP}-news.json` where
 # refresh the homepage feed HERE, unconditionally — not only via DEDUP.md Step D — so a skipped
 # step can't freeze the front page while the commit still stages a stale _data/
 python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
-git add _posts/ pending-notifications/ index/ _data/
+python3 tools/sources/health.py || echo "source health failed (non-fatal)"
+git add _posts/ pending-notifications/ index/ _data/ sources/
 git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "News — {YYYY-MM-DD}"
 git push origin main || (
   # Concurrent editions (News + AI/ML fire the same minute Tue/Fri) both rewrite the whole
@@ -168,7 +160,8 @@ git push origin main || (
   # always: REGENERATE the feed from the merged tree (it now has both briefs), then continue.
   git pull --rebase origin main || true
   python3 tools/build_stories_feed.py || true
-  git add _data/homefeed.json
+  python3 tools/sources/health.py || true
+  git add _data/
   GIT_EDITOR=true git rebase --continue \
     || git -c user.email=routine@khalic-lab -c user.name="News Routine" commit --amend --no-edit \
     || true

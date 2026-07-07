@@ -42,31 +42,15 @@ Light news/politics — just a brief "what mattered this week" section at the to
 
 The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Many of those publishers also offer machine-readable feeds (RSS, Atom, JSON) that are reachable. **Always attempt the feed/API before the HTML page.**
 
-**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds (arXiv RSS, arXiv Atom API, Nature RSS, etc.). When attempting any feed below, FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch. This is the binding-constraint workaround for the 403 wall.
+**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds (arXiv RSS, arXiv Atom API, Nature RSS, etc.). When attempting any feed from the preflight plan, FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch. This is the binding-constraint workaround for the 403 wall.
 
 **Order of attempts per topic, in priority:**
-1. Verified-reachable feed below (or arXiv/Semantic Scholar APIs) via Bash{curl}.
+1. Feed from the preflight plan (or arXiv/Semantic Scholar APIs) via Bash{curl}.
 2. Same feed via WebFetch fallback.
-3. The publisher's HTML page.
+3. The publisher's HTML page (proxy on 403).
 4. Web search snippet (last resort, tag the citation `[via snippet]`).
 
-**Verified-reachable feeds (live 2026-05-04):**
-
-| Domain | Feed URL | Format | Use case |
-|---|---|---|---|
-| arXiv categories | `https://export.arxiv.org/rss/cs.LG` (also cs.AI, cs.CL, cs.CV, stat.ML) | RSS 2.0 | Latest ML papers per category |
-| arXiv API (date-filtered) | `https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending` | Atom 1.0 | Date-confirmable paper queries; works for math.*, physics.*, astro-ph.* too — swap the cat filter |
-| Quanta Magazine | `https://www.quantamagazine.org/feed/` | RSS 2.0 | Science features, math + fundamental physics |
-| Nature flagship | `https://www.nature.com/nature.rss` | RSS | Nature general |
-| Nature Physics | `https://www.nature.com/nphys.rss` | RSS | Physics journal |
-| Nature Astronomy | `https://www.nature.com/natastron.rss` | RSS | Astronomy journal |
-| Nature Methods | `https://www.nature.com/nm.rss` | RSS | Methods journal (biology-adjacent) |
-| Al Jazeera | `https://www.aljazeera.com/xml/rss/all.xml` | RSS | World politics (week-in-headlines) |
-| Semantic Scholar API | `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations` | JSON | Paper triangulation, citation counts, author affiliations (1000 req/sec free) |
-| SRF (DE Swiss) | `https://www.srf.ch/news/bnf/rss/1646` | RSS 2.0 | DE-language Swiss |
-| Le Temps (FR Swiss) | `https://www.letemps.ch/articles.rss` | RSS 2.0 | FR-language Swiss |
-
-**Confirmed unavailable from this sandbox (do not waste cycles):** RTS.ch, NZZ (paywall 402), FAZ, Spiegel, swissinfo.ch, Reuters, Yahoo Finance, HuggingFace papers (no public feed), Le Monde RSS.
+**arXiv / Semantic Scholar mechanics:** the date-filtered arXiv Atom API (`https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending`) works for `math.*`, `physics.*`, `astro-ph.*` too — swap the `cat:` filter and window the `<published>` dates client-side. Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations` (triangulation, citation counts, affiliations).
 
 **Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** route through the proxy.
 - bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv`); returns title, abstract, DOI, and date per paper for the window — ideal for the Biology & Fundamental-science sections.
@@ -80,7 +64,7 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 # Research methodology
 
 The weekend brief warrants more aggressive iteration than the dailies. Per topic:
-1. **Feed sweep first.** Hit the relevant feeds via Bash{curl} for the past 7 days (use the arXiv API with date filters; the Nature RSS feeds are rolling). This is your primary content source.
+1. **Source plan first, then feed sweep.** Run the preflight (see Source plan above), then hit its fetch list via Bash{curl} for the past 7 days (use the arXiv API with date filters; the Nature RSS feeds are rolling). This is your primary content source.
 2. **Multi-pass search** for stories the feeds didn't surface. Start broad, refine 2–4 times, drill into specifics.
 3. **Fetch full pages** liberally. arXiv abstracts (use the arXiv API — not the abstract HTML page, which 403s), full blog posts, GitHub READMEs, model cards. If fetch fails, fall back to snippets and tag with `[via snippet]`.
 4. **Cross-reference rigorously.** For paper claims, locate the paper PDF if the abstract is ambiguous. Use Semantic Scholar API to triangulate citation/influence.
@@ -198,10 +182,11 @@ _Coverage: {date 7 days ago} to {today}. Generated {timestamp} Europe/Zurich._
 - Languages: EN, FR, DE, ...
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
-- Feeds hit (with reachability and method): arXiv RSS cs.LG {ok via curl|ok via WebFetch|fail — HTTP NNN}, arXiv API {...}, Quanta RSS {...}, Nature RSS {...}, Al Jazeera {...}, ...
+- Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan — arXiv RSS/API, Quanta RSS, Nature journals RSS, Al Jazeera, …} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
 - Sibling consultation: {performed | skipped — reason}
 - Gaps: ...
 - Things I deliberately cut: ...
+- Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
 ```
 
 # Constraints
@@ -264,7 +249,8 @@ Via Bash:
 # refresh the homepage feed HERE, unconditionally — not only via DEDUP.md Step D — so a skipped
 # step can't freeze the front page while the commit still stages a stale _data/
 python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
-git add _posts/ pending-notifications/ index/ _data/
+python3 tools/sources/health.py || echo "source health failed (non-fatal)"
+git add _posts/ pending-notifications/ index/ _data/ sources/
 git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "Weekend Deep Read — {YYYY-MM-DD}"
 git push origin main || (
   # Concurrent editions (News + AI/ML fire the same minute Tue/Fri) both rewrite the whole
@@ -272,7 +258,8 @@ git push origin main || (
   # always: REGENERATE the feed from the merged tree (it now has both briefs), then continue.
   git pull --rebase origin main || true
   python3 tools/build_stories_feed.py || true
-  git add _data/homefeed.json
+  python3 tools/sources/health.py || true
+  git add _data/
   GIT_EDITOR=true git rebase --continue \
     || git -c user.email=routine@khalic-lab -c user.name="News Routine" commit --amend --no-edit \
     || true

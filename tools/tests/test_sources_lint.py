@@ -18,12 +18,15 @@ even though something is still wrong and reported).
 """
 import os
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 
 import sources_helpers as H
 
 REGISTRY_FIXTURE = os.path.join(H.FIXTURES_DIR, "registry_static.yml")
+ANCHOR_PATH = os.path.join(H.REPO_ROOT, "tools", "store", "anchor.py")
 
 
 def bullet(lead, url, source="Source", tag=None, extra_url=None, extra_source="Also"):
@@ -137,6 +140,43 @@ class CleanEditionTest(LintTestBase):
         self.assertNotIn("LINT-REPORT", proc.stdout)
         armed = self.lint(path, arm=True)
         self.assertEqual(armed.returncode, 0)
+
+
+# ---------------------------------------------------------------------------
+# FINDING 1 (CRITICAL): Step C.25 runs anchor.py BEFORE lint.py -- lint.py must still
+# recognize a bullet anchor.py has already rewritten to
+# '- <a id="st-..." class="st-a"></a>**lead**...', or every anchored brief gets zero
+# tag/cap checks and a false discovery_quota violation whenever the footer says met.
+# ---------------------------------------------------------------------------
+
+class AnchorThenLintTest(LintTestBase):
+    def test_citations_still_extracted_after_anchor_py_rewrites_the_bullets(self):
+        items = [
+            bullet("Bern story one.", "https://www.srf.ch/news/anchor1"),
+            bullet("Fresh outlet story.", "https://freshvoice.example/anchor2", source="Fresh",
+                   tag="[new source]"),
+        ]
+        post = build_post("news", "News", items,
+                           ["- Discovery: met (freshvoice.example, first citation for the desk)"])
+        path = self.write_post("2026-07-10-news.md", post)
+
+        anchor_proc = subprocess.run([sys.executable, ANCHOR_PATH, path],
+                                      capture_output=True, text=True)
+        self.assertEqual(anchor_proc.returncode, 0, anchor_proc.stderr)
+        with open(path) as f:
+            anchored = f.read()
+        self.assertIn('class="st-a"', anchored,
+                       "fixture wasn't actually anchored by anchor.py -- test would be vacuous")
+
+        proc = self.assert_report_only_always_exits_zero(path)
+        self.assertNotIn("LINT-REPORT", proc.stdout,
+                          "an anchor.py-rewritten bullet must still be recognized as a citation "
+                          "line, not silently dropped:\nstdout:\n%s" % proc.stdout)
+
+        armed = self.lint(path, arm=True)
+        self.assertEqual(armed.returncode, 0,
+                          "anchored bullets must not produce a false discovery_quota violation "
+                          "(zero citations extracted looks like zero novel domains)")
 
 
 # ---------------------------------------------------------------------------

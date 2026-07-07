@@ -31,21 +31,9 @@ AI/ML industry activity, lab releases, ecosystem moves, AND research papers. Thi
 
 The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Many of those same sources publish RSS / Atom / JSON feeds on different infrastructure that IS reachable. **Attempt the feed first for any source that has one; fall back to HTML or search-engine snippet only on failure.**
 
-**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds (arXiv RSS, Nature RSS, etc.). When attempting any feed below, FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch.
+**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds (arXiv RSS, Nature RSS, etc.). When attempting any feed from the preflight plan, FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch.
 
 A successful feed fetch (you opened the feed URL and read the article title/date/excerpt from publisher XML/JSON) counts as a "direct fetch" — no `[via snippet]` tag needed even if the article HTML page itself returned 403, because the metadata came from the publisher's own feed.
-
-**Verified-reachable feeds (live 2026-05-04):**
-
-| Domain | Feed URL | Format |
-|---|---|---|
-| arXiv categories | `https://export.arxiv.org/rss/cs.LG` (also `cs.AI`, `cs.CL`, `cs.CV`, `stat.ML`) | RSS 2.0 |
-| arXiv date-filtered API | `https://export.arxiv.org/api/query?search_query=cat:cs.LG&max_results=30&sortBy=submittedDate&sortOrder=descending` | Atom 1.0 |
-| Quanta Magazine | `https://www.quantamagazine.org/feed/` | RSS 2.0 |
-| Nature (general + journals) | `https://www.nature.com/nature.rss` (also `nphys.rss`, `natastron.rss`, `nm.rss`) | RSS |
-| Semantic Scholar paper search | `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations&limit=10` | JSON |
-
-**Confirmed unavailable / blocked from sandbox; do NOT waste fetch cycles:** Reuters, Yahoo Finance, HuggingFace papers HTML (no public feed found — snippet/MCP only).
 
 **Coverage footer accounting (strict):**
 - `Direct fetches: N` = count of citations where you read the source from publisher infrastructure.
@@ -58,7 +46,7 @@ A successful feed fetch (you opened the feed URL and read the article title/date
 # Research methodology (apply to every section)
 
 Routines don't have access to Claude.ai's Research mode. Approximate it:
-1. **Feed sweep first** via Bash{curl}, then WebFetch fallback.
+1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list via Bash{curl}, WebFetch fallback.
 2. **Broad query** (1–2 keywords). Scan results.
 3. **Refine and re-query** based on what surfaced. At least one refinement per non-trivial topic.
 4. **Fetch full pages**, not just search snippets, when a story matters. If fetch fails, fall back to snippets and tag with `[via snippet]`.
@@ -74,7 +62,7 @@ The reader's most-valued content — give it room. This consolidates what used t
 **Feed-first sourcing (try Bash{curl} BEFORE WebFetch, and before any HTML listing):**
 - **arXiv RSS per category:** `https://export.arxiv.org/rss/cs.LG`, `cs.AI`, `cs.CL`, `cs.CV`, `stat.ML`. Hit all five.
 - **arXiv Atom API for date confirmation:** `https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending` (swap the category as needed).
-- **Fallback chain (only if the above fail):** HF papers (`huggingface.co/papers`) via search-engine snippet → Semantic Scholar API (`…&fields=title,abstract,year,authors,authors.affiliations`, see feed table) → `site:arxiv.org` search.
+- **Fallback chain (only if the above fail):** HF papers (`huggingface.co/papers`) via search-engine snippet → Semantic Scholar API (`https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations&limit=10`) → `site:arxiv.org` search.
 
 T2 commentary (discovery + framing, never the primary cite): simonwillison.net, karpathy.bearblog.dev, dnhkng.github.io, lilianweng.github.io, huggingface.co/blog.
 
@@ -153,8 +141,9 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: since the last AI/ML edition
 - Papers: N (filtered from M reviewed) | Vendor PR items: N (tagged inline)
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
-- Feeds hit (with reachability and method): arXiv RSS cs.LG {ok via curl|ok via WebFetch|fail — HTTP 403}, arXiv RSS cs.AI {...}, arXiv Atom API {...}, Semantic Scholar {...}, HF papers {...}
+- Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan — arXiv RSS per category, arXiv Atom API, Semantic Scholar, …} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
 - Gaps: ...
+- Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
 ```
 
 # Constraints
@@ -209,7 +198,8 @@ categories: [ai-ml]
 # refresh the homepage feed HERE, unconditionally — not only via DEDUP.md Step D — so a skipped
 # step can't freeze the front page while the commit still stages a stale _data/
 python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
-git add _posts/ pending-notifications/ index/ _data/
+python3 tools/sources/health.py || echo "source health failed (non-fatal)"
+git add _posts/ pending-notifications/ index/ _data/ sources/
 git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "AI/ML — {YYYY-MM-DD}"
 git push origin main || (
   # Concurrent editions (News + AI/ML fire the same minute Tue/Fri) both rewrite the whole
@@ -217,7 +207,8 @@ git push origin main || (
   # always: REGENERATE the feed from the merged tree (it now has both briefs), then continue.
   git pull --rebase origin main || true
   python3 tools/build_stories_feed.py || true
-  git add _data/homefeed.json
+  python3 tools/sources/health.py || true
+  git add _data/
   GIT_EDITOR=true git rebase --continue \
     || git -c user.email=routine@khalic-lab -c user.name="News Routine" commit --amend --no-edit \
     || true
