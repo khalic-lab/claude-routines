@@ -67,6 +67,30 @@
    └──────────────────────────────────┘
 ```
 
+> **Added 2026-07-07: story-store migration, steps 1–4 (`docs/SPIKE-2026-07-07-continuous-news.md`).**
+> The story (not the edition) is now the durable unit. **Identity:** `st-{sha1(norm_url)[:12]}`
+> (`tools/store/store.py`). **Primary store:** an append-only event ledger
+> `index/ledger/{ingest-day}.jsonl` (`seen/update/publish/status/feedback` events; `.gitattributes`
+> `merge=union`; materialized snapshot `.materialized.json` is git-ignored, regenerated per consumer).
+> `dedup.py record` **dual-writes**: the legacy per-edition `index/stories/*.jsonl` stays byte-identical
+> (retire at end of migration) + `seen`/`publish` ledger events (non-fatal on failure — a broken ledger
+> never costs an edition). History backfilled (`tools/store/backfill.py`, 1456 records → 1411 stories
+> after URL-fold). **Anchors:** Step C.25 runs `tools/store/anchor.py --index <edition file>` (bullet
+> `<a id="st-…">` / H3 kramdown IAL) so brief-page votes and homefeed votes (`sid` in `homefeed.json`)
+> share the store id. **Feedback:** folded continuously by the bridge (`tools/feedback/fold.py` after
+> drain) — resolution direct/legacy/url, `ev:"feedback"` appended BEFORE `consumed:true` flips; the
+> Evaluator's 7-day window arithmetic is retired (the 27%-orphaning class is structurally impossible).
+> **Sources:** `sources/registry.yml` (bootstrapped citation-driven from live streams, retired-pipeline
+> domains excluded; credibility lifecycle candidate→probation→established, human-gated transitions;
+> machine appends go to `sources/{candidates,last-cited}.jsonl`, folded by `registry.py sync`).
+> Writers' first research action = `tools/sources/preflight.py --slug {slug}`; `lint.py` checks
+> `[new source]` tags / Discovery footer / caps at Step C.25; `health.py` → `_data/source-health.json`
+> at Step D. **Caps + discovery quota are REPORT-ONLY** until armed (SPIKE step 5, data-gated).
+> **Evaluator:** `tools/evaluator/metrics.py` → `_data/health.json` computes the mechanical dimensions;
+> proposals also machine-readable (`proposals/*-{date}.{json,yml}`, `applied:true` stamp protocol);
+> Sunday source-scout duty (≤20 fetches, WebFetch-based — the evaluator holds no fetch-proxy token by
+> design). Spec suite: `python3 -m unittest discover -s tools/tests` (212+ tests, RED/GREEN-committed).
+
 > **Added 2026-07-03: Pages deploy self-heal + News moved to midday.** News trigger cron `0 17 * * *`
 > → `0 10 * * *` (UTC) — 19:00 → 12:00 Bern (summer; fixed-UTC cron, so 11:00 Bern in winter). See the
 > writers table above. Separately: a transient GitHub Pages deploy failure poisons the current commit
@@ -128,8 +152,13 @@
 | Git creds | `…/git-credentials` (mode 600) | `https://x-access-token:<tok>@github.com` | bridge git push |
 | Legacy briefs | `briefs/{stream}/{date}.md` | pre-Pages layout, only May 2–4 | **deleted 2026-07-03** (recoverable from git history) |
 | Coverage footer | inside each brief | `Direct fetches: N \| via-snippet: M`, `Feeds hit`, `Gaps` | **the only health signal** |
-| Reader feedback | `feedback/{YYYY-MM}.jsonl` | `{id, ts, reader, brief, story_id, vote±1, reason, surface, source_domain, consumed}` | widget→Worker→bridge → Evaluator |
+| Reader feedback | `feedback/{YYYY-MM}.jsonl` | `{id, ts, reader, brief, story_id, vote 1/-1/0, reason, surface, source_domain, consumed}` | widget→Worker→bridge → `fold.py` → ledger → Evaluator |
 | Reader profile | `reader-profile.md` + `reader-profile/source-weights.yml` (`never:`/`reduce:`) | NL editorial brief + domain lists | Evaluator proposes (human-gated) → writers read |
+| Story ledger | `index/ledger/{YYYY-MM-DD}.jsonl` (ingest day, append-only, merge=union) | `{ev: seen\|update\|publish\|status\|feedback\|notify, ts, actor, …}` — record schema in SPIKE 2026-07-07 §3.1 | dedup.py dual-write + backfill + fold.py → `store.py materialize` (all consumers) |
+| Source registry | `sources/registry.yml` (+ `sources/{candidates,last-cited}.jsonl` machine appends) | per-domain `{class, tier, status, reach, probe, streams, last_cited, subsources, lifecycle}` | `registry.py bootstrap/sync` + human → `preflight.py`/`lint.py`/writers |
+| Source health | `_data/source-health.json` | per-stream 30d `{stories, unique_domains, new_domains, top5_share, saturated, waiver_rate}` | `health.py` (writer Step D) → Evaluator + homepage-adjacent tooling |
+| Evaluator metrics | `_data/health.json` | `{week, streams, feedback, sources, continuity}` | `tools/evaluator/metrics.py` (evaluator fire start) → Evaluator |
+| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 212+ tests: store invariants, fold, registry, lint, metrics, dual-write byte-identity goldens | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`) |
 
 ### 1.3 Dedup today
 

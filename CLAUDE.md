@@ -83,6 +83,12 @@ trigger's id, cron, and full `session_context`.
   routine — DEDUP.md Step D).
 - Notifications: `pending-notifications/{ts}-{slug}.json` → local bridge → ntfy (then deleted).
 - Dedup: `tools/dedup/` (see its `DEDUP.md`); embeddings index under `index/`.
+- Story store (2026-07-07): append-only event ledger `index/ledger/*.jsonl` + `tools/store/`
+  (ids/materialize/anchor/backfill); source registry `sources/` + `tools/sources/`
+  (preflight/lint/health); evaluator metrics `tools/evaluator/`; feedback fold
+  `tools/feedback/fold.py` (bridge-side). Spec suite: `python3 -m unittest discover -s tools/tests`
+  — run it before committing changes to any of these. Details: ARCHITECTURE.md §1.2 + the
+  2026-07-07 SPIKE.
 - Topic watches: `watches.yml` (user owns entries; the Watch routine writes only `last_fired`).
 - Routine prompts: `routines/<slug>.md` (generated, == live) ← `routines/src/<slug>.md` + shared
   `routines/_shared/*.md`, composed by `routines/assemble.py`. Internal design docs live under
