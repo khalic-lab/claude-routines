@@ -17,7 +17,7 @@ sized by how much it matters, filterable by beat.</p>
   {% endfor %}
   <span class="ff-legend" aria-hidden="true">
     <span class="ff-li"><i class="fb b3"></i>Lead</span>
-    <span class="ff-li"><i class="fb b2"></i>Standard</span>
+    <span class="ff-li"><i class="fb b2"></i>Feature</span>
     <span class="ff-li"><i class="fb b1"></i>Brief</span>
   </span>
 </div>
@@ -100,8 +100,11 @@ sized by how much it matters, filterable by beat.</p>
   .ff-legend{ margin-left:auto; display:flex; gap:14px; align-items:center; }
   .ff-li{ font-family:var(--sans); font-size:.58rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted);
     display:inline-flex; align-items:center; gap:.5em; }
-  .ff-li .fb{ display:inline-block; height:9px; background:var(--accent); }
-  .ff-li .fb.b3{ width:22px; } .ff-li .fb.b2{ width:13px; opacity:.7; } .ff-li .fb.b1{ width:6px; opacity:.45; }
+  /* swatches mirror the tier chips: solid accent / outlined accent / muted hairline */
+  .ff-li .fb{ display:inline-block; width:14px; height:9px; border-radius:2px;
+    background:var(--accent); border:1px solid var(--accent); }
+  .ff-li .fb.b2{ background:transparent; }
+  .ff-li .fb.b1{ background:transparent; border-color:var(--hair); }
   @media (max-width:720px){ .ff-legend{ display:none; } }
 
   .folio-board{ position:relative; padding:22px 0 10px; }
