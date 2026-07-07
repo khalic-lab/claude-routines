@@ -47,9 +47,9 @@ def _domain(url):
 
 
 def _existing_fb_ids(root):
-    """fb_id set already folded into the ledger (any file, any age) — dedupe key for idempotent
-    re-runs and crash recovery."""
-    ids = set()
+    """{fb_id: story id} already folded into the ledger (any file, any age) — dedupe key for
+    idempotent re-runs, crash recovery, and hand-mapped reconcile events."""
+    ids = {}
     ledger = os.path.join(root, "index", "ledger")
     if not os.path.isdir(ledger):
         return ids
@@ -66,7 +66,7 @@ def _existing_fb_ids(root):
                 except ValueError:
                     continue
                 if ev.get("ev") == "feedback" and ev.get("fb_id"):
-                    ids.add(ev["fb_id"])
+                    ids[ev["fb_id"]] = ev.get("id")
     return ids
 
 
@@ -122,6 +122,22 @@ def fold(root, dry_run=False):
             if rec.get("consumed"):
                 continue  # already folded (or handled by the pre-ledger Evaluator flow)
 
+            if fb_id in already:
+                # Resolution step 0: the ledger already carries this vote (crash recovery, or a
+                # hand-mapped reconcile event) — the ledger is the consumption truth, so flip the
+                # record even if it is unresolvable by its own fields. Never re-append.
+                sid = already[fb_id]
+                rec["consumed"] = True
+                story = stories.get(sid)
+                domain = _domain(story.get("url")) if story else None
+                if domain and not rec.get("source_domain"):
+                    rec["source_domain"] = domain
+                raw_lines[i] = json.dumps(rec, ensure_ascii=False)
+                dirty = True
+                reconciled += 1
+                table.append((fb_id, "reconciled", sid))
+                continue
+
             sid, reason = _resolve(rec, snap)
             if sid is None:
                 unresolved += 1
@@ -136,11 +152,7 @@ def fold(root, dry_run=False):
             raw_lines[i] = json.dumps(rec, ensure_ascii=False)
             dirty = True
 
-            if fb_id in already:
-                reconciled += 1  # ledger already has this vote; just fixing up the record
-                table.append((fb_id, "reconciled", sid))
-                continue
-            already.add(fb_id)
+            already[fb_id] = sid
             folded += 1
             table.append((fb_id, "resolved", sid))
             to_append.append({

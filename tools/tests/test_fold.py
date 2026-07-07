@@ -19,6 +19,7 @@ only reading under which "last-write-wins" is a coherent, deterministic operatio
 Run: cd /Users/rflnogueira/code/claude-routines && python3 -m unittest discover -s tools/tests -v
 """
 import glob
+import hashlib
 import json
 import os
 import shutil
@@ -569,3 +570,51 @@ class FoldCorruptLineResilienceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FoldLedgerFirstReconcileTests(unittest.TestCase):
+    """A vote already present in the ledger (by fb_id) is consumed, PERIOD -- even when the
+    local record is unresolvable by its own fields. This is the hand-mapped-reconcile path
+    (e.g. the 2026-06 orphan repair): an operator appends the correct ev:"feedback" event,
+    and the next fold must flip the record instead of reporting UNRESOLVED forever."""
+
+    def setUp(self):
+        _assert_exists(FOLD_PATH)
+        self.root = tempfile.mkdtemp(prefix="fold-reconcile-")
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+        os.makedirs(os.path.join(self.root, "feedback"))
+        os.makedirs(os.path.join(self.root, "index", "ledger"))
+        url = "https://example.org/article"
+        self.sid = "st-" + hashlib.sha1(b"example.org/article").hexdigest()[:12]
+        self.rec = {
+            "id": "aaaa-bbbb-cccc", "ts": "2026-06-27T08:00:00.000Z", "reader": "rafael",
+            "brief": "2026-06-27-overview", "story_id": "2026-06-27-overview-mangled-slug",
+            "vote": 1, "reason": "", "surface": "web", "source_domain": None, "consumed": False,
+        }
+        with open(os.path.join(self.root, "feedback", "2026-06.jsonl"), "w", encoding="utf-8") as f:
+            f.write(json.dumps(self.rec) + "\n")
+        seen = {"ev": "seen", "ts": "2026-06-27T00:00:00Z", "actor": "backfill",
+                "story": {"id": self.sid, "url": url, "headline": "An article"}}
+        fb = {"ev": "feedback", "ts": self.rec["ts"], "actor": "reconcile", "id": self.sid,
+              "fb_id": self.rec["id"], "vote": 1, "reason": "", "reader": "rafael",
+              "surface": "web", "brief": self.rec["brief"],
+              "raw_story_id": self.rec["story_id"]}
+        with open(os.path.join(self.root, "index", "ledger", "2026-06-28.jsonl"), "w",
+                  encoding="utf-8") as f:
+            f.write(json.dumps(seen) + "\n")
+            f.write(json.dumps(fb) + "\n")
+
+    def test_ledger_resident_vote_reconciles_even_when_record_is_unresolvable(self):
+        proc = _run_fold(self.root)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        rec = _feedback_records(self.root)[self.rec["id"]]
+        self.assertTrue(rec["consumed"], "ledger-resident vote must flip consumed")
+        self.assertEqual(rec.get("source_domain"), "example.org")
+        self.assertIn("1 reconciled", proc.stdout)
+        self.assertIn("0 unresolved", proc.stdout)
+
+    def test_no_duplicate_event_is_appended_for_a_reconciled_record(self):
+        _run_fold(self.root)
+        evs = [e for e in _ledger_events(self.root, ev="feedback")
+               if e.get("fb_id") == self.rec["id"]]
+        self.assertEqual(len(evs), 1, "reconcile must not re-append the vote")
