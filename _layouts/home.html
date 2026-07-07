@@ -124,7 +124,10 @@ sized by how much it matters, filterable by beat.</p>
   .fcard{ min-width:0; }
   .fcard__in{ background:var(--card); border:1px solid var(--hair); padding:16px 16px 15px;
     display:flex; flex-direction:column; gap:9px; transition:transform .18s ease, box-shadow .18s ease; }
-  .fcard.lead .fcard__in{ padding:22px 22px 20px; border-top:2px solid var(--accent); }
+  .fcard.lead .fcard__in{ padding:22px 22px 20px; border-top:3px solid var(--accent); }
+  /* feature cards carry a half-strength accent edge so the tier reads without the chip;
+     briefs keep the bare hairline. color-mix fallback: plain hairline (declared above). */
+  .fcard.imp2 .fcard__in{ border-top:2px solid color-mix(in srgb, var(--accent) 45%, transparent); }
   .fcard__in:hover{ transform:translateY(-2px); box-shadow:0 6px 22px rgba(0,0,0,.10); }
   @media (prefers-color-scheme:dark){ .fcard__in:hover{ box-shadow:0 6px 26px rgba(0,0,0,.5); } }
 
@@ -133,11 +136,17 @@ sized by how much it matters, filterable by beat.</p>
     color:var(--muted); display:inline-flex; align-items:center; gap:.5em; white-space:nowrap; text-decoration:none; }
   .fcard__beat:hover{ color:var(--accent); }
   .fcard__beat .ff-dot{ width:6px; height:6px; }
-  .fcard__rank{ margin-left:auto; font-family:var(--sans); font-weight:700; font-size:.56rem;
-    text-transform:uppercase; letter-spacing:.14em; color:var(--accent); white-space:nowrap; }
+  /* tier chip — the color code must read at a glance: solid accent (lead),
+     outlined accent (feature), muted hairline (brief). */
+  .fcard__rank{ margin-left:auto; font-family:var(--sans); font-weight:700; font-size:.6rem;
+    text-transform:uppercase; letter-spacing:.12em; white-space:nowrap; align-self:center;
+    padding:2px 7px 1px; border:1px solid transparent; border-radius:2px; }
+  .fcard__rank[data-imp="3"]{ background:var(--accent); color:var(--paper); }
   .fcard__rank[data-imp="3"]::after{ content:"Lead"; }
-  .fcard__rank[data-imp="2"]{ color:var(--muted); } .fcard__rank[data-imp="2"]::after{ content:"Feature"; }
-  .fcard__rank[data-imp="1"]{ color:var(--muted); opacity:.7; } .fcard__rank[data-imp="1"]::after{ content:"Brief"; }
+  .fcard__rank[data-imp="2"]{ color:var(--accent); border-color:var(--accent); }
+  .fcard__rank[data-imp="2"]::after{ content:"Feature"; }
+  .fcard__rank[data-imp="1"]{ color:var(--muted); border-color:var(--hair); }
+  .fcard__rank[data-imp="1"]::after{ content:"Brief"; }
 
   /* real article image (og:image via og-proxy), natural news-photo proportions — no letterboxed
      strips, no generated placeholder. Cards without a usable image stay text-only, which is how
