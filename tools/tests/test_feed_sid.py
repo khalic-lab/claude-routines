@@ -231,3 +231,60 @@ class ParsePostWhyItMattersSectionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ParsePostAnchoredStoriesTests(unittest.TestCase):
+    """Step C.25 (anchor.py) rewrites the post BEFORE Step D parses it for the homefeed —
+    the parser must read anchored posts. Regression for 2026-07-07: both editions published
+    with anchors and the feed builder silently harvested zero stories from them."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.mod = _load_module(BUILD_FEED_PATH, "bsf_anchored")
+
+    def test_anchored_bullet_story_still_parses_with_clean_headline(self):
+        md = (
+            "## Switzerland\n\n"
+            '- <a id="st-4ed5174aeff4" class="st-a"></a>**Bern weighs a thing.** '
+            "Body sentence. ([SRF](https://www.srf.ch/news/x))\n"
+        )
+        stories = self.mod.parse_post(md)
+        self.assertEqual(len(stories), 1)
+        self.assertEqual(stories[0]["headline"], "Bern weighs a thing")
+        self.assertEqual(stories[0].get("anchor_sid"), "st-4ed5174aeff4")
+        self.assertEqual(stories[0]["url"], "https://www.srf.ch/news/x")
+
+    def test_anchored_bullet_terminates_a_preceding_h3_block(self):
+        md = (
+            "## Papers\n\n"
+            "### A paper title {#st-aaaaaaaaaaaa}\n"
+            "Paper body. ([abs](https://arxiv.org/abs/1))\n"
+            '- <a id="st-bbbbbbbbbbbb" class="st-a"></a>**A bullet after it.** '
+            "Bullet body. ([src](https://example.org/a))\n"
+        )
+        stories = self.mod.parse_post(md)
+        self.assertEqual([s["headline"] for s in stories],
+                         ["A paper title", "A bullet after it"])
+        self.assertEqual(stories[0].get("anchor_sid"), "st-aaaaaaaaaaaa")
+        self.assertEqual(stories[1].get("anchor_sid"), "st-bbbbbbbbbbbb")
+
+    def test_h3_kramdown_ial_stripped_from_headline_and_captured_as_sid(self):
+        md = (
+            "## Papers\n\n"
+            "### Coherent erbium control {#st-cccccccccccc}\n"
+            "Body. ([Nature](https://www.nature.com/articles/y))\n"
+        )
+        stories = self.mod.parse_post(md)
+        self.assertEqual(stories[0]["headline"], "Coherent erbium control")
+        self.assertNotIn("{#", stories[0]["headline"])
+        self.assertEqual(stories[0].get("anchor_sid"), "st-cccccccccccc")
+
+    def test_unanchored_posts_parse_exactly_as_before(self):
+        md = (
+            "## Switzerland\n\n"
+            "- **Plain bullet.** Body. ([SRF](https://www.srf.ch/news/z))\n"
+        )
+        stories = self.mod.parse_post(md)
+        self.assertEqual(len(stories), 1)
+        self.assertEqual(stories[0]["headline"], "Plain bullet")
+        self.assertIsNone(stories[0].get("anchor_sid"))

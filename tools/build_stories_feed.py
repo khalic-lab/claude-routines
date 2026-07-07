@@ -105,9 +105,15 @@ _KEYWORD_RULES = [
 ]
 _HEALTH_KW = ["vaccine", "hiv", "antibody", "cancer", "clinical", "disease", "primate", "immune", "bnab"]
 
-_BULLET_RE = re.compile(r"^-\s+\*\*(.+?)\*\*\.?\s*(.*)$")
+# Step C.25 (tools/store/anchor.py) rewrites bullets to '- <a id="st-…" class="st-a"></a>**…'
+# and appends '{#st-…}' kramdown IALs to ### headings BEFORE Step D parses the post — every
+# matcher here must read both the anchored and the bare form (2026-07-07 regression: both
+# editions published anchored and the feed harvested zero stories from them).
+_BULLET_RE = re.compile(r'^-\s+(?:<a id="(st-[0-9a-f]{12})" class="st-a"></a>\s*)?\*\*(.+?)\*\*\.?\s*(.*)$')
+_BULLET_START_RE = re.compile(r'^-\s+(?:<a id="st-[0-9a-f]{12}" class="st-a"></a>\s*)?\*\*')
 _H2_RE = re.compile(r"^##\s+(.*)$")
 _H3_RE = re.compile(r"^###\s+(.*)$")
+_H3_IAL_RE = re.compile(r"\s*\{#([^}]+)\}\s*$")
 _URL_RE = re.compile(r"https?://[^\s)\]]+")
 _TAG_RE = re.compile(r"`?\[(single-source|via snippet|preprint|disputed|vendor pr|ongoing since[^\]]*)\]`?", re.I)
 _META_ITALIC_RE = re.compile(r"\s*_[^_]*(?:announced|submitted|published|reported)[^_]*_\s*", re.I)
@@ -208,14 +214,15 @@ def parse_post(md):
     lines = md.splitlines()
     out, section, in_footer, i, n = [], "", False, 0, len(lines)
 
-    def emit(headline, paras):
+    def emit(headline, paras, anchor_sid=None):
         if headline.replace("*", "").rstrip().endswith(":"):
             return                                      # '**Datasets:** …' roundup label, not a story
         raw = " ".join(paras)
         urls = _URL_RE.findall(raw)
         out.append({"section": section, "headline": _strip_md(headline),
                     "body": _pick_body(paras), "why": _pick_why(paras),
-                    "url": urls[0] if urls else None, "raw": raw})
+                    "url": urls[0] if urls else None, "raw": raw,
+                    "anchor_sid": anchor_sid})
 
     while i < n:
         line = lines[i]
@@ -237,17 +244,20 @@ def parse_post(md):
                 nx = lines[j]
                 if _H2_RE.match(nx) or _H3_RE.match(nx) or nx.startswith("# "):
                     break
-                if nx.lstrip().startswith("- **"):
+                if _BULLET_START_RE.match(nx.lstrip()):
                     break
                 if nx.strip():
                     paras.append(nx.strip())
                 j += 1
-            emit(h3.group(1).strip(), paras)
+            head = h3.group(1).strip()
+            ial = _H3_IAL_RE.search(head)
+            h3_sid = ial.group(1) if ial and ial.group(1).startswith("st-") else None
+            emit(_H3_IAL_RE.sub("", head).strip(), paras, anchor_sid=h3_sid)
             i = j
             continue
         m = _BULLET_RE.match(line)
         if m:                                           # bullet-style story (news / ai-ml / weekend headlines)
-            paras, j = [m.group(2).strip()], i + 1
+            paras, j = [m.group(3).strip()], i + 1
             while j < n:
                 nxt = lines[j]
                 if nxt.startswith("#"):
@@ -265,7 +275,7 @@ def parse_post(md):
                 paras.append(nxt.strip())
                 j += 1
             if not _WHY_SECTION_RE.search(section):     # skip a why-it-matters roundup's bullets
-                emit(m.group(1).strip(), paras)
+                emit(m.group(2).strip(), paras, anchor_sid=m.group(1))
             i = j
             continue
         i += 1
@@ -414,7 +424,10 @@ def load_recent(days):
             body = _trim(im.get("display_body") or "") or s["body"]
             why = _trim(im.get("why") or "") or s["why"]
             stories.append({
-                "id": hid, "sid": _safe_story_id(s["url"]),
+                # the post's embedded anchor id is authoritative (anchor.py keyed it on the
+                # RECORDED story url via --index); recompute from the first link only for
+                # pre-anchor posts
+                "id": hid, "sid": s.get("anchor_sid") or _safe_story_id(s["url"]),
                 "headline": s["headline"], "summary": body, "why": why,
                 "url": s["url"], "source_domain": source_domain(s["url"]),
                 "date": date, "date_label": date_label(date),

@@ -104,7 +104,8 @@ _CACHE_PATH = os.path.join(tempfile.gettempdir(), "dedup-embcache.json")
 # Daily-stream slugs we treat as briefs (mirrors _posts naming).
 KNOWN_SLUGS = ("news", "ai-ml", "science", "weekend", "evaluator")
 _FILENAME_RE = re.compile(r"(\d{4}-\d{2}-\d{2})-(.+)\.(?:md|jsonl)$")
-_BULLET_RE = re.compile(r"^-\s+\*\*(.+?)\*\*\.?\s*(.*)$")
+# tolerate the Step C.25 anchor (anchor.py inserts '- <a id="st-…" class="st-a"></a>**…')
+_BULLET_RE = re.compile(r'^-\s+(?:<a id="st-[0-9a-f]{12}" class="st-a"></a>\s*)?\*\*(.+?)\*\*\.?\s*(.*)$')
 _URL_RE = re.compile(r"\]\((https?://[^)]+)\)")
 
 
