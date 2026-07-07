@@ -568,6 +568,35 @@ class MetricsGracefulDegradationTest(unittest.TestCase):
         self.assertEqual(self.health_empty["week"], {"start": "2026-06-30", "end": "2026-07-06"})
 
 
+class MetricsBadTimestampDegradationTest(unittest.TestCase):
+    """FINDING 2: a publish event carrying an empty/garbage ts must not abort the whole
+    metrics run -- _parse_dt's strptime call is the crash site (SPIKE §4 failure-semantics:
+    'a tool crash degrades ... never abort'). The fixture's bad-ts occurrence is treated as
+    non-repeat/skipped; the well-formed occurrence alongside it must still be counted."""
+
+    def setUp(self):
+        self.root = _mktemp_copy("bad_ts")
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+
+    def test_publish_event_with_empty_ts_does_not_crash_metrics(self):
+        """The bad-ts occurrence can't be dated at all, so build_streams's window check
+        (`window_start <= _date_of(ts) <= window_end`) correctly excludes it -- an empty ts
+        sorts before any real date -- rather than crashing the run. The well-formed
+        occurrence alongside it must still be counted."""
+        proc, health = _run_and_load(self.root, ["--week", "2026-07-06"])
+        _assert_clean_run(self, proc, health, self.root)
+        self.assertEqual(health["streams"]["news"]["citations"], 1)
+        self.assertEqual(health["streams"]["news"]["anchors"], 1)
+
+    def test_publish_event_with_empty_ts_is_not_flagged_a_repeat(self):
+        proc, health = _run_and_load(self.root, ["--week", "2026-07-06"])
+        _assert_clean_run(self, proc, health, self.root)
+        # Neither occurrence has an earlier same-thread ledger entry, and the bad-ts one is
+        # unparseable, so both must degrade to non-repeat rather than raising.
+        self.assertEqual(health["streams"]["news"]["repeats"], 0)
+        self.assertAlmostEqual(health["streams"]["news"]["repeat_rate"], 0.0, places=4)
+
+
 class MetricsDeterminismTest(unittest.TestCase):
     """Two independent runs against the same untouched fixture root must
     produce byte-identical output (test-infrastructure requirement +

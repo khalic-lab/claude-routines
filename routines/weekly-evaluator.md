@@ -8,7 +8,16 @@ git pull --ff-only origin main
 
 Briefs now live in this repo at `_posts/{YYYY-MM-DD}-{slug}.md` where slug is one of: `news`, `ai-ml`, `science`, `weekend`, `evaluator`. No Drive reads anywhere in this prompt.
 
-# Pipeline-cold precheck (run BEFORE anything else)
+# Fire-start: compute the mechanical state (run FIRST, in this order)
+
+```bash
+python3 tools/sources/health.py      # writes + prints _data/source-health.json
+python3 tools/evaluator/metrics.py   # writes + prints _data/health.json (embeds source-health verbatim)
+```
+
+`health.py` must run before `metrics.py` (metrics copies `_data/source-health.json` into `health.json` under `sources`). These two files ARE your mechanical dimensions — per-stream citations/anchors/repeat rates, feedback tallies, source diversity/saturation/waiver numbers, and your own continuity. **Do not hand-count anything they already report**; read the numbers and spend your word budget on the editorial judgment they cannot compute. If either script crashes, note it in the review, degrade to reading the briefs directly for that dimension, and continue — never abort the review.
+
+# Pipeline-cold precheck (run BEFORE the analysis)
 
 1. Use Glob (or `ls _posts/`) to enumerate files in `_posts/` whose dates fall in [today-6, today]. Count distinct (slug, date) pairs that have a file.
 2. Also locate the most recent `_posts/*-weekend.md` (any date).
@@ -44,7 +53,7 @@ Mechanical analysis of the past 7 days of briefs across the current stream lineu
 
 **Stream cadence (new as of 2026-06-29; News moved to midday 2026-07-03):** News fires daily (every day, midday); AI/ML fires twice a week (Tuesday & Friday midday); Science fires once a week (Wednesday afternoon); Weekend fires once a week (Saturday). This means the evaluator should expect up to 7 News briefs, ~2 AI/ML briefs, ~1 Science brief, and 1 Weekend brief in any 7-day window. AI/ML appearing only twice and Science appearing only once is the **expected cadence, not a failure** — Section D (vitality) and the cold-precheck must not penalize it.
 
-A major axis of evaluation in this version is the **feed-first source-quality recovery**: the writers were re-pointed at machine-readable RSS/JSON feeds (arXiv, Quanta, Nature, bioRxiv/medRxiv, SRF, Le Temps, Al Jazeera, Semantic Scholar, etc.) to bypass the HTTP 403 wall on HTML pages. Recent observations show that WebFetch in the routine sandbox has been returning 403 on those feeds even though they're public, so writers were further patched to try Bash{curl} BEFORE WebFetch. The Coverage footer of each brief now reports `Direct fetches: N | via-snippet citations: M` and a `Feeds hit` line distinguishing `{ok via curl}` / `{ok via WebFetch}` / `{fail — HTTP NNN}`. Track this aggressively — it's the binding-constraint metric for actual brief quality.
+A major axis of evaluation in this version is the **discovery recovery**: the writers now build their source plan from `sources/registry.yml` via `python3 tools/sources/preflight.py --slug {slug}` (their prompts carry no feed tables and no "confirmed unavailable" lists anymore), may cite a genuinely new primary source immediately when tagged `[new source]`, and end every brief with exactly one `- Discovery: met (…)` or `- Discovery: waived — <concrete reason>` footer line (lint-checked at DEDUP Step C.25, report-only for now). The mechanical numbers for all of this arrive computed in `_data/source-health.json` / `_data/health.json`; your job is to judge WHY a stream lags its targets and what to do about it — not to recount.
 
 # Inputs to read from git
 
@@ -58,43 +67,32 @@ Up to ~10 distinct (slug, date) reads in the typical week. Today's may be partia
 
 Plus:
 5. **Most recent weekend brief**: glob `_posts/*-weekend.md`, sort, read the latest.
-6. **Previous review**: `_posts/{date-7-days-ago}-evaluator.md` if it exists — for cross-week trend tracking.
-7. **Reader feedback**: every `feedback/*.jsonl` record whose `ts` falls in the window [today-6, today] (one JSON object per line: a thumb +1/-1/0 plus an optional free-text `reason`, captured by the reader on the published briefs). **Apply last-write-wins per (brief, story_id, surface) before counting**: the log is append-only, so a later record supersedes an earlier one from the same reader on the same story — and `vote: 0` is an explicit retraction (the reader un-toggled), cancelling their prior vote entirely. Focus on `consumed: false` records. Each record carries a `brief` (post slug), a `story_id`, and a `surface` (`"web"` = a brief page, `"home"` = the front-page story grid, `"cli"` = the terminal bridge). Segment by surface when counting — a drive-by front-page thumb and a considered brief-page thumb are different signals, and the same story can collect one of each (don't count them as two independent reader verdicts). `story_id: null` = brief-level feedback (the whole brief). A non-null `story_id` is **per-story**, formed as `{brief}-{slugify(headline)}` where slugify = lowercase, then replace each maximal run of characters outside [a-z0-9] with a single `-`, strip leading/trailing `-`, take the first 48 characters, then strip any trailing `-` (fallback `story` if empty). To identify which story a per-story record refers to, open `_posts/{brief}.md` and find the story whose **headline** slugifies to the part of `story_id` after `{brief}-` — that headline is the bullet's **bold lead** (`- **…**`) for news/ai-ml/weekend-headline stories, or the **`### heading`** for science/weekend paper writeups (homepage cards exist for both shapes; brief pages only decorate the bullets). That story's link gives the source domain. A per-story 👎 is a sharper signal than a brief-level one — attribute it to that specific story/source when proposing `source-weights.yml` changes.
+6. **Previous review (self-continuity)**: take it from `_data/health.json` → `continuity.previous_evaluator_path` — the most recent prior evaluator post, however long ago, script-computed — plus your own prior events in `index/ledger/` when present. Never re-derive "the post from exactly 7 days ago" by date arithmetic; that brittle offset broke continuity on 2 of 9 past runs.
+7. **Reader feedback — the ledger's folded state.** Feedback is folded continuously by the bridge (`tools/feedback/fold.py`): each vote lands as an `ev:"feedback"` event in `index/ledger/*.jsonl`, keyed to a durable story id (`st-…`), with last-write-wins per story and `vote: 0` an explicit retraction; fold.py marks the raw `feedback/*.jsonl` record `consumed: true` at fold time. **The old 7-day-window arithmetic over `feedback/*.jsonl` is RETIRED** — do not recount raw records, and do not set `consumed` flags yourself (fold.py owns consumption). Read the window's tallies from `health.json` → `feedback.by_stream` (raw up/down/retractions per stream); for per-story attribution read the ledger's `ev:"feedback"` events directly (each carries the story id, `brief`, `vote`, and optional `reason`) and resolve ids to headline/url/source_domain via `python3 tools/store/store.py materialize` (or the story's own `seen`/`publish` events). One bookkeeping check remains yours: if `health.json` → `feedback.unconsumed_total` > 0, the bridge fold is lagging or broken — flag it as a pipeline defect.
 8. **Reader profile (current state)**: `reader-profile.md` and `reader-profile/source-weights.yml` — the human-gated files the writers read at compose time. You PROPOSE edits to these (see Patch proposals); you never silently rewrite them.
-9. **Reader brief-proposals**: every `proposals/*.jsonl` record in the window (readers suggesting topics via the front page's "Propose a brief" form; the directory may not exist yet — skip silently if absent). Surface `consumed: false` proposals verbatim in your review email so Rafael sees them; if one maps cleanly onto an existing stream, fold it into a patch proposal. Mark folded/surfaced records `consumed: true` the same way as feedback records.
+9. **Reader brief-proposals**: every `proposals/*.jsonl` record in the window (readers suggesting topics via the front page's "Propose a brief" form; the directory may not exist yet — skip silently if absent). Surface `consumed: false` proposals verbatim in your review email so Rafael sees them; if one maps cleanly onto an existing stream, fold it into a patch proposal. Mark folded/surfaced records `consumed: true` in their `proposals/*.jsonl` file and commit with the review — this consumption bookkeeping is still yours (fold.py owns only feedback).
 10. **Homepage tagging quality**: `_data/homefeed.json` — the front-page story feed. Spot-check ~5 stories: do `topics` and `importance` match the tagging rubric the writers were given (newsroom-ethos: beat from the controlled set, importance 1–3 on real significance)? While writers aren't yet recording `topics`/`importance` in DEDUP Step C, tags are keyword/position-derived — judge those only for egregious misfiles (a war story under Security, a Swiss story under World). Once writer tags flow, flag rubric drift like any other quality regression.
 
 If files are missing, note which and continue. Don't fail.
 
 When computing metrics, segment by stream.
 
-# Reference: feed-first architecture (writers, for context)
+# Reference: registry architecture (writers, for context)
 
-The writer routines were patched to prefer machine-readable feeds over HTML scraping, AND to try Bash{curl} before WebFetch since WebFetch in the sandbox often 403s on public feeds.
+Writers carry no feed tables and no "confirmed unavailable" lists in their prompts anymore. Their FIRST research action is `python3 tools/sources/preflight.py --slug {slug}`; the plan it prints from `sources/registry.yml` (fetch list, pressure notes, discovery quota + `candidates_to_try`) is the authority on what they fetch. Reachability truth is the registry's `reach:` field (`direct` | `proxy` | `search-only` | `blocked` | `blocked-paywall`), maintained by deterministic probes — never a prompt list. Novel primary sources may be cited immediately when tagged `[new source]` (the tag auto-enters the domain in `sources/candidates.jsonl` as a `candidate`); caps (max 2 stories per outlet domain per edition, hubs exempt, institutional at a 30% bar) and discovery quotas (news ≥1, ai-ml ≥1 non-hub, science ≥2, weekend ≥2) ship **report-only** until Rafael arms them. Trust-bearing lifecycle transitions (`candidate` → `probation` → `established`, or `demoted`/`retired`) go through YOUR proposals and Rafael's apply step — nothing else writes `sources/registry.yml`.
 
-**Verified-reachable feeds (current lineup, used by writers):**
-- arXiv RSS per category and Atom API
-- Quanta RSS, Nature RSS (nature.rss, nphys.rss, natastron.rss, nm.rss)
-- bioRxiv/medRxiv JSON, Science.org (Science edition)
-- Al Jazeera RSS, SRF DE RSS, Le Temps FR RSS, Semantic Scholar API
-
-**Dropped feeds (security + markets pipeline removed 2026-06-18/2026-06-29):** NVD CVEs JSON 2.0, CISA KEV JSON, ECB FX XML — writers must not reference these.
-
-**Confirmed unavailable (writers told to skip):** RTS.ch, NZZ, FAZ, Spiegel, swissinfo.ch, Reuters, Yahoo Finance, HuggingFace papers, Le Monde RSS, NCSC.ch RSS.
-
-Use this list to evaluate dimension K below, and to flag if writers are still citing confirmed-unavailable domains.
+**Dropped feeds (security + markets pipeline removed 2026-06-18/2026-06-29):** NVD CVEs JSON 2.0, CISA KEV JSON, ECB FX XML — writers must not reference these; the bootstrap registry deliberately excludes those domains.
 
 # Analysis dimensions
 
 For each, compute a metric and flag if outside healthy range.
 
-## A. Source diversity
-- Total unique domains cited across all briefs: count.
-- Top 10 domains by citation count: list with counts.
-- Concentration: did any single domain account for >15% of citations? Flag.
-- Tier distribution: % T1 / % T2 / % T3. Healthy: T3 should be 0% (per policy). T1 should be ≥40%.
-- Linguistic: % of citations to non-English sources, aggregated across all daily streams. Healthy: ≥10% portfolio-wide.
-- Geographic: count distinct country-of-origin domains for news sections.
+## A. Source diversity & discovery (computed — read, don't recount)
+Per stream from `_data/source-health.json` (also embedded verbatim in `health.json` → `sources`): `stories`, `unique_domains`, `new_domains`, `top5_share` (outlet-class only — hubs and institutional excluded), `saturated` (domains over their bar), `waiver_rate`, `candidates_open`. Targets (SPIKE §3.4): top-5 outlet share ≤0.50 now / ≤0.35 steady; unique domains ≥30 per 30d; new domains ≥10/month (≈2–3/week); waiver rate ≤50%. Your judgment work:
+- Name which streams lag which target and WHY (read their Gaps + Discovery footer lines — is discovery being waived honestly, or not attempted?).
+- Turn deficits into scout targets (Sunday duty below) or patch proposals.
+- Tier distribution: % T1 / % T2 / % T3 remains your read from the briefs. Healthy: T3 = 0% (per policy), T1 ≥40%.
+- Linguistic: % non-English citations, portfolio-wide. Healthy: ≥10%. Geographic: distinct country-of-origin domains for news sections.
 
 ## B. Aggregator leakage (critical violation)
 - Search all briefs for citations to: news.ycombinator.com, lobste.rs, reddit.com, twitter.com, x.com, mastodon.social, threads.net, bsky.app.
@@ -120,16 +118,17 @@ Count items tagged `[single-source]` vs total. Healthy: <20% portfolio-wide; <25
 - `[preprint]` on arXiv items? Sample 5, verify.
 - `[vendor PR]` on vendor announcements? Sample 5.
 - `[disputed]` ever used appropriately? (Just count.)
+- `[new source]` — the Step C.25 lint recomputes tag integrity deterministically, so don't re-derive novelty; read the week's new `sources/candidates.jsonl` entries and spot-check 2: is the tagged domain a genuine primary source, or a junk anchor? Junk anchors are the failure mode to catch early.
 - `[via snippet]` — count and report by stream. With curl-first feeds, via-snippet rates should be **dropping**; rising or flat-high rates by stream means feeds are failing in that stream's sandbox. Flag.
 
 ## H. Topic balance (weekend brief only)
 Read the weekend brief's ML papers and Fundamental science papers sections. Count actual % allocation across stated bias targets. Flag deviations >10 percentage points from target.
 
-## I. Repetition detection
-Same story covered N days in a row without development? Sample by clustering similar headlines across consecutive days.
+## I. Repetition detection (computed — read, don't recount)
+`health.json` → `streams.<slug>.repeats` / `repeat_rate` (a 14-day story-id/thread-id lookback over the ledger). Don't re-cluster headlines by hand. Judgment work: for flagged repeats, check whether the re-run carried a genuinely new, dated fact (`[ongoing since]` discipline) or was a re-summary — the latter is the defect.
 
 ## J. Cross-week trend (if previous review exists)
-- Source diversity, T3 leakage count, aggregator citations, section vitality, via-snippet rate, direct-fetch rate trends.
+- Source diversity (unique/new domains, top5_share, waiver rate — from successive source-health snapshots), T3 leakage count, aggregator citations, section vitality, via-snippet rate, direct-fetch rate trends.
 
 ## K. Feed reachability and direct-fetch rate (binding-constraint metric)
 
@@ -147,7 +146,7 @@ If any brief includes a `Feeds hit` line with feed-level ok/fail flags AND metho
 - **Method comparison:** if curl succeeded substantially more often than WebFetch on the same feed, that confirms the curl-first patch is doing its job. If curl ALSO mostly failed, the egress proxy is the wall — escalate (probe routine, alternative feed source).
 
 **Domains-that-shouldn't-be-cited check:**
-Scan all citations for any domain in the writers' "Confirmed unavailable" list. Citations to those domains can ONLY be `[via snippet]`. If they appear without `[via snippet]`, flag.
+Scan all citations against the registry (`sources/registry.yml`) and `reader-profile/source-weights.yml`: a domain with `reach: blocked` / `blocked-paywall` can ONLY appear `[via snippet]`; a `never:` domain must not appear at all; a `retired`/`demoted` domain appearing as a primary anchor deserves a flag. (The prompt-side "Confirmed unavailable" lists are retired — the registry is the truth.)
 
 **Healthy ranges (post-feed-rollout):**
 - News direct-fetch ratio ≥ 0.30 (SRF/Le Temps/Al Jazeera RSS via curl)
@@ -159,6 +158,18 @@ Flag streams below their range. The patch proposal is usually: add a feed source
 
 ## L. Output volume (token-cost proxy)
 Parse each Coverage footer's `Word count: N` line (added 2026-06-22; if absent, mark `pre-rollout`). Per stream: report the mean word count for the week and the trend vs the previous review. Flag any stream whose mean grew >25% week-over-week with no matching rise in story count (Opus output tokens scale with words — this is the spend proxy until real token accounting exists). Cross-reference §I repetition: a stream that is both repetitive and long is the prime candidate for the output-cap / quiet-day levers (see docs/SPIKE-writer-token-levers.md).
+
+# Sunday source-scout duty (bounded — run AFTER the analysis, BEFORE the Output steps)
+
+A bounded discovery pass that feeds the registry with vetted candidates. **Hard budget: ≤20 candidate fetches total across this whole section** (WebFetch or direct `curl` — count them, report the count in the review; when the budget is spent, stop). **This routine holds no fetch-proxy bearer by design — never call the fetch-proxy.** When a candidate looks genuinely primary but blocks direct fetch (403/anti-bot), do NOT drop it: append it to `sources/candidates.jsonl` anyway with `"reach": "proxy-needed"` in the JSON object — the writers, who do hold the bearer, vet it at first citation and lint/registry bookkeeping takes it from there.
+
+1. **Pick the worst-deficit stream** from `_data/source-health.json`: lowest `new_domains`, tie-broken by highest `top5_share`, then lowest `candidates_open`.
+2. **Vet primary-source candidates for that stream** (most of the budget): hunt for genuine primary outlets the stream's registry affinity lacks — institutional newsrooms, journals, lab blogs, quality regional outlets; NOT aggregators. For each candidate confirm: it publishes primary material, it is reachable (direct or via proxy), and note its feed URL if it has one. Append each vetted candidate to `sources/candidates.jsonl` (append-only — never rewrite existing lines), one JSON object per line:
+   `{"domain": "<host, no www>", "first_seen": "{YYYY-MM-DD}", "via": "scout", "stream": "<slug>", "url": "<the vetted page or feed URL>"}`
+3. **Re-probe 5 stale `reach:` entries** (inside the same budget): the 5 registry domains whose reach information is oldest (use each entry's `lifecycle:` audit trail; undated = oldest). Direct curl only; a 403 on a domain recorded `reach: direct` is itself the finding (propose the flip to `proxy` — the writers confirm with their bearer at next citation). Where the outcome contradicts the recorded `reach:`, record the flip as a patch entry.
+4. **Registry changes are proposals only:** reach flips and promotion recommendations go into `proposals/registry-{YYYY-MM-DD}.yml` (above). You never edit `sources/registry.yml` yourself.
+
+Summarize the scout outcome in the review (stream picked, candidates appended, re-probe results, fetches used). If `source-health.json` is unavailable, skip the scout and note why.
 
 # Output structure
 
@@ -172,7 +183,11 @@ _Files read: N news, N AI/ML (expect ~2), N science (expect ~1), 1 weekend, prio
 
 | Metric                          | Value | Target | Status |
 |---------------------------------|-------|--------|--------|
-| Unique domains cited            |       | ≥40    | 🟢🟡🔴 |
+| Unique domains 30d (worst stream, source-health) | | ≥30 | 🟢🟡🔴 |
+| New domains this window (portfolio, source-health) | | ≥2–3/wk (≥10/mo) | 🟢🟡🔴 |
+| Top-5 outlet share (worst stream, source-health) | | ≤0.50 (→0.35) | 🟢🟡🔴 |
+| Waiver rate (worst stream, source-health) |  | ≤50%   | 🟢🟡🔴 |
+| Discovery footer present (every brief) |   | 100%   | 🟢🟡🔴 |
 | T1 citation %                   |       | ≥40%   | 🟢🟡🔴 |
 | T3 leakage count                |       | 0      | 🟢🟡🔴 |
 | Non-English citation % (portfolio) |    | ≥10%   | 🟢🟡🔴 |
@@ -180,17 +195,23 @@ _Files read: N news, N AI/ML (expect ~2), N science (expect ~1), 1 weekend, prio
 | Fabrication count               |       | 0      | 🟢🟡🔴 |
 | Single-source rate (portfolio)  |       | <20%   | 🟢🟡🔴 |
 | Empty section instances         |       | <5     | 🟢🟡🔴 |
+| Repeat rate (worst stream, health.json) |  | judge  | 🟢🟡🔴 |
 | Direct-fetch ratio (portfolio)  |       | ≥0.35  | 🟢🟡🔴 |
-| Direct-fetch ratio (News)       |       | ≥0.30  | 🟢🟡🔴 |
-| Direct-fetch ratio (AI/ML)      |       | ≥0.40  | 🟢🟡🔴 |
-| Direct-fetch ratio (Science)    |       | ≥0.30  | 🟢🟡🔴 |
 | Feeds with >50% fail rate       |       | 0      | 🟢🟡🔴 |
-| Citations to confirmed-blocked domains without [via snippet] | | 0 | 🟢🟡🔴 |
-| curl vs WebFetch advantage on feeds | | curl wins | 🟢🟡🔴 |
+| Citations on `reach: blocked` domains without [via snippet] | | 0 | 🟢🟡🔴 |
+| Unconsumed feedback backlog (health.json) | | 0     | 🟢🟡🔴 |
 
-## A–K: Detailed findings
+## A–L: Detailed findings
 
-[For each dimension, write the metric, the data, and any flags. Be specific — name the brief filename and section for any issue.]
+[For each dimension, write the metric, the data, and any flags. Be specific — name the brief filename and section for any issue. For the computed dimensions (A, I, feedback), cite the health.json / source-health.json numbers rather than recounting.]
+
+## Prior proposals status
+
+[From last week's `proposals/*` files: each proposal, whether Rafael stamped it `applied: true`, and — if stamped — whether the target file verifiably changed. Unstamped = "pending, not applied". Omit the section if no prior files exist.]
+
+## Source scout (Sunday duty)
+
+[Stream picked and why (the deficit numbers), candidates appended to sources/candidates.jsonl, re-probe outcomes, proxy fetches used (≤20). Or the one-line skip reason.]
 
 ## Patch proposals (for human review)
 
@@ -215,18 +236,42 @@ For each issue identified, propose ONE specific edit to ONE specific prompt. For
 **Why this helps:** [1 sentence]
 **Risk:** [what could go wrong if applied]
 
-[Don't propose more than 5 patches. Prioritize by severity — dimension K issues outrank stylistic ones.]
+[Don't propose more than 5 patches. Prioritize by severity — dimension A (discovery) and K (reachability) issues outrank stylistic ones.]
 
 ## Reader-feedback → profile proposals (separate from the ≤5 prompt patches above)
 
-Synthesize the window's reader feedback (the `feedback/*.jsonl` records with `consumed: false`):
-- A single tap is noise — look for a repeated theme (e.g. ≥2 👎 on the same section or source, or a `reason` that recurs) and quote the reasons verbatim.
+Synthesize the window's reader feedback from the ledger's folded state (input 7 — the `ev:"feedback"` events and `health.json` tallies, NOT the raw `feedback/*.jsonl`):
+- **Noise filter: a theme needs ≥2 signals on DISTINCT stories.** A single tap is noise, and so is one person double-tapping the same story — two votes on one story are one signal. Look for the same source, section, or recurring `reason` across ≥2 different stories, and quote the reasons verbatim.
 - Propose concrete, human-gated edits (do NOT apply them yourself), each as a Before/After block like the patches above:
   - to `reader-profile.md` — a dated line under its "Learned preferences" section, e.g. `- {today}: less SpaceX launch detail on weekends (3× 👎, "too long").`
   - to `reader-profile/source-weights.yml` — a domain for `reduce:` (low-signal / aggregator-heavy / PR-lead) or, ONLY for sources that repeatedly mislead, `never:`. Name the domain and the feedback that justifies it.
-- The writers read these two files, so editing them changes the briefs — that is exactly why ONLY Rafael applies them. Your job is to propose, not to apply.
-- Bookkeeping you MAY do: after folding a record into a proposal above, set that record's `consumed: true` in its `feedback/*.jsonl` file and commit it with the review (so it isn't re-proposed next week). Never edit `reader-profile.md` / `reader-profile/source-weights.yml` directly — those move only when Rafael applies a proposal.
+- The writers read these two files, so editing them changes the briefs — that is exactly why ONLY Rafael applies them. Your job is to propose, not to apply. Never edit `reader-profile.md` / `reader-profile/source-weights.yml` / `sources/registry.yml` directly. (No `consumed: true` bookkeeping either — the bridge's fold.py owns consumption now.)
 - If there is no feedback in the window, write "No reader feedback this week." and propose nothing here.
+
+## Machine-readable proposals (write BOTH files whenever you propose anything)
+
+Every proposal above is also emitted machine-readable, so Rafael's apply step can stamp it and next week's run can verify it:
+
+1. `proposals/reader-model-{YYYY-MM-DD}.json` — the reader-profile / source-weights / prompt-patch proposals:
+   ```json
+   {"date": "{YYYY-MM-DD}", "proposals": [
+     {"id": "rm-1", "target": "reader-profile.md | reader-profile/source-weights.yml | routines/src/<slug>.md",
+      "action": "<the exact one-line edit proposed>", "evidence": "<the signals justifying it, reasons verbatim>",
+      "applied": false}
+   ]}
+   ```
+2. `proposals/registry-{YYYY-MM-DD}.yml` — proposed `sources/registry.yml` patches (lifecycle transitions, reach flips from the Sunday re-probes, candidate promotions):
+   ```yaml
+   date: {YYYY-MM-DD}
+   applied: false
+   patches:
+     - domain: example.com
+       from: probation
+       to: established
+       evidence: ">=3 anchored citations across >=2 editions, >=14 days, zero source-quality downvotes"
+   ```
+
+**`applied: true` stamp protocol:** you always write `applied: false`. Rafael's apply step is the ONLY thing that flips it to `applied: true` when a proposal lands. Every run, read the PREVIOUS week's `proposals/*` files first: a stamped proposal → spot-check the target file actually changed (the loop's verification step — report "applied and verified" or "stamped but not landed"); an unstamped one → list it as **pending, not applied** in the review (do not silently re-propose it as if new). Skip both files (and this check's flags) if you proposed nothing and last week's files don't exist.
 
 ## Cross-week trend (if applicable)
 
@@ -239,7 +284,7 @@ Synthesize the window's reader feedback (the `feedback/*.jsonl` records with `co
 - Don't propose patches that conflict with the sourcing charter.
 - If everything is healthy, say so and propose nothing.
 - Length: 1500–4000 words.
-- Dimension K is the primary lens this week.
+- Discovery recovery (dimension A's computed numbers vs the §3.4 targets) is the primary lens until those targets hold; spend the budget the scripts freed on editorial judgment, not recounting.
 
 # Output: write the review to git + drop a notification stub + email digest
 
@@ -276,7 +321,7 @@ Use the Write tool to create `pending-notifications/{TIMESTAMP}-evaluator.json` 
 ```
 
 `{teaser}` rules: ≤200 chars.
-- For full runs: headline finding (e.g. "3 streams below direct-fetch target — feed sweep needed" or "All metrics green; curl-first delivering").
+- For full runs: headline finding (e.g. "2 streams lag discovery targets — scout vetted 3 candidates" or "All metrics green; registry flow delivering").
 - For cold runs: "Pipeline cold — no inputs in 7-day window."
 Escape any `"` inside the teaser as `\"`.
 
@@ -285,7 +330,8 @@ Escape any `"` inside the teaser as `\"`.
 Via Bash:
 
 ```bash
-git add _posts/ pending-notifications/ feedback/
+git add _posts/ pending-notifications/ _data/
+git add proposals/ sources/ 2>/dev/null || true
 git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "Weekly Pipeline Review — {YYYY-MM-DD}"
 git push origin main || (git pull --rebase origin main && git push origin main)
 ```
@@ -302,8 +348,9 @@ Note: the Gmail MCP surface is `create_draft` only — there is no send tool.
 - **Subject:** "Weekly Pipeline Review — {YYYY-MM-DD}"
 - **Body:**
   1. The Health Summary table verbatim (markdown).
-  2. Patch proposals — for each, just the title + the 1–2 sentence Issue (NOT the full diff; that's in the git review).
-  3. Open questions list verbatim if any.
-  4. End with: `Full review: {POST_URL}`
+  2. Patch proposals — for each, just the title + the 1–2 sentence Issue (NOT the full diff; that's in the git review). Note that the machine-readable copies await the apply step in `proposals/`.
+  3. Prior proposals status — one line per pending (unstamped) proposal from last week, if any.
+  4. Open questions list verbatim if any.
+  5. End with: `Full review: {POST_URL}`
 - If the review concludes "everything healthy, no patches needed", say that explicitly in the email and still link the review.
 - If `create_draft` fails, retry once. If still failing, append `email draft creation failed: <reason>` to the review file in git but don't fail the run.
