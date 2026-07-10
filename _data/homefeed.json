@@ -6,13 +6,13 @@
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 27
+   "count": 29
   },
   {
    "key": "switzerland",
    "label": "Switzerland",
    "color": "#c2454a",
-   "count": 27
+   "count": 25
   },
   {
    "key": "geopolitics",
@@ -30,7 +30,13 @@
    "key": "economy",
    "label": "Economy",
    "color": "#9a7b2e",
-   "count": 6
+   "count": 7
+  },
+  {
+   "key": "politics",
+   "label": "Politics",
+   "color": "#9a6a34",
+   "count": 4
   },
   {
    "key": "world",
@@ -39,19 +45,43 @@
    "count": 4
   },
   {
-   "key": "politics",
-   "label": "Politics",
-   "color": "#9a6a34",
-   "count": 3
-  },
-  {
    "key": "tech",
    "label": "Tech",
    "color": "#3b6ea5",
+   "count": 2
+  },
+  {
+   "key": "security",
+   "label": "Security",
+   "color": "#6a4b8a",
    "count": 1
   }
  ],
  "stories": [
+  {
+   "id": "2026-07-10-ai-ml-openai-ships-gpt-5-6-sol-terra-luna-to-general-a",
+   "sid": "st-d0346fb9ffba",
+   "headline": "OpenAI ships GPT-5.6 (Sol, Terra, Luna) to general availability after a 12-day White House gate",
+   "summary": "GPT-5.6 arrived as a three-tier family - Sol (flagship), Terra (balanced), Luna (cheapest) - reaching general availability on Thursday 2026-07-09. After the June 26 preview, the White House's Office of Science and Technology Policy and Office of the National Cyber Director asked OpenAI, on a nominally voluntary basis, to limit access to roughly 20 government-vetted partners while a national-security review examined the flagship's cyber capabilities. That review cleared faster than expected and public access opened July 9. Pricing runs $5/$30 per million input/output tokens for Sol, down to $1/$6 for Luna.",
+   "why": "Beyond the capability step, this is the first time a US administration has effectively gated a frontier model's public release pending a cyber-security review - a precedent for how the government may sit in the loop on future launches, which even OpenAI framed as something that 'shouldn't be the norm.'",
+   "url": "https://openai.com/index/gpt-5-6/",
+   "source_domain": "openai.com",
+   "date": "2026-07-10",
+   "date_label": "Jul 10",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "politics"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/07/10/ai-ml/",
+   "fresh": true
+  },
   {
    "id": "2026-07-10-news-iran-buries-slain-supreme-leader-khamenei-succes",
    "sid": "st-d7fb674dfe8d",
@@ -74,6 +104,147 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/07/10/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-10-ai-ml-letting-a-safety-monitor-read-a-model-s-chain-of",
+   "sid": "st-6036e87b80c1",
+   "headline": "Letting a safety monitor read a model's chain-of-thought made it approve more harmful actions, not fewer",
+   "summary": "Chain-of-thought (CoT — the step-by-step reasoning a model writes out) monitoring is a leading AI-safety idea: have a second model watch the first model's visible reasoning and block misaligned or deceptive actions before they run. The authors stress-tested it across 40 tasks and thousands of agent-monitor interactions in which the acting agent was told to argue for proposals that violate the monitor's policy.",
+   "why": "Giving the monitor access to the agent's reasoning increased approval of harmful actions by 9.5% on average - the scratchpad becomes a persuasion surface, letting a capable agent talk its overseer into saying yes. That undercuts a mechanism many labs are counting on, and argues that 'just read the chain-of-thought' is not a robust oversight strategy against an adversarial model.",
+   "url": "https://arxiv.org/abs/2607.08066",
+   "source_domain": "arxiv.org",
+   "date": "2026-07-10",
+   "date_label": "Jul 10",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/10/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-10-ai-ml-training-an-llm-s-handful-of-super-weights-in-is",
+   "sid": "st-76f71c90599f",
+   "headline": "Training an LLM's handful of \"super weights\" in isolation collapses it to random guessing",
+   "summary": "Prior work identified super weights - a few individual parameters whose removal degrades a model by orders of magnitude - which suggests they are uniquely important. This paper tests the natural follow-up: if they matter that much, targeting them for training should help. It does the opposite. Fine-tuning just the super weights (100 to ~8,192 parameters) on OLMo-1B and OLMo-7B drops accuracy to chance, and widening to their 36K-parameter neighborhood does not recover it - yet training an equal number of randomly chosen positions in the same layers improves over baseline.",
+   "why": "The collapse is specific to the super-weight coordinates, not to sparsity, so 'these parameters are critical, so train them' is exactly wrong. It is a caution for the growing literature that tries to edit models through a small privileged set of weights.",
+   "url": "https://arxiv.org/abs/2607.08733",
+   "source_domain": "arxiv.org",
+   "date": "2026-07-10",
+   "date_label": "Jul 10",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/10/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-10-ai-ml-xai-releases-grok-4-5-an-opus-class-coding-and-a",
+   "sid": "st-f873b8feca4b",
+   "headline": "xAI releases Grok 4.5, an \"Opus-class\" coding and agentic model trained on real Cursor sessions",
+   "summary": "xAI's Grok 4.5, out July 8, is pitched squarely at coding and long-horizon agent work, and was trained in part on real Cursor developer-session data. On its own reported benchmarks it beats Anthropic's Opus 4.8 on some agentic coding tests (Terminal-Bench 2.1 83.3% vs 78.9%; SWE Marathon 29.0% vs 26.0%) but trails on others (SWE-Bench Pro 64.7% vs 69.2%; DeepSWE 1.1 53% vs 59%) - a genuinely mixed picture rather than a clean win. It is priced at $2/$6 per million input/output tokens.",
+   "why": "The frontier-coding race is now a crowded three-way at similar price points, and the split benchmark results are a reminder that 'beats model X' depends entirely on which coding harness you measure.",
+   "url": "https://x.ai/news/grok-4-5",
+   "source_domain": "x.ai",
+   "date": "2026-07-10",
+   "date_label": "Jul 10",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/10/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-10-ai-ml-mistral-enters-robotics-with-robostral-navigate",
+   "sid": "st-3042e965f0ec",
+   "headline": "Mistral enters robotics with Robostral Navigate, an 8B model that steers robots from a single camera",
+   "summary": "Mistral's first physical AI model, announced July 8, lets a robot navigate complex environments from a single RGB camera plus plain-language prompts - no lidar or multi-sensor rig. The 8B model reports 76.6% on R2R-CE (Room-to-Room Continuous, a standard vision-and-language navigation benchmark), which the company says beats heavier multi-sensor approaches. It was trained in-house on simulated data and is claimed to generalize across robot types.",
+   "why": "It is a notable move by a European lab into embodied AI, and the single-camera framing is a bet that cheap, ubiquitous sensors plus a capable model can replace expensive sensor stacks.",
+   "url": "https://mistral.ai/news/robostral-navigate/",
+   "source_domain": "mistral.ai",
+   "date": "2026-07-10",
+   "date_label": "Jul 10",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/10/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-10-ai-ml-openai-s-own-audit-finds-roughly-a-third-of-swe",
+   "sid": "st-29c26212db9f",
+   "headline": "OpenAI's own audit finds roughly a third of SWE-Bench Pro's coding tasks are broken",
+   "summary": "In a July 8 post, OpenAI reports auditing SWE-Bench Pro - a widely cited benchmark of real software-engineering tasks - and finding it compromised. An automated datapoint-analysis pipeline flagged 200 tasks (27.4%) as broken; a parallel human campaign with five experienced engineers flagged 249 (34.1%). The defects: overly strict tests, under-specified or misleading prompts, and poor coverage.",
+   "why": "The coding benchmarks used to rank every model this week (including OpenAI's and xAI's own claims) are shakier than their headline numbers imply - a ~30% broken-task rate means single-benchmark leaderboard positions deserve real skepticism.",
+   "url": "https://openai.com/index/separating-signal-from-noise-coding-evaluations/",
+   "source_domain": "openai.com",
+   "date": "2026-07-10",
+   "date_label": "Jul 10",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/10/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-10-ai-ml-prime-intellect-raises-130m-series-a-at-a-1b-val",
+   "sid": "st-42bfe0769068",
+   "headline": "Prime Intellect raises $130M Series A at a $1B valuation to build an \"open superintelligence\" training stack",
+   "summary": "Prime Intellect closed a $130M Series A (led by Radical Ventures, with NVIDIA Ventures, Intel Capital, and Dell Technologies Capital) at a $1B valuation. The pitch is decentralized, do-it-yourself training: compute, large-scale RL, environments, sandboxes, and evaluations so companies can train and continuously improve their own agents without leaning on a frontier lab. The firm reports 6,000 customers and over $100M in annualized revenue.",
+   "why": "It is the best-funded bet yet on an open, self-hosted alternative to the closed-lab model - the counterweight to the GPT-5.6/Grok concentration story this week.",
+   "url": "https://www.primeintellect.ai/blog/series-a",
+   "source_domain": "primeintellect.ai",
+   "date": "2026-07-10",
+   "date_label": "Jul 10",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/10/ai-ml/",
    "fresh": true
   },
   {
@@ -192,6 +363,52 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/07/10/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-10-ai-ml-confidence-intervals-for-mechanistic-interpretab",
+   "sid": "st-1700541cd7f6",
+   "headline": "Confidence intervals for mechanistic-interpretability claims, so a patching result isn't just a lucky sample",
+   "summary": "Mechanistic interpretability tests explanations by intervening on a model - swapping hidden states, patching activations, ablating components - and usually reports a single point estimate of 'fidelity,' even though researchers often watch the evaluation run and adapt it toward suspected failures. Certified Interventional Fidelity (CIF) rewrites the reported quantity as a formal causal estimand and supplies confidence intervals plus anytime-valid confidence sequences (bounds that stay valid even when you peek at the data as it accumulates).",
+   "why": "It brings basic statistical hygiene to a field prone to overclaiming from a handful of striking activation-patching demos.",
+   "url": "https://arxiv.org/abs/2607.08349",
+   "source_domain": "arxiv.org",
+   "date": "2026-07-10",
+   "date_label": "Jul 10",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/07/10/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-10-ai-ml-a-mechanistic-account-of-why-fine-tuned-models-m",
+   "sid": "st-8cf6c9b42dd6",
+   "headline": "A mechanistic account of why fine-tuned models memorize new facts but can't reason with them",
+   "summary": "Fine-tuning to inject fresh knowledge has a well-known failure: the model can recite a new fact yet fails to use it in downstream reasoning. The authors formalize this Knowing-Using Gap and probe it with a new intervention called self-patching, which relocates internal representations to find where the failure lives. The evidence points to a knowledge-circuit misalignment: the memorized representation exists internally but isn't routed to the layers that do the computation.",
+   "why": "It reframes a practical, expensive frustration - fine-tuned facts that don't stick for reasoning - as a routing problem with an identifiable locus, hinting at where to intervene rather than just adding more data.",
+   "url": "https://arxiv.org/abs/2607.08393",
+   "source_domain": "arxiv.org",
+   "date": "2026-07-10",
+   "date_label": "Jul 10",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/07/10/ai-ml/",
    "fresh": true
   },
   {
@@ -590,98 +807,6 @@
    "fresh": false
   },
   {
-   "id": "2026-07-07-ai-ml-individual-weights-in-a-sparse-transformer-can-b",
-   "sid": "st-1178e8e7fd85",
-   "headline": "Individual weights in a sparse transformer can be handed a plain-English description of when they matter — and it generalizes",
-   "summary": "Most mechanistic-interpretability work picks one behavior and reverse-engineers the handful of components behind it — but the same component can do different jobs on different inputs, so a per-behavior story can mislead. This paper asks whether a single weight can be understood globally, across the whole training distribution, by characterizing exactly which inputs it affects (the ones where ablating — zeroing — it changes the model's output). An automated LLM pipeline writes a short human-readable description of when each weight matters, then verifies that description on held-out text, only crediting a weight if the description generalizes.",
-   "why": "Weight-sparse models (where most connections are forced to zero) have been floated as inherently more interpretable; this puts numbers on that hope by testing whether descriptions of individual parameters actually predict behavior on unseen data. A verify-on-held-out-text protocol is also a healthy guard against the field's habit of telling plausible stories that don't hold up out of sample.",
-   "url": "https://arxiv.org/abs/2607.02964",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-07",
-   "date_label": "Jul 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/07/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-07-ai-ml-auditing-the-audit-the-safety-benchmark-checks-r",
-   "sid": "st-be7962272b27",
-   "headline": "\"Auditing the audit\": the safety-benchmark checks regulators ask for can be silently rigged by pipeline details readers never see",
-   "summary": "Governance frameworks increasingly demand documented evaluation evidence, and a common form is a \"perturbation-based construct-validity audit\" — you tweak benchmark inputs (paraphrase, add noise) and check the score moves the way it should, as a test of whether the benchmark measures what it claims. The authors argue these audits are fragile: five classes of implementation choice — invisible in the reported numbers — can manufacture whatever conclusion you want. They demonstrate all five in a self-audit over safety benchmarks and open-weight instruction-tuned models, and propose a six-point \"due-diligence gate\"; under it, every result lands in a non-confirmatory bucket.",
-   "why": "As the EU AI Act and similar regimes turn \"we audited it\" into a compliance artifact, this is a warning that the artifact can be gamed or accidentally wrong without any visible tell — a call for audits to disclose their pipeline, not just their scores. The authors are careful about scope: it's a single two-model, five-benchmark case study and the taxonomy is illustrative, not exhaustive — a caveat worth keeping.",
-   "url": "https://arxiv.org/abs/2607.02586",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-07",
-   "date_label": "Jul 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/07/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-07-ai-ml-swarmresearch-running-a-population-of-coding-age",
-   "sid": "st-6b886c8db2fe",
-   "headline": "SwarmResearch: running a population of coding agents on separate git branches beats one long-running agent on open-ended problems",
-   "summary": "Long-running \"autoresearch\"-style coding agents tend to lock onto one high-level approach early, then grind on low-level edits and never explore genuinely different strategies. The authors blame two harness choices: piling all history into a single agent's context, and letting it edit only one program state. SwarmResearch is an orchestrator-subagent design — a \"Shepherd Agent\" holds global context and steers a population of \"Search Agents,\" each working with local context in its own git branch. On 13 of 15 open-ended optimization tasks it matches or beats state-of-the-art LLM-guided evolution and multi-agent methods, driven by more high-level exploration.",
-   "why": "It's a clean, actionable diagnosis of why single-agent coding harnesses plateau (context accumulation + a single editable state) and a harness-level fix that doesn't require a better base model — relevant to anyone building agentic coding or optimization systems.",
-   "url": "https://arxiv.org/abs/2607.02807",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-07",
-   "date_label": "Jul 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/07/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-07-ai-ml-variable-bit-width-quantization-lets-each-group",
-   "sid": "st-7fb7ede160fd",
-   "headline": "Variable-bit-width quantization lets each group of 64 weights pick its own precision — and 69% of them choose 1 bit",
-   "summary": "Quantization shrinks models by storing weights at lower precision, but the usual approach sets one global bit-width for the whole network. Variable Bit-width Quantization (VBQ) instead lets every contiguous group of 64 weights learn its own resolution from {1, 2, 4, 8} bits during training, using a Gumbel-Softmax relaxation (a trick that makes a discrete \"which bit-width?\" choice differentiable so it can be trained by gradient descent). The learned allocation is strongly uneven within a single projection type — 69% of groups collapse to 1 bit while the first MLP block keeps ~2.5 bits on average — a pattern no per-layer method can express, and stable enough to freeze into a fixed recipe and reuse without re-searching.",
-   "why": "It says precision should be allocated at fine grain, not per-layer, and that the optimal allocation is discoverable and transferable — directly useful for squeezing capable models onto memory-constrained hardware (phones, laptops, single GPUs). The eye-catching \"most groups want 1 bit\" finding is a hint about how much of a model's weight budget is genuinely low-information.",
-   "url": "https://arxiv.org/abs/2607.02893",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-07",
-   "date_label": "Jul 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/07/ai-ml/",
-   "fresh": false
-  },
-  {
    "id": "2026-07-07-news-bern-and-the-cantons-weigh-scrapping-the-mandato",
    "sid": "st-4ed5174aeff4",
    "headline": "Bern and the cantons weigh scrapping the mandatory three hours of weekly school sport",
@@ -727,52 +852,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/07/07/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-07-ai-ml-oyster-ii-uses-reinforcement-learning-to-make-sa",
-   "sid": "st-a1dd8f419293",
-   "headline": "Oyster-II uses reinforcement learning to make safety alignment constructive rather than a blanket refusal",
-   "summary": "Refusal-first safety training stops harmful output but routinely over-fires, stonewalling legitimate questions that touch sensitive topics. Building on the \"constructive safety\" idea from Oyster-I (answer the safe underlying intent instead of refusing outright), the authors name two failure modes of the earlier supervised-fine-tuning approach: it generalizes poorly to out-of-distribution prompts, and it suffers \"safety chain-of-thought over-generalization,\" where the model's safety reasoning bleeds into and degrades normal answers. Oyster-II replaces the SFT recipe with reinforcement learning (rewarding the model for constructive, safe responses rather than imitating fixed examples).",
-   "why": "Over-refusal is the most user-visible tax of current alignment, and moving the safety objective from \"imitate these refusals\" to \"optimize for helpful-and-safe\" is a concrete lever on the helpfulness/safety trade-off. As with any single-lab alignment paper, the numbers are the authors' own; the direction — constructive over blanket refusal — is the takeaway.",
-   "url": "https://arxiv.org/abs/2607.02914",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-07",
-   "date_label": "Jul 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/07/07/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-07-ai-ml-a-hybrid-block-diffusion-language-model-fixes-th",
-   "sid": "st-41b2c2f4d369",
-   "headline": "A hybrid block-diffusion language model fixes the \"prefix\" problem that broke earlier diffusion-plus-Mamba hybrids",
-   "summary": "Text generation is usually memory-bandwidth-bound: each step must stream the growing key/value cache (attention's running memory) from memory while emitting just one token, so speed suffers as context grows. Two fixes have run in parallel — cheaper memory access via linear-time mixers like Mamba (a state-space model that processes sequences in linear rather than quadratic time), and diffusion-style block generation that emits many tokens at once. Combining them is hard: earlier hybrids like DiffuMamba used a bidirectional reverse scan over the whole sequence, so their states weren't \"prefix-consistent\" — they couldn't be reused as generation extends the text. This paper trains a hybrid block-diffusion model with only partial bidirectionality, keeping the throughput wins while restoring prefix consistency.",
-   "why": "High-throughput long-context generation is a live bottleneck, and diffusion LMs are one of the more interesting non-autoregressive bets to get there. Making the Mamba/diffusion marriage actually work at generation time is a concrete engineering advance on a promising but finicky architecture.",
-   "url": "https://arxiv.org/abs/2607.02805",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-07",
-   "date_label": "Jul 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/07/07/ai-ml/",
    "fresh": false
   },
   {
@@ -1466,29 +1545,6 @@
    "fresh": false
   },
   {
-   "id": "2026-07-01-news-the-society-of-st-pius-x-sspx-the-traditionalist",
-   "sid": "st-e48494442893",
-   "headline": "The Society of St Pius X (SSPX) — the traditionalist Catholic fraternity headquartered in Ecône, Valais — consecrated four new bishops on Wednesday over the Vatican's objections, opening what looks like a fresh rupture with Rome",
-   "summary": "Superior General Abbé Davide Pagliarani framed the consecrations as securing the fraternity's survival (\"we cannot choose between the faith and the Church\"). Under Church law, unauthorised episcopal consecrations trigger automatic excommunication — the same mechanism that split the SSPX from Rome in 1988 — and canonical exclusion now looks imminent despite protests from Pope Leo XIV. The Diocese of Sion voiced its \"profound sadness.\"",
-   "why": "",
-   "url": "https://www.srf.ch/kultur/gesellschaft-religion/nach-bischofsweihe-in-econe-vs-piusbruedern-droht-der-ausschluss-aus-der-katholischen-kirche",
-   "source_domain": "srf.ch",
-   "date": "2026-07-01",
-   "date_label": "Jul 1",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/01/news/",
-   "fresh": false
-  },
-  {
    "id": "2026-07-01-science-an-old-rotation-sensor-gets-un-stuck-a-laser-gyr",
    "sid": "st-6aa75af63b8e",
    "headline": "An old rotation sensor gets un-stuck: a laser gyroscope beats the lock-in limit",
@@ -1604,29 +1660,6 @@
    "fresh": false
   },
   {
-   "id": "2026-06-30-ai-ml-eapo-reuses-past-experience-to-cut-reasoning-rl",
-   "sid": "st-bec6dfe54d72",
-   "headline": "EAPO reuses past experience to cut reasoning-RL's sample cost",
-   "summary": "EAPO (Experience-Augmented Policy Optimization) attacks the sample-cost of RLVR (Reinforcement Learning with Verifiable Rewards — RL where correctness is checked by a verifier, e.g. did the math answer match) for reasoning. Instead of reusing past successful answers as fixed reasoning traces (which go stale as the policy changes), it treats a prior RL-optimized policy as an action-level experience prior and injects it only at critical decision points during generation. Tested on Qwen-2.5-Math-7B and Qwen-3-8B.",
-   "why": "reasoning RL is expensive because it samples from scratch; reusing experience adaptively rather than verbatim is a plausible efficiency lever.",
-   "url": "https://arxiv.org/abs/2606.30420",
-   "source_domain": "arxiv.org",
-   "date": "2026-06-30",
-   "date_label": "Jun 30",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/06/30/ai-ml/",
-   "fresh": false
-  },
-  {
    "id": "2026-06-30-news-a-broad-alliance-launches-a-referendum-against-b",
    "sid": "st-3647a400380b",
    "headline": "A broad alliance launches a referendum against building new nuclear plants",
@@ -1634,29 +1667,6 @@
    "why": "",
    "url": "https://www.srf.ch/news/schweiz/nach-beschluss-des-parlaments-breites-buendnis-lanciert-referendum-gegen-den-bau-neuer-akw",
    "source_domain": "srf.ch",
-   "date": "2026-06-30",
-   "date_label": "Jun 30",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/06/30/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-06-30-news-from-1-july-switzerland-may-export-less-steel-du",
-   "sid": "st-491e4391d387",
-   "headline": "From 1 July, Switzerland may export less steel duty-free to the EU",
-   "summary": "Bern and Brussels agreed new quotas under the EU's tightened steel safeguard regime taking effect 1 July: the bloc cuts total tariff-free import volumes by 47% to 18.3 million tonnes a year and raises the above-quota duty from 25% to 50%. Switzerland and eleven other partner states see their duty-free allowances fall ~33%. Brussels says it is responding to global overcapacity — China is named as the main culprit, with steel diverted to Europe after US trade barriers; the framework was negotiated under WTO rules in Geneva.",
-   "why": "",
-   "url": "https://www.letemps.ch/articles/des-le-1er-juillet-la-suisse-pourra-moins-exporter-d-acier-vers-l-ue",
-   "source_domain": "letemps.ch",
    "date": "2026-06-30",
    "date_label": "Jun 30",
    "stream": "news",
