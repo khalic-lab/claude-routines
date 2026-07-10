@@ -170,14 +170,42 @@ def append_candidates(root, post_path, text, citations, reg, dry_run):
     tagged_novel = [c for c in citations if c["tagged"] and c["domain"] not in reg]
     if not tagged_novel or dry_run:
         return
-    m = DATE_RE.search(text)
-    first_seen = m.group(1) if m else datetime.date.today().isoformat()
-    slug = slug_of(post_path) or ""
     sources_dir = os.path.join(root, "sources")
     os.makedirs(sources_dir, exist_ok=True)
     path = os.path.join(sources_dir, "candidates.jsonl")
+
+    existing_domains = set()
+    if os.path.exists(path):
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(rec, dict):
+                    existing_domains.add(rec.get("domain"))
+
+    m = DATE_RE.search(text)
+    first_seen = m.group(1) if m else datetime.date.today().isoformat()
+    slug = slug_of(post_path) or ""
+
+    seen_this_call = set()
+    to_append = []
+    for c in tagged_novel:
+        domain = c["domain"]
+        if domain in existing_domains or domain in seen_this_call:
+            continue
+        seen_this_call.add(domain)
+        to_append.append(c)
+
+    if not to_append:
+        return
+
     with open(path, "a") as f:
-        for c in tagged_novel:
+        for c in to_append:
             f.write(json.dumps({
                 "domain": c["domain"], "first_seen": first_seen, "via": "writer",
                 "stream": slug, "url": c["url"],

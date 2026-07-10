@@ -127,6 +127,8 @@ Read the weekend brief's ML papers and Fundamental science papers sections. **Ta
 ## I. Repetition detection (computed — read, don't recount)
 `health.json` → `streams.<slug>.repeats` / `repeat_rate` (a 14-day story-id/thread-id lookback over the ledger). Don't re-cluster headlines by hand. Judgment work: for flagged repeats, check whether the re-run carried a genuinely new, dated fact (`[ongoing since]` discipline) or was a re-summary — the latter is the defect.
 
+**Identity integrity (deterministic; added 2026-07-10):** run `python3 tools/store/reconcile.py --root .` and read its output. Any `RECONCILE: flagged` line means a story id in a publish event is absent from its edition's index file — the anchor/feedback target and the dedup-canonical id have forked (the 2026-07-07 Cuba defect class). Report every flagged sid in the review; `resolved-by-merge` lines are informational.
+
 ## J. Cross-week trend (if previous review exists)
 - Source diversity (unique/new domains, top5_share, waiver rate — from successive source-health snapshots), T3 leakage count, aggregator citations, section vitality, via-snippet rate, direct-fetch rate trends.
 

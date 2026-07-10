@@ -38,6 +38,7 @@ sized by how much it matters, filterable by beat.</p>
           <span class="fcard__rank" data-imp="{{ s.importance }}"></span>
         </div>
         <h2 class="fcard__hl">{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.headline }}</a>{% else %}{{ s.headline }}{% endif %}</h2>
+        {% if s.importance == 1 and s.summary != "" %}<button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>{% endif %}
         {% if s.summary != "" %}<p class="fcard__sum">{{ s.summary }}</p>{% endif %}
         {% if s.why and s.why != "" %}<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>{{ s.why }}</p>{% endif %}
         <div class="fcard__line">
@@ -193,6 +194,19 @@ sized by how much it matters, filterable by beat.</p>
     opacity:.88; border-left:2px solid var(--accent); padding-left:10px; }
   .fcard__why-lbl{ display:block; font-family:var(--sans); font-weight:700; font-size:.56rem;
     text-transform:uppercase; letter-spacing:.13em; color:var(--accent); margin-bottom:2px; }
+
+  /* Brief-tier fold: minor stories start collapsed to their headline; the full text is always
+     authored and always in the DOM (no-JS renders it) — the fold is presentation, never a crop. */
+  .fcard__more{ display:none; align-items:center; gap:5px; background:transparent; border:0; padding:0;
+    font-family:var(--sans); font-weight:700; font-size:.6rem; text-transform:uppercase;
+    letter-spacing:.13em; color:var(--muted-ui); cursor:pointer; align-self:flex-start; }
+  .fcard[data-imp="1"] .fcard__more{ display:inline-flex; }
+  .fcard__more:hover{ color:var(--accent); }
+  .fcard__more:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .fcard__more svg{ width:10px; height:10px; fill:none; stroke:currentColor; stroke-width:2.4;
+    stroke-linecap:round; stroke-linejoin:round; transition:transform .15s; }
+  .fcard:not(.is-folded) .fcard__more svg{ transform:rotate(180deg); }
+  .fcard.is-folded .fcard__sum, .fcard.is-folded .fcard__why{ display:none; }
 
   /* per-card read toggle + read dimming (read/unread lives in localStorage only) */
   .fcard__read{ margin-left:.15em; cursor:pointer; background:transparent; border:1px solid var(--hair);
@@ -387,6 +401,25 @@ sized by how much it matters, filterable by beat.</p>
     });
   });
   cards.forEach(paintRead); readCounts();
+
+  /* ---- Brief-tier fold: imp-1 cards boot collapsed (JS-applied, so no-JS renders the full
+     text — the fold is presentation, never a crop). Ephemeral, no persistence; expanding is
+     NOT an implicit read. ---- */
+  cards.forEach(function(c){
+    var b = c.querySelector('.fcard__more');
+    if (b){ c.classList.add('is-folded'); b.setAttribute('aria-expanded', 'false'); }
+  });
+  grid.addEventListener('click', function(e){
+    var mb = e.target.closest('.fcard__more');
+    if (!mb) return;
+    var mc = mb.closest('.fcard');
+    var folded = mc.classList.toggle('is-folded');
+    mb.setAttribute('aria-expanded', String(!folded));
+    var lbl = mb.querySelector('span');
+    if (lbl) lbl.textContent = folded ? 'More' : 'Less';
+    reflow();
+  });
+
   grid.addEventListener('click', function(e){
     var rb = e.target.closest('.fcard__read');
     if (rb){                               // explicit toggle — honors the active filter at once

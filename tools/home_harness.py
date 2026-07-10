@@ -70,6 +70,9 @@ def card(s):
     og = ' data-ogurl="%s"' % e(s["url"]) if s.get("url") and s["importance"] > 1 else ""
     hl = ('<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>' % (e(s["url"]), e(s["headline"]))
           if s.get("url") else e(s["headline"]))
+    more = ('<button class="fcard__more" type="button" aria-expanded="true">'
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
+            '<span>More</span></button>' if s["importance"] == 1 and s["summary"] else "")
     summ = '<p class="fcard__sum">%s</p>' % e(s["summary"]) if s["summary"] else ""
     why = ('<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>%s</p>' % e(s["why"])
            if s.get("why") else "")
@@ -81,7 +84,7 @@ def card(s):
 <div class="fcard__in" style="--tc:%(color)s">
 <div class="fcard__top"><a class="fcard__beat" href="#"><span class="ff-dot"></span>%(tlabel)s</a><span class="fcard__rank" data-imp="%(imp)s"></span></div>
 <h2 class="fcard__hl">%(hl)s</h2>
-%(summ)s%(why)s
+%(more)s%(summ)s%(why)s
 <div class="fcard__line"><span class="fcard__src">%(src)s</span>%(fresh)s<span class="fcard__date">%(dlabel)s</span>%(readbtn)s</div>
 <div class="fcard__fb" data-story="%(id)s" data-brief="%(date)s-%(stream)s">
 <button class="ffb-t" type="button" data-v="1" aria-label="Useful">%(svg)s</button>
@@ -92,7 +95,7 @@ def card(s):
         "color": s["topic_color"], "tlabel": e(s["topic_label"]), "hl": hl, "summ": summ, "why": why,
         "src": e(s["source_domain"]), "fresh": fresh, "dlabel": e(s["date_label"]),
         "id": e(s.get("sid") or s["id"]), "date": e(s["date"]), "stream": e(s["stream"]), "svg": SVG,
-        "readbtn": readbtn,
+        "readbtn": readbtn, "more": more,
     }
 
 

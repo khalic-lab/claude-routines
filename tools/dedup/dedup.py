@@ -10,6 +10,8 @@ Subcommands
 -----------
   check     candidates JSON -> per-candidate verdict NEW | ONGOING | REPEAT
   record    final-stories JSON -> writes index/stories/{date}-{slug}.jsonl
+            (a re-record of an already-written edition CONVERGES story identities
+            onto the existing records instead of re-minting them — see converge_target)
   backfill  decompose existing _posts/*.md -> seed the index + calibration set
   lint      post-compose date checks on a brief (weekday-vs-date consistency)
   selftest  offline checks (no network): slugify, cosine, brief extraction
@@ -366,6 +368,26 @@ def write_index_file(date, slug, stories):
     return path
 
 
+def load_edition_records(date, slug):
+    """Records already written for THIS edition (index/stories/{date}-{slug}.jsonl),
+    or [] when the file doesn't exist — i.e. on a normal first `record` run. These are
+    the convergence targets for a re-`record` of the same edition (converge_target)."""
+    path = os.path.join(INDEX_DIR, f"{date}-{slug}.jsonl")
+    if not os.path.exists(path):
+        return []
+    records = []
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                records.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return records
+
+
 def prune_index(keep_days, as_of=None):
     """Delete index files older than keep_days. Returns count removed."""
     as_of = as_of or dt.date.today()
@@ -717,6 +739,55 @@ def cmd_check(args):
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
 
+def converge_target(story, vec, existing, claimed):
+    """Within-edition identity match for a re-`record`: the index into `existing` (this
+    edition's already-written records) of the record that is the SAME story as `story`,
+    else None.
+
+    Why (2026-07-07-news): `record` ran twice 3 minutes apart. The Cuba blackout story
+    differed between calls — headline lightly reworded and the primary url flipped
+    (aljazeera first call, letemps second) — so the second run plain-overwrote the
+    edition file with a brand-new identity (letemps -> st-df6bde5fe934) while the anchor
+    step, run off the first call's output, had stamped the post with the first
+    (aljazeera -> st-51f44833a0eb). A re-record must converge onto the identities
+    already written, not fork them.
+
+    Signals, in precedence order (each existing identity is claimable once — `claimed`
+    holds indices already taken by earlier stories in this payload):
+      (a) identical norm_url on the primary url (scheme/www/utm/trailing-slash noise);
+      (b) any of the story's cited `urls` (the optional Step C list — every url cited
+          in the bullet, primary included) norm-matches the existing record's url — the
+          Cuba shape: both calls cited both sources but flipped which was primary;
+      (c) near-identical headline: the same cosine machinery + gate the cross-day
+          autolink uses (AUTOLINK_MIN_DEFAULT, above the observed DISTINCT ceiling),
+          with the same arXiv distinct-paper guard. Conservative on purpose: a missed
+          match merely re-records under a fresh identity (what always happened before);
+          a false match would merge two genuinely different stories.
+    """
+    nu = store.norm_url(story.get("url"))
+    for i, rec in enumerate(existing):
+        if i not in claimed and nu and nu == store.norm_url(rec.get("url")):
+            return i
+    cited = {store.norm_url(u) for u in story.get("urls") or []} - {None, ""}
+    for i, rec in enumerate(existing):
+        if i not in claimed and store.norm_url(rec.get("url")) in cited:
+            return i
+    best, best_i = 0.0, None
+    for i, rec in enumerate(existing):
+        if i in claimed or not rec.get("emb"):
+            continue
+        try:
+            c = cosine(vec, decode_vec(rec["emb"]))
+        except Exception:
+            continue  # a corrupt emb must not cost the edition; that record just can't match
+        if c > best:
+            best, best_i = c, i
+    if (best_i is not None and best >= AUTOLINK_MIN_DEFAULT
+            and not _distinct_paper(story, existing[best_i])):
+        return best_i
+    return None
+
+
 def cmd_record(args):
     with open(args.stories) as f:
         stories = json.load(f)
@@ -732,9 +803,26 @@ def cmd_record(args):
     # Harmless if the index is missing/empty (autolink returns None).
     recent = load_recent_index(SINCE_DEFAULT, as_of=_parse_date(date))
     recent_by_id = {r.get("id"): r for r in recent}
+    # Within-edition convergence (the 2026-07-07 Cuba fork): when this edition's index
+    # file already exists — i.e. `record` is running a SECOND time for the same edition —
+    # an incoming story matching an existing record is the same story re-recorded, and
+    # must keep the existing record's identity (url — what st- sids and the already-
+    # stamped anchors derive from — plus legacy id and thread) while its content fields
+    # follow this newer payload. A first run has no edition file: `existing` is [] and
+    # every story records exactly as before (byte-identical, golden-enforced).
+    existing = load_edition_records(date, slug)
+    claimed = set()
     records = []
     for s, v in zip(stories, vecs):
+        prior = None
+        if existing:
+            t = converge_target(s, v, existing, claimed)
+            if t is not None:
+                claimed.add(t)
+                prior = existing[t]
         hid = s.get("id") or f"{date}-{slug}-{slugify(s.get('headline',''))}"
+        url = s.get("url")
+        src_domain = s.get("source_domain") or source_domain(url)
         thread_id = s.get("thread_id")
         first_seen_date = s.get("first_seen_date")
         # Validate a WRITER-SUPPLIED thread before trusting it. The SASA/SoftSAE false
@@ -751,6 +839,14 @@ def cmd_record(args):
             link = autolink(v, recent, cand=s)
             if link:
                 thread_id, first_seen_date = link
+        if prior is not None:
+            # identity sticks to the FIRST recording; content (headline/summary/
+            # display_body/... below) follows the newer payload.
+            hid = prior.get("id") or hid
+            url = prior.get("url")
+            src_domain = prior.get("source_domain") or source_domain(url)
+            thread_id = prior.get("thread_id") or thread_id
+            first_seen_date = prior.get("first_seen_date") or first_seen_date
         # event_date: writer-supplied (day precision) wins; else deterministic arXiv
         # submission month; else inherit the thread's SCHEDULED date (fixed future event
         # like a vote, so it isn't re-derived); else null. Distinct from `date`/first_seen.
@@ -766,8 +862,8 @@ def cmd_record(args):
             "stream": slug,
             "headline": s.get("headline", ""),
             "summary": s.get("summary", ""),
-            "url": s.get("url"),
-            "source_domain": s.get("source_domain") or source_domain(s.get("url")),
+            "url": url,
+            "source_domain": src_domain,
             "tier": s.get("tier"),
             "tags": s.get("tags", []),
             # homepage grid metadata (writer-supplied; see newsroom-ethos rubric). Persisted
