@@ -1,7 +1,19 @@
-# SPIKE — Cross-device read/unread sync (deferred: requires real auth)
+# SPIKE — Cross-device read/unread sync (SHIPPED 2026-07-10, passkey auth)
 
-> Status: **deferred by Rafael, 2026-07-07.** The local-only read state shipped (commit
-> `1941896`); cross-device sync is recorded here and blocked on an authentication decision.
+> Status: **revived and shipped 2026-07-10.** Rafael asked for "some kind of user accounts to
+> manage what's read/unread" and chose **passkey/WebAuthn** (§3 option 2) over the per-device
+> bearer recommendation, with identity covering **read-state + feedback votes**. As-built:
+> `@simplewebauthn/server` on the feedback-sink Worker (`/auth/register-options|register|
+> login-options|login`, registration gated by an `INVITE_TOKEN` secret, discoverable credentials,
+> UV required, rpID `khalic-lab.github.io`); 90-day rolling sessions in KV; `GET/POST /readstate`
+> (session bearer, LWW tombstone map `{sid:{ts,v}}`, shape/size caps, CORS locked to the site
+> origin); client sync engine merges remote into `homeRead:v1` via a `syncState:v1` shadow and
+> pushes debounced (30s + visibility flush). Signed-out = the original local-only behavior;
+> nothing leaves the browser without a session — the opt-in stance below is preserved. One
+> registration ceremony covers all Apple devices via iCloud Keychain passkey sync; each device
+> signs in with Face ID / Touch ID. The original analysis follows unchanged.
+>
+> _Deferred at ship time (2026-07-07 text below):_
 
 ## 1. What exists (local-only, by design)
 

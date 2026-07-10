@@ -318,6 +318,12 @@ document.addEventListener('DOMContentLoaded', function () {
       return Promise.resolve(false);
     }
     var headers = { 'Content-Type': 'application/json', 'X-Widget-Key': key };
+    // Passkey session minted on the home page (syncSession:v1, same origin): when present,
+    // votes carry the reader identity server-side; the X-Widget-Key gate is unchanged.
+    try {
+      var ses = JSON.parse(localStorage.getItem('syncSession:v1') || 'null');
+      if (ses && typeof ses.token === 'string' && ses.token) headers['Authorization'] = 'Bearer ' + ses.token;
+    } catch (e) {}
     if (onStatus) onStatus('sending…');
     return fetch(FEEDBACK_URL + '/submit', {
       method: 'POST', headers: headers,

@@ -20,6 +20,24 @@ sized by how much it matters, filterable by beat.</p>
     <button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button>
     <button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button>
   </span>
+  <span class="ff-sync" id="ffSync" hidden>
+    <button class="ff-sbtn" type="button" aria-expanded="false" aria-controls="ffSyncPanel">Sync</button>
+    <div class="ff-spanel" id="ffSyncPanel" hidden>
+      <div class="ffs-out">
+        <button class="ffs-btn ffs-signin" type="button">Sign in with passkey</button>
+        <button class="ffs-lnk ffs-setup-t" type="button" aria-expanded="false">First time? Set up</button>
+        <div class="ffs-setup" hidden>
+          <input class="ffs-invite" type="password" placeholder="invite code" aria-label="Invite code" autocomplete="off">
+          <button class="ffs-btn ffs-create" type="button">Create passkey</button>
+        </div>
+      </div>
+      <div class="ffs-in" hidden>
+        <span class="ffs-who"></span>
+        <button class="ffs-btn ffs-signout" type="button">Sign out</button>
+      </div>
+      <p class="ffs-status" aria-live="polite"></p>
+    </div>
+  </span>
   <span class="ff-legend" aria-hidden="true">
     <span class="ff-li"><i class="fb b3"></i>Lead</span>
     <span class="ff-li"><i class="fb b2"></i>Feature</span>
@@ -121,6 +139,40 @@ sized by how much it matters, filterable by beat.</p>
   .ff-li .fb.b2{ background:transparent; }
   .ff-li .fb.b1{ background:transparent; border-color:var(--hair); }
   @media (max-width:720px){ .ff-legend{ display:none; } }
+
+  /* passkey sync affordance — sits at the bar's right end beside the read toggle. Hidden
+     (attribute) until the boot script detects WebAuthn; without it there is nothing to show.
+     Panel drops under the sticky bar (z above it), var() tokens only so both themes work. */
+  .ff-sync{ position:relative; display:inline-flex; margin-left:6px; }
+  .ff-sbtn{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase; letter-spacing:.1em;
+    background:transparent; border:1px solid var(--hair); border-radius:2px; cursor:pointer;
+    color:var(--muted-ui); padding:4px 9px; }
+  .ff-sbtn:hover{ color:var(--ink); border-color:var(--rule); }
+  .ff-sbtn:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
+  .ff-sync.is-in .ff-sbtn{ color:var(--accent); border-color:var(--accent); }
+  .ff-spanel{ position:absolute; top:calc(100% + 9px); right:0; z-index:30; width:248px;
+    background:var(--card); border:1px solid var(--hair); box-shadow:0 8px 26px rgba(0,0,0,.14);
+    padding:13px 13px 11px; display:flex; flex-direction:column; gap:9px; }
+  @media (prefers-color-scheme:dark){ .ff-spanel{ box-shadow:0 8px 30px rgba(0,0,0,.55); } }
+  .ffs-out, .ffs-in{ display:flex; flex-direction:column; gap:9px; }
+  /* explicit display beats the UA's [hidden]{display:none} — re-assert it */
+  .ff-spanel[hidden], .ffs-out[hidden], .ffs-in[hidden], .ffs-setup[hidden]{ display:none; }
+  .ffs-btn{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase; letter-spacing:.1em;
+    background:transparent; border:1px solid var(--rule); border-radius:2px; color:var(--ink);
+    cursor:pointer; padding:7px 10px; }
+  .ffs-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .ffs-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .ffs-lnk{ background:transparent; border:0; padding:0; cursor:pointer; align-self:flex-start;
+    font-family:var(--sans); font-size:.6rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted-ui); }
+  .ffs-lnk:hover{ color:var(--accent); }
+  .ffs-lnk:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .ffs-setup{ display:flex; gap:6px; }
+  .ffs-invite{ flex:1; min-width:0; background:var(--field); border:1px solid var(--hair); color:var(--ink);
+    font-family:var(--sans); font-size:.72rem; padding:5px 7px; border-radius:2px; }
+  .ffs-invite:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  .ffs-who{ font-family:var(--sans); font-size:.66rem; letter-spacing:.03em; color:var(--muted); }
+  .ffs-status{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--accent); margin:0; min-height:1em; }
 
   .folio-board{ position:relative; padding:22px 0 10px; }
   .ff-crop{ position:absolute; width:14px; height:14px; pointer-events:none; }
@@ -370,6 +422,7 @@ sized by how much it matters, filterable by beat.</p>
     var s = sidOf(card); if (!s) return;
     if (v) readMap[s] = Date.now(); else delete readMap[s];
     saveRead();
+    noteLocalRead(s, v);               // sync shadow (+ debounced push when signed in) — see below
     cards.forEach(function(c){ if (sidOf(c) === s) paintRead(c); });  // repaint sid twins too
     readCounts();
   }
@@ -470,8 +523,11 @@ sized by how much it matters, filterable by beat.</p>
     var key = window.__siteKey && window.__siteKey.get();
     if (!key){ if (note) note('unlock first'); if (window.__siteKey) window.__siteKey.prompt(); return; }
     if (note) note('sending…');
+    var hdrs = { 'Content-Type':'application/json', 'X-Widget-Key': key };
+    var ses = session();                        // passkey session (below): votes carry identity;
+    if (ses) hdrs['Authorization'] = 'Bearer ' + ses.token;   // X-Widget-Key gate stays untouched
     fetch(conf.url + '/submit', {
-      method: 'POST', headers: { 'Content-Type':'application/json', 'X-Widget-Key': key },
+      method: 'POST', headers: hdrs,
       body: JSON.stringify({ brief: box.dataset.brief, vote: vote, reason: (reason || '').trim(),
         story_id: box.dataset.story || null, surface: 'home' })
     }).then(function(r){
@@ -517,6 +573,249 @@ sized by how much it matters, filterable by beat.</p>
     if (vc && !isRead(vc)) setRead(vc, true);
     if (+b.dataset.v === -1){ var r = rznFor(box, note); r.style.display = 'flex'; reflow(); r.querySelector('input').focus(); }
   });
+
+  /* ---- passkey sync (2026-07-10): read-state roams across devices through the feedback
+     Worker (origin derived from window.__FB via fbConf() — one URL to rot, not two).
+     homeRead:v1 keeps exactly its shape/semantics and stays the paint source; syncState:v1
+     {sid:{ts,v}} is the sync-truth shadow — v:0 tombstones let an unmark propagate. LWW per
+     sid, higher ts wins, tie keeps local (mirrors the server merge). Signed out = zero sync
+     requests; a 401 on any sync call quietly drops the session and flips the UI. ---- */
+  var SS_KEY = 'syncSession:v1', ST_KEY = 'syncState:v1';
+  function syncBase(){ return fbConf().url; }
+  function session(){
+    try {
+      var s = JSON.parse(localStorage.getItem(SS_KEY) || 'null');
+      return (s && typeof s.token === 'string' && s.token && s.reader) ? s : null;
+    } catch (e) { return null; }
+  }
+  var syncMap = {};
+  try { syncMap = JSON.parse(localStorage.getItem(ST_KEY) || '{}') || {}; } catch (e) {}
+  if (!syncMap || typeof syncMap !== 'object' || Array.isArray(syncMap)) syncMap = {};
+  function saveSync(){ try { localStorage.setItem(ST_KEY, JSON.stringify(syncMap)); } catch (e) {} }
+  (function pruneSync(){                   // same 45d window as the homeRead prune above
+    var cut = Date.now() - 45 * 864e5, dirty = false, k;
+    for (k in syncMap){ if (!syncMap[k] || !(syncMap[k].ts > cut)){ delete syncMap[k]; dirty = true; } }
+    if (dirty) saveSync();
+  })();
+
+  var pushTimer = null, pushPending = false;
+  function noteLocalRead(sid, v){          // every setRead lands here — shadow is written even
+    syncMap[sid] = { ts: Date.now(), v: v ? 1 : 0 };   // signed out, so a later sign-in syncs it
+    saveSync();
+    schedulePush();
+  }
+  function schedulePush(){                 // debounced: a burst of marking collapses to one POST
+    if (!session()) return;
+    pushPending = true;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(flushPush, 30000);
+  }
+  function flushPush(){                    // also fired on tab-hide/pagehide — keepalive fetch,
+    if (!pushPending) return;              // NOT sendBeacon (it can't carry the Authorization header)
+    var s = session();
+    if (!s){ pushPending = false; return; }
+    pushPending = false;
+    clearTimeout(pushTimer);
+    fetch(syncBase() + '/readstate', {
+      method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.token },
+      body: JSON.stringify({ state: syncMap })
+    }).then(function(r){ if (r.status === 401) dropSession(); })
+      .catch(function(){ pushPending = true; });   // offline — retry on the next flush trigger
+  }
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'hidden') flushPush();
+  });
+  window.addEventListener('pagehide', flushPush);
+
+  function mergeRemote(state){
+    var k, dirty = false;
+    for (k in readMap){                    // seed shadows for pre-sync implicit reads so LWW
+      if (!syncMap[k]){ syncMap[k] = { ts: readMap[k], v: 1 }; dirty = true; }  // has a local ts
+    }
+    for (k in state){
+      var r = state[k];
+      if (!r || typeof r.ts !== 'number' || (r.v !== 0 && r.v !== 1)) continue;
+      var l = syncMap[k];
+      if (l && l.ts >= r.ts) continue;     // local newer (or tie) — keep; the push carries it up
+      syncMap[k] = { ts: r.ts, v: r.v };
+      if (r.v === 1) readMap[k] = r.ts; else delete readMap[k];   // project into the paint source
+      dirty = true;
+    }
+    if (dirty){ saveSync(); saveRead(); }
+    cards.forEach(paintRead); readCounts();
+    if (readState) apply();                // a read-filter is active — re-evaluate visibility
+  }
+  function pullRemote(){
+    var s = session();
+    if (!s) return;                        // signed out: no sync traffic at all
+    fetch(syncBase() + '/readstate', { headers: { 'Authorization': 'Bearer ' + s.token } })
+      .then(function(r){
+        if (r.status === 401){ dropSession(); return null; }
+        return r.ok ? r.json() : null;
+      })
+      .then(function(j){
+        if (!j) return;
+        mergeRemote((j.state && typeof j.state === 'object') ? j.state : {});
+        schedulePush();                    // one push back — the server merge is idempotent
+      }).catch(function(){});
+  }
+  function dropSession(){                  // sign-out AND 401 handling — silent, no alert
+    try { localStorage.removeItem(SS_KEY); } catch (e) {}
+    pushPending = false; clearTimeout(pushTimer);
+    syncUi();
+  }
+
+  /* ---- sync UI: quiet affordance at the bar's right end; stays hidden without WebAuthn ---- */
+  var syncRoot = document.getElementById('ffSync');
+  var syncEls = null;
+  function saySync(m){ if (syncEls) syncEls.status.textContent = m || ''; }
+  function errMsg(err){
+    if (err && err.name === 'NotAllowedError') return 'cancelled or timed out';
+    return (err && err.message) ? err.message : 'failed';
+  }
+  function syncUi(){
+    if (!syncEls) return;
+    var s = session();
+    syncRoot.classList.toggle('is-in', !!s);
+    syncEls.btn.textContent = s ? ('Synced · ' + s.reader) : 'Sync';
+    syncEls.out.hidden = !!s;
+    syncEls.inn.hidden = !s;
+    syncEls.who.textContent = s ? ('Signed in as ' + s.reader) : '';
+  }
+  function openPanel(open){
+    if (!syncEls) return;
+    syncEls.panel.hidden = !open;
+    syncEls.btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (!open) saySync('');
+  }
+  function b64uToBuf(s){
+    s = String(s).replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    var bin = atob(s), b = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b.buffer;
+  }
+  function bufToB64u(buf){
+    var b = new Uint8Array(buf), s = '';
+    for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function authFetch(path, body){
+    return fetch(syncBase() + path, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    }).then(function(r){
+      return r.json().catch(function(){ return {}; })
+        .then(function(j){ return { ok: r.ok, status: r.status, j: j }; });
+    });
+  }
+  function adoptSession(j){
+    try { localStorage.setItem(SS_KEY, JSON.stringify({ token: j.session, reader: j.reader })); } catch (e) {}
+    syncUi(); openPanel(false);
+    pullRemote();
+  }
+  function doLogin(){
+    saySync('waiting for your passkey…');
+    authFetch('/auth/login-options', {}).then(function(res){
+      if (!res.ok) throw new Error('server error (' + res.status + ')');
+      var o = res.j;
+      o.challenge = b64uToBuf(o.challenge);
+      (o.allowCredentials || []).forEach(function(c){ c.id = b64uToBuf(c.id); });
+      return navigator.credentials.get({ publicKey: o });
+    }).then(function(cred){
+      if (!cred) throw new Error('no credential');
+      var r = cred.response;
+      var payload = {
+        id: cred.id, rawId: bufToB64u(cred.rawId), type: cred.type,
+        clientExtensionResults: cred.getClientExtensionResults ? cred.getClientExtensionResults() : {},
+        response: {
+          clientDataJSON: bufToB64u(r.clientDataJSON),
+          authenticatorData: bufToB64u(r.authenticatorData),
+          signature: bufToB64u(r.signature)
+        }
+      };
+      if (r.userHandle) payload.response.userHandle = bufToB64u(r.userHandle);
+      return authFetch('/auth/login', { response: payload });
+    }).then(function(res){
+      if (!res.ok || !res.j || !res.j.ok)
+        throw new Error(res.status === 403 ? 'passkey not recognized' : 'sign-in failed (' + res.status + ')');
+      adoptSession(res.j);
+    }).catch(function(err){ saySync(errMsg(err)); });
+  }
+  function doRegister(invite){
+    saySync('creating your passkey…');
+    authFetch('/auth/register-options', { invite: invite }).then(function(res){
+      if (!res.ok) throw new Error(res.status === 403 ? 'invite not accepted' : 'server error (' + res.status + ')');
+      var o = res.j;
+      o.challenge = b64uToBuf(o.challenge);
+      o.user.id = b64uToBuf(o.user.id);
+      (o.excludeCredentials || []).forEach(function(c){ c.id = b64uToBuf(c.id); });
+      return navigator.credentials.create({ publicKey: o });
+    }).then(function(cred){
+      if (!cred) throw new Error('no credential');
+      var r = cred.response;
+      var payload = {
+        id: cred.id, rawId: bufToB64u(cred.rawId), type: cred.type,
+        clientExtensionResults: cred.getClientExtensionResults ? cred.getClientExtensionResults() : {},
+        response: {
+          clientDataJSON: bufToB64u(r.clientDataJSON),
+          attestationObject: bufToB64u(r.attestationObject)
+        }
+      };
+      if (r.getTransports) payload.response.transports = r.getTransports();
+      return authFetch('/auth/register', { invite: invite, response: payload });
+    }).then(function(res){
+      if (!res.ok || !res.j || !res.j.ok)
+        throw new Error(res.status === 403 ? 'not accepted — invite or challenge expired' : 'setup failed (' + res.status + ')');
+      adoptSession(res.j);
+    }).catch(function(err){ saySync(errMsg(err)); });
+  }
+  if (syncRoot && window.PublicKeyCredential){   // no WebAuthn -> affordance stays hidden entirely
+    syncRoot.hidden = false;
+    syncEls = {
+      btn: syncRoot.querySelector('.ff-sbtn'),
+      panel: syncRoot.querySelector('.ff-spanel'),
+      out: syncRoot.querySelector('.ffs-out'),
+      inn: syncRoot.querySelector('.ffs-in'),
+      setupT: syncRoot.querySelector('.ffs-setup-t'),
+      setup: syncRoot.querySelector('.ffs-setup'),
+      invite: syncRoot.querySelector('.ffs-invite'),
+      create: syncRoot.querySelector('.ffs-create'),
+      signin: syncRoot.querySelector('.ffs-signin'),
+      signout: syncRoot.querySelector('.ffs-signout'),
+      who: syncRoot.querySelector('.ffs-who'),
+      status: syncRoot.querySelector('.ffs-status')
+    };
+    syncEls.btn.addEventListener('click', function(){ openPanel(syncEls.panel.hidden); });
+    syncEls.signin.addEventListener('click', doLogin);
+    syncEls.setupT.addEventListener('click', function(){
+      var show = syncEls.setup.hidden;
+      syncEls.setup.hidden = !show;
+      syncEls.setupT.setAttribute('aria-expanded', show ? 'true' : 'false');
+      if (show) syncEls.invite.focus();
+    });
+    syncEls.create.addEventListener('click', function(){
+      var code = (syncEls.invite.value || '').trim();
+      if (!code){ saySync('enter the invite code'); syncEls.invite.focus(); return; }
+      doRegister(code);
+    });
+    syncEls.invite.addEventListener('keydown', function(e){
+      if (e.key === 'Enter'){ e.preventDefault(); syncEls.create.click(); }
+    });
+    syncEls.signout.addEventListener('click', function(){
+      dropSession();                       // clears syncSession:v1 ONLY — local read state stays
+      saySync('signed out');
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape' && !syncEls.panel.hidden){ openPanel(false); syncEls.btn.focus(); }
+    });
+    document.addEventListener('click', function(e){
+      if (!syncEls.panel.hidden && !syncRoot.contains(e.target)) openPanel(false);
+    });
+    syncUi();
+  }
+  pullRemote();
 
   /* ---- real article images: unfurl each lead/feature story's og:image via og-proxy. arXiv
      cards stay text-only (their og:image is just the arXiv logo). Lazy (IntersectionObserver) +

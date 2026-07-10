@@ -1,13 +1,20 @@
-# feedback-sink — Cloudflare Worker (reader feedback)
+# feedback-sink — Cloudflare Worker (reader feedback + passkey accounts)
 
 > **Deployed 2026-06-18** → `https://feedback-sink.khalic-lab.workers.dev` (khalic-lab CF account;
 > KV `FEEDBACK_KV`, secret `FEEDBACK_TOKEN`). Widget + bridge + writers/Evaluator all wired and
 > verified — the loop is LIVE (see `feedback/FEEDBACK.md`). The steps below are the original
 > one-time deploy guide, kept for reference / redeploy.
+>
+> **Extended 2026-07-10**: passkey (WebAuthn) accounts + cross-device read-state sync
+> (`/auth/*`, `/readstate`). This made the worker its first **bundled dependency**
+> (`@simplewebauthn/server`) — deploys now need `npm install` first — and one new secret,
+> `INVITE_TOKEN`. See "Passkey accounts" below.
 
 Captures reader thumbs (+1 / −1) and an optional free-text reason from the published Jekyll
 briefs, holds them in **Cloudflare KV**, and lets the local bridge drain them into the git repo
 (`feedback/*.jsonl`) on its existing cron tick. Twin of `tools/embed-proxy` / `tools/og-proxy`.
+Since 2026-07-10 it is also the account backend: passkey auth + per-reader read-state sync for
+the homepage's read/unread marks.
 
 The loop is **human-gated**: raw feedback is committed losslessly, but the files the writers read
 (`reader-profile.md`, `reader-profile/source-weights.yml`) change only via the Weekly Evaluator's
@@ -27,9 +34,50 @@ GET  /drain             (Bearer)         -> {count, truncated, records:[{key, ..
                                          lists queued records; does NOT delete.
 POST /ack               (Bearer)         body: {keys:[...]}  -> {ok, deleted}
                                          deletes the given KV keys (call AFTER commit+push).
+
+POST /auth/register-options  (invite)    body: {invite} -> WebAuthn creation options.
+POST /auth/register          (invite)    body: {invite, response} -> {ok, session, reader}
+                                         verifies the attestation, stores the credential
+                                         (cred:{id}), issues a session. 403 unless the body
+                                         `invite` matches the INVITE_TOKEN secret (fails
+                                         closed while unset).
+POST /auth/login-options     (public)    -> WebAuthn request options (discoverable creds,
+                                         user verification required, single-use challenge).
+POST /auth/login             (public)    body: {response} -> {ok, session, reader}.
+GET  /readstate              (session)   -> {reader, state:{sid:{ts,v}}}.
+POST /readstate              (session)   body: {state:{sid:{ts,v}}} -> {ok,total,changed,skipped}
+                                         LWW merge per sid (v:0 = unread tombstone); caps:
+                                         64KB body (413), 2000 entries, sid ^st-[0-9a-f]{12}$,
+                                         90-day age-out. Session = Bearer <64-hex> from
+                                         /auth/*, KV TTL 90 days, rolling.
 ```
 
 Two-phase drain/ack so a missed bridge tick neither loses nor double-commits records.
+
+## Passkey accounts (2026-07-10)
+
+Single-reader accounts for read/unread sync across devices (SPIKE-2026-07-07-read-state-sync).
+Registration is invite-gated; one ceremony on any Apple device creates an iCloud-Keychain-synced
+passkey usable everywhere. rpID is `khalic-lab.github.io` (valid: github.io is on the Public
+Suffix List, so the subdomain is the registrable domain). `/auth/*` and `/readstate` answer CORS
+only for `https://khalic-lab.github.io`; the older routes keep `*`. A signed-in browser also
+sends the session Bearer on `/submit`, which pins the record's `reader` server-side.
+
+Deploy delta for the 2026-07-10 extension (from `tools/feedback-sink/`):
+
+```bash
+npm install                              # bundles @simplewebauthn/server (wrangler builds it in)
+openssl rand -hex 24                     # -> the invite code; keep it until registration is done
+printf '%s' "<that value>" | wrangler secret put INVITE_TOKEN
+wrangler deploy
+```
+
+Then register once from the live site: homepage → Sync → "First time? Set up" → paste the invite
+code → Face ID / Touch ID. After that every device signs in via Sync → "Sign in with passkey".
+The invite code stays live for future re-registrations (new credentials for the same reader);
+rotate or unset it after use if that's unwanted — login and sync don't need it.
+
+Smoke test (mock KV, no network — covers every non-crypto guard): `node test/smoke.mjs`.
 
 ## Deploy (one-time, ~4 minutes)
 

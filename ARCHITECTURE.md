@@ -67,6 +67,45 @@
    └──────────────────────────────────┘
 ```
 
+> **Added 2026-07-10: whole-system evaluation fixes + passkey accounts (plan
+> `go-ahead-i-trust-memoized-cray`).** A 9-agent read-only sweep found three criticals; all fixed
+> same-day. **(1) Bridge v2** (`bridge.sh`, local): `pages_selfheal` now polls
+> `repos/…/pages/builds/latest` (the 2026-07-03 version read `GET /pages` `.status`, which reflects
+> the *served* deploy — it missed the Jul-9 wedge for ~23h) and also detects a **built-but-stale
+> SHA** vs `origin/main` (push/build race → `POST /pages/builds` rebuild, rate-limited via a state
+> file); dirty-tree resilience (auto-`stash --include-untracked` → `pull --rebase` → `stash apply`;
+> a stray local edit no longer kills the tick — 31 prior silent aborts); timestamped ticks,
+> self-rotating log at `~/Library/Logs/news-brief-bridge.log`. **(2) Source diversification
+> unblocked**: `registry.py sync` was never invoked anywhere (candidates.jsonl grew, registry
+> starved, `candidates_to_try` = 0 for news/science) — now DEDUP **Step C.25b** (every writer, right
+> after `lint.py`); registry seeded to 137 domains (18 probation science venue seeds +
+> retired-stream backfill); fossil T1/T2 domain tables deleted from writer prompts (sources come
+> from the preflight plan); `lint.py append_candidates` made idempotent. **(3) Story identity**:
+> `dedup.py record` re-runs now **converge** on the first run's sids (norm_url → cited-urls overlap
+> → cosine ≥0.93); `tools/store/reconcile.py` is a report-only publish-sid⁄edition-index integrity
+> lint; the 2026-07-07 Cuba fork healed via a `merged-into:` ledger status event. **Evaluator loop
+> closed before the Sunday fire**: `proposals/reader-model-2026-07-05.json` backfilled + stamped,
+> two reader-validated preferences applied to `reader-profile.md`, **bounded auto-apply granted**
+> (evaluator may append dated "Learned preferences" lines itself — append-only, real-feedback-only;
+> registry/source-weights stay human-gated), new dimension M (editorial shape: vendor-PR-lead share,
+> aggregator-shape, personalization), self-delivery guard (stale continuity + `claude/*` branch
+> check), weekend ~50/50±15pp bias target. **Writer prompts**: News gains lead-first rule +
+> per-story depth spec; affiliations mandatory-Semantic-Scholar → best-effort chain (arXiv native →
+> S2 one-attempt → OpenAlex → omit); operational telemetry footers moved into HTML comments
+> (evaluator still reads them in raw markdown); Weekend quotas → quality-capped ceilings.
+> **Homepage**: story text is never trimmed (`_trim` deleted from `build_stories_feed.py` — the text
+> is the whole point); Brief-tier cards render folded (headline-only, click-to-expand — presentation
+> only, full text always in the DOM). **Passkey accounts + read-state sync** (SPIKE
+> 2026-07-07-read-state-sync, SHIPPED): feedback-sink Worker gains WebAuthn auth
+> (`@simplewebauthn/server` — first bundled-dep worker; invite-gated registration via new secret
+> `INVITE_TOKEN`, discoverable credentials, UV required, rpID `khalic-lab.github.io`) + 90-day
+> rolling KV sessions + `GET/POST /readstate` (per-reader `{sid:{ts,v}}` LWW tombstone map, 64KB/
+> 2000-entry caps, 90-day age-out; CORS on `/auth/*`+`/readstate` locked to the site origin);
+> homepage client syncs `homeRead:v1` through a `syncState:v1` shadow (debounced 30s push +
+> visibility flush, keepalive fetch; signed-out = zero sync traffic); votes carry the session
+> bearer → server-pinned `reader`. Spec suite now 274 tests; harness gained SYNCCHECK headless
+> assertions.
+
 > **Added 2026-07-07: story-store migration, steps 1–4 (`docs/SPIKE-2026-07-07-continuous-news.md`).**
 > The story (not the edition) is now the durable unit. **Identity:** `st-{sha1(norm_url)[:12]}`
 > (`tools/store/store.py`). **Primary store:** an append-only event ledger
@@ -91,7 +130,9 @@
 > Sunday source-scout duty (≤20 fetches, WebFetch-based — the evaluator holds no fetch-proxy token by
 > design). Spec suite: `python3 -m unittest discover -s tools/tests` (212+ tests, RED/GREEN-committed).
 
-> **Added 2026-07-03: Pages deploy self-heal + News moved to midday.** News trigger cron `0 17 * * *`
+> **Added 2026-07-03: Pages deploy self-heal + News moved to midday.** *(Self-heal superseded
+> 2026-07-10 — see the block above: it now polls `pages/builds/latest` and catches stale-SHA races.)*
+> News trigger cron `0 17 * * *`
 > → `0 10 * * *` (UTC) — 19:00 → 12:00 Bern (summer; fixed-UTC cron, so 11:00 Bern in winter). See the
 > writers table above. Separately: a transient GitHub Pages deploy failure poisons the current commit
 > SHA (Pages deployments are keyed by SHA, and **nothing retries a failed Pages build**), freezing the
@@ -158,7 +199,10 @@
 | Source registry | `sources/registry.yml` (+ `sources/{candidates,last-cited}.jsonl` machine appends) | per-domain `{class, tier, status, reach, probe, streams, last_cited, subsources, lifecycle}` | `registry.py bootstrap/sync` + human → `preflight.py`/`lint.py`/writers |
 | Source health | `_data/source-health.json` | per-stream 30d `{stories, unique_domains, new_domains, top5_share, saturated, waiver_rate}` | `health.py` (writer Step D) → Evaluator + homepage-adjacent tooling |
 | Evaluator metrics | `_data/health.json` | `{week, streams, feedback, sources, continuity}` | `tools/evaluator/metrics.py` (evaluator fire start) → Evaluator |
-| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 212+ tests: store invariants, fold, registry, lint, metrics, dual-write byte-identity goldens | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`) |
+| Machine proposals | `proposals/{name}-{date}.json` | `[{id, dimension, target, change, evidence, applied, applied_by?}]` | Evaluator emits → human/auto applies + stamps → next Evaluator verifies |
+| Read state (sync) | Cloudflare KV `readstate:{reader}` (not in repo) | `{sid: {ts, v: 0\|1}}` LWW tombstone map; client shadow `syncState:v1` + paint source `homeRead:v1` in localStorage | homepage JS ↔ feedback-sink Worker (passkey session) |
+| Passkey auth | Cloudflare KV `cred:{id}` / `session:{token}` / `chal:{kind}:{c}` (not in repo) | credential pubkey+counter; 90d rolling sessions; single-use challenges TTL 300s | feedback-sink `/auth/*` (registration invite-gated by `INVITE_TOKEN` secret) |
+| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 274 tests: store invariants, fold, registry, lint, metrics, dedup convergence, reconcile, dual-write byte-identity goldens | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`) |
 
 ### 1.3 Dedup today
 
@@ -197,7 +241,10 @@ GitHub main  ──┬─ RAW ungated: feedback/*.jsonl (append-only, dedup by i
 - **Worker:** `https://feedback-sink.khalic-lab.workers.dev` — `/submit` public (shape-capped,
   no bearer: a browser can't keep one), `/drain`+`/ack` bearer-gated (two-phase delete-on-ack so a
   missed bridge tick neither loses nor double-commits). Not on the env_018 allowlist — it's called
-  by the *browser* and the *Mac bridge*, never the routine sandbox.
+  by the *browser* and the *Mac bridge*, never the routine sandbox. Since 2026-07-10 also the
+  account backend (`/auth/*` passkeys + `/readstate` sync — see the 2026-07-10 block in §1.1 and
+  `tools/feedback-sink/README.md`); a signed-in browser's `/submit` carries the session bearer,
+  so `reader` is server-pinned instead of self-declared.
 - **Bridge:** `feedback.py drain` before commit (rides the "Drained N" commit), `ack` after push.
   `feedback.py` sends an identifiable User-Agent — Cloudflare 403s the default `Python-urllib` UA.
 - **Privacy:** reason text routes through the private Worker + private repo, never an ntfy topic.

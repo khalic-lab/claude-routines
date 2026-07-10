@@ -17,6 +17,13 @@ Usage:
 The harness appends a geometry self-check 4s after load: a `#geomcheck` div reporting
 overlapping cards and the largest column gap (grep the --dump-dom output for 'GEOM').
 Overlaps must be 0; gaps beyond ~200px mean the packing regressed.
+
+It also stubs window.fetch (no real network) and appends a `#synccheck` div at 4.5s
+exercising the passkey read-state sync engine (grep for 'SYNC'):
+  plain URL     -> signed-out run: rsCalls must be 0 (no sync traffic without a session).
+  URL + #synced -> seeded session + stubbed GET /readstate: expects gets=1 painted=1
+                   unpainted=1 shadow=1 (remote read paints; newer remote tombstone
+                   unmarks a locally-read card; both land in the syncState:v1 shadow).
 """
 import argparse
 import html
@@ -61,6 +68,87 @@ setTimeout(function(){
   d.textContent='GEOM overlaps='+overlaps+' maxGap='+maxGap+' cards='+cards.length+' cols='+xs.length+' bodyScrollW='+document.body.scrollWidth+' innerW='+innerWidth;
   document.body.appendChild(d);
 },4000);
+</script>"""
+
+
+SYNC_UI = """<span class="ff-sync" id="ffSync" hidden>
+    <button class="ff-sbtn" type="button" aria-expanded="false" aria-controls="ffSyncPanel">Sync</button>
+    <div class="ff-spanel" id="ffSyncPanel" hidden>
+      <div class="ffs-out">
+        <button class="ffs-btn ffs-signin" type="button">Sign in with passkey</button>
+        <button class="ffs-lnk ffs-setup-t" type="button" aria-expanded="false">First time? Set up</button>
+        <div class="ffs-setup" hidden>
+          <input class="ffs-invite" type="password" placeholder="invite code" aria-label="Invite code" autocomplete="off">
+          <button class="ffs-btn ffs-create" type="button">Create passkey</button>
+        </div>
+      </div>
+      <div class="ffs-in" hidden>
+        <span class="ffs-who"></span>
+        <button class="ffs-btn ffs-signout" type="button">Sign out</button>
+      </div>
+      <p class="ffs-status" aria-live="polite"></p>
+    </div>
+  </span>"""
+
+# Runs AFTER the cards are in the DOM but BEFORE the layout script: resets localStorage for a
+# deterministic run, stubs fetch (readstate canned, everything else 404), and — on #synced —
+# seeds a fake session plus a locally-read second card the remote tombstone must unmark.
+PRE_SYNC = """<script>
+(function(){
+  var SYNCED = location.hash === '#synced';
+  try { ['homeRead:v1','syncState:v1','syncSession:v1'].forEach(function(k){ localStorage.removeItem(k); }); } catch(e){}
+  var fbs = document.querySelectorAll('.fcard__fb');
+  var sidA = fbs[0] && fbs[0].dataset.story, sidB = null;
+  for (var i = 1; i < fbs.length; i++){
+    if (fbs[i].dataset.story && fbs[i].dataset.story !== sidA){ sidB = fbs[i].dataset.story; break; }
+  }
+  window.__syncSids = [sidA, sidB];
+  window.__fetchLog = [];
+  window.fetch = function(url, opts){
+    var method = ((opts && opts.method) || 'GET').toUpperCase();
+    window.__fetchLog.push(method + ' ' + String(url));
+    if (String(url).indexOf('/readstate') >= 0){
+      if (method === 'GET'){
+        var T = Date.now(), state = {};
+        if (sidA) state[sidA] = { ts: T - 5000, v: 1 };
+        if (sidB) state[sidB] = { ts: T - 1000, v: 0 };
+        return Promise.resolve(new Response(JSON.stringify({ reader:'rafael', state: state }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    }
+    return Promise.resolve(new Response('', { status: 404 }));
+  };
+  if (SYNCED){
+    try {
+      localStorage.setItem('syncSession:v1', JSON.stringify({ token: new Array(65).join('a'), reader: 'rafael' }));
+      var seed = {}; seed[sidB] = Date.now() - 100000;   // read locally, OLDER than the remote tombstone
+      localStorage.setItem('homeRead:v1', JSON.stringify(seed));
+    } catch(e){}
+  }
+})();
+</script>"""
+
+SYNC_CHECK = """<script>
+setTimeout(function(){
+  var log = window.__fetchLog || [];
+  var rs = log.filter(function(l){ return l.indexOf('/readstate') >= 0; });
+  var gets = rs.filter(function(l){ return l.indexOf('GET ') === 0; }).length;
+  var sids = window.__syncSids || [];
+  var painted = -1, unpainted = -1, shadow = -1;
+  function cardOf(sid){ var fb = document.querySelector('.fcard__fb[data-story="' + sid + '"]'); return fb && fb.closest('.fcard'); }
+  if (location.hash === '#synced' && sids[0] && sids[1]){
+    painted = cardOf(sids[0]).classList.contains('is-read') ? 1 : 0;
+    unpainted = cardOf(sids[1]).classList.contains('is-read') ? 0 : 1;
+    var st = {}; try { st = JSON.parse(localStorage.getItem('syncState:v1') || '{}'); } catch(e){}
+    shadow = (st[sids[0]] && st[sids[0]].v === 1 && st[sids[1]] && st[sids[1]].v === 0) ? 1 : 0;
+  }
+  var aff = document.getElementById('ffSync');
+  var d = document.createElement('div'); d.id = 'synccheck';
+  d.textContent = 'SYNC mode=' + (location.hash === '#synced' ? 'in' : 'out') + ' rsCalls=' + rs.length +
+    ' gets=' + gets + ' affordance=' + (aff && !aff.hidden ? 1 : 0) +
+    ' painted=' + painted + ' unpainted=' + unpainted + ' shadow=' + shadow;
+  document.body.appendChild(d);
+}, 4500);
 </script>"""
 
 
@@ -119,14 +207,14 @@ def main():
 <div class="wrap">
 <div class="folio-filters" id="folioFilters"><span class="ff-lbl">Beat</span>
 <button class="ff-chip ff-all" type="button" data-topic="" aria-pressed="true">All <span class="ff-ct">%d</span></button>
-%s<span class="ff-read" role="group" aria-label="Read state"><button class="ff-rbtn" type="button" data-rs="" aria-pressed="true">All</button><button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button><button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button></span></div>
+%s<span class="ff-read" role="group" aria-label="Read state"><button class="ff-rbtn" type="button" data-rs="" aria-pressed="true">All</button><button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button><button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button></span>%s</div>
 <div class="folio-board">
 <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
 <div class="folio-grid" id="folioGrid">%s</div>
 <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
 </div></div>
-%s%s""" % (TOKENS, styles, feed["count"], chips,
-           "".join(card(s) for s in feed["stories"]), script, GEOM_CHECK)
+%s%s%s%s""" % (TOKENS, styles, feed["count"], chips, SYNC_UI,
+               "".join(card(s) for s in feed["stories"]), PRE_SYNC, script, GEOM_CHECK, SYNC_CHECK)
 
     with open(args.out, "w") as fh:
         fh.write(page)
