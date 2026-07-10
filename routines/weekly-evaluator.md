@@ -242,10 +242,10 @@ For each issue identified, propose ONE specific edit to ONE specific prompt. For
 
 Synthesize the window's reader feedback from the ledger's folded state (input 7 — the `ev:"feedback"` events and `health.json` tallies, NOT the raw `feedback/*.jsonl`):
 - **Noise filter: a theme needs ≥2 signals on DISTINCT stories.** A single tap is noise, and so is one person double-tapping the same story — two votes on one story are one signal. Look for the same source, section, or recurring `reason` across ≥2 different stories, and quote the reasons verbatim.
-- Propose concrete, human-gated edits (do NOT apply them yourself), each as a Before/After block like the patches above:
-  - to `reader-profile.md` — a dated line under its "Learned preferences" section, e.g. `- {today}: less SpaceX launch detail on weekends (3× 👎, "too long").`
+- Propose concrete edits, each as a Before/After block like the patches above:
+  - to `reader-profile.md` — a dated line under its "Learned preferences" section, e.g. `- {today}: less SpaceX launch detail on weekends (3× 👎, "too long").` **Bounded auto-apply (granted by Rafael 2026-07-10): you apply these yourself** — append the dated line at the END of the "Learned preferences" section, append-only. Never edit or remove an existing line, never touch any other section of the file, and only append when the signal is real reader feedback from this window (a repeated vote or a vote with a written reason — never a single bare tap). Each auto-applied line still gets its machine-readable proposal entry, stamped `"applied": true, "applied_by": "evaluator"`.
   - to `reader-profile/source-weights.yml` — a domain for `reduce:` (low-signal / aggregator-heavy / PR-lead) or, ONLY for sources that repeatedly mislead, `never:`. Name the domain and the feedback that justifies it.
-- The writers read these two files, so editing them changes the briefs — that is exactly why ONLY Rafael applies them. Your job is to propose, not to apply. Never edit `reader-profile.md` / `reader-profile/source-weights.yml` / `sources/registry.yml` directly. (No `consumed: true` bookkeeping either — the bridge's fold.py owns consumption now.)
+- The writers read these two files, so editing them changes the briefs. `reader-profile/source-weights.yml` and `sources/registry.yml` remain STRICTLY human-gated — never edit them directly; propose only, Rafael applies. The auto-apply grant above covers exactly one thing: appending dated lines to reader-profile.md "Learned preferences". (No `consumed: true` bookkeeping either — the bridge's fold.py owns consumption now.)
 - If there is no feedback in the window, write "No reader feedback this week." and propose nothing here.
 
 ## Machine-readable proposals (write BOTH files whenever you propose anything)
@@ -271,7 +271,7 @@ Every proposal above is also emitted machine-readable, so Rafael's apply step ca
        evidence: ">=3 anchored citations across >=2 editions, >=14 days, zero source-quality downvotes"
    ```
 
-**`applied: true` stamp protocol:** you always write `applied: false`. Rafael's apply step is the ONLY thing that flips it to `applied: true` when a proposal lands. Every run, read the PREVIOUS week's `proposals/*` files first: a stamped proposal → spot-check the target file actually changed (the loop's verification step — report "applied and verified" or "stamped but not landed"); an unstamped one → list it as **pending, not applied** in the review (do not silently re-propose it as if new). Skip both files (and this check's flags) if you proposed nothing and last week's files don't exist.
+**`applied: true` stamp protocol:** you write `applied: false` for every proposal EXCEPT the reader-profile.md learned-preference lines you auto-applied under the bounded grant above — those you stamp `"applied": true, "applied_by": "evaluator"` in the same run. For everything else, Rafael's apply step is the ONLY thing that flips it to `applied: true` when a proposal lands. Every run, read the PREVIOUS week's `proposals/*` files first: a stamped proposal → spot-check the target file actually changed (the loop's verification step — report "applied and verified" or "stamped but not landed"); an unstamped one → list it as **pending, not applied** in the review (do not silently re-propose it as if new). Skip both files (and this check's flags) if you proposed nothing and last week's files don't exist.
 
 ## Cross-week trend (if applicable)
 

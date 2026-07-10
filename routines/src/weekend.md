@@ -77,6 +77,10 @@ The weekend brief warrants more aggressive iteration than the dailies. Per topic
 
 ## 📰 Week in headlines (short)
 Brief recap, ~5 bullets. World + Switzerland combined. Just the things that mattered structurally.
+Every bullet states what happened AND WHEN it happened — the date of the underlying event, not just
+the date of the latest development. For a death, attack, ruling, or launch, name the event date
+explicitly ("X died on {date}" / "the {date} strike"), even when the news peg is a later
+funeral/anniversary/reaction. If the daily briefs carried the event date, carry it forward.
 
 **Feed-first sources (curl first):** Al Jazeera RSS, SRF DE RSS, Le Temps FR RSS.
 

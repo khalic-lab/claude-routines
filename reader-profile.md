@@ -28,3 +28,12 @@
 ## Learned preferences (Evaluator-maintained — append below)
 <!-- The Weekly Evaluator proposes additions here from feedback; Rafael applies them. e.g.:
 - 2026-06-15: less SpaceX launch detail on weekends (3× 👎, "too long"). -->
+- 2026-06-28: for "AI/science changes how we think/work" stories, anchor on the underlying study
+  (journal article / preprint), not a Nature blog/news restatement, and avoid sensational framing —
+  distinguish skill-displacement from real deskilling rather than asserting the alarming reading
+  (2× 👎 on 2026-06-19 overview "AI tools erode skills", "read the actual study… please steer away
+  from sensationalism").
+- 2026-07-05: in the Weekend "Week in headlines" digest, always anchor a major event to WHEN it
+  happened, not just its current status (2× 👎 on the 2026-07-04 Khamenei bullet, "Missing context
+  on when it hapenned" — it said he "has died" without the 28 Feb death date the daily brief had
+  already carried).
