@@ -360,7 +360,8 @@ def load_index_meta(window_dates):
                     continue
                 r = json.loads(ln)
                 m = {"topics": r.get("topics"), "importance": r.get("importance"),
-                     "display_body": r.get("display_body"), "why": r.get("why")}
+                     "display_body": r.get("display_body"), "why": r.get("why"),
+                     "affiliations": r.get("affiliations")}
                 if r.get("id"):
                     by_id[r["id"]] = m
                 nu = norm_url(r.get("url"))
@@ -411,7 +412,8 @@ def load_recent(days):
             # re-parse — the record is authored, the parse is recovered.
             body = (im.get("display_body") or "").strip() or s["body"]
             why = (im.get("why") or "").strip() or s["why"]
-            stories.append({
+            affs = im.get("affiliations") or []
+            story = {
                 # the post's embedded anchor id is authoritative (anchor.py keyed it on the
                 # RECORDED story url via --index); recompute from the first link only for
                 # pre-anchor posts
@@ -423,7 +425,16 @@ def load_recent(days):
                 "topics": topics, "topic_primary": primary, "topic_label": label, "topic_color": color,
                 "importance": imp, "is_lead": imp == 3,
                 "permalink": "/%s/%s/%s/%s/" % (y, mo, dy, stream),
-            })
+            }
+            if affs:
+                # institution-first source label (SPIKE-2026-07-10): the affiliation is the
+                # editorial source of a paper; the domain is just the platform. Keys are
+                # emitted only when present so Liquid's `{% if %}` (empty string is truthy)
+                # can gate on them directly.
+                story["affiliations"] = affs
+                story["affiliation_label"] = ", ".join(affs[:2]) + (
+                    " +%d" % (len(affs) - 2) if len(affs) > 2 else "")
+            stories.append(story)
     return stories, max_date, joined
 
 

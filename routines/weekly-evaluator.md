@@ -168,6 +168,12 @@ Three spot-checks, each ~5 samples, judged against the mission in `reader-profil
 - **Personalization check:** sample 5 stories — is the Switzerland/tech-professional relevance framing present where it plausibly exists (CH angle, personal-impact angle, builder's angle)? Missing-where-available is the miss; forced-where-absent is also a miss (noise).
 Report all three in the Health summary table; recurring failures (≥2 weeks) warrant a patch proposal against the offending stream's prompt.
 
+## N. Affiliation element (papers streams; added 2026-07-10)
+Two checks on the week's paper coverage (ai-ml, science, weekend — see the Affiliations block in the writer prompts and SPIKE-2026-07-10-affiliation-element):
+- **Coverage rate:** across the week's paper bylines, what fraction read `(affiliation not listed)`? Target < ~20% now that the chain reads the paper's own HTML author block (2026-07-07 ran at 70% under the old API chain; 2026-07-10 hit 0% under the new one). Also spot-check 3 bylines against `"affiliations"` on the matching `index/stories/` records — a byline whose institutions never reached the record means the writer skipped the Step C field.
+- **Halo audit (anti-prestige guard):** compare the `importance` scores of this week's `(affiliation not listed)` / independent-author papers against the big-lab-affiliated ones. Affiliations are recorded for the reader, never a selection signal — if unaffiliated papers systematically land at importance 1 while equivalent-content lab papers land at 2–3, that is the LLM prestige bias the guard exists to prevent (arXiv:2509.15122); flag it and propose a patch.
+Report both in the Health summary table.
+
 # Sunday source-scout duty (bounded — run AFTER the analysis, BEFORE the Output steps)
 
 A bounded discovery pass that feeds the registry with vetted candidates. **Hard budget: ≤20 candidate fetches total across this whole section** (WebFetch or direct `curl` — count them, report the count in the review; when the budget is spent, stop). **This routine holds no fetch-proxy bearer by design — never call the fetch-proxy.** When a candidate looks genuinely primary but blocks direct fetch (403/anti-bot), do NOT drop it: append it to `sources/candidates.jsonl` anyway with `"reach": "proxy-needed"` in the JSON object — the writers, who do hold the bearer, vet it at first citation and lint/registry bookkeeping takes it from there.
@@ -213,7 +219,7 @@ _Files read: N news, N AI/ML (expect ~2), N science (expect ~1), 1 weekend, prio
 | Aggregator-shape failures (§M, of 5) |   | 0–1    | 🟢🟡🔴 |
 | Personalization misses (§M, of 5) |      | 0–1    | 🟢🟡🔴 |
 
-## A–M: Detailed findings
+## A–N: Detailed findings
 
 [For each dimension, write the metric, the data, and any flags. Be specific — name the brief filename and section for any issue. For the computed dimensions (A, I, feedback), cite the health.json / source-health.json numbers rather than recounting.]
 

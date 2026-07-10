@@ -50,9 +50,9 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 - A citation from a search-engine snippet = **via-snippet**, tag `[via snippet]` in the item.
 - In the `Feeds hit` line, distinguish `{ok via curl}` / `{ok via WebFetch}` / `{ok via proxy}` / `{fail — HTTP NNN}`.
 
-# Affiliations (best-effort — do not burn budget on them)
+# Affiliations (the provenance element)
 
-Surface the lead authors' institutional affiliations when cheaply retrievable, in this order: arXiv Atom `<author><arxiv:affiliation>` (already in the response) → Semantic Scholar `authors.affiliations` (ONE attempt — `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations`; skip on 429/400/not-indexed, which is the norm for <1-week-old arXiv IDs) → OpenAlex works API (`api.openalex.org/works?filter=doi:…` or `?search=<title>` — indexes arXiv faster and returns institution names). If all three miss, write `(affiliation not listed)` and move on — never fabricate, never web-search individual authors. Format: after the authors, in parentheses — e.g. `J. Doe, A. Smith et al. (ETH Zürich; CERN)`.
+<!-- include: _shared/affiliations.md -->
 
 # Research methodology
 

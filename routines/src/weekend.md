@@ -50,7 +50,9 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 3. The publisher's HTML page (proxy on 403).
 4. Web search snippet (last resort, tag the citation `[via snippet]`).
 
-**arXiv / Semantic Scholar mechanics:** the date-filtered arXiv Atom API (`https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending`) works for `math.*`, `physics.*`, `astro-ph.*` too — swap the `cat:` filter and window the `<published>` dates client-side. Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations` (triangulation, citation counts, affiliations).
+**arXiv / Semantic Scholar mechanics:** the date-filtered arXiv Atom API (`https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending`) works for `math.*`, `physics.*`, `astro-ph.*` too — swap the `cat:` filter and window the `<published>` dates client-side. Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors` (triangulation and citation counts — NOT affiliations; those follow the block below).
+
+<!-- include: _shared/affiliations.md -->
 
 **Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** route through the proxy.
 - bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv`); returns title, abstract, DOI, and date per paper for the window — ideal for the Biology & Fundamental-science sections.
@@ -101,7 +103,7 @@ Up to ~10 ML/AI papers — **quality is the cap, not the quota**: a 6-paper week
 - ~15% applied (anomaly detection, code, vision-language, multimodal)
 
 For each paper:
-- Title + arXiv ID + authors (first 3 + et al.) **with institutional affiliations when cheaply retrievable** — e.g. `F. Last, A. Other et al. (MIT; CERN)`. Order: arXiv `<arxiv:affiliation>` → Semantic Scholar `authors.affiliations` (ONE attempt; skip on 429/400/not-indexed) → OpenAlex works API (`api.openalex.org/works?search=<title>`). If all three miss, `(affiliation not listed)` and move on — never fabricate, never web-search individual authors.
+- Title + arXiv ID + authors (first 3 + et al.) **with institutional affiliations per the Affiliations block above** — e.g. `F. Last, A. Other et al. (MIT; CERN)`; `(affiliation not listed)` when the chain misses.
 - 3–5 sentence summary in your own words: contribution, method, key result.
 - One line: "why this is interesting".
 - Direct link to abstract.
@@ -124,7 +126,7 @@ Up to ~8 papers across the fundamental sciences — quality is the cap; skip a c
 - ~15% mathematics (major proofs, conjecture progress, surveys)
 - ~10% adjacent (chemistry, climate physics, computational)
 
-For each paper, same format as ML papers section (including the best-effort affiliations chain — arXiv `<arxiv:affiliation>` → Semantic Scholar → OpenAlex, `(affiliation not listed)` if all miss, never fabricated). Math papers may need a 2-line "context" note.
+For each paper, same format as ML papers section (including the affiliations element — same rules as the Affiliations block above, `(affiliation not listed)` when the chain misses, never fabricated). Math papers may need a 2-line "context" note.
 
 ## 🚀 Models & datasets released this week
 T1: huggingface.co/models?sort=trending&period=7day, huggingface.co/datasets, lab announcement blogs, GitHub release pages.

@@ -113,7 +113,46 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 3. The publisher's HTML page (proxy on 403).
 4. Web search snippet (last resort, tag the citation `[via snippet]`).
 
-**arXiv / Semantic Scholar mechanics:** the date-filtered arXiv Atom API (`https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending`) works for `math.*`, `physics.*`, `astro-ph.*` too — swap the `cat:` filter and window the `<published>` dates client-side. Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations` (triangulation, citation counts, affiliations).
+**arXiv / Semantic Scholar mechanics:** the date-filtered arXiv Atom API (`https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending`) works for `math.*`, `physics.*`, `astro-ph.*` too — swap the `cat:` filter and window the `<published>` dates client-side. Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors` (triangulation and citation counts — NOT affiliations; those follow the block below).
+
+**Affiliations — the paper's provenance element (machine-parsed):** every paper byline carries
+the lead authors' institutional affiliations. They are the paper's editorial source —
+arxiv.org is just the platform — and they flow to the homepage cards' institution-first source
+label and the institutions ledger (`sources/institutions.yml`), so both the retrieval order and
+the format below are load-bearing.
+
+- **arXiv preprints — read the paper's own HTML author block.** Fetch
+  `https://arxiv.org/html/<id>v1` THROUGH the fetch proxy and take the affiliations from the
+  author block at the top of page 1 (~97% of new submissions render HTML; verified in
+  production 2026-07-10, 10/10 papers). Do NOT use index APIs for preprints: Semantic Scholar
+  has not indexed hours-old papers, and OpenAlex's arXiv records carry EMPTY institutions even
+  once indexed (~6-day lag; measured 2026-07-10). If the HTML 404s (~3% of papers), write
+  `(affiliation not listed)`.
+- **bioRxiv / medRxiv preprints:** the details-API response you already fetch includes
+  `author_corresponding_institution` — use it (no extra fetch).
+- **Published papers (journal DOI) — OpenAlex:**
+  `https://api.openalex.org/works?filter=doi:<doi>&select=authorships` returns resolved
+  institution names (measured: complete for fresh Nature papers). On a miss, take them from
+  the publisher/press page you are already reading; else the sentinel.
+- **Budget: at most ONE extra fetch per selected paper.** Never web-search individual authors,
+  never guess from an email domain or a lab's reputation — `(affiliation not listed)` is
+  always the correct fallback; never fabricate.
+
+**Byline format law** (parsed by `tools/dedup/dedup.py parse_affiliations` — deviations break
+the join): after the author list, in parentheses — `AUTHORS (Inst1; Inst2; Inst3)`. `;`
+separates institutions; `,` only qualifies within one name (`HKUST, Guangzhou`); at most 3
+institutions, then `+N more`; canonical short names (`MIT`, `ETH Zürich`, `Google DeepMind` —
+not full legal names); collective authors keep their name — `Gemma Team (Google DeepMind)`.
+Example: `F. Last, A. Other et al. (MIT; CERN)`.
+
+**Step C:** copy the same institutions into each paper story's `"affiliations": ["MIT", "CERN"]`
+field in final.json (omit the key when not listed) — the homepage card and the institutions
+ledger read it from there (see DEDUP.md Step C).
+
+**Anti-halo guard:** affiliations are recorded FOR THE READER, after selection — never as a
+selection signal. Do not prefer a paper because a famous lab wrote it, and never demote one
+because its affiliation is missing, independent, or unknown (LLM judges measurably over-reject
+low-prestige affiliations — arXiv:2509.15122). Select on content.
 
 **Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** route through the proxy.
 - bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv`); returns title, abstract, DOI, and date per paper for the window — ideal for the Biology & Fundamental-science sections.
@@ -164,7 +203,7 @@ Up to ~10 ML/AI papers — **quality is the cap, not the quota**: a 6-paper week
 - ~15% applied (anomaly detection, code, vision-language, multimodal)
 
 For each paper:
-- Title + arXiv ID + authors (first 3 + et al.) **with institutional affiliations when cheaply retrievable** — e.g. `F. Last, A. Other et al. (MIT; CERN)`. Order: arXiv `<arxiv:affiliation>` → Semantic Scholar `authors.affiliations` (ONE attempt; skip on 429/400/not-indexed) → OpenAlex works API (`api.openalex.org/works?search=<title>`). If all three miss, `(affiliation not listed)` and move on — never fabricate, never web-search individual authors.
+- Title + arXiv ID + authors (first 3 + et al.) **with institutional affiliations per the Affiliations block above** — e.g. `F. Last, A. Other et al. (MIT; CERN)`; `(affiliation not listed)` when the chain misses.
 - 3–5 sentence summary in your own words: contribution, method, key result.
 - One line: "why this is interesting".
 - Direct link to abstract.
@@ -187,7 +226,7 @@ Up to ~8 papers across the fundamental sciences — quality is the cap; skip a c
 - ~15% mathematics (major proofs, conjecture progress, surveys)
 - ~10% adjacent (chemistry, climate physics, computational)
 
-For each paper, same format as ML papers section (including the best-effort affiliations chain — arXiv `<arxiv:affiliation>` → Semantic Scholar → OpenAlex, `(affiliation not listed)` if all miss, never fabricated). Math papers may need a 2-line "context" note.
+For each paper, same format as ML papers section (including the affiliations element — same rules as the Affiliations block above, `(affiliation not listed)` when the chain misses, never fabricated). Math papers may need a 2-line "context" note.
 
 ## 🚀 Models & datasets released this week
 T1: huggingface.co/models?sort=trending&period=7day, huggingface.co/datasets, lab announcement blogs, GitHub release pages.

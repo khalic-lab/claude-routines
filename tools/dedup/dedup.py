@@ -461,6 +461,120 @@ def extract_stories(md_text):
 
 
 # --------------------------------------------------------------------------- #
+# affiliations (byline parenthetical -> structured field; SPIKE-2026-07-10)
+# --------------------------------------------------------------------------- #
+_PAREN_RE = re.compile(r"\(([^()]*)\)")
+_AFFIL_MORE_RE = re.compile(r"\s*\+\s*\d+\s*more\s*$", re.I)
+_AFFIL_MAX = 6  # more institutions than this in one parenthetical reads as prose, not a byline
+# a line is a PAPER byline (eligible for affiliation parse) only if it carries a paper marker;
+# keeps news-prose parentheticals — "(Reuters)", "(the SNB)" — out of the affiliation field.
+_PAPER_LINE_RE = re.compile(r"arxiv|\[preprint|published 2\d{3}|doi\.org|biorxiv|medrxiv", re.I)
+
+
+def parse_affiliations(line):
+    """Institutions from a paper byline's affiliation parenthetical, or None.
+
+    Bylines follow the format law (routines/_shared/affiliations.md):
+        [link](url) · AUTHORS (Inst1; Inst2; Inst3) · `[preprint]`
+    The affiliation is the LAST parenthetical after the first ' · ' that is not an
+    author-list fragment — '(incl. V. Krakovna)', '(305 authors)' — and not the
+    explicit '(affiliation not listed)' sentinel. `;` separates institutions; `,`
+    only qualifies within one name ('HKUST, Guangzhou'); a trailing '+N more' is
+    display overflow, not a name. Returns a non-empty list of names, else None
+    (no byline shape / sentinel / nothing parseable). Pure — no I/O."""
+    if not line or " · " not in line:
+        return None
+    after = line.split(" · ", 1)[1]
+    cands = []
+    for m in _PAREN_RE.finditer(after):
+        frag = m.group(1).strip()
+        if not frag or frag[0].isdigit():                    # '(305 authors)', '(2026-07-02)'
+            continue
+        if frag.lower().startswith(("incl", "via ", "e.g", "see ", "arxiv")):
+            continue
+        if "://" in frag:            # a markdown link's (url) target, never an institution
+            continue
+        cands.append((frag, m.end()))
+    if not cands:
+        return None
+    cand, end = cands[-1]
+    # affiliations FOLLOW the author list; a parenthetical that itself precedes 'et al.' is a
+    # paper/method name standing in for missing authors — '· (CRAX) et al. ·' (2026-06-20) —
+    # never an institution
+    if re.match(r"\s*et al", after[end:]):
+        return None
+    if "not listed" in cand.lower():
+        return None
+    cand = _AFFIL_MORE_RE.sub("", cand)
+    names = [n.strip() for n in cand.split(";") if n.strip()]
+    if not names or len(names) > _AFFIL_MAX:
+        return None
+    return names
+
+
+def _norm_url_join(u):
+    """Canonicalize a URL for the byline<->record join (affil-backfill): scheme/www/
+    fragment/trailing-slash-insensitive, arXiv version-insensitive (abs/NNNNvK == abs/NNNN)."""
+    if not u:
+        return None
+    u = u.strip().lower()
+    u = re.sub(r"^https?://", "", u)
+    u = re.sub(r"^www\.", "", u)
+    u = u.split("#", 1)[0].rstrip("/")
+    u = re.sub(r"(arxiv\.org/abs/\d{4}\.\d{4,5})v\d+$", r"\1", u)
+    return u or None
+
+
+def cmd_affil_backfill(_args):
+    """Patch existing index/stories/*.jsonl records with `affiliations` parsed from the
+    published posts' paper bylines. Deterministic, no network, idempotent: a record that
+    already carries affiliations is left alone, so a second run is a no-op. The ledger is
+    deliberately NOT rewritten (append-only history); records written by `record` from now
+    on carry affiliations into it natively via the dual-write."""
+    by_url = {}
+    for path in sorted(glob.glob(os.path.join(POSTS_DIR, "*.md"))):
+        with open(path) as f:
+            for line in f:
+                if not _PAPER_LINE_RE.search(line):
+                    continue
+                affs = parse_affiliations(line)
+                if not affs:
+                    continue
+                m = _URL_RE.search(line)
+                nu = _norm_url_join(m.group(1)) if m else None
+                if nu:
+                    by_url.setdefault(nu, affs)
+    patched = files = 0
+    for path in sorted(glob.glob(os.path.join(INDEX_DIR, "*.jsonl"))):
+        records, changed = [], False
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    records.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+        for rec in records:
+            if rec.get("affiliations"):
+                continue
+            affs = by_url.get(_norm_url_join(rec.get("url")))
+            if affs:
+                rec["affiliations"] = affs
+                changed = True
+                patched += 1
+        if changed:
+            with open(path, "w") as f:
+                for rec in records:
+                    f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            files += 1
+            print(f"  {os.path.basename(path)}: +affiliations")
+    print(f"affil-backfill: patched {patched} record(s) across {files} file(s) "
+          f"({len(by_url)} byline affiliation(s) parsed from posts)")
+
+
+# --------------------------------------------------------------------------- #
 # verdict logic (check)
 # --------------------------------------------------------------------------- #
 def classify(vec, recent, t_high, t_low):
@@ -856,7 +970,15 @@ def cmd_record(args):
             genesis = recent_by_id.get(thread_id)
             if genesis is not None:
                 event_date = scheduled_event_date(genesis)
-        records.append({
+        # affiliations (papers; SPIKE-2026-07-10): writer-supplied list of institution
+        # names. Optional enrichment — the key is written ONLY when non-empty, so records
+        # from affiliation-less payloads stay byte-identical (golden-enforced). On a
+        # re-record, a prior value survives a newer payload that omits it (don't lose
+        # enrichment on convergence); a newer non-empty list wins as usual.
+        affs = s.get("affiliations")
+        if not (isinstance(affs, list) and affs) and prior is not None:
+            affs = prior.get("affiliations")
+        rec = {
             "id": hid,
             "date": date,
             "stream": slug,
@@ -880,7 +1002,10 @@ def cmd_record(args):
             "event_date": event_date,
             "embedding_model": EMBED_MODEL,
             "emb": encode_vec(v),
-        })
+        }
+        if isinstance(affs, list) and affs:
+            rec["affiliations"] = [str(a).strip() for a in affs if str(a).strip()][:_AFFIL_MAX]
+        records.append(rec)
     path = write_index_file(date, slug, records)
     removed = prune_index(args.keep_days, as_of=_parse_date(args.date))
     print(f"wrote {len(records)} stories -> {path}"
@@ -1103,6 +1228,10 @@ def main():
     b.add_argument("--no-embed", action="store_true", help="extract only; empty vectors (debug)")
     add_embed_args(b)
     b.set_defaults(func=cmd_backfill)
+
+    ab = sub.add_parser("affil-backfill",
+                        help="patch index records with affiliations parsed from post bylines (no network)")
+    ab.set_defaults(func=cmd_affil_backfill)
 
     ln = sub.add_parser("lint", help="post-compose date checks on a brief (no network)")
     ln.add_argument("--brief", required=True, help="path to the brief markdown file")

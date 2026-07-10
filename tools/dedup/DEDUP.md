@@ -100,6 +100,7 @@ safety net, not a requirement — supply them if you already have them, otherwis
   {"headline":"...","summary":"<one sentence>","url":"<primary source url>",
    "tier":"T1","tags":["..."],
    "topics":["geopolitics"],"importance":3,
+   "affiliations":["MIT","CERN"],
    "display_body":"<the story's explanatory paragraph EXACTLY as published in the brief>",
    "why":"<the story's 'Why it matters' text as published, if it has one; else omit>",
    "event_date":"<YYYY-MM-DD when the event actually happened, if known; else omit>",
@@ -117,6 +118,11 @@ safety net, not a requirement — supply them if you already have them, otherwis
   `security`, `tech`, `world`), `importance` is 1–3 (**3** lead, **2** standard, **1** brief). Score
   on real significance to the reader (see the tagging rubric in your prompt). If you omit them,
   `record` stores them empty and `build_stories_feed.py` derives a fallback from position + keywords.
+- **`affiliations`** (papers only; SPIKE-2026-07-10): the institutions from the story's byline
+  parenthetical, verbatim — same canonical short names, same order, ≤3 (`AUTHORS (Inst1; Inst2)`
+  → `["Inst1","Inst2"]`). **Omit the key** for non-papers and for `(affiliation not listed)`.
+  It feeds the homepage card's institution-first source label and `sources/institutions.yml`;
+  the Affiliations block in your prompt has the retrieval chain and format law.
 - **`display_body` / `why`** are the story's PUBLISHED prose, copied verbatim from the brief you just
   wrote (the explanatory paragraph, and the "Why it matters" line if the story has one) — plain text,
   no markdown links or bold. The homepage cards render these directly; when present they beat the
@@ -153,6 +159,7 @@ a reader's feedback click or a homefeed card can target one story instead of the
 python3 tools/store/anchor.py --index index/stories/{YYYY-MM-DD}-{SLUG}.jsonl _posts/{YYYY-MM-DD}-{SLUG}.md || echo "anchor failed (non-fatal)"
 python3 tools/sources/lint.py _posts/{YYYY-MM-DD}-{SLUG}.md || echo "sources lint failed (non-fatal)"
 python3 tools/sources/registry.py sync --root . || echo "registry sync failed (non-fatal)"
+python3 tools/sources/institutions.py sync --root . || echo "institutions sync failed (non-fatal)"
 ```
 
 **Step C.25b — registry sync (the line above; added 2026-07-10).** `lint.py` appends each
@@ -162,6 +169,11 @@ Without this step nothing ever promotes a discovered domain, so the NEXT edition
 would keep printing `candidates_to_try: none on file` forever (this exact gap left news/science
 with zero discovery candidates from 2026-07-07 to 2026-07-10). Stage `sources/` in the commit —
 the sync rewrites `registry.yml` and truncates `candidates.jsonl`.
+
+**Step C.25c — institutions sync (the second line; added 2026-07-10).** Folds the
+`affiliations` lists Step C just recorded into `sources/institutions.yml` — the per-institution
+citation ledger behind the homepage's institution-first source labels (per-edition bookkeeping;
+re-running is a no-op). Stage `sources/institutions.yml` too.
 
 `anchor.py` inserts `<a id="st-…" class="st-a"></a>` right after each story bullet's dash (or a
 kramdown `{#st-…}` after a `### ` heading). `--index` points it at the edition's own

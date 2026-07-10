@@ -75,7 +75,7 @@ T2 commentary (discovery + framing, never the primary cite): simonwillison.net, 
 
 If you DO have papers inside the window: because this is a multi-day window (two fires/week), target **~8–12 papers** — bias toward RL, efficient inference, interpretability, agents, and novel architectures. Dedup by arXiv ID within this batch so no paper appears twice.
 
-**Affiliations (best-effort — do not burn budget on them):** after the author list, surface the lead authors' institutional affiliations when cheaply retrievable, in this order: arXiv `<arxiv:affiliation>` (already in the Atom response) → Semantic Scholar `authors.affiliations` (ONE attempt; skip on 429/400/not-indexed — it fails for most <1-week-old arXiv IDs) → OpenAlex works API (`api.openalex.org/works?filter=doi:…` or `?search=<title>` — indexes arXiv faster and returns institution names). If all three miss, write `(affiliation not listed)` and move on — never fabricate, never do a named-senior-author web-search scramble; that budget belongs to prose and sourcing.
+<!-- include: _shared/affiliations.md -->
 
 Format each paper as a **multi-paragraph story bullet** (one `-` per paper, so the section is a bulleted
 list, not a wall of paragraphs) — the same headline-led shape the News brief uses, so each paper renders

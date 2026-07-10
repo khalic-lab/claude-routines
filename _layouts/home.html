@@ -60,7 +60,7 @@ sized by how much it matters, filterable by beat.</p>
         {% if s.summary != "" %}<p class="fcard__sum">{{ s.summary }}</p>{% endif %}
         {% if s.why and s.why != "" %}<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>{{ s.why }}</p>{% endif %}
         <div class="fcard__line">
-          <span class="fcard__src">{{ s.source_domain }}</span>
+          {% if s.affiliation_label %}<span class="fcard__src"><span class="fcard__aff">{{ s.affiliation_label }}</span> · {{ s.source_domain }}</span>{% else %}<span class="fcard__src">{{ s.source_domain }}</span>{% endif %}
           {% if s.fresh and s.importance > 1 %}<span class="fcard__fresh">Just in</span>{% endif %}
           <span class="fcard__date">{{ s.date_label }}</span>
           <button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read" title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></button>
@@ -276,7 +276,10 @@ sized by how much it matters, filterable by beat.</p>
   .fcard.is-read .fimg{ opacity:.5; }
   .fcard__line{ display:flex; align-items:baseline; gap:.6em; margin-top:auto; padding-top:9px;
     border-top:1px solid var(--hair); font-family:var(--sans); font-size:.6rem; letter-spacing:.04em; color:var(--muted); }
-  .fcard__src{ text-transform:lowercase; letter-spacing:.02em; }
+  .fcard__src{ text-transform:lowercase; letter-spacing:.02em; min-width:0; }
+  /* institution-first source label (papers): names keep their real casing inside the
+     lowercased src line; a long label wraps and the card grows — never ellipsized away */
+  .fcard__aff{ text-transform:none; }
   .fcard__date{ margin-left:auto; font-variant-numeric:tabular-nums; }
   .fcard__fresh{ color:var(--accent); font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 

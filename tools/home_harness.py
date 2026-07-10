@@ -168,6 +168,9 @@ def card(s):
     readbtn = ('<button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read"'
                ' title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true">'
                '<path d="M20 6L9 17l-5-5"/></svg></button>')
+    # institution-first source label (mirrors the Liquid in _layouts/home.html)
+    src = ('<span class="fcard__aff">%s</span> · %s' % (e(s["affiliation_label"]), e(s["source_domain"]))
+           if s.get("affiliation_label") else e(s["source_domain"]))
     return """<article class="fcard imp%(imp)s%(lead)s" data-topics="%(topics)s" data-imp="%(imp)s"%(og)s>
 <div class="fcard__in" style="--tc:%(color)s">
 <div class="fcard__top"><a class="fcard__beat" href="#"><span class="ff-dot"></span>%(tlabel)s</a><span class="fcard__rank" data-imp="%(imp)s"></span></div>
@@ -181,7 +184,7 @@ def card(s):
 </div></article>""" % {
         "imp": s["importance"], "lead": lead, "topics": e(" ".join(s["topics"])), "og": og,
         "color": s["topic_color"], "tlabel": e(s["topic_label"]), "hl": hl, "summ": summ, "why": why,
-        "src": e(s["source_domain"]), "fresh": fresh, "dlabel": e(s["date_label"]),
+        "src": src, "fresh": fresh, "dlabel": e(s["date_label"]),
         "id": e(s.get("sid") or s["id"]), "date": e(s["date"]), "stream": e(s["stream"]), "svg": SVG,
         "readbtn": readbtn, "more": more,
     }
