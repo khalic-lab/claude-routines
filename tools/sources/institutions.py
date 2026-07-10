@@ -26,7 +26,10 @@ unknown) is hand-curated too -- sync only ever writes `unknown` and never overwr
 Stdlib only, no network (routine sandboxes have no PyYAML) -- reuses registry.py's yamllite
 dialect (block maps/sequences only; keys must not contain ':').
 
-Usage: institutions.py sync [--root PATH]     (first run bootstraps the file)
+Usage: institutions.py sync [--root PATH]            (first run bootstraps the file)
+       institutions.py sync-prompts [--check]        (mirror aliases: into the writer prompts'
+                                                      shared partial; --check = drift guard,
+                                                      enforced by the spec suite)
 """
 import argparse
 import datetime
@@ -162,6 +165,67 @@ def cmd_sync(args):
           f"edition(s), {promoted} promoted, {len(inst)} institution(s) -> {path}")
 
 
+# --------------------------------------------------------------------------- #
+# sync-prompts: mirror the aliases map into the writer prompts' shared partial
+# --------------------------------------------------------------------------- #
+PARTIAL_RELPATH = os.path.join("routines", "_shared", "affiliations.md")
+_BLOCK_RE = None  # compiled lazily to keep the module import-light
+
+
+def render_alias_block(aliases):
+    """The canonical-names list as markdown bullet lines, variants grouped per canonical."""
+    if not aliases:
+        return "- (no aliases on file yet)"
+    by_canon = {}
+    for variant, canon in aliases.items():
+        by_canon.setdefault(canon, []).append(variant)
+    return "\n".join(
+        "- " + " / ".join(f"`{v}`" for v in sorted(by_canon[c])) + f" → **{c}**"
+        for c in sorted(by_canon))
+
+
+def sync_prompts_text(partial_text, aliases):
+    """Return partial_text with the generated canonical-names block replaced. Raises
+    ValueError if the marker pair is missing (someone deleted the generated block)."""
+    global _BLOCK_RE
+    if _BLOCK_RE is None:
+        import re
+        _BLOCK_RE = re.compile(
+            r"(<!-- canonical-names:begin[^\n]*-->\n).*?(<!-- canonical-names:end -->)",
+            re.S)
+    block = render_alias_block(aliases) + "\n"
+    new_text, n = _BLOCK_RE.subn(lambda m: m.group(1) + block + m.group(2), partial_text)
+    if n != 1:
+        raise ValueError(f"canonical-names markers not found (expected 1 pair, got {n})")
+    return new_text
+
+
+def cmd_sync_prompts(args):
+    """Regenerate the canonical-names block in routines/_shared/affiliations.md from the
+    ledger's aliases map. --check verifies without writing (exit 1 on drift) — the spec
+    suite runs it against the committed tree, so alias edits can't silently go stale in
+    the prompts. After a real sync, re-run `python3 routines/assemble.py`."""
+    data = _load(args.root)
+    path = os.path.join(args.root, PARTIAL_RELPATH)
+    with open(path) as f:
+        cur = f.read()
+    new = sync_prompts_text(cur, data["aliases"] or {})
+    if args.check:
+        if cur != new:
+            print(f"DRIFT: {PARTIAL_RELPATH} canonical-names block no longer matches "
+                  f"sources/institutions.yml aliases — run sync-prompts + assemble.py")
+            sys.exit(1)
+        print("sync-prompts check: OK")
+        return
+    if cur == new:
+        print("sync-prompts: already in sync")
+        return
+    with open(path, "w") as f:
+        f.write(new)
+    print(f"sync-prompts: rewrote canonical-names block in {PARTIAL_RELPATH} "
+          f"({len((data['aliases'] or {}))} alias(es)) — now run `python3 routines/assemble.py`")
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -169,6 +233,12 @@ def main():
     s = sub.add_parser("sync", help="fold index-record affiliations into sources/institutions.yml")
     s.add_argument("--root", default=".")
     s.set_defaults(func=cmd_sync)
+    sp = sub.add_parser("sync-prompts",
+                        help="mirror the aliases map into routines/_shared/affiliations.md")
+    sp.add_argument("--root", default=".")
+    sp.add_argument("--check", action="store_true",
+                    help="verify only; exit 1 if the prompt block has drifted")
+    sp.set_defaults(func=cmd_sync_prompts)
     args = p.parse_args()
     args.func(args)
 

@@ -168,6 +168,29 @@ institutions, then `+N more`; canonical short names (`MIT`, `ETH Zürich`, `Goog
 not full legal names); collective authors keep their name — `Gemma Team (Google DeepMind)`.
 Example: `F. Last, A. Other et al. (MIT; CERN)`.
 
+**Canonical names** — when a paper's author block uses a name on the LEFT, write the name on
+the RIGHT (this list mirrors `sources/institutions.yml` `aliases:`; the ledger folds strays,
+but the byline the reader sees should be canonical from the start):
+<!-- canonical-names:begin — GENERATED from sources/institutions.yml; edit aliases there, then run `python3 tools/sources/institutions.py sync-prompts && python3 routines/assemble.py` -->
+- `Qwen Team` → **Alibaba**
+- `AI2` / `Ai2` → **Allen Institute for AI**
+- `AWS` → **Amazon Web Services**
+- `CAIS` → **Center for AI Safety**
+- `Cohere For AI` / `Cohere Labs` → **Cohere**
+- `MosaicML` → **Databricks**
+- `DeepMind` → **Google DeepMind**
+- `Google Brain` → **Google Research**
+- `FAIR` / `Meta FAIR` → **Meta AI**
+- `MSR` → **Microsoft Research**
+- `JPL` / `Jet Propulsion Laboratory` → **NASA JPL**
+- `PSI` → **Paul Scherrer Institute**
+- `Shanghai AI Lab` → **Shanghai AI Laboratory**
+- `Tencent AI Lab` → **Tencent**
+- `Univ. of Illinois Urbana-Champaign` → **UIUC**
+- `UK AI Safety Institute` → **UK AI Security Institute**
+- `Z.ai` → **Zhipu AI**
+<!-- canonical-names:end -->
+
 **Step C:** copy the same institutions into each paper story's `"affiliations": ["MIT", "CERN"]`
 field in final.json (omit the key when not listed) — the homepage card and the institutions
 ledger read it from there (see DEDUP.md Step C).

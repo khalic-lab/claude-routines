@@ -151,5 +151,72 @@ class TestInstitutionsSync(unittest.TestCase):
         self.assertEqual(sorted(inst), ["MIT"])
 
 
+PARTIAL_WITH_MARKERS = """**Byline format law** blah.
+
+**Canonical names** — intro line:
+<!-- canonical-names:begin — GENERATED; run sync-prompts -->
+<!-- canonical-names:end -->
+
+**Anti-halo guard:** blah.
+"""
+
+
+class TestSyncPrompts(unittest.TestCase):
+    """sync-prompts mirrors the ledger's aliases: map into the shared prompt partial."""
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="instprompts-")
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+        os.makedirs(os.path.join(self.root, "sources"))
+        os.makedirs(os.path.join(self.root, "routines", "_shared"))
+        self.partial = os.path.join(self.root, "routines", "_shared", "affiliations.md")
+        with open(self.partial, "w") as f:
+            f.write(PARTIAL_WITH_MARKERS)
+        with open(os.path.join(self.root, "sources", "institutions.yml"), "w") as f:
+            f.write(registry.yaml_dump({
+                "meta": {"synced_editions": []},
+                "aliases": {"DeepMind": "Google DeepMind", "FAIR": "Meta AI",
+                            "Meta FAIR": "Meta AI"},
+                "institutions": {}}))
+
+    def _run(self, check=False):
+        with contextlib.redirect_stdout(io.StringIO()) as buf:
+            institutions.cmd_sync_prompts(argparse.Namespace(root=self.root, check=check))
+        return buf.getvalue()
+
+    def test_block_generated_grouped_and_idempotent(self):
+        self._run()
+        text = open(self.partial).read()
+        self.assertIn("- `DeepMind` → **Google DeepMind**", text)
+        self.assertIn("- `FAIR` / `Meta FAIR` → **Meta AI**", text)   # variants grouped
+        self.assertIn("**Anti-halo guard:** blah.", text)             # rest untouched
+        first = open(self.partial, "rb").read()
+        self._run()
+        self.assertEqual(open(self.partial, "rb").read(), first)      # idempotent
+
+    def test_check_mode_flags_drift(self):
+        self._run()
+        out = self._run(check=True)
+        self.assertIn("OK", out)
+        # hand-edit the generated block -> drift
+        text = open(self.partial).read().replace("**Google DeepMind**", "**DeepMind Inc**")
+        with open(self.partial, "w") as f:
+            f.write(text)
+        with self.assertRaises(SystemExit):
+            self._run(check=True)
+
+    def test_missing_markers_is_a_loud_error(self):
+        with open(self.partial, "w") as f:
+            f.write("no markers here\n")
+        with self.assertRaises(ValueError):
+            self._run()
+
+    def test_committed_repo_partial_matches_committed_ledger(self):
+        """The real drift guard: the checked-in partial must always mirror the checked-in
+        aliases map (same contract as `assemble.py check` for the generated prompts)."""
+        with contextlib.redirect_stdout(io.StringIO()):
+            institutions.cmd_sync_prompts(argparse.Namespace(root=REPO_ROOT, check=True))
+
+
 if __name__ == "__main__":
     unittest.main()
