@@ -113,9 +113,9 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 - A citation from a search-engine snippet = **via-snippet**, tag `[via snippet]` in the item.
 - In the `Feeds hit` line, distinguish `{ok via curl}` / `{ok via WebFetch}` / `{ok via proxy}` / `{fail — HTTP NNN}`.
 
-# Affiliations (every paper / journal item)
+# Affiliations (best-effort — do not burn budget on them)
 
-For every paper, after the author list, surface the lead authors' institutional affiliations from the Semantic Scholar `authors.affiliations` field (fall back to the arXiv Atom `<author><arxiv:affiliation>` when populated). If no affiliation is retrievable, write `(affiliation not listed)` — never fabricate. Format: after the authors, in parentheses — e.g. `J. Doe, A. Smith et al. (ETH Zürich; CERN)`. Query `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations` — keep the `authors.affiliations` field in the URL so it is actually returned.
+Surface the lead authors' institutional affiliations when cheaply retrievable, in this order: arXiv Atom `<author><arxiv:affiliation>` (already in the response) → Semantic Scholar `authors.affiliations` (ONE attempt — `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations`; skip on 429/400/not-indexed, which is the norm for <1-week-old arXiv IDs) → OpenAlex works API (`api.openalex.org/works?filter=doi:…` or `?search=<title>` — indexes arXiv faster and returns institution names). If all three miss, write `(affiliation not listed)` and move on — never fabricate, never web-search individual authors. Format: after the authors, in parentheses — e.g. `J. Doe, A. Smith et al. (ETH Zürich; CERN)`.
 
 # Research methodology
 
@@ -130,22 +130,27 @@ For every paper, after the author list, surface the lead authors' institutional 
 
 ## 🔭 Physics, chemistry, math & quantum
 
-T1: `journals.aps.org` (PRL / PRX / PRX Quantum), nature.com primary research (`s41586-…`, `nphys.rss` via curl — the papers, NOT `d41586` news), science.org research articles (RSS via proxy), **non-CS arXiv via the Atom API** (`math.*`, `physics.*` incl. `physics.chem-ph` / `physics.ao-ph` / `physics.geo-ph`, `cond-mat`, `hep-ph`, `hep-th`, `gr-qc`, `quant-ph` — swap the `cat:` filter), nature.com Nature Chemistry (`nchem.rss` via curl), cern.ch/news.
-T2: **quantamagazine.org (RSS via curl — heavy weight for math + fundamental physics)**, terrytao.wordpress.com, scottaaronson.blog, spectrum.ieee.org.
+**Sources come from the preflight plan** — the registry carries this desk's venue set (physics
+journals, preprint servers, agency newsrooms, quality explainers); spread citations across it
+instead of defaulting to the same two or three hosts every week. Fetch mechanics worth knowing:
+nature.com primary research is `s41586-…` (`nphys.rss` / `nchem.rss` via curl) — the papers, NOT
+`d41586` news; **non-CS arXiv via the Atom API** (`math.*`, `physics.*` incl. `physics.chem-ph` /
+`physics.ao-ph` / `physics.geo-ph`, `cond-mat`, `hep-ph`, `hep-th`, `gr-qc`, `quant-ph` — swap the
+`cat:` filter); science.org research RSS needs the proxy.
 Coverage: particle physics, condensed matter, quantum information (quant-ph, PRX Quantum), gravity/GR, chemistry (physical / materials chemistry), earth & climate-system science, plus mathematics (major proofs, conjecture progress, notable surveys). Exclude anything whose home is `cs.*` / `stat.ML`.
 
 ## 🧬 Biology, medicine & neuroscience
 
-**Feed-first (curl/proxy first):** bioRxiv / medRxiv JSON details API via the proxy, Nature Methods RSS (`nm.rss` via curl), Quanta RSS (biology features).
-T1: nature.com primary research, science.org research (RSS via proxy), cell.com, nejm.org, biorxiv.org / medrxiv.org (JSON API via proxy), `q-bio.*` arXiv.
-T2: statnews.com, endpts.com, neurosciencenews.com, asimov.press.
+**Sources come from the preflight plan** (journals, preprint servers, biotech/clinical outlets —
+all registered). Fetch mechanics: bioRxiv / medRxiv JSON details API via the proxy, Nature Methods
+RSS (`nm.rss` via curl), `q-bio.*` arXiv via the Atom API, Quanta RSS (biology features).
 Coverage: drug approvals and clinical-trial readouts, genomics, structural and molecular biology, neuroscience, biotech. Flag preliminary / small-sample / unreplicated results as such — don't upgrade them.
 
 ## 🌌 Astronomy & cosmology
 
-**Feed-first (curl first):** Nature Astronomy RSS (`natastron.rss`), `astro-ph.*` via the arXiv Atom API, Quanta RSS.
-T1: nasa.gov/news, eso.org/public/news, esa.int/Newsroom, nature.com primary, `astro-ph.*` arXiv (CO/GA/EP/HE/SR/IM).
-T2: skyandtelescope.org, astrobites.org, quantamagazine.org.
+**Sources come from the preflight plan** (agency newsrooms, journals, quality astro outlets — all
+registered). Fetch mechanics: Nature Astronomy RSS (`natastron.rss`) via curl, `astro-ph.*`
+(CO/GA/EP/HE/SR/IM) via the arXiv Atom API, Quanta RSS.
 Coverage: JWST and other space telescopes, ESO/ALMA, exoplanets, cosmology, gravitational waves, solar-system science.
 
 ## 🧠 Why it matters (optional — only if warranted)
@@ -178,12 +183,14 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: {date 7 days ago} to {today}
 ---
 
 ## Coverage footer
+<!-- operational telemetry — machine/evaluator-read; hidden from the rendered page
 - Sources used: T1 = N, T2 = N, T3 = 0
 - Items: N (filtered from M reviewed) — Physics/math/quantum: N, Biology/medicine/neuro: N, Astronomy/cosmology: N
 - Languages: ...
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
 - Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan — Nature journals RSS, Quanta RSS, arXiv API per category, APS, bioRxiv JSON, Science.org RSS, Semantic Scholar, …} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
+-->
 - Gaps: things you tried to find but couldn't.
 - Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
 ```

@@ -1,20 +1,42 @@
-{"date": "2026-07-05",
+{
+ "date": "2026-07-05",
  "note": "Backfilled 2026-07-10 by Rafael's apply pass: the 2026-07-05 review predates the machine-readable protocol, so its proposals are recorded here retroactively so the 2026-07-12 run's verification loop engages instead of skipping. rm-4 is backlog cleanup from the 06-21/06-28 reviews (same apply pass).",
  "proposals": [
-  {"id": "rm-1", "target": "reader-profile.md",
+  {
+   "id": "rm-1",
+   "target": "reader-profile.md",
    "action": "Append learned preference: '- 2026-07-05: in the Weekend \"Week in headlines\" digest, always anchor a major event to WHEN it happened, not just its current status (2× 👎 on the 2026-07-04 Khamenei bullet, \"Missing context on when it hapenned\" — it said he \"has died\" without the 28 Feb death date the daily brief had already carried).'",
    "evidence": "2× 👎 on 2026-07-04-weekend Khamenei bullet, one with verbatim reason 'Missing context on when it hapenned' (_posts/2026-07-05-evaluator.md, Reader-feedback Proposal A)",
-   "applied": true, "applied_on": "2026-07-10", "applied_by": "rafael-apply-pass"},
-  {"id": "rm-2", "target": "routines/src/weekend.md",
+   "applied": true,
+   "applied_on": "2026-07-10",
+   "applied_by": "rafael-apply-pass"
+  },
+  {
+   "id": "rm-2",
+   "target": "routines/src/weekend.md",
    "action": "Week in headlines: every bullet states what happened AND WHEN it happened (the underlying event date, not just the latest development); name event dates explicitly — 'X died on {date}' / 'the {date} strike' — even when the news peg is a later funeral/anniversary/reaction; carry forward event dates the daily briefs already carried.",
    "evidence": "Same 2× 👎 signal; _posts/2026-07-05-evaluator.md Patch 1",
-   "applied": true, "applied_on": "2026-07-10", "applied_by": "rafael-apply-pass"},
-  {"id": "rm-3", "target": "routines/src/ai-ml.md + routines/src/science.md + routines/src/weekend.md (affiliation sourcing)",
+   "applied": true,
+   "applied_on": "2026-07-10",
+   "applied_by": "rafael-apply-pass"
+  },
+  {
+   "id": "rm-3",
+   "target": "routines/src/ai-ml.md + routines/src/science.md + routines/src/weekend.md (affiliation sourcing)",
    "action": "Affiliations become best-effort chain: arXiv <arxiv:affiliation> / Semantic Scholar first; on 429/400/not-indexed fall back to the OpenAlex works API (api.openalex.org/works?filter=doi:… or ?search=title) before any named-senior-author web lookup; only mark '(affiliation not listed)' when all fail. Never guess.",
    "evidence": "Semantic Scholar failed all 4 attempts in the 07-05 window (429/400/not-indexed); _posts/2026-07-05-evaluator.md Patch 2 + Open Q2. Recurs every week for <1-week-old arXiv IDs.",
-   "applied": false},
-  {"id": "rm-4", "target": "reader-profile.md",
+   "applied": true,
+   "applied_on": "2026-07-10",
+   "applied_by": "rafael-apply-pass"
+  },
+  {
+   "id": "rm-4",
+   "target": "reader-profile.md",
    "action": "Append learned preference: '- 2026-06-28: for \"AI/science changes how we think/work\" stories, anchor on the underlying study (journal article / preprint), not a Nature blog/news restatement, and avoid sensational framing — distinguish skill-displacement from real deskilling rather than asserting the alarming reading (2× 👎 on 2026-06-19 overview \"AI tools erode skills\", \"read the actual study… please steer away from sensationalism\").'",
    "evidence": "Backlog cleanup: proposed _posts/2026-06-21-evaluator.md, re-proposed verbatim _posts/2026-06-28-evaluator.md Proposal A; unapplied for 3 evaluator cycles until 2026-07-10.",
-   "applied": true, "applied_on": "2026-07-10", "applied_by": "rafael-apply-pass"}
-]}
+   "applied": true,
+   "applied_on": "2026-07-10",
+   "applied_by": "rafael-apply-pass"
+  }
+ ]
+}

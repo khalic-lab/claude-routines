@@ -67,7 +67,7 @@ Up to ~10 distinct (slug, date) reads in the typical week. Today's may be partia
 
 Plus:
 5. **Most recent weekend brief**: glob `_posts/*-weekend.md`, sort, read the latest.
-6. **Previous review (self-continuity)**: take it from `_data/health.json` → `continuity.previous_evaluator_path` — the most recent prior evaluator post, however long ago, script-computed — plus your own prior events in `index/ledger/` when present. Never re-derive "the post from exactly 7 days ago" by date arithmetic; that brittle offset broke continuity on 2 of 9 past runs.
+6. **Previous review (self-continuity)**: take it from `_data/health.json` → `continuity.previous_evaluator_path` — the most recent prior evaluator post, however long ago, script-computed — plus your own prior events in `index/ledger/` when present. Never re-derive "the post from exactly 7 days ago" by date arithmetic; that brittle offset broke continuity on 2 of 9 past runs. **Self-delivery guard (added 2026-07-10 — the stranding class hit 4 of 9 past runs and the evaluator misdiagnosed it as "skipped Sundays" both times it noticed):** (a) if `continuity.previous_evaluator_path` is more than 8 days old, do not just proceed — flag "previous review is N days old" prominently in the Health summary and check whether a more recent review exists off-main; (b) run `git branch -r` and `git log --all --oneline --since={today-8d} --not main` — any recent commit NOT on main means a routine (possibly a prior you) is being diverted to a `claude/*` branch by an `outcomes` key; flag it as a critical pipeline defect in the review.
 7. **Reader feedback — the ledger's folded state.** Feedback is folded continuously by the bridge (`tools/feedback/fold.py`): each vote lands as an `ev:"feedback"` event in `index/ledger/*.jsonl`, keyed to a durable story id (`st-…`), with last-write-wins per story and `vote: 0` an explicit retraction; fold.py marks the raw `feedback/*.jsonl` record `consumed: true` at fold time. **The old 7-day-window arithmetic over `feedback/*.jsonl` is RETIRED** — do not recount raw records, and do not set `consumed` flags yourself (fold.py owns consumption). Read the window's tallies from `health.json` → `feedback.by_stream` (raw up/down/retractions per stream); for per-story attribution read the ledger's `ev:"feedback"` events directly (each carries the story id, `brief`, `vote`, and optional `reason`) and resolve ids to headline/url/source_domain via `python3 tools/store/store.py materialize` (or the story's own `seen`/`publish` events). One bookkeeping check remains yours: if `health.json` → `feedback.unconsumed_total` > 0, the bridge fold is lagging or broken — flag it as a pipeline defect.
 8. **Reader profile (current state)**: `reader-profile.md` and `reader-profile/source-weights.yml` — the human-gated files the writers read at compose time. You PROPOSE edits to these (see Patch proposals); you never silently rewrite them.
 9. **Reader brief-proposals**: every `proposals/*.jsonl` record in the window (readers suggesting topics via the front page's "Propose a brief" form; the directory may not exist yet — skip silently if absent). Surface `consumed: false` proposals verbatim in your review email so Rafael sees them; if one maps cleanly onto an existing stream, fold it into a patch proposal. Mark folded/surfaced records `consumed: true` in their `proposals/*.jsonl` file and commit with the review — this consumption bookkeeping is still yours (fold.py owns only feedback).
@@ -122,7 +122,7 @@ Count items tagged `[single-source]` vs total. Healthy: <20% portfolio-wide; <25
 - `[via snippet]` — count and report by stream. With curl-first feeds, via-snippet rates should be **dropping**; rising or flat-high rates by stream means feeds are failing in that stream's sandbox. Flag.
 
 ## H. Topic balance (weekend brief only)
-Read the weekend brief's ML papers and Fundamental science papers sections. Count actual % allocation across stated bias targets. Flag deviations >10 percentage points from target.
+Read the weekend brief's ML papers and Fundamental science papers sections. **Target (set 2026-07-10, making the long-assumed default explicit — three past reviews asked for one): ~50/50 ML-vs-(fundamental science + biology) across the paper sections, ±15 percentage points.** Count the actual % allocation and flag deviations beyond that band.
 
 ## I. Repetition detection (computed — read, don't recount)
 `health.json` → `streams.<slug>.repeats` / `repeat_rate` (a 14-day story-id/thread-id lookback over the ledger). Don't re-cluster headlines by hand. Judgment work: for flagged repeats, check whether the re-run carried a genuinely new, dated fact (`[ongoing since]` discipline) or was a re-summary — the latter is the defect.
@@ -158,6 +158,13 @@ Flag streams below their range. The patch proposal is usually: add a feed source
 
 ## L. Output volume (token-cost proxy)
 Parse each Coverage footer's `Word count: N` line (added 2026-06-22; if absent, mark `pre-rollout`). Per stream: report the mean word count for the week and the trend vs the previous review. Flag any stream whose mean grew >25% week-over-week with no matching rise in story count (Opus output tokens scale with words — this is the spend proxy until real token accounting exists). Cross-reference §I repetition: a stream that is both repetitive and long is the prime candidate for the output-cap / quiet-day levers (see docs/SPIKE-writer-token-levers.md).
+
+## M. Editorial shape (added 2026-07-10 — measures the operator's actual goals, which A–L never did)
+Three spot-checks, each ~5 samples, judged against the mission in `reader-profile.md` + `routines/_shared/newsroom-ethos.md`:
+- **Vendor-PR-lead share (AI/ML):** of the week's AI/ML news items, what fraction LEAD with a vendor's own announcement/framing rather than an independent result, benchmark, or analysis? Report the fraction; flag > ~40% (the level the 2026-05-02 review measured and nobody tracked since). `[vendor PR]`-tagged context items are fine; vendor framing as the *lead* is the defect.
+- **Aggregator-shape check (all streams):** sample 5 leads across the week — does each cite a primary source (paper, filing, official release, wire report) and add framing the source itself doesn't contain? A lead that reads like a rewritten aggregator blurb (secondary source + no added judgment) is the failure the operator explicitly named ("not very different from just reading hackernews"). Report count of failures.
+- **Personalization check:** sample 5 stories — is the Switzerland/tech-professional relevance framing present where it plausibly exists (CH angle, personal-impact angle, builder's angle)? Missing-where-available is the miss; forced-where-absent is also a miss (noise).
+Report all three in the Health summary table; recurring failures (≥2 weeks) warrant a patch proposal against the offending stream's prompt.
 
 # Sunday source-scout duty (bounded — run AFTER the analysis, BEFORE the Output steps)
 
@@ -200,8 +207,11 @@ _Files read: N news, N AI/ML (expect ~2), N science (expect ~1), 1 weekend, prio
 | Feeds with >50% fail rate       |       | 0      | 🟢🟡🔴 |
 | Citations on `reach: blocked` domains without [via snippet] | | 0 | 🟢🟡🔴 |
 | Unconsumed feedback backlog (health.json) | | 0     | 🟢🟡🔴 |
+| Vendor-PR-lead share (AI/ML, §M) |       | ≤40%   | 🟢🟡🔴 |
+| Aggregator-shape failures (§M, of 5) |   | 0–1    | 🟢🟡🔴 |
+| Personalization misses (§M, of 5) |      | 0–1    | 🟢🟡🔴 |
 
-## A–L: Detailed findings
+## A–M: Detailed findings
 
 [For each dimension, write the metric, the data, and any flags. Be specific — name the brief filename and section for any issue. For the computed dimensions (A, I, feedback), cite the health.json / source-health.json numbers rather than recounting.]
 

@@ -93,7 +93,7 @@ funeral/anniversary/reaction. If the daily briefs carried the event date, carry 
 
 T1 (HTML, often 403, fallback): arxiv.org listings, huggingface.co/papers, openreview.net.
 
-Pull 8–12 ML/AI papers. Bias allocation:
+Up to ~10 ML/AI papers — **quality is the cap, not the quota**: a 6-paper week of genuinely significant work beats 12 with filler. Rough bias when choosing among candidates (a tiebreaker, not a floor to fill):
 - ~40% RL / agent / decision-making
 - ~20% efficient inference, small models, on-device, MLX/quantization
 - ~15% interpretability, mechanistic, alignment
@@ -101,7 +101,7 @@ Pull 8–12 ML/AI papers. Bias allocation:
 - ~15% applied (anomaly detection, code, vision-language, multimodal)
 
 For each paper:
-- Title + arXiv ID + authors (first 3 + et al.) **with institutional affiliations** — e.g. `F. Last, A. Other et al. (MIT; CERN)`. Surface the lead authors' affiliations from the Semantic Scholar `authors.affiliations` field (fall back to arXiv `<arxiv:affiliation>` when populated). If no affiliation is retrievable, write `(affiliation not listed)` — never fabricate.
+- Title + arXiv ID + authors (first 3 + et al.) **with institutional affiliations when cheaply retrievable** — e.g. `F. Last, A. Other et al. (MIT; CERN)`. Order: arXiv `<arxiv:affiliation>` → Semantic Scholar `authors.affiliations` (ONE attempt; skip on 429/400/not-indexed) → OpenAlex works API (`api.openalex.org/works?search=<title>`). If all three miss, `(affiliation not listed)` and move on — never fabricate, never web-search individual authors.
 - 3–5 sentence summary in your own words: contribution, method, key result.
 - One line: "why this is interesting".
 - Direct link to abstract.
@@ -117,14 +117,14 @@ For each paper:
 T1 (HTML, often 403, fallback): journals.aps.org (PRL, PRX, PRX Quantum), science.org, cern.ch/news, eso.org/public/news, nasa.gov/news.
 T2: terrytao.wordpress.com, scottaaronson.blog, astrobites.org.
 
-Pull 5–8 papers across the fundamental sciences. Aim for breadth:
+Up to ~8 papers across the fundamental sciences — quality is the cap; skip a category with nothing genuinely notable. Rough bias when choosing among candidates (a tiebreaker, not a floor to fill):
 - ~30% physics (particle, condensed matter, hep, gravity)
 - ~25% quantum (quant-ph, PRX Quantum)
 - ~20% astronomy / astrophysics / cosmology
 - ~15% mathematics (major proofs, conjecture progress, surveys)
 - ~10% adjacent (chemistry, climate physics, computational)
 
-For each paper, same format as ML papers section (including the institutional-affiliations line — Semantic Scholar `authors.affiliations`, arXiv `<arxiv:affiliation>` fallback, `(affiliation not listed)` if absent, never fabricated). Math papers may need a 2-line "context" note.
+For each paper, same format as ML papers section (including the best-effort affiliations chain — arXiv `<arxiv:affiliation>` → Semantic Scholar → OpenAlex, `(affiliation not listed)` if all miss, never fabricated). Math papers may need a 2-line "context" note.
 
 ## 🚀 Models & datasets released this week
 T1: huggingface.co/models?sort=trending&period=7day, huggingface.co/datasets, lab announcement blogs, GitHub release pages.
@@ -144,7 +144,7 @@ What changed this week in MLX, llama.cpp, on-device inference. New benchmarks on
 T1 (HTML, often 403, fallback): nature.com, science.org, cell.com, nejm.org. (bioRxiv/medRxiv: use their JSON API via the proxy — see "Reachable via the fetch-proxy" above; Science via its RSS.)
 T2: asimov.press, statnews.com, endpts.com, neurosciencenews.com.
 
-5–10 items.
+Up to ~8 items — only what's genuinely notable; a 3-item week is a valid week.
 
 ## 📊 Data science / applied ML
 T1: company engineering blogs (Netflix, Uber, Airbnb, Stripe, Spotify), papers with code releases.
@@ -155,10 +155,10 @@ Real production ML, evaluation methodology, lessons from deployment, useful tool
 ## 📝 Essays & long-form
 T1/T2: simonwillison.net, karpathy.bearblog.dev, dnhkng.github.io, lilianweng.github.io, gwern.net, distill.pub, quantamagazine.org features (RSS via curl), lesswrong.com (high-karma posts), acoup.blog, drbex.io.
 
-Long-form pieces published this week. 5–10 items. Each: title, author, 2–3 sentence summary, your read on whether it's worth the time.
+Long-form pieces published this week, up to ~8 — only pieces you'd actually recommend; skip the rest. Each: title, author, 2–3 sentence summary, your read on whether it's worth the time.
 
-## 🧠 Cross-cutting threads
-A short final section: 2–4 themes you noticed across this week's content. This is the section where synthesis adds real value beyond aggregation.
+## 🧠 Cross-cutting threads (the payoff — give it real effort)
+2–4 themes you noticed across this week's content, each developed in a substantial paragraph: what connects the items, what it implies, what to watch next. This synthesis is the single highest-value part of the Weekend brief — the one thing aggregation cannot do — and it renders near the top of the published brief, so write it like the lead it is, not an afterthought.
 
 # Format
 
@@ -182,11 +182,13 @@ _Coverage: {date 7 days ago} to {today}. Generated {timestamp} Europe/Zurich._
 ---
 
 ## Coverage footer
+<!-- operational telemetry — machine/evaluator-read; hidden from the rendered page
 - Sources used: T1 = N, T2 = N, T3 = 0
 - Languages: EN, FR, DE, ...
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
 - Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan — arXiv RSS/API, Quanta RSS, Nature journals RSS, Al Jazeera, …} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
+-->
 - Sibling consultation: {performed | skipped — reason}
 - Gaps: ...
 - Things I deliberately cut: ...

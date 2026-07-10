@@ -115,23 +115,35 @@ A successful feed fetch (curl OR WebFetch returning 200 with feed XML/JSON) coun
 5. **Cross-reference** when a claim is significant.
 6. **Stop when triangulated** or leads exhausted.
 
-# Sections (in order)
+# Sections
+
+**Lead-first rule:** open the brief with the edition's single most-important story — the one you'd
+score importance 3 — regardless of which desk it belongs to. Order the two sections so the one
+holding today's lead comes first; do not default Switzerland-first on a quiet CH day.
+
+**Per-story depth (explicit, matching the other streams):** every kept story is one substantial
+paragraph — a bolded lead sentence stating what happened AND when, then 2–4 sentences of substance
+and context, then a "Why it matters:" line where the significance isn't self-evident. The text is
+the product: full sentences, never a headline-only item.
 
 ## 🇨🇭 Switzerland & Vaud
 
 Federal politics, cantonal Vaud, Swiss-relevant EU moves, and notable economy/society stories. Coverage window: the last ~24 hours (yesterday midday through this morning).
 
-T1: admin.ch, parlament.ch, vd.ch, Keystone-SDA via rts.ch. **Feed (try via curl first):** SRF.ch RSS (DE-language).
-T2: rts.ch, **letemps.ch (RSS via curl — paywalled items still cite-able by URL)**, nzz.ch, tagesanzeiger.ch, 24heures.ch, tdg.ch, swissinfo.ch, heidi.news.
-
-Avoid 20min/Blick as primary. **Non-English-source quota:** at least one DE or FR citation should come from SRF or Le Temps feeds when relevant.
+**Sources come from the preflight plan** (its registry feeds + `candidates_to_try` are the list —
+there is no static domain table in this prompt). Favor official/primary Swiss sources (federal and
+cantonal portals, wire copy, court/parliament documents) over commentary; tabloid-class outlets
+never as primary. **Non-English-source quota:** at least one citation from a DE- or FR-language
+primary source when relevant.
 
 ## 🌍 World politics & geopolitics
 
 The notable developments of the last ~24 hours (all time zones — not just US/Europe).
 
-T1: reuters.com, apnews.com, afp.com, gov/court filings, White House press releases.
-T2: bbc.com, ft.com, nytimes.com, lemonde.fr, spiegel.de/international, politico.eu, **aljazeera.com (RSS via curl)** (MENA), scmp.com / caixinglobal.com (China), thehindu.com (India).
+**Sources come from the preflight plan** — wires, official filings/releases, and court documents
+as T1; quality internationals as T2; regional primaries for regional stories. The plan, not a
+memorized outlet list, is the source of truth; when the plan surfaces `candidates_to_try`, work at
+least one into the sweep.
 
 Span at least 3 different countries' coverage. Focus on geopolitics, conflicts, elections, and diplomacy. Markets-specific political stories (legislation, central-bank politics) can be folded in here when they're significant — there is no longer a dedicated Markets routine.
 
@@ -142,6 +154,9 @@ Span at least 3 different countries' coverage. Focus on geopolitics, conflicts, 
 
 _Generated {ISO timestamp} Europe/Zurich. Coverage: last ~24h._
 
+{The two sections below appear in lead-first order — whichever holds today's most important story
+comes first.}
+
 ## 🇨🇭 Switzerland & Vaud
 - ...
 
@@ -151,10 +166,12 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: last ~24h._
 ---
 
 ## Coverage footer
+<!-- operational telemetry — machine/evaluator-read; hidden from the rendered page
 - Sources used: T1 = N items, T2 = N items, T3 = 0 (per policy)
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
 - Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
+-->
 - Gaps: things you tried to find but couldn't.
 - Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
 ```

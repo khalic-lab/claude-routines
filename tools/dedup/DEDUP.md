@@ -152,7 +152,16 @@ a reader's feedback click or a homefeed card can target one story instead of the
 ```bash
 python3 tools/store/anchor.py --index index/stories/{YYYY-MM-DD}-{SLUG}.jsonl _posts/{YYYY-MM-DD}-{SLUG}.md || echo "anchor failed (non-fatal)"
 python3 tools/sources/lint.py _posts/{YYYY-MM-DD}-{SLUG}.md || echo "sources lint failed (non-fatal)"
+python3 tools/sources/registry.py sync --root . || echo "registry sync failed (non-fatal)"
 ```
+
+**Step C.25b — registry sync (the line above; added 2026-07-10).** `lint.py` appends each
+`[new source]`-tagged domain to the write-contention buffer `sources/candidates.jsonl`; `sync`
+folds that buffer into `sources/registry.yml` as `status: candidate` entries and truncates it.
+Without this step nothing ever promotes a discovered domain, so the NEXT edition's preflight
+would keep printing `candidates_to_try: none on file` forever (this exact gap left news/science
+with zero discovery candidates from 2026-07-07 to 2026-07-10). Stage `sources/` in the commit —
+the sync rewrites `registry.yml` and truncates `candidates.jsonl`.
 
 `anchor.py` inserts `<a id="st-…" class="st-a"></a>` right after each story bullet's dash (or a
 kramdown `{#st-…}` after a `### ` heading). `--index` points it at the edition's own

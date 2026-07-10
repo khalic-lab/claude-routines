@@ -75,7 +75,7 @@ T2 commentary (discovery + framing, never the primary cite): simonwillison.net, 
 
 If you DO have papers inside the window: because this is a multi-day window (two fires/week), target **~8–12 papers** — bias toward RL, efficient inference, interpretability, agents, and novel architectures. Dedup by arXiv ID within this batch so no paper appears twice.
 
-**Affiliations (required for every paper):** after the author list, surface the lead authors' institutional affiliations from the Semantic Scholar `authors.affiliations` field (fall back to arXiv `<arxiv:affiliation>`). If no affiliation is retrievable, write `(affiliation not listed)` — never fabricate.
+**Affiliations (best-effort — do not burn budget on them):** after the author list, surface the lead authors' institutional affiliations when cheaply retrievable, in this order: arXiv `<arxiv:affiliation>` (already in the Atom response) → Semantic Scholar `authors.affiliations` (ONE attempt; skip on 429/400/not-indexed — it fails for most <1-week-old arXiv IDs) → OpenAlex works API (`api.openalex.org/works?filter=doi:…` or `?search=<title>` — indexes arXiv faster and returns institution names). If all three miss, write `(affiliation not listed)` and move on — never fabricate, never do a named-senior-author web-search scramble; that budget belongs to prose and sourcing.
 
 Format each paper as a **multi-paragraph story bullet** (one `-` per paper, so the section is a bulleted
 list, not a wall of paragraphs) — the same headline-led shape the News brief uses, so each paper renders
@@ -137,11 +137,13 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: since the last AI/ML edition
 ---
 
 ## Coverage footer
+<!-- operational telemetry — machine/evaluator-read; hidden from the rendered page
 - Sources used: T1 = N, T2 = N, T3 = 0
 - Papers: N (filtered from M reviewed) | Vendor PR items: N (tagged inline)
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
 - Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan — arXiv RSS per category, arXiv Atom API, Semantic Scholar, …} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
+-->
 - Gaps: ...
 - Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
 ```
