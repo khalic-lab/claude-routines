@@ -169,6 +169,21 @@ class TestParseAffiliations(unittest.TestCase):
                 "`[preprint]`")
         self.assertIsNone(self.parse(line))
 
+    def test_single_line_bullet_prose_parenthetical_loses_to_byline_affiliation(self):
+        # verbatim shape from _posts/2026-06-13-weekend.md: pre-redesign single-line bullets
+        # carry prose AFTER the `[preprint]` tag; the affiliation before the tag must win
+        line = ("- **Graphical causal reasoning** — "
+                "**[arXiv:2606.13532](https://arxiv.org/abs/2606.13532)** · "
+                "F. Chraim, D. Janzing, J. Evans (AWS) · `[preprint]`. Builds a causal graph. "
+                "_Why it matters:_ interpretable RCA (you can see why it blamed a given "
+                "component) is what engineers trust.")
+        self.assertEqual(self.parse(line), ["AWS"])
+
+    def test_author_annotation_fragment_is_none(self):
+        line = ("**[arXiv:2606.25849](https://arxiv.org/abs/2606.25849)** (Problem 1061) · "
+                "Eric Li (sole author, both) · `[preprint]`")
+        self.assertIsNone(self.parse(line))
+
     def test_markdown_link_target_is_not_an_affiliation(self):
         # verbatim shape from _posts/2026-07-08-science.md — a magazine byline citing papers
         # as markdown links: the link's (url) parenthetical must never parse as an institution

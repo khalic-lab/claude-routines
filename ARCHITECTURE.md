@@ -122,18 +122,23 @@
 > ≤3 then `+N more`, sentinel `(affiliation not listed)`, ONE extra fetch per paper max).
 > **Data:** Step C final.json gains `"affiliations": [...]` → persisted on index records
 > (only-when-present; old payloads stay byte-identical) → ledger via the verbatim dual-write;
-> `dedup.py parse_affiliations` + `affil-backfill` patched 83 historical records from post
-> bylines (idempotent, ledger untouched). **Display:** homepage card source line is
+> `dedup.py parse_affiliations` + `affil-backfill` patched 52 historical records from post
+> bylines (idempotent, ledger untouched; the parser rejects link targets, author-count/
+> author-annotation fragments, paper-name-before-`et al.` parens, and anything after the
+> first backtick tag — every trap the June single-line bylines actually contained). **Display:** homepage card source line is
 > institution-first — `ETH Zurich · arxiv.org` (`affiliation_label`, ≤2 names then `+N`;
 > proper case inside the lowercased src line; wraps, never ellipsized). **Ledger:**
 > `sources/institutions.yml` (`tools/sources/institutions.py sync`, DEDUP Step C.25c) — the
 > registry's twin keyed by canonical institution name: citations/streams/first_seen/
 > last_cited/lifecycle, probation→established at the same ≥5 floor, hand-curated `aliases:`
-> fold variants self-healingly; bootstrapped with 68 institutions from 74 backfilled
-> citations. NO imported prestige rank (CSRankings/Nature Index considered and rejected).
+> fold variants self-healingly; bootstrapped from the backfilled citations, then hand-seeded
+> to 167 entries with every `class` set (39 frontier-lab, 39 university, 36 government,
+> 22 industry, 31 independent — the big-lab catalog spans US/EU/CN/JP/KR frontier labs,
+> big-tech research arms, AI-safety orgs, and national labs). NO imported prestige rank
+> (CSRankings/Nature Index considered and rejected).
 > **Evaluator:** new dimension N — affiliation coverage rate (target <20% sentinel; was 70%
 > on 2026-07-07 under the API chain) + halo audit (unaffiliated papers must not
-> systematically score importance 1). Spec suite 274 → 298.
+> systematically score importance 1). Spec suite 274 → 300.
 
 > **Added 2026-07-07: story-store migration, steps 1–4 (`docs/SPIKE-2026-07-07-continuous-news.md`).**
 > The story (not the edition) is now the durable unit. **Identity:** `st-{sha1(norm_url)[:12]}`
@@ -232,7 +237,7 @@
 | Read state (sync) | Cloudflare KV `readstate:{reader}` (not in repo) | `{sid: {ts, v: 0\|1}}` LWW tombstone map; client shadow `syncState:v1` + paint source `homeRead:v1` in localStorage | homepage JS ↔ feedback-sink Worker (passkey session) |
 | Institutions ledger | `sources/institutions.yml` | `meta.synced_editions` + `aliases:` + per-institution `{class, status, streams, first_seen, last_cited, citations, lifecycle}` | writer bylines → Step C `affiliations` → `institutions.py sync` (Step C.25c); class + aliases hand-curated |
 | Passkey auth | Cloudflare KV `cred:{id}` / `session:{token}` / `chal:{kind}:{c}` (not in repo) | credential pubkey+counter; 90d rolling sessions; single-use challenges TTL 300s | feedback-sink `/auth/*` (registration invite-gated by `INVITE_TOKEN` secret) |
-| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 298 tests: store invariants, fold, registry, institutions, affiliations, lint, metrics, dedup convergence, reconcile, dual-write byte-identity goldens | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`) |
+| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 300 tests: store invariants, fold, registry, institutions, affiliations, lint, metrics, dedup convergence, reconcile, dual-write byte-identity goldens | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`) |
 
 ### 1.3 Dedup today
 

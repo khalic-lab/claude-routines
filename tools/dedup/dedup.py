@@ -485,6 +485,10 @@ def parse_affiliations(line):
     if not line or " · " not in line:
         return None
     after = line.split(" · ", 1)[1]
+    # the byline ends at the first backtick tag (`[preprint]` …): affiliations always precede
+    # the tags, and pre-2026-06-29 single-line bullets carry story PROSE after them — whose
+    # parentheticals ('(you can see why …)') must never win the last-parenthetical rule
+    after = after.split("`[", 1)[0]
     cands = []
     for m in _PAREN_RE.finditer(after):
         frag = m.group(1).strip()
@@ -493,6 +497,8 @@ def parse_affiliations(line):
         if frag.lower().startswith(("incl", "via ", "e.g", "see ", "arxiv")):
             continue
         if "://" in frag:            # a markdown link's (url) target, never an institution
+            continue
+        if re.search(r"\bauthors?\b", frag.lower()):         # '(sole author, both)'
             continue
         cands.append((frag, m.end()))
     if not cands:
