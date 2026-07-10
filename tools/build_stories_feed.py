@@ -136,19 +136,7 @@ def clean_body(text):
     text = text.replace("**", "").replace("*", "").replace("`", "")
     text = re.sub(r"\s+", " ", text).strip()
     text = re.sub(r"^[\s—–-]+", "", text)               # drop a leading dash lead-in ("— the week's…")
-    return _trim(text)
-
-
-def _trim(text, limit=600):
-    """Cap runaway bodies at a sentence boundary so a card stays substantial but not a wall."""
-    if len(text) <= limit:
-        return text
-    cut = text[:limit]
-    end = max(cut.rfind(". "), cut.rfind(".” "), cut.rfind('." '), cut.rfind("? "), cut.rfind("! "))
-    if end > 250:
-        return cut[:end + 1]
-    sp = cut.rfind(" ")
-    return (cut[:sp] if sp > 250 else cut).rstrip(" ,;—-") + "…"
+    return text
 
 
 def _is_meta(p):
@@ -421,8 +409,8 @@ def load_recent(days):
             y, mo, dy = date.split("-")
             # the writer's recorded prose (display_body/why, DEDUP Step C) beats the markdown
             # re-parse — the record is authored, the parse is recovered.
-            body = _trim(im.get("display_body") or "") or s["body"]
-            why = _trim(im.get("why") or "") or s["why"]
+            body = (im.get("display_body") or "").strip() or s["body"]
+            why = (im.get("why") or "").strip() or s["why"]
             stories.append({
                 # the post's embedded anchor id is authoritative (anchor.py keyed it on the
                 # RECORDED story url via --index); recompute from the first link only for
