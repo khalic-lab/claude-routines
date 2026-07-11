@@ -5,8 +5,7 @@ layout: archive
 {{ content }}
 
 {% assign feed = site.data.homefeed %}
-<p class="home-tagline">Every story the desk files, laid straight onto the page — newest at the top,
-sized by how much it matters, filterable by beat.</p>
+<p class="home-tagline">The day's stories, sized by how much they matter.</p>
 <button class="hiw-open" id="hiwOpen" type="button" aria-haspopup="dialog">
   <svg viewBox="0 0 30 8" aria-hidden="true"><circle cx="4" cy="4" r="2.2"/><path d="M8 4h4.8"/><circle cx="15" cy="4" r="2.2"/><path d="M19 4h4.8"/><circle cx="26" cy="4" r="2.2"/></svg>
   How this works
@@ -101,55 +100,111 @@ sized by how much it matters, filterable by beat.</p>
   <div class="hiw__box" role="dialog" aria-modal="true" aria-labelledby="hiwTitle">
     <button type="button" class="hiw__x" aria-label="close">×</button>
     <h2 class="hiw__title" id="hiwTitle">How this works</h2>
-    <p class="hiw__sub">Every brief here is researched, written and published by Claude on a
-    schedule — and your feedback tunes it.</p>
+    <p class="hiw__sub">Researched, written and published by Claude on a schedule — tuned by your feedback.</p>
     <div class="hiw-wrap">
       <ol class="hiw-flow">
         <li class="hiw-step">
           <div class="hiw-node">
             <span class="hiw-node__k">Schedule</span>
-            <p>Four desks fire on cron, each with its own beat and cadence.</p>
-            <span class="hiw-chips"><i>News · daily</i><i>AI/ML · Tue + Fri</i><i>Science · Wed</i><i>Deep read · Sat</i></span>
+            <p>Four desks fire on cron.</p>
           </div>
         </li>
         <li class="hiw-step">
           <div class="hiw-node">
             <span class="hiw-node__k">Research</span>
-            <p>Each desk reads primary sources — papers, filings, lab posts — not aggregators.</p>
+            <p>Primary sources — papers, filings, lab posts.</p>
             <span class="hiw-chips"><i>fetch proxy</i><i>source registry</i></span>
           </div>
         </li>
         <li class="hiw-step">
           <div class="hiw-node">
             <span class="hiw-node__k">Dedup</span>
-            <p>Candidate stories are embedded and checked against a rolling index — repeats die here.</p>
+            <p>Checked against a rolling index — repeats die.</p>
             <span class="hiw-chips"><i>embeddings index</i></span>
           </div>
         </li>
         <li class="hiw-step">
           <div class="hiw-node">
             <span class="hiw-node__k">Publish</span>
-            <p>The brief is committed to git; GitHub Pages rebuilds this site.</p>
+            <p>Committed to git; Pages rebuilds the site.</p>
             <span class="hiw-chips"><i>git</i><i>GitHub Pages</i></span>
           </div>
         </li>
         <li class="hiw-step">
           <div class="hiw-node">
             <span class="hiw-node__k">Notify</span>
-            <p>A queued ping drains through a local bridge to the phone.</p>
+            <p>A ping reaches the phone through the bridge.</p>
             <span class="hiw-chips"><i>bridge</i><i>ntfy</i></span>
           </div>
         </li>
         <li class="hiw-step">
           <div class="hiw-node">
             <span class="hiw-node__k">Learn</span>
-            <p>Votes and reasons flow back; a Sunday evaluator reviews the week and tunes the desks.</p>
+            <p>A Sunday review folds your feedback into the desks.</p>
             <span class="hiw-chips"><i>👍 / 👎 feedback</i><i>weekly evaluator</i></span>
           </div>
         </li>
       </ol>
       <span class="hiw-loop" aria-hidden="true"><i class="hiw-loop__lbl">tunes next week</i></span>
     </div>
+
+    <h3 class="hiw-h">The desks</h3>
+    <ul class="hiw-desks">
+      <li class="hiw-desk">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg>
+        <div><span class="hiw-desk__n">News</span><span class="hiw-desk__c">daily</span>
+        <p>Switzerland + the world</p></div>
+      </li>
+      <li class="hiw-desk">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg>
+        <div><span class="hiw-desk__n">AI/ML</span><span class="hiw-desk__c">Tue + Fri</span>
+        <p>Labs, industry, papers</p></div>
+      </li>
+      <li class="hiw-desk">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v6l-5.2 9a1.8 1.8 0 0 0 1.6 2.7h11.2a1.8 1.8 0 0 0 1.6-2.7L14 9V3"/><path d="M8.5 3h7"/></svg>
+        <div><span class="hiw-desk__n">Science</span><span class="hiw-desk__c">Wed</span>
+        <p>The week's real findings</p></div>
+      </li>
+      <li class="hiw-desk">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v14"/><path d="M12 6C10 4.4 7 4 4 4v14c3 0 6 .4 8 2"/><path d="M12 6c2-1.6 5-2 8-2v14c-3 0-6 .4-8 2"/></svg>
+        <div><span class="hiw-desk__n">Deep read</span><span class="hiw-desk__c">Sat</span>
+        <p>The week, in depth</p></div>
+      </li>
+      <li class="hiw-desk hiw-desk--ed">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 19a9 9 0 1 1 13 0"/><path d="M12 14l4.5-4.5"/></svg>
+        <div><span class="hiw-desk__n">Evaluator</span><span class="hiw-desk__c">Sun</span>
+        <p>Grades the week, tunes the desks</p></div>
+      </li>
+    </ul>
+
+    <h3 class="hiw-h">House rules</h3>
+    <ul class="hiw-rules">
+      <li class="hiw-rule">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7"/><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7"/></svg>
+        <span>Primary sources, always linked</span>
+      </li>
+      <li class="hiw-rule">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 13.5l4 4L14 9"/><path d="M12 17.5l2 2L22 11"/></svg>
+        <span>Big claims need two sources</span>
+      </li>
+      <li class="hiw-rule">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11V4a1 1 0 0 1 1-1h7l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
+        <span>Uncertainty wears a tag
+        <span class="hiw-chips"><i>preprint</i><i>single-source</i><i>disputed</i></span></span>
+      </li>
+      <li class="hiw-rule">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>
+        <span>No hype, no filler — omit over pad</span>
+      </li>
+      <li class="hiw-rule">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></svg>
+        <span>Claude-written, published unedited</span>
+      </li>
+      <li class="hiw-rule">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6l7-3z"/></svg>
+        <span>No trackers — sync is opt-in</span>
+      </li>
+    </ul>
   </div>
 </div>
 <script>
@@ -187,6 +242,9 @@ sized by how much it matters, filterable by beat.</p>
      monitors get a 4th column instead of dead margin. */
   .layout--home .archive{ width:100%; float:none; margin:0; padding-left:0; padding-right:0; }
   .layout--home #main{ max-width:1680px; }
+  /* no nameplate (2026-07-11): index.md carries no title, but the theme's archive layout still
+     emits the empty <h1 id="page-title"> — hide it so it doesn't leave a phantom gap. */
+  .layout--home #page-title{ display:none; }
 
   .folio-filters{ display:flex; align-items:center; gap:8px 6px; flex-wrap:wrap; margin:1.4em 0 0;
     padding:12px 0 8px; position:sticky; top:0; z-index:20; background:var(--paper);
@@ -402,7 +460,7 @@ sized by how much it matters, filterable by beat.</p>
   .hiw{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
     background:rgba(0,0,0,.45); z-index:9999; }
   .hiw.on{ display:flex; }
-  .hiw__box{ position:relative; width:92%; max-width:30em; max-height:88vh; overflow:auto;
+  .hiw__box{ position:relative; width:92%; max-width:32em; max-height:88vh; overflow:auto;
     background:var(--paper); color:var(--ink); border:1px solid var(--rule);
     padding:1.5em 1.4em 1.35em; box-shadow:0 8px 44px rgba(0,0,0,.32); }
   .hiw__x{ position:absolute; top:.3em; right:.45em; background:none; border:0; font-size:1.5em;
@@ -438,6 +496,29 @@ sized by how much it matters, filterable by beat.</p>
     writing-mode:vertical-rl; font-style:normal; font-family:var(--sans); font-size:.52rem;
     text-transform:uppercase; letter-spacing:.14em; color:var(--accent); background:var(--paper);
     padding:6px 0; }
+
+  /* masthead (the desks) + house rules — icon-first grids, a few words each */
+  .hiw-h{ display:flex; align-items:center; gap:10px; margin:26px 0 10px; font-family:var(--sans);
+    font-weight:700; font-size:.6rem; text-transform:uppercase; letter-spacing:.16em; color:var(--muted); }
+  .hiw-h::after{ content:""; flex:1; height:1px; background:var(--hair); }
+  .hiw-desks, .hiw-rules{ list-style:none; margin:0; padding:0; display:grid;
+    grid-template-columns:1fr 1fr; gap:8px; }
+  .hiw-desk{ display:flex; gap:10px; align-items:flex-start; background:var(--card);
+    border:1px solid var(--hair); padding:10px 12px; min-width:0; }
+  .hiw-desk--ed{ grid-column:1 / -1; border:1px dashed var(--accent); }  /* the editor over the desks */
+  .hiw-desk svg, .hiw-rule svg{ width:16px; height:16px; flex:none; fill:none; stroke:var(--accent);
+    stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+  .hiw-desk svg{ margin-top:1px; }
+  .hiw-desk__n{ font-family:var(--sans); font-weight:700; font-size:.64rem; text-transform:uppercase;
+    letter-spacing:.1em; color:var(--ink); }
+  .hiw-desk__c{ font-family:var(--sans); font-size:.56rem; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--muted); margin-left:.6em; font-variant-numeric:tabular-nums; }
+  .hiw-desk p{ margin:3px 0 0; font-family:var(--serif); font-size:.82rem; line-height:1.35; color:var(--muted); }
+  .hiw-rule{ display:flex; gap:10px; align-items:center; background:var(--card);
+    border:1px solid var(--hair); padding:9px 11px; min-width:0;
+    font-family:var(--sans); font-size:.68rem; letter-spacing:.02em; line-height:1.35; color:var(--ink); }
+  .hiw-rule .hiw-chips{ margin-top:5px; }
+  @media (max-width:480px){ .hiw-desks, .hiw-rules{ grid-template-columns:1fr; } }
 </style>
 
 <script>
