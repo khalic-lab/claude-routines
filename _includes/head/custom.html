@@ -1,3 +1,9 @@
+<script>
+  // The theme's seo.html composes <title> as "{page.title} - {site.title}" with NO dedup guard,
+  // so the homepage tab reads "News - News". Collapse the exact duplicate here instead of
+  // forking the whole theme include for one line.
+  (function(){ var m = document.title.match(/^(.*) - \1$/); if (m) document.title = m[1]; })();
+</script>
 <style>
   /* arXiv PDF chip — inline pill. (The thumbnail-wrapper rules that used to lead this block were
      dead — fully superseded by the editorial figure block lower down — so they were removed; their
