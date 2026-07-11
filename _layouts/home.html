@@ -242,9 +242,11 @@ layout: archive
      monitors get a 4th column instead of dead margin. */
   .layout--home .archive{ width:100%; float:none; margin:0; padding-left:0; padding-right:0; }
   .layout--home #main{ max-width:1680px; }
-  /* no nameplate (2026-07-11): index.md carries no title, but the theme's archive layout still
-     emits the empty <h1 id="page-title"> — hide it so it doesn't leave a phantom gap. */
-  .layout--home #page-title{ display:none; }
+  /* no top bar on the front page (2026-07-11): the masthead is pure branding here (site nav is
+     empty), so the page opens straight on the "News" nameplate; brief pages keep the masthead
+     as their way back home. */
+  .layout--home .masthead{ display:none; }
+  .layout--home #main{ padding-top:1.6em; }
 
   .folio-filters{ display:flex; align-items:center; gap:8px 6px; flex-wrap:wrap; margin:1.4em 0 0;
     padding:12px 0 8px; position:sticky; top:0; z-index:20; background:var(--paper);
