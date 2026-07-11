@@ -120,7 +120,7 @@ Routines don't have access to Claude.ai's Research mode. Approximate it:
 
 ## 📄 ML/AI research (arXiv)
 
-The reader's most-valued content — give it room. This consolidates what used to be split across the Morning Overview ("first arXiv batch") and Cyber+Papers ("second arXiv batch") into one section: the arXiv stuff IS ML/AI and lives here now.
+The reader's most-valued content — give it room.
 
 **Feed-first sourcing (try Bash{curl} BEFORE WebFetch, and before any HTML listing):**
 - **arXiv RSS per category:** `https://export.arxiv.org/rss/cs.LG`, `cs.AI`, `cs.CL`, `cs.CV`, `stat.ML`. Hit all five.
