@@ -101,81 +101,60 @@ layout: archive
     <button type="button" class="hiw__x" aria-label="close">×</button>
     <h2 class="hiw__title" id="hiwTitle">How this works</h2>
     <p class="hiw__sub">Researched, written and published by Claude on a schedule — tuned by your feedback.</p>
-    <div class="hiw-wrap">
-      <ol class="hiw-flow">
-        <li class="hiw-step">
-          <div class="hiw-node">
-            <span class="hiw-node__k">Schedule</span>
-            <p>Four desks fire on cron.</p>
-          </div>
-        </li>
-        <li class="hiw-step">
-          <div class="hiw-node">
-            <span class="hiw-node__k">Research</span>
-            <p>Primary sources — papers, filings, lab posts.</p>
-            <span class="hiw-chips"><i>fetch proxy</i><i>source registry</i></span>
-          </div>
-        </li>
-        <li class="hiw-step">
-          <div class="hiw-node">
-            <span class="hiw-node__k">Dedup</span>
-            <p>Checked against a rolling index — repeats die.</p>
-            <span class="hiw-chips"><i>embeddings index</i></span>
-          </div>
-        </li>
-        <li class="hiw-step">
-          <div class="hiw-node">
-            <span class="hiw-node__k">Publish</span>
-            <p>Committed to git; Pages rebuilds the site.</p>
-            <span class="hiw-chips"><i>git</i><i>GitHub Pages</i></span>
-          </div>
-        </li>
-        <li class="hiw-step">
-          <div class="hiw-node">
-            <span class="hiw-node__k">Notify</span>
-            <p>A ping reaches the phone through the bridge.</p>
-            <span class="hiw-chips"><i>bridge</i><i>ntfy</i></span>
-          </div>
-        </li>
-        <li class="hiw-step">
-          <div class="hiw-node">
-            <span class="hiw-node__k">Learn</span>
-            <p>A Sunday review folds your feedback into the desks.</p>
-            <span class="hiw-chips"><i>👍 / 👎 feedback</i><i>weekly evaluator</i></span>
-          </div>
-        </li>
-      </ol>
-      <span class="hiw-loop" aria-hidden="true"><i class="hiw-loop__lbl">tunes next week</i></span>
-    </div>
 
-    <h3 class="hiw-h">The desks</h3>
-    <ul class="hiw-desks">
-      <li class="hiw-desk">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg>
-        <div><span class="hiw-desk__n">News</span><span class="hiw-desk__c">daily</span>
-        <p>Switzerland + the world</p></div>
-      </li>
-      <li class="hiw-desk">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg>
-        <div><span class="hiw-desk__n">AI/ML</span><span class="hiw-desk__c">Tue + Fri</span>
-        <p>Labs, industry, papers</p></div>
-      </li>
-      <li class="hiw-desk">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v6l-5.2 9a1.8 1.8 0 0 0 1.6 2.7h11.2a1.8 1.8 0 0 0 1.6-2.7L14 9V3"/><path d="M8.5 3h7"/></svg>
-        <div><span class="hiw-desk__n">Science</span><span class="hiw-desk__c">Wed</span>
-        <p>The week's real findings</p></div>
-      </li>
-      <li class="hiw-desk">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v14"/><path d="M12 6C10 4.4 7 4 4 4v14c3 0 6 .4 8 2"/><path d="M12 6c2-1.6 5-2 8-2v14c-3 0-6 .4-8 2"/></svg>
-        <div><span class="hiw-desk__n">Deep read</span><span class="hiw-desk__c">Sat</span>
-        <p>The week, in depth</p></div>
-      </li>
-      <li class="hiw-desk hiw-desk--ed">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 19a9 9 0 1 1 13 0"/><path d="M12 14l4.5-4.5"/></svg>
-        <div><span class="hiw-desk__n">Evaluator</span><span class="hiw-desk__c">Sun</span>
-        <p>Grades the week, tunes the desks</p></div>
-      </li>
-    </ul>
+    <svg class="hiw-d" viewBox="0 0 520 580" role="img"
+         aria-label="Pipeline diagram: four desks (News daily, AI/ML Tuesday and Friday, Science Wednesday, Deep read Saturday) research primary sources; stories already seen are dropped by dedup; the rest are published via git to this site and pinged to the phone; your reading and votes feed a Sunday evaluator whose review tunes the desks.">
+      <!-- desks -->
+      <rect class="b" x="8"   y="8" width="117" height="52"/>
+      <rect class="b" x="138" y="8" width="117" height="52"/>
+      <rect class="b" x="268" y="8" width="117" height="52"/>
+      <rect class="b" x="398" y="8" width="117" height="52"/>
+      <text class="n" x="66.5"  y="32">NEWS</text>      <text class="c" x="66.5"  y="48">DAILY</text>
+      <text class="n" x="196.5" y="32">AI/ML</text>     <text class="c" x="196.5" y="48">TUE + FRI</text>
+      <text class="n" x="326.5" y="32">SCIENCE</text>   <text class="c" x="326.5" y="48">WED</text>
+      <text class="n" x="456.5" y="32">DEEP READ</text> <text class="c" x="456.5" y="48">SAT</text>
+      <!-- bus join + drop into research -->
+      <path class="e" d="M66.5 60V80M196.5 60V80M326.5 60V80M456.5 60V80M66.5 80H456.5M260 80V102"/>
+      <path class="e" d="M256 96l4 6 4-6"/>
+      <!-- research -->
+      <rect class="b" x="150" y="104" width="220" height="56"/>
+      <text class="k" x="260" y="128">RESEARCH</text>
+      <text class="s" x="260" y="147">primary sources, fetched at the edge</text>
+      <path class="e" d="M260 160V180M256 174l4 6 4-6"/>
+      <!-- dedup decision -->
+      <path class="b" d="M260 182L355 214L260 246L165 214Z"/>
+      <text class="s" x="260" y="219">seen before?</text>
+      <path class="e" d="M355 214H425M419 210l6 4-6 4"/>
+      <text class="l" x="382" y="207">yes</text>
+      <rect class="g" x="427" y="196" width="84" height="36"/>
+      <text class="c" x="469" y="219">DROPPED</text>
+      <path class="e" d="M260 246V266M256 260l4 6 4-6"/>
+      <text class="l" x="268" y="262">no</text>
+      <!-- publish -->
+      <rect class="b" x="150" y="268" width="220" height="56"/>
+      <text class="k" x="260" y="291">PUBLISH</text>
+      <text class="s" x="260" y="310">git commit → GitHub Pages</text>
+      <path class="e" d="M260 324V340H165V356M260 340H355V356M161 350l4 6 4-6M351 350l4 6 4-6"/>
+      <!-- site + phone -->
+      <rect class="b" x="95"  y="356" width="140" height="52"/>
+      <text class="n" x="165" y="379">THIS SITE</text>
+      <text class="c" x="165" y="396">REBUILT ON PUSH</text>
+      <rect class="b" x="285" y="356" width="140" height="52"/>
+      <text class="n" x="355" y="379">YOUR PHONE</text>
+      <text class="c" x="355" y="396">PING VIA NTFY</text>
+      <path class="e" d="M165 408V424H355V408M260 424V438M256 432l4 6 4-6"/>
+      <!-- reader -->
+      <rect class="b" x="150" y="440" width="220" height="52"/>
+      <text class="n" x="260" y="463">YOU</text>
+      <text class="s" x="260" y="481">read the brief · vote on stories</text>
+      <path class="e" d="M260 492V510M256 504l4 6 4-6"/>
+      <!-- evaluator + feedback loop -->
+      <rect class="b2" x="150" y="512" width="220" height="56"/>
+      <text class="k" x="260" y="535">EVALUATOR — SUNDAYS</text>
+      <text class="s" x="260" y="554">reviews the week against your votes</text>
+      <path class="fb" d="M150 540H30V80H58M54 76l6 4-6 4"/>
+      <text class="loop" transform="translate(22 310) rotate(-90)" text-anchor="middle">TUNES NEXT WEEK</text>
+    </svg>
 
     <h3 class="hiw-h">House rules</h3>
     <ul class="hiw-rules">
@@ -205,6 +184,7 @@ layout: archive
         <span>No trackers — sync is opt-in</span>
       </li>
     </ul>
+    <p class="hiw-read">Each desk runs on a fixed written prompt — <a href="{{ '/prompts/' | relative_url }}">read them verbatim</a>.</p>
   </div>
 </div>
 <script>
@@ -472,55 +452,39 @@ layout: archive
   .hiw__title{ font-family:var(--display); font-weight:700; font-size:1.4em; margin:0 0 .15em; }
   .hiw__sub{ font-family:var(--serif); font-size:.85em; color:var(--muted); margin:0 0 1.3em; }
 
-  /* the flow: node cards down the middle, solid connectors between them, and a dashed accent
-     rail on the right carrying the last node (Learn) back up to the first — the feedback loop. */
-  .hiw-wrap{ position:relative; padding-right:34px; }
-  .hiw-flow{ list-style:none; margin:0; padding:0; }
-  .hiw-step + .hiw-step{ position:relative; margin-top:24px; }
-  .hiw-step + .hiw-step::before{ content:""; position:absolute; left:50%; top:-24px; height:24px;
-    width:1px; background:var(--rule); }
-  .hiw-step + .hiw-step::after{ content:""; position:absolute; left:50%; top:-8px; width:6px; height:6px;
-    border:solid var(--rule); border-width:0 0 1px 1px; transform:translateX(-50%) rotate(-45deg); }
-  .hiw-node{ background:var(--card); border:1px solid var(--hair); padding:11px 13px 12px; }
-  .hiw-step:last-child .hiw-node{ border:1px dashed var(--accent); }  /* the loop node — matches the rail */
-  .hiw-node__k{ display:block; font-family:var(--sans); font-weight:700; font-size:.58rem;
-    text-transform:uppercase; letter-spacing:.14em; color:var(--accent); margin-bottom:4px; }
-  .hiw-node p{ margin:0; font-family:var(--serif); font-size:.9rem; line-height:1.45; color:var(--ink); }
-  .hiw-chips{ display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
-  .hiw-chips i{ font-style:normal; font-family:var(--sans); font-size:.56rem; letter-spacing:.06em;
-    text-transform:uppercase; color:var(--muted); border:1px solid var(--hair); border-radius:999px;
-    padding:2px 8px; white-space:nowrap; }
-  .hiw-loop{ position:absolute; top:30px; bottom:30px; right:11px; width:23px;
-    border:1px dashed var(--accent); border-left:0; opacity:.8; pointer-events:none; }
-  .hiw-loop::before{ content:""; position:absolute; left:-2px; top:-3.5px; width:5px; height:5px;
-    border:solid var(--accent); border-width:0 0 1px 1px; transform:rotate(45deg); }  /* ← into node 1 */
-  .hiw-loop__lbl{ position:absolute; top:50%; right:0; transform:translate(50%,-50%);
-    writing-mode:vertical-rl; font-style:normal; font-family:var(--sans); font-size:.52rem;
-    text-transform:uppercase; letter-spacing:.14em; color:var(--accent); background:var(--paper);
-    padding:6px 0; }
+  /* the diagram — a hand-drawn SVG flowchart; every stroke/fill is a theme token so both
+     themes work. Text is authored uppercase (SVG text-transform support is uneven). */
+  .hiw-d{ display:block; width:100%; height:auto; margin:6px 0 2px; }
+  .hiw-d .b{ fill:var(--card); stroke:var(--rule); stroke-width:1; }
+  .hiw-d .b2{ fill:var(--card); stroke:var(--accent); stroke-width:1; stroke-dasharray:4 3; }
+  .hiw-d .g{ fill:none; stroke:var(--hair); stroke-dasharray:4 3; }
+  .hiw-d .e{ fill:none; stroke:var(--rule); stroke-width:1; }
+  .hiw-d .fb{ fill:none; stroke:var(--accent); stroke-width:1; stroke-dasharray:4 3; opacity:.85; }
+  .hiw-d text{ font-family:var(--sans); }
+  .hiw-d .n{ fill:var(--ink); font-size:12.5px; font-weight:700; letter-spacing:.08em; text-anchor:middle; }
+  .hiw-d .k{ fill:var(--accent); font-size:11px; font-weight:700; letter-spacing:.14em; text-anchor:middle; }
+  .hiw-d .s{ fill:var(--muted); font-size:11.5px; text-anchor:middle; }
+  .hiw-d .c{ fill:var(--muted); font-size:9.5px; letter-spacing:.08em; text-anchor:middle; }
+  .hiw-d .l{ fill:var(--muted); font-size:10px; }
+  .hiw-d .loop{ fill:var(--accent); font-size:10px; letter-spacing:.16em; }
 
-  /* masthead (the desks) + house rules — icon-first grids, a few words each */
-  .hiw-h{ display:flex; align-items:center; gap:10px; margin:26px 0 10px; font-family:var(--sans);
+  /* house rules — compact tiles; the read-the-prompts line closes the box */
+  .hiw-h{ display:flex; align-items:center; gap:10px; margin:22px 0 10px; font-family:var(--sans);
     font-weight:700; font-size:.6rem; text-transform:uppercase; letter-spacing:.16em; color:var(--muted); }
   .hiw-h::after{ content:""; flex:1; height:1px; background:var(--hair); }
-  .hiw-desks, .hiw-rules{ list-style:none; margin:0; padding:0; display:grid;
-    grid-template-columns:1fr 1fr; gap:8px; }
-  .hiw-desk{ display:flex; gap:10px; align-items:flex-start; background:var(--card);
-    border:1px solid var(--hair); padding:10px 12px; min-width:0; }
-  .hiw-desk--ed{ grid-column:1 / -1; border:1px dashed var(--accent); }  /* the editor over the desks */
-  .hiw-desk svg, .hiw-rule svg{ width:16px; height:16px; flex:none; fill:none; stroke:var(--accent);
-    stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
-  .hiw-desk svg{ margin-top:1px; }
-  .hiw-desk__n{ font-family:var(--sans); font-weight:700; font-size:.64rem; text-transform:uppercase;
-    letter-spacing:.1em; color:var(--ink); }
-  .hiw-desk__c{ font-family:var(--sans); font-size:.56rem; text-transform:uppercase; letter-spacing:.08em;
-    color:var(--muted); margin-left:.6em; font-variant-numeric:tabular-nums; }
-  .hiw-desk p{ margin:3px 0 0; font-family:var(--serif); font-size:.82rem; line-height:1.35; color:var(--muted); }
+  .hiw-rules{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .hiw-rule{ display:flex; gap:10px; align-items:center; background:var(--card);
     border:1px solid var(--hair); padding:9px 11px; min-width:0;
     font-family:var(--sans); font-size:.68rem; letter-spacing:.02em; line-height:1.35; color:var(--ink); }
-  .hiw-rule .hiw-chips{ margin-top:5px; }
-  @media (max-width:480px){ .hiw-desks, .hiw-rules{ grid-template-columns:1fr; } }
+  .hiw-rule svg{ width:16px; height:16px; flex:none; fill:none; stroke:var(--accent);
+    stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+  .hiw-chips{ display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+  .hiw-chips i{ font-style:normal; font-family:var(--sans); font-size:.56rem; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--muted); border:1px solid var(--hair); border-radius:999px;
+    padding:2px 8px; white-space:nowrap; }
+  .hiw-read{ margin:14px 0 0; font-family:var(--serif); font-size:.85em; color:var(--muted); }
+  .hiw-read a{ color:var(--accent); text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; }
+  @media (max-width:480px){ .hiw-rules{ grid-template-columns:1fr; } }
 </style>
 
 <script>

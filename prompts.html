@@ -1,0 +1,51 @@
+---
+layout: single
+title: "The prompts"
+permalink: /prompts/
+---
+<p class="prm-intro">Every brief is written by a scheduled Claude routine following a fixed, versioned
+prompt. These are the live instructions, rendered verbatim at build time from the same files the
+routines read — <code>${FETCH_PROXY_TOKEN}</code> is a placeholder the runtime fills, never a real value.</p>
+
+{% capture p_news %}{% include_relative routines/news.md %}{% endcapture %}
+{% capture p_aiml %}{% include_relative routines/ai-ml.md %}{% endcapture %}
+{% capture p_science %}{% include_relative routines/science.md %}{% endcapture %}
+{% capture p_weekend %}{% include_relative routines/weekend.md %}{% endcapture %}
+{% capture p_eval %}{% include_relative routines/weekly-evaluator.md %}{% endcapture %}
+
+<details class="prm">
+  <summary><strong>News</strong><span>daily</span></summary>
+  <pre>{{ p_news | escape }}</pre>
+</details>
+<details class="prm">
+  <summary><strong>AI/ML</strong><span>Tue + Fri</span></summary>
+  <pre>{{ p_aiml | escape }}</pre>
+</details>
+<details class="prm">
+  <summary><strong>Science</strong><span>Wed</span></summary>
+  <pre>{{ p_science | escape }}</pre>
+</details>
+<details class="prm">
+  <summary><strong>Deep read</strong><span>Sat</span></summary>
+  <pre>{{ p_weekend | escape }}</pre>
+</details>
+<details class="prm">
+  <summary><strong>Evaluator</strong><span>Sun</span></summary>
+  <pre>{{ p_eval | escape }}</pre>
+</details>
+
+<style>
+  .prm-intro{ font-family:var(--serif); color:var(--muted); }
+  .prm{ border:1px solid var(--hair); background:var(--card); margin:0 0 10px; }
+  .prm summary{ cursor:pointer; padding:12px 14px; font-family:var(--sans); font-size:.72rem;
+    text-transform:uppercase; letter-spacing:.1em; color:var(--ink); }
+  .prm summary::marker{ color:var(--accent); }
+  .prm summary:hover{ color:var(--accent); }
+  .prm summary:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
+  .prm summary strong{ font-weight:700; }
+  .prm summary span{ color:var(--muted); margin-left:.8em; letter-spacing:.08em; }
+  .prm pre{ margin:0; padding:14px 16px; border-top:1px solid var(--hair); background:var(--panel);
+    color:var(--ink); font-size:.68rem; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+  /* the theme pill-styles inline <code>; inside the raw prompt dumps that would be noise */
+  .prm pre code{ border:0; padding:0; border-radius:0; font:inherit; color:inherit; }
+</style>
