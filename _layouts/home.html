@@ -7,6 +7,10 @@ layout: archive
 {% assign feed = site.data.homefeed %}
 <p class="home-tagline">Every story the desk files, laid straight onto the page — newest at the top,
 sized by how much it matters, filterable by beat.</p>
+<button class="hiw-open" id="hiwOpen" type="button" aria-haspopup="dialog">
+  <svg viewBox="0 0 30 8" aria-hidden="true"><circle cx="4" cy="4" r="2.2"/><path d="M8 4h4.8"/><circle cx="15" cy="4" r="2.2"/><path d="M19 4h4.8"/><circle cx="26" cy="4" r="2.2"/></svg>
+  How this works
+</button>
 
 {% if feed and feed.stories and feed.stories.size > 0 %}
 <div class="folio-filters" id="folioFilters">
@@ -89,10 +93,86 @@ sized by how much it matters, filterable by beat.</p>
   </form>
 </section>
 
+<!-- "How this works" modal — the pipeline drawn as a flow, not written up. Six nodes, one line
+     each; the dashed rail on the right is the feedback loop closing back into the desks.
+     Token-driven (var(--…)) so light/dark both work; schedules are day-level on purpose so this
+     never drifts against ARCHITECTURE.md's exact crons. -->
+<div class="hiw" id="hiwModal">
+  <div class="hiw__box" role="dialog" aria-modal="true" aria-labelledby="hiwTitle">
+    <button type="button" class="hiw__x" aria-label="close">×</button>
+    <h2 class="hiw__title" id="hiwTitle">How this works</h2>
+    <p class="hiw__sub">Every brief here is researched, written and published by Claude on a
+    schedule — and your feedback tunes it.</p>
+    <div class="hiw-wrap">
+      <ol class="hiw-flow">
+        <li class="hiw-step">
+          <div class="hiw-node">
+            <span class="hiw-node__k">Schedule</span>
+            <p>Four desks fire on cron, each with its own beat and cadence.</p>
+            <span class="hiw-chips"><i>News · daily</i><i>AI/ML · Tue + Fri</i><i>Science · Wed</i><i>Deep read · Sat</i></span>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <div class="hiw-node">
+            <span class="hiw-node__k">Research</span>
+            <p>Each desk reads primary sources — papers, filings, lab posts — not aggregators.</p>
+            <span class="hiw-chips"><i>fetch proxy</i><i>source registry</i></span>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <div class="hiw-node">
+            <span class="hiw-node__k">Dedup</span>
+            <p>Candidate stories are embedded and checked against a rolling index — repeats die here.</p>
+            <span class="hiw-chips"><i>embeddings index</i></span>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <div class="hiw-node">
+            <span class="hiw-node__k">Publish</span>
+            <p>The brief is committed to git; GitHub Pages rebuilds this site.</p>
+            <span class="hiw-chips"><i>git</i><i>GitHub Pages</i></span>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <div class="hiw-node">
+            <span class="hiw-node__k">Notify</span>
+            <p>A queued ping drains through a local bridge to the phone.</p>
+            <span class="hiw-chips"><i>bridge</i><i>ntfy</i></span>
+          </div>
+        </li>
+        <li class="hiw-step">
+          <div class="hiw-node">
+            <span class="hiw-node__k">Learn</span>
+            <p>Votes and reasons flow back; a Sunday evaluator reviews the week and tunes the desks.</p>
+            <span class="hiw-chips"><i>👍 / 👎 feedback</i><i>weekly evaluator</i></span>
+          </div>
+        </li>
+      </ol>
+      <span class="hiw-loop" aria-hidden="true"><i class="hiw-loop__lbl">tunes next week</i></span>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById('hiwOpen'), modal = document.getElementById('hiwModal');
+  if (!btn || !modal) return;
+  var x = modal.querySelector('.hiw__x'), last = null;
+  function show(){ last = document.activeElement; modal.classList.add('on'); x.focus(); }
+  function hide(){ modal.classList.remove('on'); if (last && last.focus) last.focus(); last = null; }
+  btn.addEventListener('click', show);
+  x.addEventListener('click', hide);
+  modal.addEventListener('click', function (e) { if (e.target === modal) hide(); });
+  modal.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { hide(); return; }
+    if (e.key === 'Tab') { e.preventDefault(); x.focus(); }   // × is the dialog's only focusable
+  });
+})();
+</script>
+
 <style>
   /* ===== Folio masonry front page (2026-07-06; packing + media rewrite same day). Reads
      _data/homefeed.json (built by tools/build_stories_feed.py). Uses the global Folio tokens set
-     in _includes/head/custom.html; only structural rules live here. Classes are f-/ff-/folio-
+     in _includes/head/custom.html; only structural rules live here. Classes are f-/ff-/folio-/hiw-
      prefixed to avoid colliding with the theme and the post-page .fb-* feedback widgets.
 
      Masonry is JS-placed (absolute cards, per-column stacking with notch backfill) because CSS
@@ -308,6 +388,56 @@ sized by how much it matters, filterable by beat.</p>
   @media (prefers-reduced-motion:reduce){ .fcard__in, .fcard__fb{ transition:none; } }
 
   .propose{ margin-top:2.6em; }
+
+  /* ---- "How this works" (hiw-) — trigger under the tagline + pipeline-flow modal ---- */
+  .hiw-open{ display:flex; align-items:center; gap:.55em; margin:-1.15em auto 2em;
+    background:transparent; border:1px solid var(--hair); border-radius:2px; cursor:pointer;
+    color:var(--muted-ui); font-family:var(--sans); font-size:.6rem; text-transform:uppercase;
+    letter-spacing:.12em; padding:5px 11px; }
+  .hiw-open:hover{ color:var(--accent); border-color:var(--accent); }
+  .hiw-open:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .hiw-open svg{ width:26px; height:8px; fill:none; stroke:currentColor; stroke-width:1.3; }
+  .hiw-open svg circle{ fill:currentColor; stroke:none; }
+
+  .hiw{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.45); z-index:9999; }
+  .hiw.on{ display:flex; }
+  .hiw__box{ position:relative; width:92%; max-width:30em; max-height:88vh; overflow:auto;
+    background:var(--paper); color:var(--ink); border:1px solid var(--rule);
+    padding:1.5em 1.4em 1.35em; box-shadow:0 8px 44px rgba(0,0,0,.32); }
+  .hiw__x{ position:absolute; top:.3em; right:.45em; background:none; border:0; font-size:1.5em;
+    line-height:1; cursor:pointer; color:var(--muted); }
+  .hiw__x:hover{ color:var(--ink); }
+  .hiw__x:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .hiw__title{ font-family:var(--display); font-weight:700; font-size:1.4em; margin:0 0 .15em; }
+  .hiw__sub{ font-family:var(--serif); font-size:.85em; color:var(--muted); margin:0 0 1.3em; }
+
+  /* the flow: node cards down the middle, solid connectors between them, and a dashed accent
+     rail on the right carrying the last node (Learn) back up to the first — the feedback loop. */
+  .hiw-wrap{ position:relative; padding-right:34px; }
+  .hiw-flow{ list-style:none; margin:0; padding:0; }
+  .hiw-step + .hiw-step{ position:relative; margin-top:24px; }
+  .hiw-step + .hiw-step::before{ content:""; position:absolute; left:50%; top:-24px; height:24px;
+    width:1px; background:var(--rule); }
+  .hiw-step + .hiw-step::after{ content:""; position:absolute; left:50%; top:-8px; width:6px; height:6px;
+    border:solid var(--rule); border-width:0 0 1px 1px; transform:translateX(-50%) rotate(-45deg); }
+  .hiw-node{ background:var(--card); border:1px solid var(--hair); padding:11px 13px 12px; }
+  .hiw-step:last-child .hiw-node{ border:1px dashed var(--accent); }  /* the loop node — matches the rail */
+  .hiw-node__k{ display:block; font-family:var(--sans); font-weight:700; font-size:.58rem;
+    text-transform:uppercase; letter-spacing:.14em; color:var(--accent); margin-bottom:4px; }
+  .hiw-node p{ margin:0; font-family:var(--serif); font-size:.9rem; line-height:1.45; color:var(--ink); }
+  .hiw-chips{ display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .hiw-chips i{ font-style:normal; font-family:var(--sans); font-size:.56rem; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--muted); border:1px solid var(--hair); border-radius:999px;
+    padding:2px 8px; white-space:nowrap; }
+  .hiw-loop{ position:absolute; top:30px; bottom:30px; right:11px; width:23px;
+    border:1px dashed var(--accent); border-left:0; opacity:.8; pointer-events:none; }
+  .hiw-loop::before{ content:""; position:absolute; left:-2px; top:-3.5px; width:5px; height:5px;
+    border:solid var(--accent); border-width:0 0 1px 1px; transform:rotate(45deg); }  /* ← into node 1 */
+  .hiw-loop__lbl{ position:absolute; top:50%; right:0; transform:translate(50%,-50%);
+    writing-mode:vertical-rl; font-style:normal; font-family:var(--sans); font-size:.52rem;
+    text-transform:uppercase; letter-spacing:.14em; color:var(--accent); background:var(--paper);
+    padding:6px 0; }
 </style>
 
 <script>
