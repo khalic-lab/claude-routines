@@ -119,6 +119,9 @@ def build_discovery_section(slug, reg):
         if slug not in (rec.get("streams") or []):
             continue
         status = rec.get("status")
+        if status in ("demoted", "retired"):
+            continue  # same exclusion as the fetch list: a dormant retired/deny-listed
+                      # domain must not resurface as a discovery candidate
         last_cited = rec.get("last_cited")
         is_dormant = False
         if last_cited:

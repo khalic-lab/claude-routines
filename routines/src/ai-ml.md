@@ -102,8 +102,8 @@ headline and the `**Why it matters:**` label. The bold headline is also the `hea
 dedup candidate; the arXiv URL is the `url`.
 
 ## 🏢 Lab blogs & official releases
-T1: anthropic.com/news, openai.com/news, deepmind.google/discover/blog, ai.meta.com/blog, research.google, microsoft.com/en-us/research/blog, mistral.ai/news, qwenlm.github.io/blog, allenai.org/blog, machinelearning.apple.com.
-T2: arstechnica.com, theverge.com, ft.com/technology, simonwillison.net.
+T1: the frontier-lab blogs from the preflight fetch list (Anthropic, OpenAI, Google DeepMind, Meta AI, Google Research, Microsoft Research, Mistral, Qwen, Ai2, Apple ML — the registry carries their blog probe URLs; sweep the plan, not a memorized table).
+T2: the tech outlets the plan lists for this stream (Ars Technica, The Verge, FT tech desk, simonwillison.net).
 Posts from major AI labs within the coverage window. Tag vendor PR. Lab pages 403 on direct curl — fetch them through the fetch proxy (see Feed-first source order above); only tag `[via snippet]` if the proxy also returns non-200.
 
 ## 🚀 New models, datasets, & open weights
@@ -112,13 +112,13 @@ T2: huggingface.co/blog, simonwillison.net.
 Notable releases in the window: model name, parameters, license, base, brief purpose, link to model card. Include MLX/GGUF ports if any (relevant to Apple Silicon use).
 
 ## 📊 Benchmarks & evaluations
-T1: model card claims, paper-with-code releases, official benchmark sites (lmarena.ai, livebench.ai, swe-bench.com, etc.). **Feed:** Semantic Scholar API for triangulating benchmark-paper claims.
+T1: model card claims, paper-with-code releases, the official benchmark sites in the preflight fetch list (LMArena, LiveBench, SWE-bench, etc.). **Feed:** Semantic Scholar API for triangulating benchmark-paper claims.
 T2: independent benchmark coverage from quality outlets.
 New benchmark results, leaderboard moves, evaluation methodology discussions.
 
 ## 💼 Industry, funding, regulation
 T1: SEC filings (S-1, 10-Q for AI public companies), official announcements, EU/UK/US regulator press releases, court filings (AI litigation).
-T2: ft.com/technology, reuters.com/technology, bloomberg.com (AI desk), techcrunch.com (use with caution — frequently rewrites press releases).
+T2: the business/tech desks from the preflight plan (FT, Reuters, Bloomberg; TechCrunch with caution — it frequently rewrites press releases).
 Funding rounds, acquisitions, hiring, executive moves, regulatory actions, lawsuits, policy news. Distinguish primary announcements from rumor.
 
 ## 🍎 Apple Silicon / on-device
@@ -154,7 +154,7 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: since the last AI/ML edition
 - A section appears ONLY if it has genuinely new substance for the window; otherwise omit it entirely — no placeholder, no "nothing notable in this window" line.
 - Tag `[vendor PR]` aggressively — most lab blog posts are PR.
 - For benchmark claims: state the methodology if known. "Beats GPT-X on Y" is meaningless without knowing Y.
-- **T3 deny-list — never cite (low-signal AI-spam):** aiweekly.co, aitoolsrecap.com, codersera.com, techtimes.com. Discovery-only at best; click through to the primary source or drop the item.
+- **Deny-list — never cite (low-signal AI-spam):** aiweekly.co, aitoolsrecap.com, codersera.com, techtimes.com. These carry `status: retired` in the registry, so the preflight plan never offers them — if one surfaces through search anyway, click through to the primary source or drop the item.
 
 <!-- include: _shared/pedagogical-tone.md -->
 

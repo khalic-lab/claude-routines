@@ -194,6 +194,10 @@ class DiscoveryQuotaAndCandidatesTest(PreflightTestBase):
                                  "streams": ["news"], "last_cited": H.days_ago(3)},
             "oldschool.example": {"class": "outlet", "status": "probation", "reach": "direct",
                                   "streams": ["news"], "last_cited": H.days_ago(45)},
+            "spamsite.example": {"class": "outlet", "status": "retired", "reach": "direct",
+                                 "streams": ["news"], "last_cited": H.days_ago(45)},
+            "sunkoutlet.example": {"class": "outlet", "status": "demoted", "reach": "direct",
+                                   "streams": ["news"], "last_cited": H.days_ago(45)},
         })
 
     def test_quota_values_per_slug(self):
@@ -219,6 +223,15 @@ class DiscoveryQuotaAndCandidatesTest(PreflightTestBase):
         proc = self.run_preflight("news")
         discovery = _section(proc.stdout, "discovery") or ""
         self.assertNotIn("activeoutlet.example", discovery)
+
+    def test_retired_or_demoted_dormant_entry_never_resurfaces_as_candidate(self):
+        """A deny-listed (retired) or demoted domain is dormant by construction — it must
+        NOT come back as a candidates_to_try suggestion (2026-07-11 fix: discovery now
+        applies the same status exclusion as the fetch list)."""
+        proc = self.run_preflight("news")
+        discovery = _section(proc.stdout, "discovery") or ""
+        self.assertNotIn("spamsite.example", discovery)
+        self.assertNotIn("sunkoutlet.example", discovery)
 
 
 class MissingOrEmptyRegistryTest(PreflightTestBase):
