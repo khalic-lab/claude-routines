@@ -156,6 +156,21 @@ layout: archive
       <text class="loop" transform="translate(22 310) rotate(-90)" text-anchor="middle">TUNES NEXT WEEK</text>
     </svg>
 
+    {% if site.data.stats %}{% assign st = site.data.stats %}
+    <h3 class="hiw-h">The desk, in numbers</h3>
+    <ul class="hiw-stats">
+      <li><b>{{ st.all_time.stories }}</b><span>stories published<br>since {{ st.all_time.since | date: "%-d %b %Y" }}</span></li>
+      <li><b>{{ st.all_time.distinct_domains }}</b><span>sources cited<br>{{ st.sources.candidate | default: 0 }} new on trial</span></li>
+      <li><b>~{{ st.window.avg_words }}</b><span>words per brief<br>last {{ st.window.days }} days</span></li>
+    </ul>
+    {% assign drops = st.dedup.repeats_dropped | plus: st.dedup.ongoing_dropped %}
+    {% if st.dedup.since %}
+    <p class="hiw-stat-line">{{ st.dedup.checked }} candidate stories checked against the index since {{ st.dedup.since | date: "%-d %b" }} — <strong>{{ drops }} repeats filtered</strong>, ≈{{ st.dedup.est_minutes_saved }} min of re-reading saved.</p>
+    {% else %}
+    <p class="hiw-stat-line">Repeat-filter tracking starts with the next edition.</p>
+    {% endif %}
+    {% endif %}
+
     <h3 class="hiw-h">House rules</h3>
     <ul class="hiw-rules">
       <li class="hiw-rule">
@@ -484,7 +499,15 @@ layout: archive
     padding:2px 8px; white-space:nowrap; }
   .hiw-read{ margin:14px 0 0; font-family:var(--serif); font-size:.85em; color:var(--muted); }
   .hiw-read a{ color:var(--accent); text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; }
-  @media (max-width:480px){ .hiw-rules{ grid-template-columns:1fr; } }
+  .hiw-stats{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .hiw-stats li{ background:var(--card); border:1px solid var(--hair); padding:10px 12px; min-width:0; }
+  .hiw-stats b{ display:block; font-family:var(--display); font-weight:700; font-size:1.5rem;
+    line-height:1.1; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .hiw-stats span{ display:block; margin-top:4px; font-family:var(--sans); font-size:.58rem;
+    text-transform:uppercase; letter-spacing:.08em; line-height:1.5; color:var(--muted); }
+  .hiw-stat-line{ margin:10px 0 0; font-family:var(--serif); font-size:.8em; line-height:1.5; color:var(--muted); }
+  .hiw-stat-line strong{ color:var(--ink); }
+  @media (max-width:480px){ .hiw-rules{ grid-template-columns:1fr; } .hiw-stats{ grid-template-columns:1fr 1fr; } }
 </style>
 
 <script>

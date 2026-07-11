@@ -49,6 +49,16 @@ exists to go deeper on. Every other slug omits the flag (cross-edition dedup). W
 REPEAT verdict is by construction a prior-Weekend repeat, so Step B's "REPEAT → ALWAYS DROP" still
 applies unchanged — no special-casing of the verdicts is needed.
 
+**Then snapshot the verdicts (added 2026-07-11, feeds the homepage desk-stats panel):**
+
+```bash
+python3 tools/store/verdicts.py --candidates /tmp/cand.json --verdicts /tmp/verdicts.json \
+  --date {YYYY-MM-DD} --slug {SLUG} || echo "verdict snapshot failed (non-fatal)"
+```
+
+This writes `index/verdicts/{YYYY-MM-DD}-{SLUG}.json` (idempotent — re-runs overwrite). Step E's
+`git add index/` already stages it; skip silently if the check itself was unavailable.
+
 `/tmp/verdicts.json` has one result per candidate: `verdict` (NEW | ONGOING | REPEAT), `score`,
 an optional `match_reason` (`exact-url` | `exact-arxiv` | `distinct-paper`),
 and for non-NEW a `matched` object with `id`, `date`, `headline`, `summary`, `url`, `thread_id`,
@@ -230,6 +240,11 @@ No network — it re-reads the recent `_posts/*.md` briefs (for each story's rea
 writes `_data/homefeed.json` (the four live streams, most-recent stories, per-edition-capped for
 the front page). It prints a join-rate line — `0/N carry writer-supplied topics/importance` is
 expected only until recorded stories start carrying the Step C fields.
+
+It also regenerates `_data/stats.json` (the homepage desk-stats panel, via
+`tools/build_stats.py` — ledger counts + Coverage-footer telemetry + the Step-A verdict
+snapshots) as a non-fatal piggyback; no separate command needed, and `git add _data/` in Step E
+already stages it.
 
 Every writer slug (`news`, `ai-ml`, `science`, `weekend`) runs this on every fire; the evaluator
 does not (it never touches this procedure).

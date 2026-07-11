@@ -511,6 +511,18 @@ def main():
     print("index overlay: %d/%d stories carry writer-supplied topics/importance"
           % (joined, n_parsed))                      # 0 is EXPECTED until routines start tagging
 
+    # Desk-stats piggyback (2026-07-11): every writer already runs this script
+    # unconditionally, so regenerating _data/stats.json here needs zero prompt wiring.
+    try:
+        import importlib.util as _ilu
+        _sp = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build_stats.py")
+        _spec = _ilu.spec_from_file_location("build_stats", _sp)
+        _bs = _ilu.module_from_spec(_spec)
+        _spec.loader.exec_module(_bs)
+        _bs.main(["--root", ROOT])  # module global, so a test-patched ROOT is honored
+    except Exception as e:  # stats are decorative; the feed must never fail on them
+        print("stats build skipped (non-fatal): %s" % e)
+
 
 if __name__ == "__main__":
     main()
