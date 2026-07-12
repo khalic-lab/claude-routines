@@ -1,0 +1,35 @@
+date: 2026-07-12
+applied: false
+patches:
+  # Recorded-vs-realized reachability contradiction: these are stamped reach: direct
+  # (lifecycle 2026-07-10) but the 2026-07-08 Science writer got HTTP 0 on all three
+  # even via the fetch proxy. Re-probe the exact path the writer uses (article HTML,
+  # not just the RSS/feed URL) and flip to proxy/search-only if direct does not hold.
+  - domain: journals.aps.org
+    from: direct
+    to: re-probe
+    evidence: "recorded reach: direct (2026-07-10) but 2026-07-08-science reported HTTP 0 via proxy; science stream pinned at 3 unique domains / top5_share 1.00 partly as a result"
+  - domain: science.org
+    from: direct
+    to: re-probe
+    evidence: "recorded reach: direct (2026-07-10) but 2026-07-08-science reported HTTP 0 via proxy"
+  - domain: cern.ch
+    from: direct
+    to: re-probe
+    evidence: "recorded reach: direct (2026-07-10) but 2026-07-08-science reported HTTP 0 via proxy (home.cern)"
+  # Candidate promotions from the Sunday scout (worst-deficit stream = science).
+  # Genuine primary research-news publishers absent from the registry; Swiss, so they
+  # double as personalization sources. Appended to sources/candidates.jsonl as
+  # reach: proxy-needed (evaluator holds no fetch-proxy bearer to verify directly).
+  - domain: ethz.ch
+    from: candidate
+    to: probation
+    evidence: "scout 2026-07-12: ETH Zurich news, primary research publisher, Swiss (personalization); fills science deficit (3 unique domains). Writers vet at first citation."
+  - domain: epfl.ch
+    from: candidate
+    to: probation
+    evidence: "scout 2026-07-12: EPFL Mediacom RSS, primary research publisher, Swiss; fills science deficit. Writers vet at first citation."
+  - domain: psi.ch
+    from: candidate
+    to: probation
+    evidence: "scout 2026-07-12: Paul Scherrer Institut media corner, primary research publisher, Swiss; fills science deficit. Writers vet at first citation."

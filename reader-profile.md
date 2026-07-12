@@ -37,3 +37,7 @@
   happened, not just its current status (2× 👎 on the 2026-07-04 Khamenei bullet, "Missing context
   on when it hapenned" — it said he "has died" without the 28 Feb death date the daily brief had
   already carried).
+- 2026-07-12: in the Weekend digest, get elapsed-time framing right — verify any "a year after /
+  months since / anniversary of" phrasing against the event's dated fact from the daily briefs
+  (1× 👎 with reason "The war hasn't started a year ago…" on the 2026-07-11 Iran lead, which said
+  "a year after their war" when the war opened 28 Feb 2026).

@@ -1,0 +1,35 @@
+{
+ "date": "2026-07-12",
+ "proposals": [
+  {
+   "id": "rm-1",
+   "target": "reader-profile.md",
+   "action": "Append learned preference: '- 2026-07-12: in the Weekend digest, get elapsed-time framing right — verify any \"a year after / months since / anniversary of\" phrasing against the event's dated fact from the daily briefs (1× 👎 with reason \"The war hasn't started a year ago…\" on the 2026-07-11 Iran lead, which said \"a year after their war\" when the war opened 28 Feb 2026).'",
+   "evidence": "st-dd9d52b17487 (2026-07-11-weekend Iran lead) 👎 with verbatim reason 'The war hasn't started a year ago…'; the war opened 28 Feb 2026 per the pipeline's own dated facts, so 'a year after their war' is a ~4.5-month error. Vote carries a written reason -> qualifies for bounded auto-apply.",
+   "applied": true,
+   "applied_by": "evaluator",
+   "applied_on": "2026-07-12"
+  },
+  {
+   "id": "rm-2",
+   "target": "routines/src/weekend.md",
+   "action": "Week in headlines: cite ONLY a URL actually fetched this run (curl/proxy, 200/3xx confirmed) — never reconstruct a plausible outlet slug from memory; reuse the daily brief's exact verified URL when the item came from a daily; drop a recap item rather than cite an unverified link.",
+   "evidence": "2026-07-11-weekend cited two Al Jazeera URLs that return HTTP 404 (are-the-us-and-iran-at-war-again; zaporizhzhias-mayor-...-outskirts), confirmed via curl GET and WebFetch; all seven daily-brief AJ links in the same window resolve 200. _posts/2026-07-12-evaluator.md Patch 1.",
+   "applied": false
+  },
+  {
+   "id": "rm-3",
+   "target": "routines/src/weekend.md",
+   "action": "Week in headlines: when stating an elapsed interval ('a year after', 'months since', 'anniversary of'), compute it from the event's carried date and sanity-check; do not assert a duration not derived from a dated fact in this pipeline.",
+   "evidence": "Same st-dd9d52b17487 downvote; the rm-2 (2026-07-05) date-anchor patch made the writer add temporal framing and it produced a wrong interval. _posts/2026-07-12-evaluator.md Patch 2.",
+   "applied": false
+  },
+  {
+   "id": "rm-4",
+   "target": "routines/_shared/affiliations.md",
+   "action": "arXiv preprints: if the paper's HTML author block does not render, query OpenAlex works API (api.openalex.org/works?search=<title>) and then Semantic Scholar BEFORE marking '(affiliation not listed)'; only mark unlisted when all three fail. Never guess.",
+   "evidence": "2026-07-11-weekend ran ~37% '(affiliation not listed)' (7 of ~19 papers) because HTML author blocks did not render, while 2026-07-10 AI/ML ran ~15%. The single-method chain marks unlisted instead of falling back. _posts/2026-07-12-evaluator.md Patch 3.",
+   "applied": false
+  }
+ ]
+}
