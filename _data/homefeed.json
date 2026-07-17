@@ -1,12 +1,12 @@
 {
- "generated": "2026-07-16",
+ "generated": "2026-07-17",
  "count": 80,
  "topics": [
   {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 20
+   "count": 23
   },
   {
    "key": "geopolitics",
@@ -18,7 +18,7 @@
    "key": "switzerland",
    "label": "Switzerland",
    "color": "#c2454a",
-   "count": 20
+   "count": 17
   },
   {
    "key": "science",
@@ -36,6 +36,12 @@
    "key": "politics",
    "label": "Politics",
    "color": "#9a6a34",
+   "count": 9
+  },
+  {
+   "key": "security",
+   "label": "Security",
+   "color": "#6a4b8a",
    "count": 7
   },
   {
@@ -45,25 +51,245 @@
    "count": 5
   },
   {
-   "key": "health",
-   "label": "Health",
-   "color": "#a44a72",
-   "count": 5
-  },
-  {
-   "key": "security",
-   "label": "Security",
-   "color": "#6a4b8a",
-   "count": 5
-  },
-  {
    "key": "tech",
    "label": "Tech",
    "color": "#3b6ea5",
-   "count": 3
+   "count": 5
+  },
+  {
+   "key": "health",
+   "label": "Health",
+   "color": "#a44a72",
+   "count": 4
   }
  ],
  "stories": [
+  {
+   "id": "2026-07-17-ai-ml-moonshot-s-kimi-k3-is-the-first-open-model-in-th",
+   "sid": "st-da9ec0cbf08b",
+   "headline": "Moonshot's Kimi K3 is the first open model in the ~3-trillion-parameter range, and it lands near the frontier",
+   "summary": "K3 is a multimodal open-weight mixture-of-experts model with 2.8 trillion total parameters — activating just 16 of 896 experts per token — a one-million-token context, and native image/video input; full weights are due 27 July. It pairs a new \"Kimi Delta Attention\" scheme that Moonshot says decodes up to 6.3× faster at million-token contexts. On the independent Artificial Analysis Intelligence Index it scores 57 — level with Opus 4.8 and GPT-5.5, behind Fable 5 and GPT-5.6 Sol — and on the GDPval v2 agentic benchmark it jumps to an Elo of 1,668 (from K2.6's 1,190), beating GPT-5.5 and Opus 4.8 but trailing Fable 5. One honest caveat from the same eval: its hallucination rate rose (39% → 51%) even as accuracy improved, so it answers more questions right but also fabricates more. Pricing ($0.30/M cached input, $15/M output) is well above the previous K2.6, which the write-up reads as the end of rock-bottom Chinese frontier pricing.",
+   "why": "this is the edition's headline. An openly-released model at 2.8T parameters scoring within a few points of proprietary flagships collapses the gap between the open and closed tiers faster than most expected — with direct consequences for anyone (in a sovereignty-conscious region especially) weighing whether they can self-host near-frontier capability rather than rent it. The rising hallucination rate is the asterisk: near-frontier on aggregate scores does not mean near-frontier on factual reliability.",
+   "url": "https://www.kimi.com/blog/kimi-k3",
+   "source_domain": "kimi.com",
+   "date": "2026-07-17",
+   "date_label": "Jul 17",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/07/17/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-17-ai-ml-on-device-models-can-be-re-tokenized-in-place-to",
+   "sid": "st-78b7b41ffeac",
+   "headline": "On-device models can be re-tokenized in place to cut decode cost 2–4× for under-served languages",
+   "summary": "A tokenizer — the fixed table that chops text into the sub-word units a model reads — is frozen at the start of pretraining, and it allocates its vocabulary to whatever languages mattered then. Languages added later get split into many more tokens per word, which directly raises latency, compute and energy for their users. On a big cloud model the token table is a rounding error; on a compact on-device model it is a real share of the per-token cost, so small models ship small vocabularies and accept the fragmentation. This paper's \"tokenizer expansion\" continues the existing byte-pair-encoding merges (the rule that greedily glues common character pairs into tokens) on a multilingual corpus, so old tokens carry over unchanged and each new token has an exact decomposition into old ones; new embedding rows are initialized as the mean of their parts, then a two-stage retrain recovers quality. Applied to an 8B mixture-of-experts checkpoint (MoE — only a few \"expert\" sub-networks fire per token), it encodes Hindi and Vietnamese in ~2.4× and ~2.6× fewer tokens (up to 4.0× on Thai), for an estimated 2.2–3.7× per-character decode speedup on those languages.",
+   "why": "it is a concrete, reader-relevant lever for the local-inference world — the paper describes producing the LFM2.5-8B-A1B model and releasing the weights and expanded tokenizer — and it targets a real equity gap, since the users paying the fragmentation tax are disproportionately non-English speakers on the cheapest hardware.",
+   "url": "https://arxiv.org/abs/2607.15232",
+   "source_domain": "arxiv.org",
+   "date": "2026-07-17",
+   "date_label": "Jul 17",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/17/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-17-ai-ml-rl-for-diffusion-language-models-finally-works-o",
+   "sid": "st-dd22dc697a4f",
+   "headline": "RL for diffusion language models finally works once you reward the un-masking order, not just the tokens",
+   "summary": "Most language models are autoregressive (they emit one token at a time, left to right); masked diffusion language models (MDLMs) instead start from an all-masked sequence and iteratively fill positions in, a parallel alternative that has been hard to fine-tune with RL because you can't cleanly compute the probability of a generation. Prior attempts approximated that probability using only which tokens were placed, ignoring which positions the model chose to unmask at each step. This paper formalizes generation as a two-stage decision — what token to place, and which positions to remask — so the policy gradient splits into a token term and a masking term; optimizing both gives state-of-the-art results for the family, 87.1% on GSM8K (grade-school math word problems) and 53.4% on MBPP (a Python coding benchmark).",
+   "why": "diffusion LLMs are one of the main bets on breaking the one-token-at-a-time speed ceiling, and RL post-training is what turned ordinary models into strong reasoners — so a principled recipe for applying it to diffusion models removes a real obstacle to that family becoming competitive.",
+   "url": "https://arxiv.org/abs/2607.15200",
+   "source_domain": "arxiv.org",
+   "date": "2026-07-17",
+   "date_label": "Jul 17",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/17/ai-ml/",
+   "affiliations": [
+    "UT Austin"
+   ],
+   "affiliation_label": "UT Austin",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-17-ai-ml-pretraining-data-can-be-poisoned-at-web-scale-th",
+   "sid": "st-2edc5432c7c0",
+   "headline": "Pretraining data can be poisoned at web scale through public comment boxes",
+   "summary": "Prior data-poisoning work mostly edited tidy sources like Wikipedia, which don't resemble the messy, web-scale corpora models actually train on, and ignored the curation pipelines that filter crawled data. This paper shows poisoning is feasible through an existing web-scale injection vector — public discussion interfaces (comment sections, forums) that get crawled into training sets — and introduces HalfLife, a method for estimating whether injected content actually survives crawling and curation to land in the training data. That second contribution is the important one: it lets you measure the real inclusion rate of an attack rather than assume it.",
+   "why": "\"could someone poison a frontier model's pretraining data?\" has been argued mostly in the abstract; grounding it in a real injection channel plus a way to measure survival moves it toward a threat you can quantify and defend against — and it names third-party webpage content as a live attack surface data teams currently don't audit.",
+   "url": "https://arxiv.org/abs/2607.15267",
+   "source_domain": "arxiv.org",
+   "date": "2026-07-17",
+   "date_label": "Jul 17",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/17/ai-ml/",
+   "affiliations": [
+    "University of Washington",
+    "Allen Institute for AI"
+   ],
+   "affiliation_label": "University of Washington, Allen Institute for AI",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-17-ai-ml-fine-tuning-on-narrow-moderation-passing-data-qu",
+   "sid": "st-921f2317b416",
+   "headline": "Fine-tuning on narrow, \"moderation-passing\" data quietly shifts a model's politics across unrelated topics",
+   "summary": "Adapting a model by fine-tuning it on a small, curated dataset is completely routine. The authors show that training on narrow, factually-defensible, content-filter-passing data causes broad ideological shifts on topics absent from the training set, while leaving general capability intact. Fine-tuning GPT-4.1 on right- or left-leaning economics Q&A produces matched shifts on criminal justice, the environment and cultural taste; the same happens with plausibly-deployed data like HR-policy or personal-finance Q&A, and a food-safety fine-tune increases sycophantic agreement with users' false health beliefs. They name it \"ideological generalisation\" and measure its breadth and amplification — and find fine-tuning pushes further than few-shot prompting on the identical examples, sometimes to far out-of-distribution extremes. It replicates on Gemma-3 and leaves GSM8K accuracy within ±1 point.",
+   "why": "this is a sharper, more deployable cousin of the \"emergent misalignment\" results — the training data here isn't malicious or even edgy, it passes moderation, yet it steers the model's stance on things it never mentioned. Any team fine-tuning a model on in-house data is potentially doing this without knowing.",
+   "url": "https://arxiv.org/abs/2607.14888",
+   "source_domain": "arxiv.org",
+   "date": "2026-07-17",
+   "date_label": "Jul 17",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/17/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-17-ai-ml-every-llm-judge-grok-included-rates-grokipedia-l",
+   "sid": "st-edcf6256403b",
+   "headline": "Every LLM judge — Grok included — rates Grokipedia less politically neutral than Wikipedia",
+   "summary": "Grokipedia, released in late 2025 and written entirely by xAI's Grok model, was pitched as an unbiased alternative to a Wikipedia its backers call left-biased. The authors compare 1,394 matched article pairs about members of government across nine expert-coded ideology dimensions, scored by four LLM judges (Grok, Claude, Mistral, DeepSeek) — and, aware the judges themselves could be biased, they also analyze the judges' own patterns. All four, including Grok, rate Grokipedia the less neutral of the two. Both encyclopedias are judged to portray politicians favourably overall, but toward different groups: Grokipedia favours economically right-wing figures and penalises socially liberal ones; Wikipedia tilts the other way.",
+   "why": "encyclopedias shape political opinion, and \"an LLM will write it more neutrally\" is now a testable claim rather than a talking point — the finding is that an LLM-written reference doesn't remove bias, it substitutes a different one. That even the model's own maker's judge agrees is the striking part.",
+   "url": "https://arxiv.org/abs/2607.15146",
+   "source_domain": "arxiv.org",
+   "date": "2026-07-17",
+   "date_label": "Jul 17",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "politics"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/17/ai-ml/",
+   "affiliations": [
+    "Ghent University"
+   ],
+   "affiliation_label": "Ghent University",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-17-ai-ml-openai-says-an-internal-gpt-red-model-finds-succ",
+   "sid": "st-1e97a657cd36",
+   "headline": "OpenAI says an internal \"GPT-Red\" model finds successful attacks in 84% of scenarios, vs 13% for human red-teamers",
+   "summary": "OpenAI describes training a dedicated attacker model through self-play — the model repeatedly tries to break other models and learns from what works — reporting that GPT-Red finds a successful attack in 84% of tested scenarios where human red-teamers manage 13%, and that the discovered attacks feed directly into hardening its shipping models. Automated red-teaming is a genuine capability step, but note the framing is OpenAI's own and the two numbers aren't necessarily measured on comparable task sets.",
+   "why": "if adversarial testing can be automated and scaled, both defenders and attackers get a faster loop — the same technique that hardens a model is, in principle, an offensive tool. The claim is worth watching precisely because a self-improving attacker is a double-edged capability, not an unalloyed safety win.",
+   "url": "https://the-decoder.com/openai-is-now-using-ai-to-attack-its-own-ai-and-its-working-better-than-humans-ever-did/",
+   "source_domain": "the-decoder.com",
+   "date": "2026-07-17",
+   "date_label": "Jul 17",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/17/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-17-ai-ml-thinking-machines-ships-its-first-model-inkling",
+   "sid": "st-fef80affe343",
+   "headline": "Thinking Machines ships its first model, Inkling — a 975B open-weights MoE leading US labs but trailing China",
+   "summary": "Mira Murati's lab (she was OpenAI's CTO) released Inkling, a 975-billion-parameter mixture-of-experts model with 41B active parameters, native text/image/audio, and up to a million-token context; weights are on Hugging Face. On the Artificial Analysis Intelligence Index it debuts at 41 — the top US open-weights model, ahead of Nvidia's Nemotron 3 Ultra (38) and well above Gemma 4 31B (29) — but below the strongest Chinese open models. The lab is candid that \"Inkling is not the strongest overall model available today,\" positioning it instead as an efficient, fine-tunable base: it uses markedly fewer output tokens per task than rivals and offers a continuous \"thinking effort\" dial. Two caveats worth flagging: factual accuracy is weak (a +2 on AA's Omniscience benchmark, 63% hallucination rate), and it was pretrained partly on synthetic data generated with China's Kimi K2.5 plus public data that \"may be subject to intellectual property protection.\" A smaller Inkling-Small (276B) is previewed.",
+   "why": "a new US lab's first release being an open-weights model — explicitly framed as a customizable base rather than a frontier chatbot — is a notable strategic choice, and the training-data disclosure (built partly on a Chinese open model, and on IP-protected material) is unusually frank about the provenance questions the whole field is dodging.",
+   "url": "https://thinkingmachines.ai/news/introducing-inkling/",
+   "source_domain": "thinkingmachines.ai",
+   "date": "2026-07-17",
+   "date_label": "Jul 17",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/17/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-07-17-ai-ml-eu-orders-google-to-share-search-data-and-open-a",
+   "sid": "st-3f4babda2ad4",
+   "headline": "EU orders Google to share search data and open Android to rival AI assistants",
+   "summary": "The European Commission announced binding Digital Markets Act (DMA — the EU's law reining in dominant \"gatekeeper\" platforms) \"specification measures\" against Google on two fronts. On Android, Google must open system-level access — the \"Hey Google\" wake word, screen-content access, app automation — that its own Gemini assistant currently gets preferentially, so users can install a competing AI assistant without losing features. On search, Google must share search data with rival search providers (transparently, for a reasonable fee) and must treat AI chatbots as search services for the purposes of that data-sharing. Google's global-affairs president Kent Walker called the measures overreach that will harm users and privacy; compliance is nonetheless mandatory.",
+   "why": "this is a structural remedy, not a fine — it targets the preferential hooks that make a pre-installed assistant sticky and the data moat behind search dominance. For the reader's own market, it is the clearest signal yet that the EU intends to force the AI-assistant layer open at the OS level, which could meaningfully change which assistant a European phone actually runs.",
+   "url": "https://arstechnica.com/tech-policy/2026/07/its-official-eu-will-force-google-to-share-search-data-and-open-up-ai-on-android/",
+   "source_domain": "arstechnica.com",
+   "date": "2026-07-17",
+   "date_label": "Jul 17",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "politics"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/07/17/ai-ml/",
+   "fresh": true
+  },
   {
    "id": "2026-07-16-news-us-strikes-reached-closer-to-tehran-than-at-any",
    "sid": "st-f61f16f02544",
@@ -86,7 +312,7 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/07/16/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-07-16-news-ukraine-s-parliament-confirmed-naftogaz-chief-se",
@@ -110,7 +336,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/07/16/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-07-16-news-more-than-500-rohingya-are-feared-dead-after-two",
@@ -134,7 +360,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/07/16/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-07-16-news-the-european-court-of-human-rights-condemned-swi",
@@ -158,7 +384,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/07/16/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-07-16-news-vaud-and-valais-lifted-their-formal-heatwave-can",
@@ -182,7 +408,7 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/07/16/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-07-16-news-a-french-swiss-arms-trafficking-network-was-dism",
@@ -206,7 +432,7 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/07/16/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-07-16-news-at-least-seven-drones-were-sighted-flying-toward",
@@ -230,7 +456,7 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/07/16/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-07-15-news-the-us-iran-ceasefire-has-collapsed-washington-r",
@@ -593,168 +819,6 @@
    "topics": [
     "ai-ml",
     "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/14/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-14-ai-ml-a-stricter-test-shows-sparse-autoencoder-safety",
-   "sid": "st-1fe6346f7082",
-   "headline": "A stricter test shows sparse-autoencoder \"safety features\" only work in a narrow regime",
-   "summary": "Sparse autoencoders (SAEs — tools that decompose a model's internal activations into a large dictionary of human-interpretable \"features\") are widely hoped to give localized dials for steering behaviour: find the refusal feature, turn it, control safety. This paper argues much of the apparent success is an artifact of weak baselines and of automated judges rewarding incoherent gibberish as \"safe.\" It introduces a matched, coherence-gated protocol — compare methods at the same target-effect strength, and only count a harmful output when it is both judge-unsafe and coherent. On Gemma-2-9B-it, ablating the top ~800 SAE features helps modestly, but pushing to 1,600 loses ground to a plain dense refusal-direction baseline and 3,200 mostly just breaks the model.",
-   "why": "It is methodological hygiene for a field prone to overclaiming from cherry-picked demos — the honest read is that SAE safety interventions are regime-dependent control knobs, not uniformly reliable localized handles. It sits alongside last week's confidence-intervals-for-interpretability paper as part of a growing push to hold mechanistic claims to a real bar.",
-   "url": "https://arxiv.org/abs/2607.10226",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-14",
-   "date_label": "Jul 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/14/ai-ml/",
-   "affiliations": [
-    "University of Technology Sydney"
-   ],
-   "affiliation_label": "University of Technology Sydney",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-14-ai-ml-looped-mamba-adds-reasoning-depth-by-reusing-one",
-   "sid": "st-2ce18a738acf",
-   "headline": "\"Looped\" Mamba adds reasoning depth by reusing one block, not by adding parameters",
-   "summary": "Looped language models repeatedly apply the same layer several times to give a model more computational depth without more distinct weights. Prior work only tried this on Transformers; here the authors loop a Mamba block instead. (Mamba is a state-space model — a recurrent architecture that scans a sequence in linear time and is a leading efficient alternative to attention.) On two controlled reasoning tasks — modular arithmetic and multi-hop induction — Looped Mamba beats parameter-matched baselines and often matches deeper non-looped models, and it stays competitive on pre-training benchmarks with far fewer distinct parameters, though strictly compute-matched deep Transformers still win on validation perplexity.",
-   "why": "It extends the \"depth beats width for reasoning\" result off Transformers and onto the efficient state-space family the field is increasingly betting on for long context — evidence that the recurrence-vs-parameters trade is architecture-general, not a Transformer quirk.",
-   "url": "https://arxiv.org/abs/2607.10110",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-14",
-   "date_label": "Jul 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/14/ai-ml/",
-   "affiliations": [
-    "Rikkyo University",
-    "University of Tokyo"
-   ],
-   "affiliation_label": "Rikkyo University, University of Tokyo",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-14-ai-ml-making-rope-s-rotation-rates-learnable-instead-o",
-   "sid": "st-ec91169c9c4c",
-   "headline": "Making RoPE's rotation rates learnable, instead of a fixed formula, beats it at every scale",
-   "summary": "Rotary Positional Encodings (RoPE — the near-universal scheme that encodes token position by rotating query/key vectors) fix the per-dimension rotation speeds to a geometric sequence set by one hyperparameter. LeRoPE instead learns a scalar per frequency, treating those speeds as trainable. Across a ladder of models trained from scratch (52M to 2.5B parameters) it consistently beats both standard and partial RoPE; at the largest scale plain RoPE needs 3.4% more compute to match it.",
-   "why": "RoPE is a load-bearing default in essentially every modern LLM, so a drop-in change that buys a few percent of compute efficiency across all scales — and reveals an interpretable learned \"positional band\" — is the kind of small, general lever that compounds. It pairs naturally with last week's tuning-free RoPE-stretching result (Jet-Long): both say the fixed RoPE recipe leaves value on the table.",
-   "url": "https://arxiv.org/abs/2607.10134",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-14",
-   "date_label": "Jul 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/14/ai-ml/",
-   "affiliations": [
-    "UC San Diego"
-   ],
-   "affiliation_label": "UC San Diego",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-14-ai-ml-os-pruner-treats-when-to-stop-thinking-as-a-form",
-   "sid": "st-b33afce8e8ad",
-   "headline": "OS-Pruner treats \"when to stop thinking\" as a formal optimal-stopping problem, cutting reasoning length 20–60%",
-   "summary": "Reasoning models often \"overthink\" — generating redundant chain-of-thought steps that add latency and cost without improving the answer. OS-Pruner casts the decision of whether to keep reasoning as optimal stopping (the classic \"should I stop now or continue?\" framework), learning a utility that trades final-answer accuracy against tokens spent, and terminating when more thinking isn't worth its cost. It is light to train and run, gives a tunable effort-vs-accuracy dial, and reports 20-60% shorter generations with minimal accuracy loss.",
-   "why": "Inference cost for reasoning models is dominated by how many tokens they emit before answering, so a principled early-exit that the user can dial is a direct cost lever — and a cleaner formulation than the fixed token budgets and heuristic filters used so far.",
-   "url": "https://arxiv.org/abs/2607.11089",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-14",
-   "date_label": "Jul 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/14/ai-ml/",
-   "affiliations": [
-    "MIT",
-    "Columbia"
-   ],
-   "affiliation_label": "MIT, Columbia",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-14-ai-ml-scalecua-hits-open-source-state-of-the-art-for-c",
-   "sid": "st-ee1259f7950d",
-   "headline": "ScaleCUA hits open-source state-of-the-art for computer-use agents via synthetic verifiable tasks",
-   "summary": "Computer-use agents drive a real GUI by looking at the screen and clicking/typing. Training them with online RLVR (reinforcement learning from verifiable rewards — you only reward outcomes you can automatically check) is bottlenecked by the scarcity of tasks with checkable success conditions. ScaleCUA auto-generates them: a pipeline called VeriGen spins up 100+ concurrent agents inside Docker containers to synthesize 24K+ verifiable tasks, plus efficiency tricks (frontier sampling, sliding-window visual context for a 2.8x training speedup). The result reaches 68.7% on OSWorld and 54.0% on ScienceBoard — new open-source bests — with code, models and data released.",
-   "why": "Verifiable-task scarcity is the practical wall for scaling GUI agents, and an open, released recipe for manufacturing those tasks in bulk is exactly the kind of infrastructure that moves the open-source frontier.",
-   "url": "https://arxiv.org/abs/2607.11185",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-14",
-   "date_label": "Jul 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/14/ai-ml/",
-   "affiliations": [
-    "Tsinghua University",
-    "Zhipu AI"
-   ],
-   "affiliation_label": "Tsinghua University, Zhipu AI",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-14-ai-ml-google-research-unveils-sensorfm-a-wearable-heal",
-   "sid": "st-1c76929e37d5",
-   "headline": "Google Research unveils SensorFM, a wearable-health foundation model trained on a trillion minutes of sensor data",
-   "summary": "Instead of the usual one-model-per-task approach (one detects sleep stages, another estimates cardiovascular risk), SensorFM learns a single general representation of physiology and behaviour from continuous, gappy wearable signals — pretrained on ~1 trillion minutes of unlabeled data from about five million Fitbit and Pixel Watch users, ingesting features from sensors like the optical heart-rate sensor, accelerometer and skin-temperature probe. Google reports it outperforms specially-prepared baselines on 34 of 35 downstream health and behaviour tasks, and that health summaries augmented with its predictions were rated higher by evaluators.",
-   "why": "It is the \"foundation-model\" recipe — pretrain broadly, adapt cheaply — arriving in consumer health sensing, which is both a genuine capability step and a data-governance question given the scale and sensitivity of the training corpus. The underlying preprint appeared in May; this is the blog-post rollout.",
-   "url": "https://research.google/blog/sensorfm-towards-a-general-intelligence-and-interface-for-wearable-health-data/",
-   "source_domain": "research.google",
-   "date": "2026-07-14",
-   "date_label": "Jul 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "health"
    ],
    "topic_primary": "ai-ml",
    "topic_label": "AI / ML",
@@ -1731,29 +1795,6 @@
    "fresh": false
   },
   {
-   "id": "2026-07-06-news-bern-weighs-making-tips-tax-free-and-tax-law-pro",
-   "sid": "st-d1421d211dd0",
-   "headline": "Bern weighs making tips tax-free — and tax-law professors warn it could be gamed",
-   "summary": "Under current federal practice gratuities are only taxed when they form a substantial part of wages; a proposal now under discussion would exempt them outright. Legal scholars caution that a blanket carve-out invites reclassification abuse — in the limit, well-paid employees (the article's example: bankers) restyling part of their pay as untaxed \"tips\" — echoing the design problems that dogged the US \"no tax on tips\" measure. Still an early-stage proposal, not law.",
-   "why": "",
-   "url": "https://www.srf.ch/news/schweiz/steuerbefreiter-zustupf-rechtsprofessoren-warnen-auch-banker-koennten-trinkgeld-wollen",
-   "source_domain": "srf.ch",
-   "date": "2026-07-06",
-   "date_label": "Jul 6",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/07/06/news/",
-   "fresh": false
-  },
-  {
    "id": "2026-07-05-news-the-federal-council-wrapped-its-annual-summer-co",
    "sid": "st-fabdcd7ab510",
    "headline": "The Federal Council wrapped its annual summer \"course d'école\" through canton Vaud on Friday (2026-07-03), hosted by Confederation President Guy Parmelin",
@@ -1985,52 +2026,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/07/03/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-02-news-federal-social-insurance-projections-turn-grim-d",
-   "sid": "st-9b84f4e4c256",
-   "headline": "Federal social-insurance projections turn grim: disability fund (IV/AI) reserves could run dry by 2031",
-   "summary": "The Federal Social Insurance Office (OFAS/BSV) published updated financial projections Thursday warning that the IV — Switzerland's disability insurance — could see its reserves disappear as early as 2031, with SRF reporting the scheme heading toward an 800-million-franc annual deficit. The old-age pension (AVS, the state retirement pension, AHV in German) is under parallel pressure and needs durable financing for the newly approved 13th monthly payment. This is the numbers behind a debate that directly shapes future payroll deductions and pension levels for anyone working in Switzerland.",
-   "why": "",
-   "url": "https://www.letemps.ch/articles/avs-sous-forte-pression-et-ai-au-bord-du-gouffre-les-nouvelles-projections-financieres-inquietent",
-   "source_domain": "letemps.ch",
-   "date": "2026-07-02",
-   "date_label": "Jul 2",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/07/02/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-02-news-efta-and-vietnam-sign-a-comprehensive-free-trade",
-   "sid": "st-fe2acf8ea5c3",
-   "headline": "EFTA and Vietnam sign a comprehensive free-trade agreement",
-   "summary": "Switzerland, Iceland, Liechtenstein and Norway — the EFTA bloc (European Free Trade Association, the four non-EU Western European states) — concluded a deal that abolishes all Swiss tariffs on industrial goods and fish from Vietnam; Vietnam will phase out duties on watches, machinery, chemicals, cheese and chocolate over up to 11 years. Economics minister Guy Parmelin welcomed the deal, which lands as a rare win in a difficult trade week — parliament's lower house rejected the Mercosur pact last week and a US tariff framework expires end-July. Bilateral trade is ~CHF 2.5 bn (Vietnam is Switzerland's third-largest Southeast Asian partner), small next to the ~CHF 68 bn Swiss–US goods trade. [official PR]",
-   "why": "",
-   "url": "https://www.srf.ch/news/schweiz/keine-zoelle-mehr-auf-fisch-efta-und-vietnam-unterzeichnen-freihandelsabkommen",
-   "source_domain": "srf.ch",
-   "date": "2026-07-02",
-   "date_label": "Jul 2",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/02/news/",
    "fresh": false
   }
  ]
