@@ -1,4 +1,4 @@
-Write my weekly science brief and publish it via the git pipeline. Use today's date (Wednesday) in Europe/Zurich.
+Write my weekly sports brief and publish it via the git pipeline. Use today's date (Monday) in Europe/Zurich.
 
 The repo (`khalic-lab/claude-routines`) is cloned as your working directory. Before doing anything else, sync:
 
@@ -8,11 +8,17 @@ git pull --ff-only origin main
 
 # Mission
 
-A weekly read on the most significant developments across the natural sciences — physics, math, quantum, astronomy/cosmology, biology/medicine/neuroscience, chemistry, climate/earth. Coverage window: the past 7 days.
+A weekly Monday read on the past 7 days of sport, written for a smart reader who does NOT closely follow sport — anchored to what matters from Switzerland plus the global majors. Coverage window: the past 7 days (roughly last Monday through Sunday).
 
-This is NON-AI science. **EXCLUDE AI/ML and computer science** — arXiv `cs.*` / `stat.ML` and ML preprints belong to the AI/ML edition, not here. A result is in scope only if its primary contribution is to a natural science, not to machine learning or CS (a physics paper that *uses* an ML method is fine; an ML-methods paper applied to physics is not).
+**Scope — Swiss + global majors:**
+- **Football (the spine):** Swiss Super League + the Swiss national team; UEFA competitions (Champions League, Europa League, Euro/Nations League); the big-5 European leagues (Premier League, LaLiga, Serie A, Bundesliga, Ligue 1); plus the summer/winter transfer windows when open.
+- **Formula 1 & motorsport:** race results, championship standings, FIA rulings and penalties, team/driver moves.
+- **Tennis:** ATP/WTA tournaments and Grand Slams, ranking moves, Swiss players.
+- **Winter sports & the rest:** alpine skiing World Cup (big in CH), ice hockey (Swiss National League + NHL headlines), and a catch-all for cycling (Tour de Suisse / de France), athletics, and other genuinely notable events.
 
-Three desks, deep over broad: pick the week's genuinely-new findings, read the primary papers, and decode them for a numerate non-specialist. Better to go deep on a handful of real results than to skim a feed.
+**The trap to design against (read this before selecting anything).** A box score is a commodity — every outlet on earth has the same final score. A brief that just lists results is exactly the aggregator-shape this pipeline treats as failure, not a product. Your job is the layer a scoreboard cannot give: **what the result MEANS** — what it did to the title race, the qualification math, the relegation fight, the championship standings; the story behind it; and, because the reader doesn't follow sport, the context that makes it legible (who these teams/athletes are, what was at stake, why anyone cares). Lead with meaning, never with the score.
+
+**Seasonality — omit ruthlessly.** Sport is seasonal: football runs Aug–May with a summer transfer window; F1 runs Mar–Dec; alpine skiing Dec–Mar; tennis has a grass/hard/clay calendar; hockey Sep–Apr. A desk that is out of season this week has no section — no placeholder, no "the season hasn't started." In a quiet mid-summer week the brief may be mostly the football transfer window plus F1 and tennis; in deep winter it may be skiing and hockey with football. Follow the calendar, not this list's order.
 
 # Newsroom ethos (the standard you hold yourself to)
 
@@ -38,16 +44,23 @@ In practice: go to the primary source and read it yourself; report what it actua
 - `- Discovery: waived — <concrete reason>`
 "met" is recomputed against your stream's discovery quota (stated in the preflight plan's discovery section) — never claim it without the tagged citations to back it; a false "met" is a violation, an honest waiver is not. The waiver is free but counted: give a real reason ("pursued X and Y, both paywalled"), not boilerplate. Zero lines, two lines, or any other wording all fail the lint.
 
+**Beat tag for THIS stream (overrides the general beat list above):** sports is a single-topic stream — tag EVERY story you record with `topics: ["sports"]` (one beat; the stream itself is the beat). Do not use `switzerland`/`world`/etc. for sports stories; favouring Swiss content happens in what you SELECT, not in the beat tag. `importance` still ranks across the whole edition as usual.
+
 # Sourcing rules (non-negotiable)
 
-1. **Tiers.** T1 = primary (preprint, journal research article, official lab/observatory/agency release). T2 = quality secondary. T3 = discovery only (HN/Reddit/Lobsters/X) — used to find stories, NEVER cited. Click through and cite the underlying T1/T2. **A quality outlet's news report or feature *about* a study is T2 secondary, never T1 — even when that outlet also publishes primary research.** Nature news/features (URLs of the form `nature.com/articles/d41586-…`) are journalism about papers, not the papers themselves; the primary source is the underlying paper (`nature.com/articles/s41586-…`) or its preprint. When you cover a study, locate and cite that **primary paper** — read its abstract — and use the news write-up only as a secondary pointer or for triangulation. A bullet whose sole citation is a `d41586` Nature-news piece (or any equivalent secondary report) is mis-sourced: find the paper, or if you genuinely cannot, frame it as 'as reported by …' and tag `[single-source]` — never present secondary journalism as the primary.
-2. **Citation format.** Every item ends with a markdown link to one specific URL (DOI, arXiv abstract, or article landing). Include publication name and date. No "according to recent reports" without a link.
-3. **Triangulation.** Significant claims need two independent sources where feasible. Single-sourced → mark `[single-source]`. Disagreements → surface both versions explicitly.
-4. **Diversification.** Within each desk, span subfields and institutions; don't let one journal or one lab dominate.
-5. **Tags.** Preprints → `[preprint]`. Single source → `[single-source]`. Contested → `[disputed]`.
-6. **No fabrication.** Never invent a URL, author, date, or quote. **The no-fabrication rule extends to date claims**: a paper from last month is NOT "this week's." If you cannot verify a paper was submitted or published within the past 7 days, do not include it under a section that claims this week's content.
-7. **Volume cap.** 4–8 items per desk. Quality is the cap — better to ship 3 strong findings in a desk than pad to 8.
-8. **Fetch transparency.** When you successfully fetch a URL/feed and confirm content, no marker. When the citation is based only on a search-engine snippet, append `[via snippet]` to the citation.
+The "primary source" in sport is the authoritative first-hand record, not the punditry or aggregation on top of it.
+
+1. **Tiers.**
+   - **T1 = primary:** the official result/standings from the league or governing body itself (Swiss Football League, UEFA, FIFA, Premier League & the big-5 leagues, Formula1.com / FIA, ATP / WTA, FIS, Swiss National League / IIHF, IOC); official club / federation / team **announcements** (transfers confirmed, injuries, roster and contract moves, disciplinary decisions); on-record **press-conference** statements and official athlete/club channels; and **rulings** from CAS (Court of Arbitration for Sport, Lausanne) and WADA. This is the sports analogue of "a number / ruling / release moved."
+   - **T2 = quality secondary:** reputable sports journalism (BBC Sport, The Athletic, L'Équipe, kicker, Gazzetta dello Sport, Autosport; Swiss: SRF Sport, Blick, NZZ, RTS). Use it for narrative, context and triangulation — cite it alongside, not instead of, the primary.
+   - **T3 = discovery only:** social / Reddit / forums / rumour accounts — used to FIND a story, NEVER cited. Click through to the official source.
+2. **The transfer / rumour exception (the one place sport differs).** For transfers, a tier-1 reporter often breaks the fact BEFORE the club confirms. Discipline: **the official confirmation is the fact.** Report a completed move only once the club/federation has announced it (link the official announcement). Anything earlier — talks, "advanced negotiations", a medical booked, a fee agreed — is labelled explicitly and tagged `[rumour]` / `[unconfirmed]`, with the stage named ("personal terms agreed, no club-to-club deal") and the reporting source named. Never launder a rumour into a done deal. **Sourcing an unconfirmed scoop (resolves the T3 tension):** the best transfer reporters (Romano, Ornstein, …) often break first on social — but social stays **never-cited**, even here. So: cite a **T2 outlet's write-up** that names the same reporter and stage (most reputable outlets republish within hours) — never link the raw social post. If no T2 write-up exists yet, **hold the item** rather than cite social directly; a rumour is not so time-critical that it must ship this week uncorroborated.
+3. **Citation format.** Every item ends with a markdown link to one specific URL (official result page, federation release, ruling PDF, or article landing). Include the source name and date. No "according to reports" without a link.
+4. **Triangulation.** A contested or reported-not-confirmed claim needs two independent sources where feasible; single-sourced → tag `[single-source]`; disagreements → surface both versions.
+5. **Tags.** Unconfirmed/negotiating → `[rumour]` / `[unconfirmed]`. Single source → `[single-source]`. Contested → `[disputed]`.
+6. **No fabrication.** Never invent a score, a scorer, a time, a table position, a quote, a transfer fee, or a URL. **This extends to dates and results**: if you cannot verify a result actually happened in the past 7 days, do not report it under a section that claims this week. When you cannot fetch an official result, say so — do not reconstruct a scoreline from memory.
+7. **Volume cap.** 3–7 items per desk, quality-capped. Better 3 results that genuinely moved something than 7 padded fixtures.
+8. **Fetch transparency.** Confirmed fetch → no marker. Search-snippet-only citation → append `[via snippet]`.
 
 # Reader profile + source weights (read before selecting and ordering stories)
 
@@ -94,147 +107,70 @@ Still research beyond this floor as the brief demands — the slate is where you
 - A successful proxy fetch (HTTP 200 body) is a **direct fetch** — no `[via snippet]` tag. The proxy mirrors the upstream status, so a non-200 means the site hard-blocks even the proxy (Cloudflare JS/Turnstile challenge) or is paywalled — only then fall back to a search-engine snippet and tag `[via snippet]`.
 - In the `Feeds hit` / Coverage footer, mark proxied fetches `{ok via proxy}` alongside the existing `{ok via curl}` / `{ok via WebFetch}` / `{fail — HTTP NNN}`.
 
-The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Always attempt the feed/API before the HTML page.
+## Sports fetch mechanics (specific to this stream)
 
-**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public feeds. Try `curl -fsSL <URL>` first; fall back to WebFetch only on failure. Curl success counts as a direct fetch.
+Most official sports sites (uefa.com, fifa.com, premierleague.com, formula1.com, atptour.com, …) are heavy JavaScript SPAs behind Cloudflare — a proxy fetch often returns a JS shell, not the results data. Work around it:
 
-**arXiv mechanics:** use the non-CS RSS per category (`https://export.arxiv.org/rss/astro-ph`, also `math.*`, `physics.*`, `cond-mat`, `hep-ph`, `hep-th`, `gr-qc`, `quant-ph`, `q-bio.*`) and the date-filtered Atom API (`https://export.arxiv.org/api/query?search_query=cat:astro-ph.CO&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending` — **swap the `cat:` filter** for any non-CS category; filter `<published>` to the past 7 days). For Nature journals, dig to the primary research (`s41586-…`), not the `d41586-…` news.
-
-**Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** route through the proxy exactly as the include above shows.
-- bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv` for medRxiv); returns title, abstract, DOI, and date per paper for the window — an ideal primary source for the Biology desk.
-- Science.org → its RSS feeds (e.g. `https://www.science.org/rss/news_current.xml`, plus journal feeds); Science's article HTML 403s even through the proxy, so use the feed and cite the DOI / article landing URL.
-
-**APS journals** (`journals.aps.org` — PRL / PRX / PRX Quantum): try the recent-articles RSS via curl; if it 403s, proxy the recent-articles page. Cite the article DOI / landing URL.
-
-**Nature-abstract fallback (Patch-4):** when a Nature primary research item (`s41586-…`) has no fetchable abstract from the sandbox, locate the matching arXiv cross-list preprint (search the title via the arXiv API / Semantic Scholar) and summarise *that*, tagged `[preprint]` — do NOT emit a title-only stub.
-
-**Coverage footer accounting:**
-- A citation from a feed/API fetch (curl OR WebFetch OR proxy) = **direct fetch**.
-- A citation from a search-engine snippet = **via-snippet**, tag `[via snippet]` in the item.
-- In the `Feeds hit` line, distinguish `{ok via curl}` / `{ok via WebFetch}` / `{ok via proxy}` / `{fail — HTTP NNN}`.
-
-# Affiliations (the provenance element)
-
-**Affiliations — the paper's provenance element (machine-parsed):** every paper byline carries
-the lead authors' institutional affiliations. They are the paper's editorial source —
-arxiv.org is just the platform — and they flow to the homepage cards' institution-first source
-label and the institutions ledger (`sources/institutions.yml`), so both the retrieval order and
-the format below are load-bearing.
-
-- **arXiv preprints — read the paper's own HTML author block.** Fetch
-  `https://arxiv.org/html/<id>v1` THROUGH the fetch proxy and take the affiliations from the
-  author block at the top of page 1 (~97% of new submissions render HTML; verified in
-  production 2026-07-10, 10/10 papers). Do NOT use index APIs for preprints: Semantic Scholar
-  has not indexed hours-old papers, and OpenAlex's arXiv records carry EMPTY institutions even
-  once indexed (~6-day lag; measured 2026-07-10). If the HTML 404s (~3% of papers), write
-  `(affiliation not listed)`.
-- **bioRxiv / medRxiv preprints:** the details-API response you already fetch includes
-  `author_corresponding_institution` — use it (no extra fetch).
-- **Published papers (journal DOI) — OpenAlex:**
-  `https://api.openalex.org/works?filter=doi:<doi>&select=authorships` returns resolved
-  institution names (measured: complete for fresh Nature papers). On a miss, take them from
-  the publisher/press page you are already reading; else the sentinel.
-- **Budget: at most ONE extra fetch per selected paper.** Never web-search individual authors,
-  never guess from an email domain or a lab's reputation — `(affiliation not listed)` is
-  always the correct fallback; never fabricate.
-
-**Byline format law** (parsed by `tools/dedup/dedup.py parse_affiliations` — deviations break
-the join): after the author list, in parentheses — `AUTHORS (Inst1; Inst2; Inst3)`. `;`
-separates institutions; `,` only qualifies within one name (`HKUST, Guangzhou`); at most 3
-institutions, then `+N more`; canonical short names (`MIT`, `ETH Zürich`, `Google DeepMind` —
-not full legal names); collective authors keep their name — `Gemma Team (Google DeepMind)`.
-Example: `F. Last, A. Other et al. (MIT; CERN)`.
-
-**Canonical names** — when a paper's author block uses a name on the LEFT, write the name on
-the RIGHT (this list mirrors `sources/institutions.yml` `aliases:`; the ledger folds strays,
-but the byline the reader sees should be canonical from the start):
-<!-- canonical-names:begin — GENERATED from sources/institutions.yml; edit aliases there, then run `python3 tools/sources/institutions.py sync-prompts && python3 routines/assemble.py` -->
-- `Qwen Team` → **Alibaba**
-- `AI2` / `Ai2` → **Allen Institute for AI**
-- `AWS` → **Amazon Web Services**
-- `CAIS` → **Center for AI Safety**
-- `Cohere For AI` / `Cohere Labs` → **Cohere**
-- `MosaicML` → **Databricks**
-- `DeepMind` → **Google DeepMind**
-- `Google Brain` → **Google Research**
-- `FAIR` / `Meta FAIR` → **Meta AI**
-- `MSR` → **Microsoft Research**
-- `JPL` / `Jet Propulsion Laboratory` → **NASA JPL**
-- `PSI` → **Paul Scherrer Institute**
-- `Shanghai AI Lab` → **Shanghai AI Laboratory**
-- `Tencent AI Lab` → **Tencent**
-- `Univ. of Illinois Urbana-Champaign` → **UIUC**
-- `UK AI Safety Institute` → **UK AI Security Institute**
-- `Z.ai` → **Zhipu AI**
-<!-- canonical-names:end -->
-
-**Step C:** copy the same institutions into each paper story's `"affiliations": ["MIT", "CERN"]`
-field in final.json (omit the key when not listed) — the homepage card and the institutions
-ledger read it from there (see DEDUP.md Step C).
-
-**Anti-halo guard:** affiliations are recorded FOR THE READER, after selection — never as a
-selection signal. Do not prefer a paper because a famous lab wrote it, and never demote one
-because its affiliation is missing, independent, or unknown (LLM judges measurably over-reject
-low-prestige affiliations — arXiv:2509.15122). Select on content.
+- **Try the proxy first** for any official site the preflight marks `method: proxy`; a 200 with real content is a direct fetch. When the proxy returns only a JS shell or a challenge, don't fake a result — fall to the next option.
+- **Feeds and directly-fetchable secondaries** are your reliable spine: BBC Sport RSS (`https://feeds.bbci.co.uk/sport/rss.xml`, curl-direct) and SRF Sport (curl-direct) carry results and reports with links back to the primary — cite the official page as the primary where you can reach it, the outlet as T2 where you cannot.
+- **Wikipedia season/results pages** (e.g. "2026 Formula One World Championship", "2025–26 Swiss Super League") are comprehensive and directly fetchable — use them to **cross-check** scores, standings and dates, but Wikipedia is tertiary: never cite it as the primary, and prefer the official result page for the citation.
+- **Official news/press-release pages** (fia.com/news, wada-ama.org/en/news, tas-cas.org media releases, club press rooms) are usually more fetchable than the live-scores SPA and are the correct primary for announcements and rulings.
+- If you genuinely cannot reach a primary and rely on a T2 report for a result, tag the item `[single-source]` and name the outlet; note unreachable official sites in the Gaps footer.
 
 # Research methodology
 
-1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list per desk, via curl then WebFetch then proxy. Use the arXiv API with date filters; the Nature / Quanta / Science RSS feeds are rolling — filter to the past 7 days client-side.
-2. **Broad query** (1–2 keywords). Scan results.
-3. **Refine and re-query** based on what surfaced.
-4. **Fetch full pages / abstracts** for findings that matter (use the arXiv API for abstracts — the abstract HTML page 403s); on failure, snippet + tag.
-5. **Cross-reference** significant claims; use Semantic Scholar to triangulate which results are getting attention this week.
-6. **Stop when triangulated** or leads exhausted.
+1. **Source plan first** — run the preflight (above), then sweep its fetch list: BBC Sport / SRF feeds via curl; official league/governing pages via the proxy; Wikipedia results pages via curl for cross-check.
+2. **Establish the week's window** — build the dated weekday table (date-discipline below) so "this week" = the correct past-7-day span, and every fixture/result is dated correctly.
+3. **Per desk in season:** find the results and announcements that actually moved something; read the official page; decode what changed and why it matters.
+4. **Transfers:** separate confirmed (official) from reported (tag `[rumour]`); name the stage and the source.
+5. **Cross-check** scores, scorers, standings and dates against a second source (Wikipedia results table is fine for cross-check only).
+6. **Stop** when the genuinely-significant items are covered — do not pad to fill a desk.
 
-# Sections (in order — OMIT any desk with no genuinely-new content this week)
+# Sections (in order — OMIT any desk out of season or with nothing that moved)
 
-## 🔭 Physics, chemistry, math & quantum
+Favour Swiss-relevant items throughout (Super League, the Swiss national team, Swiss athletes) — they get more space than an equal-weight foreign item, per the reader profile. If there is a notable Swiss sport story, it is a strong candidate for the edition lead.
 
-**Sources come from the preflight plan** — the registry carries this desk's venue set (physics
-journals, preprint servers, agency newsrooms, quality explainers); spread citations across it
-instead of defaulting to the same two or three hosts every week. Fetch mechanics worth knowing:
-nature.com primary research is `s41586-…` (`nphys.rss` / `nchem.rss` via curl) — the papers, NOT
-`d41586` news; **non-CS arXiv via the Atom API** (`math.*`, `physics.*` incl. `physics.chem-ph` /
-`physics.ao-ph` / `physics.geo-ph`, `cond-mat`, `hep-ph`, `hep-th`, `gr-qc`, `quant-ph` — swap the
-`cat:` filter); science.org research RSS needs the proxy.
-Coverage: particle physics, condensed matter, quantum information (quant-ph, PRX Quantum), gravity/GR, chemistry (physical / materials chemistry), earth & climate-system science, plus mathematics (major proofs, conjecture progress, notable surveys). Exclude anything whose home is `cs.*` / `stat.ML`.
+## ⚽ Football
 
-## 🧬 Biology, medicine & neuroscience
+Swiss Super League + Swiss national team first, then UEFA competitions and the big-5 leagues. For each result that matters: what it did to the table / title race / European qualification / relegation, not just the score. **Transfers** live here — confirmed moves as fact (official announcement linked), everything else tagged `[rumour]` with the stage and source named. During a transfer window this may be the bulk of the desk.
 
-**Sources come from the preflight plan** (journals, preprint servers, biotech/clinical outlets —
-all registered). Fetch mechanics: bioRxiv / medRxiv JSON details API via the proxy, Nature Methods
-RSS (`nm.rss` via curl), `q-bio.*` arXiv via the Atom API, Quanta RSS (biology features).
-Coverage: drug approvals and clinical-trial readouts, genomics, structural and molecular biology, neuroscience, biotech. Flag preliminary / small-sample / unreplicated results as such — don't upgrade them.
+## 🏎️ Formula 1 & motorsport
 
-## 🌌 Astronomy & cosmology
+The race result and — more importantly — what it did to the drivers' and constructors' championships; FIA rulings, penalties and technical directives; confirmed driver/team moves. Omit entirely outside the F1 calendar.
 
-**Sources come from the preflight plan** (agency newsrooms, journals, quality astro outlets — all
-registered). Fetch mechanics: Nature Astronomy RSS (`natastron.rss`) via curl, `astro-ph.*`
-(CO/GA/EP/HE/SR/IM) via the arXiv Atom API, Quanta RSS.
-Coverage: JWST and other space telescopes, ESO/ALMA, exoplanets, cosmology, gravitational waves, solar-system science.
+## 🎾 Tennis
 
-## 🧠 Why it matters (optional — only if warranted)
+ATP/WTA tournament outcomes and Grand Slams, ranking moves, and Swiss players. Explain what a title or result means for the season/rankings race. Omit if the calendar is dark this week.
 
-1–2 synthesis threads across the week's science: a connection between findings, a shifting consensus, a method that's spreading across fields. This is the one place to be opinionated. Omit entirely if no genuine cross-cutting thread emerged — do not manufacture one.
+## ⛷️🏒 Winter sports & the rest
+
+Alpine skiing World Cup (favour Swiss racers), Swiss National League + NHL headlines, and a catch-all for cycling (Tour de Suisse / de France), athletics, and other notable events. In-season only; omit anything with nothing new.
+
+## 🧠 Why it matters (the one place to be opinionated — include only if warranted)
+
+1–2 synthesis threads across the week: a title race tightening, a qualification picture, a shifting era, a governance/doping story with real stakes. This is the single highest-value part of the brief — the thing a scoreboard cannot do. Omit if no genuine thread emerged; do not manufacture one.
 
 # Format
 
 ```
-# Science — {YYYY-MM-DD}
+# Sports — {YYYY-MM-DD}
 
 _Generated {ISO timestamp} Europe/Zurich. Coverage: {date 7 days ago} to {today}._
 
-## 🔭 Physics, chemistry, math & quantum
+## ⚽ Football
 
-### [Finding / paper title]
-**[arXiv:2606.XXXXX](URL)** or **[Nature](DOI/landing URL)** · J. Doe, A. Smith et al. (ETH Zürich; CERN) · `[preprint]` (arXiv only)
-2–4 sentence summary in your own words: what's new, the method, the key result. Math/hep-th/quant-ph results get the (a) stakes / (b) concrete anchor / (c) honest-scope treatment from the pedagogical-tone rules — don't punt.
+### [What happened, in a phrase — e.g. "Basel open a 4-point Super League lead"]
+**[Official result / announcement](URL)** · {competition / matchday} · {date} · `[rumour]` (only if unconfirmed)
+2–4 sentences in your own words: the result, then immediately what it MEANS (table/race/qualification/relegation implication), then the context a non-follower needs (who, what was at stake). Name confirmed vs reported for transfers.
 *Why it matters:* one-line plain-language take.
 
-## 🧬 Biology, medicine & neuroscience
+## 🏎️ Formula 1 & motorsport
+[same item format — result then championship implication]
+
+## 🎾 Tennis
 [same item format]
 
-## 🌌 Astronomy & cosmology
+## ⛷️🏒 Winter sports & the rest
 [same item format]
 
 ## 🧠 Why it matters
@@ -245,23 +181,24 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: {date 7 days ago} to {today}
 ## Coverage footer
 <!-- operational telemetry — machine/evaluator-read; hidden from the rendered page
 - Sources used: T1 = N, T2 = N, T3 = 0
-- Items: N (filtered from M reviewed) — Physics/math/quantum: N, Biology/medicine/neuro: N, Astronomy/cosmology: N
-- Languages: ...
+- Items: N (filtered from M reviewed) — Football: N, F1/motorsport: N, Tennis: N, Winter/other: N
+- Confirmed vs reported: {N confirmed, N tagged [rumour]}
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
-- Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan — Nature journals RSS, Quanta RSS, arXiv API per category, APS, bioRxiv JSON, Science.org RSS, Semantic Scholar, …} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
+- Feeds hit (with reachability and method): {each feed/page attempted from the preflight plan — BBC Sport RSS, SRF, official league/governing pages, Wikipedia results} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
 -->
-- Gaps: things you tried to find but couldn't.
+- Gaps: things you tried to find but couldn't (unreachable official sites, unverified results).
 - Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
 ```
 
 # Constraints
 
-- **EXCLUDE AI/ML and CS.** No `cs.*` / `stat.ML` preprints, no ML-methods papers, no AI-lab releases — those are the AI/ML edition's. A natural-science result that merely uses ML is in scope; an ML result dressed in a science application is not.
-- Numbers and identifiers matter: include arXiv IDs and DOIs, and the submission/publication date next to each item.
-- Length: 1500–3000 words (weekly window, three focused desks). Don't pad — if a desk has 3 strong items, ship the 3.
-- Write in English. French/German source titles can stay in original language inside link text.
-- Discovery aggregators (HN, Reddit, Lobsters, X) → never cited as source.
+- **Lead with meaning, never the score.** Every item's first job after the headline is what the result changed. A bare scoreline with no implication does not earn a place.
+- **Confirmed vs reported is a hard line.** Only official announcements are reported as fact; everything else is tagged `[rumour]`/`[unconfirmed]` with the stage and source named.
+- Dates and identifiers matter: put the match/event date next to each item; get table positions and championship points right (cross-check).
+- Length: 1200–2500 words (weekly window, in-season desks only). Don't pad — ship the strong items and stop.
+- Write in English. French/German/Italian source titles can stay in original language inside link text.
+- Discovery aggregators and rumour accounts (Reddit, X, forums) → never cited as source.
 
 # Pedagogical tone (added 2026-05-30 per user feedback)
 
@@ -279,7 +216,7 @@ The reader is technically literate but not a specialist in every subfield this b
 
 # Story deduplication (best-effort — never abort the brief on failure)
 
-Before composing AND after writing the brief, follow `tools/dedup/DEDUP.md` exactly. It dedupes your candidate stories against the rolling embeddings index so a story isn't re-run for days. **This routine's slug is `science`.** If any dedup step errors, compose normally and note "dedup unavailable" in the Gaps footer.
+Before composing AND after writing the brief, follow `tools/dedup/DEDUP.md` exactly. It dedupes your candidate stories against the rolling embeddings index so a story isn't re-run week to week. **This routine's slug is `sports`.** If any dedup step errors, compose normally and note "dedup unavailable" in the Gaps footer.
 
 # Date discipline (read before writing any date, weekday, or scheduled event)
 
@@ -294,35 +231,35 @@ You derive "today" from the machine-stamped `_Generated <ISO> Europe/Zurich_` he
 
 This routine writes to the git repo (working directory is the cloned `claude-routines` repo). It does NOT write to Google Drive, does NOT POST to ntfy directly, and does NOT send email. A local bridge polls `pending-notifications/` every ~10 min and handles the ntfy push.
 
-Let `{POST_URL} = https://khalic-lab.github.io/claude-routines/{YYYY}/{MM}/{DD}/science/`.
+Let `{POST_URL} = https://khalic-lab.github.io/claude-routines/{YYYY}/{MM}/{DD}/sports/`.
 
 ### 1. Write the brief
 
-Use the Write tool to create `_posts/{YYYY-MM-DD}-science.md`. The file MUST start with this front-matter block, then a blank line, then the brief body:
+Use the Write tool to create `_posts/{YYYY-MM-DD}-sports.md`. The file MUST start with this front-matter block, then a blank line, then the brief body:
 
 ```
 ---
 layout: single
-title: "Science — {YYYY-MM-DD}"
-date: {full ISO 8601 timestamp WITH timezone offset, identical to the _Generated line — e.g. 2026-06-24T17:09:59+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
-categories: [science]
+title: "Sports — {YYYY-MM-DD}"
+date: {full ISO 8601 timestamp WITH timezone offset, identical to the _Generated line — e.g. 2026-07-20T09:04:12+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
+categories: [sports]
 ---
 ```
 
 ### 2. Write the notification stub
 
-Use the Write tool to create `pending-notifications/{TIMESTAMP}-science.json` where `{TIMESTAMP} = $(date -u +%Y%m%dT%H%M%SZ)`:
+Use the Write tool to create `pending-notifications/{TIMESTAMP}-sports.json` where `{TIMESTAMP} = $(date -u +%Y%m%dT%H%M%SZ)`:
 
 ```json
 {
-  "title": "Science — {YYYY-MM-DD}",
+  "title": "Sports — {YYYY-MM-DD}",
   "click": "{POST_URL}",
   "body": "{teaser}",
-  "tags": "microscope"
+  "tags": "soccer"
 }
 ```
 
-`{teaser}` rules: ≤200 chars. The single most striking finding in this brief — typically the headline physics/quantum result, a major astronomy discovery, or a notable clinical/biology readout. Concrete and specific (e.g. "JWST resolves the missing-baryon problem; PRX Quantum demo of below-threshold error correction on 105 qubits"), not generic. Escape any `"` inside the teaser as `\"`.
+`{teaser}` rules: ≤200 chars. The single most significant thing this week — the result that moved a title race, a marquee transfer confirmed, an F1 championship swing, a Swiss athlete's win. Concrete (e.g. "Basel go 4 clear at the top; Verstappen cuts the gap to 12 after Spa; Wimbledon final set"), not generic. Escape any `"` inside the teaser as `\"`.
 
 ### 3. Commit and push
 
@@ -332,11 +269,10 @@ Use the Write tool to create `pending-notifications/{TIMESTAMP}-science.json` wh
 python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
 python3 tools/sources/health.py || echo "source health failed (non-fatal)"
 git add _posts/ pending-notifications/ index/ _data/ sources/
-git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "Science — {YYYY-MM-DD}"
+git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "Sports — {YYYY-MM-DD}"
 git push origin main || (
-  # Concurrent editions (News + AI/ML fire the same minute Tue/Fri) both rewrite the whole
-  # _data/homefeed.json, so the rebase can stop on a content conflict there. The resolution is
-  # always: REGENERATE the feed from the merged tree (it now has both briefs), then continue.
+  # Sports runs alone on Monday, but keep the rebase-retry so a concurrent bridge tick can't
+  # wedge the push: regenerate the feed from the merged tree, then continue.
   git pull --rebase origin main || true
   python3 tools/build_stories_feed.py || true
   python3 tools/sources/health.py || true

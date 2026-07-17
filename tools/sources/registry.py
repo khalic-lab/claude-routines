@@ -26,7 +26,7 @@ import json
 import os
 import sys
 
-LIVE_STREAMS = {"news", "ai-ml", "science", "weekend"}
+LIVE_STREAMS = {"news", "ai-ml", "science", "weekend", "sports"}
 
 # SPIKE §3.4 Bootstrap, review fix C18: the retired security/markets pipeline's domains, excluded
 # from bootstrap BY NAME -- a stray genuine citation landing in a live stream (it has happened:

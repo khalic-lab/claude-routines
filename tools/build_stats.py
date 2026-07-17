@@ -34,8 +34,8 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SLUGS = ("news", "ai-ml", "science", "weekend")
-TRACKED_TAGS = ("single-source", "disputed", "preprint", "vendor PR", "official PR")
+SLUGS = ("news", "ai-ml", "science", "weekend", "sports")
+TRACKED_TAGS = ("single-source", "disputed", "preprint", "vendor PR", "official PR", "rumour", "unconfirmed")
 MINUTES_PER_DROP = 2  # reading-time estimate; the UI labels it "~"
 
 _store_spec = importlib.util.spec_from_file_location(

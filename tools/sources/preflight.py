@@ -22,7 +22,7 @@ import sys
 
 import registry
 
-QUOTA = {"news": 1, "ai-ml": 1, "science": 2, "weekend": 2}
+QUOTA = {"news": 1, "ai-ml": 1, "science": 2, "weekend": 2, "sports": 1}
 SATURATION_BAR = {"outlet": 0.20, "institutional": 0.30}  # hub: exempt (SPIKE §2/§3.4)
 DORMANT_DAYS = 30
 WINDOW_DAYS = 30

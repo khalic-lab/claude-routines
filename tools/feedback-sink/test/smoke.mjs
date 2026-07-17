@@ -370,6 +370,127 @@ const T = Date.now() - 10000;
   check("login with unknown challenge -> 403", res.status === 403, String(res.status));
 }
 
+// --- /prefs: session gate + whole-object LWW-by-ts ------------------------------------------
+{
+  const res = await worker.fetch(req("/prefs"), env);
+  const body = await res.json();
+  check("GET /prefs without session -> 401 no session", res.status === 401 && body.error === "no session", JSON.stringify([res.status, body]));
+}
+{
+  const res = await worker.fetch(req("/prefs", { headers: AUTH }), env);
+  const body = await res.json();
+  check(
+    "GET /prefs with session, none stored -> {topics:[], ts:0} + no-store",
+    res.status === 200 && body.reader === "rafael" && Array.isArray(body.prefs.topics) &&
+      body.prefs.topics.length === 0 && body.prefs.ts === 0 && res.headers.get("Cache-Control") === "no-store",
+    JSON.stringify([res.status, body]),
+  );
+}
+{
+  const now = Date.now();
+  const res = await worker.fetch(
+    req("/prefs", { method: "POST", headers: AUTH, body: { topics: ["ai-ml", "sports", "switzerland"], ts: now } }),
+    env,
+  );
+  const body = await res.json();
+  const stored = JSON.parse(await kv.get("prefs:rafael"));
+  check(
+    "POST /prefs stores topics -> applied true",
+    res.status === 200 && body.ok === true && body.applied === true &&
+      JSON.stringify(stored.topics) === JSON.stringify(["ai-ml", "sports", "switzerland"]) && stored.ts === now,
+    JSON.stringify([body, stored]),
+  );
+}
+{
+  // older ts must lose (whole-object LWW): stored set is preserved unchanged.
+  const stored0 = JSON.parse(await kv.get("prefs:rafael"));
+  const res = await worker.fetch(
+    req("/prefs", { method: "POST", headers: AUTH, body: { topics: ["science"], ts: stored0.ts - 5000 } }),
+    env,
+  );
+  const body = await res.json();
+  const stored = JSON.parse(await kv.get("prefs:rafael"));
+  check(
+    "POST /prefs older ts loses -> applied false, stored set unchanged",
+    body.applied === false && JSON.stringify(stored.topics) === JSON.stringify(["ai-ml", "sports", "switzerland"]),
+    JSON.stringify([body, stored]),
+  );
+}
+{
+  // exact tie (ts === storedTs) must lose — strict `>` guard, stored set preserved.
+  const stored0 = JSON.parse(await kv.get("prefs:rafael"));
+  const res = await worker.fetch(
+    req("/prefs", { method: "POST", headers: AUTH, body: { topics: ["science"], ts: stored0.ts } }),
+    env,
+  );
+  const body = await res.json();
+  const stored = JSON.parse(await kv.get("prefs:rafael"));
+  check(
+    "POST /prefs tie (same ts) keeps existing -> applied false, set unchanged",
+    body.applied === false && JSON.stringify(stored.topics) === JSON.stringify(stored0.topics),
+    JSON.stringify([body, stored]),
+  );
+}
+{
+  // newer ts replaces the whole set (not merge) — dropping a topic propagates.
+  const stored0 = JSON.parse(await kv.get("prefs:rafael"));
+  const res = await worker.fetch(
+    req("/prefs", { method: "POST", headers: AUTH, body: { topics: ["sports"], ts: stored0.ts + 5000 } }),
+    env,
+  );
+  const body = await res.json();
+  const stored = JSON.parse(await kv.get("prefs:rafael"));
+  check(
+    "POST /prefs newer ts replaces whole set -> applied true, set = [sports]",
+    body.applied === true && JSON.stringify(stored.topics) === JSON.stringify(["sports"]),
+    JSON.stringify([body, stored]),
+  );
+}
+{
+  // malformed entries drop themselves; dupes collapse; the batch survives.
+  const now = Date.now() + 10000;
+  const res = await worker.fetch(
+    req("/prefs", { method: "POST", headers: AUTH, body: { topics: ["ai-ml", "ai-ml", "Bad Key", 42, "", "world"], ts: now } }),
+    env,
+  );
+  const body = await res.json();
+  const stored = JSON.parse(await kv.get("prefs:rafael"));
+  check(
+    "POST /prefs filters bad/dup keys -> stored [ai-ml, world]",
+    body.applied === true && JSON.stringify(stored.topics) === JSON.stringify(["ai-ml", "world"]),
+    JSON.stringify([body, stored]),
+  );
+}
+{
+  const topics = [];
+  for (let i = 0; i < 51; i++) topics.push("t" + i);
+  const res = await worker.fetch(req("/prefs", { method: "POST", headers: AUTH, body: { topics, ts: Date.now() } }), env);
+  check("POST /prefs >50 topics -> 400", res.status === 400, String(res.status));
+}
+{
+  const res = await worker.fetch(req("/prefs", { method: "POST", headers: AUTH, body: { topics: "ai-ml" } }), env);
+  check("POST /prefs non-array topics -> 400", res.status === 400, String(res.status));
+}
+{
+  const res = await worker.fetch(
+    req("/prefs", { method: "POST", headers: AUTH, body: `{"topics":[],"pad":"${"x".repeat(70000)}"}` }),
+    env,
+  );
+  check("POST /prefs oversize body -> 413", res.status === 413, String(res.status));
+}
+{
+  const res = await worker.fetch(req("/prefs", { method: "OPTIONS", headers: { Origin: SITE } }), env);
+  check(
+    "OPTIONS /prefs from site origin -> 204 + ACAO echoed",
+    res.status === 204 && res.headers.get("Access-Control-Allow-Origin") === SITE,
+    JSON.stringify([res.status, res.headers.get("Access-Control-Allow-Origin")]),
+  );
+}
+{
+  const res = await worker.fetch(req("/prefs", { method: "OPTIONS", headers: { Origin: "https://evil.example" } }), env);
+  check("OPTIONS /prefs from foreign origin -> 204, NO ACAO", res.status === 204 && res.headers.get("Access-Control-Allow-Origin") === null, String(res.status));
+}
+
 // -----------------------------------------------------------------------------------------
 console.log(failures === 0 ? `PASS: all ${n} checks passed` : `FAIL: ${failures}/${n} checks failed`);
 process.exit(failures === 0 ? 0 : 1);

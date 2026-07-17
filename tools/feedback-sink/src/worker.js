@@ -14,6 +14,8 @@
 //   POST /auth/login             (public)    -- verify assertion, issue session.
 //   GET  /readstate              (session)   -- the reader's read-state map {sid:{ts,v}}.
 //   POST /readstate              (session)   -- LWW-merge a read-state delta into KV.
+//   GET  /prefs                  (session)   -- the reader's UI prefs {topics:[...], ts}.
+//   POST /prefs                  (session)   -- whole-object LWW-by-ts of the topic selection.
 //
 // Public writes (/submit, /propose) require the shared SITE KEY in the `X-Widget-Key`
 // header — the website password, set as the Worker secret WIDGET_KEY. It is a SHARED
@@ -24,10 +26,11 @@
 // handles them; the bridge routes by `kind` on write (proposal -> proposals/).
 //
 // Passkeys: registration is gated by the Worker secret INVITE_TOKEN (fail closed if
-// unset). Credentials (`cred:`), sessions (`session:`), single-use challenges (`chal:`)
-// and read state (`readstate:`) all live in the same FEEDBACK_KV — none of those
-// prefixes collide with `fb:` so drain/ack never sees them. /auth/* and /readstate
-// answer CORS only for the published site origin; everything else keeps `*`.
+// unset). Credentials (`cred:`), sessions (`session:`), single-use challenges (`chal:`),
+// read state (`readstate:`) and UI prefs (`prefs:`) all live in the same FEEDBACK_KV —
+// none of those prefixes collide with `fb:` so drain/ack never sees them. /auth/*,
+// /readstate and /prefs answer CORS only for the published site origin; everything else
+// keeps `*`.
 //
 // Twin of tools/embed-proxy. Needs KV bound as FEEDBACK_KV, secret FEEDBACK_TOKEN
 // (drain/ack bearer), secret WIDGET_KEY (the shared site password), and secret
@@ -63,6 +66,8 @@ const STATE_MAX_ENTRIES = 2000; // entries per /readstate POST
 const STATE_MAX_AGE_MS = 90 * 24 * 3600 * 1000; // merged entries older than this are dropped
 const STATE_MAX_SKEW_MS = 86400000; // accept ts up to one day in the future
 const SID_RE = /^st-[0-9a-f]{12}$/; // story ids from the story store
+const PREFS_MAX_TOPICS = 50; // topic keys a reader can select (the vocab is ~a dozen)
+const TOPIC_KEY_RE = /^[a-z0-9][a-z0-9-]{0,39}$/; // beat/topic filter keys (build_stories_feed TOPICS)
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -71,11 +76,11 @@ const CORS = {
   "Access-Control-Max-Age": "86400",
 };
 
-// /auth/* and /readstate carry a real session, so they answer CORS only for the
+// /auth/*, /readstate and /prefs carry a real session, so they answer CORS only for the
 // published site: the site origin gets echoed back, any other origin gets NO
 // Access-Control-Allow-Origin at all (the preflight still returns 204).
 function corsFor(request, path) {
-  if (path !== "/readstate" && !path.startsWith("/auth/")) return CORS;
+  if (path !== "/readstate" && path !== "/prefs" && !path.startsWith("/auth/")) return CORS;
   const headers = {
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Widget-Key",
@@ -526,6 +531,79 @@ async function handleReadstatePost(request, env, cors) {
   return json({ ok: true, total: Object.keys(merged).length, changed, skipped }, 200, {}, cors);
 }
 
+// ---------------------------------------------------------------------------
+// UI prefs (KV `prefs:{reader}` = {topics:[...], ts}). Unlike read state, the topic
+// selection is ONE complete statement of intent, so it merges whole-object by ts (LWW)
+// rather than per-entry — a POST replaces the stored set iff its ts is newer.
+
+async function handlePrefsGet(request, env, cors) {
+  const sess = await getSession(request, env);
+  if (!sess) return json({ error: "no session" }, 401, {}, cors);
+  await rollSession(env, sess);
+  const raw = await env.FEEDBACK_KV.get(`prefs:${sess.reader}`);
+  let prefs = { topics: [], ts: 0 };
+  if (raw != null) {
+    try {
+      const p = JSON.parse(raw);
+      if (p && Array.isArray(p.topics)) prefs = { topics: p.topics, ts: typeof p.ts === "number" ? p.ts : 0 };
+    } catch {
+      // fall through to the empty default
+    }
+  }
+  return json({ reader: sess.reader, prefs }, 200, {}, cors);
+}
+
+async function handlePrefsPost(request, env, cors) {
+  const sess = await getSession(request, env);
+  if (!sess) return json({ error: "no session" }, 401, {}, cors);
+  const body = await request.arrayBuffer();
+  if (body.byteLength > STATE_MAX_BYTES) {
+    return json({ error: `body too large (max ${STATE_MAX_BYTES} bytes)` }, 413, {}, cors);
+  }
+  let p;
+  try {
+    p = JSON.parse(new TextDecoder().decode(body));
+  } catch {
+    return json({ error: "invalid JSON body" }, 400, {}, cors);
+  }
+  if (!p || !Array.isArray(p.topics)) {
+    return json({ error: "body must include an array `topics`" }, 400, {}, cors);
+  }
+  if (p.topics.length > PREFS_MAX_TOPICS) {
+    return json({ error: `too many topics (max ${PREFS_MAX_TOPICS})` }, 400, {}, cors);
+  }
+  const now = Date.now();
+  const ts = typeof p.ts === "number" && Number.isFinite(p.ts) && p.ts > 0 && p.ts <= now + STATE_MAX_SKEW_MS ? p.ts : now;
+  // Keep only well-formed, deduped topic keys — one bad entry drops itself, never the batch.
+  const seen = new Set();
+  const topics = [];
+  for (const t of p.topics) {
+    if (typeof t === "string" && TOPIC_KEY_RE.test(t) && !seen.has(t)) {
+      seen.add(t);
+      topics.push(t);
+    }
+  }
+
+  const raw = await env.FEEDBACK_KV.get(`prefs:${sess.reader}`);
+  let stored = null;
+  if (raw != null) {
+    try {
+      stored = JSON.parse(raw);
+    } catch {
+      stored = null;
+    }
+  }
+  const storedTs = stored && typeof stored.ts === "number" ? stored.ts : 0;
+  let applied = false;
+  if (ts > storedTs) {
+    await env.FEEDBACK_KV.put(`prefs:${sess.reader}`, JSON.stringify({ topics, ts }));
+    applied = true;
+  }
+  await rollSession(env, sess);
+  const current = applied ? { topics, ts } : { topics: (stored && stored.topics) || [], ts: storedTs };
+  return json({ ok: true, applied, prefs: current }, 200, {}, cors);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -572,6 +650,11 @@ export default {
     if (path === "/readstate") {
       if (request.method === "GET") return handleReadstateGet(request, env, cors);
       if (request.method === "POST") return handleReadstatePost(request, env, cors);
+      return json({ error: "method not allowed" }, 405, {}, cors);
+    }
+    if (path === "/prefs") {
+      if (request.method === "GET") return handlePrefsGet(request, env, cors);
+      if (request.method === "POST") return handlePrefsPost(request, env, cors);
       return json({ error: "method not allowed" }, 405, {}, cors);
     }
     return text("not found", 404);

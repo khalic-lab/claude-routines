@@ -50,6 +50,13 @@ POST /readstate              (session)   body: {state:{sid:{ts,v}}} -> {ok,total
                                          64KB body (413), 2000 entries, sid ^st-[0-9a-f]{12}$,
                                          90-day age-out. Session = Bearer <64-hex> from
                                          /auth/*, KV TTL 90 days, rolling.
+GET  /prefs                  (session)   -> {reader, prefs:{topics:[...], ts}}.
+POST /prefs                  (session)   body: {topics:[...], ts} -> {ok, applied, prefs}
+                                         whole-object LWW by ts (the topic selection is one
+                                         complete statement of intent, so it REPLACES, not
+                                         merges — dropping a beat propagates). Caps: 64KB body
+                                         (413), 50 topics, keys ^[a-z0-9][a-z0-9-]{0,39}$;
+                                         bad/dup keys drop themselves. Same session as /readstate.
 ```
 
 Two-phase drain/ack so a missed bridge tick neither loses nor double-commits records.
@@ -59,8 +66,8 @@ Two-phase drain/ack so a missed bridge tick neither loses nor double-commits rec
 Single-reader accounts for read/unread sync across devices (SPIKE-2026-07-07-read-state-sync).
 Registration is invite-gated; one ceremony on any Apple device creates an iCloud-Keychain-synced
 passkey usable everywhere. rpID is `khalic-lab.github.io` (valid: github.io is on the Public
-Suffix List, so the subdomain is the registrable domain). `/auth/*` and `/readstate` answer CORS
-only for `https://khalic-lab.github.io`; the older routes keep `*`. A signed-in browser also
+Suffix List, so the subdomain is the registrable domain). `/auth/*`, `/readstate` and `/prefs`
+answer CORS only for `https://khalic-lab.github.io`; the older routes keep `*`. A signed-in browser also
 sends the session Bearer on `/submit`, which pins the record's `reader` server-side.
 
 Deploy delta for the 2026-07-10 extension (from `tools/feedback-sink/`):

@@ -33,7 +33,7 @@ from urllib.parse import urlparse
 
 import registry
 
-QUOTA = {"news": 1, "ai-ml": 1, "science": 2, "weekend": 2}
+QUOTA = {"news": 1, "ai-ml": 1, "science": 2, "weekend": 2, "sports": 1}
 OUTLET_CAP = 2
 INSTITUTIONAL_BAR = 0.30
 GATING_CATEGORIES = {"tag_missing", "tag_false", "outlet_cap", "institutional_bar", "discovery_quota"}

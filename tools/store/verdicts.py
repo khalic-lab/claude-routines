@@ -22,7 +22,7 @@ import os
 import re
 import sys
 
-SLUGS = ("news", "ai-ml", "science", "weekend")
+SLUGS = ("news", "ai-ml", "science", "weekend", "sports")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 

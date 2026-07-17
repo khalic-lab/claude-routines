@@ -439,12 +439,12 @@ document.addEventListener('DOMContentLoaded', function () {
       attachStoryThumbs(node.parentNode, headline, storeIdFor(li)); // <p> in a loose list, the <li> in a tight one
     });
 
-    // (b) H3 stories (science/weekend only — other streams' h3s aren't stories). The widget
-    // lands in the story's LAST paragraph before the next heading, mirroring the bullets'
-    // end-of-story placement. Runs before the emoji-stripper (registration order), so the
+    // (b) H3 stories (science/weekend/sports — their h3s ARE the stories; other streams' aren't).
+    // The widget lands in the story's LAST paragraph before the next heading, mirroring the
+    // bullets' end-of-story placement. Runs before the emoji-stripper (registration order), so the
     // headline text here matches the raw markdown heading the homepage feed slugifies.
     var stream = SLUG.replace(/^\d{4}-\d{2}-\d{2}-/, '');
-    if (stream === 'science' || stream === 'weekend') {
+    if (stream === 'science' || stream === 'weekend' || stream === 'sports') {
       content.querySelectorAll('h3').forEach(function (h) {
         if (h.__fb) return;
         if (afterFooter(footer, h)) return;

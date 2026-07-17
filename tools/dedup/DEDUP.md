@@ -5,7 +5,7 @@ Each writer routine follows this on every run so a story isn't re-run for days (
 brief normally and note "dedup unavailable" in the Gaps footer — never abort the brief.
 
 The routine that invokes this passes its **slug** (one of `news`, `ai-ml`,
-`science`, `weekend`) and today's date `{YYYY-MM-DD}` (Europe/Zurich).
+`science`, `weekend`, `sports`) and today's date `{YYYY-MM-DD}` (Europe/Zurich).
 
 Fixed endpoint (this is a low-value token — gates only Workers-AI embedding spend on our own
 account; the repo is private and this file is excluded from the published site):
@@ -125,7 +125,7 @@ safety net, not a requirement — supply them if you already have them, otherwis
   should anchor to.
 - **`topics` / `importance`** feed the homepage grid: `topics` is a 1–2 item list from the controlled
   beat set (`switzerland`, `geopolitics`, `politics`, `economy`, `ai-ml`, `science`, `health`,
-  `security`, `tech`, `world`), `importance` is 1–3 (**3** lead, **2** standard, **1** brief). Score
+  `security`, `tech`, `sports`, `world`), `importance` is 1–3 (**3** lead, **2** standard, **1** brief). Score
   on real significance to the reader (see the tagging rubric in your prompt). If you omit them,
   `record` stores them empty and `build_stories_feed.py` derives a fallback from position + keywords.
 - **`affiliations`** (papers only; SPIKE-2026-07-10): the institutions from the story's byline
@@ -246,7 +246,7 @@ It also regenerates `_data/stats.json` (the homepage desk-stats panel, via
 snapshots) as a non-fatal piggyback; no separate command needed, and `git add _data/` in Step E
 already stages it.
 
-Every writer slug (`news`, `ai-ml`, `science`, `weekend`) runs this on every fire; the evaluator
+Every writer slug (`news`, `ai-ml`, `science`, `weekend`, `sports`) runs this on every fire; the evaluator
 does not (it never touches this procedure).
 
 ## Step E — commit everything

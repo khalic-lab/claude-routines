@@ -1512,6 +1512,7 @@ srf.ch:
   streams:
     - news
     - weekend
+    - sports
   last_cited: 2026-07-06
   probe:
     url: https://www.srf.ch/news/bnf/rss/1646
@@ -1520,6 +1521,9 @@ srf.ch:
     - date: 2026-07-07
       event: bootstrap
       status: established
+    - date: 2026-07-17
+      event: seed
+      note: added sports stream (SRF Sport — top Swiss secondary for the sports edition)
 state.gov:
   class: institutional
   tier: T2
@@ -2043,3 +2047,218 @@ thinkingmachines.ai:
     - date: 2026-07-17
       event: candidate
       status: candidate
+# --- sports stream bootstrap (2026-07-17) — Swiss + global majors. Official governing
+# bodies and leagues are the T1 primary sources of record (results, standings, rulings);
+# BBC Sport is the directly-fetchable T2 secondary. Most official sites are Cloudflare/JS
+# fronted -> reach: proxy. Alphabetical among themselves; the registry tool re-sorts on its
+# next write.
+atptour.com:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.atptour.com/en/scores/results-archive
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: ATP Tour — official men's tennis results/rankings (sports bootstrap)
+bbc.com:
+  class: outlet
+  tier: T2
+  status: probation
+  reach: direct
+  streams:
+    - sports
+  probe:
+    url: https://feeds.bbci.co.uk/sport/rss.xml
+    method: curl
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: BBC Sport — directly-fetchable T2 secondary for triangulation (sports bootstrap)
+fia.com:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.fia.com/news
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: FIA — motorsport governing body (rulings, penalties, regs) (sports bootstrap)
+fifa.com:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.fifa.com/en/tournaments
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: FIFA — world football governing body (sports bootstrap)
+fis-ski.com:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.fis-ski.com/DB/alpine-skiing/calendar-results.html
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: FIS — alpine skiing World Cup results (big in CH) (sports bootstrap)
+football.ch:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.football.ch/sfv/de/nationalteams.aspx
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: SFV/ASF — Swiss Football Association (national team) (sports bootstrap)
+formula1.com:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.formula1.com/en/results.html
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: Formula 1 — official race results and championship standings (sports bootstrap)
+olympics.com:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.olympics.com/en/news
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: IOC — Olympic movement news/results (sports bootstrap)
+premierleague.com:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.premierleague.com/results
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: Premier League — official results/table (sports bootstrap)
+sfl.ch:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.sfl.ch/super-league/spielplan-resultate/
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: Swiss Football League — Super League results/standings (sports bootstrap)
+sihf.ch:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.sihf.ch/de/game-center/national-league/
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: Swiss Ice Hockey — National League results (sports bootstrap)
+tas-cas.org:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.tas-cas.org/en/media/media-releases.html
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: CAS (Lausanne) — Court of Arbitration for Sport rulings (sports bootstrap)
+uefa.com:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.uefa.com/uefachampionsleague/
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: UEFA — Champions/Europa League + Euro (sports bootstrap)
+wada-ama.org:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.wada-ama.org/en/news
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: WADA — anti-doping decisions/announcements (sports bootstrap)
+wtatennis.com:
+  class: outlet
+  tier: T1
+  status: probation
+  reach: proxy
+  streams:
+    - sports
+  probe:
+    url: https://www.wtatennis.com/scores
+    method: proxy
+  lifecycle:
+    - date: 2026-07-17
+      event: seed
+      note: WTA — official women's tennis results/rankings (sports bootstrap)

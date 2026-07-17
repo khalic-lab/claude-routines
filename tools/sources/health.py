@@ -28,7 +28,7 @@ import sys
 import registry
 import lint
 
-LIVE_STREAMS = ("news", "ai-ml", "science", "weekend")
+LIVE_STREAMS = ("news", "ai-ml", "science", "weekend", "sports")
 WINDOW_DAYS = 30
 OUTLET_BAR = 0.20
 INSTITUTIONAL_BAR = 0.30

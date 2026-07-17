@@ -22,6 +22,7 @@ still carries its full prompt inline in the trigger (not shimmed).
 | AI/ML | `ai-ml.md` | `trig_01QVL6eSmHTUrmnSLHrpNN9Q` | `0 10 * * 2,5` (10:00 / 12:00, Tue+Fri) | `claude-opus-4-8` | yes |
 | Science | `science.md` | `trig_01YLiCr5YJ2XNh2QyPbkyzQP` | `0 15 * * 3` (15:00 / 17:00, Wed) | `claude-opus-4-8` | yes |
 | Weekend Deep Read | `weekend.md` | `trig_01XKzge4DxP6wTjLwtkoYeqj` | `30 7 * * 6` (07:30 / 09:30, Sat) | `claude-opus-4-8` | yes |
+| Sports | `sports.md` | `trig_…` (fill after create) | `0 7 * * 1` (07:00 / 09:00, Mon) | `claude-opus-4-8` | yes |
 | Weekly Evaluator | `weekly-evaluator.md` | `trig_01F5npsKTQTLKekAZ5BczKtG` | `30 9 * * 0` (09:30 / 11:30, Sun) | `claude-opus-4-8` | yes |
 | Watch | `watch.md` | `trig_01FgrFMfsreu597nKUXEEQMt` | `0 */4 * * *` (every 4h) | `claude-haiku-4-5-20251001` | no (full inline) |
 
@@ -89,6 +90,18 @@ rather than "brief".
   "sources": [{"git_repository": {"url": "https://github.com/khalic-lab/claude-routines"}}]
 }
 ```
+
+### sports (trigger `trig_…` — fill after create; added 2026-07-17)
+```json
+{
+  "allowed_tools": ["WebFetch", "WebSearch", "Read", "Write", "Bash", "Edit", "Glob", "Grep"],
+  "model": "claude-opus-4-8",
+  "sources": [{"git_repository": {"url": "https://github.com/khalic-lab/claude-routines"}}]
+}
+```
+> Shim shape identical to the other writers (step-3 fetch-proxy token line included — the sports
+> routine fetches official sports sites via the proxy). Name **Sports**, file **sports.md**. Weekly
+> Monday. Do NOT add an `outcomes` key (strands publishes to a `claude/*` branch).
 
 ### weekly-evaluator (trigger `trig_01F5npsKTQTLKekAZ5BczKtG`)
 ```json

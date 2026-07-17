@@ -59,8 +59,8 @@ def _safe_story_id(url):
 _FILE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})-([a-z0-9-]+)\.md$")
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
-STREAM_LABEL = {"news": "News", "ai-ml": "AI/ML", "science": "Science", "weekend": "Weekend"}
-CURRENT_STREAMS = {"news", "ai-ml", "science", "weekend"}
+STREAM_LABEL = {"news": "News", "ai-ml": "AI/ML", "science": "Science", "weekend": "Weekend", "sports": "Sports"}
+CURRENT_STREAMS = {"news", "ai-ml", "science", "weekend", "sports"}
 
 # controlled topic vocabulary — MUST mirror the tagging rubric in
 # routines/_shared/newsroom-ethos.md and DEDUP.md Step C (an out-of-vocab writer tag is dropped
@@ -76,6 +76,7 @@ TOPICS = {
     "health":      ("Health",      "#a44a72"),
     "security":    ("Security",    "#6a4b8a"),
     "tech":        ("Tech",        "#3b6ea5"),
+    "sports":      ("Sports",      "#c26b2e"),
     "world":       ("World",       "#6b6f76"),
 }
 
@@ -292,6 +293,8 @@ def topic_for(story, stream, index_topics):
     healthy = any(k in text.lower() for k in _HEALTH_KW)
     if stream == "ai-ml":                               # single-topic stream: don't let a stray keyword win
         return ["ai-ml"]
+    if stream == "sports":                              # single-topic stream: the stream IS the beat
+        return ["sports"]
     if stream == "science":
         return ["health"] if healthy else ["science"]
     sec = _match(story["section"], _SECTION_RULES)      # news + weekend are mixed

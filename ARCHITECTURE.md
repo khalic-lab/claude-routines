@@ -24,6 +24,7 @@
 ║  │  • AI/ML (+ arXiv papers)     0 10 * * 2,5   _posts/{d}-ai-ml.md      none       │   ║
 ║  │  • Science (non-AI, weekly)   0 15 * * 3     _posts/{d}-science.md    none       │   ║
 ║  │  • Weekend Deep Read          30 7 * * 6     _posts/{d}-weekend.md    digest     │   ║
+║  │  • Sports (Swiss+global)      0 7 * * 1      _posts/{d}-sports.md     none       │   ║
 ║  │  WATCH (claude-haiku-4-5)     0 */4 * * *    pending-notifications/   —          │   ║
 ║  │      reads watches.yml → on match writes stub + updates last_fired              │    ║
 ║  │  EVALUATOR (claude-opus-4-8)  30 9 * * 0     _posts/{d}-evaluator.md  digest     │   ║
@@ -66,6 +67,23 @@
    │  30-day edge cache                │               └────────────────────────────────────┘
    └──────────────────────────────────┘
 ```
+
+> **Added 2026-07-17: Sports stream + topic-selection sync.** (1) **Sports** — a fifth writer
+> (`claude-opus-4-8`, weekly Monday `0 7 * * 1`, `_posts/{d}-sports.md`, no email). Scope: Swiss +
+> global majors (Super League/Swiss NT, UEFA + big-5 football, F1, tennis, alpine skiing, NL/NHL
+> hockey). Primary-source discipline mapped to sport: T1 = official results/standings + federation
+> announcements + CAS/WADA rulings; the transfer-rumour exception (official confirmation is the
+> fact, everything earlier tagged `[rumour]`); anti-commodity mandate (lead with what a result
+> *means*, never the score). `routines/src/sports.md` → `assemble.py`; single-topic beat `sports`
+> (`build_stories_feed` TOPICS `#c26b2e` + stream guard); `sports` added to every stream
+> enumeration (build_stories_feed, build_stats, sources/{registry,health,lint,preflight},
+> dedup, store/verdicts) and the shared beat vocab; registry seeded with 16 sports sources
+> (15 official T1 + BBC Sport, plus SRF gains a `sports` stream). Trigger id: `trig_…` (filled at
+> create; see `routines/MANIFEST.md`). (2) **Topic-selection sync** — the homepage beat-chip
+> selection now roams across devices via the feedback Worker's new `GET|POST /prefs` route
+> (`prefs:{reader}` KV, whole-object LWW-by-ts; the selection is one statement of intent, so it
+> replaces rather than merges). Frontend mirrors read-state's local-first model (`topicPrefs:v1`,
+> debounced push, pull+merge on login). CORS restricted to the site origin like `/readstate`.
 
 > **Added 2026-07-10: whole-system evaluation fixes + passkey accounts (plan
 > `go-ahead-i-trust-memoized-cray`).** A 9-agent read-only sweep found three criticals; all fixed
