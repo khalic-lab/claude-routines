@@ -67,7 +67,7 @@ trigger's id, cron, and full `session_context`.
   - AI/ML (Tue+Fri midday) — `trig_01QVL6eSmHTUrmnSLHrpNN9Q`
   - Science (weekly Wed; ex–Cyber+Papers, security dropped) — `trig_01YLiCr5YJ2XNh2QyPbkyzQP`
   - Weekend Deep Read (Sat) — `trig_01XKzge4DxP6wTjLwtkoYeqj`
-  - Sports (weekly Mon; Swiss + global majors; added 2026-07-17) — `trig_…` (fill after create)
+  - Sports (weekly Mon; Swiss + global majors; added 2026-07-17) — `trig_01PfmuHXkgjhZREW6XfztZrb`
   - Weekly Evaluator (Sun) — `trig_01F5npsKTQTLKekAZ5BczKtG`
   - Watch (topic poll) — `trig_01FgrFMfsreu597nKUXEEQMt`
   - (Markets — `trig_01GBugAS5qw88yQK3tv8kKWx` — **removed 2026-06-18**; trigger left disabled

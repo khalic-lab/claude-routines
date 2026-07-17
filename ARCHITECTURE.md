@@ -78,8 +78,8 @@
 > (`build_stories_feed` TOPICS `#c26b2e` + stream guard); `sports` added to every stream
 > enumeration (build_stories_feed, build_stats, sources/{registry,health,lint,preflight},
 > dedup, store/verdicts) and the shared beat vocab; registry seeded with 16 sports sources
-> (15 official T1 + BBC Sport, plus SRF gains a `sports` stream). Trigger id: `trig_…` (filled at
-> create; see `routines/MANIFEST.md`). (2) **Topic-selection sync** — the homepage beat-chip
+> (15 official T1 + BBC Sport, plus SRF gains a `sports` stream). Trigger id: `trig_01PfmuHXkgjhZREW6XfztZrb`
+> (weekly Mon `0 7 * * 1`; first run 2026-07-20; see `routines/MANIFEST.md`). (2) **Topic-selection sync** — the homepage beat-chip
 > selection now roams across devices via the feedback Worker's new `GET|POST /prefs` route
 > (`prefs:{reader}` KV, whole-object LWW-by-ts; the selection is one statement of intent, so it
 > replaces rather than merges). Frontend mirrors read-state's local-first model (`topicPrefs:v1`,
