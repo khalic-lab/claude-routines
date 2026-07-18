@@ -132,6 +132,17 @@ document.addEventListener('DOMContentLoaded', function () {
     margin:1.1em 0; padding:.5em 1.1em; color:var(--ink); }
   .page__content hr{ border:0; border-top:1px solid var(--rule); margin:2.4em 0; }
 
+  /* tables (the evaluator's health-summary tables) — the theme's table skin assumes the light
+     palette (banded grey header, grey text), which reads near-invisible on dark paper.
+     Re-skin variable-driven so both modes follow the tokens. */
+  .page__content table{ font-family:var(--sans); font-size:.8em; border:1px solid var(--hair);
+    border-collapse:collapse; background:transparent; }
+  .page__content th{ background:var(--panel); color:var(--ink); font-weight:600;
+    border:1px solid var(--hair); }
+  .page__content td{ border:1px solid var(--hair); background:transparent; color:var(--ink); }
+  .page__content tbody tr:nth-child(even), .page__content tbody tr:nth-child(even) td{
+    background:transparent; }
+
   @media (max-width:680px){
     .page__title{ font-size:1.9em; }
     /* comfortable tap targets (>=44px) without shifting layout (padding offset by negative margin) */

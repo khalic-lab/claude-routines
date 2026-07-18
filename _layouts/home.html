@@ -545,37 +545,131 @@ layout: archive
 
     var col = []; for (var i = 0; i < n; i++) col.push(0);
     var notches = [];
+    var placedRec = [];                                   // 1-col placements, for the steal pass
+    var done = visible.map(function(){ return false; });
+    var pos = new Map();                                  // card -> {x,y}, for the shift fallback
+    function put(card, x, y){
+      pos.set(card, { x: x, y: y });
+      card.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    }
+    // Any unplaced 1-col card of height <= room? (a notch nothing can EVER fill is pure dead
+    // space — the pair chooser below penalizes creating one at full weight)
+    function fillable(from, room){
+      for (var q = from; q < visible.length; q++)
+        if (!done[q] && visible[q].__span === 1 && heights[q] + GAP <= room + 0.5) return true;
+      return false;
+    }
+    // Eager backfill at notch creation: repeatedly pull the TALLEST fitting 1-col card from the
+    // whole remaining queue (tallest-fit minimizes the residual). First-fit-by-arrival left
+    // 300px+ holes above leads whenever the next cards happened to be tall — measured maxGap 383.
+    function backfill(nt, from){
+      for (;;){
+        var pick = -1;
+        for (var q = from; q < visible.length; q++){
+          if (done[q] || visible[q].__span !== 1) continue;
+          if (heights[q] + GAP <= nt.room + 0.5 && (pick < 0 || heights[q] > heights[pick])) pick = q;
+        }
+        if (pick < 0) return;
+        done[pick] = true;
+        put(visible[pick], nt.col * (colW + GAP), nt.top);
+        nt.top += heights[pick] + GAP; nt.room -= heights[pick] + GAP;
+      }
+    }
     visible.forEach(function(card, k){                    // pass 3: place
+      if (done[k]) return;                                // already pulled into a notch
       var h = heights[k], x, y;
       if (card.__span === 2){
-        var best = 0, bestY = Infinity;
+        // Choose the adjacent pair by top + waste, not top alone: leveling a lopsided pair
+        // buys a notch, and a notch no remaining card fits is dead space at full cost.
+        var best = 0, bestScore = Infinity, bestY = 0;
         for (var i = 0; i + 1 < n; i++){
           var top = Math.max(col[i], col[i+1]);
-          if (top < bestY){ bestY = top; best = i; }
+          var waste = Math.abs(col[i] - col[i+1]);
+          var score = top + waste * (waste <= 40 || fillable(k + 1, waste) ? 0.3 : 1);
+          if (score < bestScore){ bestScore = score; best = i; bestY = top; }
         }
         var short_ = col[best] <= col[best+1] ? best : best + 1;
-        if (bestY - col[short_] > 40) notches.push({ col: short_, top: col[short_], room: bestY - col[short_] });
-        x = best * (colW + GAP); y = bestY;
-        col[best] = col[best+1] = y + h + GAP;
-      } else {
-        var placed = false;
-        for (var j = 0; j < notches.length; j++){
-          var nt = notches[j];
-          if (h + GAP <= nt.room + 0.5){
-            x = nt.col * (colW + GAP); y = nt.top;
-            nt.top += h + GAP; nt.room -= h + GAP;
-            placed = true; break;
-          }
+        var shortTop = col[short_];
+        put(card, best * (colW + GAP), bestY);
+        col[best] = col[best+1] = bestY + h + GAP;
+        if (bestY - shortTop > 40){
+          var nt2 = { col: short_, top: shortTop, room: bestY - shortTop };
+          backfill(nt2, k + 1);                 // fill from the whole remaining queue, tallest-fit
+          if (nt2.room > 40) notches.push(nt2); // residual stays available to the in-order flow
         }
-        if (!placed){
+      } else {
+        var placedIn = -1;
+        for (var j = 0; j < notches.length; j++){
+          if (h + GAP <= notches[j].room + 0.5){ placedIn = j; break; }
+        }
+        if (placedIn >= 0){
+          var nt = notches[placedIn];
+          put(card, nt.col * (colW + GAP), nt.top);
+          placedRec.push({ card: card, colIdx: nt.col, y: nt.top, h: h });
+          nt.top += h + GAP; nt.room -= h + GAP;
+        } else {
           var c = 0;
           for (var m = 1; m < n; m++) if (col[m] < col[c] - 0.5) c = m;
-          x = c * (colW + GAP); y = col[c];
-          col[c] = y + h + GAP;
+          put(card, c * (colW + GAP), col[c]);
+          placedRec.push({ card: card, colIdx: c, y: col[c], h: h });
+          col[c] = col[c] + h + GAP;
         }
       }
-      card.style.transform = 'translate(' + x + 'px,' + y + 'px)';
     });
+
+    // pass 4: bottom-steal — a residual notch absorbs bottom-of-column 1-col cards; only a
+    // column's bottom-most card can move without leaving a hole behind. This closes the
+    // end-of-feed case (a lead-dense tail leaves notches nothing in the queue could fill —
+    // measured 645px at 2 columns before this pass).
+    var stole = true;
+    while (stole){
+      stole = false;
+      for (var t = 0; t < notches.length; t++){
+        var res = notches[t];
+        if (res.room <= 40) continue;
+        var pick = null;
+        for (var p = 0; p < placedRec.length; p++){
+          var pr = placedRec[p];
+          if (pr.moved || pr.y <= res.top) continue;
+          if (Math.abs(pr.y + pr.h + GAP - col[pr.colIdx]) > 1) continue;   // not its column's bottom
+          if (pr.h + GAP > res.room + 0.5) continue;
+          if (!pick || pr.h > pick.h) pick = pr;                            // tallest-fit
+        }
+        if (!pick && res.room > 150){
+          // Shift-steal fallback for BIG residual holes: the best bottom card overflows the
+          // notch by a small delta -> shift everything at/below the notch's lead down by delta
+          // and steal anyway. Trades a 600px+ hole for a <=100px seam on the sibling column
+          // (the 2-col/653-vs-625 near-miss case).
+          var over = null;
+          for (var p2 = 0; p2 < placedRec.length; p2++){
+            var pr2 = placedRec[p2];
+            if (pr2.moved || pr2.y <= res.top) continue;
+            if (Math.abs(pr2.y + pr2.h + GAP - col[pr2.colIdx]) > 1) continue;
+            var d = pr2.h + GAP - res.room;
+            if (d > 0 && d <= 100 && (!over || d < over.d)) over = { pr: pr2, d: d };
+          }
+          if (over){
+            var leadTop = res.top + res.room, d2 = over.d;
+            visible.forEach(function(vc){
+              var pv = pos.get(vc);
+              if (pv && pv.y >= leadTop && vc !== over.pr.card) put(vc, pv.x, pv.y + d2);
+            });
+            for (var m2 = 0; m2 < n; m2++) if (col[m2] >= leadTop) col[m2] += d2;
+            for (var t2 = 0; t2 < notches.length; t2++) if (notches[t2].top >= leadTop) notches[t2].top += d2;
+            placedRec.forEach(function(pr3){ if (pr3.y >= leadTop) pr3.y += d2; });
+            res.room += d2;
+            pick = over.pr;
+          }
+        }
+        if (pick){
+          col[pick.colIdx] -= pick.h + GAP;
+          put(pick.card, res.col * (colW + GAP), res.top);
+          pick.moved = true;                          // now notch-interior — never steal it again
+          res.top += pick.h + GAP; res.room -= pick.h + GAP;
+          stole = true;
+        }
+      }
+    }
     grid.style.height = Math.max(0, Math.max.apply(null, col.concat([0])) - GAP) + 'px';
     if (!grid.classList.contains('ready'))
       setTimeout(function(){ grid.classList.add('ready'); }, 80);   // no fly-in on first paint
