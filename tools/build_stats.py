@@ -45,7 +45,7 @@ _store_spec.loader.exec_module(_store)
 norm_url = _store.norm_url
 
 WORDS_RE = re.compile(r"^- Word count:\s*~?([\d,]+)", re.M)
-CALLS_RE = re.compile(r"tool calls[^:]*:\s*(\d+)")
+CALLS_RE = re.compile(r"tool calls[^:]*:\s*~?(\d+)")
 STATUS_RE = re.compile(r"^ {2}status:\s*(\S+)", re.M)
 
 

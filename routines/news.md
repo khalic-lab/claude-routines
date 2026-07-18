@@ -170,6 +170,7 @@ comes first.}
 - Sources used: T1 = N items, T2 = N items, T3 = 0 (per policy)
 - Direct fetches: N | via-snippet citations: N
 - Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
+- Token estimate (self-reported, rough — NOT metered): generated ~ (body+footer words / 0.75); distinct content read ~ (fetched/read source + prompt + repo chars / 4). Excludes per-turn context re-billing and prompt caching, so the true billed session cost far exceeds these figures and lives only in the claude.ai run history — the call count above is the better session-cost proxy.
 - Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
 -->
 - Gaps: things you tried to find but couldn't.
