@@ -397,7 +397,8 @@
 | Read state (sync) | Cloudflare KV `readstate:{reader}` (not in repo) | `{sid: {ts, v: 0\|1}}` LWW tombstone map; client shadow `syncState:v1` + paint source `homeRead:v1` in localStorage | homepage JS ↔ feedback-sink Worker (passkey session) |
 | Institutions ledger | `sources/institutions.yml` | `meta.synced_editions` + `aliases:` + per-institution `{class, status, streams, first_seen, last_cited, citations, lifecycle}` | writer bylines → Step C `affiliations` → `institutions.py sync` (Step C.25c); class + aliases hand-curated |
 | Passkey auth | Cloudflare KV `cred:{id}` / `session:{token}` / `chal:{kind}:{c}` (not in repo) | credential pubkey+counter; 90d rolling sessions; single-use challenges TTL 300s | feedback-sink `/auth/*` (registration invite-gated by `INVITE_TOKEN` secret) |
-| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 353 tests: store invariants, fold, registry, institutions, affiliations + prompt-mirror drift, lint, metrics (+ computed briefs dimensions), dedup convergence, reconcile, dual-write byte-identity goldens, fetch wrapper, computed footer, publish orchestrator, watch gate, linkcheck | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`) |
+| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 366 tests: store invariants, fold, registry, institutions, affiliations + prompt-mirror drift, lint, metrics (+ computed briefs dimensions), dedup convergence, reconcile, dual-write byte-identity goldens, fetch wrapper, computed footer, publish orchestrator, watch gate, linkcheck, plane (bake artifact roundtrip, cosine/groupbys, entities + blank-headline record path, thread enrichment) | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`); worker smokes run separately (`node tools/feedback-sink/test/smoke.mjs` 46 checks, `node tools/embed-proxy/test/smoke.mjs` 23 checks) |
+| Plane artifact | Cloudflare KV `plane:v1` on embed-proxy (not in repo; namespace `459b76a2…`) | magic `PLANEv1\0` + meta JSON (n, dim, ts, norms, compact stories incl. entities) + n×1024 float32 vectors (~7.4MB), baked from the ledger | `tools/plane/bake.py --push` (publish-tail `plane-push`, every edition) → embed-proxy `/plane/*` queries (dedup check thread-enrichment, Weekend cross-cutting grounding, ad-hoc); `tools/plane/query.py` = offline reference twin |
 
 ### 1.3 Dedup today
 
@@ -706,7 +707,9 @@ tomorrow" (advisory). All deterministic + offline.
    `export.arxiv.org`, `services.nvd.nist.gov`, `www.cisa.gov`, `www.quantamagazine.org`,
    `embed-proxy.khalic-lab.workers.dev`, `www.nature.com`, `www.aljazeera.com`, `www.ecb.europa.eu`
    (now dead — markets removed; safe to drop), `api.semanticscholar.org`, `www.srf.ch`,
-   `www.letemps.ch`, plus `fetch-proxy.khalic-lab.workers.dev` (added 2026-06-18). The chronic AI/ML
+   `www.letemps.ch`, plus `fetch-proxy.khalic-lab.workers.dev` (added 2026-06-18; since 2026-07-18
+   `embed-proxy.…workers.dev` also serves the analytical plane as `/plane/*` — new capabilities
+   mount on existing allowlisted hostnames because this list is exact-hostname and UI-managed). The chronic AI/ML
    403s were this list not covering lab/news hosts — now solved via the fetch-proxy (§1.4) rather than
    by enumerating every domain.
 2. **Compute-time index store — RESOLVED (2026-06-22): option B**, the in-repo
