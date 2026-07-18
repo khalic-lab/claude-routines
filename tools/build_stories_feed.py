@@ -514,7 +514,7 @@ def load_recent(days):
     window = sorted(p for p in posts if p[0] >= cutoff)
     idx_by_url, idx_by_id = load_index_meta({d for d, _, _ in window})
 
-    stories, seen_urls, joined = [], set(), 0
+    stories, url_pos, ov_flags = [], {}, []
     for date, stream, path in window:
         with open(path) as fh:
             parsed = parse_post(fh.read())
@@ -526,14 +526,19 @@ def load_recent(days):
             if not s["body"]:
                 continue
             nu = norm_url(s["url"])
-            if nu and nu in seen_urls:
-                continue                                # same primary source already on the page
-            if nu:
-                seen_urls.add(nu)
+            replace_at = None
+            if nu and nu in url_pos:
+                # Same primary source already on the page. The window iterates oldest->
+                # newest, so this occurrence is the NEWER telling (an ONGOING update
+                # re-citing its primary): it supersedes the older card in place. Same-date
+                # cross-stream repeats keep the first telling (no basis to prefer either).
+                prev = stories[url_pos[nu]]
+                if prev["date"] == date:
+                    continue
+                replace_at = url_pos[nu]
             hid = "%s-%s-%s" % (date, stream, slugify(s["headline"]))
             im = (nu and idx_by_url.get(nu)) or idx_by_id.get(hid) or {}
-            if im.get("topics") or im.get("importance"):
-                joined += 1
+            overlaid = bool(im.get("topics") or im.get("importance"))
             topics = topic_for(s, stream, im.get("topics"))
             imp = importance_for(pos, lead_pos, singles[pos], im.get("importance"))
             primary = topics[0]
@@ -565,8 +570,15 @@ def load_recent(days):
                 story["affiliations"] = affs
                 story["affiliation_label"] = ", ".join(affs[:2]) + (
                     " +%d" % (len(affs) - 2) if len(affs) > 2 else "")
-            stories.append(story)
-    return stories, max_date, joined
+            if replace_at is not None:
+                stories[replace_at] = story
+                ov_flags[replace_at] = overlaid
+            else:
+                if nu:
+                    url_pos[nu] = len(stories)
+                stories.append(story)
+                ov_flags.append(overlaid)
+    return stories, max_date, sum(ov_flags)
 
 
 MIN_LATEST_EDITION = 6   # each stream's NEWEST edition keeps at least this many stories

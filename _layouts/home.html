@@ -111,9 +111,9 @@ layout: archive
      technical docs. -->
 <div class="hiw" id="hiwModal" aria-hidden="true">
   <div class="hiw__box" role="dialog" aria-modal="true" aria-labelledby="hiwTitle" aria-describedby="hiwIntro">
-    <button type="button" class="hiw__x" aria-label="Close how this works">×</button>
+    <button type="button" class="hiw__x" data-hiw-close aria-label="Close how this works">×</button>
     <h2 class="hiw__title" id="hiwTitle">How this works</h2>
-    <p class="hiw__sub" id="hiwIntro">Five scheduled Claude desks research against shared memory, then publish through Git. Feedback can shape future runs, with Rafael as the editorial control boundary.</p>
+    <p class="hiw__sub" id="hiwIntro">Five scheduled Claude desks research against shared memory, then publish through Git. Rafael gates source policy and most tuning; the one narrow exception is shown below.</p>
 
     <div class="hiw-map">
       <section class="hiw-phase" aria-labelledby="hiwMake">
@@ -161,6 +161,12 @@ layout: archive
           <div><h3 id="hiwRelease">Remember &amp; release</h3><p>GitHub <code>main</code> is the system's memory, hand-off point and release trigger.</p></div>
         </header>
 
+        <aside class="hiw-route-note" data-node="email">
+          <span class="hiw-eyebrow">Routine side-channel</span>
+          <strong>Selected desks → Gmail draft</strong>
+          <p>News, Deep Read and the Evaluator call Gmail directly. Drafts wait for manual send; they do not flow out of GitHub.</p>
+        </aside>
+
         <div class="hiw-hub" data-node="github-main">
           <span class="hiw-eyebrow">Single source of truth</span>
           <strong>GitHub · main</strong>
@@ -179,11 +185,6 @@ layout: archive
             <strong>Alert queue → Mac bridge → ntfy</strong>
             <p>The bridge pulls and drains queued alerts on its local schedule. Watch can enter here without publishing a story.</p>
           </div>
-          <div class="hiw-lane" data-node="email">
-            <span class="hiw-eyebrow">Selected editions</span>
-            <strong>Gmail draft → manual send</strong>
-            <p>News, Weekend and Evaluator can prepare a draft; nothing is auto-sent.</p>
-          </div>
         </div>
       </section>
 
@@ -194,7 +195,7 @@ layout: archive
         </header>
 
         <div class="hiw-path hiw-path--four">
-          <div class="hiw-node" data-node="reader-feedback"><strong>Vote or propose</strong><span>Useful · not useful · optional reason · brief idea</span></div>
+          <div class="hiw-node" data-node="reader-feedback"><strong>Vote on a story</strong><span>Useful · not useful · optional reason</span></div>
           <span class="hiw-arrow" aria-hidden="true">→</span>
           <div class="hiw-node" data-node="feedback-worker"><strong>Feedback Worker</strong><span>Validates and queues the signal</span></div>
           <span class="hiw-arrow" aria-hidden="true">→</span>
@@ -202,6 +203,12 @@ layout: archive
           <span class="hiw-arrow" aria-hidden="true">→</span>
           <div class="hiw-node" data-node="evaluator"><strong>Sunday Evaluator</strong><span>Reads feedback, health and continuity; proposes changes</span></div>
         </div>
+
+        <aside class="hiw-route-note" data-node="proposal">
+          <span class="hiw-eyebrow">Parallel reader input</span>
+          <strong>Propose a brief → Worker queue → bridge → <code>proposals/*.jsonl</code></strong>
+          <p>The Evaluator surfaces or folds unconsumed ideas. They stay separate from the story-feedback ledger.</p>
+        </aside>
 
         <div class="hiw-gate" aria-label="Editorial approval path">
           <div class="hiw-node"><strong>Recommendations</strong><span>Prompt, profile and source-policy changes</span></div>
@@ -263,13 +270,15 @@ layout: archive
       </li>
     </ul>
     <p class="hiw-read">Prompts and editorial policy are versioned in Git; every scheduled run pulls the latest approved version.</p>
+    <button type="button" class="hiw__close-end" data-hiw-close>Close</button>
   </div>
 </div>
 <script>
 (function () {
   var btn = document.getElementById('hiwOpen'), modal = document.getElementById('hiwModal');
   if (!btn || !modal) return;
-  var x = modal.querySelector('.hiw__x'), lastFocus = null;
+  var closeButtons = modal.querySelectorAll('[data-hiw-close]');
+  var x = closeButtons[0], lastFocus = null;
   function show(){
     lastFocus = document.activeElement;
     modal.scrollTop = 0;
@@ -288,7 +297,9 @@ layout: archive
     lastFocus = null;
   }
   btn.addEventListener('click', show);
-  x.addEventListener('click', hide);
+  Array.prototype.forEach.call(closeButtons, function (closeButton) {
+    closeButton.addEventListener('click', hide);
+  });
   modal.addEventListener('click', function (e) { if (e.target === modal) hide(); });
   modal.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') { e.preventDefault(); hide(); return; }
@@ -541,7 +552,7 @@ layout: archive
   /* ---- "How this works" (hiw-) — trigger under the tagline + pipeline-flow modal ---- */
   .hiw-open{ display:flex; align-items:center; gap:.55em; margin:-1.15em auto 2em;
     background:transparent; border:1px solid var(--hair); border-radius:2px; cursor:pointer;
-    color:var(--muted-ui); font-family:var(--sans); font-size:.6rem; text-transform:uppercase;
+    color:var(--muted-ui); font-family:var(--sans); font-size:.7rem; text-transform:uppercase;
     letter-spacing:.12em; padding:5px 11px; }
   .hiw-open:hover{ color:var(--accent); border-color:var(--accent); }
   .hiw-open svg{ width:26px; height:8px; fill:none; stroke:currentColor; stroke-width:1.3; }
@@ -559,6 +570,10 @@ layout: archive
     align-items:center; justify-content:center; background:none; border:0; font-size:1.5em;
     line-height:1; cursor:pointer; color:var(--muted); }
   .hiw__x:hover{ color:var(--ink); }
+  .hiw__close-end{ display:block; min-width:88px; min-height:44px; margin:18px 0 0 auto;
+    padding:8px 16px; background:transparent; border:1px solid var(--rule); color:var(--ink);
+    font-family:var(--sans); font-size:.75rem; cursor:pointer; }
+  .hiw__close-end:hover{ border-color:var(--accent); color:var(--accent); }
   .hiw__title{ padding-right:42px; font-family:var(--display); font-weight:700; font-size:1.55em; margin:0 0 .2em; }
   .hiw__sub{ max-width:65ch; font-family:var(--serif); font-size:.9em; line-height:1.5;
     color:var(--muted); margin:0 0 1.15em; }
@@ -569,7 +584,7 @@ layout: archive
   .hiw-phase{ padding:18px 0 20px; border-bottom:1px solid var(--rule); }
   .hiw-phase__head{ display:grid; grid-template-columns:34px minmax(0,1fr); gap:10px;
     align-items:start; margin:0 0 12px; }
-  .hiw-phase__num{ font-family:var(--sans); font-size:.62rem; letter-spacing:.12em;
+  .hiw-phase__num{ font-family:var(--sans); font-size:.7rem; letter-spacing:.12em;
     color:var(--accent); padding-top:4px; }
   .hiw-phase__head h3{ margin:0; font-family:var(--display); font-size:1.05rem; font-weight:700; }
   .hiw-phase__head p{ margin:2px 0 0; font-family:var(--serif); font-size:.78rem;
@@ -581,7 +596,7 @@ layout: archive
     text-align:center; font-family:var(--sans); }
   .hiw-desks strong, .hiw-desks span{ display:block; }
   .hiw-desks strong{ font-size:.7rem; letter-spacing:.04em; }
-  .hiw-desks span{ margin-top:3px; color:var(--muted); font-size:.61rem;
+  .hiw-desks span{ margin-top:3px; color:var(--muted); font-size:.7rem;
     text-transform:uppercase; letter-spacing:.08em; }
   .hiw-down{ display:block; height:22px; text-align:center; color:var(--accent); line-height:22px; }
 
@@ -594,14 +609,14 @@ layout: archive
     font-family:var(--sans); line-height:1.35; }
   .hiw-node strong, .hiw-node > span{ display:block; }
   .hiw-node strong{ font-size:.72rem; letter-spacing:.02em; }
-  .hiw-node > span:not(.hiw-eyebrow){ margin-top:4px; color:var(--muted); font-size:.64rem; }
+  .hiw-node > span:not(.hiw-eyebrow){ margin-top:4px; color:var(--muted); font-size:.7rem; }
   .hiw-node--memory{ border-color:var(--rule); }
   .hiw-verdicts{ list-style:none; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
     gap:4px; margin:9px 0 0; padding:0; }
   .hiw-verdicts li{ min-width:0; padding:5px 4px; border-top:1px solid var(--hair); text-align:center; }
   .hiw-verdicts b, .hiw-verdicts small{ display:block; }
-  .hiw-verdicts b{ font-size:.56rem; text-transform:uppercase; letter-spacing:.08em; }
-  .hiw-verdicts small{ margin-top:2px; color:var(--muted); font-size:.55rem; line-height:1.2; }
+  .hiw-verdicts b{ font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; }
+  .hiw-verdicts small{ margin-top:2px; color:var(--muted); font-size:.7rem; line-height:1.2; }
   .hiw-sidecar{ margin:10px 0 0; padding:8px 10px; border-left:2px solid var(--accent);
     background:var(--panel); color:var(--muted); font-family:var(--serif); font-size:.72rem; line-height:1.45; }
   .hiw-sidecar b{ color:var(--ink); }
@@ -610,12 +625,17 @@ layout: archive
     box-shadow:inset 3px 0 0 var(--accent); }
   .hiw-hub strong{ display:block; margin-top:3px; font-family:var(--display); font-size:1rem; }
   .hiw-hub p{ margin:5px 0 0; color:var(--muted); font-family:var(--serif); font-size:.72rem; line-height:1.45; }
-  .hiw-eyebrow{ display:block; font-family:var(--sans); color:var(--accent); font-size:.56rem;
+  .hiw-eyebrow{ display:block; font-family:var(--sans); color:var(--accent); font-size:.7rem;
     text-transform:uppercase; letter-spacing:.12em; }
-  .hiw-release{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .hiw-route-note{ margin:0 0 12px; padding:10px 12px; border-left:2px solid var(--accent);
+    background:var(--panel); }
+  .hiw-path + .hiw-route-note{ margin:12px 0 0; }
+  .hiw-route-note strong{ display:block; margin-top:4px; font-family:var(--sans); font-size:.75rem; }
+  .hiw-route-note p{ margin:4px 0 0; color:var(--muted); font-family:var(--serif); font-size:.72rem; line-height:1.45; }
+  .hiw-release{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
   .hiw-lane{ min-width:0; padding:10px 11px; background:var(--card); border:1px solid var(--hair); }
   .hiw-lane strong{ display:block; margin-top:4px; font-family:var(--sans); font-size:.7rem; line-height:1.3; }
-  .hiw-lane p{ margin:5px 0 0; color:var(--muted); font-family:var(--serif); font-size:.67rem; line-height:1.4; }
+  .hiw-lane p{ margin:5px 0 0; color:var(--muted); font-family:var(--serif); font-size:.7rem; line-height:1.4; }
 
   .hiw-gate{ margin-top:10px; }
   .hiw-node--gate{ position:relative; border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }
@@ -627,16 +647,16 @@ layout: archive
 
   /* Evidence + editorial contract close the explainer without being confused for topology. */
   .hiw-h{ display:flex; align-items:center; gap:10px; margin:22px 0 10px; font-family:var(--sans);
-    font-weight:700; font-size:.6rem; text-transform:uppercase; letter-spacing:.16em; color:var(--muted); }
+    font-weight:700; font-size:.7rem; text-transform:uppercase; letter-spacing:.16em; color:var(--muted); }
   .hiw-h::after{ content:""; flex:1; height:1px; background:var(--hair); }
   .hiw-rules{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .hiw-rule{ display:flex; gap:10px; align-items:center; background:var(--card);
     border:1px solid var(--hair); padding:9px 11px; min-width:0;
-    font-family:var(--sans); font-size:.68rem; letter-spacing:.02em; line-height:1.35; color:var(--ink); }
+    font-family:var(--sans); font-size:.7rem; letter-spacing:.02em; line-height:1.35; color:var(--ink); }
   .hiw-rule svg{ width:16px; height:16px; flex:none; fill:none; stroke:var(--accent);
     stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
   .hiw-chips{ display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
-  .hiw-chips i{ font-style:normal; font-family:var(--sans); font-size:.56rem; letter-spacing:.06em;
+  .hiw-chips i{ font-style:normal; font-family:var(--sans); font-size:.7rem; letter-spacing:.06em;
     text-transform:uppercase; color:var(--muted); border:1px solid var(--hair); border-radius:999px;
     padding:2px 8px; white-space:nowrap; }
   .hiw-read{ margin:14px 0 0; font-family:var(--serif); font-size:.85em; color:var(--muted); }
@@ -644,18 +664,31 @@ layout: archive
   .hiw-stats li{ background:var(--card); border:1px solid var(--hair); padding:10px 12px; min-width:0; }
   .hiw-stats b{ display:block; font-family:var(--display); font-weight:700; font-size:1.5rem;
     line-height:1.1; color:var(--ink); font-variant-numeric:tabular-nums; }
-  .hiw-stats span{ display:block; margin-top:4px; font-family:var(--sans); font-size:.58rem;
+  .hiw-stats span{ display:block; margin-top:4px; font-family:var(--sans); font-size:.7rem;
     text-transform:uppercase; letter-spacing:.08em; line-height:1.5; color:var(--muted); }
   .hiw-stat-line{ margin:10px 0 0; font-family:var(--serif); font-size:.8em; line-height:1.5; color:var(--muted); }
   .hiw-stat-line strong{ color:var(--ink); }
   @media (max-width:700px){
     .hiw{ padding:12px; }
     .hiw__box{ padding:1.25em 1em; }
+    .hiw-phase__num{ font-size:.7rem; }
+    .hiw-phase__head p{ font-size:.86rem; }
     .hiw-desks{ grid-template-columns:repeat(2,minmax(0,1fr)); }
     .hiw-desks li:last-child:nth-child(odd){ grid-column:1 / -1; }
+    .hiw-desks strong{ font-size:.8rem; }
+    .hiw-desks span{ font-size:.7rem; }
     .hiw-path, .hiw-path--four, .hiw-gate{ grid-template-columns:minmax(0,1fr); }
     .hiw-arrow{ height:22px; transform:rotate(90deg); }
+    .hiw-node strong{ font-size:.82rem; }
+    .hiw-node > span:not(.hiw-eyebrow){ font-size:.75rem; }
+    .hiw-verdicts b, .hiw-verdicts small, .hiw-eyebrow{ font-size:.7rem; }
+    .hiw-sidecar, .hiw-hub p, .hiw-loopback{ font-size:.78rem; }
     .hiw-release{ grid-template-columns:minmax(0,1fr); }
+    .hiw-lane strong, .hiw-sync-note strong{ font-size:.8rem; }
+    .hiw-lane p, .hiw-sync-note p{ font-size:.76rem; }
+    .hiw-h{ font-size:.7rem; }
+    .hiw-rule{ font-size:.78rem; }
+    .hiw-chips i, .hiw-stats span{ font-size:.7rem; }
   }
   @media (max-width:480px){ .hiw-rules{ grid-template-columns:1fr; } .hiw-stats{ grid-template-columns:1fr 1fr; } }
 </style>

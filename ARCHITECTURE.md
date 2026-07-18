@@ -95,7 +95,13 @@
 > execution-verified findings folded in: the sibling-day lint hole, a tag_missing flood on
 > pre-registry editions, dead-buffer candidates_open inflation, a page-global redaction
 > whitelist bypass in check_publish, and unmatched-fence prose loss in the editorial
-> extractor — all pinned by tests).
+> extractor — all pinned by tests). Plus the audit's two unnumbered risks: homepage URL
+> dedup now keeps the NEWEST telling of a re-cited primary URL (in-place supersede;
+> same-date cross-stream repeats keep the first), and `dedup.canon_url` keeps
+> discriminating query params (tracking-stripped, sorted) so query-keyed CMS stories
+> (`watch?v=`, `article.php?id=`) no longer falsely collide into an unconditional
+> exact-key drop — the reverse miss still falls through to the cosine check. The
+> canon/norm split itself stays deliberate: identity key vs feed↔index join key.
 
 > **Fixed 2026-07-18 (night): editorial sections restored to the homepage.** Retiring
 > the brief pages orphaned the briefs' SECTION-level synthesis prose — Weekend's "Cross-cutting

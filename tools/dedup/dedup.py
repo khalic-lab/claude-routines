@@ -208,17 +208,33 @@ def arxiv_ids(*texts):
 
 
 def canon_url(url):
-    """Canonical key for exact-match dedup: lowercased host (www. stripped) + path,
-    no scheme/query/fragment/trailing-slash. None if not a URL."""
+    """Canonical key for exact-match dedup: lowercased host (www. stripped) + path +
+    DISCRIMINATING query params (tracking params utm_*/ref=/fbclid stripped, the rest
+    kept, sorted), no scheme/fragment/trailing-slash. None if not a URL.
+
+    Query params are kept since 2026-07-18 (external-audit follow-up): query-keyed CMSs
+    (watch?v=, article.php?id=) distinguish stories ONLY by query, and an exact-key hit
+    marks a repeat UNCONDITIONALLY -- no cosine backstop -- so a query-blind key silently
+    drops genuinely new stories. The reverse miss (same article cited with and without a
+    benign param) merely falls through to the embedding check, which still catches it.
+    Keys are recomputed from stored URLs at every check, so history re-keys consistently.
+    (Deliberately different from store.norm_url: that is a feed<->index JOIN key, this is
+    a story IDENTITY key -- alignment is on tracking-param stripping only.)"""
     if not url:
         return None
-    m = re.match(r"https?://([^/?#]+)([^?#]*)", url.strip(), re.I)
+    m = re.match(r"https?://([^/?#]+)([^?#]*)(?:\?([^#]*))?", url.strip(), re.I)
     if not m:
         return None
     host = m.group(1).lower()
     if host.startswith("www."):
         host = host[4:]
-    return host + re.sub(r"/+$", "", m.group(2))
+    key = host + re.sub(r"/+$", "", m.group(2))
+    if m.group(3):
+        keep = sorted(p for p in m.group(3).split("&")
+                      if p and not p.lower().startswith(("utm_", "ref=", "fbclid")))
+        if keep:
+            key += "?" + "&".join(keep)
+    return key
 
 
 def exact_keys(headline, summary, url):
