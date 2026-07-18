@@ -75,8 +75,10 @@
 > homefeed never carried them and they became unreachable anywhere on the site.
 > `build_stories_feed.py` now extracts those sections (heading-matched, emoji/hyphen-tolerant;
 > latest edition per stream, ≤3, sanitized inline HTML — links/bold/em rebuilt from escaped
-> text) into `feed.editorials`; the homepage renders them as 2-col **Editorial** cards (panel
-> background, inverted chip, italic title) placed at the top of the grid. Editorial cards have
+> text) into `feed.editorials`; the homepage renders them as 2-col **AI-editorial** cards (panel
+> background, inverted "AI editorial" chip, italic title, and a standing disclosure line —
+> "Opinion, written by the desk's AI … not itself sourced reporting") placed at the top of the
+> grid. Editorial cards have
 > no read state (excluded from the unread count) and hide under beat filters. Two landed on
 > rebuild: Weekend 07-18 (5 paras) + Science 07-08 (2 paras). One self-inflicted bug caught by
 > the suite mid-build: a duplicate `_MONTHS` constant shifted every card's date label by a

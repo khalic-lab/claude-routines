@@ -215,7 +215,9 @@ def ed_card(e):
             '<div class="fcard__in"><div class="fcard__top">'
             '<span class="fcard__beat"><span class="ff-dot"></span>%s</span>'
             '<span class="fcard__rank" data-imp="ed"></span></div>'
-            '<h2 class="fcard__hl">%s</h2>%s</div></article>'
+            '<h2 class="fcard__hl">%s</h2>'
+            '<p class="fcard__eddisc">Opinion, written by the desk\'s AI — a synthesis across '
+            'the week\'s sourced stories, not itself sourced reporting.</p>%s</div></article>'
             % (esc(e.get("kicker")), esc(e.get("title")), paras))
 
 
