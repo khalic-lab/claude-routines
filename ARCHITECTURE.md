@@ -69,6 +69,19 @@
    └──────────────────────────────────┘
 ```
 
+> **Fixed 2026-07-18 (night, latest): editorial sections restored to the homepage.** Retiring
+> the brief pages orphaned the briefs' SECTION-level synthesis prose — Weekend's "Cross-cutting
+> threads" and the Science/Sports "Why it matters" roundups are not per-story content, so the
+> homefeed never carried them and they became unreachable anywhere on the site.
+> `build_stories_feed.py` now extracts those sections (heading-matched, emoji/hyphen-tolerant;
+> latest edition per stream, ≤3, sanitized inline HTML — links/bold/em rebuilt from escaped
+> text) into `feed.editorials`; the homepage renders them as 2-col **Editorial** cards (panel
+> background, inverted chip, italic title) placed at the top of the grid. Editorial cards have
+> no read state (excluded from the unread count) and hide under beat filters. Two landed on
+> rebuild: Weekend 07-18 (5 paras) + Science 07-08 (2 paras). One self-inflicted bug caught by
+> the suite mid-build: a duplicate `_MONTHS` constant shifted every card's date label by a
+> month — the goldens flagged it instantly.
+
 > **Added 2026-07-18 (night, later): writers WIRED to the plane — continuity gets real data.**
 > Two hooks, both live at the next fires: **(1)** `dedup.py check` now enriches every ONGOING
 > verdict with `thread` — the matched story's ACTUAL coverage arc (last ≤8 entries

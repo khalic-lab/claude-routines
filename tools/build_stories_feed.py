@@ -373,6 +373,113 @@ def load_index_meta(window_dates):
     return by_url, by_id
 
 
+# --- editorials (2026-07-18) -----------------------------------------------------------------
+# The briefs' SECTION-level synthesis prose (Weekend "Cross-cutting threads", Science/Sports
+# "Why it matters") is not per-story, so it never became feed cards — and with the individual
+# brief pages retired the same day, it had nowhere on the site at all. Extract those sections
+# into feed["editorials"]; the homepage renders them as distinct 2-col editorial cards.
+_EDITORIAL_HEADINGS = {
+    "cross cutting threads": "Cross-cutting threads",
+    "why it matters": "Why it matters",
+}
+_ED_HEAD_RE = re.compile(r"^##\s+(.*)$")
+_ED_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
+_ED_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+_ED_EM_RE = re.compile(r"(?<!\*)\*([^*\n]+)\*(?!\*)")
+_ED_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _editorial_heading(line):
+    m = _ED_HEAD_RE.match(line)
+    if not m:
+        return None
+    title = _strip_md(m.group(1)).strip()
+    # collapse every non-letter run to one space so emoji AND hyphens normalize away
+    # ("🧠 Cross-cutting threads" -> "cross cutting threads")
+    key = re.sub(r"[^a-z]+", " ", title.lower()).strip()
+    return _EDITORIAL_HEADINGS.get(key)
+
+
+def _ed_inline_html(text):
+    """Markdown -> SAFE html for one paragraph: everything escaped, then only links/bold/em
+    rebuilt from the escaped text. Source HTML (e.g. anchor.py's <a id> stubs) is stripped."""
+    import html as _h
+    s = _ED_TAG_RE.sub("", text).replace("`", "")
+    s = _h.escape(s, quote=False)
+    s = _ED_LINK_RE.sub(
+        lambda m: '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>'
+        % (_h.escape(m.group(2), quote=True), m.group(1)), s)
+    s = _ED_BOLD_RE.sub(r"<strong>\1</strong>", s)
+    s = _ED_EM_RE.sub(r"<em>\1</em>", s)
+    return s.strip()
+
+
+def _ed_paragraphs(lines, cap=6):
+    """Section lines -> [html paragraph]: blank-line-delimited chunks, '- ' bullets split out,
+    wrapped lines joined."""
+    paras, chunk = [], []
+
+    def flush():
+        if chunk:
+            paras.append(_ed_inline_html(" ".join(chunk)))
+            del chunk[:]
+
+    for ln in lines:
+        stripped = ln.strip()
+        if not stripped:
+            flush()
+        elif stripped.startswith("- "):
+            flush()
+            chunk.append(stripped[2:])
+            flush()
+        else:
+            chunk.append(stripped)
+    flush()
+    return [p for p in paras if p][:cap]
+
+
+def load_editorials(days):
+    """Latest edition's editorial section per stream, newest first, max 3 cards."""
+    posts = []
+    for path in glob.glob(os.path.join(POSTS_DIR, "*.md")):
+        m = _FILE_RE.search(os.path.basename(path))
+        if m and m.group(2) in CURRENT_STREAMS:
+            posts.append((m.group(1), m.group(2), path))
+    if not posts:
+        return []
+    cutoff = (_dt.date.fromisoformat(max(p[0] for p in posts)) - _dt.timedelta(days=days)).isoformat()
+
+    by_stream = {}
+    for date, stream, path in sorted(posts):
+        if date < cutoff:
+            continue
+        with open(path) as fh:
+            lines = fh.read().splitlines()
+        i = 0
+        while i < len(lines):
+            title = _editorial_heading(lines[i])
+            if title is None:
+                i += 1
+                continue
+            j = i + 1
+            body = []
+            while j < len(lines) and not lines[j].startswith("## "):
+                body.append(lines[j])
+                j += 1
+            paras = _ed_paragraphs(body)
+            if paras:
+                d = _dt.date.fromisoformat(date)
+                label = "%s %d" % (_MONTHS[d.month - 1], d.day)
+                by_stream[stream] = {         # later (newer) editions overwrite: latest wins
+                    "stream": stream, "date": date,
+                    "date_label": label,
+                    "kicker": "%s · %s" % (STREAM_LABEL.get(stream, stream), label),
+                    "title": title, "paras": paras,
+                }
+            i = j
+    return sorted(by_stream.values(), key=lambda e: e["date"], reverse=True)[:3]
+
+
 def load_recent(days):
     posts = []
     for path in glob.glob(os.path.join(POSTS_DIR, "*.md")):
@@ -501,7 +608,9 @@ def main():
     topics = [{"key": k, "label": TOPICS[k][0], "color": TOPICS[k][1], "count": counts[k]}
               for k in sorted(counts, key=lambda k: (-counts[k], k)) if k in TOPICS]
 
-    feed = {"generated": max_date, "count": len(stories), "topics": topics, "stories": stories}
+    editorials = load_editorials(args.days)
+    feed = {"generated": max_date, "count": len(stories), "topics": topics,
+            "editorials": editorials, "stories": stories}
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w") as fh:
         json.dump(feed, fh, ensure_ascii=False, indent=1)
@@ -511,6 +620,8 @@ def main():
     print("wrote %d/%d stories (%d beats, streams: %s) -> %s  [lead=%d standard=%d brief=%d, through %s]"
           % (len(stories), n_parsed, len(topics), ",".join(streams),
              os.path.relpath(args.out, ROOT), by[3], by[2], by[1], max_date))
+    print("editorials: %d (%s)" % (len(editorials),
+          ", ".join("%s %s" % (e["stream"], e["date"]) for e in editorials) or "none in window"))
     print("index overlay: %d/%d stories carry writer-supplied topics/importance"
           % (joined, n_parsed))                      # 0 is EXPECTED until routines start tagging
 

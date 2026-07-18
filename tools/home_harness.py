@@ -207,6 +207,18 @@ def card(s):
     }
 
 
+def ed_card(e):
+    """Mirrors the editorial-card Liquid in _layouts/home.html (paras are pre-sanitized html)."""
+    esc = lambda x: html.escape(str(x or ""))
+    paras = "".join('<p class="fcard__edp">%s</p>' % p for p in e.get("paras", []))
+    return ('<article class="fcard fcard--ed lead" data-topics="" data-imp="2">'
+            '<div class="fcard__in"><div class="fcard__top">'
+            '<span class="fcard__beat"><span class="ff-dot"></span>%s</span>'
+            '<span class="fcard__rank" data-imp="ed"></span></div>'
+            '<h2 class="fcard__hl">%s</h2>%s</div></article>'
+            % (esc(e.get("kicker")), esc(e.get("title")), paras))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="/tmp/home-harness.html")
@@ -236,7 +248,8 @@ def main():
 <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
 </div></div>
 %s%s%s%s""" % (TOKENS, styles, feed["count"], chips, SYNC_UI,
-               "".join(card(s) for s in feed["stories"]), PRE_SYNC, script, GEOM_CHECK, SYNC_CHECK)
+               "".join(ed_card(e) for e in feed.get("editorials", []))
+               + "".join(card(s) for s in feed["stories"]), PRE_SYNC, script, GEOM_CHECK, SYNC_CHECK)
 
     with open(args.out, "w") as fh:
         fh.write(page)
