@@ -156,6 +156,28 @@ def embed_text(headline, summary):
     return s[:400]
 
 
+def url_headline(url):
+    """Readable fallback headline from a URL's last meaningful path segment(s).
+
+    Deterministic backstop for writer payloads with a BLANK headline: slugify("") is the
+    'story' sentinel, so every blank-headline story in an edition collapsed onto the same
+    legacy id AND the same thread (6-way collision + degenerate thread, 2026-07-18-weekend).
+    Never returns an empty string for a URL with a path; caller falls back to 'story' only
+    when there is truly nothing to derive."""
+    if not url:
+        return ""
+    path = re.sub(r"[?#].*$", "", str(url))
+    path = re.sub(r"^https?://[^/]+", "", path).strip("/")
+    if not path:
+        return ""
+    segs = [s for s in path.split("/") if s]
+    tail = segs[-1]
+    tail = re.sub(r"\.(html?|pdf|md)$", "", tail, flags=re.I)
+    if len(tail) <= 3 and len(segs) >= 2:      # e.g. trailing version/id stub — take two
+        tail = segs[-2] + " " + tail
+    return re.sub(r"[-_+]+", " ", tail).strip()[:90]
+
+
 def source_domain(url):
     if not url:
         return None
@@ -466,6 +488,7 @@ def extract_stories(md_text):
 _PAREN_RE = re.compile(r"\(([^()]*)\)")
 _AFFIL_MORE_RE = re.compile(r"\s*\+\s*\d+\s*more\s*$", re.I)
 _AFFIL_MAX = 6  # more institutions than this in one parenthetical reads as prose, not a byline
+_ENTITY_MAX = 8  # writer-supplied entity tags per story (analytical-plane graph nodes)
 # a line is a PAPER byline (eligible for affiliation parse) only if it carries a paper marker;
 # keeps news-prose parentheticals — "(Reuters)", "(the SNB)" — out of the affiliation field.
 _PAPER_LINE_RE = re.compile(r"arxiv|\[preprint|published 2\d{3}|doi\.org|biorxiv|medrxiv", re.I)
@@ -940,6 +963,13 @@ def cmd_record(args):
             if t is not None:
                 claimed.add(t)
                 prior = existing[t]
+        # Blank-headline backstop (2026-07-18): derive a readable headline from the URL so
+        # distinct stories never collapse onto the slugify("") == "story" id/thread sentinel.
+        headline = (s.get("headline") or "").strip()
+        if not headline:
+            headline = url_headline(s.get("url"))
+            if headline:
+                s = dict(s, headline=headline)
         hid = s.get("id") or f"{date}-{slug}-{slugify(s.get('headline',''))}"
         url = s.get("url")
         src_domain = s.get("source_domain") or source_domain(url)
@@ -984,6 +1014,12 @@ def cmd_record(args):
         affs = s.get("affiliations")
         if not (isinstance(affs, list) and affs) and prior is not None:
             affs = prior.get("affiliations")
+        # entities (analytical plane, 2026-07-18): writer-supplied actors/places/artifacts —
+        # the graph's node vocabulary. Same only-when-present contract as affiliations
+        # (entity-less payloads stay byte-identical; prior value survives an omitting re-record).
+        ents = s.get("entities")
+        if not (isinstance(ents, list) and ents) and prior is not None:
+            ents = prior.get("entities")
         rec = {
             "id": hid,
             "date": date,
@@ -1011,6 +1047,8 @@ def cmd_record(args):
         }
         if isinstance(affs, list) and affs:
             rec["affiliations"] = [str(a).strip() for a in affs if str(a).strip()][:_AFFIL_MAX]
+        if isinstance(ents, list) and ents:
+            rec["entities"] = [str(e).strip() for e in ents if str(e).strip()][:_ENTITY_MAX]
         records.append(rec)
     path = write_index_file(date, slug, records)
     removed = prune_index(args.keep_days, as_of=_parse_date(args.date))
