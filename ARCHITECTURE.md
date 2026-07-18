@@ -112,8 +112,12 @@
 > text) into `feed.editorials`; the homepage renders them as 2-col **AI-editorial** cards (panel
 > background, inverted "AI editorial" chip, italic title, and a standing disclosure line —
 > "Opinion, written by the desk's AI … not itself sourced reporting") placed at the top of the
-> grid. Editorial cards have
-> no read state (excluded from the unread count) and hide under beat filters. Two landed on
+> grid. Editorial cards hide under beat filters; since later the same evening they are
+> read-markable like stories (explicit ✓ only — no headline-open or vote implicit paths, as they
+> have neither), keyed `ed-<stream>-<date>` on the article element in the same `homeRead:v1`
+> map, so they count in the unread badge, obey the Unread/Read filter, and roam through the
+> `/readstate` sync unchanged (the Worker is key-agnostic). A fresh editorial for the same desk
+> gets a new id and comes back unread. Two landed on
 > rebuild: Weekend 07-18 (5 paras) + Science 07-08 (2 paras). One self-inflicted bug caught by
 > the suite mid-build: a duplicate `_MONTHS` constant shifted every card's date label by a
 > month — the goldens flagged it instantly.

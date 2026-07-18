@@ -24,6 +24,9 @@ exercising the passkey read-state sync engine (grep for 'SYNC'):
   URL + #synced -> seeded session + stubbed GET /readstate: expects gets=1 painted=1
                    unpainted=1 shadow=1 (remote read paints; newer remote tombstone
                    unmarks a locally-read card; both land in the syncState:v1 shadow).
+Both modes also expect edread=1 (editorial cards are read-markable since 2026-07-18: the ✓
+toggles is-read and writes/clears an ed-<stream>-<date> key in homeRead:v1); -1 means no
+editorial card was in the feed window, which is only OK if homefeed.json truly has none.
 """
 import argparse
 import html
@@ -158,12 +161,27 @@ setTimeout(function(){
     var st = {}; try { st = JSON.parse(localStorage.getItem('syncState:v1') || '{}'); } catch(e){}
     shadow = (st[sids[0]] && st[sids[0]].v === 1 && st[sids[1]] && st[sids[1]].v === 0) ? 1 : 0;
   }
+  // editorial read state (2026-07-18): clicking the ✓ on an ed- card must toggle is-read and
+  // land the ed-<stream>-<date> id in homeRead:v1; a second click must fully undo both.
+  var edread = -1;
+  var edCard = document.querySelector('.fcard--ed[data-story]');
+  var edBtn = edCard && edCard.querySelector('.fcard__read');
+  if (edCard && edBtn){
+    var edSid = edCard.dataset.story;
+    edBtn.click();
+    var m1 = {}; try { m1 = JSON.parse(localStorage.getItem('homeRead:v1') || '{}'); } catch(e){}
+    var on = edCard.classList.contains('is-read') && !!m1[edSid] && edSid.indexOf('ed-') === 0;
+    edBtn.click();
+    var m2 = {}; try { m2 = JSON.parse(localStorage.getItem('homeRead:v1') || '{}'); } catch(e){}
+    var off = !edCard.classList.contains('is-read') && !m2[edSid];
+    edread = (on && off) ? 1 : 0;
+  }
   var aff = document.getElementById('ffSync');
   var d = document.createElement('div'); d.id = 'synccheck';
   d.textContent = 'SYNC mode=' + (location.hash === '#synced' ? 'in' : 'out') + ' rsCalls=' + rs.length +
     ' gets=' + gets + ' affordance=' + (aff && !aff.hidden ? 1 : 0) +
     ' painted=' + painted + ' unpainted=' + unpainted + ' shadow=' + shadow +
-    ' prefsCalls=' + prefsCalls + ' prefsRs=' + prefsRs;
+    ' prefsCalls=' + prefsCalls + ' prefsRs=' + prefsRs + ' edread=' + edread;
   document.body.appendChild(d);
 }, 4500);
 </script>"""
@@ -211,14 +229,19 @@ def ed_card(e):
     """Mirrors the editorial-card Liquid in _layouts/home.html (paras are pre-sanitized html)."""
     esc = lambda x: html.escape(str(x or ""))
     paras = "".join('<p class="fcard__edp">%s</p>' % p for p in e.get("paras", []))
-    return ('<article class="fcard fcard--ed lead" data-topics="" data-imp="2">'
+    return ('<article class="fcard fcard--ed lead" data-topics="" data-imp="2" data-story="ed-%s-%s">'
             '<div class="fcard__in"><div class="fcard__top">'
             '<span class="fcard__beat"><span class="ff-dot"></span>%s</span>'
             '<span class="fcard__rank" data-imp="ed"></span></div>'
             '<h2 class="fcard__hl">%s</h2>'
             '<p class="fcard__eddisc">Opinion, written by the desk\'s AI — a synthesis across '
-            'the week\'s sourced stories, not itself sourced reporting.</p>%s</div></article>'
-            % (esc(e.get("kicker")), esc(e.get("title")), paras))
+            'the week\'s sourced stories, not itself sourced reporting.</p>%s'
+            '<div class="fcard__line"><span class="fcard__date">%s</span>'
+            '<button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read"'
+            ' title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true">'
+            '<path d="M20 6L9 17l-5-5"/></svg></button></div></div></article>'
+            % (esc(e.get("stream")), esc(e.get("date")), esc(e.get("kicker")),
+               esc(e.get("title")), paras, esc(e.get("date_label"))))
 
 
 def main():
