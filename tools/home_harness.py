@@ -96,7 +96,7 @@ SYNC_UI = """<span class="ff-sync" id="ffSync" hidden>
 PRE_SYNC = """<script>
 (function(){
   var SYNCED = location.hash === '#synced';
-  try { ['homeRead:v1','syncState:v1','syncSession:v1'].forEach(function(k){ localStorage.removeItem(k); }); } catch(e){}
+  try { ['homeRead:v1','syncState:v1','syncSession:v1','topicPrefs:v1'].forEach(function(k){ localStorage.removeItem(k); }); } catch(e){}
   var fbs = document.querySelectorAll('.fcard__fb');
   var sidA = fbs[0] && fbs[0].dataset.story, sidB = null;
   for (var i = 1; i < fbs.length; i++){
@@ -116,6 +116,15 @@ PRE_SYNC = """<script>
       }
       return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
     }
+    if (String(url).indexOf('/prefs') >= 0){
+      if (method === 'GET'){
+        // remote prefs carry a roamed read-filter (rs:'unread') with a ts newer than the
+        // cleared local shadow -> the merge must flip the segmented toggle to Unread.
+        return Promise.resolve(new Response(JSON.stringify(
+          { reader:'rafael', prefs: { topics: [], rs: 'unread', ts: Date.now() - 500 } }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ ok: true, applied: true }), { status: 200 }));
+    }
     return Promise.resolve(new Response('', { status: 404 }));
   };
   if (SYNCED){
@@ -133,6 +142,13 @@ setTimeout(function(){
   var log = window.__fetchLog || [];
   var rs = log.filter(function(l){ return l.indexOf('/readstate') >= 0; });
   var gets = rs.filter(function(l){ return l.indexOf('GET ') === 0; }).length;
+  var prefsCalls = log.filter(function(l){ return l.indexOf('/prefs') >= 0; }).length;
+  // roamed read-filter (2026-07-18): the stubbed GET /prefs carries rs:'unread'; signed-in the
+  // segmented toggle must land on Unread, signed-out it must stay on All (no prefs traffic).
+  var rbOn = document.querySelector('.ff-rbtn[aria-pressed="true"]');
+  var prefsRs = location.hash === '#synced'
+    ? ((rbOn && rbOn.dataset.rs === 'unread') ? 1 : 0)
+    : ((rbOn && rbOn.dataset.rs === '') ? 1 : 0);
   var sids = window.__syncSids || [];
   var painted = -1, unpainted = -1, shadow = -1;
   function cardOf(sid){ var fb = document.querySelector('.fcard__fb[data-story="' + sid + '"]'); return fb && fb.closest('.fcard'); }
@@ -146,7 +162,8 @@ setTimeout(function(){
   var d = document.createElement('div'); d.id = 'synccheck';
   d.textContent = 'SYNC mode=' + (location.hash === '#synced' ? 'in' : 'out') + ' rsCalls=' + rs.length +
     ' gets=' + gets + ' affordance=' + (aff && !aff.hidden ? 1 : 0) +
-    ' painted=' + painted + ' unpainted=' + unpainted + ' shadow=' + shadow;
+    ' painted=' + painted + ' unpainted=' + unpainted + ' shadow=' + shadow +
+    ' prefsCalls=' + prefsCalls + ' prefsRs=' + prefsRs;
   document.body.appendChild(d);
 }, 4500);
 </script>"""

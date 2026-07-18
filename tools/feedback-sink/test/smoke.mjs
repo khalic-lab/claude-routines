@@ -417,6 +417,56 @@ const T = Date.now() - 10000;
   );
 }
 {
+  // rs (read-filter selection, 2026-07-18): stored + echoed with the same whole-object LWW.
+  const now = Date.now() + 10;
+  const res = await worker.fetch(
+    req("/prefs", { method: "POST", headers: AUTH, body: { topics: ["ai-ml"], rs: "unread", ts: now } }),
+    env,
+  );
+  const body = await res.json();
+  const stored = JSON.parse(await kv.get("prefs:rafael"));
+  const got = await (await worker.fetch(req("/prefs", { headers: AUTH }), env)).json();
+  check(
+    "POST /prefs stores rs -> stored + GET echoes it",
+    body.applied === true && stored.rs === "unread" && got.prefs.rs === "unread",
+    JSON.stringify([body, stored, got]),
+  );
+}
+{
+  // an invalid rs coerces to "" (All) — never rejects, never stores garbage.
+  const now = Date.now() + 20;
+  const res = await worker.fetch(
+    req("/prefs", { method: "POST", headers: AUTH, body: { topics: ["ai-ml"], rs: "bogus", ts: now } }),
+    env,
+  );
+  const body = await res.json();
+  const stored = JSON.parse(await kv.get("prefs:rafael"));
+  check(
+    "POST /prefs invalid rs coerces to \"\"",
+    body.applied === true && stored.rs === "" && body.prefs.rs === "",
+    JSON.stringify([body, stored]),
+  );
+}
+{
+  // an older-ts POST must not clobber the stored rs either (whole-object LWW covers rs).
+  const now = Date.now() + 30;
+  await worker.fetch(
+    req("/prefs", { method: "POST", headers: AUTH, body: { topics: ["ai-ml"], rs: "read", ts: now } }),
+    env,
+  );
+  const res = await worker.fetch(
+    req("/prefs", { method: "POST", headers: AUTH, body: { topics: [], rs: "unread", ts: now - 5000 } }),
+    env,
+  );
+  const body = await res.json();
+  const stored = JSON.parse(await kv.get("prefs:rafael"));
+  check(
+    "POST /prefs older ts preserves stored rs",
+    body.applied === false && stored.rs === "read" && body.prefs.rs === "read",
+    JSON.stringify([body, stored]),
+  );
+}
+{
   // exact tie (ts === storedTs) must lose — strict `>` guard, stored set preserved.
   const stored0 = JSON.parse(await kv.get("prefs:rafael"));
   const res = await worker.fetch(

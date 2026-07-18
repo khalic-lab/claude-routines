@@ -98,6 +98,13 @@
 > rendered the evaluator's Health-Summary header near-invisible on dark paper — post tables are
 > re-skinned variable-driven in custom.html (th/td ink-on-panel, hairline borders, striping off).
 > All verified live by screenshot: homepage, a filtered re-layout, and the evaluator table.
+> **(3) Read-filter roaming** — the All/Unread/Read segmented toggle now roams across devices
+> with the beat chips: the `/prefs` object gains a validated `rs` field (`""|"unread"|"read"`,
+> invalid coerces to All; feedback-sink Worker + 3 new smoke checks, 46 total), `topicPrefs:v1`
+> carries `rs` in the same whole-object LWW shadow (side benefit: the filter persists across
+> reloads even signed out — it used to reset to All every load), and the harness stubs
+> `GET /prefs` + asserts the roamed filter lands signed-in and zero prefs traffic flows
+> signed-out. Worker redeployed same-day.
 
 > **Changed 2026-07-18 (later): individual brief pages retired.** The homepage story feed carries
 > every story's full prose (never trimmed, since 2026-07-10), so the per-edition pages at

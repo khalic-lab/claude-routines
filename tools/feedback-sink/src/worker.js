@@ -532,20 +532,27 @@ async function handleReadstatePost(request, env, cors) {
 }
 
 // ---------------------------------------------------------------------------
-// UI prefs (KV `prefs:{reader}` = {topics:[...], ts}). Unlike read state, the topic
-// selection is ONE complete statement of intent, so it merges whole-object by ts (LWW)
-// rather than per-entry — a POST replaces the stored set iff its ts is newer.
+// UI prefs (KV `prefs:{reader}` = {topics:[...], rs:""|"unread"|"read", ts}). Unlike read
+// state, the selection is ONE complete statement of intent, so it merges whole-object by ts
+// (LWW) rather than per-entry — a POST replaces the stored object iff its ts is newer.
+// `rs` (added 2026-07-18) is the read-state FILTER selection (All/Unread/Read segmented
+// toggle), roaming with the topic chips; an invalid value coerces to "" (All), never rejects.
+
+const READ_FILTERS = new Set(["", "unread", "read"]);
+const readFilterOf = (v) => (typeof v === "string" && READ_FILTERS.has(v) ? v : "");
 
 async function handlePrefsGet(request, env, cors) {
   const sess = await getSession(request, env);
   if (!sess) return json({ error: "no session" }, 401, {}, cors);
   await rollSession(env, sess);
   const raw = await env.FEEDBACK_KV.get(`prefs:${sess.reader}`);
-  let prefs = { topics: [], ts: 0 };
+  let prefs = { topics: [], rs: "", ts: 0 };
   if (raw != null) {
     try {
       const p = JSON.parse(raw);
-      if (p && Array.isArray(p.topics)) prefs = { topics: p.topics, ts: typeof p.ts === "number" ? p.ts : 0 };
+      if (p && Array.isArray(p.topics)) {
+        prefs = { topics: p.topics, rs: readFilterOf(p.rs), ts: typeof p.ts === "number" ? p.ts : 0 };
+      }
     } catch {
       // fall through to the empty default
     }
@@ -593,14 +600,18 @@ async function handlePrefsPost(request, env, cors) {
       stored = null;
     }
   }
+  const rs = readFilterOf(p.rs);
+
   const storedTs = stored && typeof stored.ts === "number" ? stored.ts : 0;
   let applied = false;
   if (ts > storedTs) {
-    await env.FEEDBACK_KV.put(`prefs:${sess.reader}`, JSON.stringify({ topics, ts }));
+    await env.FEEDBACK_KV.put(`prefs:${sess.reader}`, JSON.stringify({ topics, rs, ts }));
     applied = true;
   }
   await rollSession(env, sess);
-  const current = applied ? { topics, ts } : { topics: (stored && stored.topics) || [], ts: storedTs };
+  const current = applied
+    ? { topics, rs, ts }
+    : { topics: (stored && stored.topics) || [], rs: readFilterOf(stored && stored.rs), ts: storedTs };
   return json({ ok: true, applied, prefs: current }, 200, {}, cors);
 }
 

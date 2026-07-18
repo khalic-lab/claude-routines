@@ -747,6 +747,7 @@ layout: archive
       readState = b.dataset.rs;
       filters.querySelectorAll('.ff-rbtn').forEach(function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
       apply();
+      recordPrefsChange();               // the read filter roams with the topic selection (2026-07-18)
     });
   });
   cards.forEach(paintRead); readCounts();
@@ -805,28 +806,37 @@ layout: archive
       var key = chip.dataset.topic;
       if (!key) active.clear();
       else if (active.has(key)) active.delete(key); else active.add(key);
-      sync(); apply(); recordTopicChange();
+      sync(); apply(); recordPrefsChange();
     });
   });
 
-  /* ---- beat-filter prefs (2026-07-17): the topic-chip selection roams across devices via the
-     feedback Worker's /prefs route, mirroring read-state's local-first model. topicPrefs:v1
-     {topics:[...], ts} is BOTH the local truth and the sync shadow; it merges whole-object by ts
-     (higher ts wins) — the selection is one complete statement of intent, so it REPLACES rather
-     than merges (dropping a beat propagates). Signed out = local only; a later sign-in pushes it
-     up. Chip keys absent from this page (e.g. a retired beat) are ignored, never lost. ---- */
+  /* ---- filter prefs (2026-07-17; read-filter added 2026-07-18): the topic-chip selection AND
+     the All/Unread/Read segmented toggle roam across devices via the feedback Worker's /prefs
+     route, mirroring read-state's local-first model. topicPrefs:v1 {topics:[...], rs, ts} is
+     BOTH the local truth and the sync shadow; it merges whole-object by ts (higher ts wins) —
+     the selection is one complete statement of intent, so it REPLACES rather than merges
+     (dropping a beat, or going back to All, propagates). Signed out = local only; a later
+     sign-in pushes it up. Chip keys absent from this page are ignored, never lost. ---- */
   var TP_KEY = 'topicPrefs:v1';
   var chipKeys = {};
   filters.querySelectorAll('.ff-chip').forEach(function(c){ if (c.dataset.topic) chipKeys[c.dataset.topic] = 1; });
-  var topicPrefs = { topics: [], ts: 0 };
+  function validRs(v){ return v === 'unread' || v === 'read' ? v : ''; }
+  var topicPrefs = { topics: [], rs: '', ts: 0 };
   try {
     var _tp = JSON.parse(localStorage.getItem(TP_KEY) || 'null');
-    if (_tp && Array.isArray(_tp.topics)) topicPrefs = { topics: _tp.topics, ts: (typeof _tp.ts === 'number' ? _tp.ts : 0) };
+    if (_tp && Array.isArray(_tp.topics)) topicPrefs = { topics: _tp.topics, rs: validRs(_tp.rs), ts: (typeof _tp.ts === 'number' ? _tp.ts : 0) };
   } catch (e) {}
   function saveTopicPrefs(){ try { localStorage.setItem(TP_KEY, JSON.stringify(topicPrefs)); } catch (e) {} }
+  function paintReadBtns(){
+    filters.querySelectorAll('.ff-rbtn').forEach(function(x){
+      x.setAttribute('aria-pressed', x.dataset.rs === readState ? 'true' : 'false');
+    });
+  }
   function seedActiveFromPrefs(){
     active.clear();
     topicPrefs.topics.forEach(function(k){ if (chipKeys[k]) active.add(k); });
+    readState = validRs(topicPrefs.rs);
+    paintReadBtns();
   }
   var tpTimer = null, tpPending = false;
   function pushTopics(){                    // debounced; a no-op while signed out
@@ -844,19 +854,19 @@ layout: archive
     fetch(syncBase() + '/prefs', {
       method: 'POST', keepalive: true,
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.token },
-      body: JSON.stringify({ topics: topicPrefs.topics, ts: topicPrefs.ts })
+      body: JSON.stringify({ topics: topicPrefs.topics, rs: topicPrefs.rs, ts: topicPrefs.ts })
     }).then(function(r){ if (r.status === 401) dropSession(); })
       .catch(function(){ tpPending = true; });   // offline — retry on the next flush trigger
   }
-  function recordTopicChange(){             // every chip toggle stamps a fresh ts + schedules a push
-    topicPrefs = { topics: Array.from(active), ts: Date.now() };   // active is a Set — Array.from, NOT slice.call
+  function recordPrefsChange(){             // every chip/read-toggle click stamps a fresh ts + schedules a push
+    topicPrefs = { topics: Array.from(active), rs: readState, ts: Date.now() };   // active is a Set — Array.from, NOT slice.call
     saveTopicPrefs();
     pushTopics();
   }
   function mergeRemoteTopics(remote){
     if (!remote || !Array.isArray(remote.topics) || typeof remote.ts !== 'number') return;
     if (remote.ts <= topicPrefs.ts) return;   // local newer (or tie) — keep; the push carries it up
-    topicPrefs = { topics: remote.topics.slice(), ts: remote.ts };
+    topicPrefs = { topics: remote.topics.slice(), rs: validRs(remote.rs), ts: remote.ts };
     saveTopicPrefs();
     seedActiveFromPrefs();
     sync(); apply();
