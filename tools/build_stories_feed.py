@@ -422,21 +422,15 @@ def _ed_paragraphs(lines, cap=6):
     wrapped lines joined. Markdown rules (---) and fenced code blocks are structure, not prose --
     both live cards shipped a literal '---' paragraph before this filter existed."""
     paras, chunk = [], []
-    fenced = False
+    fenced, fence_buf = False, []
 
     def flush():
         if chunk:
             paras.append(_ed_inline_html(" ".join(chunk)))
             del chunk[:]
 
-    for ln in lines:
-        stripped = ln.strip()
-        if stripped.startswith("```"):
-            fenced = not fenced
-            flush()
-        elif fenced:
-            continue
-        elif not stripped or _ED_HR_RE.match(stripped):
+    def consume(stripped):
+        if not stripped or _ED_HR_RE.match(stripped):
             flush()
         elif stripped.startswith("- "):
             flush()
@@ -444,6 +438,23 @@ def _ed_paragraphs(lines, cap=6):
             flush()
         else:
             chunk.append(stripped)
+
+    for ln in lines:
+        stripped = ln.strip()
+        if stripped.startswith("```"):
+            flush()
+            if fenced:
+                del fence_buf[:]        # closed: a genuine code block, dropped whole
+            fenced = not fenced
+        elif fenced:
+            fence_buf.append(stripped)  # held, not dropped -- the fence may never close
+        else:
+            consume(stripped)
+    if fenced:
+        # Unmatched fence (a stray ``` mid-prose): the held lines are prose, not code --
+        # silently swallowing the rest of the section was an adversarial-review catch.
+        for stripped in fence_buf:
+            consume(stripped)
     flush()
     return [p for p in paras if p][:cap]
 

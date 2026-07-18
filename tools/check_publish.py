@@ -10,8 +10,9 @@ Three checks:
      published pages (prompts.html renders the routine prompts verbatim), a hole the path-based
      check 2 cannot see (found by the 2026-07-18 external audit: the notification email address
      was live on /prompts/). Every include target is scanned with the secret patterns PLUS an
-     email pattern; a string named in one of the including page's `| replace: "X", ...` filters
-     counts as redacted-at-render and is skipped.
+     email pattern; a string counts as redacted-at-render ONLY when a `| replace: "X", ...`
+     filter sits on the output expression of the capture variable that renders THAT include
+     (per-target, never page-global -- a new block that forgets its filter must fail).
 
 Run from the repo root:  python3 tools/check_publish.py
 Exit 0 = safe, 1 = a leak or a missing exclude. `tools/` is itself excluded, so this script and
@@ -101,6 +102,13 @@ def main():
 
     print("\n== include_relative scan (content published THROUGH pages) ==")
     inc_re = re.compile(r"{%\s*include_relative\s+(\S+)\s*%}")
+    # A capture binds an include to a variable; only replace filters on THAT variable's
+    # own output expressions redact it. A page-global whitelist would let a new include
+    # block that forgot its | replace filter ride on a sibling's redaction
+    # (adversarial-review catch, 2026-07-18).
+    capture_re = re.compile(
+        r"{%\s*capture\s+(\w+)\s*%}\s*{%\s*include_relative\s+(\S+)\s*%}\s*{%\s*endcapture\s*%}")
+    output_re = re.compile(r"{{\s*(\w+)((?:\s*\|[^}]*)?)}}")
     replace_re = re.compile(r'replace:\s*"([^"]+)"')
     email_re = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
     inc_hits = 0
@@ -114,7 +122,12 @@ def main():
         targets = inc_re.findall(page)
         if not targets:
             continue
-        redacted = set(replace_re.findall(page))
+        var_to_target = {var: t for var, t in capture_re.findall(page)}
+        redacted_by_target = {t: set() for t in targets}
+        for var, filters in output_re.findall(page):
+            t = var_to_target.get(var)
+            if t in redacted_by_target:
+                redacted_by_target[t].update(replace_re.findall(filters))
         page_dir = os.path.dirname(f)
         for t in targets:
             rel = os.path.normpath(os.path.join(page_dir, t))
@@ -126,7 +139,7 @@ def main():
                 continue
             for label, rx in SECRET_PATTERNS + [("email address", email_re)]:
                 for m in rx.finditer(text):
-                    if m.group(0) in redacted:
+                    if m.group(0) in redacted_by_target.get(t, set()):
                         continue
                     ok = False; inc_hits += 1
                     print(f"  LEAK via include_relative {rel} (published by {f}): "

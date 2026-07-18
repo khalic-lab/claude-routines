@@ -515,16 +515,19 @@ class CandidatesAppendTest(LintTestBase):
 
 
 class ReplayStabilityTest(LintTestBase):
-    """Tag integrity as of the POST's date (2026-07-18, from the external audit): publishing
-    lints BEFORE registry-sync, so a domain that was genuinely novel at publish time enters
-    the registry minutes later -- replaying the edition against today's registry must not
-    call its historical [new source] tag false (17/19 recent editions false-flagged).
-    The domain's earliest `lifecycle:` date is the registration timestamp; entries without
-    lifecycle dates (the static fixture) keep the old always-registered behavior."""
+    """Tag integrity as of the POST's date (2026-07-18, from the external audit + the
+    adversarial review of the first fix): publishing lints BEFORE registry-sync, so novelty
+    is judged against each domain's earliest `lifecycle:` date, not today's registry.
+    Same-day registrations are attributed by creation stream: own stream -> replay of the
+    introducing edition (skip); sibling stream -> registered hours ago, tagging it is the
+    false self-certification to catch. Later-registered domains were simply untracked at
+    publish time: their tags count novel, their untagged citations are never flagged.
+    Entries without lifecycle dates (the static fixture) keep always-registered behavior."""
 
-    def _register(self, domain, lifecycle_date):
+    def _register(self, domain, lifecycle_date, stream="news"):
         entry = (f"{domain}:\n  class: outlet\n  tier: T2\n  status: candidate\n"
-                 f"  reach: direct\n  lifecycle:\n    - date: {lifecycle_date}\n"
+                 f"  reach: direct\n  streams:\n    - {stream}\n"
+                 f"  lifecycle:\n    - date: {lifecycle_date}\n"
                  f"      event: candidate\n      status: candidate\n")
         with open(os.path.join(self.root, "sources", "registry.yml"), "a") as f:
             f.write(entry)
@@ -543,20 +546,47 @@ class ReplayStabilityTest(LintTestBase):
         self.assertNotIn("discovery_quota", proc.stdout)
         self.assertIn("clean", proc.stdout)
 
-    def test_same_day_registration_is_ambiguous_and_skipped(self):
-        """Lifecycle date == post date: registered by this very edition's own sync (or a
-        same-day sibling) -- skip tag integrity both ways, count novel for quota."""
-        self._register("sameday-tagged.example", "2026-07-10")
-        self._register("sameday-untagged.example", "2026-07-10")
+    def test_untagged_citation_of_later_registered_domain_is_not_missing(self):
+        """The tag_missing flood (adversarial-review catch): a pre-registry edition cites a
+        domain that only entered the registry at bootstrap, days later. The writer had no
+        tag regime then -- replay must not claim the domain 'is not in the registry'."""
+        self._register("bootstrapped.example", "2026-07-12")
         path = self.write_post("2026-07-10-news.md", build_post(
             "news", "World",
-            [bullet("Lead.", "https://sameday-tagged.example/a", tag="[new source]"),
-             bullet("Other.", "https://sameday-untagged.example/b")],
-            ["- Discovery: met (sameday-tagged.example)"]))
+            [bullet("Lead.", "https://bootstrapped.example/story"),
+             bullet("Other.", "https://srf.ch/a")],
+            ["- Discovery: waived — quota not attempted this run"]))
+        proc = self.assert_report_only_always_exits_zero(path)
+        self.assertNotIn("tag_missing", proc.stdout)
+
+    def test_same_day_own_stream_registration_is_skipped(self):
+        """Lifecycle date == post date, creation stream == this slug: only reachable when
+        replaying the edition whose own sync registered the domain minutes after its own
+        lint -- skip integrity, count novel for quota."""
+        self._register("ownsync.example", "2026-07-10", stream="news")
+        path = self.write_post("2026-07-10-news.md", build_post(
+            "news", "World",
+            [bullet("Lead.", "https://ownsync.example/a", tag="[new source]"),
+             bullet("Other.", "https://srf.ch/b")],
+            ["- Discovery: met (ownsync.example)"]))
         proc = self.assert_report_only_always_exits_zero(path)
         self.assertNotIn("tag_false", proc.stdout)
-        self.assertNotIn("tag_missing", proc.stdout)
         self.assertNotIn("discovery_quota", proc.stdout)
+
+    def test_same_day_sibling_registration_is_a_false_tag_and_no_quota_credit(self):
+        """The live-path hole the adversarial review proved: News (morning) registered the
+        domain; ai-ml (midday, same day) tags it [new source] and claims quota met. At
+        ai-ml's lint the domain can only be in the registry via the sibling (its own sync
+        hasn't run yet) -- tag_false must fire and the quota must NOT be satisfied."""
+        self._register("siblingfresh.example", "2026-07-10", stream="news")
+        path = self.write_post("2026-07-10-ai-ml.md", build_post(
+            "ai-ml", "Models",
+            [bullet("Lead.", "https://siblingfresh.example/a", tag="[new source]"),
+             bullet("Other.", "https://arxiv.org/abs/2507.1")],
+            ["- Discovery: met (siblingfresh.example)"]))
+        proc = self.assert_report_only_always_exits_zero(path)
+        self.assertIn("tag_false", proc.stdout)
+        self.assertIn("discovery_quota", proc.stdout)
 
     def test_tag_on_domain_registered_before_the_post_is_still_false(self):
         """A domain long in the registry, tagged [new source] anyway -- the genuine

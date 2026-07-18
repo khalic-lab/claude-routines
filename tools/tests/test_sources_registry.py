@@ -433,8 +433,10 @@ class SyncTruncatesAndIsIdempotentTest(unittest.TestCase):
 class SyncNothingToFoldLeavesRegistryUntouchedTest(unittest.TestCase):
     """Write-contention guard (2026-07-18, SPIKE 3.4 amendment): sync now runs on EVERY
     edition via the publish tail, so a fold-free sync must not rewrite registry.yml at all
-    (an untouched file cannot merge-conflict between concurrent editions) and must leave
-    the append buffers alone."""
+    (an untouched file cannot merge-conflict between concurrent editions). Dead buffer
+    entries -- every fold-free entry provably folded to nothing -- are still PURGED, or a
+    candidate for an already-registered domain would inflate candidates_open in
+    source-health forever (adversarial-review catch, 2026-07-18)."""
 
     def setUp(self):
         self.root, _ = _bootstrap_registry(self)
@@ -453,18 +455,26 @@ class SyncNothingToFoldLeavesRegistryUntouchedTest(unittest.TestCase):
         with open(reg_path) as f:
             self.assertEqual(f.read(), before)
 
-    def test_unfoldable_buffer_content_is_preserved_for_a_later_sync(self):
-        """last-cited entries older than the registry's current value fold to nothing;
-        the buffer must survive untruncated so nothing is silently discarded."""
-        buf = os.path.join(self.sources_dir, "last-cited.jsonl")
-        H.write_jsonl(buf, [{"domain": "srf.ch", "date": "2026-01-01", "stream": "news"}])
-        with open(buf) as f:
-            before = f.read()
+    def test_dead_candidate_for_registered_domain_is_purged_without_touching_registry(self):
+        """srf.ch is already registered, so its candidate line folds to nothing -- the
+        buffer must be emptied anyway (it would count as an open candidate forever) while
+        registry.yml stays byte-identical."""
+        reg_path = os.path.join(self.sources_dir, "registry.yml")
+        with open(reg_path) as f:
+            reg_before = f.read()
+        buf = os.path.join(self.sources_dir, "candidates.jsonl")
+        H.write_jsonl(buf, [{"domain": "srf.ch", "first_seen": "2026-07-05",
+                             "via": "search", "stream": "news",
+                             "url": "https://www.srf.ch/dup"}])
         proc = H.run_script(self, "registry.py", ["sync", "--root", self.root])
         self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("purged", proc.stdout)
         with open(buf) as f:
-            self.assertEqual(f.read(), before,
-                             "fold-free sync must not truncate the append buffers")
+            self.assertEqual(f.read().strip(), "",
+                             "dead candidate entries must be purged on a fold-free sync")
+        with open(reg_path) as f:
+            self.assertEqual(f.read(), reg_before,
+                             "purging dead buffers must not rewrite registry.yml")
 
 
 if __name__ == "__main__":

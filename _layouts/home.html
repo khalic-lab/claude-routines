@@ -6,7 +6,8 @@ layout: archive
 
 {% assign feed = site.data.homefeed %}
 <p class="home-tagline">The day's stories, sized by how much they matter.</p>
-<button class="hiw-open" id="hiwOpen" type="button" aria-haspopup="dialog">
+<button class="hiw-open" id="hiwOpen" type="button" aria-haspopup="dialog"
+        aria-controls="hiwModal" aria-expanded="false">
   <svg viewBox="0 0 30 8" aria-hidden="true"><circle cx="4" cy="4" r="2.2"/><path d="M8 4h4.8"/><circle cx="15" cy="4" r="2.2"/><path d="M19 4h4.8"/><circle cx="26" cy="4" r="2.2"/></svg>
   How this works
 </button>
@@ -105,100 +106,147 @@ layout: archive
   </form>
 </section>
 
-<!-- "How this works" modal — the pipeline drawn as a flow, not written up. Six nodes, one line
-     each; the dashed rail on the right is the feedback loop closing back into the desks.
-     Token-driven (var(--…)) so light/dark both work; schedules are day-level on purpose so this
-     never drifts against ARCHITECTURE.md's exact crons. -->
-<div class="hiw" id="hiwModal">
-  <div class="hiw__box" role="dialog" aria-modal="true" aria-labelledby="hiwTitle">
-    <button type="button" class="hiw__x" aria-label="close">×</button>
+<!-- "How this works" modal — a public, product-level architecture map. The semantic HTML is the
+     accessible reading order and reflows on phones; exact trigger configuration remains in the
+     technical docs. -->
+<div class="hiw" id="hiwModal" aria-hidden="true">
+  <div class="hiw__box" role="dialog" aria-modal="true" aria-labelledby="hiwTitle" aria-describedby="hiwIntro">
+    <button type="button" class="hiw__x" aria-label="Close how this works">×</button>
     <h2 class="hiw__title" id="hiwTitle">How this works</h2>
-    <p class="hiw__sub">Researched, written and published by Claude on a schedule — tuned by your feedback.</p>
+    <p class="hiw__sub" id="hiwIntro">Five scheduled Claude desks research against shared memory, then publish through Git. Feedback can shape future runs, with Rafael as the editorial control boundary.</p>
 
-    <svg class="hiw-d" viewBox="0 0 520 580" role="img"
-         aria-label="Pipeline diagram: five desks (News daily, AI/ML Tuesday and Friday, Science Wednesday, Deep read Saturday, Sports Monday) research primary sources; stories already seen are dropped by dedup; the rest are published via git to this site and pinged to the phone; your reading and votes feed a Sunday evaluator whose review tunes the desks.">
-      <!-- desks -->
-      <rect class="b" x="8"   y="8" width="92" height="52"/>
-      <rect class="b" x="111" y="8" width="92" height="52"/>
-      <rect class="b" x="214" y="8" width="92" height="52"/>
-      <rect class="b" x="317" y="8" width="92" height="52"/>
-      <rect class="b" x="420" y="8" width="92" height="52"/>
-      <text class="n" x="54"  y="32">NEWS</text>      <text class="c" x="54"  y="48">DAILY</text>
-      <text class="n" x="157" y="32">AI/ML</text>     <text class="c" x="157" y="48">TUE + FRI</text>
-      <text class="n" x="260" y="32">SCIENCE</text>   <text class="c" x="260" y="48">WED</text>
-      <text class="n" x="363" y="32">DEEP READ</text> <text class="c" x="363" y="48">SAT</text>
-      <text class="n" x="466" y="32">SPORTS</text>    <text class="c" x="466" y="48">MON</text>
-      <!-- bus join + drop into research -->
-      <path class="e" d="M54 60V80M157 60V80M260 60V80M363 60V80M466 60V80M54 80H466M260 80V102"/>
-      <path class="e" d="M256 96l4 6 4-6"/>
-      <!-- research -->
-      <rect class="b" x="150" y="104" width="220" height="56"/>
-      <text class="k" x="260" y="128">RESEARCH</text>
-      <text class="s" x="260" y="147">primary sources, fetched at the edge</text>
-      <path class="e" d="M260 160V180M256 174l4 6 4-6"/>
-      <!-- dedup decision -->
-      <path class="b" d="M260 182L355 214L260 246L165 214Z"/>
-      <text class="s" x="260" y="219">seen before?</text>
-      <path class="e" d="M355 214H425M419 210l6 4-6 4"/>
-      <text class="l" x="382" y="207">yes</text>
-      <rect class="g" x="427" y="196" width="84" height="36"/>
-      <text class="c" x="469" y="219">DROPPED</text>
-      <path class="e" d="M260 246V266M256 260l4 6 4-6"/>
-      <text class="l" x="268" y="262">no</text>
-      <!-- publish -->
-      <rect class="b" x="150" y="268" width="220" height="56"/>
-      <text class="k" x="260" y="291">PUBLISH</text>
-      <text class="s" x="260" y="310">git commit → GitHub Pages</text>
-      <path class="e" d="M260 324V340H165V356M260 340H355V356M161 350l4 6 4-6M351 350l4 6 4-6"/>
-      <!-- site + phone -->
-      <rect class="b" x="95"  y="356" width="140" height="52"/>
-      <text class="n" x="165" y="379">THIS SITE</text>
-      <text class="c" x="165" y="396">REBUILT ON PUSH</text>
-      <rect class="b" x="285" y="356" width="140" height="52"/>
-      <text class="n" x="355" y="379">YOUR PHONE</text>
-      <text class="c" x="355" y="396">PING VIA NTFY</text>
-      <path class="e" d="M165 408V424H355V408M260 424V438M256 432l4 6 4-6"/>
-      <!-- reader -->
-      <rect class="b" x="150" y="440" width="220" height="52"/>
-      <text class="n" x="260" y="463">YOU</text>
-      <text class="s" x="260" y="481">read the brief · vote on stories</text>
-      <path class="e" d="M260 492V510M256 504l4 6 4-6"/>
-      <!-- evaluator + feedback loop -->
-      <rect class="b2" x="150" y="512" width="220" height="56"/>
-      <text class="k" x="260" y="535">EVALUATOR — SUNDAYS</text>
-      <text class="s" x="260" y="554">reviews the week against your votes</text>
-      <path class="fb" d="M150 540H30V80H58M54 76l6 4-6 4"/>
-      <text class="loop" transform="translate(22 310) rotate(-90)" text-anchor="middle">TUNES NEXT WEEK</text>
-    </svg>
+    <div class="hiw-map">
+      <section class="hiw-phase" aria-labelledby="hiwMake">
+        <header class="hiw-phase__head">
+          <span class="hiw-phase__num" aria-hidden="true">01</span>
+          <div><h3 id="hiwMake">Make</h3><p>Scheduled desks discover, verify and decide what is genuinely new.</p></div>
+        </header>
+
+        <ul class="hiw-desks" aria-label="Five scheduled editorial desks">
+          <li data-node="news"><strong>News</strong><span>Daily</span></li>
+          <li data-node="ai-ml"><strong>AI / ML</strong><span>Tue + Fri</span></li>
+          <li data-node="science"><strong>Science</strong><span>Wed</span></li>
+          <li data-node="sports"><strong>Sports</strong><span>Mon</span></li>
+          <li data-node="weekend"><strong>Deep read</strong><span>Sat</span></li>
+        </ul>
+        <span class="hiw-down" aria-hidden="true">↓</span>
+
+        <div class="hiw-path">
+          <div class="hiw-node" data-node="research">
+            <strong>Research + verify</strong>
+            <span>Source plan · direct fetch · search · proxy when needed</span>
+          </div>
+          <span class="hiw-arrow" aria-hidden="true">→</span>
+          <div class="hiw-node hiw-node--memory" data-node="story-memory">
+            <strong>Check shared memory</strong>
+            <span>Exact source · embeddings · thread history</span>
+            <ul class="hiw-verdicts" aria-label="Story memory outcomes">
+              <li><b>Repeat</b><small>omit</small></li>
+              <li><b>Ongoing</b><small>material update only</small></li>
+              <li><b>New</b><small>cover</small></li>
+            </ul>
+          </div>
+          <span class="hiw-arrow" aria-hidden="true">→</span>
+          <div class="hiw-node" data-node="compose">
+            <strong>Write + check</strong>
+            <span>Claude writes; deterministic tools record, lint and build</span>
+          </div>
+        </div>
+        <p class="hiw-sidecar"><b>Memory sidecar:</b> the story ledger is baked into vector search, threads and recurring entities. It adds continuity; publishing still degrades gracefully if it is unavailable.</p>
+      </section>
+
+      <section class="hiw-phase" aria-labelledby="hiwRelease">
+        <header class="hiw-phase__head">
+          <span class="hiw-phase__num" aria-hidden="true">02</span>
+          <div><h3 id="hiwRelease">Remember &amp; release</h3><p>GitHub <code>main</code> is the system's memory, hand-off point and release trigger.</p></div>
+        </header>
+
+        <div class="hiw-hub" data-node="github-main">
+          <span class="hiw-eyebrow">Single source of truth</span>
+          <strong>GitHub · main</strong>
+          <p>Versioned prompts and reader policy · source registry · briefs and story ledger · homepage data · alert queue</p>
+        </div>
+        <span class="hiw-down" aria-hidden="true">↓</span>
+
+        <div class="hiw-release">
+          <div class="hiw-lane" data-node="homepage">
+            <span class="hiw-eyebrow">Read</span>
+            <strong>GitHub Pages → homepage</strong>
+            <p>Each push rebuilds the story cards. Ordinary brief pages stay retired; Evaluator reviews remain available.</p>
+          </div>
+          <div class="hiw-lane" data-node="phone">
+            <span class="hiw-eyebrow">Phone</span>
+            <strong>Alert queue → Mac bridge → ntfy</strong>
+            <p>The bridge pulls and drains queued alerts on its local schedule. Watch can enter here without publishing a story.</p>
+          </div>
+          <div class="hiw-lane" data-node="email">
+            <span class="hiw-eyebrow">Selected editions</span>
+            <strong>Gmail draft → manual send</strong>
+            <p>News, Weekend and Evaluator can prepare a draft; nothing is auto-sent.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="hiw-phase" aria-labelledby="hiwLearn">
+        <header class="hiw-phase__head">
+          <span class="hiw-phase__num" aria-hidden="true">03</span>
+          <div><h3 id="hiwLearn">Learn</h3><p>A vote is evidence, not an instruction. The feedback path is asynchronous and mostly human-gated.</p></div>
+        </header>
+
+        <div class="hiw-path hiw-path--four">
+          <div class="hiw-node" data-node="reader-feedback"><strong>Vote or propose</strong><span>Useful · not useful · optional reason · brief idea</span></div>
+          <span class="hiw-arrow" aria-hidden="true">→</span>
+          <div class="hiw-node" data-node="feedback-worker"><strong>Feedback Worker</strong><span>Validates and queues the signal</span></div>
+          <span class="hiw-arrow" aria-hidden="true">→</span>
+          <div class="hiw-node" data-node="feedback-ledger"><strong>Bridge → ledger</strong><span>Drain · commit · fold onto stable story IDs</span></div>
+          <span class="hiw-arrow" aria-hidden="true">→</span>
+          <div class="hiw-node" data-node="evaluator"><strong>Sunday Evaluator</strong><span>Reads feedback, health and continuity; proposes changes</span></div>
+        </div>
+
+        <div class="hiw-gate" aria-label="Editorial approval path">
+          <div class="hiw-node"><strong>Recommendations</strong><span>Prompt, profile and source-policy changes</span></div>
+          <span class="hiw-arrow" aria-hidden="true">→</span>
+          <div class="hiw-node hiw-node--gate" data-node="human-gate"><span class="hiw-eyebrow">Human gate</span><strong>Rafael decides</strong><span>Approve · edit · reject</span></div>
+          <span class="hiw-arrow" aria-hidden="true">→</span>
+          <div class="hiw-node"><strong>Approved policy on main</strong><span>The next scheduled run pulls this version</span></div>
+        </div>
+        <p class="hiw-loopback">↺ Most tuning waits here. The narrow exception is a repeated or reasoned feedback pattern, which may append one learned-preference line automatically.</p>
+
+        <aside class="hiw-sync-note">
+          <span class="hiw-eyebrow">Separate, opt-in loop</span>
+          <strong>This browser ↔ passkey ↔ Worker KV</strong>
+          <p>Read marks and beat filters stay local unless sync is enabled. They roam across devices, but never enter the feedback ledger or tune a desk.</p>
+        </aside>
+      </section>
+    </div>
 
     {% if site.data.stats %}{% assign st = site.data.stats %}
-    <h3 class="hiw-h">The desk, in numbers</h3>
+    <h3 class="hiw-h">Evidence, in numbers</h3>
     <ul class="hiw-stats">
-      <li><b>{{ st.all_time.stories }}</b><span>stories published<br>since {{ st.all_time.since | date: "%-d %b %Y" }}</span></li>
+      <li><b>{{ st.all_time.stories }}</b><span>story entries published<br>since {{ st.all_time.since | date: "%-d %b %Y" }}</span></li>
       <li><b>{{ st.all_time.distinct_domains }}</b><span>sources cited<br>{{ st.sources.candidate | default: 0 }} new on trial</span></li>
       <li><b>~{{ st.window.avg_words }}</b><span>words per brief<br>last {{ st.window.days }} days</span></li>
     </ul>
-    {% assign drops = st.dedup.repeats_dropped | plus: st.dedup.ongoing_dropped %}
     {% if st.dedup.since %}
-    <p class="hiw-stat-line">{{ st.dedup.checked }} candidate stories checked against the index since {{ st.dedup.since | date: "%-d %b" }} — <strong>{{ drops }} repeats filtered</strong>, ≈{{ st.dedup.est_minutes_saved }} min of re-reading saved.</p>
+    <p class="hiw-stat-line">{{ st.dedup.checked }} candidates checked against story memory since {{ st.dedup.since | date: "%-d %b" }} — <strong>{{ st.dedup.repeats_dropped }} repeats omitted</strong> and {{ st.dedup.ongoing_dropped }} non-material updates withheld; an estimated ≈{{ st.dedup.est_minutes_saved }} min of re-reading avoided.</p>
     {% else %}
     <p class="hiw-stat-line">Repeat-filter tracking starts with the next edition.</p>
     {% endif %}
     {% endif %}
 
-    <h3 class="hiw-h">House rules</h3>
+    <h3 class="hiw-h">Editorial contract</h3>
     <ul class="hiw-rules">
       <li class="hiw-rule">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7"/><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7"/></svg>
-        <span>Primary sources, always linked</span>
+        <span>Primary evidence stays linked</span>
       </li>
       <li class="hiw-rule">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 13.5l4 4L14 9"/><path d="M12 17.5l2 2L22 11"/></svg>
-        <span>Big claims need two sources</span>
+        <span>Significant claims seek two sources</span>
       </li>
       <li class="hiw-rule">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11V4a1 1 0 0 1 1-1h7l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
-        <span>Uncertainty wears a tag
+        <span>Uncertainty is stated plainly
         <span class="hiw-chips"><i>preprint</i><i>single-source</i><i>disputed</i></span></span>
       </li>
       <li class="hiw-rule">
@@ -207,34 +255,49 @@ layout: archive
       </li>
       <li class="hiw-rule">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></svg>
-        <span>Claude-written, published unedited</span>
+        <span>Claude-written prose; deterministic checks</span>
       </li>
       <li class="hiw-rule">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6l7-3z"/></svg>
-        <span>No trackers — sync is opt-in</span>
+        <span>No trackers — device sync is opt-in</span>
       </li>
     </ul>
-    <p class="hiw-read">Each desk runs on a fixed written prompt — <a href="{{ '/prompts/' | relative_url }}">read them verbatim</a>.</p>
+    <p class="hiw-read">Prompts and editorial policy are versioned in Git; every scheduled run pulls the latest approved version.</p>
   </div>
 </div>
 <script>
 (function () {
   var btn = document.getElementById('hiwOpen'), modal = document.getElementById('hiwModal');
   if (!btn || !modal) return;
-  var x = modal.querySelector('.hiw__x'), last = null;
-  function show(){ last = document.activeElement; modal.classList.add('on'); x.focus(); }
-  function hide(){ modal.classList.remove('on'); if (last && last.focus) last.focus(); last = null; }
+  var x = modal.querySelector('.hiw__x'), lastFocus = null;
+  function show(){
+    lastFocus = document.activeElement;
+    modal.scrollTop = 0;
+    modal.classList.add('on');
+    modal.setAttribute('aria-hidden', 'false');
+    btn.setAttribute('aria-expanded', 'true');
+    document.documentElement.classList.add('hiw-lock');
+    x.focus();
+  }
+  function hide(){
+    modal.classList.remove('on');
+    modal.setAttribute('aria-hidden', 'true');
+    btn.setAttribute('aria-expanded', 'false');
+    document.documentElement.classList.remove('hiw-lock');
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+    lastFocus = null;
+  }
   btn.addEventListener('click', show);
   x.addEventListener('click', hide);
   modal.addEventListener('click', function (e) { if (e.target === modal) hide(); });
   modal.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { hide(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); hide(); return; }
     if (e.key !== 'Tab') return;
-    // two-stop trap: × plus any real links in the dialog body (e.g. /prompts/)
-    var f = modal.querySelectorAll('.hiw__x, .hiw__box a[href]');
-    var first = f[0], last = f[f.length - 1];
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    var f = modal.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    var first = f[0], final = f[f.length - 1];
+    if (!first) return;
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); final.focus(); }
+    else if (!e.shiftKey && document.activeElement === final) { e.preventDefault(); first.focus(); }
   });
 })();
 </script>
@@ -484,35 +547,85 @@ layout: archive
   .hiw-open svg{ width:26px; height:8px; fill:none; stroke:currentColor; stroke-width:1.3; }
   .hiw-open svg circle{ fill:currentColor; stroke:none; }
 
-  .hiw{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+  .hiw-lock{ overflow:hidden; }
+  .hiw{ position:fixed; inset:0; display:none; align-items:flex-start; justify-content:center;
+    overflow-y:auto; scrollbar-gutter:stable; padding:4vh 16px; box-sizing:border-box;
     background:rgba(0,0,0,.45); z-index:9999; }
   .hiw.on{ display:flex; }
-  .hiw__box{ position:relative; width:92%; max-width:32em; max-height:88vh; overflow:auto;
+  .hiw__box{ position:relative; width:100%; max-width:50em; box-sizing:border-box;
     background:var(--paper); color:var(--ink); border:1px solid var(--rule);
     padding:1.5em 1.4em 1.35em; box-shadow:0 8px 44px rgba(0,0,0,.32); }
-  .hiw__x{ position:absolute; top:.3em; right:.45em; background:none; border:0; font-size:1.5em;
+  .hiw__x{ position:absolute; top:.15em; right:.2em; width:44px; height:44px; display:flex;
+    align-items:center; justify-content:center; background:none; border:0; font-size:1.5em;
     line-height:1; cursor:pointer; color:var(--muted); }
   .hiw__x:hover{ color:var(--ink); }
-  .hiw__title{ font-family:var(--display); font-weight:700; font-size:1.4em; margin:0 0 .15em; }
-  .hiw__sub{ font-family:var(--serif); font-size:.85em; color:var(--muted); margin:0 0 1.3em; }
+  .hiw__title{ padding-right:42px; font-family:var(--display); font-weight:700; font-size:1.55em; margin:0 0 .2em; }
+  .hiw__sub{ max-width:65ch; font-family:var(--serif); font-size:.9em; line-height:1.5;
+    color:var(--muted); margin:0 0 1.15em; }
 
-  /* the diagram — a hand-drawn SVG flowchart; every stroke/fill is a theme token so both
-     themes work. Text is authored uppercase (SVG text-transform support is uneven). */
-  .hiw-d{ display:block; width:100%; height:auto; margin:6px 0 2px; }
-  .hiw-d .b{ fill:var(--card); stroke:var(--rule); stroke-width:1; }
-  .hiw-d .b2{ fill:var(--card); stroke:var(--accent); stroke-width:1; stroke-dasharray:4 3; }
-  .hiw-d .g{ fill:none; stroke:var(--hair); stroke-dasharray:4 3; }
-  .hiw-d .e{ fill:none; stroke:var(--rule); stroke-width:1; }
-  .hiw-d .fb{ fill:none; stroke:var(--accent); stroke-width:1; stroke-dasharray:4 3; opacity:.85; }
-  .hiw-d text{ font-family:var(--sans); }
-  .hiw-d .n{ fill:var(--ink); font-size:12.5px; font-weight:700; letter-spacing:.08em; text-anchor:middle; }
-  .hiw-d .k{ fill:var(--accent); font-size:11px; font-weight:700; letter-spacing:.14em; text-anchor:middle; }
-  .hiw-d .s{ fill:var(--muted); font-size:11.5px; text-anchor:middle; }
-  .hiw-d .c{ fill:var(--muted); font-size:9.5px; letter-spacing:.08em; text-anchor:middle; }
-  .hiw-d .l{ fill:var(--muted); font-size:10px; }
-  .hiw-d .loop{ fill:var(--accent); font-size:10px; letter-spacing:.16em; }
+  /* Responsive architecture map. The DOM order is the accessible narrative; arrows only
+     reinforce it visually and turn downward when the map stacks on narrow screens. */
+  .hiw-map{ border-top:1px solid var(--rule); }
+  .hiw-phase{ padding:18px 0 20px; border-bottom:1px solid var(--rule); }
+  .hiw-phase__head{ display:grid; grid-template-columns:34px minmax(0,1fr); gap:10px;
+    align-items:start; margin:0 0 12px; }
+  .hiw-phase__num{ font-family:var(--sans); font-size:.62rem; letter-spacing:.12em;
+    color:var(--accent); padding-top:4px; }
+  .hiw-phase__head h3{ margin:0; font-family:var(--display); font-size:1.05rem; font-weight:700; }
+  .hiw-phase__head p{ margin:2px 0 0; font-family:var(--serif); font-size:.78rem;
+    line-height:1.45; color:var(--muted); }
 
-  /* house rules — compact tiles; the read-the-prompts line closes the box */
+  .hiw-desks{ list-style:none; display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:7px; margin:0; padding:0; }
+  .hiw-desks li{ min-width:0; padding:9px 6px; background:var(--card); border:1px solid var(--hair);
+    text-align:center; font-family:var(--sans); }
+  .hiw-desks strong, .hiw-desks span{ display:block; }
+  .hiw-desks strong{ font-size:.7rem; letter-spacing:.04em; }
+  .hiw-desks span{ margin-top:3px; color:var(--muted); font-size:.61rem;
+    text-transform:uppercase; letter-spacing:.08em; }
+  .hiw-down{ display:block; height:22px; text-align:center; color:var(--accent); line-height:22px; }
+
+  .hiw-path, .hiw-gate{ display:grid; grid-template-columns:minmax(0,1fr) 18px minmax(0,1.25fr) 18px minmax(0,1fr);
+    align-items:stretch; gap:0; }
+  .hiw-path--four{ grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr) 16px minmax(0,1fr) 16px minmax(0,1fr); }
+  .hiw-arrow{ display:flex; align-items:center; justify-content:center; color:var(--accent);
+    font-family:var(--sans); font-size:.9rem; }
+  .hiw-node{ min-width:0; padding:10px 11px; background:var(--card); border:1px solid var(--hair);
+    font-family:var(--sans); line-height:1.35; }
+  .hiw-node strong, .hiw-node > span{ display:block; }
+  .hiw-node strong{ font-size:.72rem; letter-spacing:.02em; }
+  .hiw-node > span:not(.hiw-eyebrow){ margin-top:4px; color:var(--muted); font-size:.64rem; }
+  .hiw-node--memory{ border-color:var(--rule); }
+  .hiw-verdicts{ list-style:none; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:4px; margin:9px 0 0; padding:0; }
+  .hiw-verdicts li{ min-width:0; padding:5px 4px; border-top:1px solid var(--hair); text-align:center; }
+  .hiw-verdicts b, .hiw-verdicts small{ display:block; }
+  .hiw-verdicts b{ font-size:.56rem; text-transform:uppercase; letter-spacing:.08em; }
+  .hiw-verdicts small{ margin-top:2px; color:var(--muted); font-size:.55rem; line-height:1.2; }
+  .hiw-sidecar{ margin:10px 0 0; padding:8px 10px; border-left:2px solid var(--accent);
+    background:var(--panel); color:var(--muted); font-family:var(--serif); font-size:.72rem; line-height:1.45; }
+  .hiw-sidecar b{ color:var(--ink); }
+
+  .hiw-hub{ padding:13px 15px; background:var(--panel); border:1px solid var(--accent);
+    box-shadow:inset 3px 0 0 var(--accent); }
+  .hiw-hub strong{ display:block; margin-top:3px; font-family:var(--display); font-size:1rem; }
+  .hiw-hub p{ margin:5px 0 0; color:var(--muted); font-family:var(--serif); font-size:.72rem; line-height:1.45; }
+  .hiw-eyebrow{ display:block; font-family:var(--sans); color:var(--accent); font-size:.56rem;
+    text-transform:uppercase; letter-spacing:.12em; }
+  .hiw-release{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .hiw-lane{ min-width:0; padding:10px 11px; background:var(--card); border:1px solid var(--hair); }
+  .hiw-lane strong{ display:block; margin-top:4px; font-family:var(--sans); font-size:.7rem; line-height:1.3; }
+  .hiw-lane p{ margin:5px 0 0; color:var(--muted); font-family:var(--serif); font-size:.67rem; line-height:1.4; }
+
+  .hiw-gate{ margin-top:10px; }
+  .hiw-node--gate{ position:relative; border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }
+  .hiw-node--gate .hiw-eyebrow{ margin:0 0 4px; }
+  .hiw-loopback{ margin:9px 0 0; color:var(--accent); font-family:var(--serif); font-size:.72rem; line-height:1.45; }
+  .hiw-sync-note{ margin-top:12px; padding:10px 12px; border:1px dashed var(--rule); background:transparent; }
+  .hiw-sync-note strong{ display:block; margin-top:4px; font-family:var(--sans); font-size:.72rem; }
+  .hiw-sync-note p{ margin:4px 0 0; color:var(--muted); font-family:var(--serif); font-size:.7rem; line-height:1.45; }
+
+  /* Evidence + editorial contract close the explainer without being confused for topology. */
   .hiw-h{ display:flex; align-items:center; gap:10px; margin:22px 0 10px; font-family:var(--sans);
     font-weight:700; font-size:.6rem; text-transform:uppercase; letter-spacing:.16em; color:var(--muted); }
   .hiw-h::after{ content:""; flex:1; height:1px; background:var(--hair); }
@@ -527,7 +640,6 @@ layout: archive
     text-transform:uppercase; color:var(--muted); border:1px solid var(--hair); border-radius:999px;
     padding:2px 8px; white-space:nowrap; }
   .hiw-read{ margin:14px 0 0; font-family:var(--serif); font-size:.85em; color:var(--muted); }
-  .hiw-read a{ color:var(--accent); text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; }
   .hiw-stats{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
   .hiw-stats li{ background:var(--card); border:1px solid var(--hair); padding:10px 12px; min-width:0; }
   .hiw-stats b{ display:block; font-family:var(--display); font-weight:700; font-size:1.5rem;
@@ -536,6 +648,15 @@ layout: archive
     text-transform:uppercase; letter-spacing:.08em; line-height:1.5; color:var(--muted); }
   .hiw-stat-line{ margin:10px 0 0; font-family:var(--serif); font-size:.8em; line-height:1.5; color:var(--muted); }
   .hiw-stat-line strong{ color:var(--ink); }
+  @media (max-width:700px){
+    .hiw{ padding:12px; }
+    .hiw__box{ padding:1.25em 1em; }
+    .hiw-desks{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .hiw-desks li:last-child:nth-child(odd){ grid-column:1 / -1; }
+    .hiw-path, .hiw-path--four, .hiw-gate{ grid-template-columns:minmax(0,1fr); }
+    .hiw-arrow{ height:22px; transform:rotate(90deg); }
+    .hiw-release{ grid-template-columns:minmax(0,1fr); }
+  }
   @media (max-width:480px){ .hiw-rules{ grid-template-columns:1fr; } .hiw-stats{ grid-template-columns:1fr 1fr; } }
 </style>
 

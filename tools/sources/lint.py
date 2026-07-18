@@ -11,9 +11,12 @@ new"). Checks:
       novelty is judged as of the POST's date via each domain's earliest registry lifecycle
       date, not against today's registry -- publishing lints before registry-sync, so replaying
       a past edition against today's registry used to call its historical [new source] tags
-      false (17/19 recent editions false-flagged; found by the external audit). A domain whose
-      lifecycle starts the SAME day as the post is ambiguous (this edition's own sync, or a
-      same-day sibling's) and is skipped for tag integrity, counted novel for quota.
+      false (17/19 recent editions false-flagged; found by the external audit). Same-day
+      registrations are attributed by creation stream: this slug's own -> replay of the
+      introducing edition, skipped; a SIBLING stream's -> registered (tagging it is the
+      false self-certification to catch, live or replayed). A domain registered only AFTER
+      the edition was simply not tracked then: its tag counts novel, its absence-of-tag is
+      never a violation.
   (2) Discovery footer format -- exactly one `- Discovery: met (...)` / `waived -- <reason>`
       line. Format-only violations are reported but never gate --arm.
   (3) per-domain outlet cap (flat 2, hubs exempt) / institutional 30% share bar, and discovery-
@@ -124,11 +127,29 @@ def post_date_of(post_path, text):
     return m.group(1) if m else None
 
 
-def registered_asof(rec, post_date):
-    """'registered' | 'unregistered' | 'ambiguous' -- was this registry entry already
-    registered when the post was published? Judged by the entry's EARLIEST lifecycle date
-    (sync/bootstrap stamp them). No lifecycle dates, or no post date to compare against ->
-    'registered' (a long-standing entry / the pre-replay-stability behavior)."""
+def novelty_asof(reg, domain, post_date, slug):
+    """Was this domain already registered when the post was published?
+
+      'unregistered' -- not in the registry at all (live-path novelty).
+      'registered'   -- registered before the post's date (or undated/bootstrap-era entry,
+                        or no post date to compare against). Includes SAME-DAY entries
+                        created by a DIFFERENT stream: at lint time this edition's own
+                        novelties are never in the registry yet (sync runs after lint), so
+                        a same-day entry means a sibling edition registered it hours ago --
+                        tagging it [new source] is the false self-certification the lint
+                        exists to catch.
+      'own-day'      -- same-day entry whose creation stream IS this slug: only reachable
+                        on replay of the edition that introduced the domain (its own sync,
+                        minutes after its own lint). Skip integrity, count novel.
+      'later'        -- entry's earliest lifecycle date post-dates the edition: from that
+                        edition's perspective the domain was simply not yet tracked. A
+                        [new source] tag was correct then (count novel); an untagged
+                        citation is NOT a violation (never claim a registered domain is
+                        'not in the registry').
+    """
+    rec = reg.get(domain)
+    if rec is None:
+        return "unregistered"
     dates = [l.get("date") for l in rec.get("lifecycle", [])
              if isinstance(l, dict) and l.get("date")]
     if not dates or not post_date:
@@ -136,9 +157,10 @@ def registered_asof(rec, post_date):
     reg_date = min(dates)
     if reg_date < post_date:
         return "registered"
-    if reg_date == post_date:
-        return "ambiguous"
-    return "unregistered"
+    if reg_date > post_date:
+        return "later"
+    streams = rec.get("streams") or []
+    return "own-day" if slug and streams and streams[0] == slug else "registered"
 
 
 def compute_violations(text, citations, reg, slug, post_date=None):
@@ -148,9 +170,9 @@ def compute_violations(text, citations, reg, slug, post_date=None):
     # trusted from the prose, and never judged against a registry newer than the edition.
     for c in citations:
         domain, tagged = c["domain"], c["tagged"]
-        asof = registered_asof(reg[domain], post_date) if domain in reg else "unregistered"
-        if asof == "ambiguous":
-            continue  # registered the same day (likely by this very edition's sync)
+        asof = novelty_asof(reg, domain, post_date, slug)
+        if asof in ("own-day", "later"):
+            continue  # own sync minutes later / not yet tracked then -- nothing to flag
         if asof == "unregistered" and not tagged:
             violations.append(("tag_missing",
                 "%s cited without a [new source] tag but is not in the registry." % domain))
@@ -189,10 +211,10 @@ def compute_violations(text, citations, reg, slug, post_date=None):
         quota = QUOTA.get(slug, 0)
         novel = set()
         for c in citations:
-            asof = (registered_asof(reg[c["domain"]], post_date)
-                    if c["domain"] in reg else "unregistered")
-            # 'ambiguous' (registered the day of the post -- by this edition's own sync)
-            # still counts as novel: it WAS new when the writer cited it.
+            asof = novelty_asof(reg, c["domain"], post_date, slug)
+            # novel = genuinely new at publish time: unregistered, registered later, or
+            # registered same-day by this edition's own sync. A same-day SIBLING
+            # registration reads 'registered' and never satisfies the quota.
             if c["tagged"] and asof != "registered":
                 cls = registry.classify_domain(c["domain"])
                 if slug == "ai-ml" and cls == "hub":

@@ -82,14 +82,20 @@
 > `include_relative` scan (excluded files republished THROUGH pages were invisible to the
 > path-based check); `routines/README.md` corrected — the prompts page is deliberate
 > transparency, the files are public content. (5) Registry write-contention: fold-free
-> `registry.py sync` is a strict no-op (no YAML rewrite, no buffer truncation) + the append
-> buffers got `merge=union`; SPIKE C1 amended — per-edition sync is deliberate (the
-> evaluator-only cadence starved discovery 07-07→07-10). (6) GPG policy scoped in both
-> CLAUDE.mds: automation commits are unsigned by design, interactive commits stay signed.
-> (7) Stale §3/§5.2 pgvector banners marked SUPERSEDED; §1.4 feedback re-scoped homepage-only.
-> (8) `sources/lint.py` tag-integrity is replay-stable: novelty judged against the domain's
-> registry lifecycle date vs the post date, not today's registry (17/19 replayed editions
-> false-flagged before).
+> `registry.py sync` never rewrites the YAML (an untouched file can't merge-conflict) but
+> still purges dead buffer entries + the append buffers got `merge=union`; SPIKE C1 amended —
+> per-edition sync is deliberate (the evaluator-only cadence starved discovery 07-07→07-10).
+> (6) GPG policy scoped in both CLAUDE.mds: automation commits are unsigned by design,
+> interactive commits stay signed. (7) Stale §3/§5.2 pgvector banners marked SUPERSEDED; §1.4
+> feedback re-scoped homepage-only. (8) `sources/lint.py` tag-integrity is replay-stable:
+> novelty judged against the domain's earliest registry lifecycle date vs the post date, not
+> today's registry (17/19 replayed editions false-flagged before); same-day registrations are
+> attributed by creation stream, so a sibling edition's fresh domain still flags tag_false and
+> earns no quota credit. A 2-Opus adversarial pass then hardened the fixes themselves (5
+> execution-verified findings folded in: the sibling-day lint hole, a tag_missing flood on
+> pre-registry editions, dead-buffer candidates_open inflation, a page-global redaction
+> whitelist bypass in check_publish, and unmatched-fence prose loss in the editorial
+> extractor — all pinned by tests).
 
 > **Fixed 2026-07-18 (night): editorial sections restored to the homepage.** Retiring
 > the brief pages orphaned the briefs' SECTION-level synthesis prose — Weekend's "Cross-cutting

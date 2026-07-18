@@ -50,6 +50,12 @@ class ParagraphsTest(unittest.TestCase):
                                     "# not a heading", "x = 1", "```", "After."])
         self.assertEqual(paras, ["Before.", "After."])
 
+    def test_unmatched_fence_does_not_swallow_trailing_prose(self):
+        """Adversarial-review catch: a stray ``` mid-prose must not silently drop every
+        paragraph after it -- unclosed 'fence' content is prose, not code."""
+        paras = bsf._ed_paragraphs(["Point one.", "", "```", "", "Point two."])
+        self.assertEqual(paras, ["Point one.", "Point two."])
+
     def test_bullets_split_and_wrapped_lines_join(self):
         paras = bsf._ed_paragraphs(["- first bullet", "- second bullet",
                                     "", "wrapped", "line"])
