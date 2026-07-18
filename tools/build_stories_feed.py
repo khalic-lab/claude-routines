@@ -383,6 +383,7 @@ _EDITORIAL_HEADINGS = {
     "why it matters": "Why it matters",
 }
 _ED_HEAD_RE = re.compile(r"^##\s+(.*)$")
+_ED_HR_RE = re.compile(r"^[-*_]{3,}$")   # markdown rule (---/***/___): separator, never prose
 _ED_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
 _ED_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
 _ED_EM_RE = re.compile(r"(?<!\*)\*([^*\n]+)\*(?!\*)")
@@ -406,9 +407,11 @@ def _ed_inline_html(text):
     import html as _h
     s = _ED_TAG_RE.sub("", text).replace("`", "")
     s = _h.escape(s, quote=False)
+    # m.group(2) comes out of the ALREADY-escaped text (& is &amp;) -- escaping it
+    # again would double-escape to &amp;amp;. Only quotes still need attribute-escaping.
     s = _ED_LINK_RE.sub(
         lambda m: '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>'
-        % (_h.escape(m.group(2), quote=True), m.group(1)), s)
+        % (m.group(2).replace('"', "&quot;"), m.group(1)), s)
     s = _ED_BOLD_RE.sub(r"<strong>\1</strong>", s)
     s = _ED_EM_RE.sub(r"<em>\1</em>", s)
     return s.strip()
@@ -416,8 +419,10 @@ def _ed_inline_html(text):
 
 def _ed_paragraphs(lines, cap=6):
     """Section lines -> [html paragraph]: blank-line-delimited chunks, '- ' bullets split out,
-    wrapped lines joined."""
+    wrapped lines joined. Markdown rules (---) and fenced code blocks are structure, not prose --
+    both live cards shipped a literal '---' paragraph before this filter existed."""
     paras, chunk = [], []
+    fenced = False
 
     def flush():
         if chunk:
@@ -426,7 +431,12 @@ def _ed_paragraphs(lines, cap=6):
 
     for ln in lines:
         stripped = ln.strip()
-        if not stripped:
+        if stripped.startswith("```"):
+            fenced = not fenced
+            flush()
+        elif fenced:
+            continue
+        elif not stripped or _ED_HR_RE.match(stripped):
             flush()
         elif stripped.startswith("- "):
             flush()

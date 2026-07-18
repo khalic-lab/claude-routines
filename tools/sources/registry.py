@@ -354,6 +354,15 @@ def cmd_sync(args):
             reg[domain]["last_cited"] = date
             folded += 1
 
+    # No-op guard (2026-07-18): sync runs on EVERY edition since the publish-tail
+    # rollout, but the SPIKE's write-contention design assumed only the low-frequency
+    # Evaluator rewrites registry.yml. When nothing folded, leave the YAML and the
+    # append buffers untouched -- an unchanged file can't merge-conflict, so the
+    # residual same-day race shrinks to the rare both-editions-added-a-domain case.
+    if added == 0 and folded == 0:
+        print("sync: nothing to fold (registry.yml untouched)")
+        return 0
+
     with open(path, "w") as f:
         f.write(yaml_dump(reg))
 

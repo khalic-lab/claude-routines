@@ -430,5 +430,42 @@ class SyncTruncatesAndIsIdempotentTest(unittest.TestCase):
                           "sync on already-empty jsonls must be a byte-identical no-op")
 
 
+class SyncNothingToFoldLeavesRegistryUntouchedTest(unittest.TestCase):
+    """Write-contention guard (2026-07-18, SPIKE 3.4 amendment): sync now runs on EVERY
+    edition via the publish tail, so a fold-free sync must not rewrite registry.yml at all
+    (an untouched file cannot merge-conflict between concurrent editions) and must leave
+    the append buffers alone."""
+
+    def setUp(self):
+        self.root, _ = _bootstrap_registry(self)
+        self.sources_dir = os.path.join(self.root, "sources")
+
+    def test_empty_buffers_leave_registry_mtime_and_bytes_alone(self):
+        reg_path = os.path.join(self.sources_dir, "registry.yml")
+        with open(reg_path) as f:
+            before = f.read()
+        os.utime(reg_path, (1000000000, 1000000000))
+        proc = H.run_script(self, "registry.py", ["sync", "--root", self.root])
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("nothing to fold", proc.stdout)
+        self.assertEqual(os.stat(reg_path).st_mtime, 1000000000,
+                         "a fold-free sync must not rewrite registry.yml")
+        with open(reg_path) as f:
+            self.assertEqual(f.read(), before)
+
+    def test_unfoldable_buffer_content_is_preserved_for_a_later_sync(self):
+        """last-cited entries older than the registry's current value fold to nothing;
+        the buffer must survive untruncated so nothing is silently discarded."""
+        buf = os.path.join(self.sources_dir, "last-cited.jsonl")
+        H.write_jsonl(buf, [{"domain": "srf.ch", "date": "2026-01-01", "stream": "news"}])
+        with open(buf) as f:
+            before = f.read()
+        proc = H.run_script(self, "registry.py", ["sync", "--root", self.root])
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        with open(buf) as f:
+            self.assertEqual(f.read(), before,
+                             "fold-free sync must not truncate the append buffers")
+
+
 if __name__ == "__main__":
     unittest.main()

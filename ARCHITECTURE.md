@@ -69,7 +69,29 @@
    └──────────────────────────────────┘
 ```
 
-> **Fixed 2026-07-18 (night, latest): editorial sections restored to the homepage.** Retiring
+> **Fixed 2026-07-18 (post-audit, latest): eight hardening fixes from an external read-only
+> audit (codex, at 63683b1).** (1) `publish.py` git tail is now honest: commit results are
+> checked (a failed commit + no-op push used to print DONE), fold-free `git add` pathspecs are
+> filtered to existing dirs, push-failure notes are amended INTO the commit, and commit/push
+> failure exits 1 with FAILED — covered by real-git tests (`RealGitTest`). (2) The editorial
+> extractor no longer emits Markdown `---` rules as prose (both live cards showed one), skips
+> fenced code, and escapes `&` in linked URLs exactly once — `test_editorials.py` pins all
+> three. (3) Sports fully integrated into weekly QA: evaluator prompt (cadence, inputs, quotas,
+> §K range), `/prompts/` page, homepage diagram (five desks). (4) `/prompts/` redacts the
+> notification email at render (`replace` filter); `check_publish.py` gained an
+> `include_relative` scan (excluded files republished THROUGH pages were invisible to the
+> path-based check); `routines/README.md` corrected — the prompts page is deliberate
+> transparency, the files are public content. (5) Registry write-contention: fold-free
+> `registry.py sync` is a strict no-op (no YAML rewrite, no buffer truncation) + the append
+> buffers got `merge=union`; SPIKE C1 amended — per-edition sync is deliberate (the
+> evaluator-only cadence starved discovery 07-07→07-10). (6) GPG policy scoped in both
+> CLAUDE.mds: automation commits are unsigned by design, interactive commits stay signed.
+> (7) Stale §3/§5.2 pgvector banners marked SUPERSEDED; §1.4 feedback re-scoped homepage-only.
+> (8) `sources/lint.py` tag-integrity is replay-stable: novelty judged against the domain's
+> registry lifecycle date vs the post date, not today's registry (17/19 replayed editions
+> false-flagged before).
+
+> **Fixed 2026-07-18 (night): editorial sections restored to the homepage.** Retiring
 > the brief pages orphaned the briefs' SECTION-level synthesis prose — Weekend's "Cross-cutting
 > threads" and the Science/Sports "Why it matters" roundups are not per-story content, so the
 > homefeed never carried them and they became unreachable anywhere on the site.
@@ -427,9 +449,11 @@ exact-string exclusion in the Cyber+Papers prompt ("read today's Overview brief,
 IDs it already cited"). That spanned no days, no other streams, and matched only arXiv IDs (not
 *stories*), which is why "Bilaterals III" ran every few days from May 3 → May 24 untouched.
 
-### 1.4 Reader feedback loop (LIVE 2026-06-18)
+### 1.4 Reader feedback loop (LIVE 2026-06-18; homepage-only since 2026-07-18)
 
-Human-gated, web-widget-only, per-brief v1. Captures 👍/👎 + an optional free-text reason
+Human-gated, web-widget-only — the homepage story cards are the ONLY feedback surface now
+(the per-brief-page widgets died with the brief pages, 2026-07-18; `brief` in the payload
+means the *stream/edition* a story belongs to, not a page). Captures 👍/👎 + an optional free-text reason
 and folds it into the writers' editorial guidance **through a human gate** (never auto-mutated
 from a tap — the documented n=1 sycophancy trap).
 
@@ -499,11 +523,12 @@ Hard Cloudflare Bot-Management / JS-challenge sites can still block even the pro
 
 ## 3. Target: two-plane hybrid
 
-> **Status (2026-06-22):** Phase 1 — the online-plane compose-time dedup below — is **BUILT and
-> LIVE** (`tools/dedup/dedup.py`, `embed-proxy`, `index/stories/`). The analytical plane (local
-> pgvector + S3 datalake — the right-hand side here and §5.2) is **Phase 2, not built**. This
-> resolves the §7 store/provider questions: store = **in-repo `index/stories/`** (option B);
-> embeddings = **Workers-AI `bge-m3`** via the `embed-proxy` Worker.
+> **Status (2026-06-22, SUPERSEDED 2026-07-18):** Phase 1 — the online-plane compose-time dedup
+> below — is **BUILT and LIVE** (`tools/dedup/dedup.py`, `embed-proxy`, `index/stories/`).
+> **Phase 2 is now ALSO built — but NOT as sketched here.** The shipped analytical plane is
+> serverless (`tools/plane/query.py` folds the ledger in-process; Worker twin on embed-proxy
+> `/plane/*` — see the dated 2026-07-18 blocks in §0). The local-pgvector + S3 right-hand side
+> of this section and §5.2 is retained as the original design rationale only; do not build it.
 
 Split the system into an **online plane** (compute-time, cloud, must be allowlisted) and an
 **analytical plane** (offline, local Mac, where pgvector lives and gives the "superpowers").
@@ -635,7 +660,11 @@ vanishes). Writers regenerate and commit it after `record` (DEDUP.md Step D; `_d
 publish `git add`, and their push-retry regenerates it on a rebase conflict — two editions firing
 the same minute both rewrite this whole file).
 
-### 5.2 Local pgvector
+### 5.2 Local pgvector (SUPERSEDED 2026-07-18 — never built; kept as design history)
+
+> The shipped Phase-2 plane is serverless (`tools/plane/`, ledger folded in-process; Worker twin
+> on embed-proxy `/plane/*`). A resident Postgres was explicitly rejected. This sketch stays only
+> so the schema thinking isn't lost if the embedded-file upgrade (DuckDB/sqlite-vec) ever lands.
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;

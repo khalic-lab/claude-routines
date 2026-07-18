@@ -55,7 +55,9 @@ trigger's id, cron, and full `session_context`.
   convention (the routines + bridge reconcile on `main`).
 - **No Claude signature** in commit messages.
 - Local/automation commits must pass `-c commit.gpgsign=false` (global `commit.gpgsign=true`
-  breaks headless commits).
+  breaks headless commits). This is a **deliberate, scoped exception** to the global GPG policy —
+  routine sandboxes hold no key and headless contexts can't open pinentry; the signing mandate in
+  `~/.claude/CLAUDE.md` covers Rafael's interactive commits on the Mac, not this repo's automation.
 
 ## Stable identifiers
 - Repo `github.com/khalic-lab/claude-routines` (private), branch `main`. Site:

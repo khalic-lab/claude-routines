@@ -514,5 +514,62 @@ class CandidatesAppendTest(LintTestBase):
                           "--dry-run must write nothing to sources/candidates.jsonl")
 
 
+class ReplayStabilityTest(LintTestBase):
+    """Tag integrity as of the POST's date (2026-07-18, from the external audit): publishing
+    lints BEFORE registry-sync, so a domain that was genuinely novel at publish time enters
+    the registry minutes later -- replaying the edition against today's registry must not
+    call its historical [new source] tag false (17/19 recent editions false-flagged).
+    The domain's earliest `lifecycle:` date is the registration timestamp; entries without
+    lifecycle dates (the static fixture) keep the old always-registered behavior."""
+
+    def _register(self, domain, lifecycle_date):
+        entry = (f"{domain}:\n  class: outlet\n  tier: T2\n  status: candidate\n"
+                 f"  reach: direct\n  lifecycle:\n    - date: {lifecycle_date}\n"
+                 f"      event: candidate\n      status: candidate\n")
+        with open(os.path.join(self.root, "sources", "registry.yml"), "a") as f:
+            f.write(entry)
+
+    def test_tag_on_domain_registered_after_the_post_is_not_false(self):
+        """The replay case: [new source] was correct on 07-10; the domain entered the
+        registry on 07-12. Neither tag_false nor a quota violation may fire."""
+        self._register("newlyseen.example", "2026-07-12")
+        path = self.write_post("2026-07-10-news.md", build_post(
+            "news", "World",
+            [bullet("Lead.", "https://newlyseen.example/story", tag="[new source]"),
+             bullet("Other.", "https://srf.ch/a")],
+            ["- Discovery: met (newlyseen.example)"]))
+        proc = self.assert_report_only_always_exits_zero(path)
+        self.assertNotIn("tag_false", proc.stdout)
+        self.assertNotIn("discovery_quota", proc.stdout)
+        self.assertIn("clean", proc.stdout)
+
+    def test_same_day_registration_is_ambiguous_and_skipped(self):
+        """Lifecycle date == post date: registered by this very edition's own sync (or a
+        same-day sibling) -- skip tag integrity both ways, count novel for quota."""
+        self._register("sameday-tagged.example", "2026-07-10")
+        self._register("sameday-untagged.example", "2026-07-10")
+        path = self.write_post("2026-07-10-news.md", build_post(
+            "news", "World",
+            [bullet("Lead.", "https://sameday-tagged.example/a", tag="[new source]"),
+             bullet("Other.", "https://sameday-untagged.example/b")],
+            ["- Discovery: met (sameday-tagged.example)"]))
+        proc = self.assert_report_only_always_exits_zero(path)
+        self.assertNotIn("tag_false", proc.stdout)
+        self.assertNotIn("tag_missing", proc.stdout)
+        self.assertNotIn("discovery_quota", proc.stdout)
+
+    def test_tag_on_domain_registered_before_the_post_is_still_false(self):
+        """A domain long in the registry, tagged [new source] anyway -- the genuine
+        false-novelty claim must still be caught."""
+        self._register("oldtimer.example", "2026-07-01")
+        path = self.write_post("2026-07-10-news.md", build_post(
+            "news", "World",
+            [bullet("Lead.", "https://oldtimer.example/story", tag="[new source]"),
+             bullet("Other.", "https://srf.ch/a")],
+            ["- Discovery: waived — quota not attempted this run"]))
+        proc = self.assert_report_only_always_exits_zero(path)
+        self.assertIn("tag_false", proc.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

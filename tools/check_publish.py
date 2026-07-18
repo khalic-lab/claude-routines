@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """Publish-safety guard — turn the fragile `_config.yml` exclude denylist into a tested invariant.
 
-Two checks:
+Three checks:
   1. REQUIRED_EXCLUDES — every sensitive path must be present in `_config.yml` exclude:.
   2. Content scan — no secret-shaped string (env id, trigger id, literal bearer token, long hex)
      may appear in any file Jekyll would PUBLISH (i.e. not under an excluded path; _posts is the
      site content and is scanned too — briefs must not carry infra identifiers).
+  3. include_relative scan — Liquid `include_relative` republishes EXCLUDED files through
+     published pages (prompts.html renders the routine prompts verbatim), a hole the path-based
+     check 2 cannot see (found by the 2026-07-18 external audit: the notification email address
+     was live on /prompts/). Every include target is scanned with the secret patterns PLUS an
+     email pattern; a string named in one of the including page's `| replace: "X", ...` filters
+     counts as redacted-at-render and is skipped.
 
 Run from the repo root:  python3 tools/check_publish.py
 Exit 0 = safe, 1 = a leak or a missing exclude. `tools/` is itself excluded, so this script and
@@ -92,6 +98,42 @@ def main():
                 print(f"  LEAK in {f}: {label} → {m.group(0)[:32]}…")
     if not hits:
         print("  no secret-shaped strings in published files ✓")
+
+    print("\n== include_relative scan (content published THROUGH pages) ==")
+    inc_re = re.compile(r"{%\s*include_relative\s+(\S+)\s*%}")
+    replace_re = re.compile(r'replace:\s*"([^"]+)"')
+    email_re = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
+    inc_hits = 0
+    for f in tracked_files():
+        if is_excluded(f, excludes):
+            continue
+        try:
+            page = open(os.path.join(ROOT, f), encoding="utf-8", errors="ignore").read()
+        except (IsADirectoryError, FileNotFoundError):
+            continue
+        targets = inc_re.findall(page)
+        if not targets:
+            continue
+        redacted = set(replace_re.findall(page))
+        page_dir = os.path.dirname(f)
+        for t in targets:
+            rel = os.path.normpath(os.path.join(page_dir, t))
+            try:
+                text = open(os.path.join(ROOT, rel), encoding="utf-8", errors="ignore").read()
+            except (IsADirectoryError, FileNotFoundError):
+                ok = False; inc_hits += 1
+                print(f"  BROKEN include_relative in {f}: {t}")
+                continue
+            for label, rx in SECRET_PATTERNS + [("email address", email_re)]:
+                for m in rx.finditer(text):
+                    if m.group(0) in redacted:
+                        continue
+                    ok = False; inc_hits += 1
+                    print(f"  LEAK via include_relative {rel} (published by {f}): "
+                          f"{label} → {m.group(0)[:40]}")
+                    break  # one report per pattern per file is enough
+    if not inc_hits:
+        print("  all include_relative content clean or redacted at render ✓")
 
     print("\n" + ("PUBLISH-SAFE ✅" if ok else "PUBLISH-UNSAFE ❌"))
     sys.exit(0 if ok else 1)

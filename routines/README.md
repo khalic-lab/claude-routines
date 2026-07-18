@@ -37,7 +37,12 @@ these files are safe to commit as-is.
 `RemoteTrigger update` is needed ONLY for a trigger's schedule (`cron_expression`), display name,
 `session_context`, or the shim text/token itself — see `MANIFEST.md` for the protocol and traps.
 
-## Excluded from Jekyll
+## Publication status (corrected 2026-07-18)
 
-`routines` is in `_config.yml`'s `exclude:` list — these are private editorial config and must never
-be published to the public GitHub Pages site.
+`routines` is in `_config.yml`'s `exclude:` list, so these files never render as pages — but the
+public `/prompts/` page deliberately republishes the six live prompt bodies verbatim via Liquid
+`include_relative` (a transparency feature, added knowingly). **Treat every routine file as
+public content**: no secrets, no infra ids, and personal data only where the render-time
+redaction in `prompts.html` covers it (currently the notification email). `tools/check_publish.py`
+scans the `include_relative` targets for exactly this. What stays genuinely private is the
+non-included material: `MANIFEST.md` (trigger ids/shims), `src/`, `_shared/`, `assemble.py`.

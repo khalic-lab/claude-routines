@@ -11,27 +11,32 @@ routines read — <code>${FETCH_PROXY_TOKEN}</code> is a placeholder the runtime
 {% capture p_aiml %}{% include_relative routines/ai-ml.md %}{% endcapture %}
 {% capture p_science %}{% include_relative routines/science.md %}{% endcapture %}
 {% capture p_weekend %}{% include_relative routines/weekend.md %}{% endcapture %}
+{% capture p_sports %}{% include_relative routines/sports.md %}{% endcapture %}
 {% capture p_eval %}{% include_relative routines/weekly-evaluator.md %}{% endcapture %}
 
 <details class="prm">
   <summary><strong>News</strong><span>daily</span></summary>
-  <pre>{{ p_news | escape }}</pre>
+  <pre>{{ p_news | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
 </details>
 <details class="prm">
   <summary><strong>AI/ML</strong><span>Tue + Fri</span></summary>
-  <pre>{{ p_aiml | escape }}</pre>
+  <pre>{{ p_aiml | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
 </details>
 <details class="prm">
   <summary><strong>Science</strong><span>Wed</span></summary>
-  <pre>{{ p_science | escape }}</pre>
+  <pre>{{ p_science | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
 </details>
 <details class="prm">
   <summary><strong>Deep read</strong><span>Sat</span></summary>
-  <pre>{{ p_weekend | escape }}</pre>
+  <pre>{{ p_weekend | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
+</details>
+<details class="prm">
+  <summary><strong>Sports</strong><span>Mon</span></summary>
+  <pre>{{ p_sports | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
 </details>
 <details class="prm">
   <summary><strong>Evaluator</strong><span>Sun</span></summary>
-  <pre>{{ p_eval | escape }}</pre>
+  <pre>{{ p_eval | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
 </details>
 
 <style>

@@ -218,6 +218,18 @@ safe; `last_cited` folds as `max()`). `registry.yml` itself is written only by h
 low-frequency fire (the Evaluator's Sunday scout duty), which folds accumulated appends into the
 YAML. This avoids same-minute Tue/Fri YAML merge conflicts and comment-destroying round-trips.
 
+> **Amended 2026-07-18 (flagged by the external audit): the fold cadence above is superseded.**
+> `tools/publish.py` runs `registry.py sync` on EVERY edition — deliberately: the evaluator-only
+> cadence left `registry.py sync` uninvoked 2026-07-07→07-10 and starved discovery (candidates
+> never entered the registry, so preflight never offered them). The contention story is now:
+> (a) the append buffers carry `merge=union` in `.gitattributes` (the union-merge safety this
+> section promised but never wired), (b) `sync` is a strict no-op when nothing folds — an
+> untouched `registry.yml` cannot conflict — so the residual race is two same-day editions BOTH
+> folding a new domain, which the publish tail's rebase retry then has to merge by hand. Accepted:
+> no two writer crons share a fire window today. "registry.yml is written only by humans and the
+> Evaluator" still holds for TRUST fields (status/tier/lifecycle promotions); sync only appends
+> candidates and folds `last_cited` maxima.
+
 **Lifecycle:** `candidate` → (first clean anchored citation, automatic bookkeeping) → `probation` →
 (≥3 anchored citations across ≥2 editions, ≥14 days, zero source-quality 👎 — **Evaluator proposes,
 Rafael applies**) → `established`; reasoned source-quality 👎 ×2 **on distinct stories** (the

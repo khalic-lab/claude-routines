@@ -7,7 +7,13 @@ Recomputes, against the registry, what a brief's own citations and Discovery foo
 never trusts the prose (mirrors §4's framing: "the model cannot self-certify a known domain as
 new"). Checks:
   (1) [new source] tag integrity -- flagged if an unregistered domain is cited untagged, or a
-      registered domain is tagged (a false novelty claim).
+      registered domain is tagged (a false novelty claim). REPLAY-STABLE since 2026-07-18:
+      novelty is judged as of the POST's date via each domain's earliest registry lifecycle
+      date, not against today's registry -- publishing lints before registry-sync, so replaying
+      a past edition against today's registry used to call its historical [new source] tags
+      false (17/19 recent editions false-flagged; found by the external audit). A domain whose
+      lifecycle starts the SAME day as the post is ambiguous (this edition's own sync, or a
+      same-day sibling's) and is skipped for tag integrity, counted novel for quota.
   (2) Discovery footer format -- exactly one `- Discovery: met (...)` / `waived -- <reason>`
       line. Format-only violations are reported but never gate --arm.
   (3) per-domain outlet cap (flat 2, hubs exempt) / institutional 30% share bar, and discovery-
@@ -109,17 +115,46 @@ def load_registry(root):
     return data if isinstance(data, dict) else {}
 
 
-def compute_violations(text, citations, reg, slug):
+def post_date_of(post_path, text):
+    """The edition's date: filename first (deterministic), front matter as fallback."""
+    m = re.match(r"^(\d{4}-\d{2}-\d{2})-", os.path.basename(post_path or ""))
+    if m:
+        return m.group(1)
+    m = DATE_RE.search(text or "")
+    return m.group(1) if m else None
+
+
+def registered_asof(rec, post_date):
+    """'registered' | 'unregistered' | 'ambiguous' -- was this registry entry already
+    registered when the post was published? Judged by the entry's EARLIEST lifecycle date
+    (sync/bootstrap stamp them). No lifecycle dates, or no post date to compare against ->
+    'registered' (a long-standing entry / the pre-replay-stability behavior)."""
+    dates = [l.get("date") for l in rec.get("lifecycle", [])
+             if isinstance(l, dict) and l.get("date")]
+    if not dates or not post_date:
+        return "registered"
+    reg_date = min(dates)
+    if reg_date < post_date:
+        return "registered"
+    if reg_date == post_date:
+        return "ambiguous"
+    return "unregistered"
+
+
+def compute_violations(text, citations, reg, slug, post_date=None):
     violations = []  # list of (category, message)
 
-    # (1) tag integrity, recomputed against the registry -- never trusted from the prose.
+    # (1) tag integrity, recomputed against the registry AS OF the post's date -- never
+    # trusted from the prose, and never judged against a registry newer than the edition.
     for c in citations:
         domain, tagged = c["domain"], c["tagged"]
-        registered = domain in reg
-        if not registered and not tagged:
+        asof = registered_asof(reg[domain], post_date) if domain in reg else "unregistered"
+        if asof == "ambiguous":
+            continue  # registered the same day (likely by this very edition's sync)
+        if asof == "unregistered" and not tagged:
             violations.append(("tag_missing",
                 "%s cited without a [new source] tag but is not in the registry." % domain))
-        elif registered and tagged:
+        elif asof == "registered" and tagged:
             violations.append(("tag_false",
                 "%s tagged [new source] but is already registered (status=%s)." %
                 (domain, reg[domain].get("status"))))
@@ -154,7 +189,11 @@ def compute_violations(text, citations, reg, slug):
         quota = QUOTA.get(slug, 0)
         novel = set()
         for c in citations:
-            if c["tagged"] and c["domain"] not in reg:
+            asof = (registered_asof(reg[c["domain"]], post_date)
+                    if c["domain"] in reg else "unregistered")
+            # 'ambiguous' (registered the day of the post -- by this edition's own sync)
+            # still counts as novel: it WAS new when the writer cited it.
+            if c["tagged"] and asof != "registered":
                 cls = registry.classify_domain(c["domain"])
                 if slug == "ai-ml" and cls == "hub":
                     continue  # ai-ml's quota is explicitly non-hub (SPIKE §3.4)
@@ -227,7 +266,8 @@ def main():
         reg = load_registry(args.root)
         citations = extract_citations(text)
         slug = slug_of(args.post)
-        violations = compute_violations(text, citations, reg, slug)
+        violations = compute_violations(text, citations, reg, slug,
+                                        post_date=post_date_of(args.post, text))
         append_candidates(args.root, args.post, text, citations, reg, args.dry_run)
     except Exception as exc:  # report-only tool: a crash never blocks the brief (§4)
         print("LINT-REPORT: lint.py crashed (%s) -- treat as report-only, never block the brief." % exc,

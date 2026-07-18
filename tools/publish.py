@@ -9,8 +9,10 @@ the rebase-conflict feed regeneration. A step can no longer be skipped, misorder
 or typo'd -- the historical failure class this tool exists to close (registry.py
 sync went uninvoked 2026-07-07..07-10 and starved discovery).
 
-Every step is NON-FATAL (the repo's failure semantics: a tool crash degrades, it
-never costs an edition); each prints an OK/FAIL line as it runs. The notification
+Every PREPROCESSING step is NON-FATAL (the repo's failure semantics: a tool crash
+degrades, it never costs an edition); each prints an OK/FAIL line as it runs. The
+git tail is the exception: a failed commit or push means nothing was published,
+so it prints FAILED (never DONE) and exits 1 -- the writer must react. The notification
 stub is written with real JSON encoding (no hand-escaped quotes) and a computed
 UTC timestamp; a bare `date:` in the post's front matter is normalized to a full
 ISO timestamp (the same-day sort-order bug class, closed at the root).
@@ -128,17 +130,40 @@ def git(root, slug, argv):
             "-c", "commit.gpgsign=false"] + argv
 
 
+def staged_changes(root, dry_run):
+    """True when the index differs from HEAD (i.e. `git commit` has something to do).
+    Also true when HEAD doesn't exist yet (first commit of a fresh repo)."""
+    if dry_run:
+        return True
+    proc = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=root,
+                          capture_output=True)
+    return proc.returncode != 0
+
+
 def commit_and_push(root, slug, message, no_push, dry_run):
-    run_step("git-add", git(root, slug, ["add", "_posts/", "pending-notifications/",
-                                         "index/", "_data/"]), root, dry_run)
-    # sources/ + proposals/ may not exist in minimal trees; separate + tolerated.
-    run_step("git-add-sources", git(root, slug, ["add", "sources/"]), root, dry_run)
-    run_step("git-commit", git(root, slug, ["commit", "-m", message]), root, dry_run)
+    """Returns 'ok', 'commit-failed', or 'push-failed'.
+
+    A failed `git commit` followed by a no-op push used to print DONE and exit 0
+    (the push of an unchanged branch succeeds) -- the one failure shape a writer
+    must NEVER mistake for success, since nothing was published at all."""
+    # A missing pathspec makes `git add` abort WITHOUT staging the ones that do
+    # exist (fatal, not partial) -- which cascades into the exact false-DONE shape
+    # this function guards against. Only add directories that exist.
+    paths = [d for d in ("_posts/", "pending-notifications/", "index/", "_data/",
+                         "sources/")
+             if os.path.exists(os.path.join(root, d))] or ["_posts/"]
+    run_step("git-add", git(root, slug, ["add"] + paths), root, dry_run)
+    if staged_changes(root, dry_run):
+        if not run_step("git-commit", git(root, slug, ["commit", "-m", message]),
+                        root, dry_run):
+            return "commit-failed"
+    else:
+        say("commit: nothing newly staged (edition already committed; push still attempted)")
     if no_push:
         say("push: skipped (--no-push)")
-        return True
+        return "ok"
     if run_step("git-push", git(root, slug, ["push", "origin", "main"]), root, dry_run):
-        return True
+        return "ok"
     # Concurrent editions both rewrite _data/homefeed.json; the fix is always:
     # rebase, REGENERATE the feed from the merged tree, continue, push again.
     say("push failed -- rebase + feed regeneration retry")
@@ -150,18 +175,28 @@ def commit_and_push(root, slug, message, no_push, dry_run):
                     git(root, slug, ["-c", "core.editor=true", "rebase", "--continue"]),
                     root, dry_run):
         run_step("git-amend", git(root, slug, ["commit", "--amend", "--no-edit"]), root, dry_run)
-    return run_step("git-push-retry", git(root, slug, ["push", "origin", "main"]), root, dry_run)
+    if run_step("git-push-retry", git(root, slug, ["push", "origin", "main"]), root, dry_run):
+        return "ok"
+    return "push-failed"
 
 
-def append_push_failure(post_path, dry_run):
-    note = "- git push failed: see run log (bridge will reconcile on its next tick)."
+def record_push_failure(root, slug, post_path, dry_run):
+    """Append the failure note to the post AND amend it into the commit -- an
+    unstaged note dies with the sandbox working tree, so it must travel with the
+    commit to mean anything on a later successful push."""
+    note = ("- git push failed: this edition has NOT reached origin -- retry "
+            "`git push origin main` before the session ends.")
     if dry_run:
         return
     try:
         with open(post_path, "a", encoding="utf-8") as fh:
             fh.write(note + "\n")
     except OSError:
-        pass
+        return
+    run_step("git-add-note", git(root, slug, ["add", os.path.relpath(post_path, root)]),
+             root, dry_run)
+    run_step("git-amend-note", git(root, slug, ["commit", "--amend", "--no-edit"]),
+             root, dry_run)
 
 
 def main(argv=None):
@@ -228,12 +263,16 @@ def main(argv=None):
         say("stub: skipped (no --notify-title/--notify-body)")
 
     message = args.message or "%s — %s" % (COMMIT_TITLE[args.slug], args.date)
-    pushed = commit_and_push(root, args.slug, message, args.no_push, args.dry_run)
-    if not pushed and not args.no_push:
-        append_push_failure(post, args.dry_run)
-        say("DONE (push FAILED -- noted in the post; bridge/next run reconciles)")
-    else:
-        say("DONE")
+    outcome = commit_and_push(root, args.slug, message, args.no_push, args.dry_run)
+    if outcome == "commit-failed":
+        say("FAILED (git commit errored -- NOTHING was published; fix the error above and rerun)")
+        return 1
+    if outcome == "push-failed":
+        record_push_failure(root, args.slug, post, args.dry_run)
+        say("FAILED (push -- edition committed locally but NOT on origin; "
+            "retry `git push origin main` before the session ends)")
+        return 1
+    say("DONE")
     return 0
 
 

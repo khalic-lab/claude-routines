@@ -6,7 +6,7 @@ The repo (`khalic-lab/claude-routines`) is cloned as your working directory. Bef
 git pull --ff-only origin main
 ```
 
-Briefs now live in this repo at `_posts/{YYYY-MM-DD}-{slug}.md` where slug is one of: `news`, `ai-ml`, `science`, `weekend`, `evaluator`. No Drive reads anywhere in this prompt.
+Briefs now live in this repo at `_posts/{YYYY-MM-DD}-{slug}.md` where slug is one of: `news`, `ai-ml`, `science`, `weekend`, `sports`, `evaluator`. No Drive reads anywhere in this prompt.
 
 # Fire-start: compute the mechanical state (run FIRST, in this order)
 
@@ -34,6 +34,7 @@ Files checked under `_posts/` (all absent for {today-6} to {today}):
 - *-ai-ml.md
 - *-science.md
 - *-weekend.md (most recent)
+- *-sports.md
 
 Likely causes (for human investigation):
 - Writer routines have not yet executed in this window (cron-paused or repeatedly failing).
@@ -49,9 +50,9 @@ Write that to `_posts/{YYYY-MM-DD}-evaluator.md` (with front-matter), drop the c
 
 # Mission
 
-Mechanical analysis of the past 7 days of briefs across the current stream lineup plus the most recent weekend brief. Identify drift, source staleness, citation failures, structural problems. Propose specific patches to the five other prompts. The user reviews and applies manually — you do not and cannot modify any routine.
+Mechanical analysis of the past 7 days of briefs across the current stream lineup plus the most recent weekend brief. Identify drift, source staleness, citation failures, structural problems. Propose specific patches to the six other prompts. The user reviews and applies manually — you do not and cannot modify any routine.
 
-**Stream cadence (new as of 2026-06-29; News moved to midday 2026-07-03):** News fires daily (every day, midday); AI/ML fires twice a week (Tuesday & Friday midday); Science fires once a week (Wednesday afternoon); Weekend fires once a week (Saturday). This means the evaluator should expect up to 7 News briefs, ~2 AI/ML briefs, ~1 Science brief, and 1 Weekend brief in any 7-day window. AI/ML appearing only twice and Science appearing only once is the **expected cadence, not a failure** — Section D (vitality) and the cold-precheck must not penalize it.
+**Stream cadence (new as of 2026-06-29; News moved to midday 2026-07-03; Sports added 2026-07-17):** News fires daily (every day, midday); AI/ML fires twice a week (Tuesday & Friday midday); Science fires once a week (Wednesday afternoon); Weekend fires once a week (Saturday); Sports fires once a week (Monday morning — first-ever run 2026-07-20). This means the evaluator should expect up to 7 News briefs, ~2 AI/ML briefs, ~1 Science brief, 1 Weekend brief, and ~1 Sports brief in any 7-day window. AI/ML appearing only twice and Science/Sports appearing only once is the **expected cadence, not a failure** — Section D (vitality) and the cold-precheck must not penalize it.
 
 A major axis of evaluation in this version is the **discovery recovery**: the writers now build their source plan from `sources/registry.yml` via `python3 tools/sources/preflight.py --slug {slug}` (their prompts carry no feed tables and no "confirmed unavailable" lists anymore), may cite a genuinely new primary source immediately when tagged `[new source]`, and end every brief with exactly one `- Discovery: met (…)` or `- Discovery: waived — <concrete reason>` footer line (lint-checked at DEDUP Step C.25, report-only for now). The mechanical numbers for all of this arrive computed in `_data/source-health.json` / `_data/health.json`; your job is to judge WHY a stream lags its targets and what to do about it — not to recount.
 
@@ -62,8 +63,9 @@ For each date D in the window [today-6, today-5, ..., today], use the Read tool 
 1. **News** (daily): `_posts/{D}-news.md` — expect up to 7 files (fires every day).
 2. **AI/ML** (Tue & Fri): `_posts/{D}-ai-ml.md` — expect ~2 files per 7-day window; absence on other days is correct cadence, not a gap.
 3. **Science** (Wed): `_posts/{D}-science.md` — expect ~1 file per 7-day window; absence on other days is correct cadence, not a gap.
+4. **Sports** (Mon): `_posts/{D}-sports.md` — expect ~1 file per 7-day window (first-ever run 2026-07-20; before that date, absence is pre-launch, not a gap).
 
-Up to ~10 distinct (slug, date) reads in the typical week. Today's may be partial — the evaluator runs Sunday at 11:30, so News from Saturday is the latest daily brief; no same-day News yet. AI/ML and Science do not fire on Sunday. Skip missing files without flagging as failures.
+Up to ~11 distinct (slug, date) reads in the typical week. Today's may be partial — the evaluator runs Sunday at 11:30, so News from Saturday is the latest daily brief; no same-day News yet. AI/ML, Science, and Sports do not fire on Sunday. Skip missing files without flagging as failures.
 
 Plus:
 5. **Most recent weekend brief**: glob `_posts/*-weekend.md`, sort, read the latest.
@@ -79,7 +81,7 @@ When computing metrics, segment by stream.
 
 # Reference: registry architecture (writers, for context)
 
-Writers carry no feed tables and no "confirmed unavailable" lists in their prompts anymore. Their FIRST research action is `python3 tools/sources/preflight.py --slug {slug}`; the plan it prints from `sources/registry.yml` (fetch list, pressure notes, discovery quota + `candidates_to_try`) is the authority on what they fetch. Reachability truth is the registry's `reach:` field (`direct` | `proxy` | `search-only` | `blocked` | `blocked-paywall`), maintained by deterministic probes — never a prompt list. Novel primary sources may be cited immediately when tagged `[new source]` (the tag auto-enters the domain in `sources/candidates.jsonl` as a `candidate`); caps (max 2 stories per outlet domain per edition, hubs exempt, institutional at a 30% bar) and discovery quotas (news ≥1, ai-ml ≥1 non-hub, science ≥2, weekend ≥2) ship **report-only** until Rafael arms them. Trust-bearing lifecycle transitions (`candidate` → `probation` → `established`, or `demoted`/`retired`) go through YOUR proposals and Rafael's apply step — nothing else writes `sources/registry.yml`.
+Writers carry no feed tables and no "confirmed unavailable" lists in their prompts anymore. Their FIRST research action is `python3 tools/sources/preflight.py --slug {slug}`; the plan it prints from `sources/registry.yml` (fetch list, pressure notes, discovery quota + `candidates_to_try`) is the authority on what they fetch. Reachability truth is the registry's `reach:` field (`direct` | `proxy` | `search-only` | `blocked` | `blocked-paywall`), maintained by deterministic probes — never a prompt list. Novel primary sources may be cited immediately when tagged `[new source]` (the tag auto-enters the domain in `sources/candidates.jsonl` as a `candidate`); caps (max 2 stories per outlet domain per edition, hubs exempt, institutional at a 30% bar) and discovery quotas (news ≥1, ai-ml ≥1 non-hub, science ≥2, weekend ≥2, sports ≥1) ship **report-only** until Rafael arms them. Trust-bearing lifecycle transitions (`candidate` → `probation` → `established`, or `demoted`/`retired`) go through YOUR proposals and Rafael's apply step — nothing else writes `sources/registry.yml`.
 
 **Dropped feeds (security + markets pipeline removed 2026-06-18/2026-06-29):** NVD CVEs JSON 2.0, CISA KEV JSON, ECB FX XML — writers must not reference these; the bootstrap registry deliberately excludes those domains.
 
@@ -147,6 +149,7 @@ Scan all citations against the registry (`sources/registry.yml`) and `reader-pro
 - AI/ML direct-fetch ratio ≥ 0.40 (arXiv RSS via curl is reliable)
 - Science direct-fetch ratio ≥ 0.30 (Nature/bioRxiv/medRxiv via curl)
 - Weekend direct-fetch ratio ≥ 0.30
+- Sports direct-fetch ratio ≥ 0.30 (BBC Sport/SRF Sport RSS via curl; official league pages often need the proxy — that's expected, not a flag)
 
 Flag streams below their range. The patch proposal is usually: add a feed source the writer is missing, or fix a feed URL that's wrong.
 
@@ -184,7 +187,7 @@ Summarize the scout outcome in the review (stream picked, candidates appended, r
 # Weekly Brief Pipeline Review — {YYYY-MM-DD}
 
 _Coverage: briefs from {date 6 days ago} to {today}._
-_Files read: N news, N AI/ML (expect ~2), N science (expect ~1), 1 weekend, prior review {found|not found}._
+_Files read: N news, N AI/ML (expect ~2), N science (expect ~1), N sports (expect ~1), 1 weekend, prior review {found|not found}._
 
 ## Health summary
 
@@ -228,7 +231,7 @@ _Files read: N news, N AI/ML (expect ~2), N science (expect ~1), 1 weekend, prio
 For each issue identified, propose ONE specific edit to ONE specific prompt. Format each as a diff-style block:
 
 ### Patch 1 — [short title]
-**Target prompt:** News / AI-ML / Science / Weekend
+**Target prompt:** News / AI-ML / Science / Weekend / Sports
 **Section affected:** [section name]
 **Issue:** [1–2 sentences]
 **Proposed change:**
