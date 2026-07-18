@@ -173,7 +173,7 @@ def card(s):
            if s.get("affiliation_label") else e(s["source_domain"]))
     return """<article class="fcard imp%(imp)s%(lead)s" data-topics="%(topics)s" data-imp="%(imp)s"%(og)s>
 <div class="fcard__in" style="--tc:%(color)s">
-<div class="fcard__top"><a class="fcard__beat" href="#"><span class="ff-dot"></span>%(tlabel)s</a><span class="fcard__rank" data-imp="%(imp)s"></span></div>
+<div class="fcard__top"><span class="fcard__beat" title="%(stream)s · %(dlabel)s"><span class="ff-dot"></span>%(tlabel)s</span><span class="fcard__rank" data-imp="%(imp)s"></span></div>
 <h2 class="fcard__hl">%(hl)s</h2>
 %(more)s%(summ)s%(why)s
 <div class="fcard__line"><span class="fcard__src">%(src)s</span>%(fresh)s<span class="fcard__date">%(dlabel)s</span>%(readbtn)s</div>
@@ -198,7 +198,9 @@ def main():
     feed = json.load(open(os.path.join(ROOT, "_data", "homefeed.json")))
     src = open(os.path.join(ROOT, "_layouts", "home.html")).read()
     styles = "\n".join(re.findall(r"<style>.*?</style>", src, re.S))
-    script = re.search(r"<script>.*?</script>", src, re.S).group(0)
+    # ALL script blocks, in document order — re.search took only the FIRST block, which
+    # since 2026-07-11 was the modal script, so the 600+-line folio engine went untested.
+    script = "\n".join(re.findall(r"<script>.*?</script>", src, re.S))
 
     chips = "".join(
         '<button class="ff-chip" type="button" data-topic="%s" aria-pressed="false" style="--tc:%s">'
