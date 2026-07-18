@@ -91,6 +91,34 @@ class PlanePureTest(unittest.TestCase):
         self.assertIn("2", lines[0].split())
 
 
+class BakeArtifactTest(unittest.TestCase):
+    """bake.py's artifact must parse under the Worker's contract (magic, meta_len, norms
+    aligned with stories, vector block exactly n*dim*4)."""
+    @classmethod
+    def setUpClass(cls):
+        cls.bake = _load("_plane_bake", os.path.join(TOOLS, "plane", "bake.py"))
+
+    def test_artifact_roundtrip(self):
+        artifact, n = self.bake.bake(os.path.dirname(TOOLS), "2026-07-18T00:00:00Z")
+        self.assertGreater(n, 0)
+        self.assertEqual(artifact[:8], b"PLANEv1\x00")
+        meta_len = struct.unpack("<I", artifact[8:12])[0]
+        meta = json.loads(artifact[12:12 + meta_len].decode("utf-8"))
+        self.assertEqual(meta["n"], n)
+        self.assertEqual(len(meta["norms"]), n)
+        self.assertEqual(len(meta["stories"]), n)
+        self.assertEqual(len(artifact) - 12 - meta_len, n * meta["dim"] * 4)
+        # stories sorted by sid; every record carries its sid; norms>0 iff vector present
+        sids = [s["sid"] for s in meta["stories"]]
+        self.assertEqual(sids, sorted(sids))
+        i = next(k for k, nm in enumerate(meta["norms"]) if nm)
+        vec = struct.unpack("<%df" % meta["dim"],
+                            artifact[12 + meta_len + i * meta["dim"] * 4:
+                                     12 + meta_len + (i + 1) * meta["dim"] * 4])
+        import math
+        self.assertAlmostEqual(math.sqrt(sum(x * x for x in vec)), meta["norms"][i], places=3)
+
+
 class UrlHeadlineTest(unittest.TestCase):
     """The blank-headline backstop's derivation helper."""
     @classmethod

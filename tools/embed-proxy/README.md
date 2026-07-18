@@ -78,3 +78,17 @@ Live logs while testing: `wrangler tail`.
 bge-m3 embeddings are a few neurons per call; a day's brief candidates (~tens of short strings)
 is negligible against the free Workers-AI allocation. The bearer token prevents the public host
 from being used as a free embedding endpoint by others.
+
+## /plane/* — the analytical plane (added 2026-07-18)
+
+This worker also hosts the Phase-2 analytical plane, BECAUSE the routine sandbox's egress
+allowlist enumerates exact hostnames — a new `*.workers.dev` host would be unreachable from the
+routines; this one already is. Same bearer for everything.
+
+- `POST /plane/ingest` — the baked artifact (tools/plane/bake.py; pushed by the publish tail
+  after every edition). Stored in KV (`PLANE_KV`, binding in wrangler.toml).
+- `POST /plane/search {text, k?}` — embeds the query in-worker (one round trip) + cosine top-k.
+- `POST /plane/related {key, k?}` / `thread {key}` / `entities|beats|sources {days?}` / `stats {}`.
+
+The embed contract above is UNCHANGED — `/` never touches KV, so a missing/empty plane cannot
+affect the dedup path (adversarially verified before deploy, 23-check smoke: `node test/smoke.mjs`).

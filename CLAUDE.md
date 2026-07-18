@@ -92,7 +92,10 @@ trigger's id, cron, and full `session_context`.
   folded in-process (search/thread/related/beats/entities/sources/stats; no DB, no service, no
   state). Read-only, optional: nothing in the publish path depends on it. Writers emit `entities`
   in DEDUP Step C for its graph. Never reintroduce a resident server here — embedded file
-  (DuckDB/sqlite-vec) is the only sanctioned upgrade path.
+  (DuckDB/sqlite-vec) is the only sanctioned upgrade path. Worker twin: embed-proxy serves the
+  same queries as `/plane/*` (sandbox-reachable — the env allowlist enumerates EXACT hostnames,
+  so new capabilities mount on existing allowlisted workers, never new hosts); `bake.py --push`
+  refreshes it via publish.py's `plane-push` step.
 - Deterministic mechanical tier (2026-07-18): `tools/fetch.py` (logging curl→proxy fetch wrapper,
   log at `/tmp/fetch.log`), `tools/footer.py` (computed Coverage-footer telemetry),
   `tools/publish.py` (the writers' single publish command — record→…→stub→commit/push),

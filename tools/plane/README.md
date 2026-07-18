@@ -43,3 +43,18 @@ the ledger is append-only and complete back to 2026-05-27.
 Deliberately NOT a graph database either: the 2026-05-31 calibration showed cosine gives
 nearness, never relationship type — the typed edges above are where the "knowledge graph"
 actually lives, and at this scale they're dict groupbys.
+
+## Worker-hosted twin (added 2026-07-18): queryable from the ROUTINE SANDBOX
+
+The same queries are served by the embed-proxy Worker (`/plane/*` on
+`embed-proxy.khalic-lab.workers.dev` — mounted THERE because the env_018 allowlist enumerates
+exact hostnames; a new host would be unreachable from the routines). `tools/plane/bake.py --push`
+bakes the ledger into a 7.4MB artifact (magic + meta JSON + float32 vectors) and POSTs it to
+`/plane/ingest`; the publish tail does this after every edition (publish.py `plane-push`,
+non-fatal). Same bearer as embeddings (the DEDUP.md token), so every routine can already query:
+
+    curl -s -XPOST "$EMBED_WORKER_URL/plane/search" -H "Authorization: Bearer $EMBED_TOKEN" \
+      -H 'Content-Type: application/json' -d '{"text":"iran hormuz","k":5}'
+
+Local CLI (this directory) and Worker answer identically (parity-verified at deploy). The local
+CLI stays: it works offline from a bare clone and is the reference implementation.

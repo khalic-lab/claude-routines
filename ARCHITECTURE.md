@@ -69,6 +69,24 @@
    └──────────────────────────────────┘
 ```
 
+> **Added 2026-07-18 (night): the plane is now SANDBOX-REACHABLE — mounted on embed-proxy.**
+> The analytical plane's queries are served by the embed-proxy Worker as `/plane/*` (search /
+> related / thread / entities / beats / sources / stats + bearer-gated `ingest`), same
+> hostname, same `EMBED_TOKEN`. Mounted THERE deliberately: the env_018 egress allowlist
+> enumerates EXACT hostnames (not `*.workers.dev`) and cannot be edited programmatically — a
+> new worker host would be unreachable from the routines; embed-proxy already is. Data path:
+> `tools/plane/bake.py` bakes the ledger into a 7.4MB artifact (magic + meta JSON + float32
+> vectors + precomputed norms, KV `plane:v1`); the publish tail refreshes it after every
+> edition (`publish.py` `plane-push`, non-fatal). The `POST /` embed contract is UNCHANGED and
+> never touches KV. Pre-deploy adversarial review (2 Opus agents) confirmed embed-route
+> byte-equivalence and caught four real 500s in the new routes (JSON-null body, NaN/overflow
+> `days`, `__proto__`-named entities crashing the aggregation, malformed artifact dates) — all
+> fixed + pinned in the 23-check smoke (`tools/embed-proxy/test/smoke.mjs`). Live-verified:
+> fresh embed of a stored story cosines 1.0000 against its ledger vector; remote search
+> parity-IDENTICAL to the local CLI (241ms); Iran thread = 11 stories via the Worker. The
+> local CLI remains the offline reference. Routines can now query the plane at compose time —
+> prompt wiring (thread-aware continuity framing) is the deliberate next step, not yet done.
+
 > **Added 2026-07-18 (evening): Phase 2 analytical plane BUILT (`tools/plane/`) — SERVERLESS.**
 > **The ledger is the database**: `query.py` folds `index/ledger/*.jsonl` in-process via
 > `store.py materialize()` (the canonical folding, never re-implemented) on every invocation —

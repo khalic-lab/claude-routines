@@ -43,13 +43,13 @@ class PublishTest(unittest.TestCase):
         self.assertEqual(rc, 0)
         order = [name for name in ("record", "anchor", "footer", "source-lint",
                                    "registry-sync", "institutions-sync", "date-lint",
-                                   "feed", "source-health", "stub", "git-add",
-                                   "git-commit", "git-push")
+                                   "feed", "source-health", "plane-push", "stub",
+                                   "git-add", "git-commit", "git-push")
                  if ("DRY-RUN %s" % name) in out or ("DRY-RUN %s:" % name) in out]
         self.assertEqual(order, ["record", "anchor", "footer", "source-lint",
                                  "registry-sync", "institutions-sync", "date-lint",
-                                 "feed", "source-health", "stub", "git-add",
-                                 "git-commit", "git-push"])
+                                 "feed", "source-health", "plane-push", "stub",
+                                 "git-add", "git-commit", "git-push"])
 
     def test_record_skipped_without_final(self):
         rc, out = self._capture(["--slug", "news", "--date", "2026-07-18",

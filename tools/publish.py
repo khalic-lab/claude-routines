@@ -216,6 +216,10 @@ def main(argv=None):
                            os.path.relpath(post, root)], root, args.dry_run)
     run_step("feed", [py, "tools/build_stories_feed.py"], root, args.dry_run)
     run_step("source-health", [py, "tools/sources/health.py"], root, args.dry_run)
+    # refresh the Worker-hosted analytical plane (embed-proxy /plane/*) from the ledger the
+    # record step just extended — non-fatal like everything else; analytics never cost an edition
+    run_step("plane-push", [py, "tools/plane/bake.py", "--push"], root, args.dry_run,
+             env=EMBED_DEFAULTS)
 
     if args.notify_title and args.notify_body:
         write_stub(root, args.slug, args.date, args.notify_title, args.notify_body,
