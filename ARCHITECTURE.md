@@ -54,11 +54,11 @@
               │ browser                     │   4 push if ahead / Pages self-heal            │
               ▼                             │  creds: store --file=git-credentials (600)     │
    ┌──────────────────────────────────┐   └───────────────────┬────────────────────────────┘
-   │ custom.html JS (client-side)      │                       │ HTTP POST
-   │  link → og-proxy worker →         │                       ▼
-   │  og:image thumbnail;              │              ┌─────────────┐     ┌──────────────┐
-   │  arxiv→PDF chip; else favicon;    │              │  ntfy.sh     │────▶│ phone (ntfy)  │
-   │  sessionStorage cache             │              │  topic khalic│push └──────────────┘
+   │ home.html JS (homepage cards)     │                       │ HTTP POST
+   │  card → og-proxy worker →         │                       ▼
+   │  og:image thumbnail (lazy,        │              ┌─────────────┐     ┌──────────────┐
+   │  sessionStorage cache); custom.   │              │  ntfy.sh     │────▶│ phone (ntfy)  │
+   │  html = skin + unlock + propose   │              │  topic khalic│push └──────────────┘
    └──────────┬────────────────────────┘             └─────────────┘
               ▼                                        ┌────────────────────────────────────┐
    ┌──────────────────────────────────┐               │ Gmail (DRAFTS → rflnogueira@me.com)  │
@@ -67,6 +67,37 @@
    │  30-day edge cache                │               └────────────────────────────────────┘
    └──────────────────────────────────┘
 ```
+
+> **Changed 2026-07-18 (latest): homepage frontend review → slim-down + packing/table fixes.**
+> A 4-agent specialist review (css-layout, js-state, architecture reviewers + adversarial Opus
+> synthesis; 24 findings verified against source, 2 struck as factually wrong) drove two commits:
+> **(1) Slim-down (`e7c8745`)** — `_includes/head/custom.html` 842 → 301 lines. The brief-page
+> machinery that outlived the retired pages (story-tagger, og-image/arXiv article-preview loader,
+> per-story + overall feedback widgets and their CSS, the `__BRIEF` injection) had silently
+> re-targeted the one remaining `single`-layout post — the evaluator review, where it restyled
+> review bullets as story headlines with 👍/👎 thumbs posting into the Evaluator's own feedback
+> ledger — and is now deleted (recoverable from git). Kept, verified individually: `window.__FB`
+> config (homepage grid + propose form read it), the `.page__content` theme stub, unlock modal +
+> propose form incl. the shared `.fb-btn` chrome (a cross-use the synthesis missed), Folio tokens,
+> and the dark-mode `.page__title a` fix. Evaluator bullets render as plain prose. Two real bugs
+> fixed en route: `home_harness.py` had embedded only the FIRST `<script>` block since 2026-07-11
+> (the 620-line folio engine went completely untested — one-line `re.findall` fix), and the "How
+> this works" modal's focus trap made its `/prompts/` link keyboard-unreachable (two-stop trap
+> now). Plus `home.html` consolidation: 11 one-off `:focus-visible` rules → 3 grouped, duplicate
+> button rules merged, dead link styling dropped from the now-span beat chip.
+> **(2) Packing + tables (`97cbc8c`)** — the fixed harness immediately exposed real masonry holes
+> (maxGap 383px at 3 cols, 645px at 2 cols — every large gap an unfilled notch above a 2-col
+> lead). Three additions to the folio engine's notch machinery: **eager tallest-fit backfill**
+> from the whole remaining queue at notch creation (first-fit-by-arrival was the main culprit);
+> **waste-aware lead pair choice** (score top + waste, full-weight penalty for a notch nothing
+> left in the queue can ever fill); and a **bottom-steal pass** (residual notches absorb
+> bottom-of-column cards — the only cards that move without leaving a hole — with a ≤100px
+> shift-steal fallback that trades a 600px+ hole for a small seam on near-miss fits). Measured:
+> 1440px 383→187, 800px 645→157, mobile 20 (= the grid gap); zero overlaps at every width; sync
+> checks green both signed-out and signed-in. Separately, the theme's light-palette table skin
+> rendered the evaluator's Health-Summary header near-invisible on dark paper — post tables are
+> re-skinned variable-driven in custom.html (th/td ink-on-panel, hairline borders, striping off).
+> All verified live by screenshot: homepage, a filtered re-layout, and the evaluator table.
 
 > **Changed 2026-07-18 (later): individual brief pages retired.** The homepage story feed carries
 > every story's full prose (never trimmed, since 2026-07-10), so the per-edition pages at
@@ -90,7 +121,8 @@
 > **(2) `tools/footer.py`** — Coverage-footer telemetry is COMPUTED at publish (registry tier
 > split, direct-vs-snippet from `[via snippet]` tags, exact word count + token estimate, `Feeds
 > hit` aggregated from the fetch log); writer-authored lines (Languages, Gaps, Discovery,
-> stream-specific) preserved. The pipeline's "only health signal" stops being self-reported.
+> stream-specific) preserved. The pipeline's "only health signal" stops being self-reported
+> (this supersedes the same-morning self-reported token-estimate footer line, `581dba3`).
 > **(3) `tools/publish.py`** — the whole writer publish tail is ONE call: record → anchor →
 > footer → source lint → registry/institutions sync → date lint → feed+stats → source health →
 > notification stub (real JSON encoding, computed UTC timestamp) → commit/push with the homefeed
@@ -281,13 +313,13 @@
 
 | Artifact | Location | Shape | Producer → Consumer |
 |---|---|---|---|
-| Brief | `_posts/{YYYY-MM-DD}-{slug}.md` | front-matter (`layout,title,date,categories`) + body + Coverage footer | writer → Jekyll + Evaluator |
+| Brief | `_posts/{YYYY-MM-DD}-{slug}.md` | front-matter (`layout,title,date,categories`) + body + Coverage footer | writer → homefeed/stats + Evaluator (data-only since 2026-07-18 — pages unpublished; only evaluator posts render, via `published: true`) |
 | Notification stub | `pending-notifications/{ts}-{slug}.json` | `{title, click, body, tags}` | writer/watch → bridge (then deleted) |
 | Watch registry | `watches.yml` | `[{id, query, match_when, cooldown_days, last_fired}]` | user + Watch (writes `last_fired`) |
 | Bridge config | `/usr/local/src/news-brief-ntfy-bridge/.env` | `NTFY_TOPIC, NTFY_SERVER, REPO, FEEDBACK_WORKER_URL, FEEDBACK_TOKEN` | bridge.sh |
 | Git creds | `…/git-credentials` (mode 600) | `https://x-access-token:<tok>@github.com` | bridge git push |
 | Legacy briefs | `briefs/{stream}/{date}.md` | pre-Pages layout, only May 2–4 | **deleted 2026-07-03** (recoverable from git history) |
-| Coverage footer | inside each brief | `Direct fetches: N \| via-snippet: M`, `Feeds hit`, `Gaps` | **the only health signal** |
+| Coverage footer | inside each brief | `Direct fetches: N \| via-snippet: M`, `Feeds hit`, `Gaps` | **the only health signal** — COMPUTED by `tools/footer.py` at publish since 2026-07-18 (writer authors only Languages/Gaps/Discovery + stream-specific lines) |
 | Reader feedback | `feedback/{YYYY-MM}.jsonl` | `{id, ts, reader, brief, story_id, vote 1/-1/0, reason, surface, source_domain, consumed}` | widget→Worker→bridge → `fold.py` → ledger → Evaluator |
 | Reader profile | `reader-profile.md` + `reader-profile/source-weights.yml` (`never:`/`reduce:`) | NL editorial brief + domain lists | Evaluator proposes (human-gated) → writers read |
 | Story ledger | `index/ledger/{YYYY-MM-DD}.jsonl` (ingest day, append-only, merge=union) | `{ev: seen\|update\|publish\|status\|feedback\|notify, ts, actor, …}` — record schema in SPIKE 2026-07-07 §3.1 | dedup.py dual-write + backfill + fold.py → `store.py materialize` (all consumers) |
@@ -319,7 +351,8 @@ and folds it into the writers' editorial guidance **through a human gate** (neve
 from a tap — the documented n=1 sycophancy trap).
 
 ```
-brief page widget (_includes/head/custom.html, FEEDBACK_ENABLED=true)
+homepage card widget (_layouts/home.html; kill switch + URL via window.__FB in custom.html —
+                      the per-brief-page widget was deleted 2026-07-18 with the brief pages)
   │  POST /submit (CORS, public)
   ▼
 feedback-sink Worker (tools/feedback-sink/) ── Cloudflare KV   [khalic-lab CF acct;
