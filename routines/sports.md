@@ -236,7 +236,9 @@ You derive "today" from the machine-stamped `_Generated <ISO> Europe/Zurich_` he
 
 This routine writes to the git repo (working directory is the cloned `claude-routines` repo). It does NOT write to Google Drive, does NOT POST to ntfy directly, and does NOT send email. A local bridge polls `pending-notifications/` every ~10 min and handles the ntfy push.
 
-Let `{POST_URL} = https://khalic-lab.github.io/claude-routines/{YYYY}/{MM}/{DD}/sports/`.
+Individual brief pages are retired (2026-07-18): the homepage story feed at
+`https://khalic-lab.github.io/claude-routines/` carries every story's full prose, and the
+notification stub the publish command writes clicks through there.
 
 ### 1. Write the brief
 

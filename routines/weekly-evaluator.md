@@ -314,8 +314,14 @@ layout: single
 title: "Weekly Pipeline Review — {YYYY-MM-DD}"
 date: {full ISO 8601 timestamp WITH timezone offset — the current Europe/Zurich time, e.g. 2026-06-21T12:00:00+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
 categories: [evaluator]
+published: true
 ---
 ```
+
+The `published: true` line is REQUIRED (added 2026-07-18): `_config.yml` unpublishes all post
+pages by default now that the homepage story feed replaced the individual brief pages — the
+evaluator review is the one post that still gets its own page, because its content is not on
+the homepage.
 
 ### 2. Write the notification stub
 

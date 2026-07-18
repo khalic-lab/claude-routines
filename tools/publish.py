@@ -103,10 +103,11 @@ def normalize_front_matter(post_path, dry_run):
 
 def write_stub(root, slug, date, title, body, tags, dry_run):
     ts = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    y, m, d = date.split("-")
     stub = {
         "title": title,
-        "click": "%s/%s/%s/%s/%s/" % (SITE, y, m, d, slug),
+        # Individual brief pages are retired (2026-07-18) — the homepage story feed
+        # is where the content lives, so every brief notification clicks through there.
+        "click": SITE + "/",
         "body": body,
         "tags": tags,
     }

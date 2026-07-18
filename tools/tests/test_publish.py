@@ -78,8 +78,9 @@ class PublishTest(unittest.TestCase):
         with open(os.path.join(stub_dir, name)) as fh:
             stub = json.load(fh)  # must be valid JSON despite the quotes
         self.assertEqual(stub["title"], 'He said "hi" — ok')
-        self.assertEqual(stub["click"],
-                         "https://khalic-lab.github.io/claude-routines/2026/07/18/news/")
+        # Brief pages are retired (2026-07-18): every brief notification clicks
+        # through to the homepage story feed, never a per-edition page.
+        self.assertEqual(stub["click"], "https://khalic-lab.github.io/claude-routines/")
         self.assertEqual(stub["tags"], "newspaper")
 
     def test_missing_post_is_fatal(self):

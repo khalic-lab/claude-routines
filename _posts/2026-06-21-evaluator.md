@@ -3,6 +3,7 @@ layout: single
 title: "Weekly Pipeline Review — 2026-06-21"
 date: 2026-06-21T11:42:59+02:00
 categories: [evaluator]
+published: true
 ---
 
 _Coverage: briefs from 2026-06-15 to 2026-06-21._

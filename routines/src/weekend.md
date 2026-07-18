@@ -212,7 +212,9 @@ Before composing AND after writing the brief, follow `tools/dedup/DEDUP.md` exac
 
 This routine writes to the git repo (working directory is the cloned `claude-routines` repo). It does NOT write to Google Drive and does NOT POST to ntfy directly. A local bridge on the user's machine polls `pending-notifications/` every ~10 min and handles the ntfy push.
 
-Let `{POST_URL} = https://khalic-lab.github.io/claude-routines/{YYYY}/{MM}/{DD}/weekend/`.
+Individual brief pages are retired (2026-07-18): the homepage story feed at
+`https://khalic-lab.github.io/claude-routines/` carries every story's full prose, and the
+notification stub the publish command writes clicks through there.
 
 ### 1. Write the brief
 
@@ -254,5 +256,5 @@ Note: the Gmail MCP surface is `create_draft` only — there is no send tool.
   - Most notable model/dataset release of the week (1–2 sentences)
   - Top essay/long-form (title, author, 1-sentence read)
   - The full Cross-cutting threads section verbatim if it's <300 words; else condense to 2–3 sentences
-  - End with: `Full brief: {POST_URL}`
+  - End with: `All stories: https://khalic-lab.github.io/claude-routines/`
 - If `create_draft` fails, retry once. If still failing, append `email draft creation failed: <reason>` to this brief's Coverage footer in git but don't fail the run.

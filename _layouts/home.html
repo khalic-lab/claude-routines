@@ -55,7 +55,7 @@ layout: archive
     <article class="fcard imp{{ s.importance }}{% if s.is_lead %} lead{% endif %}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}"{% if s.url and s.importance > 1 %} data-ogurl="{{ s.url }}"{% endif %}>
       <div class="fcard__in" style="--tc:{{ s.topic_color }}">
         <div class="fcard__top">
-          <a class="fcard__beat" href="{{ s.permalink | relative_url }}" title="{{ s.stream_label }} brief · {{ s.date_label }}"><span class="ff-dot"></span>{{ s.topic_label }}</a>
+          <span class="fcard__beat" title="{{ s.stream_label }} · {{ s.date_label }}"><span class="ff-dot"></span>{{ s.topic_label }}</span>
           <span class="fcard__rank" data-imp="{{ s.importance }}"></span>
         </div>
         <h2 class="fcard__hl">{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.headline }}</a>{% else %}{{ s.headline }}{% endif %}</h2>

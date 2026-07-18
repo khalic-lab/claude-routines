@@ -124,7 +124,9 @@ Before composing AND after writing the brief, follow `tools/dedup/DEDUP.md` exac
 
 This routine writes to the git repo (your working directory is the cloned `claude-routines` repo). It does NOT write to Google Drive and does NOT POST to ntfy directly. A local bridge on the user's machine polls `pending-notifications/` every ~10 min and handles the ntfy push.
 
-Let `{POST_URL} = https://khalic-lab.github.io/claude-routines/{YYYY}/{MM}/{DD}/news/`.
+Individual brief pages are retired (2026-07-18): the homepage story feed at
+`https://khalic-lab.github.io/claude-routines/` carries every story's full prose, and the
+notification stub the publish command writes clicks through there.
 
 ### 1. Write the brief
 
@@ -161,5 +163,5 @@ python3 tools/publish.py --slug news --date {YYYY-MM-DD} \
 Otherwise (Monday–Friday), compose a News-only midday email via Gmail (`create_draft` only). There is NO consolidated cross-stream email — this email carries News content only.
 - **To:** rflnogueira@me.com
 - **Subject:** "News — {YYYY-MM-DD}"
-- **Body:** ~250–350 words, plain text or simple markdown. Two labeled sections in this order: 🇨🇭 Switzerland & Vaud, 🌍 World. For each, 2–4 highlight bullets (top items only). End with: `Full brief: {POST_URL}`.
+- **Body:** ~250–350 words, plain text or simple markdown. Two labeled sections in this order: 🇨🇭 Switzerland & Vaud, 🌍 World. For each, 2–4 highlight bullets (top items only). End with: `All stories: https://khalic-lab.github.io/claude-routines/`.
 - If `create_draft` fails, retry once. If still failing, append `email draft creation failed: <reason>` to the brief's Coverage footer and don't fail the run.

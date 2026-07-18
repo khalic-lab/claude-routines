@@ -68,6 +68,19 @@
    └──────────────────────────────────┘
 ```
 
+> **Changed 2026-07-18 (later): individual brief pages retired.** The homepage story feed carries
+> every story's full prose (never trimmed, since 2026-07-10), so the per-edition pages at
+> `/{y}/{m}/{d}/{slug}/` were redundant — `_config.yml` now sets `published: false` on all posts
+> by default. **The `_posts/*.md` files stay** (they remain the data source for
+> `build_stories_feed`, `build_stats`, and the Evaluator); only the rendered pages are gone.
+> The **Evaluator review keeps its page** (its content is not on the homepage) via a required
+> `published: true` in its front matter — template updated, 10 historical reviews backfilled.
+> Ripples: brief notification stubs now click through to the site root (`publish.py`), the News +
+> Weekend emails end with an `All stories:` homepage link instead of `Full brief:`, and the
+> homepage card's beat chip is a plain span (it used to link the edition page). Old ntfy/email
+> links to brief pages 404 by design. The brief-page feedback widget path in `custom.html` is
+> inert (pages gone, homepage voting unaffected).
+
 > **Added 2026-07-18: determinization of the mechanical tier (less AI, same quality).** Five
 > surfaces where a model was replaying deterministic procedure moved into tools; the editorial core
 > (research, story selection, writing, ONGOING keep/drop, teasers, evaluator judgment) is untouched.

@@ -30,6 +30,12 @@ defaults:
       share: false
       related: false
       show_date: true
+      # 2026-07-18: individual brief pages retired — the homepage story feed carries every
+      # story's full prose, so per-edition pages are redundant. The _posts/*.md files STAY
+      # (they feed homefeed.json, stats, and the Evaluator); only the rendered pages go.
+      # Evaluator reviews opt back in with `published: true` in their front matter — their
+      # content is NOT on the homepage.
+      published: false
 
 category_archive:
   type: liquid
