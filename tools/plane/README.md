@@ -1,33 +1,15 @@
-# Phase-2 analytical plane (ARCHITECTURE §3/§5.2 — built 2026-07-18)
+# Phase-2 analytical plane (ARCHITECTURE §3 — built 2026-07-18, serverless)
 
-Local Postgres + pgvector over the story ledger: one database answering both query families —
-vector search (what's near this) and relational/graph queries (threads, entities, sources,
-feedback). The cloud/online plane (compose-time dedup) is untouched; this is the Mac-side
-"superpowers" half.
+**The ledger is the database.** Every query folds `index/ledger/*.jsonl` in-process via
+`tools/store/store.py materialize()` (the canonical event folding) and answers both query
+families over it: brute-force cosine for vector search — at ~1.6k stories × 1024 dims that's
+~0.2s, no index needed — and plain groupbys for the graph/relational side. No Postgres, no
+service, no sync step, no state: a fresh clone answers every query with zero setup. Stdlib only.
 
-## Setup (already done on this Mac)
-
-```bash
-brew install postgresql@17 pgvector
-brew services start postgresql@17          # persists across reboots
-/opt/homebrew/opt/postgresql@17/bin/createdb claude_routines
-```
-
-## Sync (full idempotent upsert — seconds; run any time, cron optional)
-
-```bash
-python3 tools/plane/sync.py                # ledger -> Postgres; applies schema.sql itself
-```
-
-Source of truth is `index/ledger/*.jsonl` ONLY, folded by `tools/store/store.py materialize()`
-(never re-implemented here). Embeddings ride along in the ledger's seen payloads (base64
-float16), so a fresh clone rebuilds the whole database — no re-embedding, no git archaeology.
-
-Optional crontab line (NOT installed — add if wanted; the bridge already pulls every 10 min):
-
-```
-15 * * * * cd ~/code/claude-routines && git pull -q --rebase && python3 tools/plane/sync.py >> /tmp/plane-sync.log 2>&1
-```
+(A first cut used local Postgres + pgvector per the original §5.2 sketch; replaced the same
+evening — a resident database server fights the pipeline's zero-infra character, and at this
+scale bought nothing. If the corpus ever outgrows brute force (~100×), the upgrade path is an
+embedded FILE — DuckDB or sqlite-vec — never a server.)
 
 ## Queries
 
@@ -41,9 +23,14 @@ python3 tools/plane/query.py entities --days 90      # entity graph (populates a
 python3 tools/plane/query.py sources  --days 30      # domain concentration + tier mix
 ```
 
-`search` embeds the query through the embed-proxy Worker (same bge-m3 the stories carry);
-everything else is offline SQL. Raw SQL: `psql -d claude_routines` — see `schema.sql` for the
-`threads` and `entity_stories` views.
+Only `search` touches the network (it embeds the query through the embed-proxy Worker with the
+same bge-m3 model the stories carry — apples-to-apples cosine). Everything else is offline.
+
+## Why embeddings need no rebuild, ever
+
+The ledger's `seen` payloads carry each story's embedding (base64 float16, written by
+`dedup.py record`'s dual-write). The 40-day pruning of `index/stories/` is irrelevant here —
+the ledger is append-only and complete back to 2026-05-27.
 
 ## The graph's edge types (and where they come from)
 
@@ -51,8 +38,8 @@ everything else is offline SQL. Raw SQL: `psql -d claude_routines` — see `sche
 - `entities[]` — writer-supplied actors/places/artifacts (DEDUP.md Step C, added 2026-07-18).
 - `source_domain` / `tier` — joins against `sources/registry.yml`'s credibility lifecycle.
 - `affiliations[]` — the institutions ledger's node set.
-- `feedback.sid` — reader votes per story.
+- per-story folded `feedback` — reader votes.
 
-Deliberately NOT a dedicated graph database: at ~1.6k stories, Postgres joins + recursive CTEs
-cover every graph query, and the 2026-05-31 calibration showed cosine gives nearness, never
-relationship type — the typed edges above are where the "knowledge graph" actually lives.
+Deliberately NOT a graph database either: the 2026-05-31 calibration showed cosine gives
+nearness, never relationship type — the typed edges above are where the "knowledge graph"
+actually lives, and at this scale they're dict groupbys.

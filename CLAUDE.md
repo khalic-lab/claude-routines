@@ -88,9 +88,11 @@ trigger's id, cron, and full `session_context`.
   routine — DEDUP.md Step D).
 - Notifications: `pending-notifications/{ts}-{slug}.json` → local bridge → ntfy (then deleted).
 - Dedup: `tools/dedup/` (see its `DEDUP.md`); embeddings index under `index/`.
-- Analytical plane (2026-07-18): `tools/plane/` — local Postgres+pgvector loaded from the ledger
-  (`sync.py`; `query.py` for search/thread/related/beats/entities/sources). Pull-based, optional:
-  nothing in the publish path depends on it. Writers emit `entities` in DEDUP Step C for its graph.
+- Analytical plane (2026-07-18): `tools/plane/query.py` — SERVERLESS: the ledger is the database,
+  folded in-process (search/thread/related/beats/entities/sources/stats; no DB, no service, no
+  state). Read-only, optional: nothing in the publish path depends on it. Writers emit `entities`
+  in DEDUP Step C for its graph. Never reintroduce a resident server here — embedded file
+  (DuckDB/sqlite-vec) is the only sanctioned upgrade path.
 - Deterministic mechanical tier (2026-07-18): `tools/fetch.py` (logging curl→proxy fetch wrapper,
   log at `/tmp/fetch.log`), `tools/footer.py` (computed Coverage-footer telemetry),
   `tools/publish.py` (the writers' single publish command — record→…→stub→commit/push),

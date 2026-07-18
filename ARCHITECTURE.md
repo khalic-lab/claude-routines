@@ -4,10 +4,10 @@
 > configs, `bridge.sh`, the user crontab, `_config.yml`, and `_includes/head/custom.html` — not
 > inferred. The two-plane design in §3–§7 is now **partially built**: **Phase 1 — the compose-time
 > embeddings dedup (online plane)** is LIVE (`tools/dedup/dedup.py`, the `embed-proxy` Worker, the
-> in-repo `index/stories/` index; calibrated 2026-05-31). **Phase 2 — the local pgvector analytical
-> plane — is BUILT (2026-07-18: `tools/plane/`, Postgres 17 + pgvector on the Mac, loaded from the
-> ledger)**; the S3 datalake half remains unbuilt and optional. Most §7 open questions are now
-> RESOLVED (marked inline).
+> in-repo `index/stories/` index; calibrated 2026-05-31). **Phase 2 — the analytical plane — is
+> BUILT (2026-07-18: `tools/plane/query.py`, SERVERLESS — the ledger is the database, folded
+> in-process; supersedes the §5.2 pgvector sketch)**; the S3 datalake half remains unbuilt and
+> optional. Most §7 open questions are now RESOLVED (marked inline).
 
 ---
 
@@ -69,19 +69,23 @@
    └──────────────────────────────────┘
 ```
 
-> **Added 2026-07-18 (evening): Phase 2 analytical plane BUILT (`tools/plane/`).** Local
-> Postgres 17 + pgvector 0.8.5 (brew service, DB `claude_routines`), loaded from the story
-> ledger by `sync.py` — full idempotent upsert via `store.py materialize()` (the canonical
-> event folding, never re-implemented) + a direct scan for publish/feedback events. Key
-> realization: the ledger's `seen` payloads carry the embeddings (base64 f16), so a fresh
-> clone rebuilds the whole database — 1,625 stories 2026-05-27→present, ALL with vectors, no
-> re-embedding, no git archaeology (the 40-day `index/stories/` pruning is irrelevant to the
-> plane). `query.py` ships the showcase queries: semantic `search` (embeds via embed-proxy,
-> same bge-m3), `related`, `thread` timelines (the Iran/Hormuz thread reads as an 11-story
-> line across two streams), `beats`, `entities`, `sources`, `stats`; `schema.sql` adds
-> `threads` + `entity_stories` views. **Graph decision:** no dedicated graph DB — the
+> **Added 2026-07-18 (evening): Phase 2 analytical plane BUILT (`tools/plane/`) — SERVERLESS.**
+> **The ledger is the database**: `query.py` folds `index/ledger/*.jsonl` in-process via
+> `store.py materialize()` (the canonical folding, never re-implemented) on every invocation —
+> brute-force cosine for vector search (~1.6k × 1024-dim ≈ 0.2s, no index needed), dict
+> groupbys for the graph side. No database, no service, no sync step, no state; stdlib only; a
+> fresh clone answers every query with zero setup. Key realization: the ledger's `seen`
+> payloads carry the embeddings (base64 f16) — 1,625 stories 2026-05-27→present, ALL with
+> vectors, no re-embedding, and the 40-day `index/stories/` pruning is irrelevant. Queries:
+> semantic `search` (embeds via embed-proxy, same bge-m3), `related`, `thread` timelines (the
+> Iran/Hormuz thread reads as an 11-story line across two streams), `beats`, `entities`,
+> `sources`, `stats`. *(A first cut used local Postgres 17 + pgvector per the original §5.2
+> sketch — built, loaded, verified, then replaced and uninstalled the SAME evening at Rafael's
+> call: a resident server fights the pipeline's zero-infra character and bought nothing at
+> this scale. Upgrade path if the corpus ever outgrows brute force: an embedded FILE —
+> DuckDB/sqlite-vec — never a server.)* **Graph decision:** no graph DB either — the
 > 2026-05-31 calibration showed cosine gives nearness, never relationship type, so the typed
-> edges live in columns/joins (thread_id, entities, source_domain, affiliations, feedback).
+> edges live in fields + groupbys (thread_id, entities, source_domain, affiliations, feedback).
 > **Writers now emit `entities`** (DEDUP.md Step C, 2–5 canonical actors/places/artifacts,
 > only-when-present like affiliations — old payloads stay byte-identical) as the graph's node
 > vocabulary. **Plus a data bug the plane exposed on day one:** the 2026-07-18 weekend run
@@ -89,7 +93,7 @@
 > and one degenerate thread. `record` now has a deterministic backstop (`url_headline()`:
 > blank headline → readable URL-derived fallback, distinct ids guaranteed); the six historical
 > records are left as-is (homepage recovered their prose via the URL join). Spec suite
-> 353 → 364. The plane is pull-based and optional: nothing in the publish path depends on it.
+> 353 → 363. The plane is read-only and optional: nothing in the publish path depends on it.
 
 > **Changed 2026-07-18 (latest): homepage frontend review → slim-down + packing/table fixes.**
 > A 4-agent specialist review (css-layout, js-state, architecture reviewers + adversarial Opus

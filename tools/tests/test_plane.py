@@ -1,11 +1,8 @@
-"""Spec tests for the Phase-2 analytical plane (tools/plane/) and the two record-path
+"""Spec tests for the Phase-2 analytical plane (tools/plane/query.py — SERVERLESS: the ledger
+is the database, folded in-process; no Postgres, no sync, no state) and the two record-path
 additions that feed it: the writer-supplied `entities` field (only-when-present, mirroring
 affiliations) and the blank-headline URL backstop (the 2026-07-18 six-way
 "{date}-{slug}-story" id collision).
-
-Plane coverage is the PURE half (COPY/TSV/array/vector encoding, embedding decode, ledger
-event scan, script assembly) — no live Postgres needed; the DB integration is exercised by
-running sync.py against the real database, not by this suite.
 """
 import argparse
 import base64
@@ -28,58 +25,70 @@ def _load(name, path):
     return mod
 
 
-plane = _load("_plane_sync", os.path.join(TOOLS, "plane", "sync.py"))
+plane = _load("_plane_query", os.path.join(TOOLS, "plane", "query.py"))
+
+
+def _c(sid, vec, **rec):
+    import math
+    norm = math.sqrt(sum(x * x for x in vec)) if vec else None
+    return {"sid": sid, "rec": rec, "vec": vec or None, "norm": norm or None}
 
 
 class PlanePureTest(unittest.TestCase):
-    def test_tsv_escaping(self):
-        self.assertEqual(plane.tsv(None), r"\N")
-        self.assertEqual(plane.tsv("a\tb\nc\\d"), "a\\tb\\nc\\\\d")
-
-    def test_pg_array_quoting(self):
-        self.assertEqual(plane.pg_array([]), "{}")
-        self.assertEqual(plane.pg_array(['a "quoted"', "back\\slash"]),
-                         '{"a \\"quoted\\"","back\\\\slash"}')
-
     def test_decode_emb_roundtrip_f16_and_raw(self):
         floats = [0.5, -1.25, 0.0, 2.0]
         packed = base64.b64encode(struct.pack("<%de" % len(floats), *floats)).decode()
-        out = plane.decode_emb({"emb": packed})
-        self.assertEqual(out, floats)                       # exactly representable in f16
+        self.assertEqual(plane.decode_emb({"emb": packed}), floats)  # exactly representable in f16
         self.assertEqual(plane.decode_emb({"embedding": [1.0, 2.0]}), [1.0, 2.0])
         self.assertIsNone(plane.decode_emb({}))
         self.assertIsNone(plane.decode_emb({"emb": "not-base64!!"}))
 
-    def test_story_row_column_count_matches_copy(self):
-        row = plane.story_row("st-abc", {"date": "2026-07-18", "stream": "news",
-                                         "headline": "H", "entities": ["Iran"]})
-        self.assertEqual(len(row.split("\t")), 24)          # must match COPY column list
-        self.assertIn('{"Iran"}', row)
+    def test_cosine_rank_orders_and_excludes(self):
+        corpus = [
+            _c("st-close", [1.0, 0.1, 0.0], headline="close"),
+            _c("st-far", [-1.0, 0.5, 0.0], headline="far"),
+            _c("st-mid", [0.5, 0.5, 0.0], headline="mid"),
+            _c("st-novec", None, headline="no vector"),
+        ]
+        hits = plane.cosine_rank(corpus, [1.0, 0.0, 0.0], k=10)
+        self.assertEqual([c["sid"] for _, c in hits], ["st-close", "st-mid", "st-far"])
+        self.assertAlmostEqual(hits[0][0], 0.995, places=2)
+        hits = plane.cosine_rank(corpus, [1.0, 0.0, 0.0], k=10, exclude_sids={"st-close"})
+        self.assertEqual(hits[0][1]["sid"], "st-mid")
 
-    def test_scan_events_dedupes_and_skips_garbage(self):
-        root = tempfile.mkdtemp(prefix="plane-test-")
-        os.makedirs(os.path.join(root, "index", "ledger"))
-        with open(os.path.join(root, "index", "ledger", "2026-07-18.jsonl"), "w") as fh:
-            fh.write(json.dumps({"ev": "publish", "id": "st-a", "edition": "2026-07-18-news",
-                                 "ts": "2026-07-18T10:00:00Z"}) + "\n")
-            fh.write(json.dumps({"ev": "publish", "id": "st-a", "edition": "2026-07-18-news",
-                                 "ts": "2026-07-18T10:03:00Z"}) + "\n")   # retry -> one row, earliest ts
-            fh.write("not json\n")
-            fh.write(json.dumps({"ev": "feedback", "fb_id": "f1", "id": "st-a", "vote": 1,
-                                 "ts": "2026-07-18T11:00:00Z"}) + "\n")
-            fh.write(json.dumps({"ev": "feedback", "vote": 1}) + "\n")    # no fb_id -> skipped
-        pubs, fb = plane.scan_events(root)
-        self.assertEqual(len(pubs), 1)
-        self.assertEqual(pubs[0]["ts"], "2026-07-18T10:00:00Z")
-        self.assertEqual([f["fb_id"] for f in fb], ["f1"])
+    def test_find_story_by_sid_url_and_legacy_id(self):
+        corpus = [_c("st-a", [1.0], url="https://x.example/a",
+                     legacy_ids=["2026-07-18-news-alpha"])]
+        for key in ("st-a", "https://x.example/a", "2026-07-18-news-alpha"):
+            self.assertIs(plane.find_story(corpus, key), corpus[0], key)
+        self.assertIsNone(plane.find_story(corpus, "nope"))
 
-    def test_build_script_is_one_transaction_with_upserts(self):
-        script = plane.build_script(
-            {"st-a": {"date": "2026-07-18", "stream": "news", "headline": "H"}}, [], [], ".")
-        self.assertIn("BEGIN;", script)
-        self.assertIn("COMMIT;", script)
-        self.assertEqual(script.count("ON CONFLICT"), 3)
-        self.assertIn("CREATE EXTENSION IF NOT EXISTS vector", script)
+    def test_stats_counts_folded_votes_not_dict_len(self):
+        corpus = [
+            _c("st-a", [1.0], date="2026-07-01", thread_id="t1",
+               feedback={"up": 2, "down": 1, "last_reason": None}),
+            _c("st-b", [1.0], date="2026-07-02", thread_id="t1",
+               feedback={"up": 0, "down": 0, "last_reason": None}),  # the 3-per-story trap
+        ]
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            plane.cmd_stats(corpus, None)
+        row = buf.getvalue().splitlines()[2].split()
+        self.assertEqual(row[:4], ["2", "2", "1", "3"])  # stories, vectors, threads>1, votes
+
+    def test_entities_groupby(self):
+        corpus = [
+            _c("st-a", [1.0], date="2026-07-01", stream="news", entities=["Iran", "CAS"]),
+            _c("st-b", [1.0], date="2026-07-10", stream="sports", entities=["CAS"]),
+        ]
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            plane.cmd_entities(corpus, argparse.Namespace(days=36500))
+        out = buf.getvalue()
+        lines = [l for l in out.splitlines() if l.startswith("CAS")]
+        self.assertEqual(len(lines), 1)
+        self.assertIn("news/sports", lines[0])
+        self.assertIn("2", lines[0].split())
 
 
 class UrlHeadlineTest(unittest.TestCase):
