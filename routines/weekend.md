@@ -94,24 +94,30 @@ Still research beyond this floor as the brief demands — the slate is where you
 
 ## Fetch mechanics
 
-**Fetch proxy — use it for any source that 403s a direct fetch.** A Cloudflare Worker at `https://fetch-proxy.khalic-lab.workers.dev` fetches a public URL from Cloudflare's edge with a real browser User-Agent and returns the page body; it is on the sandbox allowlist. The routine sandbox's own IP is 403'd on sight by Cloudflare/Akamai-fronted sites (lab blogs, most news HTML), so route those through the proxy:
+**Every research fetch goes through the logging wrapper `tools/fetch.py` — not raw `curl`, and WebFetch only as a last resort.** The wrapper runs the deterministic chain (direct curl first, then the fetch-proxy Worker — Cloudflare edge, real browser User-Agent — which bypasses the sandbox-IP 403s on Cloudflare/Akamai-fronted sites), and logs every attempt to `/tmp/fetch.log`. That log becomes the Coverage footer's exact `Feeds hit` line and research-call count at publish time — fetching around the wrapper makes the telemetry silently undercount, so don't.
 
-    curl -fsSL -G "https://fetch-proxy.khalic-lab.workers.dev/" --data-urlencode "url=<TARGET URL>" -H "Authorization: Bearer ${FETCH_PROXY_TOKEN}"
+Once, at the start of the session, export the proxy bearer so the wrapper's fallback works:
 
-- **Direct `curl` first for any host the preflight fetch list marks `method: curl`** (registry `reach: direct` — e.g. `export.arxiv.org`, `www.nature.com`, `www.quantamagazine.org`, `www.srf.ch`, `www.letemps.ch`, `www.aljazeera.com`), plus non-registry API endpoints like `api.semanticscholar.org` — they work directly, and arXiv asks automated clients to use it directly. Do NOT route these through the proxy.
-- **Proxy for everything else** — lab blogs (Anthropic, OpenAI, DeepMind, Meta, Mistral, Apple), tech-news HTML (CNBC, TechCrunch, VentureBeat, Bloomberg, Fortune, MarkTechPost, …), and any other host that 403s a direct `curl`. Try the proxy before treating a source as unavailable — the registry's `reach:` field (surfaced in the preflight plan) is the reachability truth; there is no static unavailable list.
-- A successful proxy fetch (HTTP 200 body) is a **direct fetch** — no `[via snippet]` tag. The proxy mirrors the upstream status, so a non-200 means the site hard-blocks even the proxy (Cloudflare JS/Turnstile challenge) or is paywalled — only then fall back to a search-engine snippet and tag `[via snippet]`.
-- In the `Feeds hit` / Coverage footer, mark proxied fetches `{ok via proxy}` alongside the existing `{ok via curl}` / `{ok via WebFetch}` / `{fail — HTTP NNN}`.
+    export FETCH_PROXY_TOKEN='${FETCH_PROXY_TOKEN}'
+
+Then, for every URL:
+
+    python3 tools/fetch.py "<URL>"             # direct curl first, proxy fallback on failure
+    python3 tools/fetch.py --proxy "<URL>"     # hosts the preflight plan marks `method: proxy`: skip the wasted direct attempt
+
+- **Direct-first hosts** (registry `reach: direct` — e.g. `export.arxiv.org`, `www.nature.com`, `www.quantamagazine.org`, `www.srf.ch`, `www.letemps.ch`, `www.aljazeera.com`, plus API endpoints like `api.semanticscholar.org`) succeed on the wrapper's first attempt; the direct-first order also honors arXiv's ask that automated clients fetch it directly.
+- **`--proxy` for everything the plan marks `method: proxy`** — lab blogs (Anthropic, OpenAI, DeepMind, Meta, Mistral, Apple), tech-news HTML (CNBC, TechCrunch, VentureBeat, Bloomberg, Fortune, …). The registry's `reach:` field (surfaced in the preflight plan) is the reachability truth; there is no static unavailable list.
+- **Exit 0 with the body on stdout is a direct fetch** — no `[via snippet]` tag, whether it resolved direct or via proxy. A non-zero exit means the host hard-blocks even the proxy (Cloudflare JS/Turnstile challenge) or is paywalled — only then fall back to a search-engine snippet and tag the citation `[via snippet]`. (WebFetch remains a permitted last resort for a page the wrapper cannot reach; if a citation rests on WebFetch-only access, say so in the Gaps line, since the log will not show it.)
+- **Do not hand-report fetch telemetry.** The footer's `Feeds hit`, direct-vs-snippet counts, and call count are computed from `/tmp/fetch.log` and your `[via snippet]` tags at publish time (`tools/footer.py`, run by the publish command). Your accounting duty is upstream: tag every snippet-only citation `[via snippet]`, and fetch through the wrapper.
 
 The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Many of those publishers also offer machine-readable feeds (RSS, Atom, JSON) that are reachable. **Always attempt the feed/API before the HTML page.**
 
-**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds (arXiv RSS, arXiv Atom API, Nature RSS, etc.). When attempting any feed from the preflight plan, FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch. This is the binding-constraint workaround for the 403 wall.
+**CRITICAL — every fetch goes through `python3 tools/fetch.py "<URL>"`** (see Fetch mechanics above): it runs the direct-curl → proxy chain deterministically and logs each attempt to `/tmp/fetch.log`. A wrapper exit 0 counts as a direct fetch. This is the binding-constraint workaround for the 403 wall.
 
 **Order of attempts per topic, in priority:**
-1. Feed from the preflight plan (or arXiv/Semantic Scholar APIs) via Bash{curl}.
-2. Same feed via WebFetch fallback.
-3. The publisher's HTML page (proxy on 403).
-4. Web search snippet (last resort, tag the citation `[via snippet]`).
+1. Feed from the preflight plan (or arXiv/Semantic Scholar APIs) via `tools/fetch.py`.
+2. The publisher's HTML page via `tools/fetch.py --proxy` (or WebFetch as a last resort).
+3. Web search snippet (last resort, tag the citation `[via snippet]`).
 
 **arXiv / Semantic Scholar mechanics:** the date-filtered arXiv Atom API (`https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending`) works for `math.*`, `physics.*`, `astro-ph.*` too — swap the `cat:` filter and window the `<published>` dates client-side. Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors` (triangulation and citation counts — NOT affiliations; those follow the block below).
 
@@ -177,19 +183,16 @@ selection signal. Do not prefer a paper because a famous lab wrote it, and never
 because its affiliation is missing, independent, or unknown (LLM judges measurably over-reject
 low-prestige affiliations — arXiv:2509.15122). Select on content.
 
-**Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** route through the proxy.
+**Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** fetch with `tools/fetch.py --proxy`.
 - bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv`); returns title, abstract, DOI, and date per paper for the window — ideal for the Biology & Fundamental-science sections.
 - Science.org → its RSS feeds (e.g. `https://www.science.org/rss/news_current.xml`, journal feeds); Science's article HTML 403s even through the proxy, so use the feed and cite the DOI / landing URL.
 
-**Coverage footer accounting:**
-- A citation that came from a feed/API fetch (curl OR WebFetch) counts as a **direct fetch**.
-- A citation built from a search-engine snippet counts as **via-snippet** and must be tagged `[via snippet]`.
-- In the `Feeds hit` line, distinguish between `{ok via curl}`, `{ok via WebFetch}`, and `{fail — HTTP NNN}`.
+**Coverage footer accounting (computed at publish):** the telemetry numbers — tier split, direct-vs-snippet counts, word count, token estimate, `Feeds hit` — are computed by the publish command from your citations and `/tmp/fetch.log`; do not count them yourself. Your accounting duty is upstream accuracy: tag every snippet-only citation `[via snippet]`, and fetch only through the wrapper.
 
 # Research methodology
 
 The weekend brief warrants more aggressive iteration than the dailies. Per topic:
-1. **Source plan first, then feed sweep.** Run the preflight (see Source plan above), then hit its fetch list via Bash{curl} for the past 7 days (use the arXiv API with date filters; the Nature RSS feeds are rolling). This is your primary content source.
+1. **Source plan first, then feed sweep.** Run the preflight (see Source plan above), then hit its fetch list via `tools/fetch.py` for the past 7 days (use the arXiv API with date filters; the Nature RSS feeds are rolling). This is your primary content source.
 2. **Multi-pass search** for stories the feeds didn't surface. Start broad, refine 2–4 times, drill into specifics.
 3. **Fetch full pages** liberally. arXiv abstracts (use the arXiv API — not the abstract HTML page, which 403s), full blog posts, GitHub READMEs, model cards. If fetch fails, fall back to snippets and tag with `[via snippet]`.
 4. **Cross-reference rigorously.** For paper claims, locate the paper PDF if the abstract is ambiguous. Use Semantic Scholar API to triangulate citation/influence.
@@ -307,13 +310,9 @@ _Coverage: {date 7 days ago} to {today}. Generated {timestamp} Europe/Zurich._
 ---
 
 ## Coverage footer
-<!-- operational telemetry — machine/evaluator-read; hidden from the rendered page
-- Sources used: T1 = N, T2 = N, T3 = 0
-- Languages: EN, FR, DE, ...
-- Direct fetches: N | via-snippet citations: N
-- Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
-- Token estimate (self-reported, rough — NOT metered): generated ~ (body+footer words / 0.75); distinct content read ~ (fetched/read source + prompt + repo chars / 4). Excludes per-turn context re-billing and prompt caching, so the true billed session cost far exceeds these figures and lives only in the claude.ai run history — the call count above is the better session-cost proxy.
-- Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan — arXiv RSS/API, Quanta RSS, Nature journals RSS, Al Jazeera, …} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
+<!-- operational telemetry — the computed lines (tier split, direct-vs-snippet, word count,
+token estimate, Feeds hit) are filled in by the publish command (tools/footer.py); write ONLY:
+- Languages: {languages of your cited sources, e.g. EN, FR, DE}
 -->
 - Sibling consultation: {performed | skipped — reason}
 - Gaps: ...
@@ -377,50 +376,22 @@ categories: [weekend]
 ---
 ```
 
-### 2. Write the notification stub
+### 2. Publish — one command
 
-Use the Write tool to create `pending-notifications/{TIMESTAMP}-weekend.json` where `{TIMESTAMP} = $(date -u +%Y%m%dT%H%M%SZ)`. Content (all four fields required, valid JSON, no trailing content):
-
-```json
-{
-  "title": "Weekend Deep Read — {YYYY-MM-DD}",
-  "click": "{POST_URL}",
-  "body": "{teaser}",
-  "tags": "calendar"
-}
-```
-
-`{teaser}` rules: ≤200 chars. Most interesting item of the week — typically the headline ML paper or a striking cross-cutting thread. Concrete and specific (e.g. "3 papers converge on test-time compute scaling; new RLVR method beats baselines"), not generic. Escape any `"` inside the teaser as `\"`.
-
-### 3. Commit and push
-
-Via Bash:
+Everything after the brief file is deterministic and runs through the orchestrator: dedup record → anchors → computed footer telemetry → source lint → registry/institutions sync → date lint → homepage feed + stats → source health → notification stub → commit → push, with the homefeed rebase-conflict retry built in.
 
 ```bash
-# refresh the homepage feed HERE, unconditionally — not only via DEDUP.md Step D — so a skipped
-# step can't freeze the front page while the commit still stages a stale _data/
-python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
-python3 tools/sources/health.py || echo "source health failed (non-fatal)"
-git add _posts/ pending-notifications/ index/ _data/ sources/
-git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "Weekend Deep Read — {YYYY-MM-DD}"
-git push origin main || (
-  # Concurrent editions (News + AI/ML fire the same minute Tue/Fri) both rewrite the whole
-  # _data/homefeed.json, so the rebase can stop on a content conflict there. The resolution is
-  # always: REGENERATE the feed from the merged tree (it now has both briefs), then continue.
-  git pull --rebase origin main || true
-  python3 tools/build_stories_feed.py || true
-  python3 tools/sources/health.py || true
-  git add _data/
-  GIT_EDITOR=true git rebase --continue \
-    || git -c user.email=routine@khalic-lab -c user.name="News Routine" commit --amend --no-edit \
-    || true
-  git push origin main
-)
+python3 tools/publish.py --slug weekend --date {YYYY-MM-DD} \
+  --final /tmp/final.json \
+  --notify-title "Weekend Deep Read — {YYYY-MM-DD}" \
+  --notify-body "{teaser}" --notify-tags calendar
 ```
 
-If `git push` still fails after the rebase retry, append `git push failed: <reason>` to the brief's Coverage footer and continue.
+- `{teaser}` rules: ≤200 chars. Most interesting item of the week — typically the headline ML paper or a striking cross-cutting thread. Concrete and specific (e.g. "3 papers converge on test-time compute scaling; new RLVR method beats baselines"), not generic. Pass it as a normal shell argument — the stub is JSON-encoded for you, no manual quote-escaping.
+- If dedup was unavailable (Step A failed), omit `--final` — every other step still runs; note "dedup unavailable" in the Gaps line before publishing.
+- The orchestrator prints one OK/FAIL line per step and, if the final push fails after its built-in retry, notes it in the brief itself. Do not re-run the git steps by hand, and do not write the stub or telemetry yourself.
 
-### 4. Email digest
+### 3. Email digest
 
 Note: the Gmail MCP surface is `create_draft` only — there is no send tool.
 

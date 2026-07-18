@@ -15,7 +15,7 @@ python3 tools/sources/health.py      # writes + prints _data/source-health.json
 python3 tools/evaluator/metrics.py   # writes + prints _data/health.json (embeds source-health verbatim)
 ```
 
-`health.py` must run before `metrics.py` (metrics copies `_data/source-health.json` into `health.json` under `sources`). These two files ARE your mechanical dimensions — per-stream citations/anchors/repeat rates, feedback tallies, source diversity/saturation/waiver numbers, and your own continuity. **Do not hand-count anything they already report**; read the numbers and spend your word budget on the editorial judgment they cannot compute. If either script crashes, note it in the review, degrade to reading the briefs directly for that dimension, and continue — never abort the review.
+`health.py` must run before `metrics.py` (metrics copies `_data/source-health.json` into `health.json` under `sources`). These two files ARE your mechanical dimensions — per-stream citations/anchors/repeat rates, feedback tallies, source diversity/saturation/waiver numbers, your own continuity **and (since 2026-07-18) the computed brief-text dimensions under `health.json` → `briefs`**: aggregator leakage (B), section vitality (D), single-source rate (F), tag counts (G), weekend paper balance (H), footer fetch ratios + per-feed reachability (K), and word-count means incl. the previous week (L), plus the off-main self-delivery guard under `continuity.off_main`. **Do not hand-count anything they already report**; read the numbers and spend your word budget on the editorial judgment they cannot compute. If either script crashes, note it in the review, degrade to reading the briefs directly for that dimension, and continue — never abort the review.
 
 # Pipeline-cold precheck (run BEFORE the analysis)
 
@@ -67,7 +67,7 @@ Up to ~10 distinct (slug, date) reads in the typical week. Today's may be partia
 
 Plus:
 5. **Most recent weekend brief**: glob `_posts/*-weekend.md`, sort, read the latest.
-6. **Previous review (self-continuity)**: take it from `_data/health.json` → `continuity.previous_evaluator_path` — the most recent prior evaluator post, however long ago, script-computed — plus your own prior events in `index/ledger/` when present. Never re-derive "the post from exactly 7 days ago" by date arithmetic; that brittle offset broke continuity on 2 of 9 past runs. **Self-delivery guard (added 2026-07-10 — the stranding class hit 4 of 9 past runs and the evaluator misdiagnosed it as "skipped Sundays" both times it noticed):** (a) if `continuity.previous_evaluator_path` is more than 8 days old, do not just proceed — flag "previous review is N days old" prominently in the Health summary and check whether a more recent review exists off-main; (b) run `git branch -r` and `git log --all --oneline --since={today-8d} --not main` — any recent commit NOT on main means a routine (possibly a prior you) is being diverted to a `claude/*` branch by an `outcomes` key; flag it as a critical pipeline defect in the review.
+6. **Previous review (self-continuity)**: take it from `_data/health.json` → `continuity.previous_evaluator_path` — the most recent prior evaluator post, however long ago, script-computed — plus your own prior events in `index/ledger/` when present. Never re-derive "the post from exactly 7 days ago" by date arithmetic; that brittle offset broke continuity on 2 of 9 past runs. **Self-delivery guard (added 2026-07-10; computed since 2026-07-18 — the stranding class hit 4 of 9 past runs and the evaluator misdiagnosed it as "skipped Sundays" both times it noticed):** (a) if `continuity.previous_evaluator_path` is more than 8 days old, do not just proceed — flag "previous review is N days old" prominently in the Health summary and check whether a more recent review exists off-main; (b) read `health.json` → `continuity.off_main` (metrics.py runs the `git branch -r` / `git log --not main` checks for you) — any `commits_not_on_main` entry means a routine (possibly a prior you) is being diverted off main by an `outcomes` key THIS window: flag it as a critical pipeline defect. `remote_branches` is context only — old recovered `claude/*` branches linger there; a branch is a defect only when it also shows recent commits.
 7. **Reader feedback — the ledger's folded state.** Feedback is folded continuously by the bridge (`tools/feedback/fold.py`): each vote lands as an `ev:"feedback"` event in `index/ledger/*.jsonl`, keyed to a durable story id (`st-…`), with last-write-wins per story and `vote: 0` an explicit retraction; fold.py marks the raw `feedback/*.jsonl` record `consumed: true` at fold time. **The old 7-day-window arithmetic over `feedback/*.jsonl` is RETIRED** — do not recount raw records, and do not set `consumed` flags yourself (fold.py owns consumption). Read the window's tallies from `health.json` → `feedback.by_stream` (raw up/down/retractions per stream); for per-story attribution read the ledger's `ev:"feedback"` events directly (each carries the story id, `brief`, `vote`, and optional `reason`) and resolve ids to headline/url/source_domain via `python3 tools/store/store.py materialize` (or the story's own `seen`/`publish` events). One bookkeeping check remains yours: if `health.json` → `feedback.unconsumed_total` > 0, the bridge fold is lagging or broken — flag it as a pipeline defect.
 8. **Reader profile (current state)**: `reader-profile.md` and `reader-profile/source-weights.yml` — the human-gated files the writers read at compose time. You PROPOSE edits to these (see Patch proposals); you never silently rewrite them.
 9. **Reader brief-proposals**: every `proposals/*.jsonl` record in the window (readers suggesting topics via the front page's "Propose a brief" form; the directory may not exist yet — skip silently if absent). Surface `consumed: false` proposals verbatim in your review email so Rafael sees them; if one maps cleanly onto an existing stream, fold it into a patch proposal. Mark folded/surfaced records `consumed: true` in their `proposals/*.jsonl` file and commit with the review — this consumption bookkeeping is still yours (fold.py owns only feedback).
@@ -94,35 +94,34 @@ Per stream from `_data/source-health.json` (also embedded verbatim in `health.js
 - Tier distribution: % T1 / % T2 / % T3 remains your read from the briefs. Healthy: T3 = 0% (per policy), T1 ≥40%.
 - Linguistic: % non-English citations, portfolio-wide. Healthy: ≥10%. Geographic: distinct country-of-origin domains for news sections.
 
-## B. Aggregator leakage (critical violation)
-- Search all briefs for citations to: news.ycombinator.com, lobste.rs, reddit.com, twitter.com, x.com, mastodon.social, threads.net, bsky.app.
-- Any hits = policy violation. List each with the brief filename, section, and the cited URL.
+## B. Aggregator leakage (computed — read, don't recount)
+`health.json` → `briefs.aggregator_leakage` lists every citation of news.ycombinator.com, lobste.rs, reddit.com, twitter.com, x.com, mastodon.social, threads.net, bsky.app — with post filename and URL. Any entry = policy violation; report each verbatim and name the section by reading that post.
 
-## C. Link health (sample-based)
-- Sample 20 random links from the week's briefs.
-- For each: confirm the URL resolves (try Bash{curl -sI} first, then WebFetch as fallback).
-- For 8 of those: spot-check that the cited claim is actually in the source.
+## C. Link health (sampling computed; claim-checks yours)
+- Run `python3 tools/evaluator/linkcheck.py --check` — it draws the week's deterministic 20-link sample and resolves each via curl, printing per-URL status + the pass rate. Paste its summary line.
+- For 8 of the resolved links: spot-check that the cited claim is actually in the source (this is the judgment half — fetch via curl/WebFetch and read).
 - Report: links broken / fabrications detected / overall pass rate per stream.
-- Note: if your environment hits HTTP 403 across most fetches, report this as **unmeasurable**. Try the feed URLs (arXiv RSS, Nature RSS, bioRxiv JSON) via curl as part of the sample — those should NOT 403, and if they do, that's a regression to flag.
+- Note: if the checker reports near-total failure, report the dimension as **unmeasurable** and flag it — the feed URLs (arXiv RSS, Nature RSS, bioRxiv JSON) should NOT 403, and if they do that's an egress regression.
 
-## D. Section vitality
-For each section across all briefs, count items per run and empty runs. Flag sections empty ≥3 times that week.
+## D. Section vitality (computed — read, don't recount)
+`health.json` → `briefs.by_stream.<slug>.sections` / `empty_sections` (per-post empty sections, named). Flag sections empty ≥3 times that week; your judgment call is WHY (dead beat, source gap, or honest omit-don't-fill).
 
 ## E. Coverage gap recurrence
 Read the "Gaps" footer from each brief. Cluster recurring gaps. ≥3 times = structural. Flag and propose source additions.
 
-## F. Triangulation rate
-Count items tagged `[single-source]` vs total. Healthy: <20% portfolio-wide; <25% on any single stream.
+## F. Triangulation rate (computed — read, don't recount)
+`health.json` → `briefs.by_stream.<slug>.single_source_rate` (and the raw counts). Healthy: <20% portfolio-wide; <25% on any single stream.
 
-## G. Tag discipline
+## G. Tag discipline (counts computed; spot-checks yours)
+Tag counts per stream are in `health.json` → `briefs.by_stream.<slug>.tags` — don't recount. Your judgment work:
 - `[preprint]` on arXiv items? Sample 5, verify.
 - `[vendor PR]` on vendor announcements? Sample 5.
-- `[disputed]` ever used appropriately? (Just count.)
+- `[disputed]` used appropriately? (Judge the counted uses.)
 - `[new source]` — the Step C.25 lint recomputes tag integrity deterministically, so don't re-derive novelty; read the week's new `sources/candidates.jsonl` entries and spot-check 2: is the tagged domain a genuine primary source, or a junk anchor? Junk anchors are the failure mode to catch early.
-- `[via snippet]` — count and report by stream. With curl-first feeds, via-snippet rates should be **dropping**; rising or flat-high rates by stream means feeds are failing in that stream's sandbox. Flag.
+- `[via snippet]` — read the per-stream count from the computed tags. With the wrapper's curl-first chain, via-snippet rates should be **dropping**; rising or flat-high rates by stream means feeds are failing in that stream's sandbox. Flag.
 
-## H. Topic balance (weekend brief only)
-Read the weekend brief's ML papers and Fundamental science papers sections. **Target (set 2026-07-10, making the long-assumed default explicit — three past reviews asked for one): ~50/50 ML-vs-(fundamental science + biology) across the paper sections, ±15 percentage points.** Count the actual % allocation and flag deviations beyond that band.
+## H. Topic balance (weekend brief only; computed — read, don't recount)
+`health.json` → `briefs.weekend_balance` (`ml_items` / `science_items` / `ml_share`, counted across the weekend paper sections). **Target (set 2026-07-10, making the long-assumed default explicit — three past reviews asked for one): ~50/50 ML-vs-(fundamental science + biology), ±15 percentage points** — i.e. `ml_share` outside [0.35, 0.65] is a flag.
 
 ## I. Repetition detection (computed — read, don't recount)
 `health.json` → `streams.<slug>.repeats` / `repeat_rate` (a 14-day story-id/thread-id lookback over the ledger). Don't re-cluster headlines by hand. Judgment work: for flagged repeats, check whether the re-run carried a genuinely new, dated fact (`[ongoing since]` discipline) or was a re-summary — the latter is the defect.
@@ -132,20 +131,13 @@ Read the weekend brief's ML papers and Fundamental science papers sections. **Ta
 ## J. Cross-week trend (if previous review exists)
 - Source diversity (unique/new domains, top5_share, waiver rate — from successive source-health snapshots), T3 leakage count, aggregator citations, section vitality, via-snippet rate, direct-fetch rate trends.
 
-## K. Feed reachability and direct-fetch rate (binding-constraint metric)
+## K. Feed reachability and direct-fetch rate (binding-constraint metric; computed — read, don't recount)
 
-**Per-stream computation:**
-For each stream and each day:
-1. Parse the Coverage footer's `Direct fetches: N | via-snippet citations: M` line. If absent, mark as `pre-rollout`.
-2. Compute `direct-fetch ratio = N / (N + M)` per (stream, day).
-3. Aggregate per stream: mean, min, max ratio.
-4. Aggregate per stream: total `via-snippet` count for the week.
+**Per-stream:** `health.json` → `briefs.by_stream.<slug>.direct_fetches` / `via_snippet` / `direct_fetch_ratio` (footer-derived; since 2026-07-18 the footers themselves are computed from the fetch log, so these are exact, not self-reported). A stream with no parseable footer shows nulls — mark it `pre-rollout`.
 
-**Per-domain (feed) reachability:**
-If any brief includes a `Feeds hit` line with feed-level ok/fail flags AND method (curl/WebFetch), aggregate across the week:
-- Per feed: count `{ok via curl}` vs `{ok via WebFetch}` vs `{fail — HTTP NNN}`.
+**Per-feed:** `health.json` → `briefs.feeds` aggregates every `Feeds hit` entry across the week (`ok_curl` / `ok_proxy` / `ok_webfetch` / `fail` per feed, both the legacy hand-written and the new computed footer formats). Your judgment work:
 - Flag any feed that failed >50% of attempts.
-- **Method comparison:** if curl succeeded substantially more often than WebFetch on the same feed, that confirms the curl-first patch is doing its job. If curl ALSO mostly failed, the egress proxy is the wall — escalate (probe routine, alternative feed source).
+- **Method comparison:** if direct curl succeeds where only the proxy used to, or the proxy carries most of a stream's fetches, say so. If curl AND proxy both mostly fail on a feed, the egress proxy is the wall — escalate (probe routine, alternative feed source).
 
 **Domains-that-shouldn't-be-cited check:**
 Scan all citations against the registry (`sources/registry.yml`) and `reader-profile/source-weights.yml`: a domain with `reach: blocked` / `blocked-paywall` can ONLY appear `[via snippet]`; a `never:` domain must not appear at all; a `retired`/`demoted` domain appearing as a primary anchor deserves a flag. (The prompt-side "Confirmed unavailable" lists are retired — the registry is the truth.)
@@ -158,8 +150,8 @@ Scan all citations against the registry (`sources/registry.yml`) and `reader-pro
 
 Flag streams below their range. The patch proposal is usually: add a feed source the writer is missing, or fix a feed URL that's wrong.
 
-## L. Output volume (token-cost proxy)
-Parse each Coverage footer's `Word count: N` line (added 2026-06-22; if absent, mark `pre-rollout`). Per stream: report the mean word count for the week and the trend vs the previous review. Flag any stream whose mean grew >25% week-over-week with no matching rise in story count (Opus output tokens scale with words — this is the spend proxy until real token accounting exists). Cross-reference §I repetition: a stream that is both repetitive and long is the prime candidate for the output-cap / quiet-day levers (see docs/SPIKE-writer-token-levers.md).
+## L. Output volume (token-cost proxy; computed — read, don't recount)
+`health.json` → `briefs.by_stream.<slug>.words_mean` / `words_mean_prev_week` / `calls_mean` (footer-derived; exact word counts since 2026-07-18). Flag any stream whose mean grew >25% week-over-week with no matching rise in story count (Opus output tokens scale with words — this is the spend proxy until real token accounting exists). Cross-reference §I repetition: a stream that is both repetitive and long is the prime candidate for the output-cap / quiet-day levers (see docs/SPIKE-writer-token-levers.md).
 
 ## M. Editorial shape (added 2026-07-10 — measures the operator's actual goals, which A–L never did)
 Three spot-checks, each ~5 samples, judged against the mission in `reader-profile.md` + `routines/_shared/newsroom-ethos.md`:

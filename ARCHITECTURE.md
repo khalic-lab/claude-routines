@@ -68,6 +68,32 @@
    └──────────────────────────────────┘
 ```
 
+> **Added 2026-07-18: determinization of the mechanical tier (less AI, same quality).** Five
+> surfaces where a model was replaying deterministic procedure moved into tools; the editorial core
+> (research, story selection, writing, ONGOING keep/drop, teasers, evaluator judgment) is untouched.
+> **(1) `tools/fetch.py`** — the curl→proxy fallback chain as a logging wrapper (one JSON line per
+> attempt to `/tmp/fetch.log`; `--proxy` skips the direct attempt; no bearer in env → proxy step
+> auto-skipped, so the Evaluator degrades to direct-only). The prompt-prose fetch dance is gone.
+> **(2) `tools/footer.py`** — Coverage-footer telemetry is COMPUTED at publish (registry tier
+> split, direct-vs-snippet from `[via snippet]` tags, exact word count + token estimate, `Feeds
+> hit` aggregated from the fetch log); writer-authored lines (Languages, Gaps, Discovery,
+> stream-specific) preserved. The pipeline's "only health signal" stops being self-reported.
+> **(3) `tools/publish.py`** — the whole writer publish tail is ONE call: record → anchor →
+> footer → source lint → registry/institutions sync → date lint → feed+stats → source health →
+> notification stub (real JSON encoding, computed UTC timestamp) → commit/push with the homefeed
+> rebase retry; bare front-matter dates normalized to full ISO timestamps. DEDUP.md Steps C.25–E
+> collapsed to its step list; the skipped-step failure class (the 07-07→07-10 registry-sync gap)
+> is structurally closed. **(4) Evaluator determinized further**: `metrics.py` computes dimensions
+> B/D/F/G/H/K/L into `health.json → briefs` plus the off-main self-delivery guard
+> (`continuity.off_main`), and `tools/evaluator/linkcheck.py` does dimension C's deterministic
+> 20-link sample + curl resolution — "read, don't recount" now covers every countable dimension;
+> Opus keeps claim spot-checks, editorial shape (M), halo audit (N), synthesis, proposals.
+> **(5) Watch gate**: `tools/watch/due.py` (cooldown arithmetic; quiet ticks stop after one Bash
+> call printing `NONE DUE`) + `tools/watch/fire.py match|push` (stub + targeted `last_fired`
+> rewrite preserving YAML formatting + commit/push) — Haiku's only remaining job is the
+> WebSearch-snippet `match_when` judgment; trigger prompt updated in place (still un-shimmed,
+> `routines/watch.md` mirrors it). Spec suite 317 → 353.
+
 > **Added 2026-07-17: Sports stream + topic-selection sync.** (1) **Sports** — a fifth writer
 > (`claude-opus-4-8`, weekly Monday `0 7 * * 1`, `_posts/{d}-sports.md`, no email). Scope: Swiss +
 > global majors (Super League/Swiss NT, UEFA + big-5 football, F1, tennis, alpine skiing, NL/NHL
@@ -259,7 +285,7 @@
 | Read state (sync) | Cloudflare KV `readstate:{reader}` (not in repo) | `{sid: {ts, v: 0\|1}}` LWW tombstone map; client shadow `syncState:v1` + paint source `homeRead:v1` in localStorage | homepage JS ↔ feedback-sink Worker (passkey session) |
 | Institutions ledger | `sources/institutions.yml` | `meta.synced_editions` + `aliases:` + per-institution `{class, status, streams, first_seen, last_cited, citations, lifecycle}` | writer bylines → Step C `affiliations` → `institutions.py sync` (Step C.25c); class + aliases hand-curated |
 | Passkey auth | Cloudflare KV `cred:{id}` / `session:{token}` / `chal:{kind}:{c}` (not in repo) | credential pubkey+counter; 90d rolling sessions; single-use challenges TTL 300s | feedback-sink `/auth/*` (registration invite-gated by `INVITE_TOKEN` secret) |
-| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 304 tests: store invariants, fold, registry, institutions, affiliations + prompt-mirror drift, lint, metrics, dedup convergence, reconcile, dual-write byte-identity goldens | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`) |
+| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 353 tests: store invariants, fold, registry, institutions, affiliations + prompt-mirror drift, lint, metrics (+ computed briefs dimensions), dedup convergence, reconcile, dual-write byte-identity goldens, fetch wrapper, computed footer, publish orchestrator, watch gate, linkcheck | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`) |
 
 ### 1.3 Dedup today
 

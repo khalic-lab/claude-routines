@@ -14,7 +14,10 @@ injected token** itself. All routines share `environment_id = env_018zypSdRSdGdr
 
 The `*.md` files beside this manifest ARE the live prompts (read at runtime via the shim); the four writer
 prompts are generated from `src/` + `_shared/` (see `assemble.py`). `watch.md` is the exception — Watch
-still carries its full prompt inline in the trigger (not shimmed).
+still carries its full prompt inline in the trigger (not shimmed). **2026-07-18: Watch prompt v2**
+(deterministic gate — `tools/watch/due.py` decides what's due, `tools/watch/fire.py` does stub +
+`last_fired` + commit/push; the model only judges snippets): the trigger content was updated in place
+via RemoteTrigger and `routines/watch.md` mirrors it byte-for-byte in spirit (ASCII inline copy).
 
 | Routine | prompt file | trigger_id | cron (UTC / CEST) | model | shim? |
 |---|---|---|---|---|---|

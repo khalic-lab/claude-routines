@@ -258,10 +258,12 @@ class MetricsHealthMainFixtureTest(unittest.TestCase):
         _assert_clean_run(self, self.proc_narrow, self.health_narrow, self.root)
 
     def test_top_level_schema_keys(self):
-        """Contract: top level is exactly {week, streams, feedback, sources, continuity}, snake_case."""
+        """Contract: top level is exactly {week, streams, feedback, sources,
+        continuity, briefs}, snake_case ("briefs" added 2026-07-18 -- the
+        computed brief-text dimensions B/D/F/G/H/K/L)."""
         self.assertEqual(
             set(self.health_main.keys()),
-            {"week", "streams", "feedback", "sources", "continuity"},
+            {"week", "streams", "feedback", "sources", "continuity", "briefs"},
         )
         for k in self.health_main:
             self.assertEqual(k, k.lower())
@@ -443,12 +445,14 @@ class MetricsHealthMainFixtureTest(unittest.TestCase):
         """Contract: "evaluator continuity (previous evaluator post exists
         in _posts/)". The fixture ships _posts/2026-06-28-evaluator.md,
         dated before the window; continuity must report it found, by its
-        POSIX-relative path."""
+        POSIX-relative path. `off_main` (the computed self-delivery guard,
+        2026-07-18) degrades to available:false in a non-git fixture root."""
         self.assertEqual(
             self.health_main["continuity"],
             {
                 "previous_evaluator_found": True,
                 "previous_evaluator_path": "_posts/2026-06-28-evaluator.md",
+                "off_main": {"available": False},
             },
         )
 
@@ -531,7 +535,8 @@ class MetricsGracefulDegradationTest(unittest.TestCase):
         """No `_posts/*-evaluator.md` exists in this fixture at all."""
         self.assertEqual(
             self.health_nc["continuity"],
-            {"previous_evaluator_found": False, "previous_evaluator_path": None},
+            {"previous_evaluator_found": False, "previous_evaluator_path": None,
+             "off_main": {"available": False}},
         )
 
     def test_missing_source_health_json_degrades_to_marker(self):
@@ -634,7 +639,8 @@ class MetricsDefaultWeekSmokeTest(unittest.TestCase):
     def test_omitted_week_defaults_without_crashing(self):
         proc, health = _run_and_load(self.root)
         _assert_clean_run(self, proc, health, self.root)
-        self.assertEqual(set(health.keys()), {"week", "streams", "feedback", "sources", "continuity"})
+        self.assertEqual(set(health.keys()),
+                         {"week", "streams", "feedback", "sources", "continuity", "briefs"})
         self.assertEqual(set(health["week"].keys()), {"start", "end"})
 
 

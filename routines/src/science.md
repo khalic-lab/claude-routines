@@ -33,22 +33,19 @@ Three desks, deep over broad: pick the week's genuinely-new findings, read the p
 
 The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Always attempt the feed/API before the HTML page.
 
-**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public feeds. Try `curl -fsSL <URL>` first; fall back to WebFetch only on failure. Curl success counts as a direct fetch.
+**CRITICAL — every fetch goes through `python3 tools/fetch.py "<URL>"`** (see Fetch mechanics above): it runs the direct-curl → proxy chain deterministically and logs each attempt to `/tmp/fetch.log`. A wrapper exit 0 counts as a direct fetch.
 
 **arXiv mechanics:** use the non-CS RSS per category (`https://export.arxiv.org/rss/astro-ph`, also `math.*`, `physics.*`, `cond-mat`, `hep-ph`, `hep-th`, `gr-qc`, `quant-ph`, `q-bio.*`) and the date-filtered Atom API (`https://export.arxiv.org/api/query?search_query=cat:astro-ph.CO&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending` — **swap the `cat:` filter** for any non-CS category; filter `<published>` to the past 7 days). For Nature journals, dig to the primary research (`s41586-…`), not the `d41586-…` news.
 
-**Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** route through the proxy exactly as the include above shows.
+**Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** fetch with `tools/fetch.py --proxy`.
 - bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv` for medRxiv); returns title, abstract, DOI, and date per paper for the window — an ideal primary source for the Biology desk.
 - Science.org → its RSS feeds (e.g. `https://www.science.org/rss/news_current.xml`, plus journal feeds); Science's article HTML 403s even through the proxy, so use the feed and cite the DOI / article landing URL.
 
-**APS journals** (`journals.aps.org` — PRL / PRX / PRX Quantum): try the recent-articles RSS via curl; if it 403s, proxy the recent-articles page. Cite the article DOI / landing URL.
+**APS journals** (`journals.aps.org` — PRL / PRX / PRX Quantum): try the recent-articles RSS via the wrapper (its proxy fallback covers the 403 case automatically). Cite the article DOI / landing URL.
 
 **Nature-abstract fallback (Patch-4):** when a Nature primary research item (`s41586-…`) has no fetchable abstract from the sandbox, locate the matching arXiv cross-list preprint (search the title via the arXiv API / Semantic Scholar) and summarise *that*, tagged `[preprint]` — do NOT emit a title-only stub.
 
-**Coverage footer accounting:**
-- A citation from a feed/API fetch (curl OR WebFetch OR proxy) = **direct fetch**.
-- A citation from a search-engine snippet = **via-snippet**, tag `[via snippet]` in the item.
-- In the `Feeds hit` line, distinguish `{ok via curl}` / `{ok via WebFetch}` / `{ok via proxy}` / `{fail — HTTP NNN}`.
+**Coverage footer accounting (computed at publish):** the telemetry numbers — tier split, direct-vs-snippet counts, word count, token estimate, `Feeds hit` — are computed by the publish command from your citations and `/tmp/fetch.log`; do not count them yourself. Your accounting duty is upstream accuracy: tag every snippet-only citation `[via snippet]`, and fetch only through the wrapper.
 
 # Affiliations (the provenance element)
 
@@ -56,7 +53,7 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 
 # Research methodology
 
-1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list per desk, via curl then WebFetch then proxy. Use the arXiv API with date filters; the Nature / Quanta / Science RSS feeds are rolling — filter to the past 7 days client-side.
+1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list per desk via `tools/fetch.py`. Use the arXiv API with date filters; the Nature / Quanta / Science RSS feeds are rolling — filter to the past 7 days client-side.
 2. **Broad query** (1–2 keywords). Scan results.
 3. **Refine and re-query** based on what surfaced.
 4. **Fetch full pages / abstracts** for findings that matter (use the arXiv API for abstracts — the abstract HTML page 403s); on failure, snippet + tag.
@@ -120,14 +117,10 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: {date 7 days ago} to {today}
 ---
 
 ## Coverage footer
-<!-- operational telemetry — machine/evaluator-read; hidden from the rendered page
-- Sources used: T1 = N, T2 = N, T3 = 0
+<!-- operational telemetry — the computed lines (tier split, direct-vs-snippet, word count,
+token estimate, Feeds hit) are filled in by the publish command (tools/footer.py); write ONLY:
 - Items: N (filtered from M reviewed) — Physics/math/quantum: N, Biology/medicine/neuro: N, Astronomy/cosmology: N
-- Languages: ...
-- Direct fetches: N | via-snippet citations: N
-- Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
-- Token estimate (self-reported, rough — NOT metered): generated ~ (body+footer words / 0.75); distinct content read ~ (fetched/read source + prompt + repo chars / 4). Excludes per-turn context re-billing and prompt caching, so the true billed session cost far exceeds these figures and lives only in the claude.ai run history — the call count above is the better session-cost proxy.
-- Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan — Nature journals RSS, Quanta RSS, arXiv API per category, APS, bioRxiv JSON, Science.org RSS, Semantic Scholar, …} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
+- Languages: {languages of your cited sources, e.g. EN, FR, DE}
 -->
 - Gaps: things you tried to find but couldn't.
 - Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
@@ -168,43 +161,17 @@ categories: [science]
 ---
 ```
 
-### 2. Write the notification stub
+### 2. Publish — one command
 
-Use the Write tool to create `pending-notifications/{TIMESTAMP}-science.json` where `{TIMESTAMP} = $(date -u +%Y%m%dT%H%M%SZ)`:
-
-```json
-{
-  "title": "Science — {YYYY-MM-DD}",
-  "click": "{POST_URL}",
-  "body": "{teaser}",
-  "tags": "microscope"
-}
-```
-
-`{teaser}` rules: ≤200 chars. The single most striking finding in this brief — typically the headline physics/quantum result, a major astronomy discovery, or a notable clinical/biology readout. Concrete and specific (e.g. "JWST resolves the missing-baryon problem; PRX Quantum demo of below-threshold error correction on 105 qubits"), not generic. Escape any `"` inside the teaser as `\"`.
-
-### 3. Commit and push
+Everything after the brief file is deterministic and runs through the orchestrator: dedup record → anchors → computed footer telemetry → source lint → registry/institutions sync → date lint → homepage feed + stats → source health → notification stub → commit → push, with the homefeed rebase-conflict retry built in.
 
 ```bash
-# refresh the homepage feed HERE, unconditionally — not only via DEDUP.md Step D — so a skipped
-# step can't freeze the front page while the commit still stages a stale _data/
-python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
-python3 tools/sources/health.py || echo "source health failed (non-fatal)"
-git add _posts/ pending-notifications/ index/ _data/ sources/
-git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "Science — {YYYY-MM-DD}"
-git push origin main || (
-  # Concurrent editions (News + AI/ML fire the same minute Tue/Fri) both rewrite the whole
-  # _data/homefeed.json, so the rebase can stop on a content conflict there. The resolution is
-  # always: REGENERATE the feed from the merged tree (it now has both briefs), then continue.
-  git pull --rebase origin main || true
-  python3 tools/build_stories_feed.py || true
-  python3 tools/sources/health.py || true
-  git add _data/
-  GIT_EDITOR=true git rebase --continue \
-    || git -c user.email=routine@khalic-lab -c user.name="News Routine" commit --amend --no-edit \
-    || true
-  git push origin main
-)
+python3 tools/publish.py --slug science --date {YYYY-MM-DD} \
+  --final /tmp/final.json \
+  --notify-title "Science — {YYYY-MM-DD}" \
+  --notify-body "{teaser}" --notify-tags microscope
 ```
 
-If `git push` still fails after the rebase retry, append `git push failed: <reason>` to the brief's Coverage footer and continue.
+- `{teaser}` rules: ≤200 chars. The single most striking finding in this brief — typically the headline physics/quantum result, a major astronomy discovery, or a notable clinical/biology readout. Concrete and specific (e.g. "JWST resolves the missing-baryon problem; PRX Quantum demo of below-threshold error correction on 105 qubits"), not generic. Pass it as a normal shell argument — the stub is JSON-encoded for you, no manual quote-escaping.
+- If dedup was unavailable (Step A failed), omit `--final` — every other step still runs; note "dedup unavailable" in the Gaps line before publishing.
+- The orchestrator prints one OK/FAIL line per step and, if the final push fails after its built-in retry, notes it in the brief itself. Do not re-run the git steps by hand, and do not write the stub or telemetry yourself.

@@ -84,6 +84,12 @@ trigger's id, cron, and full `session_context`.
   routine — DEDUP.md Step D).
 - Notifications: `pending-notifications/{ts}-{slug}.json` → local bridge → ntfy (then deleted).
 - Dedup: `tools/dedup/` (see its `DEDUP.md`); embeddings index under `index/`.
+- Deterministic mechanical tier (2026-07-18): `tools/fetch.py` (logging curl→proxy fetch wrapper,
+  log at `/tmp/fetch.log`), `tools/footer.py` (computed Coverage-footer telemetry),
+  `tools/publish.py` (the writers' single publish command — record→…→stub→commit/push),
+  `tools/watch/{due,fire}.py` (Watch cooldown gate + bookkeeping),
+  `tools/evaluator/linkcheck.py` (dimension-C sampling). Writer prompts and DEDUP.md assume these;
+  don't reintroduce hand-run publish steps into a prompt.
 - Story store (2026-07-07): append-only event ledger `index/ledger/*.jsonl` + `tools/store/`
   (ids/materialize/anchor/backfill); source registry `sources/` + `tools/sources/`
   (preflight/lint/health); evaluator metrics `tools/evaluator/`; feedback fold

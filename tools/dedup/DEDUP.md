@@ -144,129 +144,67 @@ safety net, not a requirement — supply them if you already have them, otherwis
   threads and will reject a thread whose genesis is a different arXiv paper, but don't rely on it:
   omit `thread_id` unless the new item shares the prior's arXiv id / canonical URL.
 
-```bash
-EMBED_WORKER_URL=https://embed-proxy.khalic-lab.workers.dev \
-EMBED_TOKEN=b4bd10fc46e70315205b5aa4a4352d6d79f750d13cc4ef960928f8e6da5aae8a \
-python3 tools/dedup/dedup.py record --stories /tmp/final.json --date {YYYY-MM-DD} --slug {SLUG} \
-  || echo "dedup record failed (non-fatal)"
-```
-
-This writes `index/stories/{YYYY-MM-DD}-{SLUG}.jsonl` and prunes index files older than 40 days.
-
-**`record` also dual-writes the story ledger** (`index/ledger/{YYYY-MM-DD}.jsonl`, SPIKE
-§3.1) — one `ev:"seen"` and one `ev:"publish"` event per kept story, each keyed on the story's
-own `st-{sha1(norm_url)[:12]}` id, with the classic `{date}-{slug}-…` id carried along as
-`legacy_ids` so old feedback/feed records still join. **No writer action needed** — this happens
-automatically inside the same `record` call above; the legacy `index/stories/` file it writes is
-unaffected (byte-identical). It's the join key Step C.25 anchors the brief to.
-
-## Step C.25 — anchor the brief + source-lint (report-only, no network)
-
-Right after `record`, stamp the brief file itself with the same `st-…` ids the ledger just used, so
-a reader's feedback click or a homefeed card can target one story instead of the whole brief:
+**You do NOT invoke `record` directly — the publish orchestrator runs it for you** (with the
+embed env injected). Build `/tmp/final.json`, then run the single publish command from your
+prompt's Output section:
 
 ```bash
-python3 tools/store/anchor.py --index index/stories/{YYYY-MM-DD}-{SLUG}.jsonl _posts/{YYYY-MM-DD}-{SLUG}.md || echo "anchor failed (non-fatal)"
-python3 tools/sources/lint.py _posts/{YYYY-MM-DD}-{SLUG}.md || echo "sources lint failed (non-fatal)"
-python3 tools/sources/registry.py sync --root . || echo "registry sync failed (non-fatal)"
-python3 tools/sources/institutions.py sync --root . || echo "institutions sync failed (non-fatal)"
+python3 tools/publish.py --slug {SLUG} --date {YYYY-MM-DD} --final /tmp/final.json \
+  --notify-title "..." --notify-body "..." --notify-tags ...
 ```
 
-**Step C.25b — registry sync (the line above; added 2026-07-10).** `lint.py` appends each
-`[new source]`-tagged domain to the write-contention buffer `sources/candidates.jsonl`; `sync`
-folds that buffer into `sources/registry.yml` as `status: candidate` entries and truncates it.
-Without this step nothing ever promotes a discovered domain, so the NEXT edition's preflight
-would keep printing `candidates_to_try: none on file` forever (this exact gap left news/science
-with zero discovery candidates from 2026-07-07 to 2026-07-10). Stage `sources/` in the commit —
-the sync rewrites `registry.yml` and truncates `candidates.jsonl`.
+## Steps C→E — the publish tail (ONE command since 2026-07-18: `tools/publish.py`)
 
-**Step C.25c — institutions sync (the second line; added 2026-07-10).** Folds the
-`affiliations` lists Step C just recorded into `sources/institutions.yml` — the per-institution
-citation ledger behind the homepage's institution-first source labels (per-edition bookkeeping;
-re-running is a no-op). Stage `sources/institutions.yml` too.
+`publish.py` executes, in order, everything this document previously spelled out as Steps
+C.25/C.5/D/E — each step still **non-fatal** (a crash degrades, it never costs the edition), each
+printing an `[publish] <step>: OK/FAIL` line as it runs:
 
-`anchor.py` inserts `<a id="st-…" class="st-a"></a>` right after each story bullet's dash (or a
-kramdown `{#st-…}` after a `### ` heading). `--index` points it at the edition's own
-`index/stories/{YYYY-MM-DD}-{SLUG}.jsonl` (the file Step C's `record` just wrote): for each
-bullet/heading block it matches ANY link in the block against that file's recorded urls and keys
-the id on the MATCHED record's own url — so the anchor lines up with the same url the ledger's
-`publish` events are keyed on, even when a bullet's first link is a background/corroborating
-citation rather than the primary source. It falls back to the block's first URL only when nothing
-in the block matches a recorded story (or when `--index` is omitted). Idempotent — safe to re-run
-on an already-anchored post.
+1. **`dedup.py record`** — writes `index/stories/{date}-{slug}.jsonl`, prunes >40-day files, and
+   dual-writes the story ledger (`ev:"seen"` + `ev:"publish"` per kept story, keyed on
+   `st-{sha1(norm_url)[:12]}` ids, classic ids carried as `legacy_ids`; the legacy per-edition
+   file stays byte-identical).
+2. **`store/anchor.py --index`** — stamps the brief's bullets/headings with the same `st-…` ids
+   the ledger just used (link-matched against the recorded urls; idempotent on an
+   already-anchored post).
+3. **`footer.py`** — computes the Coverage-footer telemetry: registry tier split,
+   direct-vs-snippet counts (from your `[via snippet]` tags), exact word count, token estimate,
+   and `Feeds hit` from `/tmp/fetch.log`. Writer-authored comment lines (Languages,
+   stream-specific items) are preserved; the visible Gaps/Discovery lines stay yours entirely.
+4. **`sources/lint.py`** — report-only recheck of `[new source]` tag integrity, per-domain caps,
+   and the **Discovery footer contract**: the footer ends with exactly one of
+   `- Discovery: met (<what you found that wasn't already in the registry>)` or
+   `- Discovery: waived — <concrete reason>`. The waiver is free but counted — use it honestly.
+   Violations go in the brief's Gaps line, never abort the brief. Tagged novel domains are
+   appended to `sources/candidates.jsonl`.
+5. **`sources/registry.py sync`** — folds candidates into `sources/registry.yml` (the step whose
+   omission starved news/science discovery from 2026-07-07 to 2026-07-10).
+6. **`sources/institutions.py sync`** — folds the `affiliations` you recorded into
+   `sources/institutions.yml` (per-edition bookkeeping; re-running is a no-op).
+7. **`dedup.py lint`** — the date-slip backstop: **WEEKDAY** (hard — a weekday named next to a
+   date it doesn't match) and **SCHEDULE** (advisory — relative framing of a dated event with no
+   absolute date nearby; state the absolute date and read it from `matched.event_date`, never
+   re-derive "which Sunday").
+8. **`build_stories_feed.py`** — regenerates `_data/homefeed.json` (front-page story grid) plus
+   the `_data/stats.json` desk-stats piggyback — and **`sources/health.py`**
+   (`_data/source-health.json`).
+9. **Notification stub** — `pending-notifications/{ts}-{slug}.json` written with real JSON
+   encoding and a computed UTC timestamp (your `--notify-body` teaser needs no quote-escaping).
+   A bare front-matter `date:` in the post is also normalized to a full ISO timestamp here.
+10. **Commit + push** — stages `_posts/ pending-notifications/ index/ _data/ sources/`, commits
+    with the routine identity, and pushes with the homefeed rebase-conflict retry built in
+    (rebase → regenerate the feed from the merged tree → continue → push; two editions firing
+    the same minute both rewrite the whole homefeed, and this is always the resolution). A final
+    push failure is noted in the brief itself.
 
-`sources/lint.py` is **report-only** (SPIKE §3.4/§4): caps, discovery quota, and `[new source]`-tag
-integrity are checked deterministically so no model has to self-certify them. Like every other step
-here, a violation goes in the brief's **Gaps** line — it never aborts the brief.
+Every writer slug (`news`, `ai-ml`, `science`, `weekend`, `sports`) publishes this way on every
+fire; the evaluator does not (it never touches this procedure).
 
-**Discovery footer contract:** per the writer prompt's own Coverage footer template, the brief's
-`## Coverage footer` block ends with exactly one of these as its LAST line (after Sources/Gaps —
-not, as this doc previously said, the last line *before* the `## Coverage footer` heading):
-
-```
-- Discovery: met (<what you found that wasn't already in the registry>)
-- Discovery: waived — <concrete reason, e.g. "quiet news day, no off-list primaries found">
-```
-
-`lint.py` checks for exactly one such line. The waiver is free but counted (it feeds SPIKE §3.4's
-waiver-rate target) — use it honestly rather than claiming `met` with nothing behind it.
-
-## Step C.5 — lint the brief for date slips (optional, no network)
-
-A deterministic backstop with two checks:
-- **WEEKDAY (hard, non-zero exit):** a weekday named next to a date it doesn't match (e.g. "Wednesday
-  11 June" — June 11 is a Thursday). Adjacent form only; a weekday and date split across distant
-  sentences need the injected as-of dated-weekday block.
-- **SCHEDULE (advisory):** relative framing of a dated event with no absolute date nearby ("votes
-  **this weekend**", "vote **tomorrow**"). This is what misdated the 14-June vote to "Sunday 7 June".
-  The lint can't tell you the right date — it refuses the bare framing so you **state the absolute
-  date** (and read it from `matched.event_date`, never re-derive "which Sunday").
+**Fallback (only if `publish.py` itself crashes before running its steps):** note
+"publish orchestrator failed: <error>" in Gaps, then ship the brief by hand so the edition is
+never lost:
 
 ```bash
-python3 tools/dedup/dedup.py lint --brief _posts/{YYYY-MM-DD}-{SLUG}.md || echo "fix the date flags above"
+git add _posts/ pending-notifications/ index/ _data/ && git add sources/ 2>/dev/null || true
+git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "{Title} — {YYYY-MM-DD}"
+git push origin main || (git pull --rebase origin main && git push origin main)
 ```
-
-## Step D — refresh the homepage feed (AFTER record, BEFORE commit)
-
-The front page renders individual stories as a masonry grid from a flattened feed. Regenerate it so
-today's brief shows up:
-
-```bash
-python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
-```
-
-No network — it re-reads the recent `_posts/*.md` briefs (for each story's real prose) plus
-`index/stories/*.jsonl` (for writer-supplied `topics`/`importance`, joined by canonical URL) and
-writes `_data/homefeed.json` (the four live streams, most-recent stories, per-edition-capped for
-the front page). It prints a join-rate line — `0/N carry writer-supplied topics/importance` is
-expected only until recorded stories start carrying the Step C fields.
-
-It also regenerates `_data/stats.json` (the homepage desk-stats panel, via
-`tools/build_stats.py` — ledger counts + Coverage-footer telemetry + the Step-A verdict
-snapshots) as a non-fatal piggyback; no separate command needed, and `git add _data/` in Step E
-already stages it.
-
-Every writer slug (`news`, `ai-ml`, `science`, `weekend`, `sports`) runs this on every fire; the evaluator
-does not (it never touches this procedure).
-
-## Step E — commit everything
-
-Your commit step must stage the brief, the index (legacy files **and** the ledger Step C just
-dual-wrote to), and the regenerated feed:
-
-```bash
-git add _posts/ pending-notifications/ index/ index/ledger/ _data/
-git add sources/ 2>/dev/null || true
-```
-
-`index/ledger/` is named explicitly even though `index/` already covers it — it's the append-only
-ledger this step's dual-write and Step C.25's anchors key on, worth seeing called out in a `git
-status`. The second line stages `sources/` (the credibility-registry + its append-only
-`candidates.jsonl`/`last-cited.jsonl`) *only once that directory exists* — it lands with this
-migration's registry step; kept on its own line and swallowed on failure so today's commit, before
-that step ships, isn't broken by a `git add` on a path that doesn't exist yet.
-
-If the later `git push` retry hits a rebase conflict on `_data/homefeed.json` (two editions firing
-at the same minute both rewrite the whole file), the resolution is always: re-run
-`python3 tools/build_stories_feed.py` on the merged tree, `git add _data/homefeed.json`, continue.
-Your routine's publish step spells out the exact sequence.

@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Evaluator metrics computer (SPIKE-2026-07-07-continuous-news.md §3.5,
-dimensions A/C/G/I/K/L): reads the story ledger + feedback/_posts/_data trees
-and writes/prints `_data/health.json`. Schema is fixed by
-tools/tests/test_metrics.py -- see that file's module docstring for the exact
-shape; this module implements it, it does not re-derive it.
+"""Evaluator metrics computer (SPIKE-2026-07-07-continuous-news.md §3.5):
+reads the story ledger + feedback/_posts/_data trees and writes/prints
+`_data/health.json`. Since 2026-07-18 it also computes the brief-text
+dimensions the evaluator used to hand-count (B aggregator leakage, D section
+vitality, F single-source rate, G tag counts, H weekend paper balance, K
+footer fetch ratios + feeds, L word-count means) under the top-level "briefs"
+key, plus the off-main self-delivery guard under continuity.off_main. Schema
+is fixed by tools/tests/test_metrics.py -- see that file's module docstring
+for the exact shape; this module implements it, it does not re-derive it.
 
 Stdlib only. Never aborts on missing/partial input (SPIKE §4 failure-
 semantics: a tool crash degrades, it never blocks the brief) -- absent
@@ -19,12 +23,33 @@ import glob
 import json
 import os
 import re
+import subprocess
 import sys
 
 _EDITION_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)$")
 _EVALUATOR_POST_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-evaluator\.md$")
 _LOOKBACK_DAYS = 14
 _WINDOW_DAYS = 7
+
+# --- brief-text dimensions (B/D/F/G/H/K/L), computed so the evaluator reads
+# --- instead of recounting (same principle as A/I since 2026-07-07) ----------
+_WRITER_SLUGS = ("news", "ai-ml", "science", "weekend", "sports")
+_AGGREGATORS = ("news.ycombinator.com", "lobste.rs", "reddit.com", "twitter.com",
+                "x.com", "mastodon.social", "threads.net", "bsky.app")
+_TRACKED_TAGS = ("single-source", "preprint", "vendor PR", "official PR",
+                 "disputed", "rumour", "unconfirmed", "new source", "via snippet")
+_POST_NAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-([a-z0-9-]+)\.md$")
+_BULLET_RE = re.compile(r"^-\s+(?:<a\b[^>]*></a>\s*)?\*\*")
+_HEADING_CITE_RE = re.compile(r"^\*\*\[")
+_LINK_RE = re.compile(r"\]\((https?://[^)\s]+)")
+_SECTION_RE = re.compile(r"^##\s+(.*)$")
+_FOOTER_HEADING = "## Coverage footer"
+_WORDS_RE = re.compile(r"^- Word count:\s*~?([\d,]+)", re.M)
+_CALLS_RE = re.compile(r"tool calls[^:]*:\s*~?(\d+)")
+_DIRECT_RE = re.compile(r"Direct fetches:\s*~?(\d+)\s*\|\s*via-snippet citations:\s*~?(\d+)")
+_FEEDS_LINE_RE = re.compile(r"^- Feeds hit[^:]*:\s*(.*)$", re.M)
+_FEED_OK_RE = re.compile(r"(?:(\d+)\s+)?ok via (curl|proxy|WebFetch|MCP)", re.I)
+_FEED_FAIL_RE = re.compile(r"(?:(\d+)\s+)?fail", re.I)
 
 
 def _parse_edition(edition):
@@ -245,6 +270,179 @@ def build_sources(root):
         return {"available": False, "reason": "source-health.json not found"}
 
 
+def _split_footer(text):
+    i = text.find("\n" + _FOOTER_HEADING)
+    if i < 0:
+        return text, ""
+    return text[:i], text[i + 1:]
+
+
+def _window_posts(root, start, end):
+    """[(date, slug, text)] for writer posts whose filename date is in [start, end]."""
+    out = []
+    for path in sorted(glob.glob(os.path.join(root, "_posts", "*.md"))):
+        m = _POST_NAME_RE.match(os.path.basename(path))
+        if not m or m.group(2) not in _WRITER_SLUGS:
+            continue
+        date, slug = m.group(1), m.group(2)
+        if not (start <= date <= end):
+            continue
+        try:
+            with open(path, encoding="utf-8") as fh:
+                out.append((date, slug, fh.read()))
+        except OSError:
+            continue
+    return out
+
+
+def _sections(body):
+    """[(name, item_count)] per `## ` section (citation bullets + heading-register items)."""
+    sections = []
+    for line in body.split("\n"):
+        m = _SECTION_RE.match(line)
+        if m:
+            sections.append([m.group(1).strip(), 0])
+        elif sections and (_BULLET_RE.match(line) or _HEADING_CITE_RE.match(line)
+                           or line.startswith("### ")):
+            sections[-1][1] += 1
+    return [(name, count) for name, count in sections]
+
+
+def _parse_feeds(footer, feeds_acc):
+    """Aggregate `Feeds hit` segments into feeds_acc[label] += ok/fail counts.
+    Handles both the legacy hand-written `{ok via curl}` markers and footer.py's
+    computed `{2 ok via curl, 1 fail HTTP 403}` form with the same regexes."""
+    for m in _FEEDS_LINE_RE.finditer(footer):
+        for segment in m.group(1).split(";"):
+            segment = segment.strip()
+            if not segment:
+                continue
+            label = segment.split("{")[0].strip(" -—:") or "unlabelled"
+            acc = feeds_acc.setdefault(label, {"ok_curl": 0, "ok_proxy": 0,
+                                               "ok_webfetch": 0, "ok_mcp": 0, "fail": 0})
+            for ok in _FEED_OK_RE.finditer(segment):
+                n = int(ok.group(1) or 1)
+                acc["ok_%s" % ok.group(2).lower()] += n
+            for fail in _FEED_FAIL_RE.finditer(segment):
+                acc["fail"] += int(fail.group(1) or 1)
+
+
+def _mean(values):
+    return round(sum(values) / len(values)) if values else None
+
+
+def build_briefs(root, window_start, window_end):
+    """Dimensions the evaluator used to hand-count from the week's briefs:
+    aggregator leakage (B), section vitality (D), single-source rate (F), tag
+    counts (G), weekend paper balance (H), footer fetch ratios + feeds (K),
+    word-count means incl. previous week (L). Pure parsing -- the evaluator's
+    job on these numbers is judgment, not arithmetic."""
+    posts = _window_posts(root, window_start, window_end)
+    prev_start = (dt.date.fromisoformat(window_start) - dt.timedelta(days=_WINDOW_DAYS)).isoformat()
+    prev_end = (dt.date.fromisoformat(window_start) - dt.timedelta(days=1)).isoformat()
+    prev_words = {}
+    for _, slug, text in _window_posts(root, prev_start, prev_end):
+        wm = _WORDS_RE.search(text)
+        if wm:
+            prev_words.setdefault(slug, []).append(int(wm.group(1).replace(",", "")))
+
+    leakage, feeds = [], {}
+    by_stream = {}
+    weekend_ml, weekend_sci = 0, 0
+    weekend_seen = False
+
+    for date, slug, text in posts:
+        body, footer = _split_footer(text)
+        post_name = "%s-%s.md" % (date, slug)
+        s = by_stream.setdefault(slug, {
+            "posts": 0, "citations": 0, "single_source": 0,
+            "tags": {t: 0 for t in _TRACKED_TAGS},
+            "sections": 0, "empty_sections": [],
+            "direct_fetches": 0, "via_snippet": 0,
+            "_words": [], "_calls": []})
+        s["posts"] += 1
+
+        for url in _LINK_RE.findall(body):
+            host = url.split("/")[2].lower() if url.count("/") >= 2 else ""
+            host = host[4:] if host.startswith("www.") else host
+            if any(host == a or host.endswith("." + a) for a in _AGGREGATORS):
+                leakage.append({"post": post_name, "url": url})
+
+        citations = sum(1 for line in body.split("\n")
+                        if (_BULLET_RE.match(line) or _HEADING_CITE_RE.match(line))
+                        and _LINK_RE.search(line))
+        s["citations"] += citations
+        for tag in _TRACKED_TAGS:
+            s["tags"][tag] += body.count("[%s]" % tag)
+        s["single_source"] += body.count("[single-source]")
+
+        for name, items in _sections(body):
+            s["sections"] += 1
+            if items == 0:
+                s["empty_sections"].append({"post": post_name, "section": name})
+            if slug == "weekend" and re.search(r"papers?", name, re.I):
+                weekend_seen = True
+                if re.search(r"\b(ML|AI)\b", name):
+                    weekend_ml += items
+                else:
+                    weekend_sci += items
+
+        dm = _DIRECT_RE.search(footer)
+        if dm:
+            s["direct_fetches"] += int(dm.group(1))
+            s["via_snippet"] += int(dm.group(2))
+        wm = _WORDS_RE.search(text)
+        if wm:
+            s["_words"].append(int(wm.group(1).replace(",", "")))
+            cm = _CALLS_RE.search(text[wm.start():wm.start() + 200])
+            if cm:
+                s["_calls"].append(int(cm.group(1)))
+        _parse_feeds(footer, feeds)
+
+    for slug, s in by_stream.items():
+        fetches = s["direct_fetches"] + s["via_snippet"]
+        s["direct_fetch_ratio"] = round(s["direct_fetches"] / fetches, 3) if fetches else None
+        s["single_source_rate"] = (round(s["single_source"] / s["citations"], 3)
+                                   if s["citations"] else 0.0)
+        s["tags"] = {t: n for t, n in s["tags"].items() if n}
+        s["words_mean"] = _mean(s.pop("_words"))
+        s["calls_mean"] = _mean(s.pop("_calls"))
+        s["words_mean_prev_week"] = _mean(prev_words.get(slug, []))
+
+    if weekend_seen and (weekend_ml + weekend_sci):
+        balance = {"ml_items": weekend_ml, "science_items": weekend_sci,
+                   "ml_share": round(weekend_ml / (weekend_ml + weekend_sci), 3)}
+    else:
+        balance = {"available": False}
+
+    return {"aggregator_leakage": leakage, "by_stream": by_stream,
+            "feeds": feeds, "weekend_balance": balance}
+
+
+def _git_lines(root, argv):
+    proc = subprocess.run(["git"] + argv, cwd=root, capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise RuntimeError(proc.stderr.strip())
+    return [l for l in (proc.stdout or "").splitlines() if l.strip()]
+
+
+def build_off_main(root, window_start):
+    """Self-delivery guard, computed: remote branches besides origin/main + recent
+    commits not reachable from main (the `outcomes`-stranding class). Only runs
+    when root itself is a git repo -- fixture trees degrade to available:false."""
+    if not os.path.isdir(os.path.join(root, ".git")):
+        return {"available": False}
+    try:
+        branches = [b.strip() for b in _git_lines(root, ["branch", "-r", "--format=%(refname:short)"])
+                    if b.strip() not in ("", "origin", "origin/main") and "HEAD" not in b]
+        commits = _git_lines(root, ["log", "--all", "--oneline",
+                                    "--since=%s" % window_start, "--not", "main"])
+        return {"available": True, "remote_branches": branches,
+                "commits_not_on_main": commits[:20]}
+    except (OSError, RuntimeError):
+        return {"available": False}
+
+
 def build_continuity(root, week_end):
     """Most recent `_posts/*-evaluator.md` dated strictly before week.end
     (POSIX-relative path), deliberately "most recent prior post" rather than
@@ -267,12 +465,15 @@ def compute_health(root, week_arg):
     events = list(_iter_ledger_events(root))
     thread_map = build_thread_map(events)
     occurrences = dedup_publishes(events)
+    continuity = build_continuity(root, window_end)
+    continuity["off_main"] = build_off_main(root, window_start)
     return {
         "week": {"start": window_start, "end": window_end},
         "streams": build_streams(occurrences, window_start, window_end, thread_map),
         "feedback": build_feedback(events, root, window_start, window_end),
         "sources": build_sources(root),
-        "continuity": build_continuity(root, window_end),
+        "continuity": continuity,
+        "briefs": build_briefs(root, window_start, window_end),
     }
 
 

@@ -33,19 +33,13 @@ Broad coverage of major local + world news, light filter — include items even 
 
 The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Many of those same sources publish RSS / Atom / JSON feeds on different infrastructure that IS reachable. **Attempt the feed first for any source that has one; fall back to HTML or search-engine snippet only on failure.**
 
-**CRITICAL — try Bash{curl} BEFORE WebFetch.** WebFetch in this sandbox has been observed returning HTTP 403 on public, machine-readable feeds. When attempting any feed from the preflight plan (SRF RSS, Le Temps RSS, Al Jazeera RSS, etc.), FIRST try via Bash with `curl -fsSL <URL>`, parse the response, and only fall back to WebFetch if curl also fails. A successful curl fetch counts as a direct fetch.
+**CRITICAL — every fetch goes through `python3 tools/fetch.py "<URL>"`** (see Fetch mechanics above): it runs the direct-curl → proxy chain deterministically and logs each attempt to `/tmp/fetch.log`. A wrapper exit 0 counts as a direct fetch — even when the article HTML itself is 403 and the feed carried the content.
 
-A successful feed fetch (curl OR WebFetch returning 200 with feed XML/JSON) counts as a "direct fetch" — no `[via snippet]` tag needed even if the article HTML page itself returned 403.
-
-**Coverage footer accounting (strict):**
-- `Direct fetches: N` = count of citations from publisher infrastructure (feed XML/JSON via curl or WebFetch, working HTML, official API, fetch proxy).
-- `Via-snippet citations: M` = count where you only have a search-engine result excerpt.
-- Report both. `N + M` should equal total citation count.
-- In the `Feeds hit` line, distinguish `{ok via curl}` / `{ok via WebFetch}` / `{ok via proxy}` / `{fail — HTTP NNN}`.
+**Coverage footer accounting (computed at publish):** the telemetry numbers — tier split, direct-vs-snippet counts, word count, token estimate, `Feeds hit` — are computed by the publish command from your citations and `/tmp/fetch.log`; do not count them yourself. Your accounting duty is upstream accuracy: tag every snippet-only citation `[via snippet]`, and fetch only through the wrapper.
 
 # Research methodology
 
-1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list via Bash{curl}, WebFetch fallback.
+1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list via `tools/fetch.py`.
 2. **Broad query** (1–2 keywords). Scan results.
 3. **Refine and re-query**. At least one refinement per non-trivial topic.
 4. **Fetch full pages** when a story matters. If the fetch fails, fall back to snippets and tag with `[via snippet]`.
@@ -103,12 +97,9 @@ comes first.}
 ---
 
 ## Coverage footer
-<!-- operational telemetry — machine/evaluator-read; hidden from the rendered page
-- Sources used: T1 = N items, T2 = N items, T3 = 0 (per policy)
-- Direct fetches: N | via-snippet citations: N
-- Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
-- Token estimate (self-reported, rough — NOT metered): generated ~ (body+footer words / 0.75); distinct content read ~ (fetched/read source + prompt + repo chars / 4). Excludes per-turn context re-billing and prompt caching, so the true billed session cost far exceeds these figures and lives only in the claude.ai run history — the call count above is the better session-cost proxy.
-- Feeds hit (with reachability and method): {each feed/API attempted from the preflight plan} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
+<!-- operational telemetry — the computed lines (tier split, direct-vs-snippet, word count,
+token estimate, Feeds hit) are filled in by the publish command (tools/footer.py); write ONLY:
+- Languages: {languages of your cited sources, e.g. EN, FR, DE}
 -->
 - Gaps: things you tried to find but couldn't.
 - Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
@@ -148,48 +139,22 @@ categories: [news]
 ---
 ```
 
-### 2. Write the notification stub (fires every day, including weekends)
+### 2. Publish — one command (fires every day, including weekends)
 
-Use the Write tool to create `pending-notifications/{TIMESTAMP}-news.json` where `{TIMESTAMP} = $(date -u +%Y%m%dT%H%M%SZ)`:
-
-```json
-{
-  "title": "News — {YYYY-MM-DD}",
-  "click": "{POST_URL}",
-  "body": "{teaser}",
-  "tags": "newspaper"
-}
-```
-
-`{teaser}` rules: ≤200 chars. The single most important item from this brief — the lead Swiss/Vaud or World story. Concrete and specific (e.g. "Federal Council unveils Bilaterals III ratification roadmap; Iran-Israel ceasefire holds day 67"), not generic. Escape any `"` inside the teaser as `\"`.
-
-### 3. Commit and push
+Everything after the brief file is deterministic and runs through the orchestrator: dedup record → anchors → computed footer telemetry → source lint → registry/institutions sync → date lint → homepage feed + stats → source health → notification stub → commit → push, with the homefeed rebase-conflict retry built in (News + AI/ML firing the same minute Tue/Fri is handled).
 
 ```bash
-# refresh the homepage feed HERE, unconditionally — not only via DEDUP.md Step D — so a skipped
-# step can't freeze the front page while the commit still stages a stale _data/
-python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
-python3 tools/sources/health.py || echo "source health failed (non-fatal)"
-git add _posts/ pending-notifications/ index/ _data/ sources/
-git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "News — {YYYY-MM-DD}"
-git push origin main || (
-  # Concurrent editions (News + AI/ML fire the same minute Tue/Fri) both rewrite the whole
-  # _data/homefeed.json, so the rebase can stop on a content conflict there. The resolution is
-  # always: REGENERATE the feed from the merged tree (it now has both briefs), then continue.
-  git pull --rebase origin main || true
-  python3 tools/build_stories_feed.py || true
-  python3 tools/sources/health.py || true
-  git add _data/
-  GIT_EDITOR=true git rebase --continue \
-    || git -c user.email=routine@khalic-lab -c user.name="News Routine" commit --amend --no-edit \
-    || true
-  git push origin main
-)
+python3 tools/publish.py --slug news --date {YYYY-MM-DD} \
+  --final /tmp/final.json \
+  --notify-title "News — {YYYY-MM-DD}" \
+  --notify-body "{teaser}" --notify-tags newspaper
 ```
 
-If `git push` still fails after the rebase retry, append `git push failed: <reason>` to the brief's Coverage footer and continue.
+- `{teaser}` rules: ≤200 chars. The single most important item from this brief — the lead Swiss/Vaud or World story. Concrete and specific (e.g. "Federal Council unveils Bilaterals III ratification roadmap; Iran-Israel ceasefire holds day 67"), not generic. Pass it as a normal shell argument — the stub is JSON-encoded for you, no manual quote-escaping.
+- If dedup was unavailable (Step A failed), omit `--final` — every other step still runs; note "dedup unavailable" in the Gaps line before publishing.
+- The orchestrator prints one OK/FAIL line per step and, if the final push fails after its built-in retry, notes it in the brief itself. Do not re-run the git steps by hand, and do not write the stub or telemetry yourself.
 
-### 4. Email digest (weekdays only, after git push step)
+### 3. Email digest (weekdays only, after the publish command)
 
 **Weekend gate:** if today is Saturday or Sunday in Europe/Zurich, SKIP the email step entirely. The brief is still written to git on weekends and the push notification still fires.
 

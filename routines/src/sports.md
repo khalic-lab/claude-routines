@@ -48,8 +48,8 @@ The "primary source" in sport is the authoritative first-hand record, not the pu
 
 Most official sports sites (uefa.com, fifa.com, premierleague.com, formula1.com, atptour.com, …) are heavy JavaScript SPAs behind Cloudflare — a proxy fetch often returns a JS shell, not the results data. Work around it:
 
-- **Try the proxy first** for any official site the preflight marks `method: proxy`; a 200 with real content is a direct fetch. When the proxy returns only a JS shell or a challenge, don't fake a result — fall to the next option.
-- **Feeds and directly-fetchable secondaries** are your reliable spine: BBC Sport RSS (`https://feeds.bbci.co.uk/sport/rss.xml`, curl-direct) and SRF Sport (curl-direct) carry results and reports with links back to the primary — cite the official page as the primary where you can reach it, the outlet as T2 where you cannot.
+- **`tools/fetch.py --proxy` first** for any official site the preflight marks `method: proxy`; a wrapper success with real content is a direct fetch. When the proxy returns only a JS shell or a challenge, don't fake a result — fall to the next option.
+- **Feeds and directly-fetchable secondaries** are your reliable spine: BBC Sport RSS (`https://feeds.bbci.co.uk/sport/rss.xml`) and SRF Sport, both direct on the wrapper's first attempt — they carry results and reports with links back to the primary; cite the official page as the primary where you can reach it, the outlet as T2 where you cannot.
 - **Wikipedia season/results pages** (e.g. "2026 Formula One World Championship", "2025–26 Swiss Super League") are comprehensive and directly fetchable — use them to **cross-check** scores, standings and dates, but Wikipedia is tertiary: never cite it as the primary, and prefer the official result page for the citation.
 - **Official news/press-release pages** (fia.com/news, wada-ama.org/en/news, tas-cas.org media releases, club press rooms) are usually more fetchable than the live-scores SPA and are the correct primary for announcements and rulings.
 - If you genuinely cannot reach a primary and rely on a T2 report for a result, tag the item `[single-source]` and name the outlet; note unreachable official sites in the Gaps footer.
@@ -116,14 +116,11 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: {date 7 days ago} to {today}
 ---
 
 ## Coverage footer
-<!-- operational telemetry — machine/evaluator-read; hidden from the rendered page
-- Sources used: T1 = N, T2 = N, T3 = 0
+<!-- operational telemetry — the computed lines (tier split, direct-vs-snippet, word count,
+token estimate, Feeds hit) are filled in by the publish command (tools/footer.py); write ONLY:
 - Items: N (filtered from M reviewed) — Football: N, F1/motorsport: N, Tennis: N, Winter/other: N
 - Confirmed vs reported: {N confirmed, N tagged [rumour]}
-- Direct fetches: N | via-snippet citations: N
-- Word count: N (body, excl. footer) | research tool calls (curl/WebSearch/WebFetch): N
-- Token estimate (self-reported, rough — NOT metered): generated ~ (body+footer words / 0.75); distinct content read ~ (fetched/read source + prompt + repo chars / 4). Excludes per-turn context re-billing and prompt caching, so the true billed session cost far exceeds these figures and lives only in the claude.ai run history — the call count above is the better session-cost proxy.
-- Feeds hit (with reachability and method): {each feed/page attempted from the preflight plan — BBC Sport RSS, SRF, official league/governing pages, Wikipedia results} {ok via curl|ok via WebFetch|ok via proxy|fail — HTTP NNN}
+- Languages: {languages of your cited sources, e.g. EN, FR, DE}
 -->
 - Gaps: things you tried to find but couldn't (unreachable official sites, unverified results).
 - Discovery: {met (<new domain(s) anchored>) | waived — <concrete reason>}
@@ -165,42 +162,17 @@ categories: [sports]
 ---
 ```
 
-### 2. Write the notification stub
+### 2. Publish — one command
 
-Use the Write tool to create `pending-notifications/{TIMESTAMP}-sports.json` where `{TIMESTAMP} = $(date -u +%Y%m%dT%H%M%SZ)`:
-
-```json
-{
-  "title": "Sports — {YYYY-MM-DD}",
-  "click": "{POST_URL}",
-  "body": "{teaser}",
-  "tags": "soccer"
-}
-```
-
-`{teaser}` rules: ≤200 chars. The single most significant thing this week — the result that moved a title race, a marquee transfer confirmed, an F1 championship swing, a Swiss athlete's win. Concrete (e.g. "Basel go 4 clear at the top; Verstappen cuts the gap to 12 after Spa; Wimbledon final set"), not generic. Escape any `"` inside the teaser as `\"`.
-
-### 3. Commit and push
+Everything after the brief file is deterministic and runs through the orchestrator: dedup record → anchors → computed footer telemetry → source lint → registry/institutions sync → date lint → homepage feed + stats → source health → notification stub → commit → push, with the homefeed rebase-conflict retry built in.
 
 ```bash
-# refresh the homepage feed HERE, unconditionally — not only via DEDUP.md Step D — so a skipped
-# step can't freeze the front page while the commit still stages a stale _data/
-python3 tools/build_stories_feed.py || echo "feed build failed (non-fatal)"
-python3 tools/sources/health.py || echo "source health failed (non-fatal)"
-git add _posts/ pending-notifications/ index/ _data/ sources/
-git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "Sports — {YYYY-MM-DD}"
-git push origin main || (
-  # Sports runs alone on Monday, but keep the rebase-retry so a concurrent bridge tick can't
-  # wedge the push: regenerate the feed from the merged tree, then continue.
-  git pull --rebase origin main || true
-  python3 tools/build_stories_feed.py || true
-  python3 tools/sources/health.py || true
-  git add _data/
-  GIT_EDITOR=true git rebase --continue \
-    || git -c user.email=routine@khalic-lab -c user.name="News Routine" commit --amend --no-edit \
-    || true
-  git push origin main
-)
+python3 tools/publish.py --slug sports --date {YYYY-MM-DD} \
+  --final /tmp/final.json \
+  --notify-title "Sports — {YYYY-MM-DD}" \
+  --notify-body "{teaser}" --notify-tags soccer
 ```
 
-If `git push` still fails after the rebase retry, append `git push failed: <reason>` to the brief's Coverage footer and continue.
+- `{teaser}` rules: ≤200 chars. The single most significant thing this week — the result that moved a title race, a marquee transfer confirmed, an F1 championship swing, a Swiss athlete's win. Concrete (e.g. "Basel go 4 clear at the top; Verstappen cuts the gap to 12 after Spa; Wimbledon final set"), not generic. Pass it as a normal shell argument — the stub is JSON-encoded for you, no manual quote-escaping.
+- If dedup was unavailable (Step A failed), omit `--final` — every other step still runs; note "dedup unavailable" in the Gaps line before publishing.
+- The orchestrator prints one OK/FAIL line per step and, if the final push fails after its built-in retry, notes it in the brief itself. Do not re-run the git steps by hand, and do not write the stub or telemetry yourself.
