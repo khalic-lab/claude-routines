@@ -69,6 +69,21 @@
    └──────────────────────────────────┘
 ```
 
+> **Added 2026-07-18 (night, later): writers WIRED to the plane — continuity gets real data.**
+> Two hooks, both live at the next fires: **(1)** `dedup.py check` now enriches every ONGOING
+> verdict with `thread` — the matched story's ACTUAL coverage arc (last ≤8 entries
+> `{date, headline, event_date?}`) fetched from `/plane/thread` (same host + bearer the check
+> already uses; best-effort, ≤10 distinct threads, a plane outage degrades to prior behavior).
+> DEDUP.md Step B binds the writers to it: sequence claims ("seventh consecutive night") must
+> match the timeline's entries, the arc's start date comes from its first row, and one clause
+> of arc context replaces re-explained background. Zero new prompt steps — the enrichment rides
+> the verdicts JSON the writers already read. **(2)** The Weekend cross-cutting-threads section
+> now grounds itself in `/plane/entities` (the week's recurring actors, cross-stream) +
+> `/plane/thread` (a candidate theme's real arc) before writing — the data proves a theme
+> cross-cuts; judgment still picks and develops it. Live-verified end to end: a crafted
+> Iran/Hormuz candidate came back ONGOING (0.820) with its thread's 6-row timeline attached;
+> an unrelated control stayed NEW/bare. Spec suite 364 → 366.
+
 > **Added 2026-07-18 (night): the plane is now SANDBOX-REACHABLE — mounted on embed-proxy.**
 > The analytical plane's queries are served by the embed-proxy Worker as `/plane/*` (search /
 > related / thread / entities / beats / sources / stats + bearer-gated `ingest`), same

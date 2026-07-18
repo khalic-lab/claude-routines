@@ -861,6 +861,41 @@ def decide_verdict(cand, vec, recent, exact, t_high, t_low):
     return r
 
 
+def _format_plane_thread(stories, cap=8):
+    """Compact timeline rows from a /plane/thread response: oldest -> newest, last `cap`
+    entries, headline truncated — this rides inside the verdicts JSON the writer reads,
+    so it must stay small."""
+    rows = []
+    for s in stories or []:
+        if not isinstance(s, dict) or not s.get("date"):
+            continue
+        row = {"date": s["date"], "headline": (s.get("headline") or "")[:100]}
+        if s.get("event_date"):
+            row["event_date"] = s["event_date"]
+        rows.append(row)
+    return rows[-cap:]
+
+
+def _plane_thread(thread_id, worker, token, opener=None):
+    """The story's actual coverage arc from the Worker-hosted plane (embed-proxy /plane/thread
+    — same host + bearer the check already uses). Returns compact rows or None on ANY failure:
+    the plane is enrichment, an outage must never affect the check."""
+    if not (worker and token and thread_id):
+        return None
+    try:
+        req = urllib.request.Request(
+            worker.rstrip("/") + "/plane/thread",
+            data=json.dumps({"key": thread_id}).encode("utf-8"),
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json",
+                     "User-Agent": "Mozilla/5.0 (compatible; news-brief-dedup/1.0)"},
+            method="POST")
+        with (opener or urllib.request.urlopen)(req, timeout=6) as r:
+            payload = json.loads(r.read().decode("utf-8"))
+        return _format_plane_thread(payload.get("stories")) or None
+    except Exception:
+        return None
+
+
 def cmd_check(args):
     with open(args.candidates) as f:
         cands = json.load(f)
@@ -877,6 +912,21 @@ def cmd_check(args):
         if "id" in c:
             r["id"] = c["id"]
         results.append(r)
+    # Thread-timeline enrichment (2026-07-18): an ONGOING verdict gains the thread's ACTUAL
+    # coverage arc from the analytical plane, so update framing ("seventh consecutive night",
+    # "[ongoing since ...]") counts the real sequence instead of re-deriving it from memory.
+    # Best-effort per distinct thread, capped — a plane outage degrades to today's behavior.
+    thread_cache, fetched = {}, 0
+    for r in results:
+        m = r.get("matched") or {}
+        tid = m.get("thread_id")
+        if r.get("verdict") != "ONGOING" or not tid or m.get("continuation") is False:
+            continue
+        if tid not in thread_cache and fetched < 10:
+            thread_cache[tid] = _plane_thread(tid, args.worker, args.token)
+            fetched += 1
+        if thread_cache.get(tid):
+            r["thread"] = thread_cache[tid]
     out = {"window_days": args.since, "compared_against": len(recent),
            "t_high": args.t_high, "t_low": args.t_low, "results": results}
     print(json.dumps(out, ensure_ascii=False, indent=2))

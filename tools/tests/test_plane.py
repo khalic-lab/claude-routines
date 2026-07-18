@@ -146,6 +146,42 @@ class UrlHeadlineTest(unittest.TestCase):
         self.assertEqual(self.dedup.url_headline("https://example.com/"), "")
 
 
+class ThreadEnrichmentTest(unittest.TestCase):
+    """dedup.py's ONGOING-verdict thread enrichment: compact rows from /plane/thread,
+    None on any failure (the plane is enrichment — never load-bearing for the check)."""
+    @classmethod
+    def setUpClass(cls):
+        cls.dedup = _load("_dedup_thr", os.path.join(TOOLS, "dedup", "dedup.py"))
+
+    def test_format_caps_filters_truncates(self):
+        stories = [{"date": "2026-06-%02d" % d, "headline": "H" * 200,
+                    "event_date": "2026-06-01" if d == 1 else None} for d in range(1, 12)]
+        stories.append({"headline": "no date — dropped"})
+        rows = self.dedup._format_plane_thread(stories)
+        self.assertEqual(len(rows), 8)                       # capped, keeps the LAST 8
+        self.assertEqual(rows[-1]["date"], "2026-06-11")
+        self.assertEqual(len(rows[0]["headline"]), 100)
+        self.assertNotIn("event_date", rows[-1])             # only-when-present
+
+    def test_fetch_success_and_failure(self):
+        payload = json.dumps({"stories": [{"date": "2026-07-01", "headline": "A"}]}).encode()
+
+        class FakeResp:
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def read(self): return payload
+
+        rows = self.dedup._plane_thread("t-1", "https://w.example", "tok",
+                                        opener=lambda req, timeout: FakeResp())
+        self.assertEqual(rows, [{"date": "2026-07-01", "headline": "A"}])
+
+        def boom(req, timeout):
+            raise OSError("down")
+        self.assertIsNone(self.dedup._plane_thread("t-1", "https://w.example", "tok", opener=boom))
+        self.assertIsNone(self.dedup._plane_thread(None, "https://w.example", "tok"))
+        self.assertIsNone(self.dedup._plane_thread("t-1", None, "tok"))
+
+
 class RecordEntitiesAndBackstopTest(unittest.TestCase):
     """cmd_record end-to-end (offline, stubbed embedder — the convergence tests' harness):
     entities persist only-when-present; blank headlines get URL-derived identities."""

@@ -288,6 +288,21 @@ Long-form pieces published this week, up to ~8 — only pieces you'd actually re
 ## 🧠 Cross-cutting threads (the payoff — give it real effort)
 2–4 themes you noticed across this week's content, each developed in a substantial paragraph: what connects the items, what it implies, what to watch next. This synthesis is the single highest-value part of the Weekend brief — the one thing aggregation cannot do — and it renders near the top of the published brief, so write it like the lead it is, not an afterthought.
 
+**Ground it in the analytical plane before writing** (same worker + bearer as the dedup check —
+the `EMBED_WORKER_URL`/`EMBED_TOKEN` values in `tools/dedup/DEDUP.md` Step A; best-effort, skip
+silently on failure):
+
+```bash
+curl -s -XPOST "$EMBED_WORKER_URL/plane/entities" -H "Authorization: Bearer $EMBED_TOKEN" \
+  -H 'Content-Type: application/json' -d '{"days":10}'          # who/what recurred this week
+curl -s -XPOST "$EMBED_WORKER_URL/plane/thread" -H "Authorization: Bearer $EMBED_TOKEN" \
+  -H 'Content-Type: application/json' -d '{"key":"<thread_id>"}' # a candidate theme's real arc
+```
+
+An entity spanning multiple streams, or a thread that developed several times this week, is a
+cross-cutting candidate the data can PROVE — use the timelines to anchor dates and sequence.
+Your judgment still picks and develops the themes; the plane keeps the claims honest.
+
 # Format
 
 ```

@@ -66,6 +66,11 @@ and for non-NEW a `matched` object with `id`, `date`, `headline`, `summary`, `ur
 `continuation: false` with `first_seen_date: null`. (`matched.summary`/`matched.url` are the prior
 coverage's own summary and source — lean on them when framing an ONGOING update.)
 
+**ONGOING verdicts may also carry `thread` (added 2026-07-18): the story's ACTUAL coverage arc**
+— up to the last 8 prior entries `{date, headline, event_date?}`, oldest first, fetched from the
+analytical plane (embed-proxy `/plane/thread`). It is best-effort: absent when the plane is
+unreachable, and its absence changes nothing else.
+
 ## Step B — apply verdicts while composing
 
 - **REPEAT** → ALWAYS DROP the story. Already covered, no exceptions. (`match_reason` explains why:
@@ -77,6 +82,11 @@ coverage's own summary and source — lean on them when framing an ONGOING updat
   new development and must be dropped. When you do include it, frame it as an update, lead with
   the new fact, and append `[ongoing since {event_date or first_seen_date}]` (prefer
   `matched.event_date` when present — when the thing happened — else `first_seen_date`).
+  **When the verdict carries `thread` (the arc's real timeline), ground every sequence claim in
+  it**: counts ("seventh consecutive night", "third strike wave") must match the timeline's
+  entries, the arc's start date comes from its first row — never re-derive either from memory —
+  and one clause of arc context ("after three weeks of tit-for-tat strikes since {first date}")
+  beats re-explaining the background the earlier entries already covered.
 - **`match_reason: distinct-paper`** (or `matched.continuation: false`, `first_seen_date: null`) →
   the match is a DIFFERENT artifact that is merely on the same topic. **Treat as NEW**, not ongoing.
   **Do NOT emit any `[ongoing since …]` tag** (there is no valid since-date — never print
