@@ -173,8 +173,10 @@ python3 tools/publish.py --slug {SLUG} --date {YYYY-MM-DD} --final /tmp/final.js
 ## Steps C→E — the publish tail (ONE command since 2026-07-18: `tools/publish.py`)
 
 `publish.py` executes, in order, everything this document previously spelled out as Steps
-C.25/C.5/D/E — each step still **non-fatal** (a crash degrades, it never costs the edition), each
-printing an `[publish] <step>: OK/FAIL` line as it runs:
+C.25/C.5/D/E — each PREPROCESSING step **non-fatal** (a crash degrades, it never costs the
+edition), each printing an `[publish] <step>: OK/FAIL` line as it runs. The git tail (step 10)
+is the exception since 2026-07-18: a failed commit or push ends the run with a `FAILED (...)`
+line and exit 1, never a false `DONE` — see step 10 for how to react:
 
 1. **`dedup.py record`** — writes `index/stories/{date}-{slug}.jsonl`, prunes >40-day files, and
    dual-writes the story ledger (`ev:"seen"` + `ev:"publish"` per kept story, keyed on
@@ -194,7 +196,9 @@ printing an `[publish] <step>: OK/FAIL` line as it runs:
    Violations go in the brief's Gaps line, never abort the brief. Tagged novel domains are
    appended to `sources/candidates.jsonl`.
 5. **`sources/registry.py sync`** — folds candidates into `sources/registry.yml` (the step whose
-   omission starved news/science discovery from 2026-07-07 to 2026-07-10).
+   omission starved news/science discovery from 2026-07-07 to 2026-07-10). When there is nothing
+   to fold it leaves `registry.yml` byte-untouched (an unchanged file can't merge-conflict with a
+   sibling edition) and just purges dead buffer entries.
 6. **`sources/institutions.py sync`** — folds the `affiliations` you recorded into
    `sources/institutions.yml` (per-edition bookkeeping; re-running is a no-op).
 7. **`dedup.py lint`** — the date-slip backstop: **WEEKDAY** (hard — a weekday named next to a
@@ -210,15 +214,21 @@ printing an `[publish] <step>: OK/FAIL` line as it runs:
 10. **Commit + push** — stages `_posts/ pending-notifications/ index/ _data/ sources/`, commits
     with the routine identity, and pushes with the homefeed rebase-conflict retry built in
     (rebase → regenerate the feed from the merged tree → continue → push; two editions firing
-    the same minute both rewrite the whole homefeed, and this is always the resolution). A final
-    push failure is noted in the brief itself.
+    the same minute both rewrite the whole homefeed, and this is always the resolution).
+    **Outcomes (honest since 2026-07-18 — a failed commit used to print DONE):**
+    - `DONE` + exit 0 — published; nothing more to do.
+    - `FAILED (git commit errored ...)` + exit 1 — NOTHING was published. Fix the reported
+      error and rerun the same publish command, or ship via the manual fallback below.
+    - `FAILED (push ...)` + exit 1 — committed locally, not on origin; the failure note is
+      already amended into the commit. Retry `git push origin main` before the session ends
+      (an unpushed sandbox commit is lost when the session dies).
 
 Every writer slug (`news`, `ai-ml`, `science`, `weekend`, `sports`) publishes this way on every
 fire; the evaluator does not (it never touches this procedure).
 
-**Fallback (only if `publish.py` itself crashes before running its steps):** note
-"publish orchestrator failed: <error>" in Gaps, then ship the brief by hand so the edition is
-never lost:
+**Fallback (if `publish.py` itself crashes before running its steps, or a commit failure can't
+be fixed):** note "publish orchestrator failed: <error>" in Gaps, then ship the brief by hand so
+the edition is never lost:
 
 ```bash
 git add _posts/ pending-notifications/ index/ _data/ && git add sources/ 2>/dev/null || true
