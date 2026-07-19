@@ -1,0 +1,45 @@
+date: 2026-07-19
+applied: false
+patches:
+  # Reach flips: domains recorded reach: direct but realized as FAILURES at the point of use
+  # by the writers this window (who DO hold the fetch-proxy bearer). The evaluator sandbox's
+  # egress allowlist blocked direct re-probing of these hosts (CONNECT tunnel 403), so the
+  # writers' own footers are the probe evidence. These re-surface last week's unapplied
+  # 2026-07-12 re-probe proposals, now with a second week of realized failures.
+  - domain: science.org
+    from: direct
+    to: search-only
+    evidence: "2026-07-15-science footer: 'Science.org news_current.xml {fail - empty}'. Recorded reach: direct (seed 2026-07-10); last_cited null; never successfully anchored. Second week flagged (see proposals/registry-2026-07-12.yml, unapplied)."
+  - domain: cell.com
+    from: direct
+    to: proxy
+    evidence: "2026-07-15-science footer: 'cell.com current.rss {fail - empty}'; also 'bioRxiv/medRxiv details API {fail}'. Recorded reach: direct; last_cited 2026-05-30. Cell RSS returns empty in the science sandbox; try proxy, else search-only."
+  - domain: swissinfo.ch
+    from: direct
+    to: blocked
+    evidence: "2026-07-13-news: 'swissinfo.ch hard-blocks the sandbox with HTTP 403'; 2026-07-14-news: 'unreachable both directly (connection refused) and via proxy (HTTP 410)'. Recorded reach: direct (probation); last_cited 2026-06-11. Recurring across editions - a dormant discovery candidate that never yields. Flip to blocked (cite only [via snippet]) or retire from the news affinity."
+  - domain: journals.aps.org
+    from: direct
+    to: re-probe
+    evidence: "Carried over UNAPPLIED from 2026-07-12: recorded reach: direct but 2026-07-08-science reported HTTP 0. Not exercised this window (no PRL item kept); still needs a writer-side re-probe on the article-HTML path, not the RSS URL."
+  # Candidate promotions from the Sunday scout (worst-deficit stream = science: 3 unique
+  # domains, top5_share 1.00, waiver_rate 0.67). Genuine primary Swiss research publishers
+  # absent from the registry; Swiss => double as personalization sources. Appended to
+  # sources/candidates.jsonl as reach: proxy-needed (evaluator egress allowlist blocked direct
+  # vetting; writers vet at first citation with their bearer).
+  - domain: unige.ch
+    from: candidate
+    to: probation
+    evidence: "scout 2026-07-19: University of Geneva press/communiques, primary research publisher, Swiss (personalization); fills science's 3-unique-domain concentration. Direct-vet blocked by evaluator egress allowlist; reach: proxy-needed, writers confirm at first citation."
+  - domain: empa.ch
+    from: candidate
+    to: probation
+    evidence: "scout 2026-07-19: Empa (Swiss Federal Labs for Materials Science & Technology) latest-news, primary research publisher, Swiss; fills science deficit. reach: proxy-needed."
+  - domain: wsl.ch
+    from: candidate
+    to: probation
+    evidence: "scout 2026-07-19: WSL (Swiss Federal Institute for Forest, Snow & Landscape Research) news, primary cryosphere/climate research, Swiss; ties directly to the recurring heatwave/drought coverage. reach: proxy-needed."
+  - domain: unibe.ch
+    from: candidate
+    to: probation
+    evidence: "scout 2026-07-19: University of Bern media news, primary research publisher, Swiss; broadens science's Swiss-institution affinity beyond ETH/EPFL/PSI. reach: proxy-needed."

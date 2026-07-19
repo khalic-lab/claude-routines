@@ -1,0 +1,35 @@
+{
+ "date": "2026-07-19",
+ "proposals": [
+  {
+   "id": "rm-1",
+   "target": "reader-profile.md",
+   "action": "Append learned preference: '- 2026-07-19: keep the brief's own voice impartial - when an actor characterizes their own action (a government calling a strike wave \"final\", a law's \"merely threatened\" tier), attribute or put that word in quotes rather than stating it as fact in the brief's voice.'",
+   "evidence": "2x downvotes with written reasons across DISTINCT stories/streams this window, same theme (loaded actor-framing carried in the brief's voice): weekend 2026-07-18 Iran lead 'seventh and final strike wave' -> \"'Final' should be in quotes, given their history of not following through with what they say\"; news 2026-07-18 ESA item 'species merely listed as threatened' -> \"'merely', this is the framing of the US admin, we need to stay impartial, 'merely' endangered is still significant\". Two signals on distinct stories with verbatim reasons -> qualifies for bounded auto-apply.",
+   "applied": true,
+   "applied_by": "evaluator",
+   "applied_on": "2026-07-19"
+  },
+  {
+   "id": "rm-2",
+   "target": "routines/_shared/affiliations.md",
+   "action": "For arXiv preprints whose HTML author block does not render (common for same-day submissions, which arXiv's HTML mirror lags 1-2 days behind), fall back to parsing the author/affiliation block from the PDF first page (arxiv.org/pdf/<id>), which is available immediately, BEFORE marking '(affiliation not listed)'. Do NOT use OpenAlex/Semantic Scholar for preprints (already documented as returning empty institutions for hours-old arXiv records). Never guess.",
+   "evidence": "Affiliation-not-listed ran high on the freshest preprints this week: ai-ml 2026-07-17 ~5/11 papers (2607.15232, 2607.14952 empty HTML author blocks per footer; 2607.14888/15263/14682 same class), weekend 2026-07-18 ~6/22, both driven by same-day 2026-07-16 submissions whose HTML author block had not rendered. Science 2026-07-15 (papers 1 day old) ran 0/7 not-listed, confirming the lag hypothesis. Prior rm-4 (2026-07-12) proposed an OpenAlex fallback; affiliations.md now documents why that fails for preprints, so the PDF-first-page route is the next lever.",
+   "applied": false
+  },
+  {
+   "id": "rm-3",
+   "target": "tools/evaluator/metrics.py",
+   "action": "In build_off_main(), compare against origin/main (the published line) rather than the local 'main' branch ref. The routine runs in detached HEAD after 'git pull --ff-only', which advances origin/main + FETCH_HEAD but leaves the local 'main' pointer stale, so 'git log --all --not main' reports every pulled-but-not-in-local-main commit as off-main. Use '--not origin/main' (or 'git rev-parse main' -> fall back to origin/main when detached).",
+   "evidence": "This run: continuity.off_main.commits_not_on_main listed 20 commits INCLUDING HEAD (715c583), all of which are provably on origin/main ('git log --since --not origin/main' = 0; HEAD is ancestor of origin/main; local main is 34 commits behind origin/main). remote_branches was []. So the self-delivery guard fired a false positive; a guard that cries wolf every detached-HEAD run erodes trust in the real outcomes-stranding detection it exists for.",
+   "applied": false
+  },
+  {
+   "id": "rm-4",
+   "target": "tools/evaluator/metrics.py",
+   "action": "In the brief-text section-vitality parser, do not count an analytical prose section (e.g. weekend '🧠 Cross-cutting threads') as empty merely because it carries no story-anchor (st-) markup. Detect emptiness by absence of body text, not absence of anchors, OR whitelist known anchor-free synthesis sections.",
+   "evidence": "health.json briefs.by_stream.weekend.empty_sections flagged '🧠 Cross-cutting threads' as empty in 2026-07-18-weekend.md, but that section contains four substantial bold-numbered synthesis paragraphs (lines 26-34) citing arXiv IDs inline; it is one of the richest sections in the brief. The parser keys on st- anchors, which the threads section deliberately omits. Recurs every week the section runs.",
+   "applied": false
+  }
+ ]
+}

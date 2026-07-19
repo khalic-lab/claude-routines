@@ -41,3 +41,9 @@
   months since / anniversary of" phrasing against the event's dated fact from the daily briefs
   (1× 👎 with reason "The war hasn't started a year ago…" on the 2026-07-11 Iran lead, which said
   "a year after their war" when the war opened 28 Feb 2026).
+- 2026-07-19: keep the brief's own voice impartial — when an actor characterizes their own action
+  (a government calling a strike wave "final", a law's "merely threatened" tier), attribute or put
+  that word in quotes rather than stating it as fact in the brief's voice (2× 👎 across distinct
+  stories: weekend 2026-07-18 Iran "seventh and final strike wave" — "'Final' should be in quotes,
+  given their history of not following through"; news 2026-07-18 ESA "species merely listed as
+  'threatened'" — "'merely'… this is the framing of the US admin, we need to stay impartial").

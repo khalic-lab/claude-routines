@@ -1,29 +1,612 @@
 {
+  "briefs": {
+    "aggregator_leakage": [],
+    "by_stream": {
+      "ai-ml": {
+        "calls_mean": 24,
+        "citations": 35,
+        "direct_fetch_ratio": 1.0,
+        "direct_fetches": 37,
+        "empty_sections": [],
+        "posts": 2,
+        "sections": 8,
+        "single_source": 6,
+        "single_source_rate": 0.171,
+        "tags": {
+          "new source": 3,
+          "preprint": 22,
+          "single-source": 6,
+          "vendor PR": 3
+        },
+        "via_snippet": 0,
+        "words_mean": 2435,
+        "words_mean_prev_week": 2050
+      },
+      "news": {
+        "calls_mean": 16,
+        "citations": 32,
+        "direct_fetch_ratio": 0.929,
+        "direct_fetches": 39,
+        "empty_sections": [],
+        "posts": 5,
+        "sections": 10,
+        "single_source": 4,
+        "single_source_rate": 0.125,
+        "tags": {
+          "new source": 5,
+          "official PR": 1,
+          "single-source": 4,
+          "via snippet": 3
+        },
+        "via_snippet": 3,
+        "words_mean": 794,
+        "words_mean_prev_week": 739
+      },
+      "science": {
+        "calls_mean": 30,
+        "citations": 7,
+        "direct_fetch_ratio": 1.0,
+        "direct_fetches": 8,
+        "empty_sections": [],
+        "posts": 1,
+        "sections": 3,
+        "single_source": 0,
+        "single_source_rate": 0.0,
+        "tags": {
+          "preprint": 5
+        },
+        "via_snippet": 0,
+        "words_mean": 1560,
+        "words_mean_prev_week": 1520
+      },
+      "weekend": {
+        "calls_mean": 130,
+        "citations": 35,
+        "direct_fetch_ratio": 0.971,
+        "direct_fetches": 34,
+        "empty_sections": [
+          {
+            "post": "2026-07-18-weekend.md",
+            "section": "🧠 Cross-cutting threads"
+          }
+        ],
+        "posts": 1,
+        "sections": 9,
+        "single_source": 9,
+        "single_source_rate": 0.257,
+        "tags": {
+          "new source": 1,
+          "preprint": 17,
+          "single-source": 9,
+          "vendor PR": 1,
+          "via snippet": 1
+        },
+        "via_snippet": 1,
+        "words_mean": 5300,
+        "words_mean_prev_week": 5600
+      }
+    },
+    "feeds": {
+      "AJ Iran/Myanmar HTML": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "APS PRL abstract": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "Al Jazeera RSS": {
+        "fail": 0,
+        "ok_curl": 5,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "Crossref works API": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "ESO news": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "France24 RSS": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "GitHub releases mlx/mlx-lm/llama.cpp": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "HUDOC press release": {
+        "fail": 1,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "Hugging Face trending + model cards": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 1,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "Kyiv Independent feed": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "Le Temps ECtHR HTML": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "Le Temps RSS": {
+        "fail": 0,
+        "ok_curl": 4,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "Nature article/abstract pages": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "Nature nature.rss": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "Nature nature.rss/nphys.rss/natastron.rss": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "Nature/Nature Physics/Nature Medicine article pages + citation_author meta": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "OpenAlex works API": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "Quanta RSS + feature pages": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "Quanta feed": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "SRF Pfister HTML": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "SRF RSS": {
+        "fail": 5,
+        "ok_curl": 8,
+        "ok_mcp": 0,
+        "ok_proxy": 2,
+        "ok_webfetch": 0
+      },
+      "SRF RSS, Le Temps RSS": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "SRF Ukraine/Gösgen/arms HTML": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "SRF/Le Temps/France24/CNBC/Euronews/Genevasolutions HTML details corroborated via WebSearch result excerpts and RSS descriptions": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "Science.org news_current.xml": {
+        "fail": 1,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "Semantic Scholar": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "Times of Israel feed": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "WebSearch (Apple lawsuit, funding rounds, SensorFM primary)": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "WebSearch used to corroborate Hungary vote tally and Mexico ICE figures": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "apnews.com": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "arXiv Atom API": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "arXiv Atom API (date verification)": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "arXiv Atom API cs.LG/cs.AI/cs.CL/cs.CV/stat.ML": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "arXiv Atom API quant-ph/astro-ph.*/hep-ph/hep-th/gr-qc/cond-mat.*/math.*/nucl-th": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "arXiv Atom API — astro-ph.CO/GA/EP/HE, quant-ph, cond-mat.supr-con, gr-qc, hep-ph, physics.atom-ph, q-bio.NC/GN": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "arXiv HTML author blocks (affiliations)": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "arXiv RSS cs.LG/cs.AI/cs.CL/cs.CV/stat.ML": {
+        "fail": 0,
+        "ok_curl": 2,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "arXiv id_list metadata API": {
+        "fail": 0,
+        "ok_curl": 1,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "arstechnica.com RSS": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "arstechnica.com article": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "arstechnica.com/ai/feed": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "arstechnica.com/feed direct-curl": {
+        "fail": 1,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "arxiv.org/html author blocks": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "arxiv.org/html author blocks x11": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "bioRxiv/medRxiv JSON API": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "bioRxiv/medRxiv details API": {
+        "fail": 1,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "cell.com current.rss": {
+        "fail": 1,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "earthquake.usgs.gov FDSN": {
+        "fail": 1,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "euronews Hungary URL": {
+        "fail": 1,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "federalregister.gov API": {
+        "fail": 1,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "huggingface.co API": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 1,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "huggingface.co/thinkingmachines/inkling": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "jurist.org": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "kimi.com/blog/kimi-k3": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "lab/eng blogs simonwillison/netflixtechblog/parlance-labs/acoup/lesswrong": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "research.google": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "soofi.info": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "swissinfo.ch feed": {
+        "fail": 2,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "swissinfo.ch/eng/rss": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "techcrunch.com RSS": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "the-decoder article bodies x5": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "the-decoder.com RSS+articles": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "the-decoder.com/feed": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "the-decoder.com/feed direct-curl": {
+        "fail": 1,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 0,
+        "ok_webfetch": 0
+      },
+      "thinkingmachines.ai": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      },
+      "timesofisrael.com liveblog": {
+        "fail": 0,
+        "ok_curl": 0,
+        "ok_mcp": 0,
+        "ok_proxy": 1,
+        "ok_webfetch": 0
+      }
+    },
+    "weekend_balance": {
+      "ml_items": 20,
+      "ml_share": 0.556,
+      "science_items": 16
+    }
+  },
   "continuity": {
+    "off_main": {
+      "available": true,
+      "commits_not_on_main": [
+        "715c583 Make editorial cards read-markable (ed-<stream>-<date> ids in the shared read map)",
+        "61d6e1c Sync operational docs to the honest publish tail: DEDUP.md outcomes + writer-prompt reaction guidance",
+        "30b7a54 Fix the audit's two unnumbered risks: newest-wins homepage URL dedup, query-aware canon_url identity keys",
+        "6b95c5b Harden the audit fixes per adversarial review: sibling-day lint attribution, pre-registry replay flood, dead-buffer purge, per-target redaction whitelist, unmatched-fence recovery",
+        "023001a Audit fixes 1-8: honest publish tail, editorial extractor, Sports QA, prompts privacy, registry contention, GPG scoping, doc banners, replay-stable lint",
+        "d4cb38d Label editorial cards explicitly as AI opinion",
+        "63683b1 Restore the briefs' editorial sections to the homepage",
+        "dec8a7b ARCHITECTURE: reference sections catch up with tonight",
+        "d891cb8 Wire the writers to the analytical plane",
+        "f3ef4c2 Mount the analytical plane on the embed-proxy Worker (sandbox-reachable)",
+        "c99f93a Analytical plane v2: serverless — the ledger IS the database",
+        "429a29a Build the Phase-2 analytical plane: local pgvector over the story ledger",
+        "a707a5a Read-filter selection roams with the topic prefs",
+        "1676df3 ARCHITECTURE: record all of 2026-07-18 (determinization, brief-page retirement, frontend review + slim-down, packing/table fixes)",
+        "587e14d Drained 0 notification(s) + reader feedback",
+        "97cbc8c Close the masonry packing gaps; re-skin post tables for dark mode",
+        "f37c71e Drained 0 notification(s) + reader feedback",
+        "e7c8745 Slim the homepage frontend after specialist review (custom.html 842 -> 301)",
+        "f2b52b7 Retire individual brief pages; homepage story feed is the reading surface",
+        "6ff226b Determinize the mechanical tier: fetch/footer/publish/watch/evaluator tools"
+      ],
+      "remote_branches": []
+    },
     "previous_evaluator_found": true,
-    "previous_evaluator_path": "_posts/2026-07-05-evaluator.md"
+    "previous_evaluator_path": "_posts/2026-07-12-evaluator.md"
   },
   "feedback": {
     "by_stream": {
       "ai-ml": {
-        "down": 1,
-        "retractions": 2,
-        "up": 9
-      },
-      "news": {
         "down": 0,
         "retractions": 0,
-        "up": 2
+        "up": 10
+      },
+      "news": {
+        "down": 3,
+        "retractions": 0,
+        "up": 4
       },
       "science": {
         "down": 0,
         "retractions": 0,
-        "up": 3
+        "up": 4
       },
       "weekend": {
         "down": 2,
         "retractions": 0,
-        "up": 1
+        "up": 3
       }
     },
     "notify_count": 0,
@@ -32,30 +615,31 @@
   "sources": {
     "overall": {
       "candidates_open": 0,
-      "stories": 408,
-      "unique_domains_sum": 88
+      "stories": 466,
+      "unique_domains_sum": 90
     },
     "streams": {
       "ai-ml": {
         "candidates_open": 0,
         "new_domains": 21,
         "saturated": [],
-        "stories": 116,
-        "top5_share": 0.459,
-        "unique_domains": 37,
-        "waiver_rate": 0.05
+        "stories": 123,
+        "top5_share": 0.52,
+        "unique_domains": 34,
+        "waiver_rate": 0.0667
       },
       "news": {
         "candidates_open": 0,
-        "new_domains": 19,
+        "new_domains": 24,
         "saturated": [
           "aljazeera.com",
-          "letemps.ch"
+          "letemps.ch",
+          "srf.ch"
         ],
-        "stories": 108,
-        "top5_share": 0.8774,
-        "unique_domains": 19,
-        "waiver_rate": 0.0
+        "stories": 146,
+        "top5_share": 0.8681,
+        "unique_domains": 24,
+        "waiver_rate": 0.0526
       },
       "science": {
         "candidates_open": 0,
@@ -63,111 +647,120 @@
         "saturated": [
           "nature.com"
         ],
-        "stories": 13,
+        "stories": 20,
         "top5_share": 1.0,
         "unique_domains": 3,
-        "waiver_rate": 0.5
+        "waiver_rate": 0.6667
+      },
+      "sports": {
+        "candidates_open": 0,
+        "new_domains": 0,
+        "saturated": [],
+        "stories": 0,
+        "top5_share": 0.0,
+        "unique_domains": 0,
+        "waiver_rate": 0.0
       },
       "weekend": {
         "candidates_open": 0,
-        "new_domains": 22,
+        "new_domains": 23,
         "saturated": [],
-        "stories": 171,
-        "top5_share": 0.6038,
+        "stories": 177,
+        "top5_share": 0.5484,
         "unique_domains": 29,
-        "waiver_rate": 0.2
+        "waiver_rate": 0.4
       }
     }
   },
   "streams": {
     "ai-ml": {
-      "anchors": 28,
+      "anchors": 35,
       "by_edition": {
-        "2026-07-07-ai-ml": {
-          "anchors": 10,
-          "citations": 10
+        "2026-07-14-ai-ml": {
+          "anchors": 16,
+          "citations": 16
         },
-        "2026-07-10-ai-ml": {
-          "anchors": 18,
-          "citations": 18
+        "2026-07-17-ai-ml": {
+          "anchors": 19,
+          "citations": 19
         }
       },
-      "citations": 28,
+      "citations": 35,
       "editions": [
-        "2026-07-07-ai-ml",
-        "2026-07-10-ai-ml"
+        "2026-07-14-ai-ml",
+        "2026-07-17-ai-ml"
       ],
       "repeat_rate": 0.0,
       "repeats": 0
     },
     "news": {
-      "anchors": 42,
+      "anchors": 33,
       "by_edition": {
-        "2026-07-07-news": {
-          "anchors": 9,
-          "citations": 9
-        },
-        "2026-07-08-news": {
-          "anchors": 8,
-          "citations": 8
-        },
-        "2026-07-09-news": {
-          "anchors": 10,
-          "citations": 10
-        },
-        "2026-07-10-news": {
+        "2026-07-13-news": {
           "anchors": 7,
           "citations": 7
         },
-        "2026-07-11-news": {
+        "2026-07-14-news": {
           "anchors": 8,
           "citations": 8
-        }
-      },
-      "citations": 42,
-      "editions": [
-        "2026-07-07-news",
-        "2026-07-08-news",
-        "2026-07-09-news",
-        "2026-07-10-news",
-        "2026-07-11-news"
-      ],
-      "repeat_rate": 0.21428571428571427,
-      "repeats": 9
-    },
-    "science": {
-      "anchors": 6,
-      "by_edition": {
-        "2026-07-08-science": {
+        },
+        "2026-07-15-news": {
+          "anchors": 5,
+          "citations": 5
+        },
+        "2026-07-16-news": {
+          "anchors": 7,
+          "citations": 7
+        },
+        "2026-07-18-news": {
           "anchors": 6,
           "citations": 6
         }
       },
-      "citations": 6,
+      "citations": 33,
       "editions": [
-        "2026-07-08-science"
+        "2026-07-13-news",
+        "2026-07-14-news",
+        "2026-07-15-news",
+        "2026-07-16-news",
+        "2026-07-18-news"
+      ],
+      "repeat_rate": 0.24242424242424243,
+      "repeats": 8
+    },
+    "science": {
+      "anchors": 7,
+      "by_edition": {
+        "2026-07-15-science": {
+          "anchors": 7,
+          "citations": 7
+        }
+      },
+      "citations": 7,
+      "editions": [
+        "2026-07-15-science"
       ],
       "repeat_rate": 0.0,
       "repeats": 0
     },
     "weekend": {
-      "anchors": 28,
+      "anchors": 39,
       "by_edition": {
-        "2026-07-11-weekend": {
-          "anchors": 28,
-          "citations": 28
+        "2026-07-18-weekend": {
+          "anchors": 39,
+          "citations": 39
         }
       },
-      "citations": 28,
+      "citations": 39,
       "editions": [
-        "2026-07-11-weekend"
+        "2026-07-18-weekend"
       ],
-      "repeat_rate": 0.14285714285714285,
-      "repeats": 4
+      "repeat_rate": 0.20512820512820512,
+      "repeats": 8
     }
   },
   "week": {
-    "end": "2026-07-12",
-    "start": "2026-07-06"
+    "end": "2026-07-19",
+    "start": "2026-07-13"
   }
 }
