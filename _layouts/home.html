@@ -142,7 +142,7 @@ layout: archive
         <li><strong>Release.</strong> Claude writes the source-linked prose. Deterministic tools record, lint and generate the feed and statistics; they report most problems, while commit or push failure prevents release. GitHub main is the versioned editorial and publishing hub. Pages rebuilds the homepage, and queued alerts travel through the Mac bridge to ntfy.</li>
         <li><strong>Learn.</strong> Votes and proposals enter private Worker queues, the bridge drains them into separate ledgers and the Sunday Evaluator recommends changes. Rafael approves, edits or rejects normal tuning before it is versioned on main and read by the next run.</li>
       </ol>
-      <p><strong>Boundaries.</strong> Gmail drafts are direct and manually sent. Watch can queue an alert without publishing a story. Read-state sync is opt-in and never tunes a desk. The Evaluator may append learned preferences only from repeated feedback or a written reason; other tuning remains human-gated.</p>
+      <p><strong>Boundaries.</strong> Only News, Deep Read and the Evaluator compose Gmail drafts, and sending stays manual. Watch can queue an alert without publishing a story. Read-state sync is opt-in and never tunes a desk. The Evaluator may append learned preferences only from repeated feedback or a written reason; other tuning remains human-gated.</p>
     </div>
 
     {% if site.data.stats %}{% assign st = site.data.stats %}
@@ -187,7 +187,7 @@ layout: archive
           <span><strong>Control stays explicit</strong><small>Policy is versioned; tuning is human-gated except for the bounded feedback rule.</small></span>
         </li>
       </ul>
-      <p class="hiw-boundaries"><strong>Separate by design:</strong> Gmail drafts wait for manual send; Watch alerts do not publish stories; read-state sync is opt-in and never enters the feedback or tuning ledgers.</p>
+      <p class="hiw-boundaries"><strong>Separate by design:</strong> three desks — News, Deep Read and the Evaluator — also compose a Gmail draft that waits for manual send; Watch alerts do not publish stories; read-state sync is opt-in and never enters the feedback or tuning ledgers.</p>
     </section>
     <p class="hiw-read">Prompts and editorial policy are versioned in Git; each scheduled desk pulls the version currently on <code>main</code>.</p>
     <button type="button" class="hiw__close-end" data-hiw-close>Close</button>
@@ -499,10 +499,13 @@ layout: archive
   .hiw__sub{ max-width:82ch; font-family:var(--serif); font-size:1em; line-height:1.55;
     color:var(--muted); margin:0; }
 
-  /* Static architecture first; compact repository evidence follows. */
-  .hiw-architecture{ margin:20px 0 0; }
-  .hiw-architecture picture{ display:block; }
-  .hiw-architecture img{ display:block; width:100%; height:auto; }
+  /* Static architecture first; compact repository evidence follows.
+     Hard-reset display/margins/radius: the theme styles bare <figure> as a wrapping
+     space-between flex row, which shrinks <picture> to intrinsic width and pulls the
+     caption up beside it. */
+  .hiw-architecture{ display:block; margin:20px 0 0; }
+  .hiw-architecture picture{ display:block; width:100%; }
+  .hiw-architecture img{ display:block; width:100%; height:auto; margin:0; border-radius:0; }
   .hiw-architecture figcaption{ display:flex; align-items:flex-start; justify-content:space-between;
     gap:12px 22px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid var(--hair);
     font-family:var(--sans); font-size:.78rem; line-height:1.45; color:var(--muted); }
