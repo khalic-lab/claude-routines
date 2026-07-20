@@ -4,8 +4,8 @@ title: "The prompts"
 permalink: /prompts/
 ---
 <p class="prm-intro">Every brief is written by a scheduled Claude routine following a fixed, versioned
-prompt. These are the live instructions, rendered verbatim at build time from the same files the
-routines read — <code>${FETCH_PROXY_TOKEN}</code> is a placeholder the runtime fills, never a real value.</p>
+prompt. These are the live instructions, rendered at build time from the same files the routines
+read — <code>${FETCH_PROXY_TOKEN}</code> is a placeholder the runtime fills, never a real value.</p>
 
 {% capture p_news %}{% include_relative routines/news.md %}{% endcapture %}
 {% capture p_aiml %}{% include_relative routines/ai-ml.md %}{% endcapture %}
@@ -16,31 +16,36 @@ routines read — <code>${FETCH_PROXY_TOKEN}</code> is a placeholder the runtime
 
 <details class="prm">
   <summary><strong>News</strong><span>daily</span></summary>
-  <pre>{{ p_news | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
+  <div class="prm-doc">{{ p_news | replace: "rflnogueira@me.com", "[email redacted]" | markdownify }}</div>
 </details>
 <details class="prm">
   <summary><strong>AI/ML</strong><span>Tue + Fri</span></summary>
-  <pre>{{ p_aiml | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
+  <div class="prm-doc">{{ p_aiml | replace: "rflnogueira@me.com", "[email redacted]" | markdownify }}</div>
 </details>
 <details class="prm">
   <summary><strong>Science</strong><span>Wed</span></summary>
-  <pre>{{ p_science | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
+  <div class="prm-doc">{{ p_science | replace: "rflnogueira@me.com", "[email redacted]" | markdownify }}</div>
 </details>
 <details class="prm">
   <summary><strong>Deep read</strong><span>Sat</span></summary>
-  <pre>{{ p_weekend | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
+  <div class="prm-doc">{{ p_weekend | replace: "rflnogueira@me.com", "[email redacted]" | markdownify }}</div>
 </details>
 <details class="prm">
   <summary><strong>Sports</strong><span>Mon</span></summary>
-  <pre>{{ p_sports | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
+  <div class="prm-doc">{{ p_sports | replace: "rflnogueira@me.com", "[email redacted]" | markdownify }}</div>
 </details>
 <details class="prm">
   <summary><strong>Evaluator</strong><span>Sun</span></summary>
-  <pre>{{ p_eval | escape | replace: "rflnogueira@me.com", "[email redacted]" }}</pre>
+  <div class="prm-doc">{{ p_eval | replace: "rflnogueira@me.com", "[email redacted]" | markdownify }}</div>
 </details>
 
 <style>
   .prm-intro{ font-family:var(--serif); color:var(--muted); }
+  /* the theme's `p > code` light pill outranks custom.html's chip re-skin by source order;
+     page-body styles win the tie */
+  .prm-intro code, .page__content .prm-intro code{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:.82em; font-weight:400; text-transform:none; letter-spacing:0; color:var(--ink);
+    background:var(--card); border:1px solid var(--hair); border-radius:3px; padding:.08em .35em; }
   .prm{ border:1px solid var(--hair); background:var(--card); margin:0 0 10px; }
   .prm summary{ cursor:pointer; padding:12px 14px; font-family:var(--sans); font-size:.72rem;
     text-transform:uppercase; letter-spacing:.1em; color:var(--ink); }
@@ -49,8 +54,35 @@ routines read — <code>${FETCH_PROXY_TOKEN}</code> is a placeholder the runtime
   .prm summary:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
   .prm summary strong{ font-weight:700; }
   .prm summary span{ color:var(--muted); margin-left:.8em; letter-spacing:.08em; }
-  .prm pre{ margin:0; padding:14px 16px; border-top:1px solid var(--hair); background:var(--panel);
-    color:var(--ink); font-size:.68rem; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
-  /* the theme pill-styles inline <code>; inside the raw prompt dumps that would be noise */
-  .prm pre code{ border:0; padding:0; border-radius:0; font:inherit; color:inherit; }
+
+  /* Rendered prompt document — a reading surface, not a source dump. Selectors are
+     .page__content-prefixed to outrank the theme/custom chip styling for inline code
+     (uppercase pill) and the light-palette code backgrounds. */
+  .page__content .prm-doc{ padding:4px 20px 20px; border-top:1px solid var(--hair);
+    background:var(--panel); font-size:.92rem; line-height:1.65; }
+  .page__content .prm-doc h1, .page__content .prm-doc h2, .page__content .prm-doc h3{
+    font-family:var(--sans); color:var(--ink); border:0; }
+  .page__content .prm-doc h1{ font-size:.8rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.14em; margin:1.9em 0 .7em; padding-bottom:.4em; border-bottom:1px solid var(--hair); }
+  .page__content .prm-doc h2{ font-size:.95rem; font-weight:700; margin:1.5em 0 .45em; }
+  .page__content .prm-doc h3{ font-size:.88rem; font-weight:600; margin:1.3em 0 .4em; }
+  .page__content .prm-doc p, .page__content .prm-doc li{ font-size:.92rem; }
+  .page__content .prm-doc ul, .page__content .prm-doc ol{ padding-left:1.3em; }
+  .page__content .prm-doc li{ margin-bottom:.35em; }
+  .page__content .prm-doc blockquote{ margin:1em 0; padding:.2em 0 .2em 1em;
+    border-left:2px solid var(--accent); color:var(--muted); font-style:normal; }
+  .page__content .prm-doc hr{ border:0; border-top:1px solid var(--hair); margin:1.6em 0; }
+  .page__content .prm-doc code{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:.82em; font-weight:400; text-transform:none; letter-spacing:0;
+    color:var(--ink); background:var(--card); border:1px solid var(--hair); border-radius:3px;
+    padding:.08em .35em; }
+  /* one dark terminal slab for fenced commands, in both palettes (rouge tokens are
+     dark-background-tuned); wrapper and pre share the color so they read as one surface */
+  .page__content .prm-doc div.highlighter-rouge{ font-size:.78rem; margin:0 0 1.1em;
+    background:#22252d; color:#e7e5dd; border:1px solid var(--hair); }
+  .page__content .prm-doc pre{ background:#22252d; color:#e7e5dd; padding:10px 14px; margin:0 0 1.1em;
+    overflow-x:auto; font-size:.78rem; line-height:1.55; border:1px solid var(--hair); }
+  .page__content .prm-doc div.highlighter-rouge pre{ border:0; margin:0; }
+  .page__content .prm-doc pre code{ border:0; padding:0; background:transparent; font:inherit;
+    color:inherit; }
 </style>
