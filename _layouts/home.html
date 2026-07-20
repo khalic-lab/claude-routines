@@ -110,170 +110,86 @@ layout: archive
   </form>
 </section>
 
-<!-- "How this works" modal — a public, product-level architecture map. The semantic HTML is the
-     accessible reading order and reflows on phones; exact trigger configuration remains in the
-     technical docs. -->
+<!-- "How this works" modal — a public, product-level architecture map. Generated SVGs carry the
+     visual hierarchy; the hidden semantic transcript supplies the accessible reading order. -->
 <div class="hiw" id="hiwModal" aria-hidden="true">
   <div class="hiw__box" role="dialog" aria-modal="true" aria-labelledby="hiwTitle" aria-describedby="hiwIntro">
     <button type="button" class="hiw__x" data-hiw-close aria-label="Close how this works">×</button>
     <h2 class="hiw__title" id="hiwTitle">How this works</h2>
-    <p class="hiw__sub" id="hiwIntro">Five scheduled Claude desks research against shared memory, then publish through Git. Rafael gates source policy and most tuning; the one narrow exception is shown below.</p>
+    <p class="hiw__sub" id="hiwIntro">Five scheduled Claude desks start fresh, research from a governed source registry, check candidates against story memory and publish through a versioned Git trail. The map separates automation, editorial judgment and human control.</p>
 
-    <div class="hiw-map">
-      <section class="hiw-phase" aria-labelledby="hiwMake">
-        <header class="hiw-phase__head">
-          <span class="hiw-phase__num" aria-hidden="true">01</span>
-          <div><h3 id="hiwMake">Make</h3><p>Scheduled desks discover, verify and decide what is genuinely new.</p></div>
-        </header>
+    <figure class="hiw-architecture" aria-labelledby="hiwDiagramCaption">
+      <picture>
+        <source media="(max-width:900px) and (prefers-color-scheme:dark)" srcset="{{ '/assets/diagrams/how-it-works-mobile-dark.svg' | relative_url }}">
+        <source media="(max-width:900px)" srcset="{{ '/assets/diagrams/how-it-works-mobile-light.svg' | relative_url }}">
+        <source media="(prefers-color-scheme:dark)" srcset="{{ '/assets/diagrams/how-it-works-wide-dark.svg' | relative_url }}">
+        <img src="{{ '/assets/diagrams/how-it-works-wide-light.svg' | relative_url }}" alt="Research flows through a memory and editorial gate into a versioned GitHub release and delivery; reader feedback then flows through an evaluator to human approval." decoding="async">
+      </picture>
+      <figcaption id="hiwDiagramCaption">
+        <span class="hiw-legend">
+          <span><i class="hiw-key hiw-key--path" aria-hidden="true"></i>Operational path</span>
+          <span><i class="hiw-key hiw-key--human" aria-hidden="true"></i>Human control</span>
+          <span><i class="hiw-key hiw-key--boundary" aria-hidden="true"></i>Bounded side path</span>
+        </span>
+        <span class="hiw-memory-scope"><strong>Memory scope:</strong> four desks compare across editions; Deep Read compares only with prior Deep Reads.</span>
+      </figcaption>
+    </figure>
 
-        <ul class="hiw-desks" aria-label="Five scheduled editorial desks">
-          <li data-node="news"><strong>News</strong><span>Daily</span></li>
-          <li data-node="ai-ml"><strong>AI / ML</strong><span>Tue + Fri</span></li>
-          <li data-node="science"><strong>Science</strong><span>Wed</span></li>
-          <li data-node="sports"><strong>Sports</strong><span>Mon</span></li>
-          <li data-node="weekend"><strong>Deep read</strong><span>Sat</span></li>
-        </ul>
-        <span class="hiw-down" aria-hidden="true">↓</span>
-
-        <div class="hiw-path">
-          <div class="hiw-node" data-node="research">
-            <strong>Research + verify</strong>
-            <span>Source plan · direct fetch · search · proxy when needed</span>
-          </div>
-          <span class="hiw-arrow" aria-hidden="true">→</span>
-          <div class="hiw-node hiw-node--memory" data-node="story-memory">
-            <strong>Check shared memory</strong>
-            <span>Exact source · embeddings · thread history</span>
-            <ul class="hiw-verdicts" aria-label="Story memory outcomes">
-              <li><b>Repeat</b><small>omit</small></li>
-              <li><b>Ongoing</b><small>material update only</small></li>
-              <li><b>New</b><small>cover</small></li>
-            </ul>
-          </div>
-          <span class="hiw-arrow" aria-hidden="true">→</span>
-          <div class="hiw-node" data-node="compose">
-            <strong>Write + check</strong>
-            <span>Claude writes; deterministic tools record, lint and build</span>
-          </div>
-        </div>
-        <p class="hiw-sidecar"><b>Memory sidecar:</b> the story ledger is baked into vector search, threads and recurring entities. It adds continuity; publishing still degrades gracefully if it is unavailable.</p>
-      </section>
-
-      <section class="hiw-phase" aria-labelledby="hiwRelease">
-        <header class="hiw-phase__head">
-          <span class="hiw-phase__num" aria-hidden="true">02</span>
-          <div><h3 id="hiwRelease">Remember &amp; release</h3><p>GitHub <code>main</code> is the system's memory, hand-off point and release trigger.</p></div>
-        </header>
-
-        <aside class="hiw-route-note" data-node="email">
-          <span class="hiw-eyebrow">Routine side-channel</span>
-          <strong>Selected desks → Gmail draft</strong>
-          <p>News, Deep Read and the Evaluator call Gmail directly. Drafts wait for manual send; they do not flow out of GitHub.</p>
-        </aside>
-
-        <div class="hiw-hub" data-node="github-main">
-          <span class="hiw-eyebrow">Single source of truth</span>
-          <strong>GitHub · main</strong>
-          <p>Versioned prompts and reader policy · source registry · briefs and story ledger · homepage data · alert queue</p>
-        </div>
-        <span class="hiw-down" aria-hidden="true">↓</span>
-
-        <div class="hiw-release">
-          <div class="hiw-lane" data-node="homepage">
-            <span class="hiw-eyebrow">Read</span>
-            <strong>GitHub Pages → homepage</strong>
-            <p>Each push rebuilds the story cards. Ordinary brief pages stay retired; Evaluator reviews remain available.</p>
-          </div>
-          <div class="hiw-lane" data-node="phone">
-            <span class="hiw-eyebrow">Phone</span>
-            <strong>Alert queue → Mac bridge → ntfy</strong>
-            <p>The bridge pulls and drains queued alerts on its local schedule. Watch can enter here without publishing a story.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="hiw-phase" aria-labelledby="hiwLearn">
-        <header class="hiw-phase__head">
-          <span class="hiw-phase__num" aria-hidden="true">03</span>
-          <div><h3 id="hiwLearn">Learn</h3><p>A vote is evidence, not an instruction. The feedback path is asynchronous and mostly human-gated.</p></div>
-        </header>
-
-        <div class="hiw-path hiw-path--four">
-          <div class="hiw-node" data-node="reader-feedback"><strong>Vote on a story</strong><span>Useful · not useful · optional reason</span></div>
-          <span class="hiw-arrow" aria-hidden="true">→</span>
-          <div class="hiw-node" data-node="feedback-worker"><strong>Feedback Worker</strong><span>Validates and queues the signal</span></div>
-          <span class="hiw-arrow" aria-hidden="true">→</span>
-          <div class="hiw-node" data-node="feedback-ledger"><strong>Bridge → ledger</strong><span>Drain · commit · fold onto stable story IDs</span></div>
-          <span class="hiw-arrow" aria-hidden="true">→</span>
-          <div class="hiw-node" data-node="evaluator"><strong>Sunday Evaluator</strong><span>Reads feedback, health and continuity; proposes changes</span></div>
-        </div>
-
-        <aside class="hiw-route-note" data-node="proposal">
-          <span class="hiw-eyebrow">Parallel reader input</span>
-          <strong>Propose a brief → Worker queue → bridge → <code>proposals/*.jsonl</code></strong>
-          <p>The Evaluator surfaces or folds unconsumed ideas. They stay separate from the story-feedback ledger.</p>
-        </aside>
-
-        <div class="hiw-gate" aria-label="Editorial approval path">
-          <div class="hiw-node"><strong>Recommendations</strong><span>Prompt, profile and source-policy changes</span></div>
-          <span class="hiw-arrow" aria-hidden="true">→</span>
-          <div class="hiw-node hiw-node--gate" data-node="human-gate"><span class="hiw-eyebrow">Human gate</span><strong>Rafael decides</strong><span>Approve · edit · reject</span></div>
-          <span class="hiw-arrow" aria-hidden="true">→</span>
-          <div class="hiw-node"><strong>Approved policy on main</strong><span>The next scheduled run pulls this version</span></div>
-        </div>
-        <p class="hiw-loopback">↺ Most tuning waits here. The narrow exception is a repeated or reasoned feedback pattern, which may append one learned-preference line automatically.</p>
-
-        <aside class="hiw-sync-note">
-          <span class="hiw-eyebrow">Separate, opt-in loop</span>
-          <strong>This browser ↔ passkey ↔ Worker KV</strong>
-          <p>Read marks and beat filters stay local unless sync is enabled. They roam across devices, but never enter the feedback ledger or tune a desk.</p>
-        </aside>
-      </section>
+    <div class="hiw-a11y">
+      <h3>Architecture in words</h3>
+      <ol>
+        <li><strong>Make.</strong> Five scheduled desks start fresh and pull their versioned prompts from main. Registry-led research uses linked sources and direct fetch with a proxy fallback. Exact identity and embedding similarity classify candidates; repeats are omitted, while Claude judges whether an ongoing update is material and whether a new candidate merits coverage.</li>
+        <li><strong>Release.</strong> Claude writes the source-linked prose. Deterministic tools record, lint and generate the feed and statistics; they report most problems, while commit or push failure prevents release. GitHub main is the versioned editorial and publishing hub. Pages rebuilds the homepage, and queued alerts travel through the Mac bridge to ntfy.</li>
+        <li><strong>Learn.</strong> Votes and proposals enter private Worker queues, the bridge drains them into separate ledgers and the Sunday Evaluator recommends changes. Rafael approves, edits or rejects normal tuning before it is versioned on main and read by the next run.</li>
+      </ol>
+      <p><strong>Boundaries.</strong> Gmail drafts are direct and manually sent. Watch can queue an alert without publishing a story. Read-state sync is opt-in and never tunes a desk. The Evaluator may append learned preferences only from repeated feedback or a written reason; other tuning remains human-gated.</p>
     </div>
 
     {% if site.data.stats %}{% assign st = site.data.stats %}
-    <h3 class="hiw-h">Evidence, in numbers</h3>
-    <ul class="hiw-stats">
-      <li><b>{{ st.all_time.stories }}</b><span>story entries published<br>since {{ st.all_time.since | date: "%-d %b %Y" }}</span></li>
-      <li><b>{{ st.all_time.distinct_domains }}</b><span>sources cited<br>{{ st.sources.candidate | default: 0 }} new on trial</span></li>
-      <li><b>~{{ st.window.avg_words }}</b><span>words per brief<br>last {{ st.window.days }} days</span></li>
-    </ul>
-    {% if st.dedup.since %}
-    <p class="hiw-stat-line">{{ st.dedup.checked }} candidates checked against story memory since {{ st.dedup.since | date: "%-d %b" }} — <strong>{{ st.dedup.repeats_dropped }} repeats omitted</strong> and {{ st.dedup.ongoing_dropped }} non-material updates withheld; an estimated ≈{{ st.dedup.est_minutes_saved }} min of re-reading avoided.</p>
-    {% else %}
-    <p class="hiw-stat-line">Repeat-filter tracking starts with the next edition.</p>
-    {% endif %}
+    <section class="hiw-proof" aria-labelledby="hiwEvidence">
+      <header class="hiw-section-head">
+        <h3 id="hiwEvidence">Evidence in the repository</h3>
+        <p>Generated from committed briefs and the story ledger.</p>
+      </header>
+      <ul class="hiw-stats">
+        <li><b>{{ st.all_time.stories }}</b><span>story entries<br>since {{ st.all_time.since | date: "%-d %b %Y" }}</span></li>
+        <li><b>{{ st.all_time.distinct_domains }}</b><span>sources cited<br>{{ st.sources.candidate | default: 0 }} new on trial</span></li>
+        <li><b>~{{ st.window.avg_words }}</b><span>words per brief<br>last {{ st.window.days }} days</span></li>
+      </ul>
+      {% if st.dedup.since %}
+      <p class="hiw-stat-line">{{ st.dedup.checked }} candidates checked since {{ st.dedup.since | date: "%-d %b" }}: <strong>{{ st.dedup.repeats_dropped }} repeats omitted</strong> and {{ st.dedup.ongoing_dropped }} non-material updates withheld; ≈{{ st.dedup.est_minutes_saved }} min of re-reading avoided.</p>
+      {% else %}
+      <p class="hiw-stat-line">Repeat-filter tracking starts with the next edition.</p>
+      {% endif %}
+    </section>
     {% endif %}
 
-    <h3 class="hiw-h">Editorial contract</h3>
-    <ul class="hiw-rules">
-      <li class="hiw-rule">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7"/><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7"/></svg>
-        <span>Primary evidence stays linked</span>
-      </li>
-      <li class="hiw-rule">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 13.5l4 4L14 9"/><path d="M12 17.5l2 2L22 11"/></svg>
-        <span>Significant claims seek two sources</span>
-      </li>
-      <li class="hiw-rule">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11V4a1 1 0 0 1 1-1h7l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
-        <span>Uncertainty is stated plainly
-        <span class="hiw-chips"><i>preprint</i><i>single-source</i><i>disputed</i></span></span>
-      </li>
-      <li class="hiw-rule">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg>
-        <span>No hype, no filler — omit over pad</span>
-      </li>
-      <li class="hiw-rule">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></svg>
-        <span>Claude-written prose; deterministic checks</span>
-      </li>
-      <li class="hiw-rule">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6l7-3z"/></svg>
-        <span>No trackers — device sync is opt-in</span>
-      </li>
-    </ul>
-    <p class="hiw-read">Prompts and editorial policy are versioned in Git; every scheduled run pulls the latest approved version.</p>
+    <section class="hiw-contract" aria-labelledby="hiwContract">
+      <header class="hiw-section-head">
+        <h3 id="hiwContract">Editorial contract</h3>
+        <p>The trust-bearing rules behind the diagram.</p>
+      </header>
+      <ul class="hiw-principles">
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7"/><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7"/></svg>
+          <span><strong>Evidence stays inspectable</strong><small>Primary sources stay linked; significant claims seek two sources.</small></span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11V4a1 1 0 0 1 1-1h7l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
+          <span><strong>Uncertainty stays visible</strong><small>Preprints, single-source claims and disputes are labeled plainly.</small></span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></svg>
+          <span><strong>Responsibilities are split</strong><small>Claude researches and writes; deterministic tools record, lint and build.</small></span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6l7-3z"/></svg>
+          <span><strong>Control stays explicit</strong><small>Policy is versioned; tuning is human-gated except for the bounded feedback rule.</small></span>
+        </li>
+      </ul>
+      <p class="hiw-boundaries"><strong>Separate by design:</strong> Gmail drafts wait for manual send; Watch alerts do not publish stories; read-state sync is opt-in and never enters the feedback or tuning ledgers.</p>
+    </section>
+    <p class="hiw-read">Prompts and editorial policy are versioned in Git; each scheduled desk pulls the version currently on <code>main</code>.</p>
     <button type="button" class="hiw__close-end" data-hiw-close>Close</button>
   </div>
 </div>
@@ -546,7 +462,7 @@ layout: archive
   .ffs-invite:focus-visible, .fcard__read:focus-visible, .ffb-rzn input:focus-visible{
     outline:2px solid var(--accent); outline-offset:1px; }
   .ffs-btn:focus-visible, .ffs-lnk:focus-visible, .fcard__more:focus-visible, .ffb-t:focus-visible,
-  .hiw-open:focus-visible, .hiw__x:focus-visible{
+  .hiw-open:focus-visible, .hiw__x:focus-visible, .hiw__close-end:focus-visible{
     outline:2px solid var(--accent); outline-offset:2px; }
 
   .folio-empty{ font-family:var(--sans); color:var(--muted); text-align:center; padding:60px 0; letter-spacing:.06em; }
@@ -568,9 +484,9 @@ layout: archive
     overflow-y:auto; scrollbar-gutter:stable; padding:4vh 16px; box-sizing:border-box;
     background:rgba(0,0,0,.45); z-index:9999; }
   .hiw.on{ display:flex; }
-  .hiw__box{ position:relative; width:100%; max-width:50em; box-sizing:border-box;
+  .hiw__box{ position:relative; width:100%; max-width:76rem; box-sizing:border-box;
     background:var(--paper); color:var(--ink); border:1px solid var(--rule);
-    padding:1.5em 1.4em 1.35em; box-shadow:0 8px 44px rgba(0,0,0,.32); }
+    padding:clamp(20px,2.2vw,32px); box-shadow:0 8px 44px rgba(0,0,0,.32); }
   .hiw__x{ position:absolute; top:.15em; right:.2em; width:44px; height:44px; display:flex;
     align-items:center; justify-content:center; background:none; border:0; font-size:1.5em;
     line-height:1; cursor:pointer; color:var(--muted); }
@@ -579,123 +495,83 @@ layout: archive
     padding:8px 16px; background:transparent; border:1px solid var(--rule); color:var(--ink);
     font-family:var(--sans); font-size:.75rem; cursor:pointer; }
   .hiw__close-end:hover{ border-color:var(--accent); color:var(--accent); }
-  .hiw__title{ padding-right:42px; font-family:var(--display); font-weight:700; font-size:1.55em; margin:0 0 .2em; }
-  .hiw__sub{ max-width:65ch; font-family:var(--serif); font-size:.9em; line-height:1.5;
-    color:var(--muted); margin:0 0 1.15em; }
+  .hiw__title{ padding-right:42px; font-family:var(--display); font-weight:700; font-size:1.8em; margin:0 0 .22em; }
+  .hiw__sub{ max-width:82ch; font-family:var(--serif); font-size:1em; line-height:1.55;
+    color:var(--muted); margin:0; }
 
-  /* Responsive architecture map. The DOM order is the accessible narrative; arrows only
-     reinforce it visually and turn downward when the map stacks on narrow screens. */
-  .hiw-map{ border-top:1px solid var(--rule); }
-  .hiw-phase{ padding:18px 0 20px; border-bottom:1px solid var(--rule); }
-  .hiw-phase__head{ display:grid; grid-template-columns:34px minmax(0,1fr); gap:10px;
-    align-items:start; margin:0 0 12px; }
-  .hiw-phase__num{ font-family:var(--sans); font-size:.7rem; letter-spacing:.12em;
-    color:var(--accent); padding-top:4px; }
-  .hiw-phase__head h3{ margin:0; font-family:var(--display); font-size:1.05rem; font-weight:700; }
-  .hiw-phase__head p{ margin:2px 0 0; font-family:var(--serif); font-size:.78rem;
-    line-height:1.45; color:var(--muted); }
+  /* Static architecture first; compact repository evidence follows. */
+  .hiw-architecture{ margin:20px 0 0; }
+  .hiw-architecture picture{ display:block; }
+  .hiw-architecture img{ display:block; width:100%; height:auto; }
+  .hiw-architecture figcaption{ display:flex; align-items:flex-start; justify-content:space-between;
+    gap:12px 22px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid var(--hair);
+    font-family:var(--sans); font-size:.78rem; line-height:1.45; color:var(--muted); }
+  .hiw-legend{ display:flex; flex-wrap:wrap; gap:9px 18px; }
+  .hiw-legend > span{ display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
+  .hiw-key{ display:inline-block; flex:none; }
+  .hiw-key--path{ width:22px; border-top:2px solid var(--accent); }
+  .hiw-key--human{ width:12px; height:12px; background:var(--accent); }
+  .hiw-key--boundary{ width:22px; border-top:2px dashed var(--rule); }
+  .hiw-memory-scope{ max-width:62ch; }
+  .hiw-memory-scope strong{ color:var(--ink); }
 
-  .hiw-desks{ list-style:none; display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
-    gap:7px; margin:0; padding:0; }
-  .hiw-desks li{ min-width:0; padding:9px 6px; background:var(--card); border:1px solid var(--hair);
-    text-align:center; font-family:var(--sans); }
-  .hiw-desks strong, .hiw-desks span{ display:block; }
-  .hiw-desks strong{ font-size:.7rem; letter-spacing:.04em; }
-  .hiw-desks span{ margin-top:3px; color:var(--muted); font-size:.7rem;
-    text-transform:uppercase; letter-spacing:.08em; }
-  .hiw-down{ display:block; height:22px; text-align:center; color:var(--accent); line-height:22px; }
+  .hiw-a11y{ position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 
-  .hiw-path, .hiw-gate{ display:grid; grid-template-columns:minmax(0,1fr) 18px minmax(0,1.25fr) 18px minmax(0,1fr);
-    align-items:stretch; gap:0; }
-  .hiw-path--four{ grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr) 16px minmax(0,1fr) 16px minmax(0,1fr); }
-  .hiw-arrow{ display:flex; align-items:center; justify-content:center; color:var(--accent);
-    font-family:var(--sans); font-size:.9rem; }
-  .hiw-node{ min-width:0; padding:10px 11px; background:var(--card); border:1px solid var(--hair);
-    font-family:var(--sans); line-height:1.35; }
-  .hiw-node strong, .hiw-node > span{ display:block; }
-  .hiw-node strong{ font-size:.72rem; letter-spacing:.02em; }
-  .hiw-node > span:not(.hiw-eyebrow){ margin-top:4px; color:var(--muted); font-size:.7rem; }
-  .hiw-node--memory{ border-color:var(--rule); }
-  .hiw-verdicts{ list-style:none; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:4px; margin:9px 0 0; padding:0; }
-  .hiw-verdicts li{ min-width:0; padding:5px 4px; border-top:1px solid var(--hair); text-align:center; }
-  .hiw-verdicts b, .hiw-verdicts small{ display:block; }
-  .hiw-verdicts b{ font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; }
-  .hiw-verdicts small{ margin-top:2px; color:var(--muted); font-size:.7rem; line-height:1.2; }
-  .hiw-sidecar{ margin:10px 0 0; padding:8px 10px; border-left:2px solid var(--accent);
-    background:var(--panel); color:var(--muted); font-family:var(--serif); font-size:.72rem; line-height:1.45; }
-  .hiw-sidecar b{ color:var(--ink); }
+  .hiw-proof, .hiw-contract{ margin-top:24px; }
+  .hiw-section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px 22px;
+    margin:0 0 10px; border-bottom:1px solid var(--rule); padding-bottom:8px; }
+  .hiw-section-head h3{ margin:0; font-family:var(--sans); font-size:.78rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.15em; color:var(--ink); }
+  .hiw-section-head p{ margin:0; font-family:var(--serif); font-size:.82rem; color:var(--muted); }
 
-  .hiw-hub{ padding:13px 15px; background:var(--panel); border:1px solid var(--accent);
-    box-shadow:inset 3px 0 0 var(--accent); }
-  .hiw-hub strong{ display:block; margin-top:3px; font-family:var(--display); font-size:1rem; }
-  .hiw-hub p{ margin:5px 0 0; color:var(--muted); font-family:var(--serif); font-size:.72rem; line-height:1.45; }
-  .hiw-eyebrow{ display:block; font-family:var(--sans); color:var(--accent); font-size:.7rem;
-    text-transform:uppercase; letter-spacing:.12em; }
-  .hiw-route-note{ margin:0 0 12px; padding:10px 12px; border-left:2px solid var(--accent);
-    background:var(--panel); }
-  .hiw-path + .hiw-route-note{ margin:12px 0 0; }
-  .hiw-route-note strong{ display:block; margin-top:4px; font-family:var(--sans); font-size:.75rem; }
-  .hiw-route-note p{ margin:4px 0 0; color:var(--muted); font-family:var(--serif); font-size:.72rem; line-height:1.45; }
-  .hiw-release{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-  .hiw-lane{ min-width:0; padding:10px 11px; background:var(--card); border:1px solid var(--hair); }
-  .hiw-lane strong{ display:block; margin-top:4px; font-family:var(--sans); font-size:.7rem; line-height:1.3; }
-  .hiw-lane p{ margin:5px 0 0; color:var(--muted); font-family:var(--serif); font-size:.7rem; line-height:1.4; }
-
-  .hiw-gate{ margin-top:10px; }
-  .hiw-node--gate{ position:relative; border-color:var(--accent); box-shadow:inset 3px 0 0 var(--accent); }
-  .hiw-node--gate .hiw-eyebrow{ margin:0 0 4px; }
-  .hiw-loopback{ margin:9px 0 0; color:var(--accent); font-family:var(--serif); font-size:.72rem; line-height:1.45; }
-  .hiw-sync-note{ margin-top:12px; padding:10px 12px; border:1px dashed var(--rule); background:transparent; }
-  .hiw-sync-note strong{ display:block; margin-top:4px; font-family:var(--sans); font-size:.72rem; }
-  .hiw-sync-note p{ margin:4px 0 0; color:var(--muted); font-family:var(--serif); font-size:.7rem; line-height:1.45; }
-
-  /* Evidence + editorial contract close the explainer without being confused for topology. */
-  .hiw-h{ display:flex; align-items:center; gap:10px; margin:22px 0 10px; font-family:var(--sans);
-    font-weight:700; font-size:.7rem; text-transform:uppercase; letter-spacing:.16em; color:var(--muted); }
-  .hiw-h::after{ content:""; flex:1; height:1px; background:var(--hair); }
-  .hiw-rules{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .hiw-rule{ display:flex; gap:10px; align-items:center; background:var(--card);
-    border:1px solid var(--hair); padding:9px 11px; min-width:0;
-    font-family:var(--sans); font-size:.7rem; letter-spacing:.02em; line-height:1.35; color:var(--ink); }
-  .hiw-rule svg{ width:16px; height:16px; flex:none; fill:none; stroke:var(--accent);
-    stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
-  .hiw-chips{ display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
-  .hiw-chips i{ font-style:normal; font-family:var(--sans); font-size:.7rem; letter-spacing:.06em;
-    text-transform:uppercase; color:var(--muted); border:1px solid var(--hair); border-radius:999px;
-    padding:2px 8px; white-space:nowrap; }
-  .hiw-read{ margin:14px 0 0; font-family:var(--serif); font-size:.85em; color:var(--muted); }
-  .hiw-stats{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-  .hiw-stats li{ background:var(--card); border:1px solid var(--hair); padding:10px 12px; min-width:0; }
-  .hiw-stats b{ display:block; font-family:var(--display); font-weight:700; font-size:1.5rem;
-    line-height:1.1; color:var(--ink); font-variant-numeric:tabular-nums; }
-  .hiw-stats span{ display:block; margin-top:4px; font-family:var(--sans); font-size:.7rem;
-    text-transform:uppercase; letter-spacing:.08em; line-height:1.5; color:var(--muted); }
-  .hiw-stat-line{ margin:10px 0 0; font-family:var(--serif); font-size:.8em; line-height:1.5; color:var(--muted); }
+  .hiw-stats{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+    border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); }
+  .hiw-stats li{ min-width:0; padding:12px 16px; }
+  .hiw-stats li + li{ border-left:1px solid var(--hair); }
+  .hiw-stats b{ display:block; font-family:var(--display); font-weight:700; font-size:1.7rem;
+    line-height:1; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .hiw-stats span{ display:block; margin-top:5px; font-family:var(--sans); font-size:.72rem;
+    text-transform:uppercase; letter-spacing:.08em; line-height:1.45; color:var(--muted); }
+  .hiw-stat-line{ margin:10px 0 0; font-family:var(--serif); font-size:.84rem; line-height:1.5; color:var(--muted); }
   .hiw-stat-line strong{ color:var(--ink); }
-  @media (max-width:700px){
-    .hiw{ padding:12px; }
-    .hiw__box{ padding:1.25em 1em; }
-    .hiw-phase__num{ font-size:.7rem; }
-    .hiw-phase__head p{ font-size:.86rem; }
-    .hiw-desks{ grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .hiw-desks li:last-child:nth-child(odd){ grid-column:1 / -1; }
-    .hiw-desks strong{ font-size:.8rem; }
-    .hiw-desks span{ font-size:.7rem; }
-    .hiw-path, .hiw-path--four, .hiw-gate{ grid-template-columns:minmax(0,1fr); }
-    .hiw-arrow{ height:22px; transform:rotate(90deg); }
-    .hiw-node strong{ font-size:.82rem; }
-    .hiw-node > span:not(.hiw-eyebrow){ font-size:.75rem; }
-    .hiw-verdicts b, .hiw-verdicts small, .hiw-eyebrow{ font-size:.7rem; }
-    .hiw-sidecar, .hiw-hub p, .hiw-loopback{ font-size:.78rem; }
-    .hiw-release{ grid-template-columns:minmax(0,1fr); }
-    .hiw-lane strong, .hiw-sync-note strong{ font-size:.8rem; }
-    .hiw-lane p, .hiw-sync-note p{ font-size:.76rem; }
-    .hiw-h{ font-size:.7rem; }
-    .hiw-rule{ font-size:.78rem; }
-    .hiw-chips i, .hiw-stats span{ font-size:.7rem; }
+
+  .hiw-principles{ list-style:none; margin:0; padding:0; display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(13rem,1fr)); gap:0 18px; }
+  .hiw-principles li{ display:flex; align-items:flex-start; gap:10px; min-width:0;
+    padding:12px 0; border-top:1px solid var(--hair); font-family:var(--sans); }
+  .hiw-principles svg{ width:18px; height:18px; flex:none; margin-top:2px; fill:none; stroke:var(--accent);
+    stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+  .hiw-principles span, .hiw-principles strong, .hiw-principles small{ display:block; }
+  .hiw-principles strong{ font-size:.82rem; line-height:1.35; color:var(--ink); }
+  .hiw-principles small{ margin-top:4px; font-family:var(--serif); font-size:.78rem; line-height:1.45; color:var(--muted); }
+  .hiw-boundaries{ margin:8px 0 0; padding:9px 0 0; border-top:1px dashed var(--rule);
+    font-family:var(--serif); font-size:.82rem; line-height:1.5; color:var(--muted); }
+  .hiw-boundaries strong{ color:var(--ink); }
+  .hiw-read{ margin:14px 0 0; font-family:var(--serif); font-size:.88rem; line-height:1.5; color:var(--muted); }
+
+  @media (max-width:900px){
+    .hiw-architecture img{ max-width:25.7rem; margin-inline:auto; }
+    /* the narrow-screen diagram folds the dashed boundary nodes into the prose below */
+    .hiw-legend > span:has(.hiw-key--boundary){ display:none; }
   }
-  @media (max-width:480px){ .hiw-rules{ grid-template-columns:1fr; } .hiw-stats{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:700px){
+    .hiw{ padding:8px; }
+    .hiw__box{ padding:20px 14px; }
+    .hiw__title{ font-size:1.55em; }
+    .hiw__sub{ font-size:.92rem; }
+    .hiw-architecture{ margin-top:16px; }
+    .hiw-architecture figcaption{ display:block; font-size:.75rem; }
+    .hiw-memory-scope{ display:block; margin-top:8px; }
+    .hiw-section-head{ display:block; }
+    .hiw-section-head p{ margin-top:4px; }
+    .hiw-stats li{ padding:10px 7px; }
+    .hiw-stats b{ font-size:1.35rem; }
+    .hiw-stats span{ font-size:.7rem; letter-spacing:.04em; }
+    .hiw-principles{ grid-template-columns:1fr; }
+    .hiw-principles strong{ font-size:.84rem; }
+    .hiw-principles small, .hiw-boundaries{ font-size:.8rem; }
+  }
 </style>
 
 <script>

@@ -1,0 +1,46 @@
+%% Public homepage architecture. Keep labels free of private IDs, secrets and implementation noise.
+%% The generated SVG is the visual layer; _layouts/home.html carries the accessible reading order.
+%% Generated SVGs add xml:space="preserve" to native text so leading tspan spaces survive.
+%%{init: {"htmlLabels":false,"flowchart":{"curve":"linear","nodeSpacing":24,"rankSpacing":38,"wrappingWidth":260}}}%%
+flowchart TB
+  subgraph system["1 · MAKE → 2 · RELEASE"]
+    direction LR
+    research["FIVE SCHEDULED DESKS<br/>fresh sessions · prompts from main<br/>News · Sports · AI/ML · Science · Deep Read<br/>registry-led research · direct/proxy fetch"]
+    memory["MEMORY + EDITORIAL GATE<br/>tool: exact identity + similarity<br/>REPEAT → omit<br/>Claude: material update? · worth covering?"]
+    main[("VERSIONED RELEASE · GITHUB MAIN<br/>Claude prose → record · lint · feed · stats<br/>prompts · policy · briefs · ledger · queues<br/>commit/push gates release")]
+    delivery["DELIVERY<br/>Pages → homepage<br/>queue → Mac bridge → ntfy"]
+
+    research --> memory --> main --> delivery
+  end
+
+  subgraph learn["3 · LEARN"]
+    direction LR
+    reader["READER INPUT<br/>vote · reason · propose"]
+    worker["PRIVATE ASYNC PATH<br/>Worker queues → bridge<br/>ledger + proposals"]
+    evaluator["SUNDAY EVALUATOR<br/>feedback · health · continuity<br/>recommendations"]
+    gate["HUMAN GATE<br/>Rafael approves · edits · rejects<br/>approved changes → main → next run"]
+
+    reader --> worker --> evaluator --> gate
+  end
+
+  delivery --> reader
+
+  subgraph boundaries["EXPLICIT BOUNDARIES"]
+    direction LR
+    gmail["GMAIL DRAFT<br/>selected routines → draft<br/>manual send · bypasses GitHub"]
+    watch["WATCH ALERT<br/>match → queue on main → phone<br/>no story is published"]
+    sync["READ-STATE SYNC<br/>browser ↔ passkey + KV · opt-in<br/>never tunes desks"]
+    exception["BOUNDED AUTO-LEARN<br/>Evaluator may append learned preferences<br/>repeated signal or written reason<br/>all other tuning is human-gated"]
+    gmail ~~~ watch ~~~ sync ~~~ exception
+  end
+
+  gate ~~~ gmail
+
+  class memory,main control;
+  class gate human;
+  class gmail,watch,sync,exception boundary;
+  class delivery output;
+  classDef control stroke-width:2px;
+  classDef human stroke-width:2px;
+  classDef boundary stroke-dasharray:6 5;
+  classDef output stroke-width:1.5px;
