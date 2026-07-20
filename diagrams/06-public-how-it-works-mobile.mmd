@@ -1,17 +1,18 @@
 %% Narrow-screen counterpart to 06-public-how-it-works-wide.mmd.
 %% Generated SVGs add xml:space="preserve" to native text so leading tspan spaces survive.
-%%{init: {"htmlLabels":false,"flowchart":{"curve":"linear","nodeSpacing":18,"rankSpacing":25,"wrappingWidth":320}}}%%
+%% Line breaks are EXPLICIT (wrappingWidth is a never-hit ceiling) — auto-wrap orphans single words.
+%%{init: {"htmlLabels":false,"flowchart":{"curve":"linear","nodeSpacing":18,"rankSpacing":25,"wrappingWidth":360}}}%%
 flowchart TB
   subgraph make["1 · MAKE"]
     direction TB
-    research["FIVE SCHEDULED DESKS<br/>fresh sessions · prompts from main<br/>News · Sports · AI/ML<br/>Science · Deep Read<br/>registry sources · direct/proxy"]
+    research["FIVE SCHEDULED DESKS<br/>fresh sessions<br/>prompts from main<br/>News · Sports · AI/ML<br/>Science · Deep Read<br/>registry sources · direct/proxy"]
     memory["MEMORY + EDITORIAL GATE<br/>tool: exact identity + similarity<br/>REPEAT → omit<br/>Claude: material update?<br/>worth covering?"]
     research --> memory
   end
 
   subgraph release["2 · RELEASE"]
     direction TB
-    main[("VERSIONED RELEASE<br/>GITHUB MAIN<br/>Claude prose → record · lint · feed · stats<br/>prompts · policy · briefs · ledger · queues<br/>commit/push gates release")]
+    main[("VERSIONED RELEASE<br/>GITHUB MAIN<br/>Claude prose → record<br/>lint · feed · stats<br/>prompts · policy · briefs<br/>ledger · queues<br/>commit/push gates release")]
     delivery["DELIVERY<br/>Pages → homepage<br/>queue → Mac bridge → ntfy"]
     main --> delivery
   end
@@ -21,7 +22,7 @@ flowchart TB
     reader["READER INPUT<br/>vote · reason · propose"]
     worker["PRIVATE ASYNC PATH<br/>Worker queues → bridge<br/>ledger + proposals"]
     evaluator["SUNDAY EVALUATOR<br/>feedback · health · continuity<br/>recommendations"]
-    gate["HUMAN GATE<br/>Rafael approves · edits · rejects<br/>approved changes → main → next run"]
+    gate["HUMAN GATE<br/>Rafael approves · edits · rejects<br/>approved → main → next run"]
     reader --> worker --> evaluator --> gate
   end
 
