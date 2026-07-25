@@ -740,17 +740,35 @@ layout: archive
      1.06 in Anton is optically far tighter than 1.06 in Helvetica anyway — the cap fills 86% of
      the em against Helvetica's 72% — so the tightness the brief wanted is still there. Tiers that
      genuinely cannot wrap (the nameplate) go tighter, below. */
+  /* SIZED BY MODULE WIDTH, NOT VIEWPORT. `cqi` is 1% of the module's own inline size, which is
+     what actually decides whether a headline wraps — viewport never was. This collapses the
+     two-lead split into ONE rule: the dominant is ~3x a tail module's width, so it reaches the
+     clamp ceiling and a tail lead does not, without a `:nth-child` special case. Coefficients are
+     set so a 405px tail module (1440) lands on the typographer's numbers and the 1215px dominant
+     hits the cap: lead 9.4cqi -> 38px at 405 and 60px capped from 638px up; feature 8.4cqi -> 34px;
+     brief 6cqi -> 24px. `container-type: inline-size` contains inline size only, so the stretch
+     that gives modules their shared baseline is untouched. */
+  /* Containment starts at 700px, where the board first has more than one column. Below that the
+     module IS the sheet, so container width and viewport width are the same number and `cqi` buys
+     nothing — and it costs: `container-type:inline-size` on the single-column layout collapsed
+     every module to 1px wide (measured: domW 1, gridH 356,618 against 46,030). Inline-size
+     containment makes a box's width independent of its contents, which the one-column track could
+     not resolve. Scoped, both the win and the failure disappear. */
   .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.10; margin:0;
     text-transform:uppercase; text-wrap:balance; color:var(--ink);
     font-size:1.15rem; letter-spacing:.02em; }
-  .fcard.imp2 .fcard__hl{ font-size:clamp(22px, 2.4vw, 36px); letter-spacing:.005em; }
+  .fcard.imp2 .fcard__hl{ font-size:24px; letter-spacing:.005em; }
+  .fcard.lead .fcard__hl{ font-size:30px; letter-spacing:.005em; }
+  @media (min-width:700px){
+    .fcard{ container-type:inline-size; }
+    .fcard__hl{ font-size:clamp(15px, 6cqi, 26px); }
+    .fcard.imp2 .fcard__hl{ font-size:clamp(20px, 8.4cqi, 36px); }
+    .fcard.lead .fcard__hl{ font-size:clamp(28px, 9.4cqi, 60px); }
+  }
   /* Two lead sizes, because the spec's 52px is a SPLASH size and a tier is not a width. Applied
      flat it put 52px into a 405px tail module and wrapped rank 2's headline to SEVEN lines at
      1024-1440 — the same pinching the rail diet just fixed, arriving through type instead of
      tracks. The dominant is ~2x the width of any other module, so it gets ~1.5x the type. */
-  .fcard.lead .fcard__hl{ font-size:clamp(28px, 3.0vw, 38px); letter-spacing:.005em; }
-  .folio-grid:not(.is-filtered) > .fcard:nth-child(1).lead .fcard__hl{
-    font-size:clamp(32px, 3.9vw, 60px); }
   /* Editorials stay OFF the display face. Anton ships no italic, so `font-style:italic` on it is
      synthesised oblique — a slanted ultra-condensed grotesk, which looks like a bug. They are a
      different KIND of thing anyway, and the serif italic already says so. */
