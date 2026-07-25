@@ -51,7 +51,7 @@ layout: archive
 
 <div class="folio-board">
   <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
-  <div class="folio-grid" id="folioGrid" aria-live="polite">
+  <div class="folio-grid" id="folioGrid">
     {%- comment -%}
       Editorials are emitted AFTER the first ED_AFTER stories, not before all of them. Their old
       position was never a ranking decision: feed.editorials and feed.stories are two independent
@@ -127,7 +127,7 @@ layout: archive
     {% endif %}
     {% endfor %}
   </div>
-  <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
+  <div class="folio-empty" id="folioEmpty" role="status" aria-live="polite" hidden>No stories on that beat right now.</div>
 </div>
 {% else %}
 <p style="text-align:center; font-family:var(--sans); color:var(--muted);">No stories yet — check back after the next brief.</p>
@@ -393,12 +393,19 @@ layout: archive
      that rank. It also punished editorial improvement: shortening headlines to real
      front-page length moved measured maxGap from 186 to 435, because short cards flip the
      pair-chooser's notch penalty and only short cards can then fill the notches it cuts.
-     Grid instead: DOM order IS reading order at every width, and because a grid row is as tall as
-     its tallest cell, cards in a row share a baseline — the band alignment the design wants, for
-     free, with no JS and nothing to keep in sync. The single-column case is not a special case,
-     it is the base case. */
+     Grid instead: DOM order IS reading order at every width, with no JS and nothing to keep in
+     sync. The single-column case is not a special case, it is the base case.
+     `align-items` is left at its `stretch` default ON PURPOSE, and it needs `.fcard__in{height:100%}`
+     to do anything: the border and background live on the inner element, so stretching the grid
+     ITEM alone moves nothing visible. Measured with `start`: 27 of 27 multi-card rows had ragged
+     panel bottoms, and row 2 at 1440 (two ~200px folded editorials beside a ~700px lead) left
+     roughly 480px of bare paper across two columns — a bigger hole than the 294px the masonry
+     packer left. Total page height is identical either way, since a row is as tall as its tallest
+     card regardless; stretch only decides whether that space reads as designed or as broken.
+     The real fix is composition — a 200px card should not share a band with a 700px one — which
+     is the dominant-module work, not this property. */
   .folio-grid{
-    display:grid; gap:20px; grid-template-columns:1fr; align-items:start;
+    display:grid; gap:20px; grid-template-columns:1fr;   /* align-items: stretch (default) */
   }
   /* 700px, not ~676: the old engine's threshold came out of `grid.clientWidth`, which is the
      viewport minus the board's 24px inset. Measured 1->2 columns between 690 and 700. */
@@ -410,6 +417,11 @@ layout: archive
   .folio-grid.on .fcard{ margin:0; }
 
   .fcard{ min-width:0; }
+  /* The grid stretches the ITEM; this hands that height to the element that actually paints the
+     card, so panel bottoms land on the row's shared baseline. `.fcard__line{margin-top:auto}`
+     keeps the footer pinned, so the slack opens above it, inside the border — measured: the
+     footer sits 21px off the panel bottom in every mode, unchanged. */
+  .fcard__in{ height:100%; box-sizing:border-box; }
   .fcard__in{ background:var(--card); border:1px solid var(--hair); padding:16px 16px 15px;
     display:flex; flex-direction:column; gap:9px; transition:transform .18s ease, box-shadow .18s ease; }
   .fcard.lead .fcard__in{ padding:22px 22px 20px; border-top:3px solid var(--accent); }
@@ -472,10 +484,16 @@ layout: archive
   .fcard__sum{ font-family:var(--serif); margin:0; color:var(--ink); opacity:.9; font-size:1rem; line-height:1.5; }
   .fcard.lead .fcard__sum{ font-size:1.05rem; }
   /* .span2 / column-count on the summary is GONE with the packer that set the class. Every card
-     occupies exactly one grid column for now: making leads `grid-column: span 2` needs either
-     `grid-auto-flow: dense` (which reorders visually, breaking rank == position) or accepting
-     holes when a span does not fit the remaining tracks. The dominant module is a deliberate
-     design decision for the band-projection stage, not a side effect of a span class. */
+     occupies exactly one grid column FOR NOW — and that is a design deferral, not a CSS limit.
+     An earlier version of this comment claimed spanning needs `grid-auto-flow: dense` (which
+     reorders to pack, breaking rank == position) or else leaves holes. Both are avoidable:
+     place the first N items explicitly with `grid-area` and let the tail auto-place. Verified —
+     a `grid-area: 1 / 2 / 3 / 4` dominant module in a 3-track grid leaves cell 1/1 occupied, no
+     dense, DOM order intact, dominant at ~5x the area of rank 2. Filtered states collapse back to
+     uniform cells with one rule (`.is-filtered > .fcard{ grid-area:auto }`), which is also what
+     keeps a placement manifest from needing slot machinery.
+     NEVER use `grid-auto-flow: dense` or `order:` here: both reorder to pack, which is exactly
+     the property deleting the masonry packer bought back. */
 
   /* the writers' "Why it matters" paragraph — kept as its own labelled block, like on the briefs */
   .fcard__why{ font-family:var(--serif); margin:0; font-size:.95rem; line-height:1.5; color:var(--ink);
