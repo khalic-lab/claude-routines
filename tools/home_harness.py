@@ -160,7 +160,18 @@ body{ background:var(--paper); color:var(--ink); font-family:var(--serif); margi
    ~100px, which is enough to change how many text columns fit and how many lines a headline
    wraps to; every wide-width number taken before this was measuring a narrower page than
    readers see. */
-.wrap{ max-width:1680px; margin:0 auto; padding:0 22px; }
+/* `#main.wrap` — the wrapper carries production's ID as well as the harness class, and that is
+   load-bearing rather than decorative. The layout styles the front page's outer box through
+   `.layout--home #main` (max-width, and since 2026-07-25 the top padding that produced the dead
+   band Rafael reported); with only a `.wrap` class here, none of those rules matched and the
+   harness could not see the page's top geometry at all — it measured a box production does not
+   have. The fourth blindness of this kind, after the image slot, the tier legend and the header.
+   Specificity is deliberate: `#main.wrap` is (1,1,0), so it beats BOTH the theme's `#main`
+   padding-inline and nothing else, while `.layout--home #main` — also (1,1,0) but declared later,
+   since home.html's <style> is emitted after these tokens — still wins for the properties the
+   layout actually sets. So the inline padding stays the harness's measured 22px and the vertical
+   padding comes from the layout under test, which is exactly the split we want. */
+#main.wrap{ max-width:1680px; margin:0 auto; padding:0 22px; }
 /* `.harness-doc` is deliberately UNSTYLED — it models `.initial-content` and its whole job is to
    be a flex item with non-auto cross margins. See the note where it is emitted in main(). */
 </style>"""
@@ -388,13 +399,13 @@ def card(s):
     if _hl[-1:] in ('"', "'", "\u201d", "\u2019"):     # a headline may close on a quote
         _hl = _hl[:-1]
     dot = "" if _hl[-1:] in ("?", "!", ".") else " fcard__hl--dot"
+    # mirrors the layout: since the 2026-07-25 fold ruling every tier hides its body when folded,
+    # so More is emitted wherever there IS a body. Still "only where it reveals something" — the
+    # old deck-or-brief condition existed only because a deckless lead used to stay open.
     more = ('<button class="fcard__more" type="button" aria-expanded="true">'
             '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
-            # mirrors the layout: More is emitted only where it reveals something — a deck card
-            # (body hidden) or a brief (body + why hidden). A deckless lead/feature already shows
-            # everything folded, so it gets no button.
             '<span>More</span></button>'
-            if s["summary"] and (s.get("deck") or s["importance"] == 1) else "")
+            if s["summary"] else "")
     deck = '<p class="fcard__deck">%s</p>' % e(s["deck"]) if s.get("deck") else ""
     # placed exactly where swapImage() places it: after the deck when there is one, else after the
     # headline — never above the headline, which is the whole point of the 2026-07-25 fix.
@@ -637,7 +648,7 @@ def main():
     page = """<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>home harness</title>%s%s
 <body class="layout--home">
-<div class="harness-doc"><div class="wrap">%s
+<div class="harness-doc"><div class="wrap" id="main">%s
 <div class="folio-filters" id="folioFilters"><span class="ff-lbl">Beat</span>
 <button class="ff-chip ff-all" type="button" data-topic="" aria-pressed="true">All <span class="ff-ct">%d</span></button>
 %s<span class="ff-read" role="group" aria-label="Read state"><button class="ff-rbtn" type="button" data-rs="" aria-pressed="true">All</button><button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button><button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button></span>%s%s</div>

@@ -185,10 +185,12 @@ layout: archive
           module diet only briefs had this button and their body was hidden, so its position was
           invisible; now every tier carries one and putting it under the headline interrupted the
           one flow the page most needs to keep. {%- endcomment -%}
-        {%- comment -%} Only where it DOES something. Since the clamps were removed a lead or feature
-          without a deck already shows its whole body folded, so its More button toggled nothing —
-          a control that does nothing is worse than no control. {%- endcomment -%}
-        {% if s.summary != "" and s.deck or s.importance == 1 and s.summary != "" %}<button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>{% endif %}
+        {%- comment -%} Only where it DOES something — still true, and now true of every card that
+          has a body. Under the 2026-07-25 fold ruling `.fcard.is-folded .fcard__sum` hides the body
+          on EVERY tier, so any card carrying a summary has something to reveal. The narrower
+          deck-or-brief condition existed because a deckless lead used to show its whole body while
+          folded, which made its button inert; that is no longer the case. {%- endcomment -%}
+        {% if s.summary != "" %}<button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>{% endif %}
         <div class="fcard__line">
           {% if s.affiliation_label %}<span class="fcard__src"><span class="fcard__aff">{{ s.affiliation_label }}</span> · {{ s.source_domain }}</span>{% else %}<span class="fcard__src">{{ s.source_domain }}</span>{% endif %}
           {% if s.fresh and s.importance > 1 %}<span class="fcard__fresh">Just in</span>{% endif %}
@@ -542,6 +544,20 @@ layout: archive
     .layout--home .page__title{ position:absolute; width:1px; height:1px; margin:-1px;
       overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
     .layout--home .home-tagline, .layout--home .hiw-open:not(.hiw-open--rail){ display:none; }
+    /* THE DEAD BAND ABOVE THE SHEET, and every pixel of it was ours. Measured on the deployed
+       page at 1440 before this rule: the first card began 135px down, made of
+       `#main` padding-top 1.6em = 35.2px, `.folio-filters` margin-top 1.4em = 30.8px, the 47px
+       bar, and the board's own 22px padding — 88px of pure spacing for a 47px control.
+       Both margins are leftovers from things that no longer exist here. The `#main` padding was
+       added when `.masthead` was hidden (2026-07-11), to give the CENTERED nameplate air; the
+       nameplate is in the rail now. The bar's top margin separated it from the tagline and the
+       How-this-works button, both retired above. Nothing is being tightened for its own sake —
+       these were spacing FOR elements, and the elements are gone.
+       The bar is `position:sticky; top:0`, so this only changes where the page opens; scrolled,
+       it pins flush regardless. Below 1280 the centered header still exists and keeps its air. */
+    .layout--home #main{ padding-top:8px; }
+    .folio-filters{ margin-top:0; }
+    .folio-board{ padding-top:14px; }
   }
 
   .folio-board{ position:relative; padding:22px 0 10px; }
@@ -665,7 +681,21 @@ layout: archive
      rather than a second column. Fixed px, not rem, so the root ladder can never re-inflate it. */
   @media (min-width:1280px){
     .folio-board{ display:grid; grid-template-columns:180px minmax(0,1fr); }
-    .folio-rail{ display:block; grid-column:1; align-self:start; position:sticky; top:64px;
+    /* THE RAIL SCROLLS ON ITS OWN. It was already `position:sticky`, which is why it stayed put,
+       but a sticky box taller than the viewport is not a scrollable box — it pins at the top and
+       everything past the fold is simply unreachable. Measured at 1440x1300: the rail is 1574px
+       tall against a 1300px viewport, so the bottom of the tier index and the How-this-works
+       trigger could not be reached at all without scrolling the whole sheet past them.
+       `max-height` + `overflow-y:auto` gives it a scroll container of its own, so it stays
+       visible while the sheet scrolls and scrolls internally only when it does not fit.
+       `top:55px` clears the sticky control bar exactly — that bar is `top:0` and 47px tall here,
+       so 55 leaves 8px of air rather than the old 64px guess. The max-height subtracts the same
+       offset plus a bottom gap, which is what keeps the last rail item on screen.
+       `overscroll-behavior:contain` stops a flick inside the rail from chaining into the page and
+       scrolling the sheet out from under the reader once the rail hits its end. */
+    .folio-rail{ display:block; grid-column:1; align-self:start; position:sticky; top:55px;
+      max-height:calc(100vh - 71px); overflow-y:auto; overscroll-behavior:contain;
+      scrollbar-width:thin;
       padding:0 20px 24px 0; border-inline-end:1px solid var(--rule); }
     .folio-grid{ grid-column:2; }
     /* The bar stops repeating the beat chips once the rail carries them — the SAME buttons are
@@ -1027,7 +1057,20 @@ layout: archive
   /* A deck card folds to headline + deck + why; More reveals the body. This is a whole-element
      fold, not a crop — the deck is a complete, writer-budgeted sentence or two and the body is
      hidden entire, so no sentence is severed and no ellipsis is printed. */
-  .fcard[data-deck].is-folded .fcard__sum{ display:none; }
+  /* EVERY LEAD AND FEATURE FOLDS ITS BODY — owner ruling, 2026-07-25, superseding "the splash
+     carries its whole story". Rafael has now read that live and wants the mock's density: a front
+     page is an index of the day, and a module that prints 600 words is a page, not an index entry.
+     So the fold is no longer conditional on a deck. Folded, a card is
+        headline + [deck] + image + why + More
+     and `summary` — the recorded display_body — is what More reveals. This was already the rule
+     for deck-bearing cards; it now applies to the 76 of 80 that have no deck yet, which is where
+     the wall of text was coming from.
+     NEVER-CROP HOLDS, and this is the distinction that keeps it: the body is hidden ENTIRE, as one
+     element. No sentence is severed, no ellipsis is printed, and one click restores it — which is
+     exactly what the brief tier has always done. A clamp would be a crop; this is disclosure.
+     "Why it matters" deliberately stays visible: it is the one line that says why the story is on
+     the page at all, so it is index copy rather than body copy. */
+  .fcard.is-folded .fcard__sum{ display:none; }
   .fcard__deck{ font-family:var(--serif); margin:0; color:var(--ink); font-size:1.05rem;
     line-height:1.45; }
   .fcard.lead .fcard__deck{ font-size:1.15rem; line-height:1.4; }
