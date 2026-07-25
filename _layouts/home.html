@@ -466,6 +466,46 @@ layout: archive
      viewport minus the board's 24px inset. Measured 1->2 columns between 690 and 700. */
   @media (min-width:700px){  .folio-grid{ grid-template-columns:repeat(2,1fr); } }
   @media (min-width:1024px){ .folio-grid{ grid-template-columns:repeat(3,1fr); } }
+
+  /* THE COMPOSED TOP BAND (2026-07-25). D-II is decided: keep all 80 stories, compose only the
+     top. The mock's ~8-12 prominent modules describe its FIRST SCREEN, not a story cap, and
+     discarding stories is an editorial decision nobody has taken. So ranks 1-3 get an explicit
+     grid-area and every module after them auto-places as a uniform ranked cell.
+     WHY THE FIRST THREE AND NOT JUST THE DOMINANT: without `grid-auto-flow:dense` the
+     auto-placement cursor only moves forward, so a single explicitly-placed spanning module leaves
+     the cells BEFORE it permanently empty. Placing 1-3 makes the tail start cleanly at row 3 with
+     no holes and no reordering. Measured at 1200px / 3 columns: rank1 799x358 at (400,0), rank2
+     400x140 at (0,0), rank3 400x218 at (0,140), rank4 at (0,358) — no skipped cell, DOM order
+     1..10 intact, `dense` never used.
+     At <700px there is one column and NO placement rule exists at all: spanning is meaningless at
+     one track, so it is absent rather than neutralised. That single column is the base case and
+     the no-JS case, not a fallback. */
+  @media (min-width:700px){
+    /* two columns: the dominant is a full-width band. Upper-right needs three tracks to READ as
+       dominant — at two it is half the width, which is not dominance, and it would seat rank 1 to
+       the right of ranks 2-3 with no size compensation to justify it. */
+    .folio-grid:not(.is-filtered) > .fcard:nth-child(1){ grid-area:1 / 1 / 2 / 3; }
+    .folio-grid:not(.is-filtered) > .fcard:nth-child(2){ grid-area:2 / 1 / 3 / 2; }
+    .folio-grid:not(.is-filtered) > .fcard:nth-child(3){ grid-area:2 / 2 / 3 / 3; }
+  }
+  @media (min-width:1024px){
+    /* three columns: the mock's shape — dominant upper-RIGHT, two bands tall, 5.1x the area of
+       rank 2. A top-left reading sweep therefore meets rank 2 first; that is the point of a
+       splash, which wins by size rather than position, and DOM order stays 1,2,3 for AT. */
+    .folio-grid:not(.is-filtered) > .fcard:nth-child(1){ grid-area:1 / 2 / 2 / 4; }
+    .folio-grid:not(.is-filtered) > .fcard:nth-child(2){ grid-area:1 / 1 / 2 / 2; }
+  }
+  /* The dominant module sets its body in two text columns, as a CSS consequence of its span. This
+     is what the deleted packer's `.span2` class used to do from JS, and it still earns its keep:
+     it roughly halves the module's height and keeps the measure readable across 8 of 12 tracks. */
+  @media (min-width:700px){
+    .folio-grid:not(.is-filtered) > .fcard:nth-child(1) .fcard__sum{ column-count:2; column-gap:28px; }
+  }
+  /* Filtering and baked placement collide: hide rank 1 and its named cell empties. So the whole
+     projection is scoped to `:not(.is-filtered)` and apply() sets that class whenever a beat or
+     read filter is active — filtered states fall back to uniform ranked modules in rank order.
+     This is also the answer to the presentation-manifest question: a manifest can only ever
+     describe the UNFILTERED default composition, so it never needs slot machinery. */
   /* No-JS and pre-JS are now the SAME layout as with JS, so the old `:not(.on)` fallback that
      centred cards in a 44em measure is gone: there is no longer a placement step to fall back
      from. `.on` is still set by the script and still gates the interactive skins. */
@@ -858,6 +898,11 @@ layout: archive
   function apply(){
     var shown = 0;
     cards.forEach(function(c){ var m = matches(c); c.style.display = m ? '' : 'none'; if (m) shown++; });
+    /* The composed top band is placed by explicit grid-area on ranks 1-3, which only makes sense
+       for the unfiltered feed: hiding rank 1 would leave its named cell empty. This one class is
+       the whole mechanism — filtered states fall back to uniform ranked modules. It is also the
+       ONLY layout thing any JS still does, and it is a class toggle, not a measurement. */
+    grid.classList.toggle('is-filtered', !!(active.size || readState));
     var onBeat = active.size ? ' on that beat' : '';
     empty.textContent = readState === 'unread' ? 'All caught up — nothing unread' + onBeat + '.'
                       : readState === 'read'   ? 'Nothing read yet' + onBeat + '.'
