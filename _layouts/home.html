@@ -110,9 +110,14 @@ layout: archive
           <span class="fcard__rank" data-imp="{{ s.importance }}">{% case s.importance %}{% when 3 %}Lead{% when 2 %}Feature{% else %}Brief{% endcase %}</span>
         </div>
         <h2 class="fcard__hl">{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.headline }}</a>{% else %}{{ s.headline }}{% endif %}</h2>
-        {% if s.importance == 1 and s.summary != "" %}<button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>{% endif %}
         {% if s.summary != "" %}<p class="fcard__sum">{{ s.summary }}</p>{% endif %}
         {% if s.why and s.why != "" %}<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>{{ s.why }}</p>{% endif %}
+        {%- comment -%} After the prose, not between headline and body: the clamp ends in an
+          ellipsis and "More" is the thing that continues it, so it belongs at the cut. Before the
+          module diet only briefs had this button and their body was hidden, so its position was
+          invisible; now every tier carries one and putting it under the headline interrupted the
+          one flow the page most needs to keep. {%- endcomment -%}
+        {% if s.summary != "" %}<button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>{% endif %}
         <div class="fcard__line">
           {% if s.affiliation_label %}<span class="fcard__src"><span class="fcard__aff">{{ s.affiliation_label }}</span> · {{ s.source_domain }}</span>{% else %}<span class="fcard__src">{{ s.source_domain }}</span>{% endif %}
           {% if s.fresh and s.importance > 1 %}<span class="fcard__fresh">Just in</span>{% endif %}
@@ -139,9 +144,9 @@ layout: archive
           <span class="fcard__rank" data-imp="ed">AI editorial</span>
         </div>
         <h2 class="fcard__hl">{{ e.title }}</h2>
-        <button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>
         <p class="fcard__eddisc">Opinion, written by the desk's AI — a synthesis across the week's sourced stories, not itself sourced reporting.</p>
         {% for p in e.paras %}<p class="fcard__edp">{{ p }}</p>{% endfor %}
+        <button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>
         <div class="fcard__line">
           <span class="fcard__date">{{ e.date_label }}</span>
           <button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read" title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></button>
@@ -723,18 +728,51 @@ layout: archive
   .fcard__why-lbl{ display:block; font-family:var(--sans); font-weight:700; font-size:.56rem;
     text-transform:uppercase; letter-spacing:.13em; color:var(--accent); margin-bottom:2px; }
 
-  /* Brief-tier fold: minor stories start collapsed to their headline; the full text is always
-     authored and always in the DOM (no-JS renders it) — the fold is presentation, never a crop. */
-  .fcard__more{ display:none; align-items:center; gap:5px; background:transparent; border:0; padding:0;
-    font-family:var(--sans); font-weight:700; font-size:.6rem; text-transform:uppercase;
+  /* THE MODULE DIET (2026-07-25). EVERY tier folds now, not only briefs, and the fold is a CLAMP
+     for leads and features rather than a hide. The full text is always authored and always in the
+     DOM, so no-JS renders all of it — the fold is presentation, never a crop.
+     Why: a lead module carrying its whole ~200-word summary measured 1533-1722px tall in one
+     track, and that single fact defeated every composition attempt on this page. It made the
+     mobile lead card ~1000px, it stretched a two-row dominant module to 3282px with ~2400px of
+     void, it left 1418px of slack in tail bands, and it forced rank 2 into a seven-line headline
+     because a narrow full-length neighbour dictated the band height. Clamping is upstream of all
+     of them.
+     Per tier, deliberately unequal: a lead earns more of its story on the front page than a
+     feature, and "Why it matters" is the desk's own voice, so it is clamped last and least. */
+  .fcard__more{ display:inline-flex; align-items:center; gap:5px; background:transparent; border:0;
+    padding:0; font-family:var(--sans); font-weight:700; font-size:.6rem; text-transform:uppercase;
     letter-spacing:.13em; color:var(--muted-ui); cursor:pointer; align-self:flex-start; }
-  .fcard[data-imp="1"] .fcard__more,
-  .fcard--ed .fcard__more{ display:inline-flex; }
   .fcard__more:hover{ color:var(--accent); }
   .fcard__more svg{ width:10px; height:10px; fill:none; stroke:currentColor; stroke-width:2.4;
     stroke-linecap:round; stroke-linejoin:round; transition:transform .15s; }
   .fcard:not(.is-folded) .fcard__more svg{ transform:rotate(180deg); }
-  .fcard.is-folded .fcard__sum, .fcard.is-folded .fcard__why{ display:none; }
+  /* Briefs stay headline-forward: body hidden outright, which is what "brief" means here. */
+  .fcard[data-imp="1"].is-folded .fcard__sum,
+  .fcard[data-imp="1"].is-folded .fcard__why{ display:none; }
+  /* Leads and features show the TOP of the story. line-clamp, following the editorial teaser's
+     precedent below, because it cuts on a line boundary and marks the cut with an ellipsis — a
+     bare max-height cut reads as prose that merely stopped. */
+  .fcard[data-imp="3"].is-folded .fcard__sum,
+  .fcard[data-imp="2"].is-folded .fcard__sum,
+  .fcard[data-imp="3"].is-folded .fcard__why,
+  .fcard[data-imp="2"].is-folded .fcard__why{
+    display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; }
+  .fcard[data-imp="3"].is-folded .fcard__sum{ -webkit-line-clamp:5; line-clamp:5; }
+  .fcard[data-imp="2"].is-folded .fcard__sum{ -webkit-line-clamp:3; line-clamp:3; }
+  /* NOTE, so this is not read as a bug later: `line-clamp` counts lines per FRAGMENT, and the
+     dominant module's body is two text columns. So the same `5` that clamps a one-track lead to
+     five lines gives the splash up to ten — measured at 1440, dominant summary 381px against a
+     one-track lead's 173px, i.e. the splash currently shows its whole summary and the tail does
+     not. That is the right editorial outcome (a splash carries its story) and it is why there is
+     no separate rule here; if the dominant ever needs a different budget, set it explicitly rather
+     than changing this 5 and moving both. Chrome also computes `display` to `flow-root` rather
+     than the `-webkit-box` declared above — the modern spec'd path — which is why the pair of
+     properties is still needed for older engines. */
+  /* +1 on the why: `.fcard__why-lbl` is a BLOCK span at .56rem, so it consumes one line box of the
+     clamp. Clamp 4 renders the label plus three lines of the desk's text, clamp 3 the label plus
+     two. Counting the label is why these numbers look one larger than the spec. */
+  .fcard[data-imp="3"].is-folded .fcard__why{ -webkit-line-clamp:4; line-clamp:4; }
+  .fcard[data-imp="2"].is-folded .fcard__why{ -webkit-line-clamp:3; line-clamp:3; }
   /* Editorials fold too, and they are the reason the fold exists at all now: unfolded, the two
      of them measured 4104px stacked at 390px wide — the first NEWS story began 4355px down, over
      five phone screens. `.fcard__edp` is a different class from `.fcard__sum`, so the rule above

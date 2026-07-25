@@ -260,7 +260,8 @@ def card(s):
           if s.get("url") else e(s["headline"]))
     more = ('<button class="fcard__more" type="button" aria-expanded="true">'
             '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
-            '<span>More</span></button>' if s["importance"] == 1 and s["summary"] else "")
+            # every tier folds since the module diet — mirrors `{% if s.summary != "" %}`
+            '<span>More</span></button>' if s["summary"] else "")
     summ = '<p class="fcard__sum">%s</p>' % e(s["summary"]) if s["summary"] else ""
     why = ('<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>%s</p>' % e(s["why"])
            if s.get("why") else "")
@@ -275,7 +276,7 @@ def card(s):
 <div class="fcard__in" style="--tc:%(color)s">
 <div class="fcard__top"><span class="fcard__beat" title="%(stream)s · %(dlabel)s"><span class="ff-dot"></span>%(tlabel)s</span><span class="fcard__rank" data-imp="%(imp)s">%(rank)s</span></div>
 <h2 class="fcard__hl">%(hl)s</h2>
-%(more)s%(summ)s%(why)s
+%(summ)s%(why)s%(more)s
 <div class="fcard__line"><span class="fcard__src">%(src)s</span>%(fresh)s<span class="fcard__date">%(dlabel)s</span>%(readbtn)s</div>
 <div class="fcard__fb" data-story="%(id)s" data-brief="%(date)s-%(stream)s">
 <button class="ffb-t" type="button" data-v="1" aria-label="Useful">%(svg)s</button>
@@ -352,11 +353,11 @@ def ed_card(e):
             '<span class="fcard__beat"><span class="ff-dot"></span>%s</span>'
             '<span class="fcard__rank" data-imp="ed">AI editorial</span></div>'
             '<h2 class="fcard__hl">%s</h2>'
+            '<p class="fcard__eddisc">Opinion, written by the desk\'s AI — a synthesis across '
+            'the week\'s sourced stories, not itself sourced reporting.</p>%s'
             '<button class="fcard__more" type="button" aria-expanded="true">'
             '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
             '<span>More</span></button>'
-            '<p class="fcard__eddisc">Opinion, written by the desk\'s AI — a synthesis across '
-            'the week\'s sourced stories, not itself sourced reporting.</p>%s'
             '<div class="fcard__line"><span class="fcard__date">%s</span>'
             '<button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read"'
             ' title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true">'
