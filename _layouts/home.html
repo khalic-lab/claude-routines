@@ -823,6 +823,13 @@ layout: archive
   /* Briefs stay headline-forward: body hidden outright, which is what "brief" means here. */
   .fcard[data-imp="1"].is-folded .fcard__sum,
   .fcard[data-imp="1"].is-folded .fcard__why{ display:none; }
+  /* CONTENT-DEPENDENT, ON PURPOSE — revisit the 8+4 upper-right split if module text shrinks
+     editorially. The full-width band wins today because a full-text module in one track is
+     ~1500px tall, so the splash could not share a band without inheriting a void. A writer-authored
+     `deck` (1-2 complete sentences for the front page, full body behind More — the Guardian
+     trailText pattern) would cut folded module height at the source and put the upper-right
+     dominant back in the arithmetic. That is an editorial-surface decision, not a layout one; this
+     comment exists so the next person re-runs the numbers instead of assuming the band is settled. */
   /* NO MID-TEXT CLAMPS ANYWHERE. Owner ruling, 2026-07-25: never crop text. Lead and feature
      summaries and every "Why it matters" carried a line-clamp here; all of it is gone and the full
      prose is back.
@@ -1167,7 +1174,7 @@ layout: archive
   filters.querySelectorAll('.ff-chip').forEach(function(chip){
     chip.addEventListener('click', function(){
       var key = chip.dataset.topic;
-      if (!key) active.clear();
+      if (!key){ active.clear(); held = []; }   // All replaces: held keys go too, so it propagates
       else if (active.has(key)) active.delete(key); else active.add(key);
       sync(); apply(); recordPrefsChange();
     });
@@ -1179,7 +1186,15 @@ layout: archive
      BOTH the local truth and the sync shadow; it merges whole-object by ts (higher ts wins) —
      the selection is one complete statement of intent, so it REPLACES rather than merges
      (dropping a beat, or going back to All, propagates). Signed out = local only; a later
-     sign-in pushes it up. Chip keys absent from this page are ignored, never lost. ---- */
+     sign-in pushes it up.
+     HELD KEYS. The old comment here claimed "chip keys absent from this page are ignored, never
+     lost". They were ignored for painting, correctly, but they were NOT preserved: the next write
+     serialised `Array.from(active)`, and `active` only ever holds keys that exist as chips TODAY.
+     So a beat selected on a day when it had stories was silently dropped from the roamed set the
+     first time you touched a chip on a day when it did not. `held` now carries them through.
+     The exception is the All chip, and it is deliberate: All is a complete statement of intent
+     ("show me everything"), so it clears held keys too and propagates as an empty set. Individual
+     chip toggles merge, All replaces — which is what makes "back to All" still cross devices. ---- */
   var TP_KEY = 'topicPrefs:v1';
   var chipKeys = {};
   filters.querySelectorAll('.ff-chip').forEach(function(c){ if (c.dataset.topic) chipKeys[c.dataset.topic] = 1; });
@@ -1195,8 +1210,10 @@ layout: archive
       x.setAttribute('aria-pressed', x.dataset.rs === readState ? 'true' : 'false');
     });
   }
+  var held = [];                            // roamed beats with no chip on today's page
   function seedActiveFromPrefs(){
     active.clear();
+    held = topicPrefs.topics.filter(function(k){ return !chipKeys[k]; });
     topicPrefs.topics.forEach(function(k){ if (chipKeys[k]) active.add(k); });
     readState = validRs(topicPrefs.rs);
     paintReadBtns();
@@ -1218,11 +1235,24 @@ layout: archive
       method: 'POST', keepalive: true,
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.token },
       body: JSON.stringify({ topics: topicPrefs.topics, rs: topicPrefs.rs, ts: topicPrefs.ts })
-    }).then(function(r){ if (r.status === 401) sessionDied('session expired — sign in again'); })
-      .catch(function(){ tpPending = true; });   // offline — retry on the next flush trigger
+    }).then(function(r){
+      if (r.status === 401){ sessionDied('session expired — sign in again'); return; }
+      // Any other non-2xx was silently swallowed: roaming simply stopped, with nothing on screen
+      // and no retry. Say it, and keep it pending so the next trigger retries.
+      if (!r.ok){ tpPending = true; saySync('beat sync failed (' + r.status + ')'); }
+    }).catch(function(){ tpPending = true; });   // offline — retry on the next flush trigger
   }
+  var TOPIC_CAP = 50;                       // worker.js rejects >50 with a 400, it does not clamp
   function recordPrefsChange(){             // every chip/read-toggle click stamps a fresh ts + schedules a push
-    topicPrefs = { topics: Array.from(active), rs: readState, ts: Date.now() };   // active is a Set — Array.from, NOT slice.call
+    // active is a Set — Array.from, NOT slice.call. Held keys ride along so another device's beats
+    // survive a day when they have no stories here; the All chip empties `held` before calling in.
+    var topics = Array.from(active).concat(held).filter(function(k, i, a){ return a.indexOf(k) === i; });
+    // Cap CLIENT-SIDE. The Worker 400s above 50 rather than clamping, and a 400 was being swallowed
+    // (see flushTopics), so overflow used to mean roaming just stopped with nothing said. Chips on
+    // this page are ~13, so only accumulated held keys can approach this — which is exactly the
+    // path that had no bound before.
+    if (topics.length > TOPIC_CAP) topics = topics.slice(0, TOPIC_CAP);
+    topicPrefs = { topics: topics, rs: readState, ts: Date.now() };
     saveTopicPrefs();
     pushTopics();
   }
