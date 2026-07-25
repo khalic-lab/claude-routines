@@ -97,7 +97,15 @@ def _extract_tokens():
         raise SystemExit("home_harness: no <style> block in %s" % src)
     return "".join(blocks) + """<style>
 body{ background:var(--paper); color:var(--ink); font-family:var(--serif); margin:0; }
-.wrap{ max-width:1236px; margin:0 auto; padding:0 12px; }
+/* Production's wrapper chain, measured off the live DOM at a 1440 viewport:
+   .folio-board 1396 < .archive 1396 < #main 1440 (padding-inline 22px, max-width 1680)
+   < .initial-content 1440 < body.layout--home 1440.
+   So #main's box is what decides the board width, and these two values reproduce it exactly
+   (board 1396, grid 1110 at 1440 — identical to live). The old 1236/12px understated the sheet by
+   ~100px, which is enough to change how many text columns fit and how many lines a headline
+   wraps to; every wide-width number taken before this was measuring a narrower page than
+   readers see. */
+.wrap{ max-width:1680px; margin:0 auto; padding:0 22px; }
 </style>"""
 
 
@@ -302,6 +310,36 @@ def _extract_ed_after():
 ED_AFTER = _extract_ed_after()
 
 
+def _extract_rail(feed):
+    """The >=1280px rail, READ out of the layout rather than mirrored here.
+
+    Without it this harness reserved the rail's grid track and rendered NOTHING in it — roughly
+    390px of blank left margin at 1440 — and that fake defect cost a revert and a re-land on
+    2026-07-25 before a live-DOM probe showed production's rail present, 286x567, with content.
+    A harness that omits markup the layout emits does not merely fail to test it; it invents
+    defects. Extracted, so it cannot drift.
+
+    The one Liquid expression in the block is substituted from the same feed the cards come from.
+    Any OTHER tag appearing in there is a hard error: silently shipping `{{ ... }}` into the page
+    would render as literal braces and quietly change wrap widths.
+    """
+    src = os.path.join(ROOT, "_layouts", "home.html")
+    with open(src) as fh:
+        m = re.search(r'<aside class="folio-rail">.*?</aside>', fh.read(), re.S)
+    if not m:
+        raise SystemExit("home_harness: no <aside class=\"folio-rail\"> in %s — if the rail was "
+                         "renamed or removed, update this extractor deliberately" % src)
+    rail = m.group(0)
+    first = (feed.get("stories") or [{}])[0]
+    rail = re.sub(r"\{\{\s*feed\.stories\.first\.date_label\s*\}\}",
+                  html.escape(str(first.get("date_label") or "")), rail)
+    leftover = re.findall(r"\{\{.*?\}\}|\{%.*?%\}", rail, re.S)
+    if leftover:
+        raise SystemExit("home_harness: un-substituted Liquid in the rail markup: %r — add a "
+                         "substitution for it rather than rendering literal braces" % leftover)
+    return rail
+
+
 def ed_card(e):
     """Mirrors the editorial-card Liquid in _layouts/home.html (paras are pre-sanitized html)."""
     esc = lambda x: html.escape(str(x or ""))
@@ -354,10 +392,11 @@ def main():
 %s<span class="ff-read" role="group" aria-label="Read state"><button class="ff-rbtn" type="button" data-rs="" aria-pressed="true">All</button><button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button><button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button></span>%s</div>
 <div class="folio-board">
 <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
-<div class="folio-grid" id="folioGrid">%s</div>
+%s<div class="folio-grid" id="folioGrid">%s</div>
 <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
 </div></div>
 %s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, feed["count"], chips, SYNC_UI,
+               _extract_rail(feed),
                # Emission order mirrors _layouts/home.html: ED_AFTER stories, then the editorials,
                # then the rest. Keep ED_AFTER in step with the layout's `{% assign ed_after %}` —
                # this is the mirror that the published-DOM fixture is meant to retire.
