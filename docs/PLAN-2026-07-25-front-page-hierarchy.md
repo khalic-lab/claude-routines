@@ -354,7 +354,10 @@ chrome and nameplate.
 void distribution; build the row-span band exactly as amended **iff** median slack at 1440 still
 exceeds 150px. The amended no-JS requirement stands as its spec — the fine row unit is applied only
 by the span-computing JS via a class it sets, never as the stylesheet default, so an unspanned card
-can never clip or overlap — as does the tail-band drift bound: *no tail module may render visually
+can never clip or overlap. **The tail band gets its OWN grid container** — decided now rather than
+re-litigated then, because a fine `grid-auto-rows` unit applies to every item in its grid, so sharing
+one container would make the dominant's height JS-dependent and break item 1. A separate container
+keeps the top band statically placed and no-JS-exact. So does the tail-band drift bound: *no tail module may render visually
 above any module ranked more than one column ahead of it*, counted at every width and both themes.
 
 **I1 is unchanged and non-negotiable throughout.** The deleted packer's sin was deriving *position*
