@@ -11,8 +11,14 @@ Usage:
     python3 tools/home_harness.py [--out /tmp/home-harness.html]
     # then, no local Jekyll needed:
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
-        --screenshot=/tmp/home.png --window-size=1440,2800 --virtual-time-budget=8000 \
-        "file:///tmp/home-harness.html"
+        --hide-scrollbars --screenshot=/tmp/home.png --window-size=1440,2800 \
+        --virtual-time-budget=8000 "file:///tmp/home-harness.html"
+
+`--hide-scrollbars` IS PART OF THE INVOCATION, not a screenshot nicety, and this line omitted it
+until 2026-07-25 — so the documented command produced numbers no report ever quoted. Headless
+Chrome lays out a 15px classic scrollbar on this 19,000px page and takes it out of the board:
+board=1381 without the flag, 1396 with, and every width-dependent number downstream (gridH,
+slackMed, ragMax, driftMax, even `inversions`) moves with it. Quote numbers from a run with it.
 
 DRIVING IT: RESIZEOBSERVER NEVER FIRES HERE. Under `--headless=new --virtual-time-budget` Chrome
 150 delivers no resize observations at all — not even the initial one every observer gets on
@@ -61,6 +67,27 @@ exercising the passkey read-state sync engine (grep for 'SYNC'):
 Both modes also expect edread=1 (editorial cards are read-markable since 2026-07-18: the ✓
 toggles is-read and writes/clears an ed-<stream>-<date> key in homeRead:v1); -1 means no
 editorial card was in the feed window, which is only OK if homefeed.json truly has none.
+
+Last comes `#emptycheck` at 4.8s ('EMPTY'), which drives the board to ZERO visible modules the way
+a reader does — every card's ✓, then the Unread button — and asserts the empty state is actually
+on screen and sane. It exists because the failure it covers was invisible to every metric here:
+the message was wired correctly and rendered 1,651px down the page, below the rail, while the
+board the reader was looking at held nothing at all. So `topDelta` (message top minus SHEET top)
+is the number that matters, not merely `hidden=0`:
+  vis=0 hidden=0   the filter really emptied the board and the message really shows
+  topDelta<=2      it opens the sheet rather than trailing a rail-height void
+  h>0 inGrid=1     it has a line box of its own, inside the grid's own rect
+  packedEmpty=0    the 4px row unit came off, so the line is not squeezed into one track
+  restored=1 rePacked=1 reSpanned=N  clearing the filter brings the packed board back — the
+                   boot-into-empty path must not leave the pack engine disarmed
+Two extra URL modes:
+  #empty      stop at the empty state instead of restoring — this is the screenshot mode.
+  #bootempty  seed the read map + a roamed Unread filter BEFORE the layout script runs, so the
+              page boots straight into the empty board. That is the owner's actual scenario and
+              the only path where the pack engine's FIRST pass sees zero modules; `rePacked=1`
+              there is what proves clearing the filter still packs. In this mode every card starts
+              read, so the earlier probes read as expected noise (GEOM cards=0, FOLD-SKIP,
+              SYNC edread=0) — read only the EMPTY line from a #bootempty run.
 """
 import argparse
 import html
@@ -486,6 +513,24 @@ PRE_SYNC = """<script>
       localStorage.setItem('homeRead:v1', JSON.stringify(seed));
     } catch(e){}
   }
+  // BOOT INTO AN EMPTY BOARD (#bootempty) — the owner's 2026-07-25 report exactly: a roamed
+  // Unread filter plus every story already read, so the page's FIRST pack pass ever run sees zero
+  // visible modules. It is a distinct path from filtering into empty at runtime, because the pack
+  // engine is not armed yet at that point, and it is the one the `packOn` line in packRowSpans'
+  // empty branch exists for. Seeded here rather than driven later precisely because it has to be
+  // true BEFORE the layout script reads localStorage.
+  if (location.hash === '#bootempty'){
+    try {
+      var all = {}, T = Date.now();
+      Array.prototype.forEach.call(document.querySelectorAll('.fcard'), function(c){
+        var b = c.querySelector('.fcard__fb');
+        var sid = c.dataset.story || (b && b.dataset.story);
+        if (sid) all[sid] = T;
+      });
+      localStorage.setItem('homeRead:v1', JSON.stringify(all));
+      localStorage.setItem('topicPrefs:v1', JSON.stringify({ topics: [], rs: 'unread', ts: T }));
+    } catch(e){}
+  }
 })();
 </script>"""
 
@@ -533,6 +578,68 @@ setTimeout(function(){
     ' prefsCalls=' + prefsCalls + ' prefsRs=' + prefsRs + ' edread=' + edread;
   document.body.appendChild(d);
 }, 4500);
+</script>"""
+
+
+# THE EMPTY BOARD — DRIVEN THE WAY A READER REACHES IT, not by poking `hidden` directly. Marking
+# every module read through its own ✓ and then pressing Unread is the exact sequence behind the
+# 2026-07-25 owner report, and it is the only sequence that exercises setRead -> apply() ->
+# schedulePack together. A probe that set `empty.hidden = false` itself would have passed on the
+# broken page: the flag was already correct there, and the message was still off screen.
+#
+# RUNS LAST (4.8s) AND PUTS THE PAGE BACK. Every other probe here measures the full board, so this
+# one must not leave 82 modules marked read behind it — the restore is also the assertion for the
+# boot-into-empty path, where an early `return` in the pack engine used to leave `packOn` false and
+# swallow every later filter change.
+EMPTY_CHECK = """<script>
+setTimeout(function(){
+  var grid=document.getElementById('folioGrid'), empty=document.getElementById('folioEmpty');
+  var board=document.querySelector('.folio-board');
+  var cards=[].slice.call(grid.querySelectorAll('.fcard'));
+  var keep=location.hash==='#empty';        // stop at the empty state, for the screenshot
+  var boot=location.hash==='#bootempty';    // already empty at load — see PRE_SYNC
+  function emit(t){ var d=document.createElement('div'); d.id='emptycheck'; d.textContent=t;
+    document.body.appendChild(d); }
+  var noSid=0;
+  cards.forEach(function(c){
+    var fb=c.querySelector('.fcard__fb');
+    if(!(c.dataset.story||(fb&&fb.dataset.story)))noSid++;
+    if(boot)return;                          // the seeded read map already did this
+    var b=c.querySelector('.fcard__read'); if(b)b.click();
+  });
+  if(!boot)document.querySelector('.ff-rbtn[data-rs="unread"]').click();
+  setTimeout(function(){                     // apply()'s re-pack is coalesced through a timeout
+    var vis=cards.filter(function(c){return c.style.display!=='none';}).length;
+    var er=empty.getBoundingClientRect(),gr=grid.getBoundingClientRect(),br=board.getBoundingClientRect();
+    var cs=getComputedStyle(empty);
+    var out='EMPTY vis='+vis+' noSid='+noSid+' hidden='+(empty.hidden?1:0)
+      +' text="'+empty.textContent+'"'
+      +' h='+Math.round(er.height)+' w='+Math.round(er.width)
+      +' absTop='+Math.round(er.top+scrollY)
+      +' topDelta='+Math.round(er.top-gr.top)+' leftDelta='+Math.round(er.left-gr.left)
+      +' sheetTop='+Math.round(gr.top-br.top)
+      +' inGrid='+((empty.parentElement===grid&&er.top>=gr.top-1&&er.bottom<=gr.bottom+1)?1:0)
+      +' display='+cs.display+' align='+cs.alignSelf
+      +' packedEmpty='+(grid.classList.contains('packed')?1:0)
+      +' rowUnit='+getComputedStyle(grid).gridAutoRows
+      +' rs='+((document.querySelector('.ff-rbtn[aria-pressed="true"]')||{dataset:{}}).dataset.rs||'all');
+    if(keep){ emit(out+' restored=- rePacked=- reSpanned=-'); return; }
+    /* CLEARING THE FILTER IS THE OTHER HALF OF THE TEST, not just cleanup. The pack engine has to
+       be armed on the way out of an empty board — under `#bootempty` the empty pass IS the first
+       pass — so a board that comes back UNPACKED here is the regression, and every other probe on
+       this page would still be green while it happened. */
+    document.querySelector('.ff-rbtn[data-rs=""]').click();      // back to All ...
+    if(!boot)cards.forEach(function(c){ if(c.classList.contains('is-read')){
+      var b=c.querySelector('.fcard__read'); if(b)b.click(); } });   // ... and unread again
+    setTimeout(function(){
+      var back=cards.filter(function(c){return c.style.display!=='none';}).length;
+      var spanned=cards.filter(function(c){return !!c.style.gridRow;}).length;
+      emit(out+' restored='+((back===cards.length&&empty.hidden)?1:0)
+        +' rePacked='+(grid.classList.contains('packed')?1:0)+' reSpanned='+spanned
+        +' stillRead='+cards.filter(function(c){return c.classList.contains('is-read');}).length);
+    },250);
+  },300);
+},4800);
 </script>"""
 
 
@@ -800,6 +907,13 @@ def main():
     # margins, so as a direct child of the flex `<body>` it would size to fit-content and photograph
     # narrow — with no metric complaining, because nothing measures it.
     propose = _extract_block(r'<section class="propose">.*?</section>', "propose disclosure")
+    # The empty state, EXTRACTED — the mirrored copy that used to live in the template below had
+    # already drifted (it carried neither `role="status"` nor `aria-live`), and the div's POSITION
+    # is now the thing under test: it is the grid's last child, so the message opens the sheet
+    # instead of landing in the board grid's second row under a rail-height void. Spliced inside
+    # `#folioGrid` for that reason; putting it back outside would silently reproduce the bug this
+    # harness now measures.
+    empty_state = _extract_block(r'<div class="folio-empty".*?</div>', "empty state")
 
     page = """<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>home harness</title>%s%s
@@ -810,11 +924,10 @@ def main():
 %s<span class="ff-read" role="group" aria-label="Read state"><button class="ff-rbtn" type="button" data-rs="" aria-pressed="true">All</button><button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button><button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button></span>%s%s</div>
 <div class="folio-board">
 <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
-%s<div class="folio-grid" id="folioGrid">%s</div>
-<div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
+%s<div class="folio-grid" id="folioGrid">%s%s</div>
 </div>%s</div></div>
 %s
-%s%s%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, header, feed["count"], chips,
+%s%s%s%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, header, feed["count"], chips,
                SYNC_UI, LEGEND_UI,
                _extract_rail(feed),
                # Emission order mirrors _layouts/home.html: ED_AFTER stories, then the editorials,
@@ -823,8 +936,10 @@ def main():
                "".join(card(s) for s in feed["stories"][:ED_AFTER])
                + "".join(ed_card(e) for e in feed.get("editorials", []))
                + "".join(card(s) for s in feed["stories"][ED_AFTER:]),
+               empty_state,
                propose,
-               modal, PRE_SYNC, script, VOID_METRICS, GEOM_CHECK, FOLD_CHECK, SYNC_CHECK)
+               modal, PRE_SYNC, script, VOID_METRICS, GEOM_CHECK, FOLD_CHECK, SYNC_CHECK,
+               EMPTY_CHECK)
 
     with open(args.out, "w") as fh:
         fh.write(page)

@@ -234,8 +234,20 @@ layout: archive
     {% endfor %}
     {% endif %}
     {% endfor %}
+    {%- comment -%} THE EMPTY STATE IS THE LAST GRID CHILD, NOT A SIBLING OF THE BOARD (2026-07-25).
+      It sat outside `.folio-grid` until an owner report: signed in, Unread selected, every story
+      read — a full-height black void with no acknowledgment anywhere on screen. The wiring was
+      never the bug (apply() has set the text and the `hidden` flag for both filters since the read
+      filter shipped); the PLACEMENT was. At >=1280 `.folio-board` is itself a two-column grid
+      (rail | sheet), so a full-width child could only land in ROW 2 — under a rail that measures
+      1574px. Probed: board top 55, message top 1651, i.e. one screen and a half below the fold.
+      As the grid's last child it takes the sheet's own first row, so it opens the empty board.
+      LAST, and that is load-bearing: the composed top band places ranks 1-3 by `nth-child`, which
+      counts every child, so a div anywhere before the modules would shift the composition by one.
+      `role="status"` + `aria-live` stay on the element itself — it is announced when it appears,
+      wherever it sits in the DOM. {%- endcomment -%}
+    <div class="folio-empty" id="folioEmpty" role="status" aria-live="polite" hidden>No stories on this beat right now.</div>
   </div>
-  <div class="folio-empty" id="folioEmpty" role="status" aria-live="polite" hidden>No stories on that beat right now.</div>
 </div>
 {% else %}
 <p style="text-align:center; font-family:var(--sans); color:var(--muted);">No stories yet — check back after the next brief.</p>
@@ -717,7 +729,6 @@ layout: archive
     /* the filtered fallback must re-state the span: `grid-area:auto` alone would reset these
        modules to one track of twelve. */
     .folio-grid.is-filtered > .fcard{ grid-area:auto; grid-column:span 4; }
-    .folio-empty{ grid-column:1 / -1; }
   }
   /* EXPANSION GOES SIDEWAYS, NOT DOWN (owner, 2026-07-25). Opening a span-4 module and pouring
      the body into it made a 405px-wide, ~1,500px-tall ribbon that stretched its whole band and
@@ -1243,7 +1254,29 @@ layout: archive
   .hiw-open:focus-visible, .hiw__x:focus-visible, .hiw__close-end:focus-visible{
     outline:2px solid var(--accent); outline-offset:2px; }
 
-  .folio-empty{ font-family:var(--sans); color:var(--muted); text-align:center; padding:60px 0; letter-spacing:.06em; }
+  /* THE EMPTY BOARD (2026-07-25). One quiet flush-LEFT line where the first module would be, and
+     nothing else: no illustration, no centred slab, no box. The old rule centred it with 60px of
+     air, which is the web's empty-state cliche and reads as a placeholder rather than as paper.
+     A FULL SENTENCE TAKES THE SERIF VOICE. --sans/.6rem/uppercase/.14em is how this page sets
+     one- and two-word LABELS (Beat, Why it matters, the propose disclosure); a 50-character
+     sentence in that treatment shouts and stops being furniture. `.rail-note` is the precedent
+     already on the page — a sentence of quiet muted serif under a hairline — and this is the same
+     object standing in the sheet instead of the rail.
+     THE HAIRLINE IS THE MODULE RULE (--rule) because this element stands in for the module that
+     would be here: every `.fcard` paints border-block-start + border-inline-start and the
+     container closes the other two edges, so one border-block-start leaves the sheet's rule system
+     intact with nothing in it. (--frame is form-field chrome, --hair is decoration.)
+     The 18px inset is `.fcard__in`'s, so the line starts on the same vertical as every headline
+     the board would otherwise be showing.
+     `align-self:start` is structural, not cosmetic: at >=1280 the sheet stretches to the rail's
+     height, so without it this one line becomes a ~1,574px box and any height measured off it is
+     the container's, not the text's.
+     NO `display` PROPERTY MAY BE SET HERE. It would beat `[hidden]{display:none}` and paint the
+     line permanently — including with JS off, where nothing ever filters and the board is always
+     full. The element's visibility is the `hidden` attribute's job alone. */
+  .folio-empty{ grid-column:1 / -1; align-self:start;
+    font-family:var(--serif); font-size:.95rem; line-height:1.5; color:var(--muted);
+    padding:18px 18px 22px; border-block-start:1px solid var(--rule); }
   @media (prefers-reduced-motion:reduce){ .fcard__in, .fcard__fb{ transition:none; } }
 
   /* (.propose margin lives with the rest of its rules in custom.html — was split across files) */
@@ -1420,7 +1453,21 @@ layout: archive
     if (trackCount() < 2){ unpack(); return; }
     var vis = [], i;
     for (i = 0; i < cards.length; i++) if (cards[i].style.display !== 'none') vis.push(cards[i]);
-    if (!vis.length) return;
+    /* NOTHING TO MEASURE — AND THE FINE UNIT HAS TO COME OFF ANYWAY. `.packed` is a 4px
+       `grid-auto-rows` applied to every item in the grid, and with the filter empty the only item
+       left is `.folio-empty`, which carries no span (nothing but this pass writes one). It would
+       render in a single 4px track. Dropping the class hands the empty state an auto row and its
+       own height, and costs nothing else: the modules it governs are all display:none.
+       `packOn` IS SET TRUE ON THIS PATH, and that is the boot-into-empty bug rather than a
+       nicety. The reader whose roamed prefs say Unread with everything read boots straight into
+       this branch; with `packOn` left false, `schedulePack` — which is inert until a first pass
+       has run — would swallow every later filter change, and clearing the filter would leave the
+       banded grid on screen until a resize or a fold click happened to re-pack it. */
+    if (!vis.length){
+      grid.classList.remove('packed');
+      packOn = true; packW = grid.clientWidth;
+      return;
+    }
     var gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
     /* THE FINE UNIT COMES OFF FOR THE MEASUREMENT, and that is about the SCROLL POSITION rather
        than about the heights (which `align-self:start` alone decides). With every span cleared
@@ -1550,10 +1597,17 @@ layout: archive
        the filter re-place around a different set. Coalesced because a chip click can fire this
        more than once. Inert until the first pass has run — this also fires at boot, before fonts. */
     schedulePack(0);
-    var onBeat = active.size ? ' on that beat' : '';
-    empty.textContent = readState === 'unread' ? 'All caught up — nothing unread' + onBeat + '.'
-                      : readState === 'read'   ? 'Nothing read yet' + onBeat + '.'
-                      : 'No stories on that beat right now.';
+    /* THE MOST SPECIFIC TRUE SENTENCE FOR THE FILTER THAT EMPTIED THE BOARD, always complete and
+       always terminated — never a generic "no results", and never an ellipsis or a crop, which
+       this page forbids everywhere. Both filters can be on at once, so the beat clause is composed
+       into each rather than being a fourth message: "on this beat" is the narrower, truer claim
+       whenever a beat is selected, and the reader who is caught up on EVERYTHING should not be
+       told they are caught up on a beat. The bare-beat sentence is also the markup's static
+       default (see the div), so the two readings never disagree. */
+    empty.textContent =
+        readState === 'unread' ? 'All caught up — every story ' + (active.size ? 'on this beat' : 'in this edition') + ' is read.'
+      : readState === 'read'   ? 'Nothing marked read' + (active.size ? ' on this beat' : '') + ' yet.'
+      :                          'No stories on this beat right now.';
     empty.hidden = shown > 0;
   }
   filters.querySelectorAll('.ff-rbtn').forEach(function(b){
