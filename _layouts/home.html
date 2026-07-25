@@ -449,7 +449,11 @@ layout: archive
   .fcard__rank[data-imp="3"]{ background:var(--accent); color:var(--paper); }
   .fcard__rank[data-imp="2"]{ color:var(--accent); border-color:var(--accent); }
   .fcard__rank[data-imp="1"]{ color:var(--muted); border-color:var(--hair); }
-  .fcard__rank[data-imp="ed"]{ background:var(--ink); color:var(--paper); }
+  /* Outline, not a fill. A solid --ink chip measured 13.6:1 against the LEAD chip's 7.3:1, so
+     the loudest badge on the page belonged to the AI editorial — while every other change here
+     was demoting it. Outline still reads as "a different kind of thing" without out-ranking a
+     lead story. */
+  .fcard__rank[data-imp="ed"]{ background:transparent; color:var(--ink); border-color:var(--ink); }
 
   /* editorial cards — the briefs' section-level synthesis (cross-cutting threads / why-it-
      matters), surfaced here since the individual brief pages were retired (2026-07-18) */

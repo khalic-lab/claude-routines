@@ -254,7 +254,23 @@ def card(s):
     }
 
 
-ED_AFTER = 3   # keep in step with _layouts/home.html `{% assign ed_after %}`
+def _extract_ed_after():
+    """How many stories precede the editorials — READ from the layout, not mirrored.
+
+    A hand-copied `ED_AFTER = 3` with a "keep in step" comment is the same drift class the
+    palette extraction above exists to kill: the layout changes, the harness keeps splicing at
+    the old index, and every screenshot certifies an order production does not have.
+    """
+    src = os.path.join(ROOT, "_layouts", "home.html")
+    with open(src) as fh:
+        m = re.search(r"\{%-?\s*assign\s+ed_after\s*=\s*(\d+)", fh.read())
+    if not m:
+        raise SystemExit("home_harness: no `{% assign ed_after = N %}` in %s — did the "
+                         "editorial placement change shape?" % src)
+    return int(m.group(1))
+
+
+ED_AFTER = _extract_ed_after()
 
 
 def ed_card(e):
