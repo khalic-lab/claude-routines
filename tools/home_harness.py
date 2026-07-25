@@ -23,10 +23,25 @@ border-color/background/color, and this cost a round of chasing a rail-selection
 there on 2026-07-25. Inject `transition:none !important` for any such assertion, or assert on a
 property that is not transitioned.
 
-The harness appends a geometry self-check 4s after load: a `#geomcheck` div reporting
-overlapping cards and the largest column gap (grep the --dump-dom output for 'GEOM').
-`inversions` must be 0: it counts cards whose visual (row, column) position disagrees with DOM
-order, i.e. rank. The old overlaps/maxGap pair diagnosed the deleted masonry packer.
+The harness appends a geometry self-check 4s after load: a `#geomcheck` div (grep the --dump-dom
+output for 'GEOM') carrying structure, the absolute-width sanity floor, and the void metrics.
+Read them in this order:
+  upInv      MUST be 0 — no module renders above one ranked ahead of it. Under row-span packing
+             this is a structural guarantee (sparse auto-placement advances a monotone cursor),
+             so a non-zero value means something reordered.
+  inversions the OLD banded-grid order metric, kept for the banded modes. It groups row-mates by
+             a 4px top tolerance, which packing deliberately breaks, so it reads non-zero under
+             `packed=1` BY CONSTRUCTION. Diagnose with upInv, not with this.
+  slack*     inside-panel void: last painted content element to the pinned `.fcard__line`, in px.
+             Median/p90/max over every visible module. The 9px panel flex gap is its floor.
+  holes/rag  unfilled paper INSIDE a column track, and the ragged foot under the container's
+             single straight border-block-end.
+  packed/spanned/rowUnit  runtime proof the span engine ran: `spanned` counts modules carrying an
+             inline `grid-row`, which nothing but a measurement pass writes.
+A `#foldcheck` div follows at 4.2s ('FOLD'): expands a mid-page module, asserts the zero-drift
+scroll compensation still holds around the FULL re-span (`drift` ~ 0), re-reads the void metrics
+while expanded (the worst hole case — a span-8 module needs 8 contiguous tracks), then collapses
+and asserts the module is restored byte-for-byte in height.
 
 It also stubs window.fetch (no real network) and appends a `#synccheck` div at 4.5s
 exercising the passkey read-state sync engine (grep for 'SYNC'):
@@ -214,6 +229,116 @@ def _wants_image(s):
         host = m.group(1).split("@")[-1].split(":")[0].lower()
     return not re.search(r"(^|\.)arxiv\.org$", host)
 
+# THE VOID METRICS, defined ONCE and called from two states (all-folded, and with a module
+# expanded). Sideways expansion is the worst hole case on the page — a `.is-open` module needs 8
+# contiguous free tracks of twelve, and sparse placement scans DOWN for them rather than back — so
+# measuring only the resting state would miss it. One function, two call sites, no second copy of
+# the arithmetic to drift.
+VOID_METRICS = """<script>
+window.__hmVoid = function(){
+  var grid=document.getElementById('folioGrid');
+  var cards=[].slice.call(grid.querySelectorAll('.fcard')).filter(function(c){return c.style.display!=='none';});
+  var R=cards.map(function(c){return c.getBoundingClientRect();});
+  // INSIDE-PANEL SLACK — the void this whole exercise is about. `.fcard__line` is pinned to the
+  // panel foot by `margin-top:auto`, so every pixel a module is taller than its content opens
+  // between the last visible content element and that footer. Hidden elements (a folded
+  // `.fcard__sum`) have a zero rect, so walk back to the last one that actually paints.
+  // The floor is not 0 but the panel's own 9px flex gap, which is design, not void.
+  var slack=[],per=new Array(cards.length),panelGap=0;
+  cards.forEach(function(c,i){
+    var ln=c.querySelector('.fcard__line');if(!ln)return;
+    if(!panelGap)panelGap=parseFloat(getComputedStyle(c.querySelector('.fcard__in')).rowGap)||0;
+    var pv=ln.previousElementSibling;
+    while(pv&&pv.getBoundingClientRect().height===0)pv=pv.previousElementSibling;
+    if(pv){var s=ln.getBoundingClientRect().top-pv.getBoundingClientRect().bottom;slack.push(s);per[i]=s;}
+  });
+  slack.sort(function(a,b){return a-b;});
+  function pct(p){return slack.length?Math.round(slack[Math.min(slack.length-1,Math.floor(p*(slack.length-1)))]):-1;}
+  // HOLES AND RAG. Walk each column TRACK (not each card) so a spanning module counts in every
+  // track it covers: an interior hole is unfilled paper between two cards in one track — the
+  // thing sparse placement can leave when the next module is too tall for the gap and the cursor
+  // has already moved past it (`dense` would backfill it and reorder, which is banned). `rag` is
+  // the different artifact at the foot: the container paints one straight border-block-end at the
+  // tallest column, so shorter columns end above it.
+  var gs=getComputedStyle(grid),gb=grid.getBoundingClientRect();
+  var tracks=gs.gridTemplateColumns.split(' ').map(parseFloat).filter(function(v){return !isNaN(v);});
+  var colGap=parseFloat(gs.columnGap)||0,cx=gb.left+(parseFloat(gs.borderLeftWidth)||0)+(parseFloat(gs.paddingLeft)||0);
+  var centers=[];tracks.forEach(function(w){centers.push(cx+w/2);cx+=w+colGap;});
+  // CUMULATIVE DRIFT, the failure mode a per-module bound cannot see. Each module is rounded UP to
+  // a whole number of row units, so every one of them sits a sub-unit fraction lower than its
+  // content needs, and down a 28-module column those fractions add. `driftMax` is the worst
+  // column's total — the number that says whether the rounding stays a rounding or becomes a void
+  // again. The panel's own flex gap is subtracted, since that is design and not residue.
+  var holes=0,holePx=0,ragMax=0,driftMax=0,gTop=gb.top,gBot=gb.bottom;
+  centers.forEach(function(x){
+    var col=[],drift=0;
+    R.forEach(function(b,i){if(b.left<=x&&b.right>=x){col.push([b.top,b.bottom]);
+      if(per[i]!==undefined)drift+=Math.max(0,per[i]-panelGap);}});
+    col.sort(function(a,b){return a[0]-b[0];});
+    var y=gTop;
+    col.forEach(function(iv){if(iv[0]-y>2){holes++;holePx+=Math.round(iv[0]-y);}if(iv[1]>y)y=iv[1];});
+    var rag=Math.round(gBot-y);if(rag>ragMax)ragMax=rag;
+    if(drift>driftMax)driftMax=Math.round(drift);
+  });
+  // NEVER-CROP SAFETY NET. A span short by a rounding pixel must overflow, never clip: assert
+  // `overflow:visible` survives on both boxes, and report the largest measured overflow of a
+  // panel's last child past its module's own bottom edge.
+  var ovOk=1,maxOver=0;
+  cards.forEach(function(c,i){
+    var inn=c.querySelector('.fcard__in');if(!inn)return;
+    if(getComputedStyle(c).overflow!=='visible'||getComputedStyle(inn).overflow!=='visible')ovOk=0;
+    var last=inn.lastElementChild;if(!last)return;
+    var o=last.getBoundingClientRect().bottom-R[i].bottom;if(o>maxOver)maxOver=o;
+  });
+  // PROOF OF EXECUTION, produced at RUNTIME rather than by grepping the artifact for a name:
+  // `spanned` can only be non-zero if the engine measured and wrote, and `rowUnit` can only be
+  // fine if the class it is gated behind was set by that same pass.
+  return 'packed='+(grid.classList.contains('packed')?1:0)
+    +' spanned='+cards.filter(function(c){return !!c.style.gridRow;}).length
+    +' rowUnit='+gs.gridAutoRows
+    +' gridH='+Math.round(gb.height)
+    +' slackMed='+pct(0.5)+' slackP90='+pct(0.9)
+    +' slackMax='+(slack.length?Math.round(slack[slack.length-1]):-1)+' slackN='+slack.length
+    +' holes='+holes+' holePx='+holePx+' ragMax='+ragMax+' driftMax='+driftMax
+    +' ovOk='+ovOk+' maxOver='+Math.round(maxOver);
+};
+</script>"""
+
+# FOLD + ZERO-DRIFT. The More/Less control changes a module's column span AND its content height,
+# so under row-span packing it must re-span the whole grid — and the existing scroll compensation
+# has to pay back the delta measured around that FULL pass, not around the class toggle alone.
+# `drift` is what the reader feels: the clicked module's viewport-relative top must not move.
+# Also re-reads the void metrics WHILE EXPANDED (see VOID_METRICS' note) and then restores both
+# the fold state and the scroll position, so the screenshot and the sync probe see a clean page.
+FOLD_CHECK = """<script>
+setTimeout(function(){
+  var grid=document.getElementById('folioGrid');
+  var vis=[].slice.call(grid.querySelectorAll('.fcard')).filter(function(c){return c.style.display!=='none';});
+  var target=null;
+  for(var i=8;i<vis.length;i++){ if(vis[i].querySelector('.fcard__more')){ target=vis[i]; break; } }
+  var out='FOLD-SKIP no foldable module past rank 8';
+  if(target){
+    var mb=target.querySelector('.fcard__more');
+    var t0=target.getBoundingClientRect().top,h0=Math.round(target.getBoundingClientRect().height);
+    var s0=scrollY;
+    mb.click();
+    var t1=target.getBoundingClientRect().top,h1=Math.round(target.getBoundingClientRect().height);
+    var w1=Math.round(target.getBoundingClientRect().width);
+    var opened=(target.classList.contains('is-open')&&!target.classList.contains('is-folded'))?1:0;
+    var openVoid=window.__hmVoid();
+    mb.click();
+    var t2=target.getBoundingClientRect().top,h2=Math.round(target.getBoundingClientRect().height);
+    var back=(target.classList.contains('is-folded')&&!target.classList.contains('is-open')
+              &&h2===h0&&mb.getAttribute('aria-expanded')==='false')?1:0;
+    out='FOLD opened='+opened+' collapsed='+back+' drift='+Math.round(t1-t0)
+      +' backDrift='+Math.round(t2-t0)+' grew='+(h1-h0)+' openW='+w1
+      +' [open: '+openVoid+']';
+    scrollTo(0,s0);
+  }
+  var d=document.createElement('div');d.id='foldcheck';d.textContent=out;document.body.appendChild(d);
+},4200);
+</script>"""
+
 GEOM_CHECK = """<script>
 setTimeout(function(){
   // The board is CSS Grid now, so the old metrics are gone with the engine they diagnosed:
@@ -225,11 +350,25 @@ setTimeout(function(){
   var r=cards.map(function(c){var b=c.getBoundingClientRect();return{t:Math.round(b.top+scrollY),l:Math.round(b.left),h:Math.round(b.height)};});
   // Reading order for a row-major grid: sort by (row, column) and check it matches DOM order.
   // Rows are grouped by top within a tolerance, since cards in a row share a baseline.
+  // KEPT, BUT IT IS NO LONGER THE INVARIANT — see `upInv` below. This metric assumes a BANDED
+  // grid where row-mates share a top within 4px; under row-span packing (2026-07-25) tops are
+  // staggered by design, so two neighbours 4px apart in different columns sort by `left` and
+  // register as an inversion the reader can never see. A non-zero value here is the MODEL being
+  // wrong, not the layout. It stays because it still diagnoses the banded modes (no-JS, filtered,
+  // <700px) exactly as before, and deleting a metric to make a number green is how this repo
+  // shipped three green-while-broken pages.
   var order=r.map(function(x,i){return{i:i,t:x.t,l:x.l};})
              .sort(function(a,b){return (Math.abs(a.t-b.t)>4?a.t-b.t:a.l-b.l);});
   var inversions=0;for(var k=0;k<order.length;k++) if(order[k].i!==k) inversions++;
   var xs=[];r.forEach(function(x){if(xs.indexOf(x.l)<0)xs.push(x.l);});
   var rows={};r.forEach(function(x){var key=Math.round(x.t/4);rows[key]=1;});
+  // THE ORDER INVARIANT UNDER PACKING, and it is a structural guarantee rather than a tuning:
+  // sparse auto-placement advances a monotone cursor, so a card can never be placed at a row
+  // ABOVE a card earlier in DOM order. `upInv` counts violations (must be 0) and `maxUp` reports
+  // the largest upward drift in px, which is the §10 one-column drift bound measured directly.
+  var upInv=0,maxUp=0;
+  for(var i=1;i<r.length;i++){var d=r[i-1].t-r[i].t;if(d>1)upInv++;if(d>maxUp)maxUp=d;}
+  var v=window.__hmVoid();
   // ABSOLUTE WIDTH SANITY — the invariant the whole set was missing (directive, 2026-07-25).
   // On 2026-07-25 the page rendered in a 327px column at a 1440 viewport and EVERY metric here
   // passed: inversions 0, rank2 >= tail, cols 3, scrollW == innerW. All of them are ratios or
@@ -246,8 +385,9 @@ setTimeout(function(){
   var d=document.createElement('div');d.id='geomcheck';
   d.textContent=(widthSane?'GEOM':'GEOM-FAIL')
     +' widthSane='+(widthSane?1:0)+' board='+boardW+' floor='+floorW
-    +' inversions='+inversions+' cards='+cards.length+' cols='+xs.length
-    +' rows='+Object.keys(rows).length+' gridH='+Math.round(grid.getBoundingClientRect().height)
+    +' inversions='+inversions+' upInv='+upInv+' maxUp='+maxUp
+    +' cards='+cards.length+' cols='+xs.length
+    +' rows='+Object.keys(rows).length+' '+v
     +' bodyScrollW='+document.body.scrollWidth+' innerW='+innerWidth;
   document.body.appendChild(d);
   if(!widthSane){
@@ -658,7 +798,7 @@ def main():
 <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
 </div></div></div>
 %s
-%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, header, feed["count"], chips,
+%s%s%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, header, feed["count"], chips,
                SYNC_UI, LEGEND_UI,
                _extract_rail(feed),
                # Emission order mirrors _layouts/home.html: ED_AFTER stories, then the editorials,
@@ -667,7 +807,7 @@ def main():
                "".join(card(s) for s in feed["stories"][:ED_AFTER])
                + "".join(ed_card(e) for e in feed.get("editorials", []))
                + "".join(card(s) for s in feed["stories"][ED_AFTER:]),
-               modal, PRE_SYNC, script, GEOM_CHECK, SYNC_CHECK)
+               modal, PRE_SYNC, script, VOID_METRICS, GEOM_CHECK, FOLD_CHECK, SYNC_CHECK)
 
     with open(args.out, "w") as fh:
         fh.write(page)

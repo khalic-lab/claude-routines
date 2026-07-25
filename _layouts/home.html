@@ -608,6 +608,46 @@ layout: archive
   @media (min-width:700px){  .folio-grid{ grid-template-columns:repeat(2,1fr); } }
   @media (min-width:1024px){ .folio-grid{ grid-template-columns:repeat(3,1fr); } }
 
+  /* MASONRY-TIGHT PACKING — THE ROW-SPAN BAND (owner ruling, 2026-07-25; PLAN v2 section 10).
+     Two rules and 40 lines of JS, and between them they are the whole mechanism.
+
+     THE PROBLEM THEY SOLVE. A grid row is as tall as its tallest module and `align-items:stretch`
+     hands that height to every module in it, so a 200px brief beside a 900px lead carries 700px of
+     empty panel. Measured on this corpus before the change: inside-panel slack median 46px,
+     p90 406px, max 923px at 1440 (41/385/950 at 1024, 49/336/893 at 1680). Since the never-crop
+     ruling there is no clamp left to absorb that variance, so the ROW has to absorb it instead.
+
+     HOW. `grid-auto-rows` becomes a fine unit and each module spans however many of those rows its
+     own measured height needs — so a row line falls every 4px and modules stack against the one
+     above rather than against a shared band baseline. Extent only: auto-placement still takes
+     POSITION from DOM order, which is why this is not the packer that was deleted. That engine
+     derived position from packing state, so height fed back into order; this one cannot, and
+     `grid-auto-flow:dense` and `order:` remain banned for exactly that reason.
+
+     WHY IT IS GATED BEHIND A CLASS. A fine `grid-auto-rows` applies to every item in the grid,
+     including the composed top band's explicitly-placed dominant — with no span written, that
+     module renders 4px tall. So the unit is never the stylesheet default: `.packed` is added by
+     the JS only AFTER a successful measurement pass has written a span onto every module, so the
+     two always arrive together. With JS off, neither class exists and this whole block is inert:
+     the page renders today's banded grid, complete and uncropped. That is also why PLAN section 10's
+     "the tail band gets its own grid container" is not needed here — the container split existed
+     to keep the dominant's height off the JS path, and the class gate does that for every module
+     at once without a second container to keep in step.
+
+     WHY 4px. Slack per module is bounded by the unit (span*unit - height, always < unit), so the
+     unit IS the residual void: 4px leaves a module at most 4px taller than its content, against
+     the 923px it used to carry. Finer packs tighter and costs implicit tracks — the packed board
+     measures ~19,000px at 1440, which is ~4,750 of them — so this is the balance point, not a
+     floor. Measured after: slack median 12 / p90 13 / max 13 at 1440, of which 9px is the panel's
+     own flex gap; the rounding residue down the tallest column totals 66px.
+
+     `.packing` IS THE MEASUREMENT STATE, and it exists because a spanned module cannot be
+     measured: it is already stretched to its span. `align-self:start` drops that stretch so each
+     module reports its own content height, and it is on for the duration of one synchronous
+     write-read-write pass, so it never paints. */
+  .folio-grid.packed{ grid-auto-rows:4px; }
+  .folio-grid.packing > .fcard{ align-self:start; }
+
   /* THE COMPOSED TOP BAND (2026-07-25). D-II is decided: keep all 80 stories, compose only the
      top. The mock's ~8-12 prominent modules describe its FIRST SCREEN, not a story cap, and
      discarding stories is an editorial decision nobody has taken. So ranks 1-3 get an explicit
@@ -1326,12 +1366,94 @@ layout: archive
   var cards = Array.prototype.slice.call(grid.querySelectorAll('.fcard'));
   var active = new Set();
 
-  /* ---- masonry: absolute placement, shortest-column stacking. A 2-col lead levels the two
-     columns it covers; the void that leaves in the shorter one is remembered as a "notch" and
-     backfilled by the next 1-col cards that fit — so no dead zones. Batched (write widths →
-     read heights → write positions) to avoid layout thrash across ~80 cards.
-     The min column width tracks the ROOT font-size (the theme steps it 16→22px across
-     breakpoints), so the reading measure stays constant instead of shrinking on wide screens. ---- */
+  /* ---- MASONRY-TIGHT PACKING: measure each module, span it that many fine grid rows. The CSS
+     half (and the reasoning) is in the stylesheet above under "THE ROW-SPAN BAND"; this half is
+     the measurement. It writes EXTENT only — never position, never order.
+
+     THE THREE PHASES ARE A SINGLE SYNCHRONOUS PASS, and their order is the performance contract:
+     one write (release every span so modules report their own height), one read (every rect, into
+     an array), one write (every span). Interleaving read and write across ~82 modules forces a
+     layout per module instead of one for the pass.
+
+     WHY THE SPANS ARE RELEASED FIRST. A module that already carries `grid-row: span N` is
+     stretched to N rows, so measuring it returns the previous answer forever — the pass would
+     ratchet and never shrink a module that lost content. Clearing the inline span plus `.packing`'s
+     `align-self:start` is what makes the read report content height instead.
+
+     `auto / span N`, NOT `span N`. The composed top band places ranks 1-3 with the `grid-area`
+     shorthand, which sets a definite row START. The one-value form leaves that start in place, so
+     rank 2 would keep row-start 2 while rank 1 now spans rows 1..N — they overlap. Forcing the
+     start back to `auto` puts every module back under ordinary DOM-order auto-placement, which
+     reproduces the composition exactly (rank 1 takes row 1 because it is first) and is what keeps
+     I1 true. ---- */
+  var ROW_UNIT = 4;                        // px; see "WHY 4px" in the stylesheet
+  var packOn = false, packW = -1, packT = null, roT = null;
+  function trackCount(){
+    var t = getComputedStyle(grid).gridTemplateColumns;
+    return (t && t !== 'none') ? t.split(' ').filter(function(v){ return !!v; }).length : 1;
+  }
+  function unpack(){                       // back to the banded grid, and to the no-JS layout
+    grid.classList.remove('packed');
+    for (var i = 0; i < cards.length; i++) cards[i].style.gridRow = '';
+    packOn = false; packW = grid.clientWidth;
+  }
+  function packRowSpans(){
+    if (!grid.clientWidth) return;         // hidden or detached: nothing to measure
+    /* ONE COLUMN IS ALREADY TIGHT. A row holds exactly one module there, so the row height IS the
+       content height and the slack this fixes does not exist — measured at 500px wide, every
+       module's slack is exactly the panel's 9px flex gap. The cost would be real, though: that
+       board is 37,400px tall, so a 4px unit asks the phone for ~9,300 implicit tracks in exchange
+       for nothing. */
+    if (trackCount() < 2){ unpack(); return; }
+    var vis = [], i;
+    for (i = 0; i < cards.length; i++) if (cards[i].style.display !== 'none') vis.push(cards[i]);
+    if (!vis.length) return;
+    var gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
+    grid.classList.add('packing');                                   // write
+    for (i = 0; i < vis.length; i++) vis[i].style.gridRow = '';       // write
+    var h = new Array(vis.length);
+    for (i = 0; i < vis.length; i++) h[i] = vis[i].getBoundingClientRect().height;   // read
+    grid.classList.add('packed');                                    // write
+    for (i = 0; i < vis.length; i++){                                // write
+      // fractional rect height, ceil'd: a span may only ever be LONGER than the content it holds.
+      // Round down anywhere here and the module clips, which the never-crop ruling forbids.
+      vis[i].style.gridRow = 'auto / span ' + Math.max(1, Math.ceil((h[i] + gap) / (ROW_UNIT + gap)));
+    }
+    grid.classList.remove('packing');
+    packOn = true; packW = grid.clientWidth;
+  }
+  function schedulePack(ms){               // coalesced; a no-op until the first pass has run
+    if (!packOn) return;
+    clearTimeout(packT);
+    packT = setTimeout(packRowSpans, ms || 0);
+  }
+  function watchPack(){
+    /* RESIZE IS OBSERVED ON THE GRID, NOT THE WINDOW: the sheet also changes width when the rail
+       appears at 1280 and when the theme's root ladder steps, neither of which is a window resize.
+       WIDTH ONLY, and that guard is load-bearing rather than an optimisation — every pass changes
+       the grid's HEIGHT, which this same observer sees, so re-packing on any size change is an
+       unconditional infinite loop. */
+    if (!window.ResizeObserver) return;
+    new ResizeObserver(function(){
+      if (grid.clientWidth === packW) return;
+      clearTimeout(roT);
+      roT = setTimeout(packRowSpans, 120);
+    }).observe(grid);
+  }
+  function bootPack(){
+    /* THE FIRST PASS WAITS FOR THE WEBFONT. Anton is `font-display:swap`, so the first paint sets
+       every headline in the metric-matched fallback and swaps later — Anton's cap height is 0.859em
+       against Arial Narrow's 0.716em, so a headline can gain a whole line at the swap. Measuring
+       before it lands spans every module to a height it is about to outgrow.
+       The timeout is not a nicety: if `fonts.ready` never settles the page must still pack, and
+       without the race it would sit in the banded layout forever with no error anywhere. */
+    var done = false;
+    function go(){ if (done) return; done = true; packRowSpans(); watchPack(); }
+    if (document.fonts && document.fonts.ready && document.fonts.ready.then){
+      document.fonts.ready.then(go);
+      setTimeout(go, 2500);
+    } else { go(); }
+  }
 
   /* ---- read/unread — LOCAL-ONLY state in localStorage, keyed by the durable st- story id
      (data-story on .fcard__fb); editorial cards carry ed-<stream>-<date> on the article itself
@@ -1398,6 +1520,11 @@ layout: archive
        the whole mechanism — filtered states fall back to uniform ranked modules. It is also the
        ONLY layout thing any JS still does, and it is a class toggle, not a measurement. */
     grid.classList.toggle('is-filtered', !!(active.size || readState));
+    /* Filtering changes EXTENT, not only membership: `.is-filtered` drops the dominant from twelve
+       tracks to four, so its measured height changes with its width, and the modules that survive
+       the filter re-place around a different set. Coalesced because a chip click can fire this
+       more than once. Inert until the first pass has run — this also fires at boot, before fonts. */
+    schedulePack(0);
     var onBeat = active.size ? ' on that beat' : '';
     empty.textContent = readState === 'unread' ? 'All caught up — nothing unread' + onBeat + '.'
                       : readState === 'read'   ? 'Nothing read yet' + onBeat + '.'
@@ -1433,7 +1560,14 @@ layout: archive
        Anchoring the CLICKED element makes that reflow invisible where it matters. The second
        getBoundingClientRect forces layout, so `after` is the post-toggle position, not a stale
        one. Browser scroll-anchoring does not cover this: it protects content above the viewport
-       top, not the element you are looking at. */
+       top, not the element you are looking at.
+       THE BRACKET NOW SPANS THE RE-SPAN, and it has to. A fold changes BOTH the module's column
+       span and its content height, so under row-span packing the class toggle alone is only half
+       the reflow — the spans it invalidates are the other half, and paying the delta back before
+       they settle pays back a number measured against a layout that is about to change again.
+       Every module's extent is re-derived here, not just the clicked one: widening one module
+       re-wraps nothing else, but re-placing it moves what follows into different columns, and a
+       module's height depends on the width of the track it lands in. */
     var before = mc.getBoundingClientRect().top;
     var folded = mc.classList.toggle('is-folded');
     /* `is-open` is a POSITIVE marker rather than `:not(.is-folded)`. Only cards that have a More
@@ -1443,6 +1577,7 @@ layout: archive
     mb.setAttribute('aria-expanded', String(!folded));
     var lbl = mb.querySelector('span');
     if (lbl) lbl.textContent = folded ? 'More' : 'Less';
+    packRowSpans();                        // synchronous: `after` must be the settled position
     var after = mc.getBoundingClientRect().top;
     if (after !== before) window.scrollBy(0, after - before);
   });
@@ -1946,6 +2081,16 @@ layout: archive
         var anchor = card.querySelector('.fcard__deck') || card.querySelector('.fcard__hl');
         if (!anchor) return;
         anchor.insertAdjacentElement('afterend', img);
+        /* THE SLOT DOES NOT EXIST UNTIL THIS LINE, which is the part worth being explicit about.
+           `.fimg` has a capped clamp() height, so a picture never changes a module's height by its
+           own proportions — the tempting conclusion is that og-images cannot affect the packing at
+           all. They can: it is the INSERT that costs, not the load, and it costs the whole slot
+           plus the panel's 9px flex gap. Measured at 1440 by letting the og path run for real:
+           269px on the 1215px dominant, 129px on every 405px tail module. A span measured before
+           the insert is short by exactly that, so without this line the module would overflow its
+           rows until something unrelated happened to trigger a pass.
+           Coalesced: the IntersectionObserver unfurls a screenful at a time. */
+        schedulePack(60);
       };
       img.src = src;
     }
@@ -1967,10 +2112,12 @@ layout: archive
     cards.forEach(function(c){ if (c.dataset.ogurl) imgIo.observe(c); });
   }
 
-  /* ---- init ---- */
-  /* No reflow triggers remain. They existed because the packer had to re-measure on resize, on
-     late-arriving font metrics and on `load` once images had dimensions; CSS Grid re-lays-out on
-     all three by itself. */
+  /* ---- init ----
+     The row-span band is the ONLY thing here that measures. Placement, wrapping and every other
+     geometry question is still CSS Grid's, re-solved by the engine on resize and font load without
+     help; what JS supplies is each module's EXTENT, which CSS cannot derive from content. If a
+     future change removes the packing, remove this call — do not leave an empty hook. */
+  bootPack();
 })();
 </script>
 <script>
