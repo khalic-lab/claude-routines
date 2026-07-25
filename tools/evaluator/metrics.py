@@ -259,6 +259,28 @@ def build_feedback(events, root, window_start, window_end):
     return {"unconsumed_total": unconsumed_total, "notify_count": notify_count, "by_stream": by_stream}
 
 
+def refresh_source_health(root):
+    """Run sources/health.py so `_data/source-health.json` is this run's, not last week's.
+
+    It used to be a second command in the evaluator's prompt, with a stated ordering rule
+    ("health.py must run before metrics.py") -- an invariant a script can just hold. Failure
+    is non-fatal: build_sources already degrades to the not-found marker, and a stale-but-
+    present file still beats aborting the review."""
+    tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sources", "health.py")
+    try:
+        proc = subprocess.run([sys.executable, os.path.normpath(tool), "--root", root],
+                              cwd=root, capture_output=True, text=True)
+    except OSError as exc:
+        print("source-health refresh failed (%s) -- folding what is on disk" % exc,
+              file=sys.stderr)
+        return False
+    if proc.returncode != 0:
+        print("source-health refresh exited %d -- folding what is on disk\n%s"
+              % (proc.returncode, (proc.stderr or "").strip()), file=sys.stderr)
+        return False
+    return True
+
+
 def build_sources(root):
     """Verbatim passthrough of _data/source-health.json; a fixed fallback
     marker if absent/unreadable -- never crashes (SPIKE §4)."""
@@ -481,8 +503,12 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog="metrics.py", description=__doc__.splitlines()[0])
     p.add_argument("--root", default=os.getcwd())
     p.add_argument("--week", default=None, help="window end date, YYYY-MM-DD (default: today)")
+    p.add_argument("--no-refresh-sources", dest="refresh_sources", action="store_false",
+                   help="skip the source-health refresh and fold whatever is on disk")
     args = p.parse_args(argv)
 
+    if args.refresh_sources:
+        refresh_source_health(args.root)
     week_arg = args.week or dt.date.today().isoformat()
     health = compute_health(args.root, week_arg)
 

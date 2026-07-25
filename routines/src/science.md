@@ -1,11 +1,5 @@
 Write my weekly science brief and publish it via the git pipeline. Use today's date (Wednesday) in Europe/Zurich.
 
-The repo (`khalic-lab/claude-routines`) is cloned as your working directory. Before doing anything else, sync:
-
-```bash
-git pull --ff-only origin main
-```
-
 # Mission
 
 A weekly read on the most significant developments across the natural sciences — physics, math, quantum, astronomy/cosmology, biology/medicine/neuroscience, chemistry, climate/earth. Coverage window: the past 7 days.
@@ -25,27 +19,20 @@ Three desks, deep over broad: pick the week's genuinely-new findings, read the p
 5. **Tags.** Preprints → `[preprint]`. Single source → `[single-source]`. Contested → `[disputed]`.
 6. **No fabrication.** Never invent a URL, author, date, or quote. **The no-fabrication rule extends to date claims**: a paper from last month is NOT "this week's." If you cannot verify a paper was submitted or published within the past 7 days, do not include it under a section that claims this week's content.
 7. **Volume cap.** 4–8 items per desk. Quality is the cap — better to ship 3 strong findings in a desk than pad to 8.
-8. **Fetch transparency.** When you successfully fetch a URL/feed and confirm content, no marker. When the citation is based only on a search-engine snippet, append `[via snippet]` to the citation.
+8. **Fetch transparency.** A confirmed fetch gets no marker; a citation resting only on a search-engine snippet gets `[via snippet]`.
 
 <!-- include: _shared/reader-profile-source-weights.md -->
 
 <!-- include: _shared/feed-first-source-order.md -->
 
-The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Always attempt the feed/API before the HTML page.
-
-**CRITICAL — every fetch goes through `python3 tools/fetch.py "<URL>"`** (see Fetch mechanics above): it runs the direct-curl → proxy chain deterministically and logs each attempt to `/tmp/fetch.log`. A wrapper exit 0 counts as a direct fetch.
-
 **arXiv mechanics:** use the non-CS RSS per category (`https://export.arxiv.org/rss/astro-ph`, also `math.*`, `physics.*`, `cond-mat`, `hep-ph`, `hep-th`, `gr-qc`, `quant-ph`, `q-bio.*`) and the date-filtered Atom API (`https://export.arxiv.org/api/query?search_query=cat:astro-ph.CO&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending` — **swap the `cat:` filter** for any non-CS category; filter `<published>` to the past 7 days). For Nature journals, dig to the primary research (`s41586-…`), not the `d41586-…` news.
 
-**Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** fetch with `tools/fetch.py --proxy`.
-- bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv` for medRxiv); returns title, abstract, DOI, and date per paper for the window — an ideal primary source for the Biology desk.
-- Science.org → its RSS feeds (e.g. `https://www.science.org/rss/news_current.xml`, plus journal feeds); Science's article HTML 403s even through the proxy, so use the feed and cite the DOI / article landing URL.
-
-**APS journals** (`journals.aps.org` — PRL / PRX / PRX Quantum): try the recent-articles RSS via the wrapper (its proxy fallback covers the 403 case automatically). Cite the article DOI / landing URL.
+**Endpoints worth knowing (not in the plan's probe list):**
+- bioRxiv / medRxiv JSON details API: `https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv`) — title, abstract, DOI and date per paper for the window; an ideal primary source for the Biology desk.
+- Science.org — use its RSS feeds (e.g. `https://www.science.org/rss/news_current.xml`, plus journal feeds); the article HTML is unreachable, so cite the DOI / article landing URL.
+- APS journals (`journals.aps.org` — PRL / PRX / PRX Quantum): the recent-articles RSS. Cite the article DOI / landing URL.
 
 **Nature-abstract fallback (Patch-4):** when a Nature primary research item (`s41586-…`) has no fetchable abstract from the sandbox, locate the matching arXiv cross-list preprint (search the title via the arXiv API / Semantic Scholar) and summarise *that*, tagged `[preprint]` — do NOT emit a title-only stub.
-
-**Coverage footer accounting (computed at publish):** the telemetry numbers — tier split, direct-vs-snippet counts, word count, token estimate, `Feeds hit` — are computed by the publish command from your citations and `/tmp/fetch.log`; do not count them yourself. Your accounting duty is upstream accuracy: tag every snippet-only citation `[via snippet]`, and fetch only through the wrapper.
 
 # Affiliations (the provenance element)
 
@@ -53,7 +40,7 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 
 # Research methodology
 
-1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list per desk via `tools/fetch.py`. Use the arXiv API with date filters; the Nature / Quanta / Science RSS feeds are rolling — filter to the past 7 days client-side.
+1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list per desk. Use the arXiv API with date filters; the Nature / Quanta / Science RSS feeds are rolling — filter to the past 7 days client-side.
 2. **Broad query** (1–2 keywords). Scan results.
 3. **Refine and re-query** based on what surfaced.
 4. **Fetch full pages / abstracts** for findings that matter (use the arXiv API for abstracts — the abstract HTML page 403s); on failure, snippet + tag.
@@ -66,24 +53,24 @@ The HTML pages of most quality sources return HTTP 403 from this routine sandbox
 
 **Sources come from the preflight plan** — the registry carries this desk's venue set (physics
 journals, preprint servers, agency newsrooms, quality explainers); spread citations across it
-instead of defaulting to the same two or three hosts every week. Fetch mechanics worth knowing:
-nature.com primary research is `s41586-…` (`nphys.rss` / `nchem.rss` via curl) — the papers, NOT
-`d41586` news; **non-CS arXiv via the Atom API** (`math.*`, `physics.*` incl. `physics.chem-ph` /
-`physics.ao-ph` / `physics.geo-ph`, `cond-mat`, `hep-ph`, `hep-th`, `gr-qc`, `quant-ph` — swap the
-`cat:` filter); science.org research RSS needs the proxy.
+instead of defaulting to the same two or three hosts every week. Where to look: nature.com primary
+research is `s41586-…` (`nphys.rss` / `nchem.rss`) — the papers, NOT `d41586` news; **non-CS arXiv
+via the Atom API** (`math.*`, `physics.*` incl. `physics.chem-ph` / `physics.ao-ph` /
+`physics.geo-ph`, `cond-mat`, `hep-ph`, `hep-th`, `gr-qc`, `quant-ph` — swap the `cat:` filter);
+science.org research RSS.
 Coverage: particle physics, condensed matter, quantum information (quant-ph, PRX Quantum), gravity/GR, chemistry (physical / materials chemistry), earth & climate-system science, plus mathematics (major proofs, conjecture progress, notable surveys). Exclude anything whose home is `cs.*` / `stat.ML`.
 
 ## 🧬 Biology, medicine & neuroscience
 
 **Sources come from the preflight plan** (journals, preprint servers, biotech/clinical outlets —
-all registered). Fetch mechanics: bioRxiv / medRxiv JSON details API via the proxy, Nature Methods
-RSS (`nm.rss` via curl), `q-bio.*` arXiv via the Atom API, Quanta RSS (biology features).
+all registered). Where to look: the bioRxiv / medRxiv JSON details API, Nature Methods RSS
+(`nm.rss`), `q-bio.*` arXiv via the Atom API, Quanta RSS (biology features).
 Coverage: drug approvals and clinical-trial readouts, genomics, structural and molecular biology, neuroscience, biotech. Flag preliminary / small-sample / unreplicated results as such — don't upgrade them.
 
 ## 🌌 Astronomy & cosmology
 
 **Sources come from the preflight plan** (agency newsrooms, journals, quality astro outlets — all
-registered). Fetch mechanics: Nature Astronomy RSS (`natastron.rss`) via curl, `astro-ph.*`
+registered). Where to look: Nature Astronomy RSS (`natastron.rss`), `astro-ph.*`
 (CO/GA/EP/HE/SR/IM) via the arXiv Atom API, Quanta RSS.
 Coverage: JWST and other space telescopes, ESO/ALMA, exoplanets, cosmology, gravitational waves, solar-system science.
 
@@ -117,8 +104,7 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: {date 7 days ago} to {today}
 ---
 
 ## Coverage footer
-<!-- operational telemetry — the computed lines (tier split, direct-vs-snippet, word count,
-token estimate, Feeds hit) are filled in by the publish command (tools/footer.py); write ONLY:
+<!-- the telemetry lines are computed at publish; write ONLY:
 - Items: N (filtered from M reviewed) — Physics/math/quantum: N, Biology/medicine/neuro: N, Astronomy/cosmology: N
 - Languages: {languages of your cited sources, e.g. EN, FR, DE}
 -->
@@ -144,36 +130,7 @@ Before composing AND after writing the brief, follow `tools/dedup/DEDUP.md` exac
 
 # Output: write the brief to git + drop a notification stub
 
-This routine writes to the git repo (working directory is the cloned `claude-routines` repo). It does NOT write to Google Drive, does NOT POST to ntfy directly, and does NOT send email. A local bridge polls `pending-notifications/` every ~10 min and handles the ntfy push.
+<!-- include: _shared/publish-step.md -->
 
-Individual brief pages are retired (2026-07-18): the homepage story feed at
-`https://khalic-lab.github.io/claude-routines/` carries every story's full prose, and the
-notification stub the publish command writes clicks through there.
-
-### 1. Write the brief
-
-Use the Write tool to create `_posts/{YYYY-MM-DD}-science.md`. The file MUST start with this front-matter block, then a blank line, then the brief body:
-
-```
----
-layout: single
-title: "Science — {YYYY-MM-DD}"
-date: {full ISO 8601 timestamp WITH timezone offset, identical to the _Generated line — e.g. 2026-06-24T17:09:59+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
-categories: [science]
----
-```
-
-### 2. Publish — one command
-
-Everything after the brief file is deterministic and runs through the orchestrator: dedup record → anchors → computed footer telemetry → source lint → registry/institutions sync → date lint → homepage feed + stats → source health → notification stub → commit → push, with the homefeed rebase-conflict retry built in.
-
-```bash
-python3 tools/publish.py --slug science --date {YYYY-MM-DD} \
-  --final /tmp/final.json \
-  --notify-title "Science — {YYYY-MM-DD}" \
-  --notify-body "{teaser}" --notify-tags microscope
-```
-
-- `{teaser}` rules: ≤200 chars. The single most striking finding in this brief — typically the headline physics/quantum result, a major astronomy discovery, or a notable clinical/biology readout. Concrete and specific (e.g. "JWST resolves the missing-baryon problem; PRX Quantum demo of below-threshold error correction on 105 qubits"), not generic. Pass it as a normal shell argument — the stub is JSON-encoded for you, no manual quote-escaping.
-- If dedup was unavailable (Step A failed), omit `--final` — every other step still runs; note "dedup unavailable" in the Gaps line before publishing.
-- The orchestrator prints one OK/FAIL line per step and ends with `DONE` or a `FAILED (...)` line. Preprocessing FAILs degrade — never abort the brief for them. The two git failures need a reaction: `FAILED (git commit errored ...)` means NOTHING was published — fix the reported error and rerun the same publish command (or use DEDUP.md's manual-git fallback); `FAILED (push ...)` means the edition is committed locally but not on origin (the failure note is already amended into the commit) — retry `git push origin main` before the session ends. Do not re-run the preprocessing steps by hand, and do not write the stub or telemetry yourself.
+- `{teaser}` rules: ≤200 chars. The single most striking finding in this brief — typically the headline physics/quantum result, a major astronomy discovery, or a notable clinical/biology readout. Concrete and specific (e.g. "JWST resolves the missing-baryon problem; PRX Quantum demo of below-threshold error correction on 105 qubits"), not generic. Pass it as a plain shell argument; no quote-escaping.
+<!-- include: _shared/publish-outcomes.md -->

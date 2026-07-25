@@ -1,28 +1,21 @@
 Write the weekly evaluation review for my news brief pipeline and publish it via the git pipeline. Use today's date in Europe/Zurich (the most recent run day = Sunday).
 
-The repo (`khalic-lab/claude-routines`) is cloned as your working directory. Before doing anything else, sync:
-
-```bash
-git pull --ff-only origin main
-```
-
 Briefs now live in this repo at `_posts/{YYYY-MM-DD}-{slug}.md` where slug is one of: `news`, `ai-ml`, `science`, `weekend`, `sports`, `evaluator`. No Drive reads anywhere in this prompt.
 
-# Fire-start: compute the mechanical state (run FIRST, in this order)
+# Fire-start: compute the mechanical state (run FIRST)
 
 ```bash
-python3 tools/sources/health.py      # writes + prints _data/source-health.json
-python3 tools/evaluator/metrics.py   # writes + prints _data/health.json (embeds source-health verbatim)
+python3 tools/evaluator/metrics.py   # refreshes _data/source-health.json, then writes + prints _data/health.json
 ```
 
-`health.py` must run before `metrics.py` (metrics copies `_data/source-health.json` into `health.json` under `sources`). These two files ARE your mechanical dimensions — per-stream citations/anchors/repeat rates, feedback tallies, source diversity/saturation/waiver numbers, your own continuity **and (since 2026-07-18) the computed brief-text dimensions under `health.json` → `briefs`**: aggregator leakage (B), section vitality (D), single-source rate (F), tag counts (G), weekend paper balance (H), footer fetch ratios + per-feed reachability (K), and word-count means incl. the previous week (L), plus the off-main self-delivery guard under `continuity.off_main`. **Do not hand-count anything they already report**; read the numbers and spend your word budget on the editorial judgment they cannot compute. If either script crashes, note it in the review, degrade to reading the briefs directly for that dimension, and continue — never abort the review.
+These two files ARE your mechanical dimensions — per-stream citations/anchors/repeat rates, feedback tallies, source diversity/saturation/waiver numbers, your own continuity **and (since 2026-07-18) the computed brief-text dimensions under `health.json` → `briefs`**: aggregator leakage (B), section vitality (D), single-source rate (F), tag counts (G), weekend paper balance (H), footer fetch ratios + per-feed reachability (K), and word-count means incl. the previous week (L), plus the off-main self-delivery guard under `continuity.off_main`. **Do not hand-count anything they already report**; read the numbers and spend your word budget on the editorial judgment they cannot compute. If either script crashes, note it in the review, degrade to reading the briefs directly for that dimension, and continue — never abort the review.
 
 # Pipeline-cold precheck (run BEFORE the analysis)
 
 1. Use Glob (or `ls _posts/`) to enumerate files in `_posts/` whose dates fall in [today-6, today]. Count distinct (slug, date) pairs that have a file.
 2. Also locate the most recent `_posts/*-weekend.md` (any date).
 
-**If the total count of (slug, date) pairs with a file is 0**, the pipeline is cold. In that case, write ONLY this minimal review and stop — do NOT proceed to analysis dimensions, do NOT write a long meta-report, do NOT create an email draft. BUT still write the ntfy notification stub (see Output section below) with a cold-run teaser.
+**If the total count of (slug, date) pairs with a file is 0**, the pipeline is cold. In that case, write ONLY this minimal review and stop — do NOT proceed to analysis dimensions, do NOT write a long meta-report. BUT still publish it with a cold-run teaser (per the Output section below), so the notification goes out.
 
 ```
 # Weekly Brief Pipeline Review — {YYYY-MM-DD}
@@ -44,7 +37,7 @@ Likely causes (for human investigation):
 Skipping analysis. Next review will be substantive once at least one daily stream is writing.
 ```
 
-Write that to `_posts/{YYYY-MM-DD}-evaluator.md` (with front-matter), drop the cold-run stub, commit and push (per Output section), and stop.
+Write that to `_posts/{YYYY-MM-DD}-evaluator.md` (body only — front matter is derived at publish), publish it with the cold-run teaser (per Output section), and stop.
 
 **If at least one daily-stream (slug, date) pair has a file**, continue with the full analysis below.
 
@@ -54,7 +47,7 @@ Mechanical analysis of the past 7 days of briefs across the current stream lineu
 
 **Stream cadence (new as of 2026-06-29; News moved to midday 2026-07-03; Sports added 2026-07-17):** News fires daily (every day, midday); AI/ML fires twice a week (Tuesday & Friday midday); Science fires once a week (Wednesday afternoon); Weekend fires once a week (Saturday); Sports fires once a week (Monday morning — first-ever run 2026-07-20). This means the evaluator should expect up to 7 News briefs, ~2 AI/ML briefs, ~1 Science brief, 1 Weekend brief, and ~1 Sports brief in any 7-day window. AI/ML appearing only twice and Science/Sports appearing only once is the **expected cadence, not a failure** — Section D (vitality) and the cold-precheck must not penalize it.
 
-A major axis of evaluation in this version is the **discovery recovery**: the writers now build their source plan from `sources/registry.yml` via `python3 tools/sources/preflight.py --slug {slug}` (their prompts carry no feed tables and no "confirmed unavailable" lists anymore), may cite a genuinely new primary source immediately when tagged `[new source]`, and end every brief with exactly one `- Discovery: met (…)` or `- Discovery: waived — <concrete reason>` footer line (lint-checked at DEDUP Step C.25, report-only for now). The mechanical numbers for all of this arrive computed in `_data/source-health.json` / `_data/health.json`; your job is to judge WHY a stream lags its targets and what to do about it — not to recount.
+A major axis of evaluation in this version is the **discovery recovery**: the writers now build their source plan from `sources/registry.yml` via `python3 tools/sources/preflight.py --slug {slug}` (their prompts carry no feed tables and no "confirmed unavailable" lists anymore), may cite a genuinely new primary source immediately when tagged `[new source]`, and end every brief with exactly one `- Discovery: met (…)` or `- Discovery: waived — <concrete reason>` footer line (lint-checked at publish, report-only for now). The mechanical numbers for all of this arrive computed in `_data/source-health.json` / `_data/health.json`; your job is to judge WHY a stream lags its targets and what to do about it — not to recount.
 
 # Inputs to read from git
 
@@ -72,8 +65,8 @@ Plus:
 6. **Previous review (self-continuity)**: take it from `_data/health.json` → `continuity.previous_evaluator_path` — the most recent prior evaluator post, however long ago, script-computed — plus your own prior events in `index/ledger/` when present. Never re-derive "the post from exactly 7 days ago" by date arithmetic; that brittle offset broke continuity on 2 of 9 past runs. **Self-delivery guard (added 2026-07-10; computed since 2026-07-18 — the stranding class hit 4 of 9 past runs and the evaluator misdiagnosed it as "skipped Sundays" both times it noticed):** (a) if `continuity.previous_evaluator_path` is more than 8 days old, do not just proceed — flag "previous review is N days old" prominently in the Health summary and check whether a more recent review exists off-main; (b) read `health.json` → `continuity.off_main` (metrics.py runs the `git branch -r` / `git log --not main` checks for you) — any `commits_not_on_main` entry means a routine (possibly a prior you) is being diverted off main by an `outcomes` key THIS window: flag it as a critical pipeline defect. `remote_branches` is context only — old recovered `claude/*` branches linger there; a branch is a defect only when it also shows recent commits.
 7. **Reader feedback — the ledger's folded state.** Feedback is folded continuously by the bridge (`tools/feedback/fold.py`): each vote lands as an `ev:"feedback"` event in `index/ledger/*.jsonl`, keyed to a durable story id (`st-…`), with last-write-wins per story and `vote: 0` an explicit retraction; fold.py marks the raw `feedback/*.jsonl` record `consumed: true` at fold time. **The old 7-day-window arithmetic over `feedback/*.jsonl` is RETIRED** — do not recount raw records, and do not set `consumed` flags yourself (fold.py owns consumption). Read the window's tallies from `health.json` → `feedback.by_stream` (raw up/down/retractions per stream); for per-story attribution read the ledger's `ev:"feedback"` events directly (each carries the story id, `brief`, `vote`, and optional `reason`) and resolve ids to headline/url/source_domain via `python3 tools/store/store.py materialize` (or the story's own `seen`/`publish` events). One bookkeeping check remains yours: if `health.json` → `feedback.unconsumed_total` > 0, the bridge fold is lagging or broken — flag it as a pipeline defect.
 8. **Reader profile (current state)**: `reader-profile.md` and `reader-profile/source-weights.yml` — the human-gated files the writers read at compose time. You PROPOSE edits to these (see Patch proposals); you never silently rewrite them.
-9. **Reader brief-proposals**: every `proposals/*.jsonl` record in the window (readers suggesting topics via the front page's "Propose a brief" form; the directory may not exist yet — skip silently if absent). Surface `consumed: false` proposals verbatim in your review email so Rafael sees them; if one maps cleanly onto an existing stream, fold it into a patch proposal. Mark folded/surfaced records `consumed: true` in their `proposals/*.jsonl` file and commit with the review — this consumption bookkeeping is still yours (fold.py owns only feedback).
-10. **Homepage tagging quality**: `_data/homefeed.json` — the front-page story feed. Spot-check ~5 stories: do `topics` and `importance` match the tagging rubric the writers were given (newsroom-ethos: beat from the controlled set, importance 1–3 on real significance)? While writers aren't yet recording `topics`/`importance` in DEDUP Step C, tags are keyword/position-derived — judge those only for egregious misfiles (a war story under Security, a Swiss story under World). Once writer tags flow, flag rubric drift like any other quality regression.
+9. **Reader brief-proposals**: every `proposals/*.jsonl` record in the window (readers suggesting topics via the front page's "Propose a brief" form; the directory may not exist yet — skip silently if absent). Surface `consumed: false` proposals verbatim in the review itself (a short section under Open questions) so Rafael sees them; if one maps cleanly onto an existing stream, fold it into a patch proposal. Mark folded/surfaced records `consumed: true` in their `proposals/*.jsonl` file and commit with the review — this consumption bookkeeping is still yours (fold.py owns only feedback).
+10. **Homepage tagging quality**: `_data/homefeed.json` — the front-page story feed. Spot-check ~5 stories: do `topics` and `importance` match the tagging rubric the writers were given (newsroom-ethos: beat from the controlled set, importance 1–3 on real significance)? **Writer tags now flow** (every story recorded in DEDUP Step C carries both), so judge rubric drift like any other quality regression — a misfiled beat, or an edition with no 3 / several 3s, is the writer's error to flag. Keyword/position derivation survives only as the fallback for older records, so a pre-rollout post's odd tag is not a finding.
 
 If files are missing, note which and continue. Don't fail.
 
@@ -119,7 +112,7 @@ Tag counts per stream are in `health.json` → `briefs.by_stream.<slug>.tags` �
 - `[preprint]` on arXiv items? Sample 5, verify.
 - `[vendor PR]` on vendor announcements? Sample 5.
 - `[disputed]` used appropriately? (Judge the counted uses.)
-- `[new source]` — the Step C.25 lint recomputes tag integrity deterministically, so don't re-derive novelty; read the week's new `sources/candidates.jsonl` entries and spot-check 2: is the tagged domain a genuine primary source, or a junk anchor? Junk anchors are the failure mode to catch early.
+- `[new source]` — the publish-time source lint recomputes tag integrity deterministically, so don't re-derive novelty; read the week's new `sources/candidates.jsonl` entries and spot-check 2: is the tagged domain a genuine primary source, or a junk anchor? Junk anchors are the failure mode to catch early.
 - `[via snippet]` — read the per-stream count from the computed tags. With the wrapper's curl-first chain, via-snippet rates should be **dropping**; rising or flat-high rates by stream means feeds are failing in that stream's sandbox. Flag.
 
 ## H. Topic balance (weekend brief only; computed — read, don't recount)
@@ -256,7 +249,7 @@ For each issue identified, propose ONE specific edit to ONE specific prompt. For
 Synthesize the window's reader feedback from the ledger's folded state (input 7 — the `ev:"feedback"` events and `health.json` tallies, NOT the raw `feedback/*.jsonl`):
 - **Noise filter: a theme needs ≥2 signals on DISTINCT stories.** A single tap is noise, and so is one person double-tapping the same story — two votes on one story are one signal. Look for the same source, section, or recurring `reason` across ≥2 different stories, and quote the reasons verbatim.
 - Propose concrete edits, each as a Before/After block like the patches above:
-  - to `reader-profile.md` — a dated line under its "Learned preferences" section, e.g. `- {today}: less SpaceX launch detail on weekends (3× 👎, "too long").` **Bounded auto-apply (granted by Rafael 2026-07-10): you apply these yourself** — append the dated line at the END of the "Learned preferences" section, append-only. Never edit or remove an existing line, never touch any other section of the file, and only append when the signal is real reader feedback from this window (a repeated vote or a vote with a written reason — never a single bare tap). Each auto-applied line still gets its machine-readable proposal entry, stamped `"applied": true, "applied_by": "evaluator"`.
+  - to `reader-profile.md` — a dated line under its "Learned preferences" section, e.g. `- {today}: less SpaceX launch detail on weekends (3× 👎, "too long").` A 👍-sourced theme gets the same treatment phrased as reinforcement — e.g. `- {today}: more primary-source AI-safety papers (3× 👍, "exactly what I want more of").` — reinforcement wording ("more like this because X") for 👍, correction wording for 👎. **Bounded auto-apply (granted by Rafael 2026-07-10): you apply these yourself** — append the dated line at the END of the "Learned preferences" section, append-only. Never edit or remove an existing line, never touch any other section of the file, and only append when the signal is real reader feedback from this window (a repeated vote or a vote with a written reason — never a single bare tap). Each auto-applied line still gets its machine-readable proposal entry, stamped `"applied": true, "applied_by": "evaluator"`.
   - to `reader-profile/source-weights.yml` — a domain for `reduce:` (low-signal / aggregator-heavy / PR-lead) or, ONLY for sources that repeatedly mislead, `never:`. Name the domain and the feedback that justifies it.
 - The writers read these two files, so editing them changes the briefs. `reader-profile/source-weights.yml` and `sources/registry.yml` remain STRICTLY human-gated — never edit them directly; propose only, Rafael applies. The auto-apply grant above covers exactly one thing: appending dated lines to reader-profile.md "Learned preferences". (No `consumed: true` bookkeeping either — the bridge's fold.py owns consumption now.)
 - If there is no feedback in the window, write "No reader feedback this week." and propose nothing here.
@@ -299,9 +292,7 @@ Every proposal above is also emitted machine-readable, so Rafael's apply step ca
 - Length: 1500–4000 words.
 - Discovery recovery (dimension A's computed numbers vs the §3.4 targets) is the primary lens until those targets hold; spend the budget the scripts freed on editorial judgment, not recounting.
 
-# Output: write the review to git + drop a notification stub + email digest
-
-This routine writes to the git repo (working directory is the cloned `claude-routines` repo). It does NOT write to Google Drive and does NOT POST to ntfy directly. A local bridge on the user's machine polls `pending-notifications/` every ~10 min and handles the ntfy push.
+# Output: write the review to git + drop a notification stub
 
 Let `{POST_URL} = https://khalic-lab.github.io/claude-routines/{YYYY}/{MM}/{DD}/evaluator/`.
 
@@ -309,67 +300,43 @@ This step runs on BOTH cold and full runs — the user should know the evaluator
 
 ### 1. Write the review
 
-Use the Write tool to create `_posts/{YYYY-MM-DD}-evaluator.md`. The file MUST start with this front-matter block, then a blank line, then the review body (either the cold-run minimal text from the precheck block, or the full analysis):
+Use the Write tool to write the review BODY to `_posts/{YYYY-MM-DD}-evaluator.md` — either the
+cold-run minimal text from the precheck block, or the full analysis. The front matter is derived
+at publish (including the `published: true` that keeps this the one post with its own page) —
+don't write it yourself.
+
+### 2. Publish — one command
+
+```bash
+python3 tools/publish.py --slug evaluator --date {YYYY-MM-DD} --notify-body "{teaser}"
+```
+
+`{teaser}` rules: ≤200 chars, passed as a plain shell argument (no quote-escaping).
+- For full runs: headline finding (e.g. "2 streams lag discovery targets — scout vetted 3 candidates" or "All metrics green; registry flow delivering").
+- For cold runs: "Pipeline cold — no inputs in 7-day window."
+
+It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the review is committed but not on origin (retry `git push origin main` before the session ends). Never write the stub or run the git steps by hand.
+
+**Fallback — only if `publish.py` itself crashes before doing anything** (the writers have the same
+escape hatch in `DEDUP.md`): note the error in the review, then ship it by hand so the week's review
+is never lost. Nothing derived the front matter in this path, so prepend it yourself first:
 
 ```
 ---
 layout: single
 title: "Weekly Pipeline Review — {YYYY-MM-DD}"
-date: {full ISO 8601 timestamp WITH timezone offset — the current Europe/Zurich time, e.g. 2026-06-21T12:00:00+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
+date: {current Europe/Zurich time, ISO 8601 with offset}
 categories: [evaluator]
 published: true
 ---
 ```
 
-The `published: true` line is REQUIRED (added 2026-07-18): `_config.yml` unpublishes all post
-pages by default now that the homepage story feed replaced the individual brief pages — the
-evaluator review is the one post that still gets its own page, because its content is not on
-the homepage.
-
-### 2. Write the notification stub
-
-Use the Write tool to create `pending-notifications/{TIMESTAMP}-evaluator.json` where `{TIMESTAMP} = $(date -u +%Y%m%dT%H%M%SZ)`. Content (all four fields required, valid JSON, no trailing content):
-
-```json
-{
-  "title": "Weekly Pipeline Review — {YYYY-MM-DD}",
-  "click": "{POST_URL}",
-  "body": "{teaser}",
-  "tags": "memo"
-}
-```
-
-`{teaser}` rules: ≤200 chars.
-- For full runs: headline finding (e.g. "2 streams lag discovery targets — scout vetted 3 candidates" or "All metrics green; registry flow delivering").
-- For cold runs: "Pipeline cold — no inputs in 7-day window."
-Escape any `"` inside the teaser as `\"`.
-
-### 3. Commit and push
-
-Via Bash:
-
 ```bash
-git add _posts/ pending-notifications/ _data/
-git add proposals/ sources/ 2>/dev/null || true
-git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "Weekly Pipeline Review — {YYYY-MM-DD}"
+git add _posts/ pending-notifications/ _data/ && git add proposals/ sources/ reader-profile.md 2>/dev/null || true
+git -c user.email=routine@khalic-lab -c user.name="News Routine" -c commit.gpgsign=false \
+  commit -m "Weekly Pipeline Review — {YYYY-MM-DD}"
 git push origin main || (git pull --rebase origin main && git push origin main)
 ```
 
-If `git push` still fails after the rebase retry, append `git push failed: <reason>` to the review's Coverage footer and continue.
-
-### 4. Email digest (full runs only)
-
-If the pipeline-cold precheck triggered, the run already stopped after writing the review file, dropping the cold-run stub, and pushing. Otherwise:
-
-Note: the Gmail MCP surface is `create_draft` only — there is no send tool.
-
-- **To:** rflnogueira@me.com
-- **Subject:** "Weekly Pipeline Review — {YYYY-MM-DD}"
-- **Body:**
-  1. The Health Summary table verbatim (markdown).
-  2. Patch proposals — for each, just the title + the 1–2 sentence Issue (NOT the full diff; that's in the git review). Note that the machine-readable copies await the apply step in `proposals/`.
-  3. Prior proposals status — one line per pending (unstamped) proposal from last week, if any.
-  4. Open questions list verbatim if any.
-  5. End with: `Full review: {POST_URL}`
-- If the review concludes "everything healthy, no patches needed", say that explicitly in the email and still link the review.
-- If `create_draft` fails, retry once. If still failing, append `email draft creation failed: <reason>` to the review file in git but don't fail the run.
+`reader-profile.md` belongs in that `git add` whenever you auto-applied a learned-preference line —
+unstaged, the edit dies with the sandbox while your proposal still claims `applied: true`.

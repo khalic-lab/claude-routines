@@ -1,0 +1,2 @@
+- Omit `--final` if dedup was unavailable — note "dedup unavailable" in the Gaps line first.
+- It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the edition is committed but not on origin (retry `git push origin main` before the session ends). Never redo its steps by hand.

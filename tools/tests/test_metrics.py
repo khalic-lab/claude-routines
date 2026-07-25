@@ -169,7 +169,7 @@ def _mktemp_copy(skeleton_name):
     return dst
 
 
-def _run_metrics(root, extra_args=None, timeout=30):
+def _run_metrics(root, extra_args=None, timeout=30, refresh=False):
     """Invokes metrics.py as a subprocess CLI against `root`.
 
     Asserts the script FILE exists first, with a clear message, per the
@@ -182,6 +182,12 @@ def _run_metrics(root, extra_args=None, timeout=30):
         "it is." % METRICS_PATH
     )
     args = [sys.executable, METRICS_PATH, "--root", root] + (extra_args or [])
+    # These fixtures exercise metrics' FOLDING in isolation; since 2026-07-25 metrics.py
+    # refreshes _data/source-health.json itself by default (the evaluator prompt used to carry
+    # that as a second command plus an ordering rule). Refresh is tested explicitly in
+    # SourceHealthRefreshTest -- everywhere else, keep the fixture root untouched.
+    if "--no-refresh-sources" not in args and not refresh:
+        args.append("--no-refresh-sources")
     return subprocess.run(args, capture_output=True, text=True, timeout=timeout)
 
 
@@ -189,9 +195,9 @@ def _health_path(root):
     return os.path.join(root, "_data", "health.json")
 
 
-def _run_and_load(root, extra_args=None):
+def _run_and_load(root, extra_args=None, refresh=False):
     """Runs metrics.py and returns (CompletedProcess, parsed health.json | None)."""
-    proc = _run_metrics(root, extra_args)
+    proc = _run_metrics(root, extra_args, refresh=refresh)
     hp = _health_path(root)
     health = None
     if os.path.exists(hp):
@@ -646,3 +652,38 @@ class MetricsDefaultWeekSmokeTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SourceHealthRefreshTest(unittest.TestCase):
+    """metrics.py refreshes source-health itself, so the evaluator prompt carries ONE command
+    instead of two plus a stated ordering rule ("health.py must run before metrics.py") --
+    an invariant a script can simply hold."""
+
+    def setUp(self):
+        self.root = _mktemp_copy("no_continuity")   # fixture ships no _data/source-health.json
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+        self.sh = os.path.join(self.root, "_data", "source-health.json")
+
+    def test_default_run_produces_source_health_instead_of_the_missing_marker(self):
+        proc, health = _run_and_load(self.root, ["--week", "2026-07-06"], refresh=True)
+        self.assertEqual(proc.returncode, 0)
+        self.assertTrue(os.path.exists(self.sh), "the refresh must write source-health.json")
+        self.assertNotEqual(health["sources"],
+                            {"available": False, "reason": "source-health.json not found"})
+
+    def test_opt_out_leaves_the_tree_alone_and_degrades(self):
+        proc, health = _run_and_load(self.root, ["--week", "2026-07-06"])   # --no-refresh-sources
+        self.assertEqual(proc.returncode, 0)
+        self.assertFalse(os.path.exists(self.sh))
+        self.assertEqual(health["sources"],
+                         {"available": False, "reason": "source-health.json not found"})
+
+    def test_refresh_failure_is_non_fatal(self):
+        """A broken/absent health.py must degrade to the marker, never abort the review."""
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("_metrics_mod", METRICS_PATH)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        empty = tempfile.mkdtemp(prefix="metrics-refresh-empty-")
+        self.addCleanup(shutil.rmtree, empty, ignore_errors=True)
+        self.assertIn(mod.refresh_source_health(empty), (True, False))

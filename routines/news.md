@@ -1,11 +1,5 @@
 Write my midday news brief and publish it via the git pipeline. Use today's date in Europe/Zurich.
 
-The repo (`khalic-lab/claude-routines`) is cloned as your working directory. Before doing anything else, sync:
-
-```bash
-git pull --ff-only origin main
-```
-
 # Mission
 
 A tight midday read of the major **local (Switzerland & Vaud)** and **world** news since yesterday's edition. Coverage window: the last ~24 hours (yesterday midday through this morning) — federal/cantonal developments, Swiss-relevant EU moves, and the notable geopolitics, conflicts, elections, and diplomacy across all time zones.
@@ -47,7 +41,7 @@ In practice: go to the primary source and read it yourself; report what it actua
 5. **Tags.** Vendor/official announcements → `[official PR]`. Single source → `[single-source]`. Contested → `[disputed]`.
 6. **No fabrication.** Never invent a URL, author, date, or quote. **The no-fabrication rule extends to date claims** — date accuracy matters most in this edition (elections, Swiss federal/cantonal votes, scheduled diplomatic events): never report a scheduled or future event as a result, and carry each event's real date forward rather than re-deriving it (see Date discipline below).
 7. **Volume cap.** 4–7 items per section. Better to omit than dilute.
-8. **Fetch transparency.** Many sites return HTTP 403 to the routine sandbox. When you successfully fetch a URL/feed and confirm content, no marker. When the citation is based only on a search-engine snippet, append `[via snippet]` to the citation.
+8. **Fetch transparency.** A confirmed fetch gets no marker; a citation resting only on a search-engine snippet gets `[via snippet]`.
 
 # Reader profile + source weights (read before selecting and ordering stories)
 
@@ -68,12 +62,12 @@ editorial instruction. If a file is missing or empty, proceed normally.
 
 **FIRST research action — build today's source plan:**
 
-    python3 tools/sources/preflight.py --slug {slug}
+    python3 tools/sources/preflight.py --slug news
 
-(your slug is the one named in your Story-deduplication section). It reads `sources/registry.yml` and prints the plan that is the AUTHORITY on what to fetch and what pressure applies today — not any table in this prompt:
+It reads `sources/registry.yml` and prints the plan that is the AUTHORITY on what to fetch and what pressure applies today — not any table in this prompt:
 
 - **Fetch list** — the domains/feeds affine to this stream, each with its probe URL and method (curl or proxy). Sweep these first.
-- **Pressure** — per-domain rolling-30-day citation shares, with a `SATURATED` flag on any domain over its share bar (hubs like arXiv are exempt). The separate flat cap of 2 stories per outlet domain per edition is checked after writing by the source lint (DEDUP Step C.25), not printed here. Both are report-only — no story gets dropped for them — but when two sources carry the same story, prefer the unsaturated one.
+- **Pressure** — per-domain rolling-30-day citation shares, with a `SATURATED` flag on any domain over its share bar (hubs like arXiv are exempt). Report-only — no story is dropped for it — but when two sources carry the same story, prefer the unsaturated one, and cite no outlet domain more than twice in one edition (hubs exempt).
 - **Discovery** — this stream's discovery quota and `candidates_to_try` (registry candidates and dormant domains worth a probe this run). Work at least the quota's worth of genuinely new or dormant domains into your research; the Discovery footer line reports the outcome.
 
 **EMERGENCY SLATE — degraded mode only (a floor, never the ceiling).** If preflight errors or prints `source-plan unavailable`, fall back to these known-good feeds and note `source-plan unavailable` in the Gaps footer:
@@ -81,31 +75,35 @@ editorial instruction. If a file is missing or empty, proceed normally.
 - Science streams: arXiv `https://export.arxiv.org/rss/{category}` + the Atom API, Nature `https://www.nature.com/nature.rss`.
 Still research beyond this floor as the brief demands — the slate is where you start when the plan is missing, never a cap on where you look.
 
-**New-source citation rule.** T3 aggregators (HN/Reddit/X) remain never-cited. But a **genuine primary source discovered through search or a T3 lead MAY be cited immediately even if it is absent from `sources/registry.yml`** — tag it with the literal marker `[new source]` next to the citation. Tag ONLY domains genuinely absent from the registry (grep `sources/registry.yml` for the domain first): the lint at DEDUP Step C.25 recomputes novelty itself, and both a missing tag on an unregistered domain and a `[new source]` tag on a registered one are violations. This is how the registry grows — a tagged citation auto-enters the domain as a `candidate`.
+**New-source citation rule.** T3 aggregators (HN/Reddit/X) remain never-cited. But a **genuine primary source discovered through search or a T3 lead MAY be cited immediately even if it is absent from `sources/registry.yml`** — tag it with the literal marker `[new source]` next to the citation. Tag ONLY domains genuinely absent from the registry (grep `sources/registry.yml` for the domain first): the source lint recomputes novelty itself at publish, and both a missing tag on an unregistered domain and a `[new source]` tag on a registered one are violations. This is how the registry grows — a tagged citation auto-enters the domain as a `candidate`.
 
 ## Fetch mechanics
 
-**Every research fetch goes through the logging wrapper `tools/fetch.py` — not raw `curl`, and WebFetch only as a last resort.** The wrapper runs the deterministic chain (direct curl first, then the fetch-proxy Worker — Cloudflare edge, real browser User-Agent — which bypasses the sandbox-IP 403s on Cloudflare/Akamai-fronted sites), and logs every attempt to `/tmp/fetch.log`. That log becomes the Coverage footer's exact `Feeds hit` line and research-call count at publish time — fetching around the wrapper makes the telemetry silently undercount, so don't.
+**Feed first.** Most quality sources' HTML 403s this sandbox while the same publisher's RSS / Atom
+/ JSON feed — served from different infrastructure — is reachable. Attempt the feed or API before
+the HTML page for any source that has one.
 
-Once, at the start of the session, export the proxy bearer so the wrapper's fallback works:
+**Every research fetch goes through `tools/fetch.py`** — never raw `curl`, and WebFetch only as a
+last resort. Once, at the start of the session, export the proxy bearer:
 
     export FETCH_PROXY_TOKEN='${FETCH_PROXY_TOKEN}'
 
 Then, for every URL:
 
-    python3 tools/fetch.py "<URL>"             # direct curl first, proxy fallback on failure
-    python3 tools/fetch.py --proxy "<URL>"     # hosts the preflight plan marks `method: proxy`: skip the wasted direct attempt
+    python3 tools/fetch.py "<URL>"             # direct first, proxy fallback on failure
+    python3 tools/fetch.py --proxy "<URL>"     # hosts the plan marks `method: proxy`
 
-- **Direct-first hosts** (registry `reach: direct` — e.g. `export.arxiv.org`, `www.nature.com`, `www.quantamagazine.org`, `www.srf.ch`, `www.letemps.ch`, `www.aljazeera.com`, plus API endpoints like `api.semanticscholar.org`) succeed on the wrapper's first attempt; the direct-first order also honors arXiv's ask that automated clients fetch it directly.
-- **`--proxy` for everything the plan marks `method: proxy`** — lab blogs (Anthropic, OpenAI, DeepMind, Meta, Mistral, Apple), tech-news HTML (CNBC, TechCrunch, VentureBeat, Bloomberg, Fortune, …). The registry's `reach:` field (surfaced in the preflight plan) is the reachability truth; there is no static unavailable list.
-- **Exit 0 with the body on stdout is a direct fetch** — no `[via snippet]` tag, whether it resolved direct or via proxy. A non-zero exit means the host hard-blocks even the proxy (Cloudflare JS/Turnstile challenge) or is paywalled — only then fall back to a search-engine snippet and tag the citation `[via snippet]`. (WebFetch remains a permitted last resort for a page the wrapper cannot reach; if a citation rests on WebFetch-only access, say so in the Gaps line, since the log will not show it.)
-- **Do not hand-report fetch telemetry.** The footer's `Feeds hit`, direct-vs-snippet counts, and call count are computed from `/tmp/fetch.log` and your `[via snippet]` tags at publish time (`tools/footer.py`, run by the publish command). Your accounting duty is upstream: tag every snippet-only citation `[via snippet]`, and fetch through the wrapper.
+The plan's `reach:` is the reachability truth — this prompt carries no unavailable list.
 
-The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Many of those same sources publish RSS / Atom / JSON feeds on different infrastructure that IS reachable. **Attempt the feed first for any source that has one; fall back to HTML or search-engine snippet only on failure.**
+**Exit 0 is a real fetch — no marker, whichever way it resolved.** A non-zero exit means the host
+blocks even the proxy, or is paywalled: only then fall back to a search-engine snippet and tag
+that citation `[via snippet]`. If a citation rests on WebFetch instead, say so in the Gaps line —
+it leaves no trace in the fetch log.
 
-**CRITICAL — every fetch goes through `python3 tools/fetch.py "<URL>"`** (see Fetch mechanics above): it runs the direct-curl → proxy chain deterministically and logs each attempt to `/tmp/fetch.log`. A wrapper exit 0 counts as a direct fetch — even when the article HTML itself is 403 and the feed carried the content.
-
-**Coverage footer accounting (computed at publish):** the telemetry numbers — tier split, direct-vs-snippet counts, word count, token estimate, `Feeds hit` — are computed by the publish command from your citations and `/tmp/fetch.log`; do not count them yourself. Your accounting duty is upstream accuracy: tag every snippet-only citation `[via snippet]`, and fetch only through the wrapper.
+**Never hand-count fetch telemetry.** The footer's tier split, direct-vs-snippet counts, word
+count and `Feeds hit` are computed at publish from your citations and the wrapper's log. Your
+whole accounting duty is upstream: tag every snippet-only citation, and fetch through the wrapper
+(fetching around it silently undercounts).
 
 # Research methodology
 
@@ -167,8 +165,7 @@ comes first.}
 ---
 
 ## Coverage footer
-<!-- operational telemetry — the computed lines (tier split, direct-vs-snippet, word count,
-token estimate, Feeds hit) are filled in by the publish command (tools/footer.py); write ONLY:
+<!-- the telemetry lines are computed at publish; write ONLY:
 - Languages: {languages of your cited sources, e.g. EN, FR, DE}
 -->
 - Gaps: things you tried to find but couldn't.
@@ -209,48 +206,19 @@ You derive "today" from the machine-stamped `_Generated <ISO> Europe/Zurich_` he
 3. **Never write relative framing** — "this weekend", "tomorrow", "next week", "in N days" — **for a dated event without the absolute date right beside it.** (The `lint` SCHEDULE check flags bare relative framing.)
 4. When you `record` the stories you kept, put each event's real date in its `event_date` field whenever you know it — that is what carries the correct date forward to future briefs.
 
-# Output: write the brief to git + drop a notification stub + email digest
-
-This routine writes to the git repo (your working directory is the cloned `claude-routines` repo). It does NOT write to Google Drive and does NOT POST to ntfy directly. A local bridge on the user's machine polls `pending-notifications/` every ~10 min and handles the ntfy push.
-
-Individual brief pages are retired (2026-07-18): the homepage story feed at
-`https://khalic-lab.github.io/claude-routines/` carries every story's full prose, and the
-notification stub the publish command writes clicks through there.
+# Output: write the brief to git + drop a notification stub
 
 ### 1. Write the brief
 
-Use the Write tool to create `_posts/{YYYY-MM-DD}-news.md`. Front-matter:
+Use the Write tool to write the brief BODY to `_posts/{YYYY-MM-DD}-news.md`, starting at the `#` heading from the Format block above. The front matter is derived at publish — don't write it yourself.
 
-```
----
-layout: single
-title: "News — {YYYY-MM-DD}"
-date: {full ISO 8601 timestamp WITH timezone offset, identical to the _Generated line — e.g. 2026-06-29T19:09:59+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
-categories: [news]
----
-```
-
-### 2. Publish — one command (fires every day, including weekends)
-
-Everything after the brief file is deterministic and runs through the orchestrator: dedup record → anchors → computed footer telemetry → source lint → registry/institutions sync → date lint → homepage feed + stats → source health → notification stub → commit → push, with the homefeed rebase-conflict retry built in (News + AI/ML firing the same minute Tue/Fri is handled).
+### 2. Publish — one command
 
 ```bash
 python3 tools/publish.py --slug news --date {YYYY-MM-DD} \
-  --final /tmp/final.json \
-  --notify-title "News — {YYYY-MM-DD}" \
-  --notify-body "{teaser}" --notify-tags newspaper
+  --final /tmp/final.json --notify-body "{teaser}"
 ```
 
-- `{teaser}` rules: ≤200 chars. The single most important item from this brief — the lead Swiss/Vaud or World story. Concrete and specific (e.g. "Federal Council unveils Bilaterals III ratification roadmap; Iran-Israel ceasefire holds day 67"), not generic. Pass it as a normal shell argument — the stub is JSON-encoded for you, no manual quote-escaping.
-- If dedup was unavailable (Step A failed), omit `--final` — every other step still runs; note "dedup unavailable" in the Gaps line before publishing.
-- The orchestrator prints one OK/FAIL line per step and ends with `DONE` or a `FAILED (...)` line. Preprocessing FAILs degrade — never abort the brief for them. The two git failures need a reaction: `FAILED (git commit errored ...)` means NOTHING was published — fix the reported error and rerun the same publish command (or use DEDUP.md's manual-git fallback); `FAILED (push ...)` means the edition is committed locally but not on origin (the failure note is already amended into the commit) — retry `git push origin main` before the session ends. Do not re-run the preprocessing steps by hand, and do not write the stub or telemetry yourself.
-
-### 3. Email digest (weekdays only, after the publish command)
-
-**Weekend gate:** if today is Saturday or Sunday in Europe/Zurich, SKIP the email step entirely. The brief is still written to git on weekends and the push notification still fires.
-
-Otherwise (Monday–Friday), compose a News-only midday email via Gmail (`create_draft` only). There is NO consolidated cross-stream email — this email carries News content only.
-- **To:** rflnogueira@me.com
-- **Subject:** "News — {YYYY-MM-DD}"
-- **Body:** ~250–350 words, plain text or simple markdown. Two labeled sections in this order: 🇨🇭 Switzerland & Vaud, 🌍 World. For each, 2–4 highlight bullets (top items only). End with: `All stories: https://khalic-lab.github.io/claude-routines/`.
-- If `create_draft` fails, retry once. If still failing, append `email draft creation failed: <reason>` to the brief's Coverage footer and don't fail the run.
+- `{teaser}` rules: ≤200 chars. The single most important item from this brief — the lead Swiss/Vaud or World story. Concrete and specific (e.g. "Federal Council unveils Bilaterals III ratification roadmap; Iran-Israel ceasefire holds day 67"), not generic. Pass it as a plain shell argument; no quote-escaping.
+- Omit `--final` if dedup was unavailable — note "dedup unavailable" in the Gaps line first.
+- It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the edition is committed but not on origin (retry `git push origin main` before the session ends). Never redo its steps by hand.

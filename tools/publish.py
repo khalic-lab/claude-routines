@@ -17,11 +17,21 @@ stub is written with real JSON encoding (no hand-escaped quotes) and a computed
 UTC timestamp; a bare `date:` in the post's front matter is normalized to a full
 ISO timestamp (the same-day sort-order bug class, closed at the root).
 
+`--slug evaluator` is the review's variant: no story preprocessing (it records none),
+just the stub -- clicking through to the review's own page, the one post still rendered
+-- plus the same git tail.
+
+Front matter is DERIVED here too (layout/title/categories from the slug, date from the brief's
+own _Generated stamp, `published: true` for the review) -- a writer writes the brief body and
+nothing else, so no prompt carries a block to reproduce by hand. Likewise the notification title
+and tag: both follow from (slug, date), leaving the teaser as the only thing a writer passes.
+
 Usage:
   publish.py --slug news --date 2026-07-18 [--root .]
              [--final /tmp/final.json]          # skips `record` when omitted (dedup unavailable)
              [--fetch-log /tmp/fetch.log]
-             [--notify-title "..." --notify-body "..." --notify-tags newspaper]
+             --notify-body "<teaser>"           # title/tag default from the slug
+             [--notify-title "..."] [--notify-tags ...]
              [--message "..."] [--no-push] [--dry-run]
 """
 import argparse
@@ -33,37 +43,47 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SLUGS = ("news", "ai-ml", "science", "weekend", "sports")
-COMMIT_TITLE = {"news": "News", "ai-ml": "AI/ML", "science": "Science",
-                "weekend": "Weekend Deep Read", "sports": "Sports"}
+# Writers run the full preprocessing chain; the evaluator publishes a review + stub only
+# (its own mechanical state comes from health.py/metrics.py at fire-start, and it records
+# no stories), but shares the honest git tail -- the same rebase retry and the
+# commit/push failure semantics its hand-rolled tail never had.
+WRITER_SLUGS = ("news", "ai-ml", "science", "weekend", "sports")
+SLUGS = WRITER_SLUGS + ("evaluator",)
+EDITION_NAME = {"news": "News", "ai-ml": "AI/ML", "science": "Science",
+                "weekend": "Weekend Deep Read", "sports": "Sports",
+                "evaluator": "Weekly Pipeline Review"}
 GIT_NAME = {"news": "News Routine", "ai-ml": "AI/ML Routine", "science": "Science Routine",
-            "weekend": "Weekend Routine", "sports": "Sports Routine"}
+            "weekend": "Weekend Routine", "sports": "Sports Routine",
+            "evaluator": "News Routine"}
 SITE = "https://khalic-lab.github.io/claude-routines"
-
-# Committed alongside this file in DEDUP.md; low-value token (gates only Workers-AI
-# embedding spend on our own account). Env vars, when set, win.
-EMBED_DEFAULTS = {
-    "EMBED_WORKER_URL": "https://embed-proxy.khalic-lab.workers.dev",
-    "EMBED_TOKEN": "b4bd10fc46e70315205b5aa4a4352d6d79f750d13cc4ef960928f8e6da5aae8a",
-}
+# Per-slug ntfy tag (the phone's icon per edition) -- fixed per stream, so it is a default
+# here rather than an argument every prompt repeats.
+NOTIFY_TAGS = {"news": "newspaper", "ai-ml": "robot_face", "science": "microscope",
+               "weekend": "calendar", "sports": "soccer", "evaluator": "memo"}
 
 BARE_DATE_RE = re.compile(r"^(date:\s*)(\d{4}-\d{2}-\d{2})\s*$", re.M)
+# The brief's own machine-stamped line ("_Generated 2026-07-25T12:03:11+02:00 Europe/Zurich._",
+# or Weekend's "_Coverage: … Generated <ts> …_") -- reused verbatim as the front-matter date so
+# the two agree exactly instead of drifting by however long the publish step took. ANCHORED on the
+# word Generated: an unanchored match would happily take a timestamp out of a story's own text.
+GENERATED_TS_RE = re.compile(
+    r"[Gg]enerated\s+(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2}))")
+# A complete front-matter block: opening ---, body, closing ---. Matching the WHOLE block (rather
+# than partitioning on the first "\n---") is what makes the repair below safe on a post whose text
+# begins with a blank line -- that shape used to put `published: true` outside the block entirely.
+FRONT_MATTER_RE = re.compile(r"\A\s*---[ \t]*\r?\n(?P<fm>.*?)\r?\n---[ \t]*\r?$", re.S | re.M)
 
 
 def say(msg):
     print("[publish] %s" % msg, flush=True)
 
 
-def run_step(name, argv, root, dry_run, env=None):
+def run_step(name, argv, root, dry_run):
     if dry_run:
         say("DRY-RUN %s: %s" % (name, " ".join(argv)))
         return True
-    merged = dict(os.environ)
-    if env:
-        for k, v in env.items():
-            merged.setdefault(k, v)
     try:
-        proc = subprocess.run(argv, cwd=root, capture_output=True, text=True, env=merged)
+        proc = subprocess.run(argv, cwd=root, capture_output=True, text=True)
     except OSError as exc:
         say("%s: FAIL (%s)" % (name, exc))
         return False
@@ -82,6 +102,95 @@ def zurich_now():
         return dt.datetime.now().astimezone()
 
 
+def edition_title(slug, date):
+    """The edition's one name -- post title AND notification title, everywhere."""
+    return "%s — %s" % (EDITION_NAME[slug], date)
+
+
+def _iso_offset(stamp):
+    """'+0200' -> '+02:00' (Jekyll wants the colon); already-colon input passes through."""
+    m = re.search(r"([+-]\d{2})(\d{2})$", stamp)
+    return stamp[:m.start()] + m.group(1) + ":" + m.group(2) if m else stamp
+
+
+def _fm_day(fm):
+    """The YYYY-MM-DD of a front-matter block's `date:` line, or None."""
+    m = re.search(r"^date:\s*(\d{4}-\d{2}-\d{2})", fm, re.M)
+    return m.group(1) if m else None
+
+
+def _is_future(stamp, now):
+    try:
+        return dt.datetime.fromisoformat(stamp.replace("Z", "+00:00")) > now
+    except ValueError:
+        return False
+
+
+def ensure_front_matter(post_path, slug, date, dry_run):
+    """Give the post the front matter Jekyll needs, derived from (slug, date) + the brief's
+    own _Generated stamp -- so the prompt no longer carries a block for the model to
+    reproduce exactly. A post that already has front matter is left alone, EXCEPT that an
+    evaluator review is guaranteed `published: true`: _config.yml unpublishes posts by
+    default, so without that line the one review page that should render silently doesn't.
+
+    Returns the DAY of the front-matter date in effect (or None when it can't be read). That
+    day -- not --date -- is what the notification must link to: Jekyll builds the permalink
+    from front matter, so deriving the two from different sources is how they drift apart."""
+    with open(post_path, encoding="utf-8") as fh:
+        text = fh.read()
+
+    if text.lstrip().startswith("---"):
+        m = FRONT_MATTER_RE.match(text)
+        if not m:
+            # Opens with --- but never closes: prepending a second block would make it worse.
+            say("front-matter: WARNING unterminated block -- left as written")
+            return
+        fm = m.group("fm")
+        fm_day = _fm_day(fm)
+        if slug != "evaluator" or re.search(r"^published:", fm, re.M):
+            return fm_day
+        if dry_run:
+            say("DRY-RUN front-matter: would add `published: true` (evaluator page)")
+            return fm_day
+        # Insert INSIDE the block, located by span -- never by string surgery on the whole file.
+        new = text[:m.end("fm")] + "\npublished: true" + text[m.end("fm"):]
+        with open(post_path, "w", encoding="utf-8") as fh:
+            fh.write(new)
+        say("front-matter: added missing `published: true`")
+        return fm_day
+
+    # Time-of-day from the brief's own _Generated line (so the two agree); DATE always the
+    # edition's, because Jekyll builds the permalink from the front-matter date while the
+    # notification stub links using --date -- a run that crosses midnight would otherwise
+    # publish the review at a URL its own notification 404s on.
+    m = GENERATED_TS_RE.search(text[:1500])
+    now = zurich_now()
+    clock = _iso_offset(m.group(1)).split("T", 1)[1] if m else \
+        _iso_offset(now.strftime("%H:%M:%S%z"))
+    stamp = "%sT%s" % (date, clock)
+    # Jekyll's `future` defaults to false and _config.yml does not override it: a front-matter
+    # date ahead of the build clock makes the post vanish from the site entirely -- and the
+    # evaluator review is the one post that still renders a page. So never emit a future stamp;
+    # if --date is ahead of the real day, say so loudly and fall back to now.
+    if _is_future(stamp, now):
+        stamp = _iso_offset(now.strftime("%Y-%m-%dT%H:%M:%S%z"))
+        say("front-matter: WARNING --date %s is ahead of the clock (%s) -- a future-dated post "
+            "would be excluded from the build; using now instead" % (date, now.date().isoformat()))
+    lines = ["---", "layout: single", 'title: "%s"' % edition_title(slug, date),
+             "date: %s" % stamp, "categories: [%s]" % slug]
+    if slug == "evaluator":
+        lines.append("published: true")
+    lines += ["---", ""]
+    if dry_run:
+        say("DRY-RUN front-matter: would prepend %d lines (date %s)" % (len(lines), stamp))
+        return stamp.split("T", 1)[0]
+    with open(post_path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n" + text.lstrip("\n"))
+    say("front-matter: wrote block (date %s, from %s)"
+        % (stamp, "the _Generated line" if m else "now"))
+    return stamp.split("T", 1)[0]
+
+
 def normalize_front_matter(post_path, dry_run):
     """A bare `date: YYYY-MM-DD` front-matter line becomes a full ISO timestamp --
     bare dates make same-day briefs sort out of chronological order."""
@@ -93,8 +202,7 @@ def normalize_front_matter(post_path, dry_run):
         say("front-matter: date already a full timestamp")
         return
     stamp = "%s%sT%s" % (m.group(1), m.group(2),
-                         zurich_now().strftime("%H:%M:%S%z"))
-    stamp = stamp[:-2] + ":" + stamp[-2:]  # +0200 -> +02:00
+                         _iso_offset(zurich_now().strftime("%H:%M:%S%z")))
     if dry_run:
         say("DRY-RUN front-matter: would rewrite %r -> %r" % (m.group(0), stamp))
         return
@@ -105,11 +213,15 @@ def normalize_front_matter(post_path, dry_run):
 
 def write_stub(root, slug, date, title, body, tags, dry_run):
     ts = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    # Individual brief pages are retired (2026-07-18) — the homepage story feed is where
+    # brief content lives, so brief notifications click through there. The evaluator
+    # review is the one post that still renders its own page, so it links to it.
+    click = SITE + "/"
+    if slug == "evaluator":
+        click = "%s/%s/evaluator/" % (SITE, date.replace("-", "/"))
     stub = {
         "title": title,
-        # Individual brief pages are retired (2026-07-18) — the homepage story feed
-        # is where the content lives, so every brief notification clicks through there.
-        "click": SITE + "/",
+        "click": click,
         "body": body,
         "tags": tags,
     }
@@ -149,9 +261,15 @@ def commit_and_push(root, slug, message, no_push, dry_run):
     # A missing pathspec makes `git add` abort WITHOUT staging the ones that do
     # exist (fatal, not partial) -- which cascades into the exact false-DONE shape
     # this function guards against. Only add directories that exist.
-    paths = [d for d in ("_posts/", "pending-notifications/", "index/", "_data/",
-                         "sources/")
-             if os.path.exists(os.path.join(root, d))] or ["_posts/"]
+    wanted = ["_posts/", "pending-notifications/", "index/", "_data/", "sources/",
+              "proposals/"]
+    # The evaluator holds a bounded grant to append dated lines to reader-profile.md
+    # ("Learned preferences"). Nothing else in the tree writes that file, and it is not
+    # under any staged directory -- unstaged, the edit dies with the sandbox while the
+    # run's proposal record still claims applied:true. Slug-scoped: writers only READ it.
+    if slug == "evaluator":
+        wanted.append("reader-profile.md")
+    paths = [d for d in wanted if os.path.exists(os.path.join(root, d))] or ["_posts/"]
     run_step("git-add", git(root, slug, ["add"] + paths), root, dry_run)
     if staged_changes(root, dry_run):
         if not run_step("git-commit", git(root, slug, ["commit", "-m", message]),
@@ -205,10 +323,14 @@ def main(argv=None):
     p.add_argument("--date", required=True)
     p.add_argument("--root", default=ROOT)
     p.add_argument("--final", default=None, help="Step-C final.json; omit if dedup was unavailable")
+    p.add_argument("--candidates", default="/tmp/cand.json",
+                   help="Step-A candidates; snapshotted with --verdicts when both exist")
+    p.add_argument("--verdicts", default="/tmp/verdicts.json")
     p.add_argument("--fetch-log", default=os.environ.get("FETCH_LOG", "/tmp/fetch.log"))
-    p.add_argument("--notify-title", default=None)
+    # Title and tag are derivable from (slug, date); only the teaser is the writer's to judge.
+    p.add_argument("--notify-title", default=None, help="defaults to '<Edition> — <date>'")
     p.add_argument("--notify-body", default=None)
-    p.add_argument("--notify-tags", default="newspaper")
+    p.add_argument("--notify-tags", default=None, help="defaults to the slug's ntfy tag")
     p.add_argument("--message", default=None)
     p.add_argument("--no-push", action="store_true")
     p.add_argument("--dry-run", action="store_true")
@@ -220,49 +342,70 @@ def main(argv=None):
         say("FATAL: %s does not exist -- write the brief first." % post)
         return 2
 
+    stub_date = args.date
     if os.path.exists(post):
+        stub_date = ensure_front_matter(post, args.slug, args.date, args.dry_run) or args.date
         normalize_front_matter(post, args.dry_run)
+        if stub_date != args.date:
+            say("stub: will link %s (the front-matter date), not --date %s" % (stub_date, args.date))
 
     py = sys.executable
     index_file = os.path.join(root, "index", "stories", "%s-%s.jsonl" % (args.date, args.slug))
 
-    if args.final:
-        run_step("record", [py, "tools/dedup/dedup.py", "record", "--stories", args.final,
-                            "--date", args.date, "--slug", args.slug],
-                 root, args.dry_run, env=EMBED_DEFAULTS)
+    if args.slug not in WRITER_SLUGS:
+        say("preprocessing: skipped (%s publishes post + stub only)" % args.slug)
     else:
-        say("record: skipped (no --final; note 'dedup unavailable' in Gaps)")
+        if args.final:
+            run_step("record", [py, "tools/dedup/dedup.py", "record", "--stories", args.final,
+                                "--date", args.date, "--slug", args.slug],
+                     root, args.dry_run)
+        else:
+            say("record: skipped (no --final; note 'dedup unavailable' in Gaps)")
 
-    anchor_cmd = [py, "tools/store/anchor.py"]
-    if os.path.exists(index_file):
-        anchor_cmd += ["--index", os.path.relpath(index_file, root)]
-    anchor_cmd.append(os.path.relpath(post, root))
-    run_step("anchor", anchor_cmd, root, args.dry_run)
+        # The Step-A verdict snapshot (desk-stats raw material) rides along here rather
+        # than being a second command in the writer's prompt: both files are still on
+        # disk from the check the writer ran before composing.
+        if os.path.exists(args.candidates) and os.path.exists(args.verdicts):
+            run_step("verdicts", [py, "tools/store/verdicts.py",
+                                  "--candidates", args.candidates,
+                                  "--verdicts", args.verdicts,
+                                  "--date", args.date, "--slug", args.slug],
+                     root, args.dry_run)
+        else:
+            say("verdicts: skipped (no %s + %s)" % (args.candidates, args.verdicts))
 
-    run_step("footer", [py, "tools/footer.py", os.path.relpath(post, root),
-                        "--root", ".", "--fetch-log", args.fetch_log], root, args.dry_run)
-    run_step("source-lint", [py, "tools/sources/lint.py", os.path.relpath(post, root),
-                             "--root", "."], root, args.dry_run)
-    run_step("registry-sync", [py, "tools/sources/registry.py", "sync", "--root", "."],
-             root, args.dry_run)
-    run_step("institutions-sync", [py, "tools/sources/institutions.py", "sync", "--root", "."],
-             root, args.dry_run)
-    run_step("date-lint", [py, "tools/dedup/dedup.py", "lint", "--brief",
-                           os.path.relpath(post, root)], root, args.dry_run)
-    run_step("feed", [py, "tools/build_stories_feed.py"], root, args.dry_run)
-    run_step("source-health", [py, "tools/sources/health.py"], root, args.dry_run)
-    # refresh the Worker-hosted analytical plane (embed-proxy /plane/*) from the ledger the
-    # record step just extended — non-fatal like everything else; analytics never cost an edition
-    run_step("plane-push", [py, "tools/plane/bake.py", "--push"], root, args.dry_run,
-             env=EMBED_DEFAULTS)
+        anchor_cmd = [py, "tools/store/anchor.py"]
+        if os.path.exists(index_file):
+            anchor_cmd += ["--index", os.path.relpath(index_file, root)]
+        anchor_cmd.append(os.path.relpath(post, root))
+        run_step("anchor", anchor_cmd, root, args.dry_run)
 
-    if args.notify_title and args.notify_body:
-        write_stub(root, args.slug, args.date, args.notify_title, args.notify_body,
-                   args.notify_tags, args.dry_run)
+        run_step("footer", [py, "tools/footer.py", os.path.relpath(post, root),
+                            "--root", ".", "--fetch-log", args.fetch_log], root, args.dry_run)
+        run_step("source-lint", [py, "tools/sources/lint.py", os.path.relpath(post, root),
+                                 "--root", "."], root, args.dry_run)
+        run_step("registry-sync", [py, "tools/sources/registry.py", "sync", "--root", "."],
+                 root, args.dry_run)
+        run_step("institutions-sync", [py, "tools/sources/institutions.py", "sync", "--root", "."],
+                 root, args.dry_run)
+        run_step("date-lint", [py, "tools/dedup/dedup.py", "lint", "--brief",
+                               os.path.relpath(post, root)], root, args.dry_run)
+        run_step("feed", [py, "tools/build_stories_feed.py"], root, args.dry_run)
+        run_step("source-health", [py, "tools/sources/health.py"], root, args.dry_run)
+        # refresh the Worker-hosted analytical plane (embed-proxy /plane/*) from the ledger the
+        # record step just extended — non-fatal like everything else; analytics never cost an edition
+        run_step("plane-push", [py, "tools/plane/bake.py", "--push"], root, args.dry_run)
+
+    if args.notify_body:
+        write_stub(root, args.slug, stub_date,
+                   args.notify_title or edition_title(args.slug, args.date),
+                   args.notify_body,
+                   args.notify_tags or NOTIFY_TAGS.get(args.slug, "newspaper"),
+                   args.dry_run)
     else:
-        say("stub: skipped (no --notify-title/--notify-body)")
+        say("stub: skipped (no --notify-body teaser)")
 
-    message = args.message or "%s — %s" % (COMMIT_TITLE[args.slug], args.date)
+    message = args.message or edition_title(args.slug, args.date)
     outcome = commit_and_push(root, args.slug, message, args.no_push, args.dry_run)
     if outcome == "commit-failed":
         say("FAILED (git commit errored -- NOTHING was published; fix the error above and rerun)")

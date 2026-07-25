@@ -100,7 +100,8 @@ trigger's id, cron, and full `session_context`.
   refreshes it via publish.py's `plane-push` step.
 - Deterministic mechanical tier (2026-07-18): `tools/fetch.py` (logging curl→proxy fetch wrapper,
   log at `/tmp/fetch.log`), `tools/footer.py` (computed Coverage-footer telemetry),
-  `tools/publish.py` (the writers' single publish command — record→…→stub→commit/push),
+  `tools/publish.py` (the single publish command — record→…→stub→commit/push for writers;
+  `--slug evaluator` is stub + git tail only),
   `tools/watch/{due,fire}.py` (Watch cooldown gate + bookkeeping),
   `tools/evaluator/linkcheck.py` (dimension-C sampling). Writer prompts and DEDUP.md assume these;
   don't reintroduce hand-run publish steps into a prompt.

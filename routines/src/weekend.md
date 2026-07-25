@@ -1,11 +1,5 @@
 Write my weekend deep-read brief and publish it via the git pipeline. Use today's date (Saturday) in Europe/Zurich.
 
-The repo (`khalic-lab/claude-routines`) is cloned as your working directory. Before doing anything else, sync:
-
-```bash
-git pull --ff-only origin main
-```
-
 # Mission
 
 A long-form weekly digest. Coverage window: past 7 days. **This is the in-depth revisit of the week's most important stories** — the place where the week's biggest items get the *deep* treatment. Select and go deep on the strongest items across the past 7 days regardless of which day they broke, **including stories the daily editions (News / AI/ML / Science) already flagged this week.** Do NOT avoid a story just because a daily edition mentioned it — this is exactly where it gets revisited: go deeper than the daily did, with fuller analysis, the complete paper summary, and connection-drawing across stories.
@@ -29,7 +23,7 @@ Light news/politics — just a brief "what mattered this week" section at the to
 4. **Diversification.** Within each section, span geographic/linguistic sources.
 5. **Tags.** Preprints → `[preprint]`. Vendor announcements → `[vendor PR]`. Single source → `[single-source]`. Contested → `[disputed]`.
 6. **No fabrication.** Never invent a URL, author, date, or quote.
-7. **Fetch transparency.** Many sites return HTTP 403 to the routine sandbox. When you successfully fetch a URL/feed and confirm content, no marker. When the citation is based only on a search-engine snippet, append `[via snippet]` to the citation.
+7. **Fetch transparency.** A confirmed fetch gets no marker; a citation resting only on a search-engine snippet gets `[via snippet]`.
 
 **Volume rules for weekend brief:**
 - Sections aren't capped at 4–7. Quality is the cap.
@@ -40,29 +34,23 @@ Light news/politics — just a brief "what mattered this week" section at the to
 
 <!-- include: _shared/feed-first-source-order.md -->
 
-The HTML pages of most quality sources return HTTP 403 from this routine sandbox. Many of those publishers also offer machine-readable feeds (RSS, Atom, JSON) that are reachable. **Always attempt the feed/API before the HTML page.**
-
-**CRITICAL — every fetch goes through `python3 tools/fetch.py "<URL>"`** (see Fetch mechanics above): it runs the direct-curl → proxy chain deterministically and logs each attempt to `/tmp/fetch.log`. A wrapper exit 0 counts as a direct fetch. This is the binding-constraint workaround for the 403 wall.
-
 **Order of attempts per topic, in priority:**
-1. Feed from the preflight plan (or arXiv/Semantic Scholar APIs) via `tools/fetch.py`.
-2. The publisher's HTML page via `tools/fetch.py --proxy` (or WebFetch as a last resort).
+1. A feed from the preflight plan, or the arXiv / Semantic Scholar APIs.
+2. The publisher's HTML page.
 3. Web search snippet (last resort, tag the citation `[via snippet]`).
 
 **arXiv / Semantic Scholar mechanics:** the date-filtered arXiv Atom API (`https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending`) works for `math.*`, `physics.*`, `astro-ph.*` too — swap the `cat:` filter and window the `<published>` dates client-side. Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors` (triangulation and citation counts — NOT affiliations; those follow the block below).
 
 <!-- include: _shared/affiliations.md -->
 
-**Reachable via the fetch-proxy (verified 2026-06-19) — USE these, don't skip them:** fetch with `tools/fetch.py --proxy`.
-- bioRxiv / medRxiv → their JSON details API: `url=https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv`); returns title, abstract, DOI, and date per paper for the window — ideal for the Biology & Fundamental-science sections.
-- Science.org → its RSS feeds (e.g. `https://www.science.org/rss/news_current.xml`, journal feeds); Science's article HTML 403s even through the proxy, so use the feed and cite the DOI / landing URL.
-
-**Coverage footer accounting (computed at publish):** the telemetry numbers — tier split, direct-vs-snippet counts, word count, token estimate, `Feeds hit` — are computed by the publish command from your citations and `/tmp/fetch.log`; do not count them yourself. Your accounting duty is upstream accuracy: tag every snippet-only citation `[via snippet]`, and fetch only through the wrapper.
+**Endpoints worth knowing (not in the plan's probe list) — USE these, don't skip them:**
+- bioRxiv / medRxiv JSON details API: `https://api.biorxiv.org/details/biorxiv/{YYYY-MM-DD}/{YYYY-MM-DD}/0` (swap `medrxiv`) — title, abstract, DOI and date per paper for the window; ideal for the Biology & Fundamental-science sections.
+- Science.org — use its RSS feeds (e.g. `https://www.science.org/rss/news_current.xml`, journal feeds); the article HTML is unreachable, so cite the DOI / landing URL.
 
 # Research methodology
 
 The weekend brief warrants more aggressive iteration than the dailies. Per topic:
-1. **Source plan first, then feed sweep.** Run the preflight (see Source plan above), then hit its fetch list via `tools/fetch.py` for the past 7 days (use the arXiv API with date filters; the Nature RSS feeds are rolling). This is your primary content source.
+1. **Source plan first, then feed sweep.** Run the preflight (see Source plan above), then hit its fetch list for the past 7 days (use the arXiv API with date filters; the Nature RSS feeds are rolling). This is your primary content source.
 2. **Multi-pass search** for stories the feeds didn't surface. Start broad, refine 2–4 times, drill into specifics.
 3. **Fetch full pages** liberally. arXiv abstracts (use the arXiv API — not the abstract HTML page, which 403s), full blog posts, GitHub READMEs, model cards. If fetch fails, fall back to snippets and tag with `[via snippet]`.
 4. **Cross-reference rigorously.** For paper claims, locate the paper PDF if the abstract is ambiguous. Use Semantic Scholar API to triangulate citation/influence.
@@ -80,16 +68,17 @@ the date of the latest development. For a death, attack, ruling, or launch, name
 explicitly ("X died on {date}" / "the {date} strike"), even when the news peg is a later
 funeral/anniversary/reaction. If the daily briefs carried the event date, carry it forward.
 
-**Feed-first sources (curl first):** Al Jazeera RSS, SRF DE RSS, Le Temps FR RSS.
+**Feed-first sources:** Al Jazeera RSS, SRF DE RSS, Le Temps FR RSS.
 
 ## 📄 ML / AI papers of the week (heaviest section)
 
-**Feed-first sources (curl first):**
+**Feed-first sources:**
 - **arXiv RSS per category**: `https://export.arxiv.org/rss/cs.LG`, `cs.AI`, `cs.CL`, `cs.CV`, `stat.ML`. Hit all five.
 - **arXiv Atom API for week-window queries**: `https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=100&sortBy=submittedDate&sortOrder=descending` — then filter the returned `<published>` dates client-side to the past 7 days.
 - **Semantic Scholar** to triangulate which papers are getting attention this week.
 
-T1 (HTML, often 403, fallback): arxiv.org listings, huggingface.co/papers, openreview.net.
+T1 (HTML fallback): arxiv.org listings, huggingface.co/papers. (Not openreview.net — measured
+2026-07-25: it 403s direct and the proxy returns the JavaScript shell, never the papers.)
 
 Up to ~10 ML/AI papers — **quality is the cap, not the quota**: a 6-paper week of genuinely significant work beats 12 with filler. Rough bias when choosing among candidates (a tiebreaker, not a floor to fill):
 - ~40% RL / agent / decision-making
@@ -107,12 +96,12 @@ For each paper:
 
 ## 🔭 Fundamental science papers of the week
 
-**Feed-first sources (curl first):**
+**Feed-first sources:**
 - **arXiv API per category**, week-windowed: math.AG, math.AT, math.CO, math.NT, math.PR, math.ST; physics (cond-mat, hep-ph, hep-th, gr-qc, quant-ph, nucl-th); astro-ph.*.
 - **Quanta Magazine RSS** — heavy weight here, math + fundamental physics.
 - **Nature journals RSS**: nature.rss, nphys.rss (Nature Physics), natastron.rss (Nature Astronomy).
 
-T1 (HTML, often 403, fallback): journals.aps.org (PRL, PRX, PRX Quantum), science.org, cern.ch/news, eso.org/public/news, nasa.gov/news.
+T1 (HTML fallback): journals.aps.org (PRL, PRX, PRX Quantum), science.org, cern.ch/news, eso.org/public/news, nasa.gov/news.
 T2: terrytao.wordpress.com, scottaaronson.blog, astrobites.org.
 
 Up to ~8 papers across the fundamental sciences — quality is the cap; skip a category with nothing genuinely notable. Rough bias when choosing among candidates (a tiebreaker, not a floor to fill):
@@ -135,11 +124,11 @@ What changed this week in MLX, llama.cpp, on-device inference. New benchmarks on
 
 ## 🧬 Biology, biotech, neuroscience
 
-**Feed-first sources (curl first):**
+**Feed-first sources:**
 - **Nature Methods RSS**: `https://www.nature.com/nm.rss`.
 - **Quanta Magazine RSS** — covers biology features.
 
-T1 (HTML, often 403, fallback): nature.com, science.org, cell.com, nejm.org. (bioRxiv/medRxiv: use their JSON API via the proxy — see "Reachable via the fetch-proxy" above; Science via its RSS.)
+T1 (HTML fallback): nature.com, science.org, cell.com, nejm.org. (bioRxiv/medRxiv: use their JSON details API — see "Endpoints worth knowing" above; Science via its RSS.)
 T2: asimov.press, statnews.com, endpts.com, neurosciencenews.com.
 
 Up to ~8 items — only what's genuinely notable; a 3-item week is a valid week.
@@ -158,15 +147,12 @@ Long-form pieces published this week, up to ~8 — only pieces you'd actually re
 ## 🧠 Cross-cutting threads (the payoff — give it real effort)
 2–4 themes you noticed across this week's content, each developed in a substantial paragraph: what connects the items, what it implies, what to watch next. This synthesis is the single highest-value part of the Weekend brief — the one thing aggregation cannot do — and it renders near the top of the published brief, so write it like the lead it is, not an afterthought.
 
-**Ground it in the analytical plane before writing** (same worker + bearer as the dedup check —
-the `EMBED_WORKER_URL`/`EMBED_TOKEN` values in `tools/dedup/DEDUP.md` Step A; best-effort, skip
+**Ground it in the analytical plane before writing** (reads the local ledger; best-effort, skip
 silently on failure):
 
 ```bash
-curl -s -XPOST "$EMBED_WORKER_URL/plane/entities" -H "Authorization: Bearer $EMBED_TOKEN" \
-  -H 'Content-Type: application/json' -d '{"days":10}'          # who/what recurred this week
-curl -s -XPOST "$EMBED_WORKER_URL/plane/thread" -H "Authorization: Bearer $EMBED_TOKEN" \
-  -H 'Content-Type: application/json' -d '{"key":"<thread_id>"}' # a candidate theme's real arc
+python3 tools/plane/query.py entities --days 10   # who/what recurred this week
+python3 tools/plane/query.py thread <thread_id>   # a candidate theme's real arc
 ```
 
 An entity spanning multiple streams, or a thread that developed several times this week, is a
@@ -195,8 +181,7 @@ _Coverage: {date 7 days ago} to {today}. Generated {timestamp} Europe/Zurich._
 ---
 
 ## Coverage footer
-<!-- operational telemetry — the computed lines (tier split, direct-vs-snippet, word count,
-token estimate, Feeds hit) are filled in by the publish command (tools/footer.py); write ONLY:
+<!-- the telemetry lines are computed at publish; write ONLY:
 - Languages: {languages of your cited sources, e.g. EN, FR, DE}
 -->
 - Sibling consultation: {performed | skipped — reason}
@@ -223,53 +208,9 @@ Before composing AND after writing the brief, follow `tools/dedup/DEDUP.md` exac
 
 <!-- include: _shared/date-discipline.md -->
 
-# Output: write the brief to git + drop a notification stub + email digest
+# Output: write the brief to git + drop a notification stub
 
-This routine writes to the git repo (working directory is the cloned `claude-routines` repo). It does NOT write to Google Drive and does NOT POST to ntfy directly. A local bridge on the user's machine polls `pending-notifications/` every ~10 min and handles the ntfy push.
+<!-- include: _shared/publish-step.md -->
 
-Individual brief pages are retired (2026-07-18): the homepage story feed at
-`https://khalic-lab.github.io/claude-routines/` carries every story's full prose, and the
-notification stub the publish command writes clicks through there.
-
-### 1. Write the brief
-
-Use the Write tool to create `_posts/{YYYY-MM-DD}-weekend.md`. The file MUST start with this front-matter block, then a blank line, then the brief body:
-
-```
----
-layout: single
-title: "Weekend Deep Read — {YYYY-MM-DD}"
-date: {full ISO 8601 timestamp WITH timezone offset, identical to the _Generated line — e.g. 2026-06-21T09:39:44+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
-categories: [weekend]
----
-```
-
-### 2. Publish — one command
-
-Everything after the brief file is deterministic and runs through the orchestrator: dedup record → anchors → computed footer telemetry → source lint → registry/institutions sync → date lint → homepage feed + stats → source health → notification stub → commit → push, with the homefeed rebase-conflict retry built in.
-
-```bash
-python3 tools/publish.py --slug weekend --date {YYYY-MM-DD} \
-  --final /tmp/final.json \
-  --notify-title "Weekend Deep Read — {YYYY-MM-DD}" \
-  --notify-body "{teaser}" --notify-tags calendar
-```
-
-- `{teaser}` rules: ≤200 chars. Most interesting item of the week — typically the headline ML paper or a striking cross-cutting thread. Concrete and specific (e.g. "3 papers converge on test-time compute scaling; new RLVR method beats baselines"), not generic. Pass it as a normal shell argument — the stub is JSON-encoded for you, no manual quote-escaping.
-- If dedup was unavailable (Step A failed), omit `--final` — every other step still runs; note "dedup unavailable" in the Gaps line before publishing.
-- The orchestrator prints one OK/FAIL line per step and ends with `DONE` or a `FAILED (...)` line. Preprocessing FAILs degrade — never abort the brief for them. The two git failures need a reaction: `FAILED (git commit errored ...)` means NOTHING was published — fix the reported error and rerun the same publish command (or use DEDUP.md's manual-git fallback); `FAILED (push ...)` means the edition is committed locally but not on origin (the failure note is already amended into the commit) — retry `git push origin main` before the session ends. Do not re-run the preprocessing steps by hand, and do not write the stub or telemetry yourself.
-
-### 3. Email digest
-
-Note: the Gmail MCP surface is `create_draft` only — there is no send tool.
-
-- **To:** rflnogueira@me.com
-- **Subject:** "Weekend Deep Read — {YYYY-MM-DD}"
-- **Body:** ~500–700 words, plain text or simple markdown:
-  - Top 3 ML papers (title + arXiv ID + 1-sentence why-it-matters)
-  - Top 2 fundamental science papers (same format)
-  - Most notable model/dataset release of the week (1–2 sentences)
-  - Top essay/long-form (title, author, 1-sentence read)
-  - The full Cross-cutting threads section verbatim if it's <300 words; else condense to 2–3 sentences
-  - End with: `All stories: https://khalic-lab.github.io/claude-routines/`
-- If `create_draft` fails, retry once. If still failing, append `email draft creation failed: <reason>` to this brief's Coverage footer in git but don't fail the run.
+- `{teaser}` rules: ≤200 chars. Most interesting item of the week — typically the headline ML paper or a striking cross-cutting thread. Concrete and specific (e.g. "3 papers converge on test-time compute scaling; new RLVR method beats baselines"), not generic. Pass it as a plain shell argument; no quote-escaping.
+<!-- include: _shared/publish-outcomes.md -->

@@ -7,14 +7,6 @@ brief normally and note "dedup unavailable" in the Gaps footer — never abort t
 The routine that invokes this passes its **slug** (one of `news`, `ai-ml`,
 `science`, `weekend`, `sports`) and today's date `{YYYY-MM-DD}` (Europe/Zurich).
 
-Fixed endpoint (this is a low-value token — gates only Workers-AI embedding spend on our own
-account; the repo is private and this file is excluded from the published site):
-
-```
-EMBED_WORKER_URL=https://embed-proxy.khalic-lab.workers.dev
-EMBED_TOKEN=b4bd10fc46e70315205b5aa4a4352d6d79f750d13cc4ef960928f8e6da5aae8a
-```
-
 ## Step A — check candidates (AFTER research, BEFORE composing)
 
 Once you have the stories you're considering, write them to `/tmp/cand.json` (one entry per
@@ -34,8 +26,6 @@ paper or page already covered, it is dropped regardless of how the headline is w
 Run the check:
 
 ```bash
-EMBED_WORKER_URL=https://embed-proxy.khalic-lab.workers.dev \
-EMBED_TOKEN=b4bd10fc46e70315205b5aa4a4352d6d79f750d13cc4ef960928f8e6da5aae8a \
 python3 tools/dedup/dedup.py check --candidates /tmp/cand.json --since 30 \
   > /tmp/verdicts.json 2>/tmp/dedup.err && cat /tmp/verdicts.json \
   || echo "DEDUP UNAVAILABLE: $(cat /tmp/dedup.err)"
@@ -49,15 +39,8 @@ exists to go deeper on. Every other slug omits the flag (cross-edition dedup). W
 REPEAT verdict is by construction a prior-Weekend repeat, so Step B's "REPEAT → ALWAYS DROP" still
 applies unchanged — no special-casing of the verdicts is needed.
 
-**Then snapshot the verdicts (added 2026-07-11, feeds the homepage desk-stats panel):**
-
-```bash
-python3 tools/store/verdicts.py --candidates /tmp/cand.json --verdicts /tmp/verdicts.json \
-  --date {YYYY-MM-DD} --slug {SLUG} || echo "verdict snapshot failed (non-fatal)"
-```
-
-This writes `index/verdicts/{YYYY-MM-DD}-{SLUG}.json` (idempotent — re-runs overwrite). Step E's
-`git add index/` already stages it; skip silently if the check itself was unavailable.
+**Leave `/tmp/cand.json` and `/tmp/verdicts.json` in place** — the publish command snapshots them
+for the homepage desk-stats panel; you run nothing extra.
 
 `/tmp/verdicts.json` has one result per candidate: `verdict` (NEW | ONGOING | REPEAT), `score`,
 an optional `match_reason` (`exact-url` | `exact-arxiv` | `distinct-paper`),
@@ -161,77 +144,42 @@ safety net, not a requirement — supply them if you already have them, otherwis
   threads and will reject a thread whose genesis is a different arXiv paper, but don't rely on it:
   omit `thread_id` unless the new item shares the prior's arXiv id / canonical URL.
 
-**You do NOT invoke `record` directly — the publish orchestrator runs it for you** (with the
-embed env injected). Build `/tmp/final.json`, then run the single publish command from your
-prompt's Output section:
+**You do NOT invoke `record` (or any other tail step) directly — the publish command runs them
+for you.** Build `/tmp/final.json`, then run the single command from your prompt's Output section:
 
 ```bash
 python3 tools/publish.py --slug {SLUG} --date {YYYY-MM-DD} --final /tmp/final.json \
-  --notify-title "..." --notify-body "..." --notify-tags ...
+  --notify-body "{teaser}"
 ```
 
 ## Steps C→E — the publish tail (ONE command since 2026-07-18: `tools/publish.py`)
 
-`publish.py` executes, in order, everything this document previously spelled out as Steps
-C.25/C.5/D/E — each PREPROCESSING step **non-fatal** (a crash degrades, it never costs the
-edition), each printing an `[publish] <step>: OK/FAIL` line as it runs. The git tail (step 10)
-is the exception since 2026-07-18: a failed commit or push ends the run with a `FAILED (...)`
-line and exit 1, never a false `DONE` — see step 10 for how to react:
-
-1. **`dedup.py record`** — writes `index/stories/{date}-{slug}.jsonl`, prunes >40-day files, and
-   dual-writes the story ledger (`ev:"seen"` + `ev:"publish"` per kept story, keyed on
-   `st-{sha1(norm_url)[:12]}` ids, classic ids carried as `legacy_ids`; the legacy per-edition
-   file stays byte-identical).
-2. **`store/anchor.py --index`** — stamps the brief's bullets/headings with the same `st-…` ids
-   the ledger just used (link-matched against the recorded urls; idempotent on an
-   already-anchored post).
-3. **`footer.py`** — computes the Coverage-footer telemetry: registry tier split,
-   direct-vs-snippet counts (from your `[via snippet]` tags), exact word count, token estimate,
-   and `Feeds hit` from `/tmp/fetch.log`. Writer-authored comment lines (Languages,
-   stream-specific items) are preserved; the visible Gaps/Discovery lines stay yours entirely.
-4. **`sources/lint.py`** — report-only recheck of `[new source]` tag integrity, per-domain caps,
-   and the **Discovery footer contract**: the footer ends with exactly one of
-   `- Discovery: met (<what you found that wasn't already in the registry>)` or
-   `- Discovery: waived — <concrete reason>`. The waiver is free but counted — use it honestly.
-   Violations go in the brief's Gaps line, never abort the brief. Tagged novel domains are
-   appended to `sources/candidates.jsonl`.
-5. **`sources/registry.py sync`** — folds candidates into `sources/registry.yml` (the step whose
-   omission starved news/science discovery from 2026-07-07 to 2026-07-10). When there is nothing
-   to fold it leaves `registry.yml` byte-untouched (an unchanged file can't merge-conflict with a
-   sibling edition) and just purges dead buffer entries.
-6. **`sources/institutions.py sync`** — folds the `affiliations` you recorded into
-   `sources/institutions.yml` (per-edition bookkeeping; re-running is a no-op).
-7. **`dedup.py lint`** — the date-slip backstop: **WEEKDAY** (hard — a weekday named next to a
-   date it doesn't match) and **SCHEDULE** (advisory — relative framing of a dated event with no
-   absolute date nearby; state the absolute date and read it from `matched.event_date`, never
-   re-derive "which Sunday").
-8. **`build_stories_feed.py`** — regenerates `_data/homefeed.json` (front-page story grid) plus
-   the `_data/stats.json` desk-stats piggyback — and **`sources/health.py`**
-   (`_data/source-health.json`).
-9. **Notification stub** — `pending-notifications/{ts}-{slug}.json` written with real JSON
-   encoding and a computed UTC timestamp (your `--notify-body` teaser needs no quote-escaping).
-   A bare front-matter `date:` in the post is also normalized to a full ISO timestamp here.
-10. **Commit + push** — stages `_posts/ pending-notifications/ index/ _data/ sources/`, commits
-    with the routine identity, and pushes with the homefeed rebase-conflict retry built in
-    (rebase → regenerate the feed from the merged tree → continue → push; two editions firing
-    the same minute both rewrite the whole homefeed, and this is always the resolution).
-    **Outcomes (honest since 2026-07-18 — a failed commit used to print DONE):**
-    - `DONE` + exit 0 — published; nothing more to do.
-    - `FAILED (git commit errored ...)` + exit 1 — NOTHING was published. Fix the reported
-      error and rerun the same publish command, or ship via the manual fallback below.
-    - `FAILED (push ...)` + exit 1 — committed locally, not on origin; the failure note is
-      already amended into the commit. Retry `git push origin main` before the session ends
-      (an unpushed sandbox commit is lost when the session dies).
+It runs, in order: the dedup record and verdict snapshot, story-id anchoring, the computed footer
+telemetry, the source and date lints, the registry and institutions syncs, the homepage feed +
+stats, the notification stub, and the git tail. Preprocessing steps degrade without costing the
+edition; only the git tail is fatal, and your prompt's Output section says how to react to it.
+Never replay one of its steps by hand, and never write the stub or the telemetry yourself.
 
 Every writer slug (`news`, `ai-ml`, `science`, `weekend`, `sports`) publishes this way on every
-fire; the evaluator does not (it never touches this procedure).
+fire; the evaluator publishes with `--slug evaluator`, which is the stub + git tail only.
 
-**Fallback (if `publish.py` itself crashes before running its steps, or a commit failure can't
-be fixed):** note "publish orchestrator failed: <error>" in Gaps, then ship the brief by hand so
-the edition is never lost:
+**Fallback — only if `publish.py` itself crashes before doing anything:** note "publish
+orchestrator failed: <error>" in Gaps, then ship the brief by hand so the edition is never lost.
+Nothing derived the front matter in this path, so prepend it yourself first (this is the ONLY
+situation in which you write one):
+
+```
+---
+layout: single
+title: "{Edition} — {YYYY-MM-DD}"
+date: {the same ISO timestamp as the brief's _Generated line}
+categories: [{slug}]
+---
+```
 
 ```bash
 git add _posts/ pending-notifications/ index/ _data/ && git add sources/ 2>/dev/null || true
-git -c user.email=routine@khalic-lab -c user.name="News Routine" commit -m "{Title} — {YYYY-MM-DD}"
+git -c user.email=routine@khalic-lab -c user.name="News Routine" -c commit.gpgsign=false \
+  commit -m "{Title} — {YYYY-MM-DD}"
 git push origin main || (git pull --rebase origin main && git push origin main)
 ```

@@ -1,11 +1,5 @@
 Write my weekly sports brief and publish it via the git pipeline. Use today's date (Monday) in Europe/Zurich.
 
-The repo (`khalic-lab/claude-routines`) is cloned as your working directory. Before doing anything else, sync:
-
-```bash
-git pull --ff-only origin main
-```
-
 # Mission
 
 A weekly Monday read on the past 7 days of sport, written for a smart reader who does NOT closely follow sport — anchored to what matters from Switzerland plus the global majors. Coverage window: the past 7 days (roughly last Monday through Sunday).
@@ -81,12 +75,12 @@ editorial instruction. If a file is missing or empty, proceed normally.
 
 **FIRST research action — build today's source plan:**
 
-    python3 tools/sources/preflight.py --slug {slug}
+    python3 tools/sources/preflight.py --slug sports
 
-(your slug is the one named in your Story-deduplication section). It reads `sources/registry.yml` and prints the plan that is the AUTHORITY on what to fetch and what pressure applies today — not any table in this prompt:
+It reads `sources/registry.yml` and prints the plan that is the AUTHORITY on what to fetch and what pressure applies today — not any table in this prompt:
 
 - **Fetch list** — the domains/feeds affine to this stream, each with its probe URL and method (curl or proxy). Sweep these first.
-- **Pressure** — per-domain rolling-30-day citation shares, with a `SATURATED` flag on any domain over its share bar (hubs like arXiv are exempt). The separate flat cap of 2 stories per outlet domain per edition is checked after writing by the source lint (DEDUP Step C.25), not printed here. Both are report-only — no story gets dropped for them — but when two sources carry the same story, prefer the unsaturated one.
+- **Pressure** — per-domain rolling-30-day citation shares, with a `SATURATED` flag on any domain over its share bar (hubs like arXiv are exempt). Report-only — no story is dropped for it — but when two sources carry the same story, prefer the unsaturated one, and cite no outlet domain more than twice in one edition (hubs exempt).
 - **Discovery** — this stream's discovery quota and `candidates_to_try` (registry candidates and dormant domains worth a probe this run). Work at least the quota's worth of genuinely new or dormant domains into your research; the Discovery footer line reports the outcome.
 
 **EMERGENCY SLATE — degraded mode only (a floor, never the ceiling).** If preflight errors or prints `source-plan unavailable`, fall back to these known-good feeds and note `source-plan unavailable` in the Gaps footer:
@@ -94,39 +88,49 @@ editorial instruction. If a file is missing or empty, proceed normally.
 - Science streams: arXiv `https://export.arxiv.org/rss/{category}` + the Atom API, Nature `https://www.nature.com/nature.rss`.
 Still research beyond this floor as the brief demands — the slate is where you start when the plan is missing, never a cap on where you look.
 
-**New-source citation rule.** T3 aggregators (HN/Reddit/X) remain never-cited. But a **genuine primary source discovered through search or a T3 lead MAY be cited immediately even if it is absent from `sources/registry.yml`** — tag it with the literal marker `[new source]` next to the citation. Tag ONLY domains genuinely absent from the registry (grep `sources/registry.yml` for the domain first): the lint at DEDUP Step C.25 recomputes novelty itself, and both a missing tag on an unregistered domain and a `[new source]` tag on a registered one are violations. This is how the registry grows — a tagged citation auto-enters the domain as a `candidate`.
+**New-source citation rule.** T3 aggregators (HN/Reddit/X) remain never-cited. But a **genuine primary source discovered through search or a T3 lead MAY be cited immediately even if it is absent from `sources/registry.yml`** — tag it with the literal marker `[new source]` next to the citation. Tag ONLY domains genuinely absent from the registry (grep `sources/registry.yml` for the domain first): the source lint recomputes novelty itself at publish, and both a missing tag on an unregistered domain and a `[new source]` tag on a registered one are violations. This is how the registry grows — a tagged citation auto-enters the domain as a `candidate`.
 
 ## Fetch mechanics
 
-**Every research fetch goes through the logging wrapper `tools/fetch.py` — not raw `curl`, and WebFetch only as a last resort.** The wrapper runs the deterministic chain (direct curl first, then the fetch-proxy Worker — Cloudflare edge, real browser User-Agent — which bypasses the sandbox-IP 403s on Cloudflare/Akamai-fronted sites), and logs every attempt to `/tmp/fetch.log`. That log becomes the Coverage footer's exact `Feeds hit` line and research-call count at publish time — fetching around the wrapper makes the telemetry silently undercount, so don't.
+**Feed first.** Most quality sources' HTML 403s this sandbox while the same publisher's RSS / Atom
+/ JSON feed — served from different infrastructure — is reachable. Attempt the feed or API before
+the HTML page for any source that has one.
 
-Once, at the start of the session, export the proxy bearer so the wrapper's fallback works:
+**Every research fetch goes through `tools/fetch.py`** — never raw `curl`, and WebFetch only as a
+last resort. Once, at the start of the session, export the proxy bearer:
 
     export FETCH_PROXY_TOKEN='${FETCH_PROXY_TOKEN}'
 
 Then, for every URL:
 
-    python3 tools/fetch.py "<URL>"             # direct curl first, proxy fallback on failure
-    python3 tools/fetch.py --proxy "<URL>"     # hosts the preflight plan marks `method: proxy`: skip the wasted direct attempt
+    python3 tools/fetch.py "<URL>"             # direct first, proxy fallback on failure
+    python3 tools/fetch.py --proxy "<URL>"     # hosts the plan marks `method: proxy`
 
-- **Direct-first hosts** (registry `reach: direct` — e.g. `export.arxiv.org`, `www.nature.com`, `www.quantamagazine.org`, `www.srf.ch`, `www.letemps.ch`, `www.aljazeera.com`, plus API endpoints like `api.semanticscholar.org`) succeed on the wrapper's first attempt; the direct-first order also honors arXiv's ask that automated clients fetch it directly.
-- **`--proxy` for everything the plan marks `method: proxy`** — lab blogs (Anthropic, OpenAI, DeepMind, Meta, Mistral, Apple), tech-news HTML (CNBC, TechCrunch, VentureBeat, Bloomberg, Fortune, …). The registry's `reach:` field (surfaced in the preflight plan) is the reachability truth; there is no static unavailable list.
-- **Exit 0 with the body on stdout is a direct fetch** — no `[via snippet]` tag, whether it resolved direct or via proxy. A non-zero exit means the host hard-blocks even the proxy (Cloudflare JS/Turnstile challenge) or is paywalled — only then fall back to a search-engine snippet and tag the citation `[via snippet]`. (WebFetch remains a permitted last resort for a page the wrapper cannot reach; if a citation rests on WebFetch-only access, say so in the Gaps line, since the log will not show it.)
-- **Do not hand-report fetch telemetry.** The footer's `Feeds hit`, direct-vs-snippet counts, and call count are computed from `/tmp/fetch.log` and your `[via snippet]` tags at publish time (`tools/footer.py`, run by the publish command). Your accounting duty is upstream: tag every snippet-only citation `[via snippet]`, and fetch through the wrapper.
+The plan's `reach:` is the reachability truth — this prompt carries no unavailable list.
 
-## Sports fetch mechanics (specific to this stream)
+**Exit 0 is a real fetch — no marker, whichever way it resolved.** A non-zero exit means the host
+blocks even the proxy, or is paywalled: only then fall back to a search-engine snippet and tag
+that citation `[via snippet]`. If a citation rests on WebFetch instead, say so in the Gaps line —
+it leaves no trace in the fetch log.
 
-Most official sports sites (uefa.com, fifa.com, premierleague.com, formula1.com, atptour.com, …) are heavy JavaScript SPAs behind Cloudflare — a proxy fetch often returns a JS shell, not the results data. Work around it:
+**Never hand-count fetch telemetry.** The footer's tier split, direct-vs-snippet counts, word
+count and `Feeds hit` are computed at publish from your citations and the wrapper's log. Your
+whole accounting duty is upstream: tag every snippet-only citation, and fetch through the wrapper
+(fetching around it silently undercounts).
 
-- **`tools/fetch.py --proxy` first** for any official site the preflight marks `method: proxy`; a wrapper success with real content is a direct fetch. When the proxy returns only a JS shell or a challenge, don't fake a result — fall to the next option.
-- **Feeds and directly-fetchable secondaries** are your reliable spine: BBC Sport RSS (`https://feeds.bbci.co.uk/sport/rss.xml`) and SRF Sport, both direct on the wrapper's first attempt — they carry results and reports with links back to the primary; cite the official page as the primary where you can reach it, the outlet as T2 where you cannot.
-- **Wikipedia season/results pages** (e.g. "2026 Formula One World Championship", "2025–26 Swiss Super League") are comprehensive and directly fetchable — use them to **cross-check** scores, standings and dates, but Wikipedia is tertiary: never cite it as the primary, and prefer the official result page for the citation.
-- **Official news/press-release pages** (fia.com/news, wada-ama.org/en/news, tas-cas.org media releases, club press rooms) are usually more fetchable than the live-scores SPA and are the correct primary for announcements and rulings.
+## Where sport's sources actually live (specific to this stream)
+
+Most official sports sites (uefa.com, fifa.com, premierleague.com, formula1.com, atptour.com, …) are heavy JavaScript SPAs: a fetch often returns a JS shell rather than the results data. Work around it:
+
+- **When a fetch returns only a JS shell or a challenge, don't fake a result** — fall to the next option.
+- **Feeds and secondaries are your reliable spine:** BBC Sport RSS (`https://feeds.bbci.co.uk/sport/rss.xml`) and SRF Sport carry results and reports with links back to the primary; cite the official page as the primary where you can reach it, the outlet as T2 where you cannot.
+- **Wikipedia season/results pages** (e.g. "2026 Formula One World Championship", "2025–26 Swiss Super League") are comprehensive and reachable — use them to **cross-check** scores, standings and dates, but Wikipedia is tertiary: never cite it as the primary, and prefer the official result page for the citation.
+- **Official news/press-release pages** (fia.com/news, wada-ama.org/en/news, tas-cas.org media releases, club press rooms) are usually more reachable than the live-scores SPA and are the correct primary for announcements and rulings.
 - If you genuinely cannot reach a primary and rely on a T2 report for a result, tag the item `[single-source]` and name the outlet; note unreachable official sites in the Gaps footer.
 
 # Research methodology
 
-1. **Source plan first** — run the preflight (above), then sweep its fetch list: BBC Sport / SRF feeds via curl; official league/governing pages via the proxy; Wikipedia results pages via curl for cross-check.
+1. **Source plan first** — run the preflight (above), then sweep its fetch list: BBC Sport / SRF feeds, the official league/governing pages, and Wikipedia results pages for cross-check.
 2. **Establish the week's window** — build the dated weekday table (date-discipline below) so "this week" = the correct past-7-day span, and every fixture/result is dated correctly.
 3. **Per desk in season:** find the results and announcements that actually moved something; read the official page; decode what changed and why it matters.
 4. **Transfers:** separate confirmed (official) from reported (tag `[rumour]`); name the stage and the source.
@@ -186,8 +190,7 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: {date 7 days ago} to {today}
 ---
 
 ## Coverage footer
-<!-- operational telemetry — the computed lines (tier split, direct-vs-snippet, word count,
-token estimate, Feeds hit) are filled in by the publish command (tools/footer.py); write ONLY:
+<!-- the telemetry lines are computed at publish; write ONLY:
 - Items: N (filtered from M reviewed) — Football: N, F1/motorsport: N, Tennis: N, Winter/other: N
 - Confirmed vs reported: {N confirmed, N tagged [rumour]}
 - Languages: {languages of your cited sources, e.g. EN, FR, DE}
@@ -234,36 +237,17 @@ You derive "today" from the machine-stamped `_Generated <ISO> Europe/Zurich_` he
 
 # Output: write the brief to git + drop a notification stub
 
-This routine writes to the git repo (working directory is the cloned `claude-routines` repo). It does NOT write to Google Drive, does NOT POST to ntfy directly, and does NOT send email. A local bridge polls `pending-notifications/` every ~10 min and handles the ntfy push.
-
-Individual brief pages are retired (2026-07-18): the homepage story feed at
-`https://khalic-lab.github.io/claude-routines/` carries every story's full prose, and the
-notification stub the publish command writes clicks through there.
-
 ### 1. Write the brief
 
-Use the Write tool to create `_posts/{YYYY-MM-DD}-sports.md`. The file MUST start with this front-matter block, then a blank line, then the brief body:
-
-```
----
-layout: single
-title: "Sports — {YYYY-MM-DD}"
-date: {full ISO 8601 timestamp WITH timezone offset, identical to the _Generated line — e.g. 2026-07-20T09:04:12+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
-categories: [sports]
----
-```
+Use the Write tool to write the brief BODY to `_posts/{YYYY-MM-DD}-sports.md`, starting at the `#` heading from the Format block above. The front matter is derived at publish — don't write it yourself.
 
 ### 2. Publish — one command
 
-Everything after the brief file is deterministic and runs through the orchestrator: dedup record → anchors → computed footer telemetry → source lint → registry/institutions sync → date lint → homepage feed + stats → source health → notification stub → commit → push, with the homefeed rebase-conflict retry built in.
-
 ```bash
 python3 tools/publish.py --slug sports --date {YYYY-MM-DD} \
-  --final /tmp/final.json \
-  --notify-title "Sports — {YYYY-MM-DD}" \
-  --notify-body "{teaser}" --notify-tags soccer
+  --final /tmp/final.json --notify-body "{teaser}"
 ```
 
-- `{teaser}` rules: ≤200 chars. The single most significant thing this week — the result that moved a title race, a marquee transfer confirmed, an F1 championship swing, a Swiss athlete's win. Concrete (e.g. "Basel go 4 clear at the top; Verstappen cuts the gap to 12 after Spa; Wimbledon final set"), not generic. Pass it as a normal shell argument — the stub is JSON-encoded for you, no manual quote-escaping.
-- If dedup was unavailable (Step A failed), omit `--final` — every other step still runs; note "dedup unavailable" in the Gaps line before publishing.
-- The orchestrator prints one OK/FAIL line per step and ends with `DONE` or a `FAILED (...)` line. Preprocessing FAILs degrade — never abort the brief for them. The two git failures need a reaction: `FAILED (git commit errored ...)` means NOTHING was published — fix the reported error and rerun the same publish command (or use DEDUP.md's manual-git fallback); `FAILED (push ...)` means the edition is committed locally but not on origin (the failure note is already amended into the commit) — retry `git push origin main` before the session ends. Do not re-run the preprocessing steps by hand, and do not write the stub or telemetry yourself.
+- `{teaser}` rules: ≤200 chars. The single most significant thing this week — the result that moved a title race, a marquee transfer confirmed, an F1 championship swing, a Swiss athlete's win. Concrete (e.g. "Basel go 4 clear at the top; Verstappen cuts the gap to 12 after Spa; Wimbledon final set"), not generic. Pass it as a plain shell argument; no quote-escaping.
+- Omit `--final` if dedup was unavailable — note "dedup unavailable" in the Gaps line first.
+- It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the edition is committed but not on origin (retry `git push origin main` before the session ends). Never redo its steps by hand.

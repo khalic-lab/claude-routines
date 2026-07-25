@@ -74,6 +74,11 @@ _store_spec.loader.exec_module(store)
 REPO = os.environ.get("REPO") or os.getcwd()
 INDEX_DIR = os.path.join(REPO, "index", "stories")
 POSTS_DIR = os.path.join(REPO, "_posts")
+# Fixed deployment constants (same pair tools/publish.py injects for `record`), so a
+# writer runs `check` with no env incantation in its prompt. Env/flags still win.
+# Low-value token: gates only Workers-AI embedding spend on our own account.
+EMBED_WORKER_DEFAULT = "https://embed-proxy.khalic-lab.workers.dev"
+EMBED_TOKEN_DEFAULT = "b4bd10fc46e70315205b5aa4a4352d6d79f750d13cc4ef960928f8e6da5aae8a"
 EMBED_MODEL = "bge-m3"
 EMBED_DIM = 1024
 # Calibrated 2026-05-31 against a hand-labelled gold set of cross-day story pairs.
@@ -1308,8 +1313,10 @@ def main():
     sub = p.add_subparsers(dest="cmd", required=True)
 
     def add_embed_args(sp):
-        sp.add_argument("--worker", default=os.environ.get("EMBED_WORKER_URL"))
-        sp.add_argument("--token", default=os.environ.get("EMBED_TOKEN"))
+        sp.add_argument("--worker",
+                        default=os.environ.get("EMBED_WORKER_URL") or EMBED_WORKER_DEFAULT)
+        sp.add_argument("--token",
+                        default=os.environ.get("EMBED_TOKEN") or EMBED_TOKEN_DEFAULT)
 
     c = sub.add_parser("check", help="classify candidates against the recent index")
     c.add_argument("--candidates", required=True)

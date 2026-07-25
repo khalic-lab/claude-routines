@@ -23,10 +23,16 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.join(BASE, "src")
 SHARED_DIR = os.path.join(BASE, "_shared")
 PH_RE = re.compile(r"^<!-- include: _shared/(.+?) -->$")
+# A shared partial can't hardcode one stream's slug, but making the ROUTINE resolve it at fire
+# time ("your slug is the one named in your dedup section") is exactly the deterministic work
+# that shouldn't be in a prompt -- so the assembler resolves it here, per generated file.
+SLUG_TOKEN = "{slug}"
 
 
 def assemble(src_path):
-    """Return the assembled prompt text for one src file (placeholders expanded)."""
+    """Return the assembled prompt text for one src file (placeholders expanded,
+    `{slug}` resolved to the stream this file generates)."""
+    slug = os.path.splitext(os.path.basename(src_path))[0]
     out = []
     with open(src_path, encoding="utf-8") as fh:
         text = fh.read()
@@ -40,7 +46,7 @@ def assemble(src_path):
                 out.extend(pf.read().rstrip("\n").split("\n"))
         else:
             out.append(line)
-    return "\n".join(out)
+    return "\n".join(out).replace(SLUG_TOKEN, slug)
 
 
 def main():

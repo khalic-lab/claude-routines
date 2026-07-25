@@ -1,11 +1,5 @@
 Write my weekly sports brief and publish it via the git pipeline. Use today's date (Monday) in Europe/Zurich.
 
-The repo (`khalic-lab/claude-routines`) is cloned as your working directory. Before doing anything else, sync:
-
-```bash
-git pull --ff-only origin main
-```
-
 # Mission
 
 A weekly Monday read on the past 7 days of sport, written for a smart reader who does NOT closely follow sport — anchored to what matters from Switzerland plus the global majors. Coverage window: the past 7 days (roughly last Monday through Sunday).
@@ -44,19 +38,19 @@ The "primary source" in sport is the authoritative first-hand record, not the pu
 
 <!-- include: _shared/feed-first-source-order.md -->
 
-## Sports fetch mechanics (specific to this stream)
+## Where sport's sources actually live (specific to this stream)
 
-Most official sports sites (uefa.com, fifa.com, premierleague.com, formula1.com, atptour.com, …) are heavy JavaScript SPAs behind Cloudflare — a proxy fetch often returns a JS shell, not the results data. Work around it:
+Most official sports sites (uefa.com, fifa.com, premierleague.com, formula1.com, atptour.com, …) are heavy JavaScript SPAs: a fetch often returns a JS shell rather than the results data. Work around it:
 
-- **`tools/fetch.py --proxy` first** for any official site the preflight marks `method: proxy`; a wrapper success with real content is a direct fetch. When the proxy returns only a JS shell or a challenge, don't fake a result — fall to the next option.
-- **Feeds and directly-fetchable secondaries** are your reliable spine: BBC Sport RSS (`https://feeds.bbci.co.uk/sport/rss.xml`) and SRF Sport, both direct on the wrapper's first attempt — they carry results and reports with links back to the primary; cite the official page as the primary where you can reach it, the outlet as T2 where you cannot.
-- **Wikipedia season/results pages** (e.g. "2026 Formula One World Championship", "2025–26 Swiss Super League") are comprehensive and directly fetchable — use them to **cross-check** scores, standings and dates, but Wikipedia is tertiary: never cite it as the primary, and prefer the official result page for the citation.
-- **Official news/press-release pages** (fia.com/news, wada-ama.org/en/news, tas-cas.org media releases, club press rooms) are usually more fetchable than the live-scores SPA and are the correct primary for announcements and rulings.
+- **When a fetch returns only a JS shell or a challenge, don't fake a result** — fall to the next option.
+- **Feeds and secondaries are your reliable spine:** BBC Sport RSS (`https://feeds.bbci.co.uk/sport/rss.xml`) and SRF Sport carry results and reports with links back to the primary; cite the official page as the primary where you can reach it, the outlet as T2 where you cannot.
+- **Wikipedia season/results pages** (e.g. "2026 Formula One World Championship", "2025–26 Swiss Super League") are comprehensive and reachable — use them to **cross-check** scores, standings and dates, but Wikipedia is tertiary: never cite it as the primary, and prefer the official result page for the citation.
+- **Official news/press-release pages** (fia.com/news, wada-ama.org/en/news, tas-cas.org media releases, club press rooms) are usually more reachable than the live-scores SPA and are the correct primary for announcements and rulings.
 - If you genuinely cannot reach a primary and rely on a T2 report for a result, tag the item `[single-source]` and name the outlet; note unreachable official sites in the Gaps footer.
 
 # Research methodology
 
-1. **Source plan first** — run the preflight (above), then sweep its fetch list: BBC Sport / SRF feeds via curl; official league/governing pages via the proxy; Wikipedia results pages via curl for cross-check.
+1. **Source plan first** — run the preflight (above), then sweep its fetch list: BBC Sport / SRF feeds, the official league/governing pages, and Wikipedia results pages for cross-check.
 2. **Establish the week's window** — build the dated weekday table (date-discipline below) so "this week" = the correct past-7-day span, and every fixture/result is dated correctly.
 3. **Per desk in season:** find the results and announcements that actually moved something; read the official page; decode what changed and why it matters.
 4. **Transfers:** separate confirmed (official) from reported (tag `[rumour]`); name the stage and the source.
@@ -116,8 +110,7 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: {date 7 days ago} to {today}
 ---
 
 ## Coverage footer
-<!-- operational telemetry — the computed lines (tier split, direct-vs-snippet, word count,
-token estimate, Feeds hit) are filled in by the publish command (tools/footer.py); write ONLY:
+<!-- the telemetry lines are computed at publish; write ONLY:
 - Items: N (filtered from M reviewed) — Football: N, F1/motorsport: N, Tennis: N, Winter/other: N
 - Confirmed vs reported: {N confirmed, N tagged [rumour]}
 - Languages: {languages of your cited sources, e.g. EN, FR, DE}
@@ -145,36 +138,7 @@ Before composing AND after writing the brief, follow `tools/dedup/DEDUP.md` exac
 
 # Output: write the brief to git + drop a notification stub
 
-This routine writes to the git repo (working directory is the cloned `claude-routines` repo). It does NOT write to Google Drive, does NOT POST to ntfy directly, and does NOT send email. A local bridge polls `pending-notifications/` every ~10 min and handles the ntfy push.
+<!-- include: _shared/publish-step.md -->
 
-Individual brief pages are retired (2026-07-18): the homepage story feed at
-`https://khalic-lab.github.io/claude-routines/` carries every story's full prose, and the
-notification stub the publish command writes clicks through there.
-
-### 1. Write the brief
-
-Use the Write tool to create `_posts/{YYYY-MM-DD}-sports.md`. The file MUST start with this front-matter block, then a blank line, then the brief body:
-
-```
----
-layout: single
-title: "Sports — {YYYY-MM-DD}"
-date: {full ISO 8601 timestamp WITH timezone offset, identical to the _Generated line — e.g. 2026-07-20T09:04:12+02:00; NOT a bare date, which makes same-day briefs sort out of chronological order}
-categories: [sports]
----
-```
-
-### 2. Publish — one command
-
-Everything after the brief file is deterministic and runs through the orchestrator: dedup record → anchors → computed footer telemetry → source lint → registry/institutions sync → date lint → homepage feed + stats → source health → notification stub → commit → push, with the homefeed rebase-conflict retry built in.
-
-```bash
-python3 tools/publish.py --slug sports --date {YYYY-MM-DD} \
-  --final /tmp/final.json \
-  --notify-title "Sports — {YYYY-MM-DD}" \
-  --notify-body "{teaser}" --notify-tags soccer
-```
-
-- `{teaser}` rules: ≤200 chars. The single most significant thing this week — the result that moved a title race, a marquee transfer confirmed, an F1 championship swing, a Swiss athlete's win. Concrete (e.g. "Basel go 4 clear at the top; Verstappen cuts the gap to 12 after Spa; Wimbledon final set"), not generic. Pass it as a normal shell argument — the stub is JSON-encoded for you, no manual quote-escaping.
-- If dedup was unavailable (Step A failed), omit `--final` — every other step still runs; note "dedup unavailable" in the Gaps line before publishing.
-- The orchestrator prints one OK/FAIL line per step and ends with `DONE` or a `FAILED (...)` line. Preprocessing FAILs degrade — never abort the brief for them. The two git failures need a reaction: `FAILED (git commit errored ...)` means NOTHING was published — fix the reported error and rerun the same publish command (or use DEDUP.md's manual-git fallback); `FAILED (push ...)` means the edition is committed locally but not on origin (the failure note is already amended into the commit) — retry `git push origin main` before the session ends. Do not re-run the preprocessing steps by hand, and do not write the stub or telemetry yourself.
+- `{teaser}` rules: ≤200 chars. The single most significant thing this week — the result that moved a title race, a marquee transfer confirmed, an F1 championship swing, a Swiss athlete's win. Concrete (e.g. "Basel go 4 clear at the top; Verstappen cuts the gap to 12 after Spa; Wimbledon final set"), not generic. Pass it as a plain shell argument; no quote-escaping.
+<!-- include: _shared/publish-outcomes.md -->
