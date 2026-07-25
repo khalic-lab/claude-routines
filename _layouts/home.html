@@ -414,11 +414,13 @@ layout: archive
   /* No-JS and pre-JS are now the SAME layout as with JS, so the old `:not(.on)` fallback that
      centred cards in a 44em measure is gone: there is no longer a placement step to fall back
      from. `.on` is still set by the script and still gates the interactive skins. */
-  /* No layout JS remains: CSS Grid places every card, so JS-off renders byte-identically to
-     JS-on. layout(), reflow(), its ~7 call sites, the debounced resize listener and the
-     fonts.ready hook are all deleted — with the packer gone there is no geometry to recompute,
-     and keeping empty hooks invites someone to fill them. `.on` is still set by the script as a
-     "JS is live" marker for the interactive skins; it no longer gates any placement. */
+  /* No layout JS remains: CSS Grid places every card, so the LAYOUT is identical with and
+     without JS. The PAGES still differ — fold state, read state, the Sync affordance and
+     og-images are all JS-applied — so do not restate this as "byte-identical"; it is a claim
+     about placement only. layout(), reflow(), its ~7 call sites, the debounced resize listener
+     and the load/fonts.ready hooks are deleted: with the packer gone there is no geometry to
+     recompute, and keeping empty hooks invites someone to fill them. `.on` is still set as a
+     "JS is live" marker for the interactive skins; it gates no placement. */
 
   .fcard{ min-width:0; }
   /* The grid stretches the ITEM; this hands that height to the element that actually paints the
@@ -467,6 +469,13 @@ layout: archive
      story. So the paper below them reads as whitespace beside a long lead instead of as a
      hollow panel. Story cards still stretch, which is what keeps their bands aligned. */
   .fcard--ed{ align-self:start; }
+  /* Anything COLLAPSED opts out too, for the same reason and a worse measurement: a brief showing
+     only its headline was stretching to its row's tallest card, giving a median 602px of empty
+     bordered panel at 1440 and 745px at 1024 (max 1020/1209), with the footer stranded at the
+     bottom. Keyed on `.is-folded` rather than `[data-imp="1"]` so it self-corrects — expanding a
+     brief restores stretch and the card rejoins its row's baseline. Leads measure 9px of slack,
+     which is the proof the mechanism is sound: they set row height, so they have none. */
+  .fcard.is-folded{ align-self:start; }
   .fcard--ed .fcard__in{ background:var(--panel); border-top:2px solid var(--ink); }
   .fcard--ed .fcard__hl{ font-style:italic; }
   .fcard__eddisc{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase;
