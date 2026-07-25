@@ -53,22 +53,34 @@ document.addEventListener('DOMContentLoaded', function () {
      fetch. Dropping the Google Fonts links removes an external request and its CSP surface; the old
      Fraunces/Inter/Source-Serif faces are gone. Cool bone paper + ink-indigo accent, light & dark. -->
 <style>
+  /* ONE palette, both schemes. `light-dark()` replaces the old :root + prefers-color-scheme
+     duplicate pair — every token below reads light-value-first, dark-value-second, so a colour
+     can no longer drift between the two blocks (it was two edits per change; now it is one).
+     `color-scheme` is what arms light-dark(), and it also hands the UA the scheme for form
+     controls, scrollbars and the canvas — which is why several "stop the stock skin flashing
+     white" patches further down are no longer doing the work they were written for.
+     Baseline-newly-available (Chrome 123 / Safari 17.5 / Firefox 120). Tokens are consumed only
+     as colours, never inside another function, which is the constraint light-dark() imposes.
+     The harness (tools/home_harness.py) EXTRACTS this block by regex rather than mirroring it —
+     do not reformat the `:root{` … `}` delimiters without checking there. */
   :root{
-    --paper:#eceae4; --panel:#e2e1d9; --card:#f3f2ec; --ink:#23252b; --muted:#5f616a; --muted-ui:#565863;
-    --rule:rgba(35,37,43,.62); --hair:rgba(35,37,43,.14); --field:#f6f5f0;
-    --frame:rgba(35,37,43,.46); --accent:#2b3f6b;
-    --accent-chip:#3a3d47; --accent-chip-hover:#2b2e36;
+    color-scheme: light dark;
+    --paper:      light-dark(#eceae4, #14151a);
+    --panel:      light-dark(#e2e1d9, #1d1e25);
+    --card:       light-dark(#f3f2ec, #1a1b21);
+    --ink:        light-dark(#23252b, #e7e5dd);
+    --muted:      light-dark(#5f616a, #9a9ca6);
+    --muted-ui:   light-dark(#565863, #b0b2bb);
+    --rule:       light-dark(rgb(35 37 43 / .62), rgb(231 229 221 / .5));
+    --hair:       light-dark(rgb(35 37 43 / .14), rgb(231 229 221 / .13));
+    --field:      light-dark(#f6f5f0, rgb(255 255 255 / .05));
+    --frame:      light-dark(rgb(35 37 43 / .46), rgb(231 229 221 / .3));
+    --accent:     light-dark(#2b3f6b, #8fa9df);
+    --accent-chip:       light-dark(#3a3d47, #4a4d57);
+    --accent-chip-hover: light-dark(#2b2e36, #565a65);
     --serif:ui-serif,'New York','Iowan Old Style',Charter,Georgia,'Times New Roman',serif;
     --display:ui-serif,'New York','Iowan Old Style',Georgia,serif;
     --sans:'Helvetica Neue',Helvetica,Arial,-apple-system,BlinkMacSystemFont,sans-serif;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --paper:#14151a; --panel:#1d1e25; --card:#1a1b21; --ink:#e7e5dd; --muted:#9a9ca6; --muted-ui:#b0b2bb;
-      --rule:rgba(231,229,221,.5); --hair:rgba(231,229,221,.13); --field:rgba(255,255,255,.05);
-      --frame:rgba(231,229,221,.3); --accent:#8fa9df;
-      --accent-chip:#4a4d57; --accent-chip-hover:#565a65;
-    }
   }
 
   html,body{ background:var(--paper); color:var(--ink); }

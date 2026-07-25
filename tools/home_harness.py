@@ -36,19 +36,42 @@ import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-TOKENS = """<style>
-:root{ --paper:#eceae4; --panel:#e2e1d9; --card:#f3f2ec; --ink:#23252b; --muted:#5f616a; --muted-ui:#565863;
- --rule:rgba(35,37,43,.62); --hair:rgba(35,37,43,.14); --field:#f6f5f0; --frame:rgba(35,37,43,.46);
- --accent:#2b3f6b; --accent-chip:#3a3d47; --accent-chip-hover:#2b2e36;
- --serif:ui-serif,'New York','Iowan Old Style',Charter,Georgia,serif;
- --display:ui-serif,'New York','Iowan Old Style',Georgia,serif;
- --sans:'Helvetica Neue',Helvetica,Arial,sans-serif; }
-@media (prefers-color-scheme: dark){ :root{ --paper:#14151a; --panel:#1d1e25; --card:#1a1b21; --ink:#e7e5dd;
- --muted:#9a9ca6; --muted-ui:#b0b2bb; --rule:rgba(231,229,221,.5); --hair:rgba(231,229,221,.13);
- --field:rgba(255,255,255,.05); --frame:rgba(231,229,221,.3); --accent:#8fa9df; } }
+def _extract_tokens():
+    """The palette, READ from _includes/head/custom.html — never mirrored here.
+
+    A hand-copied duplicate of that :root block is the drift trap this repo has hit repeatedly:
+    a token lands in custom.html, the harness keeps rendering the old value, and the screenshot
+    reports success on the wrong palette. Since the palette collapsed to a single
+    `light-dark()` :root block there is exactly one thing to extract, so mirroring buys nothing.
+
+    Raises rather than falling back to a stale copy: a harness that silently renders the wrong
+    colours is worse than one that refuses to run.
+    """
+    src = os.path.join(ROOT, "_includes", "head", "custom.html")
+    with open(src) as fh:
+        css = fh.read()
+    # Strip /* … */ first. Skipping this step cost a debugging round: the comment ABOVE the block
+    # mentions `:root{` in prose, so an unanchored search matched inside the comment and emitted
+    # a rule with a garbage selector — valid-looking output, zero tokens applied, and the only
+    # symptom was maxGap 200 -> 526 three steps later.
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    m = re.search(r"^[ \t]*:root\s*\{(?:[^{}]*)\}", css, re.M | re.S)
+    if not m:
+        raise SystemExit("home_harness: could not find the :root token block in %s "
+                         "(did the block's formatting change?)" % src)
+    root = m.group(0).strip()
+    for required in ("--paper", "--ink", "--accent", "color-scheme"):
+        if required not in root:
+            raise SystemExit("home_harness: extracted :root block is missing %s — "
+                             "the regex matched the wrong thing" % required)
+    return """<style>
+%s
 body{ background:var(--paper); color:var(--ink); font-family:var(--serif); margin:0; }
 .wrap{ max-width:1236px; margin:0 auto; padding:0 12px; }
-</style>"""
+</style>""" % root
+
+
+TOKENS = _extract_tokens()
 
 SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28'
        'a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>')
@@ -225,15 +248,24 @@ def card(s):
     }
 
 
+ED_AFTER = 3   # keep in step with _layouts/home.html `{% assign ed_after %}`
+
+
 def ed_card(e):
     """Mirrors the editorial-card Liquid in _layouts/home.html (paras are pre-sanitized html)."""
     esc = lambda x: html.escape(str(x or ""))
     paras = "".join('<p class="fcard__edp">%s</p>' % p for p in e.get("paras", []))
-    return ('<article class="fcard fcard--ed lead" data-topics="" data-imp="2" data-story="ed-%s-%s">'
+    # `lead` deliberately absent (2026-07-25): it was giving editorials BOTH the span=2 width and
+    # -- via .fcard.lead .fcard__hl -- the largest headline treatment on the page, measured 32.8px,
+    # landing on a generic section title. The fold button is what .fcard--ed.is-folded acts on.
+    return ('<article class="fcard fcard--ed" data-topics="" data-imp="2" data-story="ed-%s-%s">'
             '<div class="fcard__in"><div class="fcard__top">'
             '<span class="fcard__beat"><span class="ff-dot"></span>%s</span>'
             '<span class="fcard__rank" data-imp="ed"></span></div>'
             '<h2 class="fcard__hl">%s</h2>'
+            '<button class="fcard__more" type="button" aria-expanded="true">'
+            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
+            '<span>More</span></button>'
             '<p class="fcard__eddisc">Opinion, written by the desk\'s AI — a synthesis across '
             'the week\'s sourced stories, not itself sourced reporting.</p>%s'
             '<div class="fcard__line"><span class="fcard__date">%s</span>'
@@ -273,8 +305,12 @@ def main():
 <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
 </div></div>
 %s%s%s%s""" % (TOKENS, styles, feed["count"], chips, SYNC_UI,
-               "".join(ed_card(e) for e in feed.get("editorials", []))
-               + "".join(card(s) for s in feed["stories"]), PRE_SYNC, script, GEOM_CHECK, SYNC_CHECK)
+               # Emission order mirrors _layouts/home.html: ED_AFTER stories, then the editorials,
+               # then the rest. Keep ED_AFTER in step with the layout's `{% assign ed_after %}` —
+               # this is the mirror that the published-DOM fixture is meant to retire.
+               "".join(card(s) for s in feed["stories"][:ED_AFTER])
+               + "".join(ed_card(e) for e in feed.get("editorials", []))
+               + "".join(card(s) for s in feed["stories"][ED_AFTER:]), PRE_SYNC, script, GEOM_CHECK, SYNC_CHECK)
 
     with open(args.out, "w") as fh:
         fh.write(page)
