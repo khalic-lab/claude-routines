@@ -23,12 +23,18 @@ The whole loop is wired and verified end-to-end (was BUILT + DORMANT until then)
   dedup index `id` (the writer curates a separate, shorter index `headline`), but both the widget
   and the Evaluator derive the key from the *same* source — the brief's bold leads — so they join
   deterministically. Frontend-only change in `_includes/head/custom.html`; Worker/bridge unchanged.
+- **Passkeys-only + both-thumbs reasons + editorial votes (2026-07-25):** `/submit` now requires
+  the passkey session Bearer (the shared `X-Widget-Key` site password and unlock modal are gone);
+  the optional "why?" box appears on 👍 as well as 👎 (send resolves the polarity live from the
+  active thumb); and the homepage's editorial cards are votable — their `story_id` is
+  `ed-<stream>-<date>`, which `fold.py` resolves as itself (no ledger story node; the vote reaches
+  the per-stream tallies and the Evaluator's raw events).
 
 ## Flow
 
 ```
-Rafael taps 👍/👎 (+ optional reason) on a brief page
-  │  _includes/head/custom.html widget  ──POST /submit──►  feedback-sink Worker ──► Cloudflare KV
+Rafael taps 👍/👎 (+ optional reason) on a homepage card
+  │  _layouts/home.html widget (passkey session Bearer)  ──POST /submit──►  feedback-sink Worker ──► Cloudflare KV
   ▼
 LOCAL BRIDGE (cron */10), per tick:
   1 git pull --rebase

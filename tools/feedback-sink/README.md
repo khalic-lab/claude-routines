@@ -9,6 +9,12 @@
 > (`/auth/*`, `/readstate`). This made the worker its first **bundled dependency**
 > (`@simplewebauthn/server`) — deploys now need `npm install` first — and one new secret,
 > `INVITE_TOKEN`. See "Passkey accounts" below.
+>
+> **Passkeys-only 2026-07-25**: `/submit` and `/propose` now require the passkey session
+> Bearer; the shared `WIDGET_KEY` site password and the site-unlock modal are gone (the
+> secret can be deleted once the deploy is verified). Session TTL rolling is daily (any
+> authed use re-mints the 90-day runway — the old 30-day threshold silently expired
+> regularly-visiting readers).
 
 Captures reader thumbs (+1 / −1) and an optional free-text reason from the published Jekyll
 briefs, holds them in **Cloudflare KV**, and lets the local bridge drain them into the git repo
@@ -23,11 +29,12 @@ human-applied patch proposals — never auto-mutated from a tap. See `feedback/F
 ## API
 
 ```
-POST /submit            (site key, CORS) body: {brief, vote, reason?, story_id?, surface?}
-  -> {ok:true, id}                       writes one record to KV. No bearer (browser can't keep one);
-                                         requires the X-Widget-Key header (fails closed with 403 if
-                                         WIDGET_KEY is unset or wrong).
-POST /propose           (site key, CORS) body: {topic, detail?, surface?}
+POST /submit            (session)        body: {brief, vote, reason?, story_id?, surface?}
+  -> {ok:true, id}                       writes one record to KV; 401 without a valid passkey
+                                         session Bearer. `reader` is pinned from the session;
+                                         story_id must match ^st-[0-9a-f]{12}$ or an editorial
+                                         ed-<stream>-<date> id (else 400).
+POST /propose           (session)        body: {topic, detail?, surface?}
   -> {ok:true, id}                       writes one kind:"proposal" record to KV (the home-page
                                          "Propose a brief" form); bridge routes it to proposals/.
 GET  /drain             (Bearer)         -> {count, truncated, records:[{key, ...record}]}
@@ -66,9 +73,12 @@ Two-phase drain/ack so a missed bridge tick neither loses nor double-commits rec
 Single-reader accounts for read/unread sync across devices (SPIKE-2026-07-07-read-state-sync).
 Registration is invite-gated; one ceremony on any Apple device creates an iCloud-Keychain-synced
 passkey usable everywhere. rpID is `khalic-lab.github.io` (valid: github.io is on the Public
-Suffix List, so the subdomain is the registrable domain). `/auth/*`, `/readstate` and `/prefs`
-answer CORS only for `https://khalic-lab.github.io`; the older routes keep `*`. A signed-in browser also
-sends the session Bearer on `/submit`, which pins the record's `reader` server-side.
+Suffix List, so the subdomain is the registrable domain). Every session-carrying route
+(`/auth/*`, `/submit`, `/propose`, `/readstate`, `/prefs`) answers CORS only for
+`https://khalic-lab.github.io`; the bridge routes (`/drain`, `/ack`) keep `*`. The session
+Bearer is the ONLY write credential since 2026-07-25 and pins the record's `reader`
+server-side. Consequence: a browser without WebAuthn support is read-only — there is no
+password fallback any more.
 
 Deploy delta for the 2026-07-10 extension (from `tools/feedback-sink/`):
 
@@ -100,12 +110,8 @@ From this directory (`tools/feedback-sink`):
    ```
    wrangler secret put FEEDBACK_TOKEN
    ```
-   Set the shared site key — **required** (the Worker fails closed: /submit and /propose return
-   403 for every request while WIDGET_KEY is unset). It must match the key visitors enter in the
-   unlock modal (sent as the `X-Widget-Key` header; kept in the browser's localStorage):
-   ```
-   wrangler secret put WIDGET_KEY
-   ```
+   (`WIDGET_KEY` is no longer read — the 2026-07-25 passkeys-only change made the session
+   the only write credential. If the secret still exists from an old deploy, delete it.)
 4. Deploy:
    ```
    wrangler deploy
@@ -123,9 +129,10 @@ From this directory (`tools/feedback-sink`):
 WORKER=https://feedback-sink.<account>.workers.dev
 TOKEN=<the FEEDBACK_TOKEN you set>
 
-# Submit (site key) — expect {ok:true,id:...}; without X-Widget-Key expect 403 (fail closed)
+# Submit (session) — grab a live session token first (sign in on the site, then in the browser
+# console: JSON.parse(localStorage.getItem('syncSession:v1')).token). Without it expect 401.
 curl -s -XPOST "$WORKER/submit" -H 'Content-Type: application/json' \
-  -H "X-Widget-Key: <the WIDGET_KEY you set>" \
+  -H "Authorization: Bearer <session token>" \
   -d '{"brief":"2026-07-03-news","vote":-1,"reason":"too long"}'
 
 # Drain (bearer) — expect the record back with its KV key
@@ -144,6 +151,6 @@ Live logs while testing: `wrangler tail`.
 ## Privacy
 
 The reason text is more sensitive than a notification body, so it is routed through this **private
-Worker + KV** and the **private repo** — never an ntfy topic (world-readable). The `/submit` route
-is public by necessity (a browser widget); the defense is shape caps in the Worker + the human gate
-downstream, not the (un-hideable) widget key.
+Worker + KV** and the **private repo** — never an ntfy topic (world-readable). Since 2026-07-25
+`/submit` requires a passkey session, so writes carry real per-reader identity; shape caps in the
+Worker + the human gate downstream remain the defense in depth.

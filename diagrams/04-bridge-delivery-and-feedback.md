@@ -16,8 +16,8 @@ sequenceDiagram
     participant PH as Phone (ntfy app)
 
     Note over U,FS: reader taps 👍/👎 on a brief
-    U->>FS: POST /submit {brief, story_id, vote, reason, X-Widget-Key}
-    FS->>FS: store in FEEDBACK_KV (public endpoint, shape-capped)
+    U->>FS: POST /submit {brief, story_id, vote, reason} + passkey session Bearer
+    FS->>FS: store in FEEDBACK_KV (session-gated since 2026-07-25, shape-capped)
 
     Note over BR: tick every 10 min, 07:00–22:00
     BR->>GH: git pull --rebase

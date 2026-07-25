@@ -20,22 +20,22 @@
 ║                                                                                      ║
 ║  env_018zypSdRSdGdrZ8J5usqCWA   (network settings changed 2026-05-25 → Custom)        ║
 ║  ┌────────────────────────────────────────────────────────────────────────────┐     ║
-║  │ WRITERS (claude-opus-4-8)      cron (UTC)        output file          email     │    ║
-║  │  • News (CH + world, noon)    0 10 * * *     _posts/{d}-news.md       weekday    │   ║
-║  │  • AI/ML (+ arXiv papers)     0 10 * * 2,5   _posts/{d}-ai-ml.md      none       │   ║
-║  │  • Science (non-AI, weekly)   0 15 * * 3     _posts/{d}-science.md    none       │   ║
-║  │  • Weekend Deep Read          30 7 * * 6     _posts/{d}-weekend.md    digest     │   ║
-║  │  • Sports (Swiss+global)      0 7 * * 1      _posts/{d}-sports.md     none       │   ║
-║  │  WATCH (claude-haiku-4-5)     0 */4 * * *    pending-notifications/   —          │   ║
+║  │ WRITERS (claude-opus-4-8)      cron (UTC)        output file                    │    ║
+║  │  • News (CH + world, noon)    0 10 * * *     _posts/{d}-news.md                  │   ║
+║  │  • AI/ML (+ arXiv papers)     0 10 * * 2,5   _posts/{d}-ai-ml.md                 │   ║
+║  │  • Science (non-AI, weekly)   0 15 * * 3     _posts/{d}-science.md               │   ║
+║  │  • Weekend Deep Read          30 7 * * 6     _posts/{d}-weekend.md              │   ║
+║  │  • Sports (Swiss+global)      0 7 * * 1      _posts/{d}-sports.md                │   ║
+║  │  WATCH (claude-haiku-4-5)     0 */4 * * *    pending-notifications/              │   ║
 ║  │      reads watches.yml → on match writes stub + updates last_fired              │    ║
-║  │  EVALUATOR (claude-opus-4-8)  30 9 * * 0     _posts/{d}-evaluator.md  digest     │   ║
+║  │  EVALUATOR (claude-opus-4-8)  30 9 * * 0     _posts/{d}-evaluator.md            │   ║
 ║  │  ⮑ all triggers (except Watch) are BOOTSTRAP SHIMS → git pull + read              │   ║
 ║  │     routines/<slug>.md at fire time (see routines/MANIFEST.md)                    │   ║
 ║  │      reads last 7d of _posts → Health table + Patch proposals (human-applied)   │    ║
 ║  └────────────────────────────────────────────────────────────────────────────┘     ║
 ╚═══════════════════════════════════════╤══════════════════════════════════════════════╝
-   per run: clone → git pull → WebSearch/curl/WebFetch + MCP → Write → commit → push main
-                                         │   (+ Gmail create_draft → DRAFTS, never auto-sent)
+   per run: clone → git pull → WebSearch/curl/WebFetch → Write → commit → push main
+                                         │
                                          ▼
             ┌─────────────────────────────────────────────────────┐
             │  GitHub: khalic-lab/claude-routines (private)         │
@@ -59,15 +59,175 @@
    │  card → og-proxy worker →         │                       ▼
    │  og:image thumbnail (lazy,        │              ┌─────────────┐     ┌──────────────┐
    │  sessionStorage cache); custom.   │              │  ntfy.sh     │────▶│ phone (ntfy)  │
-   │  html = skin + unlock + propose   │              │  topic khalic│push └──────────────┘
+   │  html = skin; propose in home     │              │  topic khalic│push └──────────────┘
    └──────────┬────────────────────────┘             └─────────────┘
-              ▼                                        ┌────────────────────────────────────┐
-   ┌──────────────────────────────────┐               │ Gmail (DRAFTS → rflnogueira@me.com)  │
-   │ Cloudflare Worker (og-proxy)      │               │  News weekday + Weekend/Eval digests │
-   │  fetch article HTML → og:image    │               │  user sends manually                 │
-   │  30-day edge cache                │               └────────────────────────────────────┘
+              ▼
+   ┌──────────────────────────────────┐
+   │ Cloudflare Worker (og-proxy)      │        (ntfy + the homepage feed are the ONLY
+   │  fetch article HTML → og:image    │         reader surfaces since 2026-07-25 —
+   │  30-day edge cache                │         the Gmail digests were removed)
    └──────────────────────────────────┘
 ```
+
+> **Changed 2026-07-25 (latest): reader-site fixes — passkeys-only writes, sessions that
+> actually live, editorial votes, both-thumbs reasons, a reader-facing "How this works".**
+> Diagnosed by a 4-agent workflow, applied by hand. **(1) Sessions were dying silently**, three
+> ways: the 30-day rolling threshold left a dead zone (KV TTL anchors to the last PUT, so weeks
+> of daily visits extended nothing and the session expired 90 days after the last ROLL, not the
+> last visit); rolling fired only from /readstate + /prefs; and a just-issued token could 401 off
+> an eventually-consistent KV read and get dropped seconds after login. Now: rolling is daily on
+> ANY authed use (incl. /submit + /propose), a 401 opens the Sync panel with a visible
+> "session expired — sign in again" nudge instead of the silent flip (roaming quietly stopping
+> was the symptom), and sessions under a minute old get a grace pass. **(2) Passkeys-only:** the
+> shared `WIDGET_KEY` site password, `X-Widget-Key` header and site-unlock modal are gone
+> end-to-end; /submit + /propose now 401 without a session Bearer, sit behind site-origin CORS,
+> pin `reader` from the session, and allowlist `story_id` (`st-`/`ed-` shapes). The propose-form
+> wiring moved from custom.html into home.html beside the session helpers. Consequence, accepted:
+> a WebAuthn-less browser is read-only — no password fallback. The Worker secret WIDGET_KEY can
+> be deleted after the deploy is verified. **(3) Editorial cards are votable** — the vote handler
+> was always card-agnostic, only the markup skipped them; their `ed-<stream>-<date>` ids resolve
+> in fold.py as themselves (per-stream tallies + raw Evaluator events; deliberately never a
+> ledger story node), where before the fix every editorial vote would have sat UNRESOLVED
+> forever while the UI said "thanks". **(4) Reasons on both thumbs** — the entire down-only gate
+> was one `=== -1` in the client; the reason box's send now resolves polarity LIVE from the
+> active thumb (the memoized input's hardcoded `-1` would have mis-signed reasons after a vote
+> switch), up-votes get the box without focus-steal, and the Evaluator prompt gained the
+> 👍-reinforcement wording rule. **(5) Voting no longer implicitly marks read** — the implicit
+> mark made the explicit ✓ toggle look broken (vote, then ✓ "un-marked" a card the reader never
+> knowingly marked); ✓ and opening the headline are the only read paths now. **(6) The
+> "How this works" modal was rewritten for a READER** (what is this, who writes it, what keeps
+> it honest, what your clicks do) replacing the builder-narration — which had also gone stale
+> (it still described the removed Gmail drafts). Known residue: the hiw SVGs still draw a
+> "GMAIL DRAFT" boundary node — they need a regeneration pass. Smoke 52/52; fold suite 20/20
+> incl. two new pins (ed- resolution, up-reason survival).
+
+> **Removed 2026-07-25: the Gmail digests.** ntfy + the homepage feed are now the only
+> reader surfaces. The email step is gone from News, Weekend and the Evaluator (and the vacuous
+> "this routine sends no email" note from Science and Sports); no prompt mentions Gmail,
+> `create_draft`, or an address any more. Two things had to move rather than just be deleted: the
+> Evaluator surfaced **reader brief-proposals** (`proposals/*.jsonl`, submitted from the homepage
+> form) *through* that email, so they now go into the review itself under Open questions — deleting
+> the email alone would have silently dropped every reader-submitted topic; and the cold-run path's
+> "do NOT create an email draft" clause is gone. `prompts.html` no longer redacts an address at
+> render (all six filters were no-ops once the digests went), so `check_publish.py` will now FAIL
+> loudly if personal data reappears in a published prompt instead of scrubbing it silently — the
+> intended signal. The Gmail MCP connector is still attached to the triggers; it is inert and
+> removing it is a separate `RemoteTrigger` change.
+>
+> **Reviewed 2026-07-25: four-lens review of the day's change + the refactor it asked for.**
+> A functional lens re-ran the whole pipeline against a repo copy (fresh git, local bare origin,
+> `plane/bake.py` stubbed so a fabricated story could not reach the live plane) and every artifact
+> checked out: derived front matter, anchors, computed footer, index + ledger + verdict snapshot,
+> homefeed carrying the writer's own `topics`/`importance`, stub with defaulted title/tag, commit
+> pushed — for a writer run AND an evaluator run. Three real edge cases in `ensure_front_matter`
+> came out of the correctness lens and are fixed with tests: a body starting with a blank line put
+> `published: true` OUTSIDE the front matter (string-partition surgery replaced by matching the
+> whole block by span); the `published:` check scanned only `text[:600]`, so a long title earned a
+> duplicate key while an early body line wrongly skipped the repair (now scans the block only); and
+> `GENERATED_TS_RE` was unanchored, able to take its timestamp from a story's own text (now anchored
+> on the word *Generated*). An unterminated block is now left alone with a warning instead of
+> getting a second one. **Refactor** (the review's headline finding): the five writer prompts each
+> repeated the same publish block, so it moved into `_shared/publish-step.md` +
+> `_shared/publish-outcomes.md`, bracketing the one genuinely per-stream line (the `{teaser}` rule).
+> Extraction was done the byte-identical way — the shared run was computed by comparing the five
+> sections line-for-line, and the regenerated prompts differ from the pre-extraction files ONLY in
+> two intended wording changes. Also: `publish.py`'s `EMBED_DEFAULTS` deleted (both consumers —
+> `dedup.py` and `plane/bake.py` — now default the endpoint themselves, so the token literal count
+> went DOWN), `run_step`'s now-unused `env` parameter dropped, `normalize_front_matter` reuses
+> `_iso_offset` instead of re-inlining it, and `COMMIT_TITLE` → `EDITION_NAME` (it names the
+> edition in three places now, not just the commit).
+>
+> **Two majors from the same review, both fixed.** (1) **A future front-matter date is now
+> impossible.** Jekyll's `future` defaults to false and `_config.yml` never overrides it, so a
+> front-matter date ahead of the build clock drops the post from the site — silently, and for the
+> evaluator that is the one page a notification links to. The stamp is now clamped to `now` with a
+> loud WARNING when `--date` runs ahead of the clock, and — the root fix — **the stub's click URL is
+> derived from the front-matter date actually written**, not from `--date`, so the page and the link
+> to it can no longer come from different sources. (2) **The evaluator regained a crash fallback:**
+> moving it onto `publish.py` put it on a code path that can raise before reaching the controlled
+> FAILED checks, while writers kept DEDUP.md's manual escape hatch; `weekly-evaluator.md` now
+> carries the equivalent (front-matter block + `git add … reader-profile.md` + commit + push). Two
+> stale prompt lines the change had left behind (a renamed cross-reference, a cold-run instruction
+> still saying to hand-write front matter) are also fixed. Spec suite 425 → 432, and the
+> front-matter tests are now clock-relative: they had hardcoded dates and times, which the new clamp
+> exposed as latent flakiness — a fixed 08:03 stamp is "the future" to a suite run at 01:56.
+>
+> **Added 2026-07-25: registry expansion — 187 → 234 domains, every one probe-verified.**
+> Discovery was starving at the two thinnest desks: **science** cited 5 distinct domains in 30 days
+> with nature.com saturated at 42% and its quota waived in 75% of editions; **sports** cited 4, with
+> srf.ch saturated and the quota waived in EVERY edition. 20 new sources were added — 7 each to
+> science (eLife, PLOS, PNAS, LBL, ORNL, IOP, Semantic Scholar's API), sports (L'Équipe, kicker,
+> Autosport, ESPN) and news (UN News, ECB press, Le Monde, El País, ANSA, DW, RFI — the linguistic
+> spread the 0.84 top-5 share needed), then a scouted second wave took it to 47 new domains:
+> Fermilab/NOAA/USGS-quakes/NOIRLab/NRAO/AAS Nova/APS-Physics and MPG for science; MLCommons, NIST,
+> ACL Anthology, NVIDIA, Epoch, Stanford HAI, Cohere, DeepSeek for ai-ml/weekend; Tour de Suisse,
+> Diamond League, ITA, IIHF, Le Tour for sports; European Parliament, UN Geneva, WHO, WTO, Fedlex,
+> FINMA, BIS and canton Vaud's press releases for news. `letemps.ch` gained the `sports` stream (its
+> sport feed verified fresh) rather than registering an unknown sports outlet. **`reach` is measured, never
+> guessed:** each candidate was fetched through `tools/fetch.py` with the bearer stripped (a success
+> there is genuinely direct) and then via `--proxy`, with the payload classified so a 200 that is
+> really a JS shell cannot be recorded as a working feed. Only feed/JSON responders were registered;
+> **A freshness gate was added after the first pass shipped a corpse:** `worldathletics.org/rss`
+> answers 200 with 50 items whose newest is 1471 days old, and `gazzetta.it` 959 — both were removed
+> again; `news.cnrs.fr`, which a scout reported as "200, valid RSS", is 4189 days stale and never
+> entered. Reachable is not alive. Candidates were rejected wholesale, including `openreview.net` (403 direct, and the proxy returns
+> the SPA shell rather than API JSON — the ai-ml/weekend prompts list it as a fallback that in fact
+> never resolves) and a batch whose feed URLs simply 404. Entries enter as `status: candidate`, so
+> preflight surfaces them in both the fetch list and `candidates_to_try` and the lifecycle promotes
+> them on real citations. **All 47 carry their evidence in the file**: each `seed` note records the
+> HTTP status, payload type and — for the 39 real feeds — the age of the newest item (`newest 0d`,
+> `newest 26d`, `newest undated` for IIHF's date-less feed); the 7 feed-less entries say so
+> explicitly rather than implying a feed exists. Recording that took a second pass, because the
+> prober kept dying mid-run at the same item: `news.un.org` answers **gzip**, and decoding the raw
+> stream as UTF-8 raised `UnicodeDecodeError` — the freshness fetch now reads bytes and decompresses.
+> All eight domains that pass had missed re-probed clean (newest 0d). The file was edited through `registry.py`'s own loader/dumper with a guard
+> asserting all 187 pre-existing entries stay byte-identical (it fired once, correctly: the file is
+> NOT alphabetical — `sync` appends — so re-sorting would have churned every entry); the resulting
+> diff is +285 lines, zero deletions, and `registry.py sync` reports "nothing to fold".
+>
+> **Changed 2026-07-25: deterministic procedure removed FROM the prompts.** The
+> 2026-07-18 determinization moved the mechanics into tools but left the prompts still *narrating*
+> them — publish.py's 10-step list, the fetch chain's internals, the `DONE`/`FAILED` taxonomy, the
+> bridge/Drive infrastructure notes, per-stream reachability tables. Those are gone; what a tool
+> derives is no longer transcribed for the model, while everything the model alone produces
+> (`[via snippet]` / `[new source]` / `[ongoing since]` tagging, the Discovery footer contract,
+> beat + importance rubric, `final.json` and candidate contracts, ONGOING keep/drop, date
+> discipline) is untouched. Three enabling tool changes let incantations leave the prompts
+> rather than merely move: **(1)** `dedup.py` defaults the embed-proxy worker/token (the same
+> constants `publish.py` already injects), so DEDUP.md Step A is a bare command and the
+> `EMBED_WORKER_URL=… EMBED_TOKEN=…` block is deleted — verified live with both vars unset;
+> **(2)** the Step-A verdict snapshot rides along inside `publish.py` (both `/tmp` files are still
+> on disk), one fewer command in the writer's hands; **(3)** `publish.py --slug evaluator` — stub
+> (clicking through to the review page, the one post still rendered) + the honest git tail, no
+> story preprocessing — replaces the Evaluator's hand-rolled `$(date -u …)` stub JSON, manual
+> quote-escaping and `git add/commit/push` block, and it inherits the rebase retry, the
+> commit-failure semantics and the bare-date normalization that block never had. Weekend's
+> cross-cutting grounding now calls `tools/plane/query.py entities|thread` (local ledger) instead
+> of raw `curl` + bearer against the Worker twin. `assemble.py` also resolves a `{slug}` token per
+> generated file, so each prompt now carries its own literal `preflight.py --slug news` instead of
+> making the routine work out its slug at fire time.
+>
+> **Second wave, same day — the last derivable things left the prompts.** **(4) Front matter is
+> derived**, not dictated: a routine writes the brief BODY and `publish.py` prepends the block
+> (layout/title/categories from the slug, `published: true` for the review, date = the brief's own
+> `_Generated` stamp with the DATE part pinned to the edition's — Jekyll builds the permalink from
+> front matter while the stub links from `--date`, so a midnight-crossing run would otherwise
+> publish the review at a URL its own notification 404s on). Replayed against the last 11 real
+> briefs, the derived block matches what the routines hand-wrote field-for-field. **(5)
+> `--notify-title` and `--notify-tags` now default from (slug, date)** — the teaser is the only
+> notification input a writer still supplies. **(6) `metrics.py` refreshes source-health itself**,
+> so the Evaluator's fire-start is one command instead of two plus a stated ordering rule.
+> **(7)** An adversarial audit of the cuts (three lenses; the contract lens found nothing lost)
+> surfaced a REAL pre-existing hole this change would have made permanent: the Evaluator's bounded
+> auto-apply writes `reader-profile.md`, which sits under none of the staged paths — every past
+> landing (e.g. `c353f7b`) happened only because the model hand-extended its own `git add`, an
+> improvisation the one-command tail forbids. `publish.py` now stages `reader-profile.md` for
+> `--slug evaluator` only (writers just read it).
+>
+> Net over the whole read surface (prompt + DEDUP.md): −12.6% — news −16.2%, DEDUP.md −25.7%
+> (237 → 174 lines), a News run reading ~20% less plumbing; spec suite 397 → 425. Watch is NOT
+> included — it is un-shimmed (live prompt inline in the trigger) and is already
+> all-invocations-plus-one-judgment, so it has nothing to cut.
 
 > **Fixed 2026-07-18 (post-audit, latest): eight hardening fixes from an external read-only
 > audit (codex, at 63683b1).** (1) `publish.py` git tail is now honest: commit results are
@@ -465,18 +625,18 @@ exact-string exclusion in the Cyber+Papers prompt ("read today's Overview brief,
 IDs it already cited"). That spanned no days, no other streams, and matched only arXiv IDs (not
 *stories*), which is why "Bilaterals III" ran every few days from May 3 → May 24 untouched.
 
-### 1.4 Reader feedback loop (LIVE 2026-06-18; homepage-only since 2026-07-18)
+### 1.4 Reader feedback loop (LIVE 2026-06-18; homepage-only since 2026-07-18; passkeys-only 2026-07-25)
 
-Human-gated, web-widget-only — the homepage story cards are the ONLY feedback surface now
+Human-gated, web-widget-only — the homepage story AND editorial cards are the feedback surface
 (the per-brief-page widgets died with the brief pages, 2026-07-18; `brief` in the payload
-means the *stream/edition* a story belongs to, not a page). Captures 👍/👎 + an optional free-text reason
-and folds it into the writers' editorial guidance **through a human gate** (never auto-mutated
-from a tap — the documented n=1 sycophancy trap).
+means the *stream/edition* a story belongs to, not a page). Captures 👍/👎 + an optional free-text
+reason on either thumb, and folds it into the writers' editorial guidance **through a human gate**
+(never auto-mutated from a tap — the documented n=1 sycophancy trap).
 
 ```
 homepage card widget (_layouts/home.html; kill switch + URL via window.__FB in custom.html —
                       the per-brief-page widget was deleted 2026-07-18 with the brief pages)
-  │  POST /submit (CORS, public)
+  │  POST /submit (CORS site-origin; passkey session Bearer — passkeys-only since 2026-07-25)
   ▼
 feedback-sink Worker (tools/feedback-sink/) ── Cloudflare KV   [khalic-lab CF acct;
   │                                                             bearer FEEDBACK_TOKEN on /drain+/ack]
@@ -792,4 +952,4 @@ tomorrow" (advisory). All deterministic + offline.
 
 - Closing the Evaluator loop (auto-PR of patches) — separate track.
 - Migrating the legacy `briefs/` dir — resolved 2026-07-03: deleted (was dead weight; git history keeps it).
-- Replacing ntfy / Gmail-draft delivery — unchanged by this design.
+- Replacing ntfy delivery — unchanged by this design. (The Gmail-draft digests were removed 2026-07-25.)

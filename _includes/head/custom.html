@@ -24,15 +24,14 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <style>
-  /* .fb-btn — shared button chrome for the unlock modal + propose form (layout here; colors in
-     the variable-driven block lower down). */
+  /* .fb-btn — button chrome for the propose form (layout here; colors in the
+     variable-driven block lower down). */
   .fb-btn {
     cursor: pointer; background: transparent;
     color: inherit; border-radius: 6px; padding: 0.25em 0.6em; font-size: 1em; line-height: 1;
   }
   /* keyboard focus affordance (WCAG 2.4.7) across every interactive control */
   .fb-btn:focus-visible,
-  .site-unlock__x:focus-visible, .site-unlock__pw:focus-visible, .site-unlock__go:focus-visible,
   .propose__topic:focus-visible, .propose__detail:focus-visible {
     outline: 2px solid var(--accent); outline-offset: 2px;
   }
@@ -40,7 +39,8 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
   // --- feedback-sink config — see tools/feedback-sink/README.md for redeploy ----
   // Kill switch: set enabled to false to hide feedback controls site-wide. The homepage grid
-  // (_layouts/home.html) and the propose form below both read window.__FB.
+  // and the propose form (both in _layouts/home.html) read window.__FB. All writes ride the
+  // passkey session — the shared-key unlock modal that lived here died 2026-07-25.
   window.__FB = { enabled: true, url: "https://feedback-sink.khalic-lab.workers.dev" };
 </script>
 
@@ -147,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function () {
     .page__title{ font-size:1.9em; }
     /* comfortable tap targets (>=44px) without shifting layout (padding offset by negative margin) */
     .fb-btn{ padding:.6em 1em; min-height:44px; display:inline-flex; align-items:center; }
-    .site-unlock__x{ padding:.5em; top:0; right:0; }
   }
 
   /* home / archive contents list */
@@ -164,12 +163,12 @@ document.addEventListener('DOMContentLoaded', function () {
   .page__footer a,.page__footer-copyright{ color:var(--muted-ui); }
   .page__footer a{ text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; }
 
-  /* shared buttons (unlock modal + propose form) — variable-driven, follows light/dark.
+  /* propose-form buttons — variable-driven, follows light/dark.
      controls keep a >=3:1 border (--muted-ui) per WCAG 1.4.11. */
   .fb-btn{ border:1px solid var(--muted-ui); }
   .fb-btn:hover{ background:var(--hair); }
   /* readable placeholders (the stock ~50% grey fails AA in light mode) */
-  .site-unlock__pw::placeholder, .propose__topic::placeholder, .propose__detail::placeholder{
+  .propose__topic::placeholder, .propose__detail::placeholder{
     color:var(--muted-ui); opacity:1; }
 </style>
 <script>
@@ -202,23 +201,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </style>
 
 <style>
-  /* ---- shared-key unlock modal + propose-a-brief form ---- */
-  .site-unlock{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.45); z-index:9999; }
-  .site-unlock.on{ display:flex; }
-  .site-unlock__box{ position:relative; width:90%; max-width:23em; background:var(--paper); color:var(--ink);
-    border:1px solid var(--rule); padding:1.6em 1.5em; box-shadow:0 8px 44px rgba(0,0,0,.32); }
-  .site-unlock__x{ position:absolute; top:.3em; right:.45em; background:none; border:0; font-size:1.5em;
-    line-height:1; cursor:pointer; color:var(--muted); }
-  .site-unlock__title{ font-family:var(--display); font-weight:700; font-size:1.4em; margin-bottom:.15em; }
-  .site-unlock__sub{ font-family:var(--serif); font-size:.85em; color:var(--muted); margin:0 0 1em; }
-  /* present for password managers, kept off-screen (a password-only form confuses them) */
-  .site-unlock__user{ position:absolute; left:-9999px; top:0; width:1px; height:1px; opacity:0; }
-  .site-unlock__pw{ width:100%; box-sizing:border-box; font:inherit; font-size:1em; padding:.5em .6em;
-    background:var(--field); color:var(--ink); border:1px solid var(--frame); border-radius:6px; }
-  .site-unlock__go{ margin-top:.85em; }
-  .site-unlock__msg{ display:block; font-family:var(--sans); font-size:.8em; color:var(--muted); margin-top:.5em; min-height:1em; }
-
+  /* ---- propose-a-brief form (the shared-key unlock modal died 2026-07-25 — passkeys-only) ---- */
   .propose{ max-width:44em; margin:2.6em auto 2.4em; }
   .propose__form{ display:flex; flex-direction:column; gap:.6em; }
   .propose__topic, .propose__detail{ width:100%; box-sizing:border-box; font:inherit; padding:.5em .6em;
@@ -228,85 +211,7 @@ document.addEventListener('DOMContentLoaded', function () {
   .propose__form .fb-btn{ align-self:flex-start; }
   .propose__msg{ font-family:var(--sans); font-size:.8em; color:var(--muted); margin-left:.5em; }
 </style>
-<script>
-(function () {
-  if (typeof window === 'undefined' || !window.fetch || !window.localStorage) return;
-  var WORKER = (window.__FB && window.__FB.url) || "https://feedback-sink.khalic-lab.workers.dev";
-  var LS = "siteKey";
-  var panel = null, pending = null, lastFocus = null;
-
-  function get(){ try { return localStorage.getItem(LS) || ''; } catch (e) { return ''; } }
-  function set(v){ try { localStorage.setItem(LS, v); } catch (e) {} }
-  function clear(){ try { localStorage.removeItem(LS); } catch (e) {} }
-
-  function build(){
-    panel = document.createElement('div');
-    panel.className = 'site-unlock';
-    panel.innerHTML =
-      '<form class="site-unlock__box" role="dialog" aria-modal="true" aria-labelledby="unlock-dlg-title" action="#" autocomplete="on">' +
-        '<button type="button" class="site-unlock__x" aria-label="close">×</button>' +
-        '<div class="site-unlock__title" id="unlock-dlg-title">Unlock to interact</div>' +
-        '<p class="site-unlock__sub">Enter the shared site key to give feedback or propose a brief. It stays in this browser.</p>' +
-        '<input type="text" name="username" value="khalic-lab" autocomplete="username" class="site-unlock__user" readonly tabindex="-1" aria-hidden="true">' +
-        '<input type="password" name="password" autocomplete="current-password" class="site-unlock__pw" placeholder="site key" aria-label="site key" required>' +
-        '<button type="submit" class="fb-btn site-unlock__go">Unlock</button>' +
-        '<span class="site-unlock__msg"></span>' +
-      '</form>';
-    document.body.appendChild(panel);
-    var pw = panel.querySelector('.site-unlock__pw');
-    panel.querySelector('.site-unlock__x').addEventListener('click', hide);
-    panel.addEventListener('click', function (e) { if (e.target === panel) hide(); });
-    // Escape closes; Tab/Shift+Tab is trapped inside the dialog (×, key field, Unlock).
-    panel.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') { hide(); return; }
-      if (e.key !== 'Tab') return;
-      var f = [panel.querySelector('.site-unlock__x'), pw, panel.querySelector('.site-unlock__go')];
-      var first = f[0], last = f[f.length - 1];
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-    });
-    panel.querySelector('form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var v = (pw.value || '').trim();
-      if (!v) return;
-      set(v); hide();
-      var cb = pending; pending = null;
-      if (cb) cb();
-    });
-  }
-  function show(){ lastFocus = document.activeElement; if (!panel) build(); panel.classList.add('on');
-    var pw = panel.querySelector('.site-unlock__pw'); pw.value = ''; setTimeout(function(){ pw.focus(); }, 30); }
-  function hide(){ if (panel) panel.classList.remove('on');
-    if (lastFocus && lastFocus.focus) { lastFocus.focus(); lastFocus = null; } }
-
-  window.__siteKey = { get: get, set: set, clear: clear, prompt: function (retry) { pending = retry || null; show(); } };
-
-  // Propose-a-brief form (home page only)
-  document.addEventListener('DOMContentLoaded', function () {
-    var form = document.querySelector('.propose__form');
-    if (!form) return;
-    var topic = form.querySelector('[name=topic]');
-    var detail = form.querySelector('[name=detail]');
-    var msg = form.querySelector('.propose__msg');
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var t = (topic.value || '').trim();
-      if (!t) { topic.focus(); return; }
-      (function send(){
-        var key = get();
-        if (!key) { msg.textContent = '🔒 unlock first'; window.__siteKey.prompt(send); return; }
-        msg.textContent = 'sending…';
-        fetch(WORKER + '/propose', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Widget-Key': key },
-          body: JSON.stringify({ topic: t, detail: (detail.value || '').trim(), surface: 'web' })
-        }).then(function (r) {
-          if (r.status === 403) { clear(); msg.textContent = '🔒 wrong key'; window.__siteKey.prompt(send); return; }
-          if (r.ok) { msg.textContent = 'proposed — thanks ✓'; topic.value = ''; detail.value = ''; }
-          else msg.textContent = 'failed (' + r.status + ')';
-        }).catch(function () { msg.textContent = 'offline — try again later'; });
-      })();
-    });
-  });
-})();
-</script>
+<!-- (The shared-key unlock modal + window.__siteKey API + the propose-form wiring that lived
+     here were removed 2026-07-25: all writes now ride the passkey session, and the propose
+     wiring moved to _layouts/home.html beside the session helpers it depends on. Recoverable
+     from git history.) -->

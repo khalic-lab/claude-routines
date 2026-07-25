@@ -66,6 +66,11 @@ layout: archive
           <span class="fcard__date">{{ e.date_label }}</span>
           <button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read" title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></button>
         </div>
+        <div class="fcard__fb" data-story="ed-{{ e.stream }}-{{ e.date }}" data-brief="{{ e.date }}-{{ e.stream }}">
+          <button class="ffb-t" type="button" data-v="1" aria-label="Useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+          <button class="ffb-t ffb-down" type="button" data-v="-1" aria-label="Not useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+          <span class="ffb-note" aria-live="polite"></span>
+        </div>
       </div>
     </article>
     {% endfor %}
@@ -116,7 +121,7 @@ layout: archive
   <div class="hiw__box" role="dialog" aria-modal="true" aria-labelledby="hiwTitle" aria-describedby="hiwIntro">
     <button type="button" class="hiw__x" data-hiw-close aria-label="Close how this works">×</button>
     <h2 class="hiw__title" id="hiwTitle">How this works</h2>
-    <p class="hiw__sub" id="hiwIntro">Five scheduled Claude desks start fresh, research from a governed source registry, check candidates against story memory and publish through a versioned Git trail. The map separates automation, editorial judgment and human control.</p>
+    <p class="hiw__sub" id="hiwIntro">An AI writes this site. On a schedule, Claude reads what its sources published and files each story with a link to the original — no reporter involved. One person, Rafael, keeps the source list and reads what you send back.</p>
 
     <figure class="hiw-architecture" aria-labelledby="hiwDiagramCaption">
       <picture>
@@ -127,69 +132,94 @@ layout: archive
       </picture>
       <figcaption id="hiwDiagramCaption">
         <span class="hiw-legend">
-          <span><i class="hiw-key hiw-key--path" aria-hidden="true"></i>Operational path</span>
-          <span><i class="hiw-key hiw-key--human" aria-hidden="true"></i>Human control</span>
-          <span><i class="hiw-key hiw-key--boundary" aria-hidden="true"></i>Bounded side path</span>
+          <span><i class="hiw-key hiw-key--path" aria-hidden="true"></i>Runs on its own</span>
+          <span><i class="hiw-key hiw-key--human" aria-hidden="true"></i>Rafael decides</span>
+          <span><i class="hiw-key hiw-key--boundary" aria-hidden="true"></i>Stops short of publishing</span>
         </span>
-        <span class="hiw-memory-scope"><strong>Memory scope:</strong> four desks compare across editions; Deep Read compares only with prior Deep Reads.</span>
+        <span class="hiw-memory-scope"><strong>Reading the map:</strong> left, the five scheduled writing runs — it calls them desks — and the repeat check. Middle, publishing. Right, your feedback.</span>
       </figcaption>
     </figure>
 
     <div class="hiw-a11y">
-      <h3>Architecture in words</h3>
+      <h3>The same map in words</h3>
       <ol>
-        <li><strong>Make.</strong> Five scheduled desks start fresh and pull their versioned prompts from main. Registry-led research uses linked sources and direct fetch with a proxy fallback. Exact identity and embedding similarity classify candidates; repeats are omitted, while Claude judges whether an ongoing update is material and whether a new candidate merits coverage.</li>
-        <li><strong>Release.</strong> Claude writes the source-linked prose. Deterministic tools record, lint and generate the feed and statistics; they report most problems, while commit or push failure prevents release. GitHub main is the versioned editorial and publishing hub. Pages rebuilds the homepage, and queued alerts travel through the Mac bridge to ntfy.</li>
-        <li><strong>Learn.</strong> Votes and proposals enter private Worker queues, the bridge drains them into separate ledgers and the Sunday Evaluator recommends changes. Rafael approves, edits or rejects normal tuning before it is versioned on main and read by the next run.</li>
+        <li><strong>Write.</strong> Five scheduled runs — News, Sports, AI/ML, Science, Weekend Deep Read — start with no memory of the last one and follow instructions published on this site. They research from a maintained source list and fetch the pages themselves. Each candidate story is compared with earlier briefs: repeats are dropped, and a running story returns only when something real has changed.</li>
+        <li><strong>Publish.</strong> Claude writes the prose with its sources linked. Fixed scripts, not the AI, do the counting and the page building. If publishing fails, nothing ships.</li>
+        <li><strong>Learn.</strong> Votes, written reasons and topic proposals go to a private queue. A Sunday review run reads the week and recommends changes. Rafael approves, edits or rejects them before the next run sees them.</li>
       </ol>
-      <p><strong>Boundaries.</strong> Only News, Deep Read and the Evaluator compose Gmail drafts, and sending stays manual. Watch can queue an alert without publishing a story. Read-state sync is opt-in and never tunes a desk. The Evaluator may append learned preferences only from repeated feedback or a written reason; other tuning remains human-gated.</p>
     </div>
 
     {% if site.data.stats %}{% assign st = site.data.stats %}
     <section class="hiw-proof" aria-labelledby="hiwEvidence">
       <header class="hiw-section-head">
-        <h3 id="hiwEvidence">Evidence in the repository</h3>
-        <p>Generated from committed briefs and the story ledger.</p>
+        <h3 id="hiwEvidence">What has been published</h3>
+        <p>Counted from the files.</p>
       </header>
       <ul class="hiw-stats">
-        <li><b>{{ st.all_time.stories }}</b><span>story entries<br>since {{ st.all_time.since | date: "%-d %b %Y" }}</span></li>
-        <li><b>{{ st.all_time.distinct_domains }}</b><span>sources cited<br>{{ st.sources.candidate | default: 0 }} new on trial</span></li>
-        <li><b>~{{ st.window.avg_words }}</b><span>words per brief<br>last {{ st.window.days }} days</span></li>
+        <li><b>{{ st.all_time.stories }}</b><span>stories filed<br>since {{ st.all_time.since | date: "%-d %b %Y" }}</span></li>
+        <li><b>{{ st.all_time.distinct_domains }}</b><span>different sources<br>linked so far</span></li>
+        <li><b>{{ st.all_time.editions }}</b><span>briefs<br>published in that time</span></li>
       </ul>
+      <p class="hiw-stat-line">Of those stories, <strong>{{ st.all_time.tags["preprint"] | default: 0 }}</strong> rested on research not yet peer-reviewed, <strong>{{ st.all_time.tags["single-source"] | default: 0 }}</strong> on a single source, <strong>{{ st.all_time.tags["disputed"] | default: 0 }}</strong> on contested facts.</p>
       {% if st.dedup.since %}
-      <p class="hiw-stat-line">{{ st.dedup.checked }} candidates checked since {{ st.dedup.since | date: "%-d %b" }}: <strong>{{ st.dedup.repeats_dropped }} repeats omitted</strong> and {{ st.dedup.ongoing_dropped }} non-material updates withheld; ≈{{ st.dedup.est_minutes_saved }} min of re-reading avoided.</p>
+      <p class="hiw-stat-line">{{ st.dedup.checked }} candidates checked against earlier briefs since {{ st.dedup.since | date: "%-d %b" }}; <strong>{{ st.dedup.repeats_dropped | plus: st.dedup.ongoing_dropped }} held back</strong> as things you already read.</p>
       {% else %}
-      <p class="hiw-stat-line">Repeat-filter tracking starts with the next edition.</p>
+      <p class="hiw-stat-line">Repeat-checking starts with the next brief.</p>
       {% endif %}
     </section>
     {% endif %}
 
     <section class="hiw-contract" aria-labelledby="hiwContract">
       <header class="hiw-section-head">
-        <h3 id="hiwContract">Editorial contract</h3>
-        <p>The trust-bearing rules behind the diagram.</p>
+        <h3 id="hiwContract">What keeps it honest</h3>
+        <p>Rules, not aspirations.</p>
       </header>
       <ul class="hiw-principles">
         <li>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7"/><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7"/></svg>
-          <span><strong>Evidence stays inspectable</strong><small>Primary sources stay linked; significant claims seek two sources.</small></span>
+          <span><strong>You can check it yourself</strong><small>The link on a story is where it came from; big claims want a second.</small></span>
         </li>
         <li>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11V4a1 1 0 0 1 1-1h7l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
-          <span><strong>Uncertainty stays visible</strong><small>Preprints, single-source claims and disputes are labeled plainly.</small></span>
+          <span><strong>Doubt is written down</strong><small>Unreviewed research, lone sources and contested facts get labelled.</small></span>
         </li>
         <li>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></svg>
-          <span><strong>Responsibilities are split</strong><small>Claude researches and writes; deterministic tools record, lint and build.</small></span>
+          <span><strong>It remembers what it told you</strong><small>New stories are checked against what has already been filed.</small></span>
         </li>
         <li>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6l7-3z"/></svg>
-          <span><strong>Control stays explicit</strong><small>Policy is versioned; tuning is human-gated except for the bounded feedback rule.</small></span>
+          <span><strong>A person owns the list</strong><small>Rafael decides which sources are trusted and signs off on changes.</small></span>
         </li>
       </ul>
-      <p class="hiw-boundaries"><strong>Separate by design:</strong> three desks — News, Deep Read and the Evaluator — also compose a Gmail draft that waits for manual send; Watch alerts do not publish stories; read-state sync is opt-in and never enters the feedback or tuning ledgers.</p>
+      <p class="hiw-boundaries"><strong>What it is not:</strong> nobody here makes a phone call. It reads what is already public, and a model can misread — so the link is always there. Opinion pieces say an AI wrote them.</p>
     </section>
-    <p class="hiw-read"><a href="{{ '/prompts/' | relative_url }}">Read the live prompts</a> — versioned in Git; each scheduled desk pulls the version currently on <code>main</code>.</p>
+
+    <section class="hiw-contract" aria-labelledby="hiwYours">
+      <header class="hiw-section-head">
+        <h3 id="hiwYours">What your clicks do</h3>
+        <p>Slowly, never alone.</p>
+      </header>
+      <ul class="hiw-principles">
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.3a2 2 0 0 0 2-1.7l1.4-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+          <span><strong>Useful / not useful</strong><small>Counted, not obeyed. One tap changes nothing; a pattern can.</small></span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></svg>
+          <span><strong>Saying why</strong><small>A sentence outweighs a tap, and lands in a private file, not a public thread.</small></span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+          <span><strong>Marking a story read</strong><small>Greys the card for you alone. It never steers the writing.</small></span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          <span><strong>Proposing a topic</strong><small>Becomes an open question in the Sunday review.</small></span>
+        </li>
+      </ul>
+    </section>
+    <p class="hiw-read"><a href="{{ '/prompts/' | relative_url }}">Read the instructions the runs follow</a> — the real wording, kept version by version.</p>
     <button type="button" class="hiw__close-end" data-hiw-close>Close</button>
   </div>
 </div>
@@ -755,9 +785,11 @@ layout: archive
   /* ---- read/unread — LOCAL-ONLY state in localStorage, keyed by the durable st- story id
      (data-story on .fcard__fb); editorial cards carry ed-<stream>-<date> on the article itself
      (a fresh editorial for the same desk gets a new id, so it comes back unread). Explicit ✓
-     toggles; opening the headline or voting marks read implicitly (editorials have neither, so
-     the ✓ is their only path). Implicit reads only dim the card — they never hide it out from
-     under the cursor; the unread filter re-evaluates on the next filter interaction or reload. ---- */
+     toggles; opening the headline marks read implicitly. Voting does NOT touch read state
+     (2026-07-25: the old implicit mark-on-vote made the ✓ toggle look broken — vote, then ✓
+     "un-marked" a card the reader never knowingly marked). Implicit reads only dim the card —
+     they never hide it out from under the cursor; the unread filter re-evaluates on the next
+     filter interaction or reload. ---- */
   var READ_KEY = 'homeRead:v1';
   var readMap = {};
   try { readMap = JSON.parse(localStorage.getItem(READ_KEY) || '{}') || {}; } catch (e) {}
@@ -930,7 +962,7 @@ layout: archive
       method: 'POST', keepalive: true,
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.token },
       body: JSON.stringify({ topics: topicPrefs.topics, rs: topicPrefs.rs, ts: topicPrefs.ts })
-    }).then(function(r){ if (r.status === 401) dropSession(); })
+    }).then(function(r){ if (r.status === 401) sessionDied('session expired — sign in again'); })
       .catch(function(){ tpPending = true; });   // offline — retry on the next flush trigger
   }
   function recordPrefsChange(){             // every chip/read-toggle click stamps a fresh ts + schedules a push
@@ -950,50 +982,52 @@ layout: archive
     var s = session();
     if (!s) return;
     fetch(syncBase() + '/prefs', { headers: { 'Authorization': 'Bearer ' + s.token } })
-      .then(function(r){ if (r.status === 401){ dropSession(); return null; } return r.ok ? r.json() : null; })
+      .then(function(r){ if (r.status === 401){ sessionDied('session expired — sign in again'); return null; } return r.ok ? r.json() : null; })
       .then(function(j){ if (j && j.prefs){ mergeRemoteTopics(j.prefs); pushTopics(); } })
       .catch(function(){});
   }
   seedActiveFromPrefs(); sync(); apply();   // paint the stored selection on first load
 
-  /* ---- per-story feedback: same site-key unlock + feedback-sink + kill switch as the brief
-     pages (custom.html exposes both on window.__FB). Clicking the active thumb again RETRACTS
-     (posts vote 0); the sink is append-only and consumers apply last-write-wins. ---- */
+  /* ---- per-story feedback: votes ride the passkey session (passkeys-only since 2026-07-25 —
+     the shared-key unlock is gone; a signed-out tap opens the Sync panel instead). Kill switch
+     stays on window.__FB. Clicking the active thumb again RETRACTS (posts vote 0); the sink is
+     append-only and consumers apply last-write-wins. ---- */
   function fbConf(){ return window.__FB || { enabled: true, url: "https://feedback-sink.khalic-lab.workers.dev" }; }
   function postFb(box, vote, note, reason){
     var conf = fbConf();
     if (!conf.enabled){ if (note) note(''); return; }
-    var key = window.__siteKey && window.__siteKey.get();
-    if (!key){ if (note) note('unlock first'); if (window.__siteKey) window.__siteKey.prompt(); return; }
+    var ses = session();
+    if (!ses){ if (note) note('sign in to vote'); nudgeSignIn('sign in with your passkey to vote'); return; }
     if (note) note('sending…');
-    var hdrs = { 'Content-Type':'application/json', 'X-Widget-Key': key };
-    var ses = session();                        // passkey session (below): votes carry identity;
-    if (ses) hdrs['Authorization'] = 'Bearer ' + ses.token;   // X-Widget-Key gate stays untouched
     fetch(conf.url + '/submit', {
-      method: 'POST', headers: hdrs,
+      method: 'POST', headers: { 'Content-Type':'application/json', 'Authorization': 'Bearer ' + ses.token },
       body: JSON.stringify({ brief: box.dataset.brief, vote: vote, reason: (reason || '').trim(),
         story_id: box.dataset.story || null, surface: 'home' })
     }).then(function(r){
-      if (r.status === 403 && window.__siteKey){ window.__siteKey.clear(); window.__siteKey.prompt(); if (note) note('wrong key'); return; }
+      if (r.status === 401){ sessionDied('session expired — sign in again'); if (note) note('sign in to vote'); return; }
       if (note) note(r.ok ? (vote === 0 ? 'withdrawn ✓' : 'thanks ✓') : 'failed (' + r.status + ')');
     }).catch(function(){ if (note) note('offline — try later'); });
   }
-  // down-vote reason input, built lazily per card (mirrors the brief pages' fb-irzn — the
-  // reasoned downvotes are the pipeline's highest-value signal). Posting a second record with
-  // the same vote + a reason is by design: the sink is append-only, consumers last-write-win.
+  // vote-reason input, built lazily per card and shared by BOTH thumbs (up-reasons since
+  // 2026-07-25 — reasoned votes are the pipeline's highest-value signal either way). send()
+  // resolves the polarity LIVE from the active thumb: the input is memoized per card, so a
+  // vote captured at build time would go stale on a later opposite vote. Posting a second
+  // record with the same vote + a reason is by design: append-only sink, last-write-wins.
   function rznFor(box, note){
     var r = box.querySelector('.ffb-rzn');
     if (r) return r;
     r = document.createElement('span');
     r.className = 'ffb-rzn';
     r.innerHTML = '<input type="text" placeholder="why? (optional)" maxlength="500" ' +
-      'aria-label="Reason for thumbs-down (optional)"/><button type="button">send</button>';
+      'aria-label="Reason for this vote (optional)"/><button type="button">send</button>';
     var input = r.querySelector('input');
     function send(){
       var why = (input.value || '').trim();
       r.style.display = 'none'; reflow();
       if (!why) return;
-      postFb(box, -1, function(m){ note.textContent = m; }, why);
+      var onBtn = box.querySelector('.ffb-t.on');
+      if (!onBtn) return;                    // vote was retracted before sending — nothing to attach to
+      postFb(box, +onBtn.dataset.v, function(m){ note.textContent = m; }, why);
     }
     r.querySelector('button').addEventListener('click', send);
     input.addEventListener('keydown', function(e){ if (e.key === 'Enter') send(); });
@@ -1012,9 +1046,13 @@ layout: archive
     if (was){ postFb(box, 0, noteFn); reflow(); return; }  // second click on the same thumb = retract
     b.classList.add('on');
     postFb(box, +b.dataset.v, noteFn);
-    var vc = b.closest('.fcard');                          // voting = read (implicit: dim only)
-    if (vc && !isRead(vc)) setRead(vc, true);
-    if (+b.dataset.v === -1){ var r = rznFor(box, note); r.style.display = 'flex'; reflow(); r.querySelector('input').focus(); }
+    var up = +b.dataset.v === 1;
+    var r = rznFor(box, note), inp = r.querySelector('input');
+    inp.value = '';                          // shared box — never carry text across polarities
+    inp.placeholder = up ? 'what stood out? (optional)' : 'why? (optional)';
+    inp.setAttribute('aria-label', up ? 'Reason for thumbs-up (optional)' : 'Reason for thumbs-down (optional)');
+    r.style.display = 'flex'; reflow();
+    if (!up) inp.focus();                    // a complaint asks for the why; a compliment shouldn't demand one
   });
 
   /* ---- passkey sync (2026-07-10): read-state roams across devices through the feedback
@@ -1022,7 +1060,10 @@ layout: archive
      homeRead:v1 keeps exactly its shape/semantics and stays the paint source; syncState:v1
      {sid:{ts,v}} is the sync-truth shadow — v:0 tombstones let an unmark propagate. LWW per
      sid, higher ts wins, tie keeps local (mirrors the server merge). Signed out = zero sync
-     requests; a 401 on any sync call quietly drops the session and flips the UI. ---- */
+     requests. A 401 drops the session and OPENS the Sync panel with a sign-in nudge
+     (2026-07-25 — the old silent drop read as data loss: roaming just stopped); sessions
+     younger than a minute get a grace pass, because a just-issued token can 401 off an
+     eventually-consistent KV read at another edge colo. ---- */
   var SS_KEY = 'syncSession:v1', ST_KEY = 'syncState:v1';
   function syncBase(){ return fbConf().url; }
   function session(){
@@ -1063,7 +1104,7 @@ layout: archive
       method: 'POST', keepalive: true,
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.token },
       body: JSON.stringify({ state: syncMap })
-    }).then(function(r){ if (r.status === 401) dropSession(); })
+    }).then(function(r){ if (r.status === 401) sessionDied('session expired — sign in again'); })
       .catch(function(){ pushPending = true; });   // offline — retry on the next flush trigger
   }
   document.addEventListener('visibilitychange', function(){
@@ -1094,7 +1135,7 @@ layout: archive
     if (!s) return;                        // signed out: no sync traffic at all
     fetch(syncBase() + '/readstate', { headers: { 'Authorization': 'Bearer ' + s.token } })
       .then(function(r){
-        if (r.status === 401){ dropSession(); return null; }
+        if (r.status === 401){ sessionDied('session expired — sign in again'); return null; }
         return r.ok ? r.json() : null;
       })
       .then(function(j){
@@ -1103,10 +1144,21 @@ layout: archive
         schedulePush();                    // one push back — the server merge is idempotent
       }).catch(function(){});
   }
-  function dropSession(){                  // sign-out AND 401 handling — silent, no alert
+  function dropSession(reason){            // explicit sign-out passes no reason; a death does
     try { localStorage.removeItem(SS_KEY); } catch (e) {}
     pushPending = false; clearTimeout(pushTimer);
     syncUi();
+    if (reason) nudgeSignIn(reason);
+  }
+  function sessionDied(reason){            // every 401 lands here, not on dropSession directly
+    var s = session();
+    if (s && typeof s.at === 'number' && Date.now() - s.at < 60000) return;  // KV-lag grace
+    dropSession(reason);
+  }
+  function nudgeSignIn(msg){               // open the Sync panel and say why (no-op without WebAuthn)
+    if (!syncEls) return;
+    openPanel(true);
+    saySync(msg);
   }
 
   /* ---- sync UI: quiet affordance at the bar's right end; stays hidden without WebAuthn ---- */
@@ -1154,7 +1206,8 @@ layout: archive
     });
   }
   function adoptSession(j){
-    try { localStorage.setItem(SS_KEY, JSON.stringify({ token: j.session, reader: j.reader })); } catch (e) {}
+    // `at` feeds sessionDied()'s grace window — the pulls fired right below can race KV.
+    try { localStorage.setItem(SS_KEY, JSON.stringify({ token: j.session, reader: j.reader, at: Date.now() })); } catch (e) {}
     syncUi(); openPanel(false);
     pullRemote();
     pullTopics();
@@ -1248,8 +1301,8 @@ layout: archive
       if (e.key === 'Enter'){ e.preventDefault(); syncEls.create.click(); }
     });
     syncEls.signout.addEventListener('click', function(){
-      dropSession();                       // clears syncSession:v1 ONLY — local read state stays
-      saySync('signed out');
+      dropSession();                       // no reason: a chosen sign-out isn't an alarm.
+      saySync('signed out');               // clears syncSession:v1 ONLY — local read state stays
     });
     document.addEventListener('keydown', function(e){
       if (e.key === 'Escape' && !syncEls.panel.hidden){ openPanel(false); syncEls.btn.focus(); }
@@ -1258,6 +1311,7 @@ layout: archive
       if (!syncEls.panel.hidden && !syncRoot.contains(e.target)) openPanel(false);
     });
     syncUi();
+    window.__syncNudge = nudgeSignIn;      // the standalone propose IIFE below borrows the nudge
   }
   pullRemote();
   pullTopics();
@@ -1311,6 +1365,47 @@ layout: archive
   else document.addEventListener('DOMContentLoaded', reflow);
   window.addEventListener('load', reflow);   // catch late metrics
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(reflow);
+})();
+</script>
+<script>
+/* ---- propose-a-brief: passkey-session writes, same as votes (moved here from custom.html when
+   the shared-key unlock died, 2026-07-25). Standalone IIFE on purpose: the main grid IIFE bails
+   on an empty feed (no #folioGrid, so no Sync widget either) and the form must still answer
+   with a clear message rather than sit dead. ---- */
+(function () {
+  var form = document.querySelector('.propose__form');
+  if (!form || !window.fetch || !window.localStorage) return;
+  var WORKER = (window.__FB && window.__FB.url) || "https://feedback-sink.khalic-lab.workers.dev";
+  var topic = form.querySelector('[name=topic]');
+  var detail = form.querySelector('[name=detail]');
+  var msg = form.querySelector('.propose__msg');
+  function session(){
+    try {
+      var s = JSON.parse(localStorage.getItem('syncSession:v1') || 'null');
+      return (s && typeof s.token === 'string' && s.token) ? s : null;
+    } catch (e) { return null; }
+  }
+  function askSignIn(m){
+    msg.textContent = m;
+    if (window.__syncNudge) window.__syncNudge('sign in with your passkey to propose');
+  }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var t = (topic.value || '').trim();
+    if (!t) { topic.focus(); return; }
+    var s = session();
+    if (!s) { askSignIn('sign in to propose — Sync, top right'); return; }
+    msg.textContent = 'sending…';
+    fetch(WORKER + '/propose', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + s.token },
+      body: JSON.stringify({ topic: t, detail: (detail.value || '').trim(), surface: 'web' })
+    }).then(function (r) {
+      if (r.status === 401) { askSignIn('session expired — sign in again'); return; }
+      if (r.ok) { msg.textContent = 'proposed — thanks ✓'; topic.value = ''; detail.value = ''; }
+      else msg.textContent = 'failed (' + r.status + ')';
+    }).catch(function () { msg.textContent = 'offline — try again later'; });
+  });
 })();
 </script>
 <style>

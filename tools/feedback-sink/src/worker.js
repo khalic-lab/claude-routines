@@ -4,8 +4,8 @@
 // also the account backend: passkey (WebAuthn) auth + per-reader read-state sync.
 //
 // Routes:
-//   POST /submit                 (site key)  -- the brief page widget posts one feedback record.
-//   POST /propose                (site key)  -- the home page form posts one brief proposal.
+//   POST /submit                 (session)   -- the home-grid widget posts one feedback record.
+//   POST /propose                (session)   -- the home page form posts one brief proposal.
 //   GET  /drain                  (bearer)    -- list queued records (does NOT delete). Bridge reads.
 //   POST /ack                    (bearer)    -- delete the given KV keys. Bridge calls AFTER commit+push.
 //   POST /auth/register-options  (invite)    -- WebAuthn registration options (invite-gated).
@@ -17,24 +17,22 @@
 //   GET  /prefs                  (session)   -- the reader's UI prefs {topics:[...], ts}.
 //   POST /prefs                  (session)   -- whole-object LWW-by-ts of the topic selection.
 //
-// Public writes (/submit, /propose) require the shared SITE KEY in the `X-Widget-Key`
-// header — the website password, set as the Worker secret WIDGET_KEY. It is a SHARED
-// secret (no per-user identity): anyone given the password can write; rotate the secret
-// to revoke. It is entered by the visitor and kept in their browser localStorage, never
-// baked into the page source. Privileged reads/deletes (/drain, /ack) use the separate
-// bearer FEEDBACK_TOKEN. Both write kinds share the `fb:` KV prefix so one drain/ack
-// handles them; the bridge routes by `kind` on write (proposal -> proposals/).
+// Writes (/submit, /propose) require a passkey session Bearer — the shared X-Widget-Key
+// site password was retired 2026-07-25 (passkeys-only; the session also pins the reader
+// identity, so the body `reader` field is ignored). Privileged reads/deletes (/drain,
+// /ack) use the separate bearer FEEDBACK_TOKEN. Both write kinds share the `fb:` KV
+// prefix so one drain/ack handles them; the bridge routes by `kind` on write
+// (proposal -> proposals/).
 //
 // Passkeys: registration is gated by the Worker secret INVITE_TOKEN (fail closed if
 // unset). Credentials (`cred:`), sessions (`session:`), single-use challenges (`chal:`),
 // read state (`readstate:`) and UI prefs (`prefs:`) all live in the same FEEDBACK_KV —
-// none of those prefixes collide with `fb:` so drain/ack never sees them. /auth/*,
-// /readstate and /prefs answer CORS only for the published site origin; everything else
-// keeps `*`.
+// none of those prefixes collide with `fb:` so drain/ack never sees them. Every
+// session-carrying route (/auth/*, /submit, /propose, /readstate, /prefs) answers CORS
+// only for the published site origin; the bridge routes (/drain, /ack) keep `*`.
 //
 // Twin of tools/embed-proxy. Needs KV bound as FEEDBACK_KV, secret FEEDBACK_TOKEN
-// (drain/ack bearer), secret WIDGET_KEY (the shared site password), and secret
-// INVITE_TOKEN (passkey registration invite). See README.
+// (drain/ack bearer) and secret INVITE_TOKEN (passkey registration invite). See README.
 
 import {
   generateAuthenticationOptions,
@@ -60,30 +58,37 @@ const READER_DISPLAY = "Rafael";
 
 const CHALLENGE_TTL_S = 300; // single-use WebAuthn challenges
 const SESSION_TTL_S = 90 * 24 * 3600; // session lifetime in KV
-const SESSION_ROLL_MS = 30 * 24 * 3600 * 1000; // re-mint TTL when a used session is older than this
+// Re-mint the TTL when the last roll is older than this. Daily granularity: KV's
+// expirationTtl anchors to the last PUT, so the 90-day idle budget must run from the
+// reader's LAST VISIT — the old 30-day threshold left a dead zone where weeks of daily
+// visits extended nothing and the session died 90 days after the last ROLL instead.
+const SESSION_ROLL_MS = 24 * 3600 * 1000;
 const STATE_MAX_BYTES = 65536; // raw /readstate POST body cap
 const STATE_MAX_ENTRIES = 2000; // entries per /readstate POST
 const STATE_MAX_AGE_MS = 90 * 24 * 3600 * 1000; // merged entries older than this are dropped
 const STATE_MAX_SKEW_MS = 86400000; // accept ts up to one day in the future
 const SID_RE = /^st-[0-9a-f]{12}$/; // story ids from the story store
+// /submit story ids: ledger sids, or the homepage's editorial cards (ed-<stream>-<date>).
+const STORY_ID_RE = /^(st-[0-9a-f]{12}|ed-[a-z0-9-]{1,40}-\d{4}-\d{2}-\d{2})$/;
 const PREFS_MAX_TOPICS = 50; // topic keys a reader can select (the vocab is ~a dozen)
 const TOPIC_KEY_RE = /^[a-z0-9][a-z0-9-]{0,39}$/; // beat/topic filter keys (build_stories_feed TOPICS)
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Widget-Key",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
   "Access-Control-Max-Age": "86400",
 };
 
-// /auth/*, /readstate and /prefs carry a real session, so they answer CORS only for the
-// published site: the site origin gets echoed back, any other origin gets NO
-// Access-Control-Allow-Origin at all (the preflight still returns 204).
+// Every session-carrying route (/auth/*, /submit, /propose, /readstate, /prefs) answers
+// CORS only for the published site: the site origin gets echoed back, any other origin
+// gets NO Access-Control-Allow-Origin at all (the preflight still returns 204).
 function corsFor(request, path) {
-  if (path !== "/readstate" && path !== "/prefs" && !path.startsWith("/auth/")) return CORS;
+  if (path !== "/readstate" && path !== "/prefs" && path !== "/submit" && path !== "/propose" &&
+      !path.startsWith("/auth/")) return CORS;
   const headers = {
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Widget-Key",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
   };
@@ -116,13 +121,6 @@ function bearerOk(request, env) {
   let diff = 0;
   for (let i = 0; i < got.length; i++) diff |= got.charCodeAt(i) ^ expected.charCodeAt(i);
   return diff === 0;
-}
-
-// shared site password for public writes (sent in X-Widget-Key). Fail closed if unset.
-function keyOk(request, env) {
-  const expected = env.WIDGET_KEY;
-  if (!expected) return false;
-  return (request.headers.get("X-Widget-Key") || "") === expected;
 }
 
 // passkey-registration invite (body field, not header). Same length-guarded
@@ -180,7 +178,8 @@ async function getSession(request, env) {
   return { token, reader: sess.reader, created: typeof sess.created === "number" ? sess.created : 0 };
 }
 
-// Rolling renewal: a session used for readstate after >30 days gets a fresh TTL + created.
+// Rolling renewal: any authed use more than SESSION_ROLL_MS after the last roll
+// re-mints the TTL + created, so the idle budget runs from the reader's last visit.
 async function rollSession(env, sess) {
   if (Date.now() - sess.created <= SESSION_ROLL_MS) return;
   await env.FEEDBACK_KV.put(
@@ -216,64 +215,68 @@ async function consumeChallenge(env, kind, challenge) {
 // ---------------------------------------------------------------------------
 // Handlers
 
-async function handleSubmit(request, env) {
-  if (!keyOk(request, env)) return text("locked: site key required", 403);
-  // A valid passkey session pins the reader identity; without one the behavior
-  // is exactly the pre-accounts one (body `reader` field, default "rafael").
+async function handleSubmit(request, env, cors) {
   const sess = await getSession(request, env);
+  if (!sess) return json({ error: "no session" }, 401, {}, cors);
   let p;
   try {
     p = await request.json();
   } catch {
-    return json({ error: "invalid JSON body" }, 400);
+    return json({ error: "invalid JSON body" }, 400, {}, cors);
   }
   const brief = p && p.brief;
   const vote = p && p.vote;
   if (typeof brief !== "string" || !brief) {
-    return json({ error: "body must include a non-empty `brief` (post slug)" }, 400);
+    return json({ error: "body must include a non-empty `brief` (post slug)" }, 400, {}, cors);
   }
   // 0 = retraction: the reader un-toggled a thumb, cancelling their prior vote on this
   // brief/story. The sink stays append-only — consumers (evaluator) apply last-write-wins
   // per (reader, brief, story_id).
   if (vote !== 1 && vote !== -1 && vote !== 0) {
-    return json({ error: "`vote` must be 1, -1 or 0 (retract)" }, 400);
+    return json({ error: "`vote` must be 1, -1 or 0 (retract)" }, 400, {}, cors);
   }
   const reason = typeof p.reason === "string" ? p.reason : "";
   if (reason.length > MAX_REASON) {
-    return json({ error: `reason too long (max ${MAX_REASON})` }, 400);
+    return json({ error: `reason too long (max ${MAX_REASON})` }, 400, {}, cors);
+  }
+  const storyId = typeof p.story_id === "string" && p.story_id ? p.story_id : null;
+  if (storyId !== null && !STORY_ID_RE.test(storyId)) {
+    return json({ error: "malformed story_id" }, 400, {}, cors);
   }
   const rec = {
     id: crypto.randomUUID(),
     ts: new Date().toISOString(),
-    reader: clip(sess ? sess.reader : typeof p.reader === "string" && p.reader ? p.reader : "rafael", MAX_FIELD),
+    reader: clip(sess.reader, MAX_FIELD),
     brief: clip(brief, MAX_FIELD),
-    story_id: typeof p.story_id === "string" && p.story_id ? clip(p.story_id, MAX_FIELD) : null,
+    story_id: storyId,
     vote,
     reason,
     surface: clip(typeof p.surface === "string" && p.surface ? p.surface : "web", MAX_FIELD),
   };
   await putRecord(env, rec);
-  return json({ ok: true, id: rec.id });
+  await rollSession(env, sess);
+  return json({ ok: true, id: rec.id }, 200, {}, cors);
 }
 
-async function handlePropose(request, env) {
-  if (!keyOk(request, env)) return text("locked: site key required", 403);
+async function handlePropose(request, env, cors) {
+  const sess = await getSession(request, env);
+  if (!sess) return json({ error: "no session" }, 401, {}, cors);
   let p;
   try {
     p = await request.json();
   } catch {
-    return json({ error: "invalid JSON body" }, 400);
+    return json({ error: "invalid JSON body" }, 400, {}, cors);
   }
   const topic = p && p.topic;
   if (typeof topic !== "string" || !topic.trim()) {
-    return json({ error: "body must include a non-empty `topic`" }, 400);
+    return json({ error: "body must include a non-empty `topic`" }, 400, {}, cors);
   }
   if (topic.length > MAX_TOPIC) {
-    return json({ error: `topic too long (max ${MAX_TOPIC})` }, 400);
+    return json({ error: `topic too long (max ${MAX_TOPIC})` }, 400, {}, cors);
   }
   const detail = typeof p.detail === "string" ? p.detail : "";
   if (detail.length > MAX_REASON) {
-    return json({ error: `detail too long (max ${MAX_REASON})` }, 400);
+    return json({ error: `detail too long (max ${MAX_REASON})` }, 400, {}, cors);
   }
   const rec = {
     id: crypto.randomUUID(),
@@ -284,7 +287,8 @@ async function handlePropose(request, env) {
     surface: clip(typeof p.surface === "string" && p.surface ? p.surface : "web", MAX_FIELD),
   };
   await putRecord(env, rec);
-  return json({ ok: true, id: rec.id });
+  await rollSession(env, sess);
+  return json({ ok: true, id: rec.id }, 200, {}, cors);
 }
 
 async function handleDrain(env) {
@@ -625,12 +629,12 @@ export default {
     }
 
     if (path === "/submit") {
-      if (request.method !== "POST") return text("method not allowed", 405);
-      return handleSubmit(request, env);
+      if (request.method !== "POST") return json({ error: "method not allowed" }, 405, {}, cors);
+      return handleSubmit(request, env, cors);
     }
     if (path === "/propose") {
-      if (request.method !== "POST") return text("method not allowed", 405);
-      return handlePropose(request, env);
+      if (request.method !== "POST") return json({ error: "method not allowed" }, 405, {}, cors);
+      return handlePropose(request, env, cors);
     }
     if (path === "/drain") {
       if (request.method !== "GET") return text("method not allowed", 405);

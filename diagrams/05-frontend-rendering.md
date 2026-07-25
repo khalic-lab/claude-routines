@@ -42,8 +42,8 @@ flowchart TD
     f2["bottom .fb-box overall (story_id = null)"]
     f1 --> f3
     f2 --> f3
-    f3["post() → feedback-sink /submit<br/>X-Widget-Key = __siteKey.get() (localStorage)"]
-    f3 -->|"no key / HTTP 403"| f4[".site-unlock modal — prompt for shared key"]
+    f3["post() → feedback-sink /submit<br/>Authorization: Bearer — passkey session (2026-07-25)"]
+    f3 -->|"no session / HTTP 401"| f4["Sync panel opens — sign in with passkey"]
   end
 
   tag --> emo["4 · Strip leading section emoji on h2/h3"]

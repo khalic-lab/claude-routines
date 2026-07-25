@@ -71,9 +71,13 @@ def _existing_fb_ids(root):
 
 
 def _resolve(rec, snap):
-    """CONTRACT resolution order. Returns (sid, reason) — reason is set only when sid is None."""
+    """CONTRACT resolution order. Returns (sid, reason) — reason is set only when sid is None.
+
+    ed- ids (homepage editorial cards, votable since 2026-07-25) resolve as themselves:
+    they are not ledger stories, so the folded event reaches the per-stream tallies but
+    never a story node — without this branch every editorial vote sat UNRESOLVED forever."""
     raw = rec.get("story_id")
-    if raw and raw.startswith("st-"):
+    if raw and (raw.startswith("st-") or raw.startswith("ed-")):
         return raw, None
     if raw and raw in snap["by_legacy"]:
         return snap["by_legacy"][raw], None

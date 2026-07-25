@@ -2,7 +2,8 @@
 // against a mock env (in-memory KV) with NO network and NO real authenticator.
 // The full WebAuthn ceremony (attestation/assertion crypto) is live-only — here we
 // assert every non-crypto guard: invite gate, single-use challenges, unknown cred,
-// session auth, LWW merge semantics, caps, /submit reader override, per-origin CORS.
+// session auth (incl. the passkeys-only /submit + /propose gates, 2026-07-25), LWW
+// merge semantics, caps, per-origin CORS.
 //
 // Run: cd tools/feedback-sink && node test/smoke.mjs   (exit 0 = all checks pass)
 
@@ -39,7 +40,6 @@ const kv = mockKV();
 const env = {
   FEEDBACK_KV: kv,
   FEEDBACK_TOKEN: "bridge-bearer-secret",
-  WIDGET_KEY: "site-key",
   INVITE_TOKEN: "the-invite-secret",
 };
 
@@ -208,41 +208,68 @@ const T = Date.now() - 10000;
   );
 }
 {
-  await kv.put(`session:${TOKEN}`, JSON.stringify({ reader: "rafael", created: Date.now() - 31 * DAY }));
+  await kv.put(`session:${TOKEN}`, JSON.stringify({ reader: "rafael", created: Date.now() - 2 * DAY }));
   await worker.fetch(req("/readstate", { headers: AUTH }), env);
   const sess = JSON.parse(await kv.get(`session:${TOKEN}`));
-  check("session >30 days old is re-minted on readstate use", Date.now() - sess.created < DAY, JSON.stringify(sess));
+  check("session older than a day is re-minted on readstate use", Date.now() - sess.created < DAY, JSON.stringify(sess));
 }
 
-// --- /submit reader override -------------------------------------------------------
+// --- /submit + /propose: passkeys-only (the shared X-Widget-Key gate died 2026-07-25) ---
 {
+  const res = await worker.fetch(req("/submit", { method: "POST", body: { brief: "2026-07-10-news", vote: 1 } }), env);
+  const body = await res.json();
+  check("/submit without session -> 401 no session", res.status === 401 && body.error === "no session", JSON.stringify([res.status, body]));
+}
+{
+  // a stray X-Widget-Key (an old cached page) is simply ignored; the session decides.
   const res = await worker.fetch(
-    req("/submit", { method: "POST", headers: { "X-Widget-Key": "site-key" }, body: { brief: "2026-07-10-news", vote: 1 } }),
+    req("/submit", { method: "POST", headers: { ...AUTH, "X-Widget-Key": "site-key" }, body: { brief: "2026-07-10-news", vote: 1, reader: "mallory" } }),
     env,
   );
   const { keys } = await kv.list({ prefix: "fb:" });
   const rec = JSON.parse(await kv.get(keys[keys.length - 1].name));
-  check("/submit without session keeps default reader 'rafael'", res.status === 200 && rec.reader === "rafael", JSON.stringify(rec));
+  check("/submit with session -> 200, reader pinned from session (body reader ignored)", res.status === 200 && rec.reader === "rafael", JSON.stringify(rec));
 }
 {
   const aliceTok = "b".repeat(64);
   await kv.put(`session:${aliceTok}`, JSON.stringify({ reader: "alice", created: Date.now() }));
   const res = await worker.fetch(
-    req("/submit", {
-      method: "POST",
-      headers: { "X-Widget-Key": "site-key", Authorization: `Bearer ${aliceTok}` },
-      body: { brief: "2026-07-10-news", vote: -1 },
-    }),
+    req("/submit", { method: "POST", headers: { Authorization: `Bearer ${aliceTok}` }, body: { brief: "2026-07-10-news", vote: -1 } }),
     env,
   );
   const { keys } = await kv.list({ prefix: "fb:" });
   const recs = await Promise.all(keys.map(async (k) => JSON.parse(await kv.get(k.name))));
   const alice = recs.find((r) => r.reader === "alice");
-  check("/submit with session Bearer sets reader from session", res.status === 200 && !!alice && alice.vote === -1, JSON.stringify(recs));
+  check("/submit session identity carries per token", res.status === 200 && !!alice && alice.vote === -1, JSON.stringify(recs));
 }
 {
-  const res = await worker.fetch(req("/submit", { method: "POST", body: { brief: "x", vote: 1 } }), env);
-  check("/submit X-Widget-Key gate unchanged (missing key -> 403)", res.status === 403, String(res.status));
+  // story_id allowlist: ledger sids and editorial ed- ids pass, anything else 400s.
+  const bad = await worker.fetch(req("/submit", { method: "POST", headers: AUTH, body: { brief: "b", vote: 1, story_id: "javascript:alert(1)" } }), env);
+  const ed = await worker.fetch(req("/submit", { method: "POST", headers: AUTH, body: { brief: "2026-07-24-weekend", vote: 1, story_id: "ed-weekend-2026-07-24" } }), env);
+  const st = await worker.fetch(req("/submit", { method: "POST", headers: AUTH, body: { brief: "b", vote: 1, story_id: "st-0123456789ab" } }), env);
+  check("/submit story_id allowlist: junk -> 400, st-/ed- -> 200", bad.status === 400 && ed.status === 200 && st.status === 200, JSON.stringify([bad.status, ed.status, st.status]));
+}
+{
+  // any authed write extends the session runway, not just readstate.
+  await kv.put(`session:${TOKEN}`, JSON.stringify({ reader: "rafael", created: Date.now() - 2 * DAY }));
+  await worker.fetch(req("/submit", { method: "POST", headers: AUTH, body: { brief: "b", vote: 0 } }), env);
+  const sess = JSON.parse(await kv.get(`session:${TOKEN}`));
+  check("/submit re-mints a session older than a day", Date.now() - sess.created < DAY, JSON.stringify(sess));
+}
+{
+  const res = await worker.fetch(req("/propose", { method: "POST", body: { topic: "quantum networking" } }), env);
+  check("/propose without session -> 401", res.status === 401, String(res.status));
+}
+{
+  const res = await worker.fetch(req("/propose", { method: "POST", headers: AUTH, body: { topic: "quantum networking", detail: "why it matters" } }), env);
+  const { keys } = await kv.list({ prefix: "fb:" });
+  const recs = await Promise.all(keys.map(async (k) => JSON.parse(await kv.get(k.name))));
+  const prop = recs.find((r) => r.kind === "proposal");
+  check("/propose with session -> 200 + kind:proposal stored", res.status === 200 && !!prop && prop.topic === "quantum networking", JSON.stringify(recs));
+}
+{
+  const res = await worker.fetch(req("/propose", { method: "POST", headers: AUTH, body: { detail: "no topic" } }), env);
+  check("/propose without topic -> 400", res.status === 400, String(res.status));
 }
 
 // --- CORS: restricted origins on /readstate + /auth/* --------------------------------
@@ -273,7 +300,11 @@ const T = Date.now() - 10000;
 }
 {
   const res = await worker.fetch(req("/submit", { method: "OPTIONS", headers: { Origin: "https://evil.example" } }), env);
-  check("existing routes keep ACAO '*'", res.status === 204 && res.headers.get("Access-Control-Allow-Origin") === "*", String(res.headers.get("Access-Control-Allow-Origin")));
+  check("OPTIONS /submit from foreign origin -> no ACAO (writes are credentialed now)", res.status === 204 && res.headers.get("Access-Control-Allow-Origin") === null, String(res.headers.get("Access-Control-Allow-Origin")));
+}
+{
+  const res = await worker.fetch(req("/drain", { method: "OPTIONS", headers: { Origin: "https://evil.example" } }), env);
+  check("bridge routes keep ACAO '*'", res.status === 204 && res.headers.get("Access-Control-Allow-Origin") === "*", String(res.headers.get("Access-Control-Allow-Origin")));
 }
 
 // --- /auth/register-options: invite gate + fail closed ---------------------------------

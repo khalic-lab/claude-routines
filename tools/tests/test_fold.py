@@ -568,6 +568,55 @@ class FoldCorruptLineResilienceTests(unittest.TestCase):
                           "preserved corrupt line")
 
 
+class FoldEditorialAndUpReasonTests(unittest.TestCase):
+    """Two 2026-07-25 homepage capabilities whose pipeline half lives here.
+
+    (1) Editorial cards became votable: their ids are ed-<stream>-<date>, which are NOT ledger
+    stories — _resolve() must accept them as themselves (like st-), or every editorial vote
+    sits UNRESOLVED forever while the UI says "thanks". (2) Thumbs-UP votes can now carry a
+    written reason; the whole stack was already polarity-blind by construction, but nothing
+    pinned reason-survives-on-up-vote until the client could actually produce such records."""
+
+    ED_REC = {"id": "fb-editorial-0001", "ts": "2026-06-26T08:00:00.000Z", "reader": "rafael",
+              "brief": "2026-06-25-news", "story_id": "ed-news-2026-06-25", "vote": 1,
+              "reason": "", "surface": "home", "source_domain": None, "consumed": False}
+    UP_REC = {"id": "fb-upreason-0001", "ts": "2026-06-26T08:01:00.000Z", "reader": "rafael",
+              "brief": "2026-06-25-news", "story_id": "st-7b08aa59704a", "vote": 1,
+              "reason": "exactly the depth I want", "surface": "home", "source_domain": None,
+              "consumed": False}
+
+    def setUp(self):
+        self.root = _copy_scenario("basic")
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+        path = os.path.join(self.root, "feedback", "2026-06.jsonl")
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(self.ED_REC, ensure_ascii=False) + "\n")
+            f.write(json.dumps(self.UP_REC, ensure_ascii=False) + "\n")
+
+    def test_editorial_vote_resolves_consumes_and_lands_in_the_ledger(self):
+        proc = _run_fold(self.root)
+        self.assertEqual(proc.returncode, 0, f"fold.py failed: {proc.stderr}")
+
+        rec = _feedback_records(self.root)["fb-editorial-0001"]
+        self.assertTrue(rec["consumed"], "an ed- vote must fold, not sit UNRESOLVED")
+        self.assertFalse(rec.get("source_domain"),
+                         "no story record exists for an ed- id — nothing to backfill from")
+
+        ev = {e["fb_id"]: e for e in _ledger_events(self.root, ev="feedback")}["fb-editorial-0001"]
+        self.assertEqual(ev["id"], "ed-news-2026-06-25")
+        self.assertEqual(ev["vote"], 1)
+
+    def test_up_vote_reason_survives_the_fold_verbatim(self):
+        proc = _run_fold(self.root)
+        self.assertEqual(proc.returncode, 0, f"fold.py failed: {proc.stderr}")
+
+        self.assertTrue(_feedback_records(self.root)["fb-upreason-0001"]["consumed"])
+        ev = {e["fb_id"]: e for e in _ledger_events(self.root, ev="feedback")}["fb-upreason-0001"]
+        self.assertEqual(ev["vote"], 1)
+        self.assertEqual(ev["reason"], "exactly the depth I want",
+                         "an up-vote's written reason must reach the ledger unchanged")
+
+
 if __name__ == "__main__":
     unittest.main()
 
