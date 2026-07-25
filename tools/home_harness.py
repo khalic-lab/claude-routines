@@ -95,6 +95,25 @@ def _extract_tokens():
         blocks = re.findall(r"<style>.*?</style>", fh.read(), re.S)
     if not blocks:
         raise SystemExit("home_harness: no <style> block in %s" % src)
+
+    # @font-face src is Liquid — `url('{{ "/assets/fonts/x.woff2" | relative_url }}')` — because
+    # this is a project Pages site under `baseurl: /claude-routines` and a root-absolute url()
+    # 404s there. Jekyll expands it; verbatim extraction does not, so the literal braces survive,
+    # the woff2 never loads, and the harness silently paints the metric-matched FALLBACK instead.
+    # That is not a cosmetic difference: Anton's cap height is 0.859em against Arial Narrow's
+    # 0.716em, so every leading and wrap judgement taken off such a screenshot is ~20% wrong in
+    # exactly the dimension this redesign is tuning.
+    blocks = [re.sub(r"""\{\{\s*["'](/assets/fonts/[^"']+)["']\s*\|\s*relative_url\s*\}\}""",
+                     lambda m: "file://" + ROOT + m.group(1), b) for b in blocks]
+
+    # Generalised guard. The rail extractor has had one of these since it shipped, but it only
+    # covered the rail — which is precisely why the font bug above could sit in the stylesheet
+    # looking fine. ANY unexpanded Liquid in embedded CSS is a wrong render, so fail loudly rather
+    # than let the next one be found by eye three reports later.
+    leftover = re.findall(r"\{\{.*?\}\}|\{%.*?%\}", "".join(blocks), re.S)
+    if leftover:
+        raise SystemExit("home_harness: unexpanded Liquid in custom.html's CSS: %r — the harness "
+                         "renders it literally, so add a substitution above" % leftover[:4])
     return "".join(blocks) + """<style>
 body{ background:var(--paper); color:var(--ink); font-family:var(--serif); margin:0; }
 /* Production's wrapper chain, measured off the live DOM at a 1440 viewport:
@@ -258,6 +277,12 @@ def card(s):
     og = ' data-ogurl="%s"' % e(s["url"]) if s.get("url") and s["importance"] > 1 else ""
     hl = ('<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>' % (e(s["url"]), e(s["headline"]))
           if s.get("url") else e(s["headline"]))
+    # mirrors the layout's `{% unless hl_last == '?' ... %}` — a headline ending in ? or ! must not
+    # render "?." once .fcard__hl--dot::after adds the terminal period.
+    _hl = (s["headline"] or "").strip()
+    if _hl[-1:] in ('"', "'", "\u201d", "\u2019"):     # a headline may close on a quote
+        _hl = _hl[:-1]
+    dot = "" if _hl[-1:] in ("?", "!", ".") else " fcard__hl--dot"
     more = ('<button class="fcard__more" type="button" aria-expanded="true">'
             '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
             # every tier folds since the module diet — mirrors `{% if s.summary != "" %}`
@@ -275,7 +300,7 @@ def card(s):
     return """<article class="fcard imp%(imp)s%(lead)s" data-topics="%(topics)s" data-imp="%(imp)s"%(og)s>
 <div class="fcard__in" style="--tc:%(color)s">
 <div class="fcard__top"><span class="fcard__beat" title="%(stream)s · %(dlabel)s"><span class="ff-dot"></span>%(tlabel)s</span><span class="fcard__rank" data-imp="%(imp)s">%(rank)s</span></div>
-<h2 class="fcard__hl">%(hl)s</h2>
+<h2 class="fcard__hl%(dot)s">%(hl)s</h2>
 %(summ)s%(why)s%(more)s
 <div class="fcard__line"><span class="fcard__src">%(src)s</span>%(fresh)s<span class="fcard__date">%(dlabel)s</span>%(readbtn)s</div>
 <div class="fcard__fb" data-story="%(id)s" data-brief="%(date)s-%(stream)s">
@@ -288,7 +313,7 @@ def card(s):
         "color": s["topic_color"], "tlabel": e(s["topic_label"]), "hl": hl, "summ": summ, "why": why,
         "src": src, "fresh": fresh, "dlabel": e(s["date_label"]),
         "id": e(s.get("sid") or s["id"]), "date": e(s["date"]), "stream": e(s["stream"]), "svg": SVG,
-        "readbtn": readbtn, "more": more,
+        "readbtn": readbtn, "more": more, "dot": dot,
     }
 
 

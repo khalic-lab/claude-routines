@@ -109,7 +109,18 @@ layout: archive
           <span class="fcard__beat" title="{{ s.stream_label }} · {{ s.date_label }}"><span class="ff-dot"></span>{{ s.topic_label }}</span>
           <span class="fcard__rank" data-imp="{{ s.importance }}">{% case s.importance %}{% when 3 %}Lead{% when 2 %}Feature{% else %}Brief{% endcase %}</span>
         </div>
-        <h2 class="fcard__hl">{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.headline }}</a>{% else %}{{ s.headline }}{% endif %}</h2>
+        {%- comment -%} A headline already ending in ? or ! must not render "?." — the terminal
+          period is typography, so it is a CSS ::after keyed on this class, and the recorded
+          headline data stays period-free per the spec. {%- endcomment -%}
+        {%- assign hl_end = s.headline | strip -%}
+        {%- assign hl_last = hl_end | slice: -1 -%}
+        {%- comment -%} A headline may close on a quote — `... "digital sovereignty"` is live in the
+          feed today. Then the character that decides this is the one BEFORE the quote, or
+          `... "all the way."` would render `.".` {%- endcomment -%}
+        {%- if hl_last == '"' or hl_last == "'" or hl_last == '”' or hl_last == '’' -%}
+          {%- assign hl_last = hl_end | slice: -2, 1 -%}
+        {%- endif -%}
+        <h2 class="fcard__hl{% unless hl_last == '?' or hl_last == '!' or hl_last == '.' %} fcard__hl--dot{% endunless %}">{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.headline }}</a>{% else %}{{ s.headline }}{% endif %}</h2>
         {% if s.summary != "" %}<p class="fcard__sum">{{ s.summary }}</p>{% endif %}
         {% if s.why and s.why != "" %}<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>{{ s.why }}</p>{% endif %}
         {%- comment -%} After the prose, not between headline and body: the clamp ends in an
@@ -448,6 +459,14 @@ layout: archive
   .ffs-status{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase; letter-spacing:.1em;
     color:var(--accent); margin:0; min-height:1em; }
 
+  /* NAMEPLATE — 72px / 0.85, overriding custom.html's 2.7em. It lives here rather than there so
+     the typographer's file stays theirs, and home.html's <style> loads after <head> so it wins on
+     source order without !important. 0.85 leading is safe where 1.06 is required on modules: the
+     nameplate is one word and cannot wrap, so no diacritic can collide with a line above it. */
+  .layout--home .page__title{ font-size:72px; line-height:.85; letter-spacing:0;
+    text-transform:uppercase; }
+  @media (max-width:699px){ .layout--home .page__title{ font-size:clamp(40px,11vw,72px); } }
+
   .folio-board{ position:relative; padding:22px 0 10px; }
   .ff-crop{ position:absolute; width:14px; height:14px; pointer-events:none; }
   .ff-crop::before,.ff-crop::after{ content:""; position:absolute; background:var(--rule); }
@@ -658,9 +677,16 @@ layout: archive
   .fcard__rank{ margin-left:auto; font-family:var(--sans); font-weight:700; font-size:.6rem;
     text-transform:uppercase; letter-spacing:.12em; white-space:nowrap; align-self:center;
     padding:2px 7px 1px; border:1px solid transparent; border-radius:2px; }
-  .fcard__rank[data-imp="3"]{ background:var(--accent); color:var(--paper); }
-  .fcard__rank[data-imp="2"]{ color:var(--accent); border-color:var(--accent); }
-  .fcard__rank[data-imp="1"]{ color:var(--muted); border-color:var(--hair); }
+  /* TIER CHIPS DEMOTED TO PLAIN SMALL-CAPS. With the type scale carrying the hierarchy — a 52px
+     lead against a 32px feature against an 18px brief — a filled navy box saying LEAD restated in
+     colour what the size already says in type, and it was the loudest non-headline element on the
+     module. The word stays (it is the real text that reaches assistive tech; see the note above)
+     and the box goes. The AI EDITORIAL chip KEEPS its box: that one is a disclosure, not a tier —
+     it says "no human reported this", which nothing else on the module says. */
+  .fcard__rank[data-imp="3"],
+  .fcard__rank[data-imp="2"],
+  .fcard__rank[data-imp="1"]{ background:transparent; border-color:transparent;
+    color:var(--muted-ui); padding-inline:0; }
   /* Outline, not a fill. A solid --ink chip measured 13.6:1 against the LEAD chip's 7.3:1, so
      the loudest badge on the page belonged to the AI editorial — while every other change here
      was demoting it. Outline still reads as "a different kind of thing" without out-ranking a
@@ -701,11 +727,38 @@ layout: archive
   .fcard.lead .fimg{ aspect-ratio:21/9; }
   @media (prefers-color-scheme:dark){ .fimg{ filter:saturate(.85) brightness(.92); } }
 
-  /* headline scale carries the hierarchy: brief < feature < lead */
-  .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.16; margin:0; text-wrap:balance;
-    font-size:1.04rem; color:var(--ink); }
-  .fcard.imp2 .fcard__hl{ font-size:1.24rem; line-height:1.12; }
-  .fcard.lead .fcard__hl{ font-size:clamp(1.5rem,2.6vw,2.05rem); line-height:1.05; letter-spacing:-.005em; }
+  /* THE TYPE SCALE — Anton, uppercase, per tier. Sizes are PX, not rem, and that is the same
+     lesson the rail taught: the theme steps the root 16 -> 18 -> 20 -> 22px across these very
+     breakpoints, so a rem-sized display face inflates ~37% between 1024 and 1600 on top of
+     whatever the clamp is already doing. The clamp interpolates on viewport instead, hitting the
+     typographer's desktop numbers at ~1440 and holding there.
+     LINE-HEIGHT IS 1.06, NOT THE ~0.95 THE BRIEF ASKED FOR, and the reason is measured rather
+     than aesthetic: in Anton the umlaut on Ä/Ü reaches 1.053em and the ring on Å reaches 1.229em,
+     so any wrapping tier set below 1.053 puts diacritics inside the cap of the line above. ZÜRICH
+     is a routine headline on this page, where that reads as a rendering fault, not as brutalism.
+     1.06 in Anton is optically far tighter than 1.06 in Helvetica anyway — the cap fills 86% of
+     the em against Helvetica's 72% — so the tightness the brief wanted is still there. Tiers that
+     genuinely cannot wrap (the nameplate) go tighter, below. */
+  .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.06; margin:0;
+    text-transform:uppercase; text-wrap:balance; color:var(--ink);
+    font-size:clamp(16px, 1.25vw, 18px); letter-spacing:.02em; }
+  .fcard.imp2 .fcard__hl{ font-size:clamp(20px, 2.2vw, 32px); letter-spacing:.005em; }
+  /* Two lead sizes, because the spec's 52px is a SPLASH size and a tier is not a width. Applied
+     flat it put 52px into a 405px tail module and wrapped rank 2's headline to SEVEN lines at
+     1024-1440 — the same pinching the rail diet just fixed, arriving through type instead of
+     tracks. The dominant is ~2x the width of any other module, so it gets ~1.5x the type. */
+  .fcard.lead .fcard__hl{ font-size:clamp(28px, 3.0vw, 36px); letter-spacing:.005em; }
+  .folio-grid:not(.is-filtered) > .fcard:nth-child(1).lead .fcard__hl{
+    font-size:clamp(34px, 3.6vw, 52px); }
+  /* Editorials stay OFF the display face. Anton ships no italic, so `font-style:italic` on it is
+     synthesised oblique — a slanted ultra-condensed grotesk, which looks like a bug. They are a
+     different KIND of thing anyway, and the serif italic already says so. */
+  .fcard--ed .fcard__hl{ font-family:var(--serif); text-transform:none; letter-spacing:0;
+    font-size:1.15rem; line-height:1.25; }
+  /* Terminal period — on the heading, so it sits outside the link's underline and click target.
+     The `--dot` class is Liquid-computed: a headline already ending in ? or ! must not render
+     "?." The recorded data stays period-free either way. */
+  .fcard__hl--dot::after{ content:"."; }
   .fcard__hl a{ color:inherit; text-decoration:none; }
   .fcard__hl a:hover{ color:var(--accent); text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; }
 
@@ -808,7 +861,10 @@ layout: archive
   .fcard.is-read .fimg{ opacity:.5; }
   .fcard__line{ display:flex; align-items:baseline; gap:.6em; margin-top:auto; padding-top:9px;
     border-top:1px solid var(--hair); font-family:var(--sans); font-size:.6rem; letter-spacing:.04em; color:var(--muted); }
-  .fcard__src{ text-transform:lowercase; letter-spacing:.02em; min-width:0; }
+  /* The source domain takes the red accent — in the mock the red domain is the module's
+     signature foot. Measured against --paper: #c8102e 4.89:1 light, #ff5a5f 5.97:1 dark, so it
+     clears AA body text at this size in both schemes. "Just in" keeps the same red beside it. */
+  .fcard__src{ text-transform:lowercase; letter-spacing:.02em; min-width:0; color:var(--red); }
   /* institution-first source label (papers): names keep their real casing inside the
      lowercased src line; a long label wraps and the card grows — never ellipsized away */
   .fcard__aff{ text-transform:none; }
