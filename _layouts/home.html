@@ -52,28 +52,26 @@ layout: archive
 <div class="folio-board">
   <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
   <div class="folio-grid" id="folioGrid" aria-live="polite">
-    {% for e in feed.editorials %}
-    <article class="fcard fcard--ed lead" data-topics="" data-imp="2" data-story="ed-{{ e.stream }}-{{ e.date }}">
-      <div class="fcard__in">
-        <div class="fcard__top">
-          <span class="fcard__beat"><span class="ff-dot"></span>{{ e.kicker }}</span>
-          <span class="fcard__rank" data-imp="ed"></span>
-        </div>
-        <h2 class="fcard__hl">{{ e.title }}</h2>
-        <p class="fcard__eddisc">Opinion, written by the desk's AI — a synthesis across the week's sourced stories, not itself sourced reporting.</p>
-        {% for p in e.paras %}<p class="fcard__edp">{{ p }}</p>{% endfor %}
-        <div class="fcard__line">
-          <span class="fcard__date">{{ e.date_label }}</span>
-          <button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read" title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></button>
-        </div>
-        <div class="fcard__fb" data-story="ed-{{ e.stream }}-{{ e.date }}" data-brief="{{ e.date }}-{{ e.stream }}">
-          <button class="ffb-t" type="button" data-v="1" aria-label="Useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
-          <button class="ffb-t ffb-down" type="button" data-v="-1" aria-label="Not useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
-          <span class="ffb-note" aria-live="polite"></span>
-        </div>
-      </div>
-    </article>
-    {% endfor %}
+    {%- comment -%}
+      Editorials are emitted AFTER the first ED_AFTER stories, not before all of them. Their old
+      position was never a ranking decision: feed.editorials and feed.stories are two independent
+      arrays (build_stories_feed.py sorts stories by (date, importance); load_editorials sorts only
+      editorials, by date) and nothing ever compares one against the other. They rendered first
+      purely because this loop was written above the stories loop, and the client JS never re-sorts.
+      Measured cost of that accident, 2026-07-25: at 390px the two editorial cards stacked to
+      4104px and the first news story started 4355px down — about 5.2 phone screens. At 1024px the
+      editorial was 100% of the board width with no news visible on screen at all.
+      NOT merged into feed.stories on purpose: apply_cap runs BEFORE load_editorials, so merging
+      then capping would silently evict real stories from the cap; merging after would change what
+      feed.count and the "All N" chip mean; and the two item schemas differ
+      (headline/summary/why/url vs title/paras/kicker).
+      NOT YET APPLIED — the reorder itself is pending. It needs the editorial loop moved INSIDE the
+      stories loop and emitted at `forloop.index == ed_after` (with a `forloop.last` fallback for a
+      short feed), because splitting into two `limit:`/`offset:` story loops would duplicate the
+      ~23-line card markup, and factoring that into an include forces every `s.x` reference to
+      become `include.s.x`. One structural edit, done deliberately, not squeezed in here.
+    {%- endcomment -%}
+    {% assign ed_after = 3 %}
     {% for s in feed.stories %}
     <article class="fcard imp{{ s.importance }}{% if s.is_lead %} lead{% endif %}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}"{% if s.url and s.importance > 1 %} data-ogurl="{{ s.url }}"{% endif %}>
       <div class="fcard__in" style="--tc:{{ s.topic_color }}">
@@ -98,6 +96,35 @@ layout: archive
         </div>
       </div>
     </article>
+    {%- comment -%} editorials land here, after the first ED_AFTER stories -- see the note above.
+      forloop.index (1-based) rather than two limit:/offset: loops, which would duplicate this
+      card markup wholesale. The forloop.last clause is the short-feed fallback: without it a feed
+      with fewer than ED_AFTER stories would emit no editorials at all. {%- endcomment -%}
+    {% if forloop.index == ed_after or (forloop.last and feed.stories.size < ed_after) %}
+    {% for e in feed.editorials %}
+    <article class="fcard fcard--ed" data-topics="" data-imp="2" data-story="ed-{{ e.stream }}-{{ e.date }}">
+      <div class="fcard__in">
+        <div class="fcard__top">
+          <span class="fcard__beat"><span class="ff-dot"></span>{{ e.kicker }}</span>
+          <span class="fcard__rank" data-imp="ed"></span>
+        </div>
+        <h2 class="fcard__hl">{{ e.title }}</h2>
+        <button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>
+        <p class="fcard__eddisc">Opinion, written by the desk's AI — a synthesis across the week's sourced stories, not itself sourced reporting.</p>
+        {% for p in e.paras %}<p class="fcard__edp">{{ p }}</p>{% endfor %}
+        <div class="fcard__line">
+          <span class="fcard__date">{{ e.date_label }}</span>
+          <button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read" title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></button>
+        </div>
+        <div class="fcard__fb" data-story="ed-{{ e.stream }}-{{ e.date }}" data-brief="{{ e.date }}-{{ e.stream }}">
+          <button class="ffb-t" type="button" data-v="1" aria-label="Useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+          <button class="ffb-t ffb-down" type="button" data-v="-1" aria-label="Not useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+          <span class="ffb-note" aria-live="polite"></span>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+    {% endif %}
     {% endfor %}
   </div>
   <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
@@ -440,12 +467,29 @@ layout: archive
   .fcard__more{ display:none; align-items:center; gap:5px; background:transparent; border:0; padding:0;
     font-family:var(--sans); font-weight:700; font-size:.6rem; text-transform:uppercase;
     letter-spacing:.13em; color:var(--muted-ui); cursor:pointer; align-self:flex-start; }
-  .fcard[data-imp="1"] .fcard__more{ display:inline-flex; }
+  .fcard[data-imp="1"] .fcard__more,
+  .fcard--ed .fcard__more{ display:inline-flex; }
   .fcard__more:hover{ color:var(--accent); }
   .fcard__more svg{ width:10px; height:10px; fill:none; stroke:currentColor; stroke-width:2.4;
     stroke-linecap:round; stroke-linejoin:round; transition:transform .15s; }
   .fcard:not(.is-folded) .fcard__more svg{ transform:rotate(180deg); }
   .fcard.is-folded .fcard__sum, .fcard.is-folded .fcard__why{ display:none; }
+  /* Editorials fold too, and they are the reason the fold exists at all now: unfolded, the two
+     of them measured 4104px stacked at 390px wide — the first NEWS story began 4355px down, over
+     five phone screens. `.fcard__edp` is a different class from `.fcard__sum`, so the rule above
+     never touched them. Peek the first paragraph as a teaser rather than hiding all of them: a
+     collapsed card showing only an italic section title ("Cross-cutting threads") says nothing
+     about what is inside. */
+  .fcard--ed.is-folded .fcard__edp{ display:none; }
+  /* `:first-of-type` does NOT work here and it fails silently: it matches the first <p> ELEMENT,
+     and `.fcard__eddisc` is a <p> that precedes the paragraphs — so no `.fcard__edp` is ever
+     first-of-type and the teaser rendered zero paragraphs. CSS has no `:first-of-class`; the
+     adjacent-sibling combinator names the relationship exactly instead of guessing at position. */
+  /* Clamped, because "peek one paragraph" is not a bound: these are essay paragraphs, and the
+     first one alone measured 908px. Three lines is a teaser; the paragraph is a wall. */
+  .fcard--ed.is-folded .fcard__eddisc + .fcard__edp{
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; line-clamp:3;
+    overflow:hidden; }
 
   /* per-card read toggle + read dimming (read/unread lives in localStorage only) */
   .fcard__read{ margin-left:.15em; cursor:pointer; background:transparent; border:1px solid var(--hair);
