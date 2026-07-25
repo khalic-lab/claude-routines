@@ -77,7 +77,15 @@ read — <code>${FETCH_PROXY_TOKEN}</code> is a placeholder the runtime fills, n
     color:var(--ink); background:var(--card); border:1px solid var(--hair); border-radius:3px;
     padding:.08em .35em; }
   /* one dark terminal slab for fenced commands, in both palettes (rouge tokens are
-     dark-background-tuned); wrapper and pre share the color so they read as one surface */
+     dark-background-tuned); wrapper and pre share the color so they read as one surface.
+     DO NOT "clean this up" into `color-scheme: dark` on this subtree. Since the palette moved to
+     light-dark() (2026-07-25) every --token is an unregistered custom property holding a
+     light-dark() call, which resolves against the USED color-scheme at its use site — measured: a
+     `color-scheme: only dark` subtree on a LIGHT page resolves var(--paper) to rgb(20,21,26), and
+     descendants inherit it. Setting color-scheme here would therefore silently flip --hair, --ink
+     and every other token inside this block to their dark halves in light mode. The hard-coded
+     hexes are deliberate: this slab is dark in BOTH schemes, which is a fixed-colour decision,
+     not a scheme-dependent one. */
   .page__content .prm-doc div.highlighter-rouge{ font-size:.78rem; margin:0 0 1.1em;
     background:#22252d; color:#e7e5dd; border:1px solid var(--hair); }
   .page__content .prm-doc pre{ background:#22252d; color:#e7e5dd; padding:10px 14px; margin:0 0 1.1em;
