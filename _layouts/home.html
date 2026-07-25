@@ -449,7 +449,18 @@ layout: archive
      The real fix is composition — a 200px card should not share a band with a 700px one — which
      is the dominant-module work, not this property. */
   .folio-grid{
-    display:grid; gap:20px; grid-template-columns:1fr;   /* align-items: stretch (default) */
+    display:grid; gap:0; grid-template-columns:1fr;   /* align-items: stretch (default) */
+    /* THE RULE SYSTEM (2026-07-25). Zero gap; every module paints ONLY its block-start and
+       inline-start edges and the container closes the other two. Each shared edge therefore gets
+       exactly one line however modules span — measured: every item computes border-top 1px,
+       border-left 1px, border-right 0, border-bottom 0. A full border per module doubles every
+       interior line and then needs negative margins to hide the doubling.
+       --rule, NOT --hair. Composited over paper, --hair measures 1.31:1 light / 1.38:1 dark, and
+       with --card gone the rule is the only thing separating one story from the next; --rule
+       measures 4.12:1 / 4.44:1. If 1px ever reads heavy the 3:1 floor is alpha .510 light
+       (rgb(133,134,134)) / .375 dark (rgb(99,99,99)) — lighter than that is decoration, not a
+       boundary. */
+    border-block-end:1px solid var(--rule); border-inline-end:1px solid var(--rule);
   }
   /* 700px, not ~676: the old engine's threshold came out of `grid.clientWidth`, which is the
      viewport minus the board's 24px inset. Measured 1->2 columns between 690 and 700. */
@@ -466,20 +477,32 @@ layout: archive
      recompute, and keeping empty hooks invites someone to fill them. `.on` is still set as a
      "JS is live" marker for the interactive skins; it gates no placement. */
 
-  .fcard{ min-width:0; }
+  /* A module is the grid ITEM. It carries the two rules; nothing else draws a box. */
+  .fcard{ min-width:0;
+    border-block-start:1px solid var(--rule); border-inline-start:1px solid var(--rule); }
   /* The grid stretches the ITEM; this hands that height to the element that actually paints the
      card, so panel bottoms land on the row's shared baseline. `.fcard__line{margin-top:auto}`
-     keeps the footer pinned, so the slack opens above it, inside the border — measured: the
-     footer sits 21px off the panel bottom in every mode, unchanged. */
-  .fcard__in{ height:100%; box-sizing:border-box; }
-  .fcard__in{ background:var(--card); border:1px solid var(--hair); padding:16px 16px 15px;
-    display:flex; flex-direction:column; gap:9px; transition:transform .18s ease, box-shadow .18s ease; }
-  .fcard.lead .fcard__in{ padding:22px 22px 20px; border-top:3px solid var(--accent); }
-  /* feature cards carry a half-strength accent edge so the tier reads without the chip;
-     briefs keep the bare hairline. color-mix fallback: plain hairline (declared above). */
-  .fcard.imp2 .fcard__in{ border-top:2px solid color-mix(in srgb, var(--accent) 45%, transparent); }
-  .fcard__in:hover{ transform:translateY(-2px); box-shadow:0 6px 22px rgba(0,0,0,.10); }
-  @media (prefers-color-scheme:dark){ .fcard__in:hover{ box-shadow:0 6px 26px rgba(0,0,0,.5); } }
+     keeps the footer pinned, so the slack opens above it — measured: the footer sits 21px off the
+     panel bottom in every mode, unchanged. */
+  .fcard__in{ height:100%; box-sizing:border-box; padding:17px 18px 16px;
+    display:flex; flex-direction:column; gap:9px; transition:background-color .18s ease; }
+  /* `background:var(--card)` + `border:1px solid var(--hair)` used to live here and are both gone.
+     --card measures 1.07:1 light / 1.06:1 dark against --paper, so the fill was doing no work at
+     all — the hairline was carrying the whole module edge at 1.3:1. Dropping the fill also frees
+     --panel to keep meaning "a different KIND of thing" (the editorial) rather than just "a card". */
+  .fcard.lead .fcard__in{ padding:22px 22px 20px; }
+  /* Tier edge as an INSET SHADOW, not a border. A 3px border-top on a lead would make the band's
+     shared horizontal rule 3px under that module and 1px under its row-mate — the most visible
+     line in the system, unevenly weighted. An inset shadow paints inside the module, below the
+     shared rule, so the rule stays a uniform 1px everywhere. */
+  .fcard.lead .fcard__in{ box-shadow:inset 0 3px 0 var(--accent); }
+  /* feature modules carry a half-strength accent edge so the tier reads without the chip;
+     briefs keep the bare rule. */
+  .fcard.imp2 .fcard__in{ box-shadow:inset 0 2px 0 color-mix(in srgb, var(--accent) 45%, transparent); }
+  /* Hover is a tint, not a lift. `transform:translateY(-2px)` was fine between 20px gutters; at
+     zero gap it slides a module off the rule grid and tears the shared lines. */
+  .fcard:hover{ background-color:color-mix(in srgb, var(--ink) 4%, transparent); }
+  .fcard--ed:hover .fcard__in{ background-color:color-mix(in srgb, var(--ink) 4%, var(--panel)); }
 
   .fcard__top{ display:flex; align-items:baseline; gap:.7em; }
   .fcard__beat{ font-family:var(--sans); text-transform:uppercase; letter-spacing:.1em; font-size:.6rem;
@@ -507,20 +530,20 @@ layout: archive
 
   /* editorial cards — the briefs' section-level synthesis (cross-cutting threads / why-it-
      matters), surfaced here since the individual brief pages were retired (2026-07-18) */
-  /* Editorials opt OUT of the row stretch. With it, a folded ~200px editorial beside a ~700px
-     lead became a tall mostly-empty bordered box — the border drawing attention to the void
-     rather than resolving it. Compact is also what they ARE: a folded synthesis note, not a
-     story. So the paper below them reads as whitespace beside a long lead instead of as a
-     hollow panel. Story cards still stretch, which is what keeps their bands aligned. */
-  .fcard--ed{ align-self:start; }
-  /* Anything COLLAPSED opts out too, for the same reason and a worse measurement: a brief showing
-     only its headline was stretching to its row's tallest card, giving a median 602px of empty
-     bordered panel at 1440 and 745px at 1024 (max 1020/1209), with the footer stranded at the
-     bottom. Keyed on `.is-folded` rather than `[data-imp="1"]` so it self-corrects — expanding a
-     brief restores stretch and the card rejoins its row's baseline. Leads measure 9px of slack,
-     which is the proof the mechanism is sound: they set row height, so they have none. */
-  .fcard.is-folded{ align-self:start; }
-  .fcard--ed .fcard__in{ background:var(--panel); border-top:2px solid var(--ink); }
+  /* THE `align-self:start` OPT-OUTS ARE GONE, and the reason is the rule system, not a change of
+     mind. They were right while each module was a bordered card floating in a 20px gutter: a
+     folded ~200px editorial stretched beside a ~700px lead became a tall hollow box, and
+     collapsed briefs measured a median 602px of empty panel at 1440 / 745px at 1024 (max
+     1020/1209) with the footer stranded at the bottom. Opting out let that space read as plain
+     paper instead.
+     At zero gap the module's own edges ARE the grid. An item that does not fill its track paints
+     a border only as tall as itself, so `align-self:start` truncates that column's vertical rule
+     and drops the band's horizontal one — measured 6 of 82 items short of their track, and
+     visibly two dead unruled columns under row 2 at 1440. A torn rule reads as broken; slack
+     inside a ruled cell reads as a designed void, which is the idiom the whole page is moving
+     toward. So everything stretches, and the fix for a 200px module beside a 700px one is
+     composition — the dominant-module placement below — not opting out of the grid. */
+  .fcard--ed .fcard__in{ background:var(--panel); box-shadow:inset 0 2px 0 var(--ink); }
   .fcard--ed .fcard__hl{ font-style:italic; }
   .fcard__eddisc{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase;
     letter-spacing:.09em; color:var(--muted); border-bottom:1px solid var(--hair);
