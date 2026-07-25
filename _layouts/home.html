@@ -190,7 +190,7 @@ layout: archive
       <div class="fcard__in">
         <div class="fcard__top">
           <span class="fcard__beat"><span class="ff-dot"></span>{{ e.kicker }}</span>
-          <span class="fcard__rank" data-imp="ed"><i class="tier-key" aria-hidden="true"></i>AI editorial</span>
+          <span class="fcard__rank" data-imp="ed">AI editorial</span>
         </div>
         <h2 class="fcard__hl">{{ e.title }}</h2>
         <p class="fcard__eddisc">Opinion, written by the desk's AI — a synthesis across the week's sourced stories, not itself sourced reporting.</p>
@@ -659,29 +659,36 @@ layout: archive
      SECOND channel, never the only one — a red dot and an ink square still differ in outline when
      the page is greyscale or the reader cannot separate the hues.
      The circle is 8px against the square's 7 because a disc reads optically smaller than a square
-     of equal side; matched box sizes would leave the lead looking like the lighter mark. */
+     of equal side; matched box sizes would leave the lead looking like the lighter mark.
+     EVERY GLYPH SITS IN THE SAME 9px BOX and the shape is drawn by `::before` inside it. The
+     shapes are different sizes on purpose (see below), so drawing them as the box itself made the
+     label after them start at three different x positions — 2px of rag across a four-line legend.
+     A fixed box also gives the AI editorial row a way to hold its indent while carrying NO glyph. */
   .fcard__rank .tier-key, .rail-index dt .tier-key, .ff-li .tier-key{
-    flex:none; display:inline-block; box-sizing:border-box; width:7px; height:7px; }
+    flex:none; display:inline-flex; align-items:center; justify-content:center;
+    box-sizing:border-box; width:9px; height:9px; }
+  .fcard__rank .tier-key::before, .rail-index dt .tier-key::before, .ff-li .tier-key::before{
+    content:""; display:block; box-sizing:border-box; }
   /* LEAD — solid --red. The one place the red accent marks rank rather than urgency, and it is the
      top of the page, so it is the mark that should carry the accent. */
-  .fcard__rank[data-imp="3"] .tier-key, .rail-index dt[data-imp="3"] .tier-key,
-  .ff-li[data-imp="3"] .tier-key{ width:8px; height:8px; border-radius:50%; background:var(--red); }
+  .fcard__rank[data-imp="3"] .tier-key::before, .rail-index dt[data-imp="3"] .tier-key::before,
+  .ff-li[data-imp="3"] .tier-key::before{ width:8px; height:8px; border-radius:50%; background:var(--red); }
   /* FEATURE — solid ink square. */
-  .fcard__rank[data-imp="2"] .tier-key, .rail-index dt[data-imp="2"] .tier-key,
-  .ff-li[data-imp="2"] .tier-key{ background:var(--ink); }
+  .fcard__rank[data-imp="2"] .tier-key::before, .rail-index dt[data-imp="2"] .tier-key::before,
+  .ff-li[data-imp="2"] .tier-key::before{ width:7px; height:7px; background:var(--ink); }
   /* BRIEF — a bare rule, the least ink in the set, which is what a brief is: a headline and a way
      in. Deliberately NOT a hollow square; at 7px an outlined box and a filled one differ by one
      pixel of fill and the tier stops reading at a glance, which is the whole complaint. */
-  .fcard__rank[data-imp="1"] .tier-key, .rail-index dt[data-imp="1"] .tier-key,
-  .ff-li[data-imp="1"] .tier-key{ width:9px; height:2px; background:var(--muted-ui); }
-  /* AI EDITORIAL — a ring, outside the label's box, which keeps the box the disclosure it has
-     always been. Outline rather than fill for the reason the box itself is outlined: it says "a
-     different KIND of thing", not "a higher rank". Without it the rail index would show a mark for
-     three of the four entries it explains, which is what stops it being a true legend. */
-  /* 1.5px on purpose: it floors to 1px on a 1x screen and draws 1.5 on the 2x displays this is
-     read on, where a flat 1px ring at 8px reads as a smudge rather than an outline. */
-  .fcard__rank[data-imp="ed"] .tier-key, .rail-index dt[data-imp="ed"] .tier-key{
-    width:8px; height:8px; border-radius:50%; background:transparent; border:1.5px solid var(--ink); }
+  .fcard__rank[data-imp="1"] .tier-key::before, .rail-index dt[data-imp="1"] .tier-key::before,
+  .ff-li[data-imp="1"] .tier-key::before{ width:9px; height:2px; background:var(--rule); }
+  /* AI EDITORIAL GETS NO GLYPH — ruling, 2026-07-25, not a judgement left open. It is not a tier,
+     it is a disclosure, and 0ba0909 deliberately quieted it after measuring it as the loudest badge
+     on the page; a mark of its own would re-promote exactly what that commit demoted. Its boxed
+     label stays the primary signal.
+     The rail index still emits the empty `.tier-key` BOX on that row, and that is the point of the
+     fixed box above: the slot is present and deliberately blank, so "AI editorial" keeps the indent
+     its three neighbours have instead of hanging 9px to their left. The card's meta row emits no
+     `<i>` at all — `.fcard__rank` is right-aligned there, so there is nothing to align to. */
   .rail-note{ font-family:var(--serif); font-size:.75rem; line-height:1.45; color:var(--muted);
     margin:1.6em 0 0; padding-top:1em; border-top:1px solid var(--hair); }
 

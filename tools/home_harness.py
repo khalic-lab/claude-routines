@@ -84,6 +84,32 @@ def _theme_css(refresh=False):
         return "<style>%s</style>" % fh.read()
 
 
+def _css_sanity(label, css):
+    """Reject CSS a browser would SILENTLY discard. Guards our own blocks, not the theme's.
+
+    A stray `*/` — the residue of editing inside a long comment block, which is most of the
+    commentary in home.html — is not an error any browser reports. The text before it becomes a
+    bad selector and the parser then swallows the NEXT declaration block whole: one rule deleted,
+    no warning, nothing in the console. On 2026-07-25 it deleted `.tier-key`'s fixed 9px box while
+    every glyph still painted (they come from `::before`, a different rule), so the page looked
+    right and only a computed-style probe caught the 2px of label rag it caused. That is the same
+    green-while-broken shape as the 327px shrink-wrap, and it is cheap to make impossible.
+    Brace imbalance is the identical failure with a wider blast radius, so it is checked here too.
+    """
+    body = re.sub(r"</?style>", "", css)
+    stripped = re.sub(r"/\*.*?\*/", "", body, flags=re.S)
+    for token, why in (("*/", "the browser turns the text before it into a bad selector and "
+                              "DISCARDS the next rule silently"),
+                       ("/*", "an unterminated comment eats every rule after it")):
+        if token in stripped:
+            i = stripped.index(token)
+            raise SystemExit("home_harness: stray `%s` in %s CSS — %s.\nNear: %r"
+                             % (token, label, why, stripped[max(0, i - 110):i + 2]))
+    if stripped.count("{") != stripped.count("}"):
+        raise SystemExit("home_harness: unbalanced braces in %s CSS (%d '{' vs %d '}') — a rule is "
+                         "being swallowed" % (label, stripped.count("{"), stripped.count("}")))
+
+
 def _extract_tokens():
     """Embed EVERY <style> block from _includes/head/custom.html verbatim.
 
@@ -123,6 +149,7 @@ def _extract_tokens():
     if leftover:
         raise SystemExit("home_harness: unexpanded Liquid in custom.html's CSS: %r — the harness "
                          "renders it literally, so add a substitution above" % leftover[:4])
+    _css_sanity("custom.html", "".join(blocks))
     return "".join(blocks) + """<style>
 body{ background:var(--paper); color:var(--ink); font-family:var(--serif); margin:0; }
 /* Production's wrapper chain, measured off the live DOM at a 1440 viewport:
@@ -423,8 +450,7 @@ def ed_card(e):
     return ('<article class="fcard fcard--ed" data-topics="" data-imp="2" data-story="ed-%s-%s">'
             '<div class="fcard__in"><div class="fcard__top">'
             '<span class="fcard__beat"><span class="ff-dot"></span>%s</span>'
-            '<span class="fcard__rank" data-imp="ed"><i class="tier-key" aria-hidden="true"></i>'
-            'AI editorial</span></div>'
+            '<span class="fcard__rank" data-imp="ed">AI editorial</span></div>'
             '<h2 class="fcard__hl">%s</h2>'
             '<p class="fcard__eddisc">Opinion, written by the desk\'s AI — a synthesis across '
             'the week\'s sourced stories, not itself sourced reporting.</p>%s'
@@ -449,6 +475,7 @@ def main():
     feed = json.load(open(os.path.join(ROOT, "_data", "homefeed.json")))
     src = open(os.path.join(ROOT, "_layouts", "home.html")).read()
     styles = "\n".join(re.findall(r"<style>.*?</style>", src, re.S))
+    _css_sanity("_layouts/home.html", styles)
     # ALL script blocks, in document order — re.search took only the FIRST block, which
     # since 2026-07-11 was the modal script, so the 600+-line folio engine went untested.
     script = "\n".join(re.findall(r"<script>.*?</script>", src, re.S))
