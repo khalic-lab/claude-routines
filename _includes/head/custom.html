@@ -30,8 +30,10 @@ document.addEventListener('DOMContentLoaded', function () {
     cursor: pointer; background: transparent;
     color: inherit; border-radius: 6px; padding: 0.25em 0.6em; font-size: 1em; line-height: 1;
   }
-  /* keyboard focus affordance (WCAG 2.4.7) across every interactive control */
-  .fb-btn:focus-visible,
+  /* keyboard focus affordance (WCAG 2.4.7) across every interactive control.
+     `.propose__s` is the <details> summary at the page foot — a real keyboard-operated control
+     (Enter/Space toggles it), so it belongs in this group like any button. */
+  .fb-btn:focus-visible, .propose__s:focus-visible,
   .propose__topic:focus-visible, .propose__detail:focus-visible {
     outline: 2px solid var(--accent); outline-offset: 2px;
   }
@@ -206,9 +208,12 @@ document.addEventListener('DOMContentLoaded', function () {
      controls keep a >=3:1 border (--muted-ui) per WCAG 1.4.11. */
   .fb-btn{ border:1px solid var(--muted-ui); }
   .fb-btn:hover{ background:var(--hair); }
-  /* readable placeholders (the stock ~50% grey fails AA in light mode) */
+  /* readable placeholders (the stock ~50% grey fails AA in light mode). --sans and NOT uppercase:
+     there is no --mono token in this palette, and the page's small-caps label voice belongs on
+     labels, not inside a field a reader is typing prose into. */
   .propose__topic::placeholder, .propose__detail::placeholder{
-    color:var(--muted-ui); opacity:1; }
+    color:var(--muted-ui); opacity:1; font-family:var(--sans); font-size:.86em;
+    letter-spacing:.02em; }
 </style>
 
 <!-- ============================================================================
@@ -292,22 +297,55 @@ document.addEventListener('DOMContentLoaded', function () {
     color:var(--muted); max-width:34em; margin:0 auto 1.8em; line-height:1.5; }
 
   /* (the old front page's hero + edition-list CSS lived here until 2026-07-06; the masonry
-     redesign in _layouts/home.html removed the markup, so the rules were dropped too.) */
-  .layout--home .archive__subtitle{ max-width:44em; margin:0 auto .4em; text-align:left; }
+     redesign in _layouts/home.html removed the markup, so the rules were dropped too. The
+     `.layout--home .archive__subtitle` rule went the same way on 2026-07-25: the propose form's
+     h3 was the front page's last archive__subtitle and it is now a <details> summary, so the
+     rule matched nothing. The base rule at the top of this file still serves the theme's own
+     archive/taxonomy pages.) */
 </style>
 
 <style>
-  /* ---- propose-a-brief form (the shared-key unlock modal died 2026-07-25 — passkeys-only) ---- */
+  /* ---- propose-a-brief form (the shared-key unlock modal died 2026-07-25 — passkeys-only) ----
+     Since 2026-07-25 it is COLLAPSED behind a native <details> (markup + the reasoning in
+     _layouts/home.html). Resting state is one quiet line of page-foot furniture; the form only
+     exists on screen once the reader asks for it. Everything here is scoped to `.propose*`, so
+     no other page's controls move. */
   .propose{ max-width:44em; margin:2.6em auto 2.4em; }
-  .propose__form{ display:flex; flex-direction:column; gap:.6em; }
-  .propose__topic, .propose__detail{ width:100%; box-sizing:border-box; font:inherit; padding:.5em .6em;
-    background:var(--field); color:var(--ink); border:1px solid var(--frame); border-radius:6px; }
+  .propose__d{ border-top:1px solid var(--rule); }
+  /* THE BAR'S LABEL VOICE (.ff-lbl / .fcard__more), not the theme's archive__subtitle: --sans,
+     .6rem, uppercase, wide tracking, --muted. That heading is what made this corner look
+     off-brand — it was the skin's type, not the paper's. */
+  .propose__s{ display:flex; align-items:center; gap:.7em; cursor:pointer; padding:13px 0 14px;
+    font-family:var(--sans); font-size:.6rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.14em; color:var(--muted); list-style:none; }
+  /* The UA disclosure triangle has to be killed TWICE — `display:flex` drops the list-item box
+     (Chrome/Firefox) and `::-webkit-details-marker` is Safari's separate marker element. Remove
+     either one alone and the triangle comes back in half the browsers. */
+  .propose__s::-webkit-details-marker{ display:none; }
+  /* the +/- is the affordance, drawn in CSS so no script and no icon file is involved */
+  .propose__s::before{ content:'+'; font-size:1.05rem; line-height:0; font-weight:400;
+    color:var(--muted-ui); }
+  .propose__d[open] > .propose__s::before{ content:'\2212'; }
+  .propose__s:hover{ color:var(--ink); }
+  .propose__s:hover::before{ color:var(--accent); }
+  .propose__form{ display:flex; flex-direction:column; gap:.6em; padding:2px 0 22px; }
+  /* radius 2px, matching .ff-read / .ff-sbtn — 6px was the theme's roundness, not this page's.
+     The border stays --frame (>=3:1 non-text contrast, WCAG 1.4.11); a true hairline would fail
+     it on a control. */
+  .propose__topic, .propose__detail{ width:100%; box-sizing:border-box; font:inherit; padding:.6em .7em;
+    background:var(--field); color:var(--ink); border:1px solid var(--frame); border-radius:2px; }
   /* NOT --display: since that token became Anton (ultra-condensed, caps-forward, single heavy
      weight), reader-typed text in it is genuinely hard to read back while typing. Display faces
      belong on headlines, not in form fields. */
   .propose__topic{ font-family:var(--sans); font-size:1.05em; }
   .propose__detail{ min-height:4em; resize:vertical; font-family:var(--serif); }
-  .propose__form .fb-btn{ align-self:flex-start; }
+  /* SCOPED to the form on purpose: `.fb-btn` is shared chrome, so restyling the bare class would
+     retarget every other button that carries it. No `min-height` here either — the <=680px rule
+     above still supplies the 44px tap target, and this padding is already larger than its own. */
+  .propose__form .fb-btn{ align-self:flex-start; font-family:var(--sans); font-size:.62rem;
+    font-weight:700; text-transform:uppercase; letter-spacing:.13em; padding:.9em 1.6em;
+    border-radius:2px; color:var(--muted-ui); }
+  .propose__form .fb-btn:hover{ color:var(--ink); }
   .propose__msg{ font-family:var(--sans); font-size:.8em; color:var(--muted); margin-left:.5em; }
 </style>
 <!-- (The shared-key unlock modal + window.__siteKey API + the propose-form wiring that lived

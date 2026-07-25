@@ -793,6 +793,13 @@ def main():
     header = ('<h1 class="page__title">News</h1>'
               + _extract_block(r'<p class="home-tagline">.*?</button>', "page header"))
     modal = _hiw_stub()
+    # The propose disclosure, extracted like the header — it was the last piece of the front page
+    # this harness did not render, so the page foot could not be reviewed here at all. It is
+    # spliced INSIDE `#main` rather than after it, and that is the same trap the `.harness-doc`
+    # note above describes: `.propose` carries `margin:2.6em auto 2.4em`, i.e. two auto cross-axis
+    # margins, so as a direct child of the flex `<body>` it would size to fit-content and photograph
+    # narrow — with no metric complaining, because nothing measures it.
+    propose = _extract_block(r'<section class="propose">.*?</section>', "propose disclosure")
 
     page = """<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>home harness</title>%s%s
@@ -805,7 +812,7 @@ def main():
 <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
 %s<div class="folio-grid" id="folioGrid">%s</div>
 <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
-</div></div></div>
+</div>%s</div></div>
 %s
 %s%s%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, header, feed["count"], chips,
                SYNC_UI, LEGEND_UI,
@@ -816,6 +823,7 @@ def main():
                "".join(card(s) for s in feed["stories"][:ED_AFTER])
                + "".join(ed_card(e) for e in feed.get("editorials", []))
                + "".join(card(s) for s in feed["stories"][ED_AFTER:]),
+               propose,
                modal, PRE_SYNC, script, VOID_METRICS, GEOM_CHECK, FOLD_CHECK, SYNC_CHECK)
 
     with open(args.out, "w") as fh:

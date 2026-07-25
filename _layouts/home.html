@@ -241,13 +241,26 @@ layout: archive
 <p style="text-align:center; font-family:var(--sans); color:var(--muted);">No stories yet — check back after the next brief.</p>
 {% endif %}
 
+{%- comment -%}
+  PAGE-FOOT FURNITURE, NOT A SECTION OF THE PAPER (2026-07-25). This was a raw form sitting open
+  under the last story beneath a theme-styled `archive__subtitle` — the one place left where the
+  skin showed through the restyle. It is now collapsed behind a NATIVE <details>: no script runs
+  for the disclosure, so with JS off the summary still opens the form, where the always-open
+  version could only ever sit there dead (the submit handler at the foot of this file is the only
+  thing that has ever sent it). The label is a <span> on purpose — every h2 on this page is a
+  story, and furniture headings stay demoted.
+  DO NOT RENAME `.propose__form` / `__topic` / `__detail` / `__msg` / `.fb-btn`: that same handler
+  binds them by class. Styling lives with the rest of the propose rules in head/custom.html.
+{%- endcomment -%}
 <section class="propose">
-  <h3 class="archive__subtitle">Propose a brief</h3>
-  <form class="propose__form" action="#">
-    <input type="text" name="topic" class="propose__topic" placeholder="A topic or beat you'd want covered" maxlength="300" required>
-    <textarea name="detail" class="propose__detail" placeholder="Optional — why it matters, sources, the angle"></textarea>
-    <div><button type="submit" class="fb-btn">Propose</button><span class="propose__msg"></span></div>
-  </form>
+  <details class="propose__d">
+    <summary class="propose__s"><span>Propose a brief</span></summary>
+    <form class="propose__form" action="#">
+      <input type="text" name="topic" class="propose__topic" placeholder="A topic or beat you'd want covered" maxlength="300" required>
+      <textarea name="detail" class="propose__detail" placeholder="Optional — why it matters, sources, the angle"></textarea>
+      <div><button type="submit" class="fb-btn">Propose</button><span class="propose__msg"></span></div>
+    </form>
+  </details>
 </section>
 
 <!-- "How this works" modal — a public, product-level architecture map. Generated SVGs carry the
