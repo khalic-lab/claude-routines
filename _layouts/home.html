@@ -666,6 +666,29 @@ layout: archive
     .folio-grid.is-filtered > .fcard{ grid-area:auto; grid-column:span 4; }
     .folio-empty{ grid-column:1 / -1; }
   }
+  /* EXPANSION GOES SIDEWAYS, NOT DOWN (owner, 2026-07-25). Opening a span-4 module and pouring
+     the body into it made a 405px-wide, ~1,500px-tall ribbon that stretched its whole band and
+     left two voids beside it — "giant lines". A module that has to show more text should get more
+     ROOM, which on a track grid means more tracks: 8 of 12 on the sheet, 2 of 3 at 1024-1279.
+     Declared AFTER the `.is-filtered` fallback on purpose — both are (0,3,0), so source order is
+     what lets a card still expand while a beat filter is on.
+     The dominant is deliberately NOT covered: its rule is (0,4,0) and already spans all twelve, so
+     opening it changes its height and nothing else. Below 1024 nothing changes — modules are
+     already the full sheet there, and downward is the only direction that exists. */
+  @media (min-width:1024px) and (max-width:1279px){
+    .folio-grid > .fcard.is-open{ grid-column:span 2; }
+  }
+  @media (min-width:1280px){
+    .folio-grid > .fcard.is-open{ grid-column:span 8; }
+  }
+  /* Prose multicol, which is the measure fix and not the banned one: the ban was on multicol
+     across the CARD GRID, where it would break DOM-order == rank. Inside one module the reading
+     order is a single column of text flowing top-to-bottom then across, exactly as the dominant
+     has set its body since the composition landed. Without it an 810px module sets 110-character
+     lines, which is unreadable in a different way from a ribbon. */
+  @media (min-width:1024px){
+    .fcard.is-open .fcard__sum{ column-count:2; column-gap:28px; }
+  }
   /* THE RAIL IS 180 FIXED PIXELS, AND THAT IS WHY IT CAN LIVE AT 1280.
      It used to be `minmax(10rem,13rem)`, and rem was the bug: the theme steps the root 16 -> 18 ->
      20 -> 22px across exactly these breakpoints, so 13rem inflated from 208px to 286px precisely
@@ -1401,10 +1424,26 @@ layout: archive
     var mb = e.target.closest('.fcard__more');
     if (!mb) return;
     var mc = mb.closest('.fcard');
+    /* Read the card's position BEFORE the class change, then again after, and pay back the
+       difference. Widening a module re-flows everything after it, which is sanctioned for a
+       user-initiated state — but the reader's eye is on the card they just clicked, and without
+       this the card can slide out from under the cursor (a span-8 module in the third column of
+       a 12-track sheet has no room left in its row, so auto-placement drops it to the next one).
+       Anchoring the CLICKED element makes that reflow invisible where it matters. The second
+       getBoundingClientRect forces layout, so `after` is the post-toggle position, not a stale
+       one. Browser scroll-anchoring does not cover this: it protects content above the viewport
+       top, not the element you are looking at. */
+    var before = mc.getBoundingClientRect().top;
     var folded = mc.classList.toggle('is-folded');
+    /* `is-open` is a POSITIVE marker rather than `:not(.is-folded)`. Only cards that have a More
+       button ever get `is-folded`, so the negation would also match every card that never folds
+       and hand them an expanded span they never asked for. */
+    mc.classList.toggle('is-open', !folded);
     mb.setAttribute('aria-expanded', String(!folded));
     var lbl = mb.querySelector('span');
     if (lbl) lbl.textContent = folded ? 'More' : 'Less';
+    var after = mc.getBoundingClientRect().top;
+    if (after !== before) window.scrollBy(0, after - before);
   });
 
   grid.addEventListener('click', function(e){
