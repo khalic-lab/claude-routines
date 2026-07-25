@@ -1121,19 +1121,20 @@ layout: archive
   /* Editorials fold too, and they are the reason the fold exists at all now: unfolded, the two
      of them measured 4104px stacked at 390px wide — the first NEWS story began 4355px down, over
      five phone screens. `.fcard__edp` is a different class from `.fcard__sum`, so the rule above
-     never touched them. Peek the first paragraph as a teaser rather than hiding all of them: a
-     collapsed card showing only an italic section title ("Cross-cutting threads") says nothing
-     about what is inside. */
+     never touched them.
+     THE PEEK PARAGRAPH IS GONE — ruling, 2026-07-25, closing a flag I raised twice. Folded, an
+     editorial is now title + disclosure + More, exactly as every other tier folds to its index
+     shape. The peek existed on the argument that an italic section title alone says nothing about
+     what is inside; under the new density that argument lost to arithmetic. Measured before this
+     rule: the editorial ran roughly twice the height of anything beside it, so its row-mates
+     carried every void outlier on the page — p90 436px and max 947px at 1440 were substantially
+     its doing.
+     THE DISCLOSURE NEVER HIDES, AND THAT IS NOT A STYLE CHOICE. "Opinion, written by the desk's
+     AI — not itself sourced reporting" is the one line on the module that says a machine wrote it
+     with no reporter involved. It is transparency, not content, so it cannot live behind a control
+     the reader has to find. `.fcard__eddisc` is a different class from `.fcard__edp` and no fold
+     rule names it — asserted in the probe rather than left to inspection, folded AND expanded. */
   .fcard--ed.is-folded .fcard__edp{ display:none; }
-  /* `:first-of-type` does NOT work here and it fails silently: it matches the first <p> ELEMENT,
-     and `.fcard__eddisc` is a <p> that precedes the paragraphs — so no `.fcard__edp` is ever
-     first-of-type and the teaser rendered zero paragraphs. CSS has no `:first-of-class`; the
-     adjacent-sibling combinator names the relationship exactly instead of guessing at position. */
-  /* The teaser paragraph is shown WHOLE. It used to carry a 3-line clamp, on the argument that a
-     908px essay paragraph is not a teaser — true, and dead anyway under the no-crop ruling, which
-     does not have an exception for paragraphs that are inconveniently long. Showing one complete
-     paragraph and hiding the rest is the same element-level fold the brief tier uses. */
-  .fcard--ed.is-folded .fcard__eddisc + .fcard__edp{ display:block; }
 
   /* per-card read toggle + read dimming (read/unread lives in localStorage only) */
   .fcard__read{ margin-left:.15em; cursor:pointer; background:transparent; border:1px solid var(--hair);
