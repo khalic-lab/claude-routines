@@ -363,6 +363,7 @@ def load_index_meta(window_dates):
                     continue
                 r = json.loads(ln)
                 m = {"topics": r.get("topics"), "importance": r.get("importance"),
+                     "headline": r.get("headline"),
                      "display_body": r.get("display_body"), "why": r.get("why"),
                      "affiliations": r.get("affiliations")}
                 if r.get("id"):
@@ -546,6 +547,19 @@ def load_recent(days):
             y, mo, dy = date.split("-")
             # the writer's recorded prose (display_body/why, DEDUP Step C) beats the markdown
             # re-parse — the record is authored, the parse is recovered.
+            #
+            # Same for the headline, and it is load-bearing: the post's BOLD LEAD is a lead
+            # sentence by spec (news.md: "a bolded lead sentence stating what happened AND when"),
+            # and `display_body` OPENS with that very sentence — so pairing the parsed lead with
+            # the recorded body printed the headline verbatim under itself on 27/80 cards
+            # (measured 2026-07-25). The record's `headline` is the curated front-page form; see
+            # this module's load_index_meta docstring, which already joins on URL *because* the
+            # two forms are written independently. The parse is not at fault — group(3) is the
+            # post-bold remainder, so a re-parse alone never duplicates.
+            #
+            # `hid` above is deliberately still slugified from the PARSED lead: it is the story id
+            # the reader's read-state is keyed on, so it must stay byte-stable across this change.
+            headline = (im.get("headline") or "").strip() or s["headline"]
             body = (im.get("display_body") or "").strip() or s["body"]
             why = (im.get("why") or "").strip() or s["why"]
             affs = im.get("affiliations") or []
@@ -554,7 +568,7 @@ def load_recent(days):
                 # RECORDED story url via --index); recompute from the first link only for
                 # pre-anchor posts
                 "id": hid, "sid": s.get("anchor_sid") or _safe_story_id(s["url"]),
-                "headline": s["headline"], "summary": body, "why": why,
+                "headline": headline, "summary": body, "why": why,
                 "url": s["url"], "source_domain": source_domain(s["url"]),
                 "date": date, "date_label": date_label(date),
                 "stream": stream, "stream_label": STREAM_LABEL.get(stream, stream.title()),

@@ -824,9 +824,19 @@ text-only fallback, per-story thumbs posting `surface:"home"`), not the old edit
 `tools/build_stories_feed.py` **parses the recent `_posts/*.md` briefs** for each story's real
 prose (headline, body, and the writers' `Why it matters` paragraph — the dedup summary is a terse
 embedding one-liner, deliberately not used for display), then overlays `topics`/`importance` **and
-the writer-recorded `display_body`/`why` prose** from the matching `index/stories/*.jsonl` record —
-**joined by canonical URL** (slugified headlines diverge between the post's bold lead and the
-record's curated headline), slug-id as fallback; the build prints the join rate. Recorded prose
+the writer-recorded `headline`/`display_body`/`why` prose** from the matching `index/stories/*.jsonl`
+record — **joined by canonical URL** (slugified headlines diverge between the post's bold lead and the
+record's curated headline), slug-id as fallback; the build prints the join rate.
+
+**The record's `headline` wins over the parsed one (2026-07-25), and it matters more than it looks.**
+The post's bold run is a *lead sentence* by the writers' spec ("a bolded lead sentence stating what
+happened AND when"), while `display_body` is that same paragraph — so pairing the parsed lead with
+the recorded body printed the headline verbatim underneath itself on 27 of 80 cards, and the median
+front-page headline was 114 characters / 19 words. Overlaying the record's curated headline takes
+that to 76 chars / 12 words with zero duplication, joining 78/80 in the current window, no backfill.
+The parser is not at fault (its group(3) is the post-bold remainder); the defect was mixed
+provenance. **`hid` is still slugified from the PARSED lead on purpose** — it is the story id the
+reader's localStorage read-state is keyed on, so it must stay byte-stable across this change. Recorded prose
 beats the markdown re-parse (the record is authored, the parse is recovered); as records accumulate
 the parser becomes legacy fallback only. `tools/home_harness.py` renders the layout standalone for
 headless-Chrome smoke tests (geometry self-check included) — no local Jekyll needed. Unmatched stories get derived tags (topic from section+keywords,
