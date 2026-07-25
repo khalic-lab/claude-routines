@@ -14,6 +14,15 @@ Usage:
         --screenshot=/tmp/home.png --window-size=1440,2800 --virtual-time-budget=8000 \
         "file:///tmp/home-harness.html"
 
+DRIVING IT: A TRANSITIONED PROPERTY CANNOT BE READ AFTER A SYNTHETIC CLICK. Under
+`--virtual-time-budget` the timer clock races ahead but the ANIMATION clock does not, so a CSS
+transition never advances past its first frame. Read `getComputedStyle` after `el.click()` and you
+get the PRE-click value however long you wait — while untransitioned properties in the very same
+rule already show the new state, which reads exactly like a broken selector. `.ff-chip` transitions
+border-color/background/color, and this cost a round of chasing a rail-selection "bug" that was not
+there on 2026-07-25. Inject `transition:none !important` for any such assertion, or assert on a
+property that is not transitioned.
+
 The harness appends a geometry self-check 4s after load: a `#geomcheck` div reporting
 overlapping cards and the largest column gap (grep the --dump-dom output for 'GEOM').
 `inversions` must be 0: it counts cards whose visual (row, column) position disagrees with DOM
@@ -160,6 +169,16 @@ setTimeout(function(){
 </script>"""
 
 
+# The control bar's tier legend, which this harness did NOT emit until 2026-07-25 — so the swatches
+# production shows between 721 and 1279px were never once on screen here, and a change to them could
+# not be reviewed. It shares `data-imp` + `.tier-key` with the modules and the rail index, which is
+# the property worth being able to see: all three must render the same glyph.
+LEGEND_UI = """<span class="ff-legend" aria-hidden="true">
+    <span class="ff-li" data-imp="3"><i class="tier-key"></i>Lead</span>
+    <span class="ff-li" data-imp="2"><i class="tier-key"></i>Feature</span>
+    <span class="ff-li" data-imp="1"><i class="tier-key"></i>Brief</span>
+  </span>"""
+
 SYNC_UI = """<span class="ff-sync" id="ffSync" hidden>
     <button class="ff-sbtn" type="button" aria-expanded="false" aria-controls="ffSyncPanel">Sync</button>
     <div class="ff-spanel" id="ffSyncPanel" hidden>
@@ -305,7 +324,7 @@ def card(s):
            if s.get("affiliation_label") else e(s["source_domain"]))
     return """<article class="fcard imp%(imp)s%(lead)s" data-topics="%(topics)s" data-imp="%(imp)s"%(dk)s%(og)s>
 <div class="fcard__in" style="--tc:%(color)s">
-<div class="fcard__top"><span class="fcard__beat" title="%(stream)s · %(dlabel)s"><span class="ff-dot"></span>%(tlabel)s</span><span class="fcard__rank" data-imp="%(imp)s">%(rank)s</span></div>
+<div class="fcard__top"><span class="fcard__beat" title="%(stream)s · %(dlabel)s"><span class="ff-dot"></span>%(tlabel)s</span><span class="fcard__rank" data-imp="%(imp)s"><i class="tier-key" aria-hidden="true"></i>%(rank)s</span></div>
 <h2 class="fcard__hl%(dot)s">%(hl)s</h2>
 %(deck)s%(summ)s%(why)s%(more)s
 <div class="fcard__line"><span class="fcard__src">%(src)s</span>%(fresh)s<span class="fcard__date">%(dlabel)s</span>%(readbtn)s</div>
@@ -404,7 +423,8 @@ def ed_card(e):
     return ('<article class="fcard fcard--ed" data-topics="" data-imp="2" data-story="ed-%s-%s">'
             '<div class="fcard__in"><div class="fcard__top">'
             '<span class="fcard__beat"><span class="ff-dot"></span>%s</span>'
-            '<span class="fcard__rank" data-imp="ed">AI editorial</span></div>'
+            '<span class="fcard__rank" data-imp="ed"><i class="tier-key" aria-hidden="true"></i>'
+            'AI editorial</span></div>'
             '<h2 class="fcard__hl">%s</h2>'
             '<p class="fcard__eddisc">Opinion, written by the desk\'s AI — a synthesis across '
             'the week\'s sourced stories, not itself sourced reporting.</p>%s'
@@ -463,13 +483,14 @@ def main():
 <div class="harness-doc"><div class="wrap">
 <div class="folio-filters" id="folioFilters"><span class="ff-lbl">Beat</span>
 <button class="ff-chip ff-all" type="button" data-topic="" aria-pressed="true">All <span class="ff-ct">%d</span></button>
-%s<span class="ff-read" role="group" aria-label="Read state"><button class="ff-rbtn" type="button" data-rs="" aria-pressed="true">All</button><button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button><button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button></span>%s</div>
+%s<span class="ff-read" role="group" aria-label="Read state"><button class="ff-rbtn" type="button" data-rs="" aria-pressed="true">All</button><button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button><button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button></span>%s%s</div>
 <div class="folio-board">
 <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
 %s<div class="folio-grid" id="folioGrid">%s</div>
 <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
 </div></div></div>
-%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, feed["count"], chips, SYNC_UI,
+%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, feed["count"], chips,
+               SYNC_UI, LEGEND_UI,
                _extract_rail(feed),
                # Emission order mirrors _layouts/home.html: ED_AFTER stories, then the editorials,
                # then the rest. Keep ED_AFTER in step with the layout's `{% assign ed_after %}` —

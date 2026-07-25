@@ -48,10 +48,13 @@ layout: archive
       <p class="ffs-status" aria-live="polite"></p>
     </div>
   </span>
+  {%- comment -%} `data-imp` rather than a per-tier modifier class, so these swatches are styled by
+    the SAME rule as the modules' own glyphs and the rail index's — see `.tier-key`. A legend that
+    can drift from the thing it explains is worse than no legend. {%- endcomment -%}
   <span class="ff-legend" aria-hidden="true">
-    <span class="ff-li"><i class="fb b3"></i>Lead</span>
-    <span class="ff-li"><i class="fb b2"></i>Feature</span>
-    <span class="ff-li"><i class="fb b1"></i>Brief</span>
+    <span class="ff-li" data-imp="3"><i class="tier-key"></i>Lead</span>
+    <span class="ff-li" data-imp="2"><i class="tier-key"></i>Feature</span>
+    <span class="ff-li" data-imp="1"><i class="tier-key"></i>Brief</span>
   </span>
 </div>
 
@@ -86,13 +89,13 @@ layout: archive
     </div>
     <h2 class="rail-title">How to read this page</h2>
     <dl class="rail-index">
-      <dt><i class="rail-key rail-key--lead" aria-hidden="true"></i>Lead</dt>
+      <dt data-imp="3"><i class="tier-key" aria-hidden="true"></i>Lead</dt>
       <dd>The day's most consequential reporting. Largest type, top of the page.</dd>
-      <dt><i class="rail-key rail-key--feature" aria-hidden="true"></i>Feature</dt>
+      <dt data-imp="2"><i class="tier-key" aria-hidden="true"></i>Feature</dt>
       <dd>Worth your time, not urgent.</dd>
-      <dt><i class="rail-key rail-key--brief" aria-hidden="true"></i>Brief</dt>
+      <dt data-imp="1"><i class="tier-key" aria-hidden="true"></i>Brief</dt>
       <dd>Collapsed to its headline. Open it to read the rest.</dd>
-      <dt><i class="rail-key rail-key--ed" aria-hidden="true"></i>AI editorial</dt>
+      <dt data-imp="ed"><i class="tier-key" aria-hidden="true"></i>AI editorial</dt>
       <dd>The desk's own synthesis across the week. Not sourced reporting.</dd>
     </dl>
     <p class="rail-note">Ranked by date, then by how much the desk thinks each story matters. Position is the ranking.</p>
@@ -123,7 +126,10 @@ layout: archive
       <div class="fcard__in" style="--tc:{{ s.topic_color }}">
         <div class="fcard__top">
           <span class="fcard__beat" title="{{ s.stream_label }} · {{ s.date_label }}"><span class="ff-dot"></span>{{ s.topic_label }}</span>
-          <span class="fcard__rank" data-imp="{{ s.importance }}">{% case s.importance %}{% when 3 %}Lead{% when 2 %}Feature{% else %}Brief{% endcase %}</span>
+          {%- comment -%} The glyph is aria-hidden and the WORD stays the accessible name — the tier
+            became real text in 3281fb9 precisely because it reached assistive tech nowhere, and a
+            decorative shape must not walk that back. {%- endcomment -%}
+          <span class="fcard__rank" data-imp="{{ s.importance }}"><i class="tier-key" aria-hidden="true"></i>{% case s.importance %}{% when 3 %}Lead{% when 2 %}Feature{% else %}Brief{% endcase %}</span>
         </div>
         {%- comment -%} A headline already ending in ? or ! must not render "?." — the terminal
           period is typography, so it is a CSS ::after keyed on this class, and the recorded
@@ -179,7 +185,7 @@ layout: archive
       <div class="fcard__in">
         <div class="fcard__top">
           <span class="fcard__beat"><span class="ff-dot"></span>{{ e.kicker }}</span>
-          <span class="fcard__rank" data-imp="ed">AI editorial</span>
+          <span class="fcard__rank" data-imp="ed"><i class="tier-key" aria-hidden="true"></i>AI editorial</span>
         </div>
         <h2 class="fcard__hl">{{ e.title }}</h2>
         <p class="fcard__eddisc">Opinion, written by the desk's AI — a synthesis across the week's sourced stories, not itself sourced reporting.</p>
@@ -449,11 +455,6 @@ layout: archive
   .ff-legend{ margin-left:14px; display:flex; gap:14px; align-items:center; }
   .ff-li{ font-family:var(--sans); font-size:.58rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted);
     display:inline-flex; align-items:center; gap:.5em; }
-  /* swatches mirror the tier chips: solid accent / outlined accent / muted hairline */
-  .ff-li .fb{ display:inline-block; width:14px; height:9px; border-radius:2px;
-    background:var(--accent); border:1px solid var(--accent); }
-  .ff-li .fb.b2{ background:transparent; }
-  .ff-li .fb.b1{ background:transparent; border-color:var(--hair); }
   @media (max-width:720px){ .ff-legend{ display:none; } }
 
   /* passkey sync affordance — sits at the bar's right end beside the read toggle. Hidden
@@ -621,8 +622,12 @@ layout: archive
        still in the DOM above, so this is one control with two skins, not a second selector, and
        `display:none` keeps the hidden set out of the accessibility tree as well as off screen.
        Measured at 1440: the bar goes 91px tall (chips wrapping to a third row) to 47px, which is
-       the whole reason the rail earns its 180px back. */
-    .folio-filters .ff-chip, .ff-lbl{ display:none; }
+       the whole reason the rail earns its 180px back.
+       `.ff-legend` goes for the same reason and ONLY here: between 721 and 1279 it is the page's
+       only legend and has to stay, but at >=1280 the rail's index says the same thing in real
+       prose with the same glyphs, so a second copy in the bar is exactly the duplication this
+       composition exists to remove. */
+    .folio-filters .ff-chip, .ff-lbl, .ff-legend{ display:none; }
   }
   .rail-edition{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase;
     letter-spacing:.16em; color:var(--muted); margin:0 0 1.4em; }
@@ -635,11 +640,43 @@ layout: archive
   .rail-index dt:first-of-type{ margin-top:0; }
   .rail-index dd{ margin:.35em 0 0; font-family:var(--serif); font-size:.78rem; line-height:1.45;
     color:var(--muted); }
-  /* the keys mirror each module's own tier edge, at rail scale */
-  .rail-key{ flex:none; width:15px; height:3px; background:var(--accent); }
-  .rail-key--feature{ height:2px; background:color-mix(in srgb, var(--accent) 45%, transparent); }
-  .rail-key--brief{ height:1px; background:var(--rule); }
-  .rail-key--ed{ height:2px; background:var(--ink); }
+  /* THE TIER GLYPHS — ONE VOCABULARY, DEFINED ONCE, RENDERED IN THREE PLACES.
+     The owner's ruling: "just the top border is too subtle". The inset tier edge (3px accent on a
+     lead, 2px at 45% on a feature, nothing on a brief) is a difference in WEIGHT of the same mark,
+     which needs two modules side by side to read at all — and a brief's "mark" was the absence of
+     one. A glyph is a difference in SHAPE, so a single module states its own tier.
+     Keyed on `data-imp` rather than a per-tier modifier class so this rule is the ONLY definition:
+     the module's meta row, the rail's index and the control bar's legend all resolve here, and a
+     legend that can drift from the thing it explains is worse than no legend. The three selectors
+     are named explicitly rather than swept with a bare `[data-imp]` because `.fcard` itself carries
+     that attribute.
+     Shapes descend by ink, not by size: filled circle -> filled square -> bare dash. Colour is a
+     SECOND channel, never the only one — a red dot and an ink square still differ in outline when
+     the page is greyscale or the reader cannot separate the hues.
+     The circle is 8px against the square's 7 because a disc reads optically smaller than a square
+     of equal side; matched box sizes would leave the lead looking like the lighter mark. */
+  .fcard__rank .tier-key, .rail-index dt .tier-key, .ff-li .tier-key{
+    flex:none; display:inline-block; box-sizing:border-box; width:7px; height:7px; }
+  /* LEAD — solid --red. The one place the red accent marks rank rather than urgency, and it is the
+     top of the page, so it is the mark that should carry the accent. */
+  .fcard__rank[data-imp="3"] .tier-key, .rail-index dt[data-imp="3"] .tier-key,
+  .ff-li[data-imp="3"] .tier-key{ width:8px; height:8px; border-radius:50%; background:var(--red); }
+  /* FEATURE — solid ink square. */
+  .fcard__rank[data-imp="2"] .tier-key, .rail-index dt[data-imp="2"] .tier-key,
+  .ff-li[data-imp="2"] .tier-key{ background:var(--ink); }
+  /* BRIEF — a bare rule, the least ink in the set, which is what a brief is: a headline and a way
+     in. Deliberately NOT a hollow square; at 7px an outlined box and a filled one differ by one
+     pixel of fill and the tier stops reading at a glance, which is the whole complaint. */
+  .fcard__rank[data-imp="1"] .tier-key, .rail-index dt[data-imp="1"] .tier-key,
+  .ff-li[data-imp="1"] .tier-key{ width:9px; height:2px; background:var(--muted-ui); }
+  /* AI EDITORIAL — a ring, outside the label's box, which keeps the box the disclosure it has
+     always been. Outline rather than fill for the reason the box itself is outlined: it says "a
+     different KIND of thing", not "a higher rank". Without it the rail index would show a mark for
+     three of the four entries it explains, which is what stops it being a true legend. */
+  /* 1.5px on purpose: it floors to 1px on a 1x screen and draws 1.5 on the 2x displays this is
+     read on, where a flat 1px ring at 8px reads as a smudge rather than an outline. */
+  .fcard__rank[data-imp="ed"] .tier-key, .rail-index dt[data-imp="ed"] .tier-key{
+    width:8px; height:8px; border-radius:50%; background:transparent; border:1.5px solid var(--ink); }
   .rail-note{ font-family:var(--serif); font-size:.75rem; line-height:1.45; color:var(--muted);
     margin:1.6em 0 0; padding-top:1em; border-top:1px solid var(--hair); }
 
@@ -730,7 +767,10 @@ layout: archive
      in the DOM also deletes four CSS rules: WCAG 1.4.1 and less code, same edit. */
   .fcard__rank{ margin-left:auto; font-family:var(--sans); font-weight:700; font-size:.6rem;
     text-transform:uppercase; letter-spacing:.12em; white-space:nowrap; align-self:center;
-    padding:2px 7px 1px; border:1px solid transparent; border-radius:2px; }
+    padding:2px 7px 1px; border:1px solid transparent; border-radius:2px;
+    /* inline-flex so the glyph centres on the cap height instead of sitting on the baseline —
+       matches `.fcard__beat`, which solved the same problem for the topic dot. */
+    display:inline-flex; align-items:center; gap:.5em; }
   /* TIER CHIPS DEMOTED TO PLAIN SMALL-CAPS. With the type scale carrying the hierarchy — a 52px
      lead against a 32px feature against an 18px brief — a filled navy box saying LEAD restated in
      colour what the size already says in type, and it was the loudest non-headline element on the
