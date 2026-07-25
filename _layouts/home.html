@@ -843,7 +843,19 @@ layout: archive
      volume slightly down; `grayscale(1)` with a small contrast lift is the b/w halftone the
      broadsheet is built on, and it also stops a foreign brand-red (the Guardian bar in the
      rejected screenshot) out-shouting --red, which is the page's only accent. */
+  /* `object-position` BIASED UP, and this is not a taste setting. Cropping a 16:9 press photo to a
+     4.7:1 band takes a horizontal slice, and `cover` defaults to 50% 50% — the middle of a news
+     photo is torsos. Measured on the live fixture at the default: the dominant's three subjects
+     rendered from the chin down, headless, which is worse than the uncropped photo it replaced.
+     Faces sit in the upper third of almost every wire image, so the window moves up to meet them.
+     18% chosen against the live fixture, not guessed: at the 50% default all three subjects render
+     from the chin down; at 28% the faces are in frame but both men are cut at the forehead; at 18%
+     all three heads are whole. Landscape and aerial images (the Hodeida tail module) are unharmed,
+     since biasing up on a horizon shot just favours sky over foreground.
+     The lever for a bad crop is this, never a taller slot: raising the floor re-inflates exactly
+     what the owner rejected. */
   .fimg{ display:block; width:100%; height:clamp(120px, 22cqi, 260px); object-fit:cover;
+    object-position:50% 18%;
     border:1px solid var(--hair); background:var(--panel);
     filter:grayscale(1) contrast(1.08); }
   @media (prefers-color-scheme:dark){ .fimg{ filter:grayscale(1) contrast(1.06) brightness(.9); } }
