@@ -1387,7 +1387,7 @@ layout: archive
      reproduces the composition exactly (rank 1 takes row 1 because it is first) and is what keeps
      I1 true. ---- */
   var ROW_UNIT = 4;                        // px; see "WHY 4px" in the stylesheet
-  var packOn = false, packW = -1, packT = null, roT = null;
+  var packOn = false, packW = -1, packT = null, roT = null, packRo = null;
   function trackCount(){
     var t = getComputedStyle(grid).gridTemplateColumns;
     return (t && t !== 'none') ? t.split(' ').filter(function(v){ return !!v; }).length : 1;
@@ -1409,7 +1409,16 @@ layout: archive
     for (i = 0; i < cards.length; i++) if (cards[i].style.display !== 'none') vis.push(cards[i]);
     if (!vis.length) return;
     var gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
+    /* THE FINE UNIT COMES OFF FOR THE MEASUREMENT, and that is about the SCROLL POSITION rather
+       than about the heights (which `align-self:start` alone decides). With every span cleared
+       while `grid-auto-rows` is still 4px, each module occupies one 4px row for the duration of
+       the read — the grid's laid-out height collapses from ~19,000px to ~112px, and a reader
+       12,000px down a re-pack triggered by a fold or a late image is one scroll-clamp away from
+       being thrown to the top of the page. Measuring with `auto` rows keeps the document roughly
+       its own height throughout, so there is nothing to clamp to. It also fails better: an
+       exception mid-pass leaves the banded grid, not a page of 4px modules. */
     grid.classList.add('packing');                                   // write
+    grid.classList.remove('packed');                                 // write
     for (i = 0; i < vis.length; i++) vis[i].style.gridRow = '';       // write
     var h = new Array(vis.length);
     for (i = 0; i < vis.length; i++) h[i] = vis[i].getBoundingClientRect().height;   // read
@@ -1434,11 +1443,14 @@ layout: archive
        the grid's HEIGHT, which this same observer sees, so re-packing on any size change is an
        unconditional infinite loop. */
     if (!window.ResizeObserver) return;
-    new ResizeObserver(function(){
+    /* The observer is HELD, not left anonymous: an unreferenced observer's lifetime is a
+       specification detail nobody should be relying on, and this one has to outlive the page. */
+    packRo = new ResizeObserver(function(){
       if (grid.clientWidth === packW) return;
       clearTimeout(roT);
       roT = setTimeout(packRowSpans, 120);
-    }).observe(grid);
+    });
+    packRo.observe(grid);
   }
   function bootPack(){
     /* THE FIRST PASS WAITS FOR THE WEBFONT. Anton is `font-display:swap`, so the first paint sets

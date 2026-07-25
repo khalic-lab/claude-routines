@@ -14,6 +14,15 @@ Usage:
         --screenshot=/tmp/home.png --window-size=1440,2800 --virtual-time-budget=8000 \
         "file:///tmp/home-harness.html"
 
+DRIVING IT: RESIZEOBSERVER NEVER FIRES HERE. Under `--headless=new --virtual-time-budget` Chrome
+150 delivers no resize observations at all — not even the initial one every observer gets on
+`observe()`. Verified 2026-07-25 on a five-line control page (a div, an observer, a width change):
+`initial=0 afterResize=0`, with and without `--run-all-compositor-stages-before-draw`;
+`--headless=old` delivered the initial callback on one run and nothing on the next. So the layout's
+debounced re-pack-on-resize CANNOT be exercised from this harness, and a run that narrows the page
+and finds stale spans is measuring the instrument, not the engine. To test a width change, drive a
+pass through a path that does run — a fold click re-spans synchronously — and compare.
+
 DRIVING IT: A TRANSITIONED PROPERTY CANNOT BE READ AFTER A SYNTHETIC CLICK. Under
 `--virtual-time-budget` the timer clock races ahead but the ANIMATION clock does not, so a CSS
 transition never advances past its first frame. Read `getComputedStyle` after `el.click()` and you
