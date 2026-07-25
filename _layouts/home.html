@@ -57,30 +57,6 @@ layout: archive
 
 <div class="folio-board">
   <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
-  {%- comment -%}
-    The rail (>=1280px only). It is FURNITURE, not a second nameplate: the page has exactly one h1,
-    supplied by the archive layout, and duplicating it here would give the page two — one of them
-    hidden — plus a duplicate landmark for assistive tech. So the rail carries the edition line and
-    the tier index, which is additive: the tier word already reaches AT from each module's own chip
-    (real text since 3281fb9), and this explains what the tiers MEAN, which nothing did before.
-    `.ff-legend` in the control bar stays aria-hidden and decorative — it is the same information
-    as swatches, and this is the accessible copy of it.
-  {%- endcomment -%}
-  <aside class="folio-rail">
-    <p class="rail-edition">{{ feed.stories.first.date_label }}</p>
-    <h2 class="rail-title">How to read this page</h2>
-    <dl class="rail-index">
-      <dt><i class="rail-key rail-key--lead" aria-hidden="true"></i>Lead</dt>
-      <dd>The day's most consequential reporting. Largest type, top of the page.</dd>
-      <dt><i class="rail-key rail-key--feature" aria-hidden="true"></i>Feature</dt>
-      <dd>Worth your time, not urgent.</dd>
-      <dt><i class="rail-key rail-key--brief" aria-hidden="true"></i>Brief</dt>
-      <dd>Collapsed to its headline. Open it to read the rest.</dd>
-      <dt><i class="rail-key rail-key--ed" aria-hidden="true"></i>AI editorial</dt>
-      <dd>The desk's own synthesis across the week. Not sourced reporting.</dd>
-    </dl>
-    <p class="rail-note">Ranked by date, then by how much the desk thinks each story matters. Position is the ranking.</p>
-  </aside>
   <div class="folio-grid" id="folioGrid" tabindex="-1">
     {%- comment -%}
       Editorials are emitted AFTER the first ED_AFTER stories, not before all of them. Their old
@@ -504,14 +480,7 @@ layout: archive
      At <700px there is one column and NO placement rule exists at all: spanning is meaningless at
      one track, so it is absent rather than neutralised. That single column is the base case and
      the no-JS case, not a fallback. */
-  /* EACH BAND'S COMPOSITION IS CONFINED TO ITS OWN WIDTH RANGE, and that is load-bearing rather
-     than tidiness. These rules name absolute track numbers, so an unbounded `min-width` rule leaks
-     into the next breakpoint's grid and means something different there. It bit exactly once: the
-     2-column rule `nth-child(3): grid-area 2/2/3/3` survived into the >=1280 twelve-track sheet,
-     where "columns 2 to 3" is ONE track of twelve — rank 3 rendered ~100px wide with its text
-     clipped mid-word and row 2 overlapping row 1. Every geometry metric passed while that was on
-     screen (inversions 2, rowsByCount 3-across, scrollW == innerW); only the screenshot showed it. */
-  @media (min-width:700px) and (max-width:1023px){
+  @media (min-width:700px){
     /* two columns: the dominant is a full-width band. Upper-right needs three tracks to READ as
        dominant — at two it is half the width, which is not dominance, and it would seat rank 1 to
        the right of ranks 2-3 with no size compensation to justify it. */
@@ -519,59 +488,13 @@ layout: archive
     .folio-grid:not(.is-filtered) > .fcard:nth-child(2){ grid-area:2 / 1 / 3 / 2; }
     .folio-grid:not(.is-filtered) > .fcard:nth-child(3){ grid-area:2 / 2 / 3 / 3; }
   }
-  @media (min-width:1024px) and (max-width:1279px){
+  @media (min-width:1024px){
     /* three columns: the mock's shape — dominant upper-RIGHT, two bands tall, 5.1x the area of
        rank 2. A top-left reading sweep therefore meets rank 2 first; that is the point of a
        splash, which wins by size rather than position, and DOM order stays 1,2,3 for AT. */
     .folio-grid:not(.is-filtered) > .fcard:nth-child(1){ grid-area:1 / 2 / 2 / 4; }
     .folio-grid:not(.is-filtered) > .fcard:nth-child(2){ grid-area:1 / 1 / 2 / 2; }
   }
-  /* THE RAIL + 12-TRACK SHEET (>=1280px). Twelve tracks rather than a fixed three because 12
-     divides by both 3 and 4: the same breakpoint can hold a 3-across band (span 4) and a 4-across
-     brief band (span 3) without a second grid. The rail closes its own inline-end edge, so it
-     joins the module rule system instead of sitting beside it. */
-  .folio-rail{ display:none; }
-  @media (min-width:1280px){
-    .folio-board{ display:grid; grid-template-columns:minmax(10rem,13rem) minmax(0,1fr); }
-    .folio-rail{ display:block; grid-column:1; align-self:start; position:sticky; top:64px;
-      padding:0 22px 24px 0; border-inline-end:1px solid var(--rule); }
-    .folio-grid{ grid-column:2; grid-template-columns:repeat(12,minmax(0,1fr)); }
-    /* SIX, not four, in this band. The rail costs ~13rem, so `span 4` here would make each module
-       NARROWER than the plain 3-column band at 1024-1279 — going wider must never shrink the
-       measure. Two across until there is room for three. */
-    .folio-grid > .fcard{ grid-column:span 6; }
-    .folio-grid:not(.is-filtered) > .fcard:nth-child(1){ grid-area:1 / 5 / 2 / 13; }
-    .folio-grid:not(.is-filtered) > .fcard:nth-child(2){ grid-area:1 / 1 / 2 / 5; }
-    /* the filtered fallback must re-state the span: `grid-area:auto` alone would reset these
-       modules to one track of twelve. */
-    .folio-grid.is-filtered > .fcard{ grid-area:auto; grid-column:span 6; }
-    .folio-empty{ grid-column:1 / -1; }
-  }
-  /* room for three across beside the rail. 12 tracks is what makes this a span change rather than
-     a new grid — the same breakpoint could also hold a 4-across brief band at `span 3`. */
-  @media (min-width:1600px){
-    .folio-grid > .fcard,
-    .folio-grid.is-filtered > .fcard{ grid-column:span 4; }
-  }
-  .rail-edition{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase;
-    letter-spacing:.16em; color:var(--muted); margin:0 0 1.4em; }
-  .rail-title{ font-family:var(--sans); font-size:.62rem; font-weight:700; text-transform:uppercase;
-    letter-spacing:.15em; color:var(--ink); margin:0 0 .9em; padding-bottom:.7em;
-    border-bottom:1px solid var(--rule); }
-  .rail-index{ margin:0; font-family:var(--sans); }
-  .rail-index dt{ display:flex; align-items:center; gap:.55em; font-size:.62rem; font-weight:700;
-    text-transform:uppercase; letter-spacing:.12em; color:var(--ink); margin-top:1.1em; }
-  .rail-index dt:first-of-type{ margin-top:0; }
-  .rail-index dd{ margin:.35em 0 0; font-family:var(--serif); font-size:.78rem; line-height:1.45;
-    color:var(--muted); }
-  /* the keys mirror each module's own tier edge, at rail scale */
-  .rail-key{ flex:none; width:15px; height:3px; background:var(--accent); }
-  .rail-key--feature{ height:2px; background:color-mix(in srgb, var(--accent) 45%, transparent); }
-  .rail-key--brief{ height:1px; background:var(--rule); }
-  .rail-key--ed{ height:2px; background:var(--ink); }
-  .rail-note{ font-family:var(--serif); font-size:.75rem; line-height:1.45; color:var(--muted);
-    margin:1.6em 0 0; padding-top:1em; border-top:1px solid var(--hair); }
-
   /* The dominant module sets its body in two text columns, as a CSS consequence of its span. This
      is what the deleted packer's `.span2` class used to do from JS, and it still earns its keep:
      it roughly halves the module's height and keeps the measure readable across 8 of 12 tracks. */
@@ -758,10 +681,7 @@ layout: archive
      lowercased src line; a long label wraps and the card grows — never ellipsized away */
   .fcard__aff{ text-transform:none; }
   .fcard__date{ margin-left:auto; font-variant-numeric:tabular-nums; }
-  /* the one red thing on the page. "Just in" is the only genuinely time-sensitive mark here, so it
-     is what earns the accent that is not the structural one. See --red in head/custom.html for the
-     measured pair and why a single hex cannot serve both schemes. */
-  .fcard__fresh{ color:var(--red); font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .fcard__fresh{ color:var(--accent); font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
 
   .fcard__fb{ display:flex; flex-wrap:wrap; align-items:center; gap:.28em; margin-top:9px; padding-top:9px;
     border-top:1px solid var(--hair); opacity:.42; transition:opacity .15s ease; }
