@@ -556,17 +556,23 @@ layout: archive
     .folio-grid.is-filtered > .fcard{ grid-area:auto; grid-column:span 4; }
     .folio-empty{ grid-column:1 / -1; }
   }
-  /* THE RAIL WAITS FOR 1600, and that is a measurement not a preference. It costs 286px, so
-     introducing it always steps the measure DOWN at its own breakpoint — there is no width where
-     adding a 286px column makes the remaining modules wider. Put it at 1280 and modules drop from
-     465px to 317px exactly when the viewport grows; put it at 1600 and they drop 465 -> 423, a
-     step small enough to be paid for by what the rail gives back. Strict monotonicity is simply
-     not available alongside a rail; the honest invariant is that the measure never falls below the
-     previous COLUMN COUNT's width, and that rank 2 is never narrower than the tail. */
-  @media (min-width:1600px){
-    .folio-board{ display:grid; grid-template-columns:minmax(10rem,13rem) minmax(0,1fr); }
+  /* THE RAIL IS 180 FIXED PIXELS, AND THAT IS WHY IT CAN LIVE AT 1280.
+     It used to be `minmax(10rem,13rem)`, and rem was the bug: the theme steps the root 16 -> 18 ->
+     20 -> 22px across exactly these breakpoints, so 13rem inflated from 208px to 286px precisely
+     as the viewport grew — the rail ate its gains. At 286px it took ~20% of the sheet against the
+     mock's ~10% of canvas, and it forced the composition to choose between a rail and 1440.
+     The arithmetic, with board = min(1680, viewport) - 44 and the amended invariant's floor being
+     the 326px that 3-across already delivers at 1024:
+       rail   1280  1440  1600  1680
+       286     317   370   423   450   <- 317 is BELOW the floor: not admissible at 1280
+       258     326   379   433   459   <- exactly at the floor; no margin
+       180     352   405   459   485   <- what ships
+     258px is the widest rail that keeps 1280 legal; 180 leaves real headroom and reads as a rail
+     rather than a second column. Fixed px, not rem, so the root ladder can never re-inflate it. */
+  @media (min-width:1280px){
+    .folio-board{ display:grid; grid-template-columns:180px minmax(0,1fr); }
     .folio-rail{ display:block; grid-column:1; align-self:start; position:sticky; top:64px;
-      padding:0 22px 24px 0; border-inline-end:1px solid var(--rule); }
+      padding:0 20px 24px 0; border-inline-end:1px solid var(--rule); }
     .folio-grid{ grid-column:2; }
   }
   .rail-edition{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase;
