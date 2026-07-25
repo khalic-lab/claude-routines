@@ -543,3 +543,347 @@ is untouched by every stage.
    CSS.
 5. **Stage 1 alone** as a first ship (black-and-white edition, no structural change) — worth a
    day of living with before Stage 2 lands the rules?
+
+> **Superseded by Amendment A below.** Questions 1–3 stand. Question 4 is answered there
+> (editorials are a band, and the mechanism is a zone, not a placement hint). Question 5 is
+> answered: no — Stage 1 alone now ships onto a board whose hierarchy is still flat, which is
+> precisely the complaint Amendment A exists to answer.
+
+---
+---
+
+# AMENDMENT A — Hierarchy first, theme second
+
+**Date:** 2026-07-25 · **Status:** PROPOSED · **Reframes:** §1's premise and §5's stage order.
+**Ask (Rafael):** *"The spike is interesting but doesn't go far enough, it's not just a matter of
+theme, the information hierarchy on the page needs to be more prominent."*
+
+He is right, and the reason is measurable rather than aesthetic. §1–§6 above are a **paint job on a
+flat board**. They restyle a hierarchy that the pipeline has already flattened before a pixel is
+drawn, and one that the *engine* actively scrambles. No token, rule weight or type scale fixes
+either. This amendment finds both, fixes them where they happen, and re-orders the stages so the
+visual work lands on a board that has something to express.
+
+Every number below is reproduced from this repo on 2026-07-25 (`--days 14`), and every code claim
+is quoted from the file it names.
+
+---
+
+## A.1 The first error: the cap deletes the base of the pyramid
+
+| | imp 3 (LEAD) | imp 2 (FEATURE) | imp 1 (BRIEF) | total |
+|---|---|---|---|---|
+| **What the writers filed** (uncapped) | 24 — **8%** | 142 — 50% | 120 — **42%** | 286 |
+| **What the page ships** (`--max 80`) | 24 — **30%** | 52 — 65% | 4 — **5%** | 80 |
+
+*(The committed `_data/homefeed.json` — what is live this minute — reads 23/53/4: a routine built it
+at a different moment in the day. The figures above are today's reproducible `--max 80` run, which is
+what every other number in this amendment is measured against.)*
+
+The writers are not the problem. `routines/_shared/newsroom-ethos.md:17` demands *"exactly one 3 per
+edition unless the day genuinely has two majors; most stories are 1 or 2"* — and across the window's
+**23 editions, 21 have exactly one lead**, one has three, one has none. 279 of 286 stories carry
+writer-supplied `importance` from the dedup index, so `importance_for()`'s positional fallback
+(`build_stories_feed.py:311`) barely fires. **Upstream judgment is already a clean 8/50/42 pyramid.**
+
+`apply_cap()` (`build_stories_feed.py:587`) flattens it. It sorts each edition `(importance, -pos)`
+and pops index 0 — **lowest importance first**:
+
+```python
+for ed in editions.values():
+    ed.sort(key=lambda s: (s["importance"], -pos[id(s)]))
+...
+dropped.add(id(editions[key].pop(0)))          # <- lowest importance in the biggest edition
+```
+
+**The precise framing matters, because it kills the obvious fix.** The cap is not lead-hostile, it is
+**brief-hostile**: `imp3` survives at exactly 24 at *every* cap from 80 to 240. It is the base that
+gets deleted — 206 of 286 stories discarded, briefs first — leaving a page on which almost nothing
+is ordinary. And **raising the cap measurably does not help**:
+
+| `--max` | 80 | 120 | 160 | 200 | 240 |
+|---|---|---|---|---|---|
+| imp 3 / 2 / 1 | 24 / 52 / 4 | 24 / 90 / 6 | 24 / 111 / 25 | 24 / 131 / 45 | 24 / 142 / 74 |
+
+The mix stays feature-dominated at every setting; the flat board just gets longer. **No cap can
+produce a pyramid, because the source is 50% features.** The cap's job is only to stop deleting the
+base and stop pinning a fortnight of stale features. The pyramid itself has to be *drawn* (§A.3–A.4).
+
+## A.2 The second error: an edition's lead is not the page's lead
+
+24 leads is **correct data** — 23 editions, one lead each, exactly as instructed. The rendering error
+is treating *"this edition's lead"* as *"this page's lead"*. A newspaper has section leads too; only
+one of them runs above the fold at 5rem.
+
+So the page needs two distinct concepts where it currently has one:
+
+- **tier** — editorial, writer-assigned, per edition (`importance`). Unchanged. Never overridden.
+- **display rank** — page-level, derived, `(date, importance)` order. Exactly one card is the splash.
+
+This is also why widening §6.3's type ratio backfires. 1.18 / 1.6 / `clamp(2rem,3.4vw,3.1rem)` is a
+2.6× spread, up from today's 1.65× — but applied to 24 leads it does not produce a hierarchy, it
+produces **a wall of 3.1rem headlines with 52 near-peers underneath**. The more emphatic the lead
+treatment, the more absurd it looks repeated 24 times. **Scale is a consequence of A.1–A.4, not a
+peer of them.**
+
+## A.3 The fork: zones are DATA, never DOM
+
+Three candidate architectures were stress-tested. Two are fatal, and the fatal mechanism is one line:
+
+```css
+.folio-grid.on .fcard{ position:absolute; top:0; left:0; margin:0; }   /* home.html:364 */
+```
+
+**It is a descendant selector**, and `.folio-grid` is the `position:relative` ancestor
+(`home.html:361`). Therefore:
+
+| Candidate | Verdict | The mechanism that kills it |
+|---|---|---|
+| **(a) keep the masonry, change only what paints** — the stance of §1–§6 | **insufficient** | `layout()` is one global shortest-column pass whose eager tallest-fit backfill (`:665-676`) pulls the *tallest* fitting card from the whole remaining queue, and whose pass-4 bottom-steal (`:719-771`) promotes cards from below into notches above. Position encodes packing convenience **by construction**. It can express A.1 and part of A.5 and cannot express a contiguous index, an edition fold, or one splash — i.e. it cannot answer the complaint. Worse, it is *self-defeating* the moment A.1 lands: ~90 cards ordered by height is a longer flat board |
+| **zones as nested containers** (`<section class="zone-lead">` inside `#folioGrid`) | **fatal** | cards nested one level down still go absolute against `.folio-grid`; the wrapper collapses to 0 height and `grid.style.height = max(col) - GAP` (`:772`) accounts for nothing inside it. **All three zones stack at y≈0 and overlap** |
+| **briefs in a flow index outside `#folioGrid`** | **fatal** | `cards = grid.querySelectorAll('.fcard')` is captured once (`:618`) and the fold (`:869`), read toggle (`:880`) and votes (`:1038`) are all delegated on `grid`; `readCounts()`, `paintRead()` and `apply()` iterate `cards`. Index rows would get no read dimming, no unread count, **no beat filtering** (they stay visible while the grid empties — the filter looks broken), no votes, no fold. **Six shipped features die silently** |
+| **(c) full zones, retire the packer** | **fatal** | `home_harness.py:63` derives every rect by regexing `style.transform` for `translate(x,y)`. With no absolute placement the regex misses, every rect becomes `l=0,t=0`, and the overlap loop counts every pair. The only way to see this page without a Ruby toolchain **goes dark exactly when the riskiest change lands** — the third instance of that failure shape in this repo |
+
+**Chosen: (b) zones + masonry band, where a zone is a data partition inside `layout()`.** Same
+`#folioGrid`, same direct-child `.fcard` elements, same absolute placement, same `cards` array,
+same delegated handlers. The existing body of `layout()` is extracted **unchanged** into
+`packRange(items, cols, colW, x0, y0)` and called once per zone:
+
+- **Zone A — the splash + today.** `data-fresh="1"` and `data-imp>=2`.
+- **Zone B — the band.** Everything else with `data-imp>=2`, plus `.fcard--ed` (the THREADS band of
+  §2.3 is a *zone*, which answers old open question 4 without a placement hint).
+- **Zone C — the index.** `data-imp="1"`, placed by a second, **dumber** placer: ~15 lines,
+  column-major, count-partitioned via `ceil(k/cols)`, no notches, no steal.
+
+Zones are recomputed from `visible` on every layout, so a beat filter re-derives them; an empty zone
+takes zero height and its divider goes `display:none`.
+
+**The splash is slot-based, not tier-based:** its occupant is the first visible card in rank order
+with `data-imp>=2`. **Never keyed on `.lead`** — editorial cards carry class `lead` with
+`data-imp="2"` (`home.html:56`) purely for the `span=2` side effect, and would otherwise win the
+splash. If nothing qualifies (filter to a briefs-only beat, or a no-lead fortnight) Zone A collapses
+to zero height and the band becomes the top zone.
+
+## A.4 Briefs stop being cards — the change that makes A.1 and A.5 affordable
+
+A tier-1 brief becomes a **ruled one-line row** that is still a `.fcard`, still a direct child of
+`#folioGrid`, still absolutely placed. Be honest about the numbers: the row is **~32px, not 24px**,
+because `.fcard__read` (22×17 plus a −6px touch target) and the two `.ffb-t` thumbs stay per-story —
+reasoned votes are this pipeline's highest-value signal and are not negotiable for a lower tier.
+
+What it costs in the engine: nothing new. The fold is already there and already correct —
+`.fcard[data-imp="1"] .fcard__more{display:inline-flex}` (`home.html:443`) plus `is-folded`
+collapsing `.fcard__sum`/`.fcard__why`, with `reflow()` on expand; every imp1 has a summary
+(`load_recent` skips bodyless stories), so every row gets its button. No image work: `data-ogurl`
+and `.fcard__fresh` are both gated on `importance > 1` already. Retire the *"Brief"* rank chip on
+rows (~40% of a 32px row's width) but keep the word in `.ff-legend`/the rail index as real text —
+row shape must not become the only tier carrier (WCAG 1.4.1).
+
+**This is the axis that unlocks the other two.** A brief at 32px instead of ~300px means the page can
+afford ~20 of them, so A.5 has somewhere to put the base of the pyramid; and it is the real answer to
+"scale ratio", because the contrast a reader actually perceives is **rendered area**, not type size —
+a ~32px row against a multi-hundred-px splash, *without changing a single `font-size`*. **Unlike every
+other figure in this amendment, that ratio is not yet measured**: it needs real card heights, which is
+exactly what stage 1's harness makes obtainable. Treat it as directional until stage 3 prints it.
+
+## A.5 The cap policy: weighted, recency-banded — verified by prototype
+
+Weight by **rendered form**, not tier: `splash=6`, `feature card=3`, `index row=1`. Today's shipped
+page is **235 weight**, so a budget of **B=240** is "no page-length regression" by construction
+rather than by guess. Keep `apply_cap`'s edition/stream skeleton — it is the invariant that stops a
+dense Weekend erasing Science — and **change only the comparator**:
+
+1. **Age band** from `max_date`: `0` = today, `1` = ≤2d, `2` = ≤6d, `3` = older.
+2. **Per-edition tier depth**, retaining earliest position first:
+   band 0 `{3:∞, 2:8, 1:10}` · band 1 `{3:∞, 2:6, 1:4}` · band 2 `{3:∞, 2:3, 1:0}` ·
+   band 3 `{3:∞, 2:1, 1:0}`. **Briefs are perishable — they expire at 2 days.** That single line is
+   what keeps the index at ~20 rows instead of 120.
+3. **Global weight backstop:** while `weight(keep) > B`, drop `max by (band, -importance, position)`
+   — oldest band, lowest tier, latest position. **Never an imp3.** That is an *existing* structural
+   property (measured: imp3 = 24 at every cap 80→240) — preserve it and **test** it.
+4. **Floors:** `MIN_LATEST_EDITION` 6 → 3 (one lead + two features) on each stream's newest edition,
+   plus an absolute per-stream floor of ≥1.
+
+**Measured** (prototype run against the live uncapped window, reproduced independently):
+
+```
+KEPT n=91  3=24 2=48 1=19  (26%/53%/21%)  weight=238
+today kept 28 of 47          (vs 16 today — today's coverage nearly doubles)
+streams: news 42, weekend 23, ai-ml 17, science 5, sports 4
+biggest edition kept: 21     beats: 11 of 11     leads dropped: 0
+```
+
+Note honestly that 26/53/21 is *not* the source 8/50/42 — it cannot be, per A.1. The pyramid is drawn
+by one splash and 19 rows, not by the cap. What the cap delivers is a base that exists at all, a
+fortnight of stale features thinned, and **31 → 19 of today's stories dropped**: since post pages
+were unpublished on 2026-07-18 the feed is the only reading surface, so this strictly *improves*
+reachability. Worth saying out loud when it ships.
+
+**Degenerate cases, all measured or named:**
+
+- **A 40-story edition.** Real, twice: `('2026-07-25','weekend')` = 40 (3/20/17) and
+  `('2026-07-18','weekend')` = 40 (1/14/25). With no band-0 depth cap, Weekend takes ~54% of the
+  page and Science falls to 4 — the front page becomes one desk's arXiv index. Hence a ceiling in
+  band 0 too. Worth testing in the same stage: make the band-0 ceiling a per-edition *weight*
+  ceiling rather than counts (so a 17-brief roundup is admitted generously as 17 weight of rows while
+  its 20 features are rationed), binding only while the global budget is exceeded.
+- **A stream silent for a week** (sports, science are weekly). The bands would reduce it to
+  lead-only, so the per-stream floor is load-bearing. Floor 3 keeps science 5 / sports 4 above.
+- **Never zero for a beat.** `feed.topics` is computed from the *capped* set
+  (`build_stories_feed.py:637-642`), and a vanished chip corrupts reader prefs — see A.7.
+- **Zero leads on the page** is impossible unless the writers emit no 3 for 14 days. If it happens,
+  no card gets `span=2` and the splash falls back per A.3, handled in the zone code, not the cap.
+
+**Do not fix this upstream.** `routines/weekly-evaluator.md:69` instructs the Sunday Evaluator to
+spot-check `_data/homefeed.json` and treat *"an edition with no 3 / several 3s"* as **the writer's
+error to flag**. Re-scoring importance in the writers to suit a rendering decision would manufacture
+false findings against them every Sunday, and would turn a one-file page problem into
+`newsroom-ethos.md` + four assembled prompts + the evaluator's ~8 enumerations.
+
+## A.6 Ordering: position must encode rank
+
+Rank already exists and is already correct — `build_stories_feed.py:632` sorts `(date, importance)`
+descending and DOM order *is* rank order. Make it explicit as `data-rank` on the article so the
+engine never re-derives it, and mirror it in `home_harness.py::card()`.
+
+The engine change is three parts:
+
+1. **Partition into zones first, pack per zone** (A.3). Packing keeps all its freedom *inside* a
+   zone, where cards are peers and reordering costs nothing semantically.
+2. **Promotion eligibility** — the actual fix for the eager backfill (`:665-676`) and the pass-4
+   bottom-steal (`:719-771`). A candidate may fill a notch only if (i) it is in the **same zone** and
+   (ii) its `data-date` equals the date of the card that owns the notch. Same-day is
+   data-expressible, self-documenting, and directly encodes "position encodes recency-rank" —
+   preferable to a tuned rank window nobody will ever retune. Whatever no longer qualifies leaves a
+   hole, which becomes a pooled `.ffill` paper block at `colW` width, pitch-aligned to
+   `c*(colW+GAP)`. §2.1 item 4 needs those fillers anyway: **a void stops being a bug and becomes a
+   blank cell.**
+3. **Kill the shift-steal fallback** (`:737-762`) outside Zone B. It moves every card at or below
+   `leadTop` down by `delta` and rewrites `col`, `notches` and `placedRec`; inside a rank-ordered
+   zone it would drag the whole page to close one hole.
+
+**Pool dividers and fillers once at boot** and reposition them per layout. `reflow()` fires on up to
+77 og-image loads, on resize, on `load`, on `document.fonts.ready` and on every fold/vote/reason
+send — elements appended per call leak, and because `cards` was captured at `:618`, `apply()` would
+never hide them. Never move a card between containers on reflow: moving a focused element blurs it
+mid-vote-reason. Partition the index **by count**, not by height — a height-balanced partition
+re-partitions when a `.fcard__more` expansion changes a row's height, so rows would jump columns
+under the cursor.
+
+## A.7 Two latent defects this work exposes — worth fixing regardless
+
+**1. Roamed beat preferences are silently lossy.** `home.html:926` claims *"Chip keys absent from
+this page are ignored, never lost."* They are lost. `seedActiveFromPrefs` (`:944`) admits a key only
+`if (chipKeys[k])`, and `recordPrefsChange` (`:969`) then writes
+`topicPrefs = { topics: Array.from(active), … }` with a fresh `ts` — so the next chip click
+**overwrites the stored list with only the keys this build happened to render**, on every device.
+Any cap policy that can take a beat to zero triggers it, but the bug is already live and independent
+of this redesign. The obvious one line:
+
+```js
+topics: Array.from(active).concat(topicPrefs.topics.filter(function(k){ return !chipKeys[k]; }))
+```
+
+> **DO NOT SHIP THAT LINE AS WRITTEN** (verified 2026-07-25, see
+> `docs/PLAN-2026-07-25-front-page-hierarchy.md` §1 D-I). Two reasons, both confirmed by reading the
+> code. (a) `tools/feedback-sink/src/worker.js:583-585` **rejects** with HTTP 400 at
+> `topics.length > 50` — it does not clamp — and `home.html:965` branches only on `401`, so an
+> unbounded concat grows the list until topic *and read-state* roaming stops permanently and
+> silently on every device. (b) It is not a pure bug fix: `active.clear()` (the All chip) then
+> writes a non-empty `topics`, so **"back to All" stops propagating** — reversing the deliberate
+> replace semantics documented at `:923-925`. And there is no escape hatch: `worker.js:612`
+> re-serialises only `{topics, rs, ts}`, so a separate `held` field is dropped on the round trip.
+> The All-vs-held choice is structural and needs Rafael's decision. The client-side cap and non-2xx
+> surfacing are needed either way.
+
+**2. The harness cannot see this class of change.** Three known blind spots, all confirmed:
+`home_harness.py::card()` (`:209-225`) is a **hand-written mirror** of the Liquid, so a new
+`data-fresh`/`data-rank`/`data-zone` attribute simply will not exist in the harness DOM; `GEOM`'s
+`maxGap` groups rects by distinct left-x (`:68-69`), so zones with different column pitches report
+inter-zone whitespace as a packing regression; and `apply_cap` has **zero test coverage** — `grep`
+finds `apply_cap`/`MIN_LATEST_EDITION` nowhere under `tools/tests/`, and the golden byte-diff
+(`test_feed_sid.py:87`) runs with `--max 0`, so the cap is excluded from the only regression net.
+
+Consequence, and it is the whole reason Stage 1 is a gate: without an asserted **zone-cardinality**
+line, a missing `data-fresh` attribute files every card into "earlier", the splash never renders, and
+`GEOM` still prints `overlaps=0 maxGap=fine`. **Green on a broken page.** Add `zones=<a/b/c>` and
+`fills=<n>` to the GEOM line with asserted values, report `maxGap` per `data-zone`, and dump
+`(rank, zone, x, y)` per visible card to assert `y` is monotonically non-decreasing by rank within
+each zone (modulo same-date reordering).
+
+**One hard blocker to know about before A.5/A.6 add any feed field.**
+`tools/tests/test_feed_sid.py:130` asserts `extra_keys == {"sid"} & extra_keys` — it whitelists
+*exactly one* new key on a story dict and fails the instant a second appears. Adding e.g.
+`display_rank` therefore also touches that whitelist and requires regenerating
+`tools/tests/fixtures/dualwrite/golden-feed.json` via the `capture_golden_feed()` helper at
+`test_feed_sid.py:99-108`. (Everything else tolerates extra keys: no consumer iterates `story.keys()`
+or validates a closed schema.) **Cheapest path: derive rank and zone in JS from `data-imp` +
+`data-date`, which the cards already carry, and add no feed field at all.**
+
+## A.8 Revised staging
+
+> **SUPERSEDED by `docs/PLAN-2026-07-25-front-page-hierarchy.md` (PLAN v2, 2026-07-25).** The table
+> below is kept for the reasoning only. A.8 — and PLAN v1, which refined it — both assumed the
+> masonry packer stays. **It does not.** v2 deletes `:637-771` outright: the ranked list is the model
+> (`.folio-grid:not(.on)` at `:362` already IS it, and `.on` at `:615` repacks it by height), and the
+> desktop composition is a CSS-Grid band projection of that list. Consequences: stages 2 and 5 of
+> A.8 disappear rather than being resequenced; the full-width splash was an invention of the plan,
+> not of the mock (the dominant module is upper-right); and **the theme is no longer last** — grid,
+> type, imagery and hierarchy are one system. Stage 9's *spec* is still cut (four undefined custom
+> properties) but its goals are load-bearing.
+>
+> Two changes worth more than everything in this table, neither of which was in A.8: the curated
+> short headline already exists in `index/stories/*.jsonl` and the feed builder ignores it (median
+> 114 → 75 chars, verbatim headline/body duplication 27 → 0, three lines); and the editorial loop at
+> `:55` emits before the story loop at `:77`, putting ~4100px of AI opinion above the first news
+> story on a phone.
+
+The old §5 does not disappear — it becomes the **last** stage, applied to a page whose hierarchy is
+structural. Effort figures are estimates; dependencies are not.
+
+| Stage | Content | Files | Est. | Depends on |
+|---|---|---|---|---|
+| **1** | **Gate:** harness trust (`data-*` mirror, per-zone `maxGap`, asserted `zones=`/`fills=`, rank-monotonicity dump) + the one-line prefs fix (A.7) | `home_harness.py`, `home.html` | 2h | — |
+| **2** | `packRange()` extraction — a provably behaviour-identical no-op refactor | `home.html` | 2h | 1 (needs a trustworthy geometry dump to diff against) |
+| **3** | Brief **row skin** — CSS only; ships on the 4 imp1 cards already in the feed | `home.html` | 2h | 1 (screenshots); independent of 2 |
+| **4** | `apply_cap` **spec test (RED)** — no behaviour change, closes a zero-coverage gap. Must assert: no imp3 ever dropped; every stream keeps ≥1; **at least one story with `date == max_date` survives** (`fresh` is stamped *after* the cap, so the top zone's existence depends on it) | `tools/tests/test_feed_cap.py` | 1h | — (parallel with 1–3) |
+| **5** | **Zones:** `data-fresh`/`data-rank`, zone partition, splash slot, pooled dividers + `.ffill`, same-day promotion guard | `home.html`, `home_harness.py` | 5–6h | 1, 2, 3 |
+| **6** | Weighted recency cap behind `--policy weighted`, old default unchanged | `build_stories_feed.py`, `test_feed_cap.py` | 2h | 4 |
+| **7** | **Flip the cap default** (one line) + regenerate the feed | `build_stories_feed.py`, `_data/homefeed.json` | 0.5h | 5, 6 |
+| **8** | Scale ratio to 4–6×: generalize `span` 2 → n, splash full-width, editorial band, mobile clamps | `home.html` | 3h | 5 |
+| **9** | **The existing §5 in full** — tokens, ruled grid, rail, images, polish | `home.html`, `head/custom.html`, `home_harness.py` | 12–16h | 8 (its `GAP→2` / ink-grid work assumes the fillers and zone geometry from 5 and 8) |
+
+**Correction to §5's rollback claim.** "The entire redesign lives in two files… `_data/homefeed.json`
+is untouched by every stage" holds for stages 1–5, 8 and 9 — **not** for 6–7. `tools/publish.py:289`
+and `:393` invoke `build_stories_feed.py` with **no arguments**, so the policy is a *default* and
+reverting the commit does not regenerate the feed. That is exactly why the policy lands behind
+`--policy weighted` in stage 6 and the default flips as a separate one-line commit in stage 7:
+rollback of 7 is `git revert` **plus one** `python3 tools/build_stories_feed.py` run. Note also that
+generalizing `span` 2 → n (stage 8) is the same engine change §2.3 already needs for the editorial
+band — do it once, there.
+
+Blast radius for the cap change, verified: `apply_cap` is its own sole implementation; **no test or
+doc anywhere pins the 80-item total or the capped tier mix**; `build_stats.py` and all four live
+Workers have zero references to `importance`/`is_lead`/`homefeed`; and the ledger-side `importance`
+(`dedup.py`, `store/`, `plane/`, and every `tools/tests/test_{backfill,dualwrite,…}.py` fixture) is a
+**separate store**, untouched by any stage here. Docs to update with stage 6: the module header at
+`build_stories_feed.py:17`, `apply_cap`'s docstring (`:588-592`), and `ARCHITECTURE.md:834` only if
+the floor mechanism itself changes (it does — 6 → 3).
+
+## A.9 Revised open questions
+
+Old questions 1–3 stand (self-hosted face; beat colour; `--muted` at pure black). 4 and 5 are
+answered above. New:
+
+1. **Budget `B=240`** is set to today's rendered weight so the page does not get longer. Is
+   "no length regression" the right constraint, or should the front page get *shorter* and denser?
+2. **Briefs expire at 2 days** (band-1 depth `1:4`, band-2 `1:0`). That is the single line governing
+   index length. Right instinct, or should the index carry a full week of shorts?
+3. **`MIN_LATEST_EDITION` 6 → 3** thins the weekly desks (science 5, sports 4 in the measured run).
+   Acceptable, or floor the weekly streams higher than the daily ones?
+4. **One splash, or one splash per band-0 stream?** A slot-based splash means a single story owns the
+   top of the page. On a day when News and Science both lead strongly, is that right, or should
+   Zone A hold up to two?
+5. **Stage 3 alone** (brief rows, CSS only, 4 cards) is now the cheapest thing that shows Rafael
+   whether the row form reads as an index at all — before stages 5–7 make 19 of them. Worth
+   shipping first for a day?
