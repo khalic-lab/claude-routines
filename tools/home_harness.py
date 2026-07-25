@@ -79,7 +79,10 @@ is the number that matters, not merely `hidden=0`:
   h>0 inGrid=1     it has a line box of its own, inside the grid's own rect
   packedEmpty=0    the 4px row unit came off, so the line is not squeezed into one track
   restored=1 rePacked=1 reSpanned=N  clearing the filter brings the packed board back — the
-                   boot-into-empty path must not leave the pack engine disarmed
+                   boot-into-empty path must not leave the pack engine disarmed. AT >=700px ONLY:
+                   below that the grid is one column, where `packRowSpans` unpacks by design (a
+                   row holds one module, so it is already tight), and `rePacked=0 reSpanned=0` is
+                   the correct reading — measured 390/800/1024 on 2026-07-25.
 Two extra URL modes:
   #empty      stop at the empty state instead of restoring — this is the screenshot mode.
   #bootempty  seed the read map + a roamed Unread filter BEFORE the layout script runs, so the
@@ -623,7 +626,15 @@ setTimeout(function(){
       +' packedEmpty='+(grid.classList.contains('packed')?1:0)
       +' rowUnit='+getComputedStyle(grid).gridAutoRows
       +' rs='+((document.querySelector('.ff-rbtn[aria-pressed="true"]')||{dataset:{}}).dataset.rs||'all');
-    if(keep){ emit(out+' restored=- rePacked=- reSpanned=-'); return; }
+    /* THE SCREENSHOT MODE ABANDONS THE PAGE MID-STATE, so it clears what it wrote to storage
+       before it does. `file://` shares ONE origin across every artifact ever opened from it, so 82
+       read entries left behind here would boot the next run — any run, this harness or another
+       agent's — into a half-read board. PRE_SYNC's reset happens to cover it today; that is a side
+       effect of a different probe, not a guarantee this one may lean on. */
+    if(keep){
+      try{ ['homeRead:v1','topicPrefs:v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
+      emit(out+' restored=- rePacked=- reSpanned=-'); return;
+    }
     /* CLEARING THE FILTER IS THE OTHER HALF OF THE TEST, not just cleanup. The pack engine has to
        be armed on the way out of an empty board — under `#bootempty` the empty pass IS the first
        pass — so a board that comes back UNPACKED here is the regression, and every other probe on
