@@ -414,7 +414,11 @@ layout: archive
   /* No-JS and pre-JS are now the SAME layout as with JS, so the old `:not(.on)` fallback that
      centred cards in a 44em measure is gone: there is no longer a placement step to fall back
      from. `.on` is still set by the script and still gates the interactive skins. */
-  .folio-grid.on .fcard{ margin:0; }
+  /* No layout JS remains: CSS Grid places every card, so JS-off renders byte-identically to
+     JS-on. layout(), reflow(), its ~7 call sites, the debounced resize listener and the
+     fonts.ready hook are all deleted — with the packer gone there is no geometry to recompute,
+     and keeping empty hooks invites someone to fill them. `.on` is still set by the script as a
+     "JS is live" marker for the interactive skins; it no longer gates any placement. */
 
   .fcard{ min-width:0; }
   /* The grid stretches the ITEM; this hands that height to the element that actually paints the
@@ -717,21 +721,6 @@ layout: archive
      read heights → write positions) to avoid layout thrash across ~80 cards.
      The min column width tracks the ROOT font-size (the theme steps it 16→22px across
      breakpoints), so the reading measure stays constant instead of shrinking on wide screens. ---- */
-  // layout() is now a no-op: CSS Grid does the placement. It is kept as a function because
-  // reflow() and several event handlers call it, and because the next stage (band projection /
-  // the dominant module) will need one hook to set grid-area on a small number of cards. It must
-  // NOT set transforms, widths or grid height — doing so is what the deleted engine did wrong.
-  function layout(){
-    grid.style.height = '';                             // undo any height a previous build set
-  }
-  /* microtask-coalesced, NOT requestAnimationFrame: rAF is throttled/paused in occluded or
-     background windows, which left stale card positions (overlaps) until the tab repainted. */
-  var pending = false;
-  function reflow(){
-    if (pending) return;
-    pending = true;
-    Promise.resolve().then(function(){ pending = false; layout(); });
-  }
 
   /* ---- read/unread — LOCAL-ONLY state in localStorage, keyed by the durable st- story id
      (data-story on .fcard__fb); editorial cards carry ed-<stream>-<date> on the article itself
@@ -798,7 +787,6 @@ layout: archive
                       : readState === 'read'   ? 'Nothing read yet' + onBeat + '.'
                       : 'No stories on that beat right now.';
     empty.hidden = shown > 0;
-    reflow();
   }
   filters.querySelectorAll('.ff-rbtn').forEach(function(b){
     b.addEventListener('click', function(){
@@ -825,7 +813,6 @@ layout: archive
     mb.setAttribute('aria-expanded', String(!folded));
     var lbl = mb.querySelector('span');
     if (lbl) lbl.textContent = folded ? 'More' : 'Less';
-    reflow();
   });
 
   grid.addEventListener('click', function(e){
@@ -974,7 +961,7 @@ layout: archive
     var input = r.querySelector('input');
     function send(){
       var why = (input.value || '').trim();
-      r.style.display = 'none'; reflow();
+      r.style.display = 'none';
       if (!why) return;
       var onBtn = box.querySelector('.ffb-t.on');
       if (!onBtn) return;                    // vote was retracted before sending — nothing to attach to
@@ -990,11 +977,11 @@ layout: archive
     if (e.target.closest('.ffb-rzn')) return;           // typing/sending a reason, not voting
     var b = e.target.closest('.ffb-t'); if (!b) return;
     var box = b.closest('.fcard__fb'); var note = box.querySelector('.ffb-note');
-    var noteFn = function(m){ note.textContent = m; reflow(); };
+    var noteFn = function(m){ note.textContent = m; };
     var was = b.classList.contains('on');
     box.querySelectorAll('.ffb-t').forEach(function(x){ x.classList.remove('on'); });
     var rz = box.querySelector('.ffb-rzn'); if (rz) rz.style.display = 'none';
-    if (was){ postFb(box, 0, noteFn); reflow(); return; }  // second click on the same thumb = retract
+    if (was){ postFb(box, 0, noteFn); return; }  // second click on the same thumb = retract
     b.classList.add('on');
     postFb(box, +b.dataset.v, noteFn);
     var up = +b.dataset.v === 1;
@@ -1002,7 +989,7 @@ layout: archive
     inp.value = '';                          // shared box — never carry text across polarities
     inp.placeholder = up ? 'what stood out? (optional)' : 'why? (optional)';
     inp.setAttribute('aria-label', up ? 'Reason for thumbs-up (optional)' : 'Reason for thumbs-down (optional)');
-    r.style.display = 'flex'; reflow();
+    r.style.display = 'flex';
     if (!up) inp.focus();                    // a complaint asks for the why; a compliment shouldn't demand one
   });
 
@@ -1287,7 +1274,6 @@ layout: archive
         img.className = "fimg"; img.alt = ""; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
         var top = card.querySelector('.fcard__top');
         top.insertAdjacentElement('afterend', img);
-        reflow();
       };
       img.src = src;
     }
@@ -1309,13 +1295,10 @@ layout: archive
     cards.forEach(function(c){ if (c.dataset.ogurl) imgIo.observe(c); });
   }
 
-  /* ---- init + reflow triggers ---- */
-  var rt;
-  window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(reflow, 120); });
-  if (document.readyState !== 'loading') reflow();
-  else document.addEventListener('DOMContentLoaded', reflow);
-  window.addEventListener('load', reflow);   // catch late metrics
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(reflow);
+  /* ---- init ---- */
+  /* No reflow triggers remain. They existed because the packer had to re-measure on resize, on
+     late-arriving font metrics and on `load` once images had dimensions; CSS Grid re-lays-out on
+     all three by itself. */
 })();
 </script>
 <script>

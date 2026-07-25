@@ -38,38 +38,29 @@ import re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def _extract_tokens():
-    """The palette, READ from _includes/head/custom.html — never mirrored here.
+    """Embed EVERY <style> block from _includes/head/custom.html verbatim.
 
-    A hand-copied duplicate of that :root block is the drift trap this repo has hit repeatedly:
-    a token lands in custom.html, the harness keeps rendering the old value, and the screenshot
-    reports success on the wrong palette. Since the palette collapsed to a single
-    `light-dark()` :root block there is exactly one thing to extract, so mirroring buys nothing.
+    This used to regex out just the `:root{...}` palette. Selecting one block has two silent
+    failure modes, both plausible: a SECOND :root block added later (a type scale, say) is
+    dropped while the guard still passes on the first, and a `:root` inside an earlier @media
+    gets extracted INSTEAD of the real palette. In both cases the harness renders a page
+    production does not have and reports success. The deeper flaw was that the guard checked the
+    extracted TEXT, never that the tokens actually APPLY — the original garbage-selector bug
+    would have passed it too, had the garbage contained the token names.
 
-    Raises rather than falling back to a stale copy: a harness that silently renders the wrong
-    colours is worse than one that refuses to run.
+    Embedding everything cannot drop a token, needs no guard, and picks up the .propose__* /
+    .fb-btn rules the harness was missing anyway. It is the same `re.findall` over <style> that
+    main() already uses for _layouts/home.html — one mechanism instead of two.
     """
     src = os.path.join(ROOT, "_includes", "head", "custom.html")
     with open(src) as fh:
-        css = fh.read()
-    # Strip /* … */ first. Skipping this step cost a debugging round: the comment ABOVE the block
-    # mentions `:root{` in prose, so an unanchored search matched inside the comment and emitted
-    # a rule with a garbage selector — valid-looking output, zero tokens applied, and the only
-    # symptom was maxGap 200 -> 526 three steps later.
-    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
-    m = re.search(r"^[ \t]*:root\s*\{(?:[^{}]*)\}", css, re.M | re.S)
-    if not m:
-        raise SystemExit("home_harness: could not find the :root token block in %s "
-                         "(did the block's formatting change?)" % src)
-    root = m.group(0).strip()
-    for required in ("--paper", "--ink", "--accent", "color-scheme"):
-        if required not in root:
-            raise SystemExit("home_harness: extracted :root block is missing %s — "
-                             "the regex matched the wrong thing" % required)
-    return """<style>
-%s
+        blocks = re.findall(r"<style>.*?</style>", fh.read(), re.S)
+    if not blocks:
+        raise SystemExit("home_harness: no <style> block in %s" % src)
+    return "".join(blocks) + """<style>
 body{ background:var(--paper); color:var(--ink); font-family:var(--serif); margin:0; }
 .wrap{ max-width:1236px; margin:0 auto; padding:0 12px; }
-</style>""" % root
+</style>"""
 
 
 TOKENS = _extract_tokens()
