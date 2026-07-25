@@ -463,9 +463,8 @@ layout: archive
      the typographer's file stays theirs, and home.html's <style> loads after <head> so it wins on
      source order without !important. 0.85 leading is safe where 1.06 is required on modules: the
      nameplate is one word and cannot wrap, so no diacritic can collide with a line above it. */
-  .layout--home .page__title{ font-size:72px; line-height:.85; letter-spacing:0;
-    text-transform:uppercase; }
-  @media (max-width:699px){ .layout--home .page__title{ font-size:clamp(40px,11vw,72px); } }
+  .layout--home .page__title{ font-size:clamp(40px, 5vw, 76px); line-height:.85;
+    letter-spacing:0; text-transform:uppercase; }
 
   .folio-board{ position:relative; padding:22px 0 10px; }
   .ff-crop{ position:absolute; width:14px; height:14px; pointer-events:none; }
@@ -730,24 +729,28 @@ layout: archive
      breakpoints, so a rem-sized display face inflates ~37% between 1024 and 1600 on top of
      whatever the clamp is already doing. The clamp interpolates on viewport instead, hitting the
      typographer's desktop numbers at ~1440 and holding there.
-     LINE-HEIGHT IS 1.06, NOT THE ~0.95 THE BRIEF ASKED FOR, and the reason is measured rather
+     LINE-HEIGHT IS 1.10, NOT THE ~0.95 THE BRIEF ASKED FOR (and not the 1.06 first specced:
+     1.06 clears the 1.053em umlaut threshold by 0.007em, which is 0.39px at the lead size — inside
+     rounding, and it still reads as touching. 1.10 gives 2.63px of real clearance at the lead and
+     1.18px at the brief. Anton at 1.10 still has a cap-to-cap gap of 0.241em against Helvetica's
+     0.283em at 1.00, so nothing is given up.), and the reason is measured rather
      than aesthetic: in Anton the umlaut on Ä/Ü reaches 1.053em and the ring on Å reaches 1.229em,
      so any wrapping tier set below 1.053 puts diacritics inside the cap of the line above. ZÜRICH
      is a routine headline on this page, where that reads as a rendering fault, not as brutalism.
      1.06 in Anton is optically far tighter than 1.06 in Helvetica anyway — the cap fills 86% of
      the em against Helvetica's 72% — so the tightness the brief wanted is still there. Tiers that
      genuinely cannot wrap (the nameplate) go tighter, below. */
-  .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.06; margin:0;
+  .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.10; margin:0;
     text-transform:uppercase; text-wrap:balance; color:var(--ink);
-    font-size:clamp(16px, 1.25vw, 18px); letter-spacing:.02em; }
-  .fcard.imp2 .fcard__hl{ font-size:clamp(20px, 2.2vw, 32px); letter-spacing:.005em; }
+    font-size:1.15rem; letter-spacing:.02em; }
+  .fcard.imp2 .fcard__hl{ font-size:clamp(22px, 2.4vw, 36px); letter-spacing:.005em; }
   /* Two lead sizes, because the spec's 52px is a SPLASH size and a tier is not a width. Applied
      flat it put 52px into a 405px tail module and wrapped rank 2's headline to SEVEN lines at
      1024-1440 — the same pinching the rail diet just fixed, arriving through type instead of
      tracks. The dominant is ~2x the width of any other module, so it gets ~1.5x the type. */
-  .fcard.lead .fcard__hl{ font-size:clamp(28px, 3.0vw, 36px); letter-spacing:.005em; }
+  .fcard.lead .fcard__hl{ font-size:clamp(28px, 3.0vw, 38px); letter-spacing:.005em; }
   .folio-grid:not(.is-filtered) > .fcard:nth-child(1).lead .fcard__hl{
-    font-size:clamp(34px, 3.6vw, 52px); }
+    font-size:clamp(32px, 3.9vw, 60px); }
   /* Editorials stay OFF the display face. Anton ships no italic, so `font-style:italic` on it is
      synthesised oblique — a slanted ultra-condensed grotesk, which looks like a bug. They are a
      different KIND of thing anyway, and the serif italic already says so. */
