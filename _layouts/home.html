@@ -68,6 +68,22 @@ layout: archive
   {%- endcomment -%}
   <aside class="folio-rail">
     <p class="rail-edition">{{ feed.stories.first.date_label }}</p>
+    {%- comment -%}
+      THE BEAT SELECTOR IS THE SAME CONTROL, RENDERED TWICE — never two selectors. Each rail
+      button is a real `.ff-chip` carrying the same `data-topic`, so the script's ONE `active` Set
+      and its `sync()` painter drive both sets through `allChips()`; there is no rail-specific
+      state to keep in step and nothing to diverge. At >=1280 the bar hides its chips (see the CSS)
+      and the rail is the selector; below 1280 the rail is `display:none` and the bar is. So
+      exactly one set is ever visible — and, since `display:none` also removes a subtree from the
+      accessibility tree, exactly one set is ever announced.
+    {%- endcomment -%}
+    <div class="rail-beats" role="group" aria-label="Filter by beat">
+      <h2 class="rail-title">Beat</h2>
+      <button class="ff-chip ff-all" type="button" data-topic="" aria-pressed="true">All <span class="ff-ct">{{ feed.count }}</span></button>
+      {% for t in feed.topics %}
+      <button class="ff-chip" type="button" data-topic="{{ t.key }}" aria-pressed="false" style="--tc:{{ t.color }}"><span class="ff-dot"></span>{{ t.label }} <span class="ff-ct">{{ t.count }}</span></button>
+      {% endfor %}
+    </div>
     <h2 class="rail-title">How to read this page</h2>
     <dl class="rail-index">
       <dt><i class="rail-key rail-key--lead" aria-hidden="true"></i>Lead</dt>
@@ -601,6 +617,12 @@ layout: archive
     .folio-rail{ display:block; grid-column:1; align-self:start; position:sticky; top:64px;
       padding:0 20px 24px 0; border-inline-end:1px solid var(--rule); }
     .folio-grid{ grid-column:2; }
+    /* The bar stops repeating the beat chips once the rail carries them — the SAME buttons are
+       still in the DOM above, so this is one control with two skins, not a second selector, and
+       `display:none` keeps the hidden set out of the accessibility tree as well as off screen.
+       Measured at 1440: the bar goes 91px tall (chips wrapping to a third row) to 47px, which is
+       the whole reason the rail earns its 180px back. */
+    .folio-filters .ff-chip, .ff-lbl{ display:none; }
   }
   .rail-edition{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase;
     letter-spacing:.16em; color:var(--muted); margin:0 0 1.4em; }
@@ -620,6 +642,30 @@ layout: archive
   .rail-key--ed{ height:2px; background:var(--ink); }
   .rail-note{ font-family:var(--serif); font-size:.75rem; line-height:1.45; color:var(--muted);
     margin:1.6em 0 0; padding-top:1em; border-top:1px solid var(--hair); }
+
+  /* THE RAIL'S BEAT LIST. Same `.ff-chip` element as the control bar's — only the SKIN differs,
+     because a horizontal pill row does not fit a 160px measure. So: a vertical list, selection
+     marked by an inline-start edge plus inked weight rather than a filled box, counts pushed to
+     the rule with `margin-inline-start:auto`.
+     Every override below exists to undo a bar rule that reads wrong at rail scale; the specificity
+     is `.rail-beats .ff-chip[...]` (0,3,0) against the bar's `.ff-all[aria-pressed="true"]` (0,2,0),
+     so these win on weight and not on source order. */
+  .rail-beats{ margin:0 0 2em; }
+  .rail-beats .ff-chip{ display:flex; width:100%; gap:.5em; align-items:center;
+    border:0; border-inline-start:2px solid transparent; border-radius:0; background:transparent;
+    color:var(--muted-ui); font-size:.72rem; letter-spacing:.01em; line-height:1.25;
+    padding:.36em .1em .36em .62em; text-align:start; }
+  .rail-beats .ff-chip .ff-ct{ margin-inline-start:auto; }
+  .rail-beats .ff-chip:hover{ color:var(--ink); border-inline-start-color:var(--hair); }
+  /* The bar paints selection as a filled --ink pill. At rail scale that is a black bar across a
+     160px column for every beat you pick; the marked edge says the same thing at a tenth the ink. */
+  .rail-beats .ff-chip[aria-pressed="true"]{ background:transparent; color:var(--ink);
+    font-weight:700; border-inline-start-color:var(--red); }
+  /* the bar rings the topic dot in --paper so it survives the ink fill; with no fill the ring
+     just eats the dot. */
+  .rail-beats .ff-chip[aria-pressed="true"] .ff-dot{ box-shadow:none; }
+  .rail-beats .ff-all{ margin-bottom:.2em; }
+  .rail-beats .rail-title{ margin-bottom:.7em; }
 
   /* The dominant module sets its body in two text columns, as a CSS consequence of its span. This
      is what the deleted packer's `.span2` class used to do from JS, and it still earns its keep:
@@ -1183,13 +1229,23 @@ layout: archive
     var a = e.target.closest('.fcard__hl a');
     if (a){ var c = a.closest('.fcard'); if (!isRead(c)) setRead(c, true); }
   });
+  /* ---- The beat chips exist TWICE in the DOM — once in the control bar, once in the rail — and
+     they are one control, not two. Every chip carries the same `data-topic`, so this helper is the
+     only thing either rendering needs: one `active` Set, one painter, one click handler, and no
+     rail-specific state that could drift out of step with the bar's. It replaced three separate
+     `filters.querySelectorAll('.ff-chip')` call sites; adding a third rendering means extending
+     this selector and nothing else.
+     Scoped rather than a bare `.ff-chip` sweep so a chip-shaped control added elsewhere on the
+     page later cannot silently join the filter set. ---- */
+  var CHIP_SEL = '.folio-filters .ff-chip, .rail-beats .ff-chip';
+  function allChips(){ return document.querySelectorAll(CHIP_SEL); }
   function sync(){
-    filters.querySelectorAll('.ff-chip').forEach(function(c){
+    allChips().forEach(function(c){
       var k = c.dataset.topic;
       c.setAttribute('aria-pressed', (k ? active.has(k) : active.size === 0) ? 'true' : 'false');
     });
   }
-  filters.querySelectorAll('.ff-chip').forEach(function(chip){
+  allChips().forEach(function(chip){
     chip.addEventListener('click', function(){
       var key = chip.dataset.topic;
       if (!key){ active.clear(); held = []; }   // All replaces: held keys go too, so it propagates
@@ -1215,7 +1271,7 @@ layout: archive
      chip toggles merge, All replaces — which is what makes "back to All" still cross devices. ---- */
   var TP_KEY = 'topicPrefs:v1';
   var chipKeys = {};
-  filters.querySelectorAll('.ff-chip').forEach(function(c){ if (c.dataset.topic) chipKeys[c.dataset.topic] = 1; });
+  allChips().forEach(function(c){ if (c.dataset.topic) chipKeys[c.dataset.topic] = 1; });
   function validRs(v){ return v === 'unread' || v === 'read' ? v : ''; }
   var topicPrefs = { topics: [], rs: '', ts: 0 };
   try {

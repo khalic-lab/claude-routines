@@ -125,6 +125,8 @@ body{ background:var(--paper); color:var(--ink); font-family:var(--serif); margi
    wraps to; every wide-width number taken before this was measuring a narrower page than
    readers see. */
 .wrap{ max-width:1680px; margin:0 auto; padding:0 22px; }
+/* `.harness-doc` is deliberately UNSTYLED — it models `.initial-content` and its whole job is to
+   be a flex item with non-auto cross margins. See the note where it is emitted in main(). */
 </style>"""
 
 
@@ -350,9 +352,9 @@ def _extract_rail(feed):
     A harness that omits markup the layout emits does not merely fail to test it; it invents
     defects. Extracted, so it cannot drift.
 
-    The one Liquid expression in the block is substituted from the same feed the cards come from.
-    Any OTHER tag appearing in there is a hard error: silently shipping `{{ ... }}` into the page
-    would render as literal braces and quietly change wrap widths.
+    The Liquid in the block is substituted from the same feed the cards come from. Any OTHER tag
+    appearing in there is a hard error: silently shipping `{{ ... }}` into the page would render as
+    literal braces and quietly change wrap widths.
     """
     src = os.path.join(ROOT, "_layouts", "home.html")
     with open(src) as fh:
@@ -361,9 +363,30 @@ def _extract_rail(feed):
         raise SystemExit("home_harness: no <aside class=\"folio-rail\"> in %s — if the rail was "
                          "renamed or removed, update this extractor deliberately" % src)
     rail = m.group(0)
+    # Jekyll drops {%- comment -%} blocks; leaving them in would trip the leftover-Liquid guard
+    # below on the rail's own design notes.
+    rail = re.sub(r"\{%-?\s*comment\s*-?%\}.*?\{%-?\s*endcomment\s*-?%\}", "", rail, flags=re.S)
     first = (feed.get("stories") or [{}])[0]
     rail = re.sub(r"\{\{\s*feed\.stories\.first\.date_label\s*\}\}",
                   html.escape(str(first.get("date_label") or "")), rail)
+
+    # The rail's beat chips are a `{% for t in feed.topics %}` loop. WITHOUT expanding it the guard
+    # below fires — loudly, which is correct — but the tempting "fix" of dropping the loop instead
+    # would render a rail holding only the All chip, i.e. a harness that certifies a selector the
+    # page does not have. Expanded from the same `feed["topics"]` the bar's chips come from, so the
+    # two renderings of the one control cannot disagree here for a reason production would not have.
+    def _topics(m):
+        out = []
+        for t in feed.get("topics") or []:
+            body = m.group(1)
+            for k in ("key", "color", "label", "count"):
+                body = re.sub(r"\{\{\s*t\.%s\s*\}\}" % k, html.escape(str(t.get(k, ""))), body)
+            out.append(body)
+        return "".join(out)
+    rail = re.sub(r"\{%-?\s*for\s+t\s+in\s+feed\.topics\s*-?%\}(.*?)\{%-?\s*endfor\s*-?%\}",
+                  _topics, rail, flags=re.S)
+    rail = re.sub(r"\{\{\s*feed\.count\s*\}\}", str(feed.get("count") or 0), rail)
+
     leftover = re.findall(r"\{\{.*?\}\}|\{%.*?%\}", rail, re.S)
     if leftover:
         raise SystemExit("home_harness: un-substituted Liquid in the rail markup: %r — add a "
@@ -415,9 +438,29 @@ def main():
         '<span class="ff-dot"></span>%s <span class="ff-ct">%d</span></button>'
         % (t["key"], t["color"], t["label"], t["count"]) for t in feed["topics"])
 
+    # THE `.harness-doc` WRAPPER IS NOT DECORATION — WITHOUT IT THIS HARNESS INVENTS A COLLAPSE.
+    # minimal-mistakes sets `body{display:flex; flex-direction:column}`, so every child of <body>
+    # is a flex item and the cross axis is HORIZONTAL. `.wrap` carries `margin:0 auto`, i.e. two
+    # auto cross-axis margins, and per Flexbox 9.4 an item with an auto cross margin is NOT
+    # stretched — its width becomes fit-content instead of the container's 1440.
+    # That was survivable only by accident: fit-content is min(max-content, available), and the
+    # bar's ~13 wrapping chips gave `.folio-filters` a max-content of a full single line, which
+    # held `.wrap` open at the viewport width. The moment the >=1280 rule hides those chips, the
+    # widest remaining max-content is the board's — and `container-type:inline-size` on `.fcard`
+    # (contain:inline-size) zeroes each module's intrinsic contribution, so the 12-track sheet
+    # collapses to ~103px. Measured, chips hidden and no other change: wrap 1440 -> 327,
+    # board 1396 -> 283, grid 1216 -> 103. Every geometry invariant still PASSED through it
+    # (inversions 0, rank2 >= tail, scrollW == innerW) — only the widths and the screenshot showed
+    # it, which is how it cost a revert on 2026-07-25 before the cause was known.
+    # Production never had this: `.initial-content` is the flex item there and the theme gives it
+    # `flex:1 0 auto` with NO auto cross margins, so it stretches to a definite width and `#main`
+    # (max-width + margin:auto) does ordinary block layout inside it. An unstyled block here
+    # reproduces exactly that chain, so `.wrap` is sized by a definite parent rather than by its
+    # own contents. `width:100%` on `.wrap` fixes the symptom identically and says nothing about
+    # why, so it is not what ships.
     page = """<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>home harness</title>%s%s
-<div class="wrap">
+<div class="harness-doc"><div class="wrap">
 <div class="folio-filters" id="folioFilters"><span class="ff-lbl">Beat</span>
 <button class="ff-chip ff-all" type="button" data-topic="" aria-pressed="true">All <span class="ff-ct">%d</span></button>
 %s<span class="ff-read" role="group" aria-label="Read state"><button class="ff-rbtn" type="button" data-rs="" aria-pressed="true">All</button><button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button><button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button></span>%s</div>
@@ -425,7 +468,7 @@ def main():
 <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
 %s<div class="folio-grid" id="folioGrid">%s</div>
 <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
-</div></div>
+</div></div></div>
 %s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, feed["count"], chips, SYNC_UI,
                _extract_rail(feed),
                # Emission order mirrors _layouts/home.html: ED_AFTER stories, then the editorials,
