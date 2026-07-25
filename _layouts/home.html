@@ -103,7 +103,7 @@ layout: archive
     {%- endcomment -%}
     {% assign ed_after = 3 %}
     {% for s in feed.stories %}
-    <article class="fcard imp{{ s.importance }}{% if s.is_lead %} lead{% endif %}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}"{% if s.url and s.importance > 1 %} data-ogurl="{{ s.url }}"{% endif %}>
+    <article class="fcard imp{{ s.importance }}{% if s.is_lead %} lead{% endif %}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}"{% if s.deck %} data-deck=""{% endif %}{% if s.url and s.importance > 1 %} data-ogurl="{{ s.url }}"{% endif %}>
       <div class="fcard__in" style="--tc:{{ s.topic_color }}">
         <div class="fcard__top">
           <span class="fcard__beat" title="{{ s.stream_label }} · {{ s.date_label }}"><span class="ff-dot"></span>{{ s.topic_label }}</span>
@@ -121,6 +121,14 @@ layout: archive
           {%- assign hl_last = hl_end | slice: -2, 1 -%}
         {%- endif -%}
         <h2 class="fcard__hl{% unless hl_last == '?' or hl_last == '!' or hl_last == '.' %} fcard__hl--dot{% endunless %}">{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.headline }}</a>{% else %}{{ s.headline }}{% endif %}</h2>
+        {%- comment -%} The deck is the STANDING front-page text when the writer wrote one: the card
+          folds to headline + deck + why and More reveals `summary` (the recorded display_body).
+          The parsed summary is retired from the folded card wherever a deck exists — the deck was
+          introduced precisely because the summary is the wrong length for a front page, so showing
+          both would stack two standfirsts and reintroduce the duplication it removes. Stories
+          without a deck render exactly as they do today, permanently: the pipeline never
+          synthesizes one, so deck-absent is a steady state, not a migration window. {%- endcomment -%}
+        {% if s.deck %}<p class="fcard__deck">{{ s.deck }}</p>{% endif %}
         {% if s.summary != "" %}<p class="fcard__sum">{{ s.summary }}</p>{% endif %}
         {% if s.why and s.why != "" %}<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>{{ s.why }}</p>{% endif %}
         {%- comment -%} After the prose, not between headline and body: the clamp ends in an
@@ -128,7 +136,10 @@ layout: archive
           module diet only briefs had this button and their body was hidden, so its position was
           invisible; now every tier carries one and putting it under the headline interrupted the
           one flow the page most needs to keep. {%- endcomment -%}
-        {% if s.summary != "" %}<button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>{% endif %}
+        {%- comment -%} Only where it DOES something. Since the clamps were removed a lead or feature
+          without a deck already shows its whole body folded, so its More button toggled nothing —
+          a control that does nothing is worse than no control. {%- endcomment -%}
+        {% if s.summary != "" and s.deck or s.importance == 1 and s.summary != "" %}<button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>{% endif %}
         <div class="fcard__line">
           {% if s.affiliation_label %}<span class="fcard__src"><span class="fcard__aff">{{ s.affiliation_label }}</span> · {{ s.source_domain }}</span>{% else %}<span class="fcard__src">{{ s.source_domain }}</span>{% endif %}
           {% if s.fresh and s.importance > 1 %}<span class="fcard__fresh">Just in</span>{% endif %}
@@ -820,6 +831,13 @@ layout: archive
   .fcard__more svg{ width:10px; height:10px; fill:none; stroke:currentColor; stroke-width:2.4;
     stroke-linecap:round; stroke-linejoin:round; transition:transform .15s; }
   .fcard:not(.is-folded) .fcard__more svg{ transform:rotate(180deg); }
+  /* A deck card folds to headline + deck + why; More reveals the body. This is a whole-element
+     fold, not a crop — the deck is a complete, writer-budgeted sentence or two and the body is
+     hidden entire, so no sentence is severed and no ellipsis is printed. */
+  .fcard[data-deck].is-folded .fcard__sum{ display:none; }
+  .fcard__deck{ font-family:var(--serif); margin:0; color:var(--ink); font-size:1.05rem;
+    line-height:1.45; }
+  .fcard.lead .fcard__deck{ font-size:1.15rem; line-height:1.4; }
   /* Briefs stay headline-forward: body hidden outright, which is what "brief" means here. */
   .fcard[data-imp="1"].is-folded .fcard__sum,
   .fcard[data-imp="1"].is-folded .fcard__why{ display:none; }

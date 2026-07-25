@@ -285,8 +285,12 @@ def card(s):
     dot = "" if _hl[-1:] in ("?", "!", ".") else " fcard__hl--dot"
     more = ('<button class="fcard__more" type="button" aria-expanded="true">'
             '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
-            # every tier folds since the module diet — mirrors `{% if s.summary != "" %}`
-            '<span>More</span></button>' if s["summary"] else "")
+            # mirrors the layout: More is emitted only where it reveals something — a deck card
+            # (body hidden) or a brief (body + why hidden). A deckless lead/feature already shows
+            # everything folded, so it gets no button.
+            '<span>More</span></button>'
+            if s["summary"] and (s.get("deck") or s["importance"] == 1) else "")
+    deck = '<p class="fcard__deck">%s</p>' % e(s["deck"]) if s.get("deck") else ""
     summ = '<p class="fcard__sum">%s</p>' % e(s["summary"]) if s["summary"] else ""
     why = ('<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>%s</p>' % e(s["why"])
            if s.get("why") else "")
@@ -297,11 +301,11 @@ def card(s):
     # institution-first source label (mirrors the Liquid in _layouts/home.html)
     src = ('<span class="fcard__aff">%s</span> · %s' % (e(s["affiliation_label"]), e(s["source_domain"]))
            if s.get("affiliation_label") else e(s["source_domain"]))
-    return """<article class="fcard imp%(imp)s%(lead)s" data-topics="%(topics)s" data-imp="%(imp)s"%(og)s>
+    return """<article class="fcard imp%(imp)s%(lead)s" data-topics="%(topics)s" data-imp="%(imp)s"%(dk)s%(og)s>
 <div class="fcard__in" style="--tc:%(color)s">
 <div class="fcard__top"><span class="fcard__beat" title="%(stream)s · %(dlabel)s"><span class="ff-dot"></span>%(tlabel)s</span><span class="fcard__rank" data-imp="%(imp)s">%(rank)s</span></div>
 <h2 class="fcard__hl%(dot)s">%(hl)s</h2>
-%(summ)s%(why)s%(more)s
+%(deck)s%(summ)s%(why)s%(more)s
 <div class="fcard__line"><span class="fcard__src">%(src)s</span>%(fresh)s<span class="fcard__date">%(dlabel)s</span>%(readbtn)s</div>
 <div class="fcard__fb" data-story="%(id)s" data-brief="%(date)s-%(stream)s">
 <button class="ffb-t" type="button" data-v="1" aria-label="Useful">%(svg)s</button>
@@ -313,7 +317,8 @@ def card(s):
         "color": s["topic_color"], "tlabel": e(s["topic_label"]), "hl": hl, "summ": summ, "why": why,
         "src": src, "fresh": fresh, "dlabel": e(s["date_label"]),
         "id": e(s.get("sid") or s["id"]), "date": e(s["date"]), "stream": e(s["stream"]), "svg": SVG,
-        "readbtn": readbtn, "more": more, "dot": dot,
+        "readbtn": readbtn, "more": more, "dot": dot, "deck": deck,
+        "dk": ' data-deck=""' if s.get("deck") else "",
     }
 
 
