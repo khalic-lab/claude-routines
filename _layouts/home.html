@@ -453,6 +453,12 @@ layout: archive
 
   /* editorial cards — the briefs' section-level synthesis (cross-cutting threads / why-it-
      matters), surfaced here since the individual brief pages were retired (2026-07-18) */
+  /* Editorials opt OUT of the row stretch. With it, a folded ~200px editorial beside a ~700px
+     lead became a tall mostly-empty bordered box — the border drawing attention to the void
+     rather than resolving it. Compact is also what they ARE: a folded synthesis note, not a
+     story. So the paper below them reads as whitespace beside a long lead instead of as a
+     hollow panel. Story cards still stretch, which is what keeps their bands aligned. */
+  .fcard--ed{ align-self:start; }
   .fcard--ed .fcard__in{ background:var(--panel); border-top:2px solid var(--ink); }
   .fcard--ed .fcard__hl{ font-style:italic; }
   .fcard__eddisc{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase;
