@@ -291,3 +291,74 @@ reads as a hierarchy there is no number, and not looking is what produced v1.
 - **`ARCHITECTURE.md:821-822`** describes the front page as "a per-STORY masonry grid
   (importance-sized cards…)" ⊕ — false after Stage 6, and this file is the repo's declared single
   source of truth.
+
+---
+
+## §10 The composition reconciliation — why the masonry band became conditional
+
+**Date:** 2026-07-25 · **Status:** RESOLVED · Supersedes the task-#3 directive's item 2.
+
+The owner ruled that text is never cropped. That killed the per-tier line-clamps (`c9f0ec1`) and
+handed the front page back its full-length modules, which re-opened the question the clamps had
+closed: what absorbs the height variance. A three-agent prior-art fan-out was run to answer it. Its
+output is internally contradictory, and the contradiction is the whole finding.
+
+**The css-masonry agent** recommends a hybrid band system — static grid for the top band, and a tail
+band using the grid row-span technique (`grid-auto-rows` at a fine unit, per-item spans measured by
+JS via `ResizeObserver`). It is right that this is the only mechanism satisfying all four hard
+constraints *at once, today*: no truncation, DOM order == rank, JS-off renders full content, and all
+three engines. Native CSS masonry (`display: grid-lanes`, Grid L3) ships stably only in Safari 26;
+Chrome 140 has a flagged alternate syntax under rework and Firefox an outdated 2020 implementation,
+so it is a progressive enhancement behind `@supports`, never a foundation.
+
+**The news-design agent, studying five live fronts, concluded the opposite:**
+
+> "None of the mainstream fronts studied use algorithmic masonry … for their primary news package.
+> Height variation comes from a small, fixed enum of card formats … so heights vary in discrete
+> steps, not continuously. True justified/masonry packing … shows up on these sites only in
+> secondary contexts: photo galleries … not the main story hierarchy."
+
+> "…implement as a small enumerated set of card-format components … i.e. stepped/quantized masonry,
+> not an auto-packing algorithm."
+
+Its first recommendation is a written length budget enforced **at authoring time, never at render** —
+the Guardian's per-front `trailText` field.
+
+**The resolution.** Both agents are right about different worlds. The row-span band is correct *if*
+continuous full-text height variance is a fixed constraint. It is not: the owner approved the `deck`
+field the same day — a writer-authored front-page standfirst with a per-tier character budget — which
+attacks that variance at its source and makes module heights quantized by tier, exactly the shape the
+news-design agent found on every real front. Building an observer against a height distribution we
+know is about to shift is the one thing "measurement wins" argues against.
+
+Three further considerations pointed the same way. This repo has killed JS layout twice
+(`9344d2d`, `297ee9c`), and the row-span technique reintroduces its class — JS measuring rendered
+height and writing layout — with four known failure modes (first-paint measurement race, sub-pixel
+drift, a no-JS state needing its own guard, and re-measure on font load). The mock is a quantized
+broadsheet, not a Pinterest wall. And the void it would fix is currently **median 189px / max 1,978px
+at 1440** and shrinking editorially.
+
+A concrete collision confirmed the sequencing. `grid-auto-rows` at a fine unit applies to the whole
+grid, including the explicitly placed dominant at `grid-area: 1 / 1 / 2 / 13` — under an 8px unit the
+splash renders **8px tall**. Masonry-ing the tail therefore forces the top band's row placement to
+become JS-dependent too, contradicting the directive's own item 1 ("TOP BAND — UNCHANGED … no JS,
+exact DOM==rank"). Solvable with a separate grid container for the tail, but that is an architectural
+choice, not an implementation detail.
+
+**What ships instead, in order:** the deck render (folded card = headline + deck + why, `More`
+expands the body; deck-absent renders exactly as today, indefinitely, because the feed stays mixed
+for weeks); then a quantized tail using stepped CSS allocations with no observer; then the rail
+chrome and nameplate.
+
+**The masonry band is conditional, not cancelled.** Once the feed is majority-deck, re-measure the
+void distribution; build the row-span band exactly as amended **iff** median slack at 1440 still
+exceeds 150px. The amended no-JS requirement stands as its spec — the fine row unit is applied only
+by the span-computing JS via a class it sets, never as the stylesheet default, so an unspanned card
+can never clip or overlap — as does the tail-band drift bound: *no tail module may render visually
+above any module ranked more than one column ahead of it*, counted at every width and both themes.
+
+**I1 is unchanged and non-negotiable throughout.** The deleted packer's sin was deriving *position*
+from packing state, so height fed back into order. Row-span derives only *extent*; auto-placement
+still takes position from DOM order. That distinction is what would make the conditional build safe —
+it is not a licence to revisit shortest-column packing, which the research rejects outright as
+unbounded and content-dependent.
