@@ -825,13 +825,28 @@ layout: archive
     text-underline-offset:2px; text-decoration-color:var(--muted-ui); }
   .fcard__edp a:hover{ color:var(--accent); text-decoration-color:var(--accent); }
 
-  /* real article image (og:image via og-proxy), natural news-photo proportions — no letterboxed
-     strips, no generated placeholder. Cards without a usable image stay text-only, which is how
-     a broadsheet treats most stories anyway. */
-  .fimg{ display:block; width:100%; aspect-ratio:16/10; object-fit:cover; border:1px solid var(--hair);
-    background:var(--panel); filter:saturate(.9); }
-  .fcard.lead .fimg{ aspect-ratio:21/9; }
-  @media (prefers-color-scheme:dark){ .fimg{ filter:saturate(.85) brightness(.92); } }
+  /* IMAGE DISCIPLINE (2026-07-25, owner rejection of the live page). TYPE LEADS A MODULE; the
+     picture is subordinate furniture. What shipped before was the opposite and the arithmetic
+     shows why it had to be: `aspect-ratio:21/9` on a lead means the DOMINANT module's image is
+     1216 / 2.33 = 521px tall at 1440, inserted `afterend` of the meta row — so a full-colour
+     press photo, carrying its own publisher's branding, owned the entire fold ABOVE the headline.
+     The previous comment here called that "natural news-photo proportions"; natural proportions
+     are exactly what a full-width module cannot afford.
+     A SLOT, NOT AN ASPECT RATIO. Height is capped and `object-fit:cover` crops to it, so the
+     module — not the photo — decides how much room the photo gets. Sized in `cqi` for the same
+     reason the type scale is (6059e0c): what matters is the MODULE's width, never the viewport,
+     and one rule then covers every tier without naming any of them. Resolved: 268 -> capped 260px
+     on the 1216px dominant at 1440, 120px on a 405px tail lead or feature, 120px on a 352px module
+     at 1280. Below 700px no container is established, so `cqi` falls back to the viewport and the
+     floor takes over at 120px — which is the right answer there anyway.
+     GRAYSCALE IS THE MOCK'S GRAMMAR, not a tint. `saturate(.9)` was a colour photo with the
+     volume slightly down; `grayscale(1)` with a small contrast lift is the b/w halftone the
+     broadsheet is built on, and it also stops a foreign brand-red (the Guardian bar in the
+     rejected screenshot) out-shouting --red, which is the page's only accent. */
+  .fimg{ display:block; width:100%; height:clamp(120px, 22cqi, 260px); object-fit:cover;
+    border:1px solid var(--hair); background:var(--panel);
+    filter:grayscale(1) contrast(1.08); }
+  @media (prefers-color-scheme:dark){ .fimg{ filter:grayscale(1) contrast(1.06) brightness(.9); } }
 
   /* THE TYPE SCALE — Anton, uppercase, per tier. Sizes are PX, not rem, and that is the same
      lesson the rail taught: the theme steps the root 16 -> 18 -> 20 -> 22px across these very
@@ -1746,8 +1761,15 @@ layout: archive
       var img = new Image();
       img.onload = function(){
         img.className = "fimg"; img.alt = ""; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
-        var top = card.querySelector('.fcard__top');
-        top.insertAdjacentElement('afterend', img);
+        /* BELOW THE HEADLINE+DECK BLOCK, never above it. This used to be `afterend` of
+           `.fcard__top`, which put the photo between the meta row and the <h2> — so on the
+           dominant module the reader met a press photo before they met the story. Type leads;
+           the deck is part of that lede, so the image lands after it when one exists and after
+           the headline when one does not. Anchored on the elements themselves rather than an
+           index, since deck / summary / why are each conditional. */
+        var anchor = card.querySelector('.fcard__deck') || card.querySelector('.fcard__hl');
+        if (!anchor) return;
+        anchor.insertAdjacentElement('afterend', img);
       };
       img.src = src;
     }

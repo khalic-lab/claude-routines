@@ -171,6 +171,38 @@ TOKENS = _extract_tokens()
 SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28'
        'a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>')
 
+# THE IMAGE SLOT WAS INVISIBLE TO THIS HARNESS, AND THAT IS HOW THE REGRESSION SHIPPED APPROVED.
+# og:images arrive at runtime from og-proxy, `window.fetch` is stubbed here, and nothing else ever
+# put an `.fimg` in the DOM — so every geometry number this harness has produced was measured on a
+# page with no pictures on it, while production put a 521px photo above the fold. A card that WOULD
+# carry an image now renders this placeholder at the real slot, so heights, module order and the
+# first screen are measured with the images in place.
+#
+# DELIBERATELY SATURATED. A grey placeholder under `filter:grayscale(1)` is indistinguishable from
+# a grey placeholder with the filter missing; magenta and cyan stripes render as grey ONLY if the
+# filter is actually applied, so the screenshot proves the rule rather than merely not
+# contradicting it. The diagonals also make `object-fit:cover`'s crop visible.
+IMG_PH = ("data:image/svg+xml;utf8,"
+          "<svg xmlns='http://www.w3.org/2000/svg' width='320' height='200'>"
+          "<rect width='320' height='200' fill='%23d81b8c'/>"
+          "<path d='M-40 200L200 -40M40 280L280 40M120 360L360 120M-120 120L120 -120'"
+          " stroke='%2300b3c8' stroke-width='34'/></svg>")
+
+
+def _wants_image(s):
+    """Mirrors swapImage() in the layout: lead/feature with a URL, arXiv excluded.
+
+    Kept as one function so the placeholder cannot appear where production would show nothing
+    (a harness that invents images is as wrong as one that omits them).
+    """
+    if not s.get("url") or s.get("importance", 0) <= 1:
+        return False
+    host = ""
+    m = re.match(r"^[a-z]+://([^/]+)", str(s["url"]), re.I)
+    if m:
+        host = m.group(1).split("@")[-1].split(":")[0].lower()
+    return not re.search(r"(^|\.)arxiv\.org$", host)
+
 GEOM_CHECK = """<script>
 setTimeout(function(){
   // The board is CSS Grid now, so the old metrics are gone with the engine they diagnosed:
@@ -187,11 +219,36 @@ setTimeout(function(){
   var inversions=0;for(var k=0;k<order.length;k++) if(order[k].i!==k) inversions++;
   var xs=[];r.forEach(function(x){if(xs.indexOf(x.l)<0)xs.push(x.l);});
   var rows={};r.forEach(function(x){var key=Math.round(x.t/4);rows[key]=1;});
+  // ABSOLUTE WIDTH SANITY — the invariant the whole set was missing (directive, 2026-07-25).
+  // On 2026-07-25 the page rendered in a 327px column at a 1440 viewport and EVERY metric here
+  // passed: inversions 0, rank2 >= tail, cols 3, scrollW == innerW. All of them are ratios or
+  // orderings, and a uniformly shrink-wrapped page satisfies every ratio perfectly. That was the
+  // third green-while-broken incident in this repo. So assert the one thing none of them cover:
+  // the board must actually be about as wide as the viewport allows. The theme's own chain caps
+  // at max-width 1680 with a 22px inset each side; 0.9x of that minus a tolerance is far below any
+  // legitimate layout and far above any collapse (the real one measured 283 against a 1236 floor).
+  var boardEl=document.querySelector('.folio-board');
+  var boardW=boardEl?Math.round(boardEl.getBoundingClientRect().width):-1;
+  var expectW=Math.min(innerWidth,1680);
+  var floorW=Math.round(0.9*expectW-60);
+  var widthSane=boardW>=floorW;
   var d=document.createElement('div');d.id='geomcheck';
-  d.textContent='GEOM inversions='+inversions+' cards='+cards.length+' cols='+xs.length
+  d.textContent=(widthSane?'GEOM':'GEOM-FAIL')
+    +' widthSane='+(widthSane?1:0)+' board='+boardW+' floor='+floorW
+    +' inversions='+inversions+' cards='+cards.length+' cols='+xs.length
     +' rows='+Object.keys(rows).length+' gridH='+Math.round(grid.getBoundingClientRect().height)
     +' bodyScrollW='+document.body.scrollWidth+' innerW='+innerWidth;
   document.body.appendChild(d);
+  if(!widthSane){
+    // loud in the SCREENSHOT too: the collapse was invisible to every number, so the failure has
+    // to be visible to the other instrument as well.
+    var w=document.createElement('div');
+    w.setAttribute('style','position:fixed;inset:0 0 auto 0;z-index:9999;background:#c8102e;'
+      +'color:#fff;font:700 15px/1.5 system-ui,sans-serif;padding:9px 14px');
+    w.textContent='HARNESS FAIL — board '+boardW+'px at a '+innerWidth+'px viewport (floor '
+      +floorW+'px): the page has shrink-wrapped.';
+    document.body.appendChild(w);
+  }
 },4000);
 </script>"""
 
@@ -339,6 +396,10 @@ def card(s):
             '<span>More</span></button>'
             if s["summary"] and (s.get("deck") or s["importance"] == 1) else "")
     deck = '<p class="fcard__deck">%s</p>' % e(s["deck"]) if s.get("deck") else ""
+    # placed exactly where swapImage() places it: after the deck when there is one, else after the
+    # headline — never above the headline, which is the whole point of the 2026-07-25 fix.
+    img = ('<img class="fimg" src="%s" alt="" loading="eager" referrerpolicy="no-referrer">' % IMG_PH
+           if _wants_image(s) else "")
     summ = '<p class="fcard__sum">%s</p>' % e(s["summary"]) if s["summary"] else ""
     why = ('<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>%s</p>' % e(s["why"])
            if s.get("why") else "")
@@ -353,7 +414,7 @@ def card(s):
 <div class="fcard__in" style="--tc:%(color)s">
 <div class="fcard__top"><span class="fcard__beat" title="%(stream)s · %(dlabel)s"><span class="ff-dot"></span>%(tlabel)s</span><span class="fcard__rank" data-imp="%(imp)s"><i class="tier-key" aria-hidden="true"></i>%(rank)s</span></div>
 <h2 class="fcard__hl%(dot)s">%(hl)s</h2>
-%(deck)s%(summ)s%(why)s%(more)s
+%(deck)s%(img)s%(summ)s%(why)s%(more)s
 <div class="fcard__line"><span class="fcard__src">%(src)s</span>%(fresh)s<span class="fcard__date">%(dlabel)s</span>%(readbtn)s</div>
 <div class="fcard__fb" data-story="%(id)s" data-brief="%(date)s-%(stream)s">
 <button class="ffb-t" type="button" data-v="1" aria-label="Useful">%(svg)s</button>
@@ -365,7 +426,7 @@ def card(s):
         "color": s["topic_color"], "tlabel": e(s["topic_label"]), "hl": hl, "summ": summ, "why": why,
         "src": src, "fresh": fresh, "dlabel": e(s["date_label"]),
         "id": e(s.get("sid") or s["id"]), "date": e(s["date"]), "stream": e(s["stream"]), "svg": SVG,
-        "readbtn": readbtn, "more": more, "dot": dot, "deck": deck,
+        "readbtn": readbtn, "more": more, "dot": dot, "deck": deck, "img": img,
         "dk": ' data-deck=""' if s.get("deck") else "",
     }
 
