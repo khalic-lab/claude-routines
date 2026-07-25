@@ -385,12 +385,29 @@ layout: archive
 
   /* pre-JS (and no-JS): plain block flow, cards full-width, still readable. The .on class,
      added by the script before first paint, switches to absolute placement. */
-  .folio-grid{ position:relative; }
-  .folio-grid:not(.on) .fcard{ max-width:44em; margin:0 auto 20px; }
-  .folio-grid.on{ height:0; }                       /* JS sets the real height */
-  .folio-grid.on .fcard{ position:absolute; top:0; left:0; margin:0; }
-  .folio-grid.on.ready .fcard{ transition:transform .28s ease, opacity .2s ease; }
-  @media (prefers-reduced-motion:reduce){ .folio-grid.on.ready .fcard{ transition:none; } }
+  /* THE BOARD IS A GRID, NOT A PACKING (2026-07-25).
+     What was here before: `height:0` plus `position:absolute` on every card, with ~150 lines of JS
+     assigning each card an (x,y) by greedy shortest-column placement, notch backfill and two
+     "steal" passes. That engine reordered stories by HEIGHT, which destroyed the one thing the
+     page already had right — feed.stories arrives sorted (date, importance) and DOM order equals
+     that rank. It also punished editorial improvement: shortening headlines to real
+     front-page length moved measured maxGap from 186 to 435, because short cards flip the
+     pair-chooser's notch penalty and only short cards can then fill the notches it cuts.
+     Grid instead: DOM order IS reading order at every width, and because a grid row is as tall as
+     its tallest cell, cards in a row share a baseline — the band alignment the design wants, for
+     free, with no JS and nothing to keep in sync. The single-column case is not a special case,
+     it is the base case. */
+  .folio-grid{
+    display:grid; gap:20px; grid-template-columns:1fr; align-items:start;
+  }
+  /* 700px, not ~676: the old engine's threshold came out of `grid.clientWidth`, which is the
+     viewport minus the board's 24px inset. Measured 1->2 columns between 690 and 700. */
+  @media (min-width:700px){  .folio-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (min-width:1024px){ .folio-grid{ grid-template-columns:repeat(3,1fr); } }
+  /* No-JS and pre-JS are now the SAME layout as with JS, so the old `:not(.on)` fallback that
+     centred cards in a 44em measure is gone: there is no longer a placement step to fall back
+     from. `.on` is still set by the script and still gates the interactive skins. */
+  .folio-grid.on .fcard{ margin:0; }
 
   .fcard{ min-width:0; }
   .fcard__in{ background:var(--card); border:1px solid var(--hair); padding:16px 16px 15px;
@@ -452,9 +469,11 @@ layout: archive
   /* full summary on every card, at a readable size — no truncation, no shrinking. */
   .fcard__sum{ font-family:var(--serif); margin:0; color:var(--ink); opacity:.9; font-size:1rem; line-height:1.5; }
   .fcard.lead .fcard__sum{ font-size:1.05rem; }
-  /* a lead spanning two columns sets its body in two text columns, like a print splash —
-     halves the card height and keeps the measure readable. .span2 is set by the layout JS. */
-  .fcard.span2 .fcard__sum{ column-count:2; column-gap:28px; }
+  /* .span2 / column-count on the summary is GONE with the packer that set the class. Every card
+     occupies exactly one grid column for now: making leads `grid-column: span 2` needs either
+     `grid-auto-flow: dense` (which reorders visually, breaking rank == position) or accepting
+     holes when a span does not fit the remaining tracks. The dominant module is a deliberate
+     design decision for the band-projection stage, not a side effect of a span class. */
 
   /* the writers' "Why it matters" paragraph — kept as its own labelled block, like on the briefs */
   .fcard__why{ font-family:var(--serif); margin:0; font-size:.95rem; line-height:1.5; color:var(--ink);
@@ -661,7 +680,6 @@ layout: archive
   var filters = document.getElementById('folioFilters');
   var cards = Array.prototype.slice.call(grid.querySelectorAll('.fcard'));
   var active = new Set();
-  var GAP = 20;
 
   /* ---- masonry: absolute placement, shortest-column stacking. A 2-col lead levels the two
      columns it covers; the void that leaves in the shorter one is remembered as a "notch" and
@@ -669,153 +687,12 @@ layout: archive
      read heights → write positions) to avoid layout thrash across ~80 cards.
      The min column width tracks the ROOT font-size (the theme steps it 16→22px across
      breakpoints), so the reading measure stays constant instead of shrinking on wide screens. ---- */
+  // layout() is now a no-op: CSS Grid does the placement. It is kept as a function because
+  // reflow() and several event handlers call it, and because the next stage (band projection /
+  // the dominant module) will need one hook to set grid-area on a small number of cards. It must
+  // NOT set transforms, widths or grid height — doing so is what the deleted engine did wrong.
   function layout(){
-    var W = grid.clientWidth;
-    if (!W) return;
-    var rootFs = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    var minCol = 20.5 * rootFs;                         // ≈330px at the 16px base
-    var n = Math.max(1, Math.floor((W + GAP) / (minCol + GAP)));
-    var colW = (W - GAP * (n - 1)) / n;
-    var visible = cards.filter(function(c){ return c.style.display !== 'none'; });
-
-    visible.forEach(function(card){                       // pass 1: widths (+span class)
-      var span = (card.classList.contains('lead') && n >= 2) ? 2 : 1;
-      card.__span = span;
-      card.classList.toggle('span2', span === 2);
-      card.style.width = (colW * span + GAP * (span - 1)) + 'px';
-    });
-    var heights = visible.map(function(card){ return card.offsetHeight; });   // pass 2: read
-
-    var col = []; for (var i = 0; i < n; i++) col.push(0);
-    var notches = [];
-    var placedRec = [];                                   // 1-col placements, for the steal pass
-    var done = visible.map(function(){ return false; });
-    var pos = new Map();                                  // card -> {x,y}, for the shift fallback
-    function put(card, x, y){
-      pos.set(card, { x: x, y: y });
-      card.style.transform = 'translate(' + x + 'px,' + y + 'px)';
-    }
-    // Any unplaced 1-col card of height <= room? (a notch nothing can EVER fill is pure dead
-    // space — the pair chooser below penalizes creating one at full weight)
-    function fillable(from, room){
-      for (var q = from; q < visible.length; q++)
-        if (!done[q] && visible[q].__span === 1 && heights[q] + GAP <= room + 0.5) return true;
-      return false;
-    }
-    // Eager backfill at notch creation: repeatedly pull the TALLEST fitting 1-col card from the
-    // whole remaining queue (tallest-fit minimizes the residual). First-fit-by-arrival left
-    // 300px+ holes above leads whenever the next cards happened to be tall — measured maxGap 383.
-    function backfill(nt, from){
-      for (;;){
-        var pick = -1;
-        for (var q = from; q < visible.length; q++){
-          if (done[q] || visible[q].__span !== 1) continue;
-          if (heights[q] + GAP <= nt.room + 0.5 && (pick < 0 || heights[q] > heights[pick])) pick = q;
-        }
-        if (pick < 0) return;
-        done[pick] = true;
-        put(visible[pick], nt.col * (colW + GAP), nt.top);
-        nt.top += heights[pick] + GAP; nt.room -= heights[pick] + GAP;
-      }
-    }
-    visible.forEach(function(card, k){                    // pass 3: place
-      if (done[k]) return;                                // already pulled into a notch
-      var h = heights[k], x, y;
-      if (card.__span === 2){
-        // Choose the adjacent pair by top + waste, not top alone: leveling a lopsided pair
-        // buys a notch, and a notch no remaining card fits is dead space at full cost.
-        var best = 0, bestScore = Infinity, bestY = 0;
-        for (var i = 0; i + 1 < n; i++){
-          var top = Math.max(col[i], col[i+1]);
-          var waste = Math.abs(col[i] - col[i+1]);
-          var score = top + waste * (waste <= 40 || fillable(k + 1, waste) ? 0.3 : 1);
-          if (score < bestScore){ bestScore = score; best = i; bestY = top; }
-        }
-        var short_ = col[best] <= col[best+1] ? best : best + 1;
-        var shortTop = col[short_];
-        put(card, best * (colW + GAP), bestY);
-        col[best] = col[best+1] = bestY + h + GAP;
-        if (bestY - shortTop > 40){
-          var nt2 = { col: short_, top: shortTop, room: bestY - shortTop };
-          backfill(nt2, k + 1);                 // fill from the whole remaining queue, tallest-fit
-          if (nt2.room > 40) notches.push(nt2); // residual stays available to the in-order flow
-        }
-      } else {
-        var placedIn = -1;
-        for (var j = 0; j < notches.length; j++){
-          if (h + GAP <= notches[j].room + 0.5){ placedIn = j; break; }
-        }
-        if (placedIn >= 0){
-          var nt = notches[placedIn];
-          put(card, nt.col * (colW + GAP), nt.top);
-          placedRec.push({ card: card, colIdx: nt.col, y: nt.top, h: h });
-          nt.top += h + GAP; nt.room -= h + GAP;
-        } else {
-          var c = 0;
-          for (var m = 1; m < n; m++) if (col[m] < col[c] - 0.5) c = m;
-          put(card, c * (colW + GAP), col[c]);
-          placedRec.push({ card: card, colIdx: c, y: col[c], h: h });
-          col[c] = col[c] + h + GAP;
-        }
-      }
-    });
-
-    // pass 4: bottom-steal — a residual notch absorbs bottom-of-column 1-col cards; only a
-    // column's bottom-most card can move without leaving a hole behind. This closes the
-    // end-of-feed case (a lead-dense tail leaves notches nothing in the queue could fill —
-    // measured 645px at 2 columns before this pass).
-    var stole = true;
-    while (stole){
-      stole = false;
-      for (var t = 0; t < notches.length; t++){
-        var res = notches[t];
-        if (res.room <= 40) continue;
-        var pick = null;
-        for (var p = 0; p < placedRec.length; p++){
-          var pr = placedRec[p];
-          if (pr.moved || pr.y <= res.top) continue;
-          if (Math.abs(pr.y + pr.h + GAP - col[pr.colIdx]) > 1) continue;   // not its column's bottom
-          if (pr.h + GAP > res.room + 0.5) continue;
-          if (!pick || pr.h > pick.h) pick = pr;                            // tallest-fit
-        }
-        if (!pick && res.room > 150){
-          // Shift-steal fallback for BIG residual holes: the best bottom card overflows the
-          // notch by a small delta -> shift everything at/below the notch's lead down by delta
-          // and steal anyway. Trades a 600px+ hole for a <=100px seam on the sibling column
-          // (the 2-col/653-vs-625 near-miss case).
-          var over = null;
-          for (var p2 = 0; p2 < placedRec.length; p2++){
-            var pr2 = placedRec[p2];
-            if (pr2.moved || pr2.y <= res.top) continue;
-            if (Math.abs(pr2.y + pr2.h + GAP - col[pr2.colIdx]) > 1) continue;
-            var d = pr2.h + GAP - res.room;
-            if (d > 0 && d <= 100 && (!over || d < over.d)) over = { pr: pr2, d: d };
-          }
-          if (over){
-            var leadTop = res.top + res.room, d2 = over.d;
-            visible.forEach(function(vc){
-              var pv = pos.get(vc);
-              if (pv && pv.y >= leadTop && vc !== over.pr.card) put(vc, pv.x, pv.y + d2);
-            });
-            for (var m2 = 0; m2 < n; m2++) if (col[m2] >= leadTop) col[m2] += d2;
-            for (var t2 = 0; t2 < notches.length; t2++) if (notches[t2].top >= leadTop) notches[t2].top += d2;
-            placedRec.forEach(function(pr3){ if (pr3.y >= leadTop) pr3.y += d2; });
-            res.room += d2;
-            pick = over.pr;
-          }
-        }
-        if (pick){
-          col[pick.colIdx] -= pick.h + GAP;
-          put(pick.card, res.col * (colW + GAP), res.top);
-          pick.moved = true;                          // now notch-interior — never steal it again
-          res.top += pick.h + GAP; res.room -= pick.h + GAP;
-          stole = true;
-        }
-      }
-    }
-    grid.style.height = Math.max(0, Math.max.apply(null, col.concat([0])) - GAP) + 'px';
-    if (!grid.classList.contains('ready'))
-      setTimeout(function(){ grid.classList.add('ready'); }, 80);   // no fly-in on first paint
+    grid.style.height = '';                             // undo any height a previous build set
   }
   /* microtask-coalesced, NOT requestAnimationFrame: rAF is throttled/paused in occluded or
      background windows, which left stale card positions (overlaps) until the tab repainted. */

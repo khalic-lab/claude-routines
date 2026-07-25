@@ -16,7 +16,8 @@ Usage:
 
 The harness appends a geometry self-check 4s after load: a `#geomcheck` div reporting
 overlapping cards and the largest column gap (grep the --dump-dom output for 'GEOM').
-Overlaps must be 0; gaps beyond ~200px mean the packing regressed.
+`inversions` must be 0: it counts cards whose visual (row, column) position disagrees with DOM
+order, i.e. rank. The old overlaps/maxGap pair diagnosed the deleted masonry packer.
 
 It also stubs window.fetch (no real network) and appends a `#synccheck` div at 4.5s
 exercising the passkey read-state sync engine (grep for 'SYNC'):
@@ -78,20 +79,24 @@ SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3
 
 GEOM_CHECK = """<script>
 setTimeout(function(){
-  // Read each card's TARGET geometry (style.transform + offset box), not
-  // getBoundingClientRect: cards animate transform for 280ms after a reflow, and
-  // sampling mid-flight reports phantom overlaps that the settled layout doesn't have.
+  // The board is CSS Grid now, so the old metrics are gone with the engine they diagnosed:
+  // `overlaps` and `maxGap` measured a hand-rolled packing that no longer exists (grid rows
+  // cannot overlap and leave no vertical voids). What CAN still regress is the property the
+  // packer used to violate: DOM order == reading order == rank. So assert that instead.
   var grid=document.getElementById('folioGrid');
   var cards=[].slice.call(grid.querySelectorAll('.fcard')).filter(function(c){return c.style.display!=='none';});
-  var rects=cards.map(function(c){
-    var m=/translate\\(([-\\d.]+)px,\\s*([-\\d.]+)px\\)/.exec(c.style.transform);
-    return{l:m?Math.round(+m[1]):0,t:m?Math.round(+m[2]):0,w:c.offsetWidth,h:c.offsetHeight};
-  });
-  var overlaps=0;for(var i=0;i<rects.length;i++)for(var j=i+1;j<rects.length;j++){var a=rects[i],b=rects[j];if(a.l<b.l+b.w-2&&b.l<a.l+a.w-2&&a.t<b.t+b.h-2&&b.t<a.t+a.h-2)overlaps++;}
-  var xs=[];rects.forEach(function(r){if(xs.indexOf(r.l)<0)xs.push(r.l);});
-  var maxGap=0;xs.forEach(function(x){var iv=rects.filter(function(r){return r.l<=x&&x+10<r.l+r.w;}).sort(function(a,b){return a.t-b.t;});for(var i=1;i<iv.length;i++){var g=iv[i].t-(iv[i-1].t+iv[i-1].h);if(g>maxGap)maxGap=Math.round(g);}});
+  var r=cards.map(function(c){var b=c.getBoundingClientRect();return{t:Math.round(b.top+scrollY),l:Math.round(b.left),h:Math.round(b.height)};});
+  // Reading order for a row-major grid: sort by (row, column) and check it matches DOM order.
+  // Rows are grouped by top within a tolerance, since cards in a row share a baseline.
+  var order=r.map(function(x,i){return{i:i,t:x.t,l:x.l};})
+             .sort(function(a,b){return (Math.abs(a.t-b.t)>4?a.t-b.t:a.l-b.l);});
+  var inversions=0;for(var k=0;k<order.length;k++) if(order[k].i!==k) inversions++;
+  var xs=[];r.forEach(function(x){if(xs.indexOf(x.l)<0)xs.push(x.l);});
+  var rows={};r.forEach(function(x){var key=Math.round(x.t/4);rows[key]=1;});
   var d=document.createElement('div');d.id='geomcheck';
-  d.textContent='GEOM overlaps='+overlaps+' maxGap='+maxGap+' cards='+cards.length+' cols='+xs.length+' bodyScrollW='+document.body.scrollWidth+' innerW='+innerWidth;
+  d.textContent='GEOM inversions='+inversions+' cards='+cards.length+' cols='+xs.length
+    +' rows='+Object.keys(rows).length+' gridH='+Math.round(grid.getBoundingClientRect().height)
+    +' bodyScrollW='+document.body.scrollWidth+' innerW='+innerWidth;
   document.body.appendChild(d);
 },4000);
 </script>"""
