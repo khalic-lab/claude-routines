@@ -14,7 +14,7 @@ candidate, across ALL sections of the brief):
 
 ```json
 {"candidates":[
-  {"id":"1","headline":"<the bold headline you plan to use>","summary":"<one neutral sentence>",
+  {"id":"1","headline":"<the story's short front-page headline, 3-8 words>","summary":"<one neutral sentence>",
    "url":"<primary source URL — include it whenever you have one>"}
 ]}
 ```
