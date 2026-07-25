@@ -101,6 +101,7 @@ safety net, not a requirement — supply them if you already have them, otherwis
 ```json
 {"stories":[
   {"headline":"...","summary":"<one sentence>","url":"<primary source url>",
+   "deck":"<front-page standfirst — importance 3: 1-2 sentences <=160 chars; 2: 1 sentence <=110; 1: omit>",
    "tier":"T1","tags":["..."],
    "topics":["geopolitics"],"importance":3,
    "entities":["Iran","Strait of Hormuz"],
@@ -122,6 +123,15 @@ safety net, not a requirement — supply them if you already have them, otherwis
   `security`, `tech`, `sports`, `world`), `importance` is 1–3 (**3** lead, **2** standard, **1** brief). Score
   on real significance to the reader (see the tagging rubric in your prompt). If you omit them,
   `record` stores them empty and `build_stories_feed.py` derives a fallback from position + keywords.
+- **`deck`** (added 2026-07-25) is the front-page standfirst the card prints under the headline,
+  budgeted by the story's `importance` because that is what the card's tier label reads from:
+  **3** (Lead) → 1–2 complete sentences, ≤160 chars; **2** (Feature) → one complete sentence,
+  ≤110 chars; **1** (Brief) → **omit the key** — briefs are headline-only on the front page, so a
+  deck there is padding. Complete sentences with terminal punctuation, never an ellipsis (the page
+  prints the deck in full and puts `display_body` behind "More", so a trailing-off deck has nothing
+  to trail into), and it must not restate `display_body`'s opening — same test as `headline`.
+  Omitting it is safe: the card renders headline-only. There is no backfill and nothing synthesizes
+  a deck for records that lack one.
 - **`entities`** (added 2026-07-18; feeds the analytical plane's story graph): 2–5 proper-noun
   actors/places/artifacts the story is ABOUT — countries, organizations, named people, named
   systems/products, treaties, rulings (e.g. `["Iran","Strait of Hormuz"]`,

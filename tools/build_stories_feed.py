@@ -363,7 +363,7 @@ def load_index_meta(window_dates):
                     continue
                 r = json.loads(ln)
                 m = {"topics": r.get("topics"), "importance": r.get("importance"),
-                     "headline": r.get("headline"),
+                     "headline": r.get("headline"), "deck": r.get("deck"),
                      "display_body": r.get("display_body"), "why": r.get("why"),
                      "affiliations": r.get("affiliations")}
                 if r.get("id"):
@@ -560,6 +560,11 @@ def load_recent(days):
             # `hid` above is deliberately still slugified from the PARSED lead: it is the story id
             # the reader's read-state is keyed on, so it must stay byte-stable across this change.
             headline = (im.get("headline") or "").strip() or s["headline"]
+            # `deck` (2026-07-25) takes NO fallback, unlike every other overlaid field above.
+            # There is nothing in the post to recover it from — it is a front-page artifact the
+            # writer authors in Step C and nowhere else — and briefs are specified to omit it, so
+            # "absent" is a normal, correct state rather than a hole to fill.
+            deck = (im.get("deck") or "").strip()
             body = (im.get("display_body") or "").strip() or s["body"]
             why = (im.get("why") or "").strip() or s["why"]
             affs = im.get("affiliations") or []
@@ -576,6 +581,12 @@ def load_recent(days):
                 "importance": imp, "is_lead": imp == 3,
                 "permalink": "/%s/%s/%s/%s/" % (y, mo, dy, stream),
             }
+            if deck:
+                # Emitted ONLY when non-empty, for the same reason as `affiliations` below:
+                # Liquid counts "" as truthy, so a always-present `deck` key would open an empty
+                # standfirst slot under every brief-tier card and every record written before this
+                # field existed. Key absence is the render-side gate.
+                story["deck"] = deck
             if affs:
                 # institution-first source label (SPIKE-2026-07-10): the affiliation is the
                 # editorial source of a paper; the domain is just the platform. Keys are

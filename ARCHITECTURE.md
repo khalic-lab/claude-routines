@@ -824,7 +824,7 @@ text-only fallback, per-story thumbs posting `surface:"home"`), not the old edit
 `tools/build_stories_feed.py` **parses the recent `_posts/*.md` briefs** for each story's real
 prose (headline, body, and the writers' `Why it matters` paragraph — the dedup summary is a terse
 embedding one-liner, deliberately not used for display), then overlays `topics`/`importance` **and
-the writer-recorded `headline`/`display_body`/`why` prose** from the matching `index/stories/*.jsonl`
+the writer-recorded `headline`/`deck`/`display_body`/`why` prose** from the matching `index/stories/*.jsonl`
 record — **joined by canonical URL** (slugified headlines diverge between the post's bold lead and the
 record's curated headline), slug-id as fallback; the build prints the join rate.
 
@@ -838,7 +838,22 @@ The parser is not at fault (its group(3) is the post-bold remainder); the defect
 provenance. **`hid` is still slugified from the PARSED lead on purpose** — it is the story id the
 reader's localStorage read-state is keyed on, so it must stay byte-stable across this change. Recorded prose
 beats the markdown re-parse (the record is authored, the parse is recovered); as records accumulate
-the parser becomes legacy fallback only. `tools/home_harness.py` renders the layout standalone for
+the parser becomes legacy fallback only.
+
+**`deck` — the writer-authored front-page standfirst (2026-07-25, Guardian `trailText` pattern).**
+The card prints headline + deck folded, and reveals `display_body` behind "More". Written in
+DEDUP.md Step C and budgeted by the story's own `importance`, which is what the card's tier label
+already reads from (`home.html`: 3 → Lead, 2 → Feature, else Brief): **3 → 1–2 complete sentences
+≤160 chars, 2 → one sentence ≤110 chars, 1 → omitted** (briefs are headline-only by design). It
+exists because the owner's 2026-07-25 ruling bars mid-text clamps — the front page may not crop a
+sentence or print an ellipsis the writer did not write — so shortening a folded card has to happen
+*editorially, at the source*, not with CSS. **Unlike every other overlaid field, `deck` takes no
+fallback**: there is nothing in the post to recover it from, so the build emits the key **only when
+the record carries a non-empty one**, exactly as it does for `affiliations` and for the same reason
+(Liquid counts `""` as truthy, so an always-present key would open an empty standfirst slot under
+every brief and every pre-2026-07-25 record). Decks therefore appear gradually as new editions
+publish; nothing is backfilled and nothing synthesizes one. `tools/tests/test_deck.py` pins the
+absence contract. `tools/home_harness.py` renders the layout standalone for
 headless-Chrome smoke tests (geometry self-check included) — no local Jekyll needed. Unmatched stories get derived tags (topic from section+keywords,
 importance from brief position). Output is URL-deduped across streams, sorted newest+lead first,
 and capped per-edition (each stream's latest edition keeps ≥6 stories, so weekly Science never
