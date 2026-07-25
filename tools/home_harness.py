@@ -37,6 +37,44 @@ import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+THEME_URL = "https://khalic-lab.github.io/claude-routines/assets/css/main.css"
+THEME_CACHE = "/tmp/mm-main.css"
+
+
+def _theme_css(refresh=False):
+    """The COMPILED theme CSS, or "" if it cannot be fetched.
+
+    `remote_theme: mmistakes/minimal-mistakes@4.26.2` means the skin we are layering over exists
+    nowhere in this repo — it is built by GitHub Pages. So every geometry number this harness has
+    ever produced was measured WITHOUT it, and the theme has bled through this restyle in LAYOUT
+    before, not only in colour. The concrete one: minimal-mistakes' reset sets
+    `html{box-sizing:border-box}` + `*{box-sizing:inherit}`, so in production `.fcard__in` is
+    border-box and in a theme-blind harness it is content-box — a per-card difference on the one
+    measurement that matters.
+
+    Inlined BEFORE the local tokens so our rules still win the cascade, which is the deployed
+    order (custom.html loads last in <head>). Cached, because a page render should not depend on
+    the network; `--refresh-theme` re-pulls. Degrades to "" with a loud warning rather than
+    failing, so the harness still works offline — but a run that prints that warning is measuring
+    the wrong page and its numbers should not be quoted.
+    """
+    import urllib.request
+    if refresh or not os.path.exists(THEME_CACHE):
+        try:
+            req = urllib.request.Request(THEME_URL, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=25) as r:
+                data = r.read().decode("utf-8", "replace")
+            with open(THEME_CACHE, "w") as fh:
+                fh.write(data)
+        except Exception as exc:                       # offline, DNS, 4xx/5xx
+            if not os.path.exists(THEME_CACHE):
+                print("home_harness: WARNING could not fetch the theme CSS (%s) — rendering "
+                      "THEME-BLIND; box-sizing and skin geometry will differ from production" % exc)
+                return ""
+    with open(THEME_CACHE) as fh:
+        return "<style>%s</style>" % fh.read()
+
+
 def _extract_tokens():
     """Embed EVERY <style> block from _includes/head/custom.html verbatim.
 
@@ -292,6 +330,8 @@ def ed_card(e):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="/tmp/home-harness.html")
+    ap.add_argument("--refresh-theme", action="store_true",
+                    help="re-pull the compiled minimal-mistakes CSS into %s" % THEME_CACHE)
     args = ap.parse_args()
 
     feed = json.load(open(os.path.join(ROOT, "_data", "homefeed.json")))
@@ -317,7 +357,7 @@ def main():
 <div class="folio-grid" id="folioGrid">%s</div>
 <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
 </div></div>
-%s%s%s%s""" % (TOKENS, styles, feed["count"], chips, SYNC_UI,
+%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, feed["count"], chips, SYNC_UI,
                # Emission order mirrors _layouts/home.html: ED_AFTER stories, then the editorials,
                # then the rest. Keep ED_AFTER in step with the layout's `{% assign ed_after %}` —
                # this is the mirror that the published-DOM fixture is meant to retire.
