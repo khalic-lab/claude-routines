@@ -535,44 +535,40 @@ layout: archive
      divides by both 3 and 4: the same breakpoint can hold a 3-across band (span 4) and a 4-across
      brief band (span 3) without a second grid. The rail closes its own inline-end edge, so it
      joins the module rule system instead of sitting beside it. */
+  /* THE 12-TRACK SHEET (>=1280px), AND THE MOCK'S UPPER-RIGHT DOMINANT, NOW THAT IT FITS.
+     Twelve tracks rather than a fixed three because 12 divides by both 3 and 4: one grid holds a
+     3-across band (span 4), the 8+4 splash split, and a future 4-across brief band (span 3).
+     This band previously ran 2-across with a FULL-WIDTH dominant, because with a span-6 tail any
+     upper-right split left rank 2 at span<=6 — never wider than a module ranked below it. Measured
+     live at 1440 back then: 739, 370, 554, 555 — rank 2 the narrowest module on the page with a
+     seven-line headline. What changed is not the arithmetic but the text: with the module diet a
+     lead shows five clamped lines instead of forty, so a 3-across tail is comfortable and the
+     8 + 4 split lands rank 2 at EXACTLY tail width. The mock's shape was never refused by the
+     grid; it was refused by the prose length, which is now fixed. */
   .folio-rail{ display:none; }
   @media (min-width:1280px){
+    .folio-grid{ grid-template-columns:repeat(12,minmax(0,1fr)); }
+    .folio-grid > .fcard{ grid-column:span 4; }
+    .folio-grid:not(.is-filtered) > .fcard:nth-child(1){ grid-area:1 / 5 / 2 / 13; }
+    .folio-grid:not(.is-filtered) > .fcard:nth-child(2){ grid-area:1 / 1 / 2 / 5; }
+    /* the filtered fallback must re-state the span: `grid-area:auto` alone would reset these
+       modules to one track of twelve. */
+    .folio-grid.is-filtered > .fcard{ grid-area:auto; grid-column:span 4; }
+    .folio-empty{ grid-column:1 / -1; }
+  }
+  /* THE RAIL WAITS FOR 1600, and that is a measurement not a preference. It costs 286px, so
+     introducing it always steps the measure DOWN at its own breakpoint — there is no width where
+     adding a 286px column makes the remaining modules wider. Put it at 1280 and modules drop from
+     465px to 317px exactly when the viewport grows; put it at 1600 and they drop 465 -> 423, a
+     step small enough to be paid for by what the rail gives back. Strict monotonicity is simply
+     not available alongside a rail; the honest invariant is that the measure never falls below the
+     previous COLUMN COUNT's width, and that rank 2 is never narrower than the tail. */
+  @media (min-width:1600px){
     .folio-board{ display:grid; grid-template-columns:minmax(10rem,13rem) minmax(0,1fr); }
     .folio-rail{ display:block; grid-column:1; align-self:start; position:sticky; top:64px;
       padding:0 22px 24px 0; border-inline-end:1px solid var(--rule); }
-    .folio-grid{ grid-column:2; grid-template-columns:repeat(12,minmax(0,1fr)); }
-    /* SIX, not four, in this band. The rail costs ~13rem, so `span 4` here would make each module
-       NARROWER than the plain 3-column band at 1024-1279 — going wider must never shrink the
-       measure. Two across until there is room for three. */
-    .folio-grid > .fcard{ grid-column:span 6; }
-    /* THE INVARIANT THIS BAND EXISTS TO SATISFY: rank 2 must never be narrower than a module
-       ranked below it. Measured on the LIVE page at 1440 with an upper-right dominant here, module
-       widths ran 739, 370, 554, 555, 554, 555 — the second-most-important story of the day got the
-       NARROWEST column on the page, and its headline wrapped to seven lines at a 39px line-height.
-       With a 2-across tail (span 6) any upper-right split leaves rank 2 at span<=6, i.e. never
-       wider than the tail, so an upper-right dominant is arithmetically impossible in this band.
-       A FULL-WIDTH band is, which is the same treatment 700-1023 already gets: rank 1 takes all
-       twelve tracks and rank 2 auto-places into row 2 at the tail's own width. */
-    .folio-grid:not(.is-filtered) > .fcard:nth-child(1){ grid-area:1 / 1 / 2 / 13; }
-    /* the filtered fallback must re-state the span: `grid-area:auto` alone would reset these
-       modules to one track of twelve. */
-    .folio-grid.is-filtered > .fcard{ grid-area:auto; grid-column:span 6; }
-    .folio-empty{ grid-column:1 / -1; }
+    .folio-grid{ grid-column:2; }
   }
-  /* THERE IS NO 3-ACROSS STEP, and no upper-right dominant above 1279px. Both were tried and
-     measured out. `#main` caps at 1680px, so the widest the sheet ever gets beside the rail is
-     1350px — three across is therefore <=450px FOREVER, while two across is 475px at 1280, 555px
-     at 1440 and 675px at the cap. Adding the step made going from 1440 to 1600 SHRINK every module
-     from 555px to 423px and pushed rank 2's headline from four lines to six. And an upper-right
-     dominant needs the tail at span 4 to keep rank 2 at tail width, so it cannot be had without
-     that shrink.
-     This is the composition telling us something about the content rather than the grid: the mock's
-     upper-right dominant assumes short modules, and ours carry a ~200-word summary. At this text
-     length the page wants FEWER, WIDER columns, and the full-width band is the better splash
-     anyway — it gets the whole 1109px sheet and sets its body in two text columns, which is the
-     most splash-like treatment available here. Twelve tracks still earn their keep: span 6 is this
-     band, `1 / 1 / 2 / 13` is the full-width dominant, and a future brief band is span 3 or 4.
-     Revisit when module text is clamped, not before — that is the actual blocker. */
   .rail-edition{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase;
     letter-spacing:.16em; color:var(--muted); margin:0 0 1.4em; }
   .rail-title{ font-family:var(--sans); font-size:.62rem; font-weight:700; text-transform:uppercase;
