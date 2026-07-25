@@ -101,8 +101,13 @@ layout: archive
       <button class="ff-chip" type="button" data-topic="{{ t.key }}" aria-pressed="false" style="--tc:{{ t.color }}"><span class="ff-dot"></span>{{ t.label }} <span class="ff-ct">{{ t.count }}</span></button>
       {% endfor %}
     </div>
-    <h2 class="rail-title">How to read this page</h2>
-    <dl class="rail-index">
+    {%- comment -%} A <p>, not an <h2>, for the reason the Beat label is one: every story headline
+      on this page is an <h2>, so a rail heading seats furniture in the level that means "a story"
+      and lands in a reader's heading-navigation list among 82 headlines. The index keeps a
+      programmatic name through `aria-labelledby` on the <dl>, so nothing is lost by dropping the
+      heading semantics — the label is still announced when the list is entered. {%- endcomment -%}
+    <p class="rail-title" id="railIndexTitle">How to read this page</p>
+    <dl class="rail-index" aria-labelledby="railIndexTitle">
       <dt data-imp="3"><i class="tier-key" aria-hidden="true"></i>Lead</dt>
       <dd>The day's most consequential reporting. Largest type, top of the page.</dd>
       <dt data-imp="2"><i class="tier-key" aria-hidden="true"></i>Feature</dt>
@@ -738,14 +743,20 @@ layout: archive
      pixel of fill and the tier stops reading at a glance, which is the whole complaint. */
   .fcard__rank[data-imp="1"] .tier-key::before, .rail-index dt[data-imp="1"] .tier-key::before,
   .ff-li[data-imp="1"] .tier-key::before{ width:9px; height:2px; background:var(--rule); }
-  /* AI EDITORIAL GETS NO GLYPH — ruling, 2026-07-25, not a judgement left open. It is not a tier,
-     it is a disclosure, and 0ba0909 deliberately quieted it after measuring it as the loudest badge
-     on the page; a mark of its own would re-promote exactly what that commit demoted. Its boxed
-     label stays the primary signal.
-     The rail index still emits the empty `.tier-key` BOX on that row, and that is the point of the
-     fixed box above: the slot is present and deliberately blank, so "AI editorial" keeps the indent
-     its three neighbours have instead of hanging 9px to their left. The card's meta row emits no
-     `<i>` at all — `.fcard__rank` is right-aligned there, so there is nothing to align to. */
+  /* AI EDITORIAL GETS NO GLYPH ON THE CARD — ruling, 2026-07-25, not a judgement left open. It is
+     not a tier, it is a disclosure, and 0ba0909 deliberately quieted it after measuring it as the
+     loudest badge on the page; a mark of its own would re-promote exactly what that commit
+     demoted. Its boxed label stays the primary signal, and `.fcard__rank[data-imp="ed"]` emits no
+     `<i>` at all — `.fcard__rank` is right-aligned there, so there is nothing to align to either.
+     THE RAIL INDEX DRAWS THE BOX ITSELF, which is a different thing from giving the card a mark.
+     A legend that explains four entries while marking three is not a legend, but the fix is not a
+     new symbol — it is a MINIATURE OF WHAT THE CARD ALREADY SHOWS: a small outlined rectangle,
+     the same outline the label carries at the same 1px weight. So the legend now reads
+     literally ("this is what that looks like") rather than symbolically, and the card gains
+     nothing. Scoped to `.rail-index dt` on purpose: `.fcard__rank` and `.ff-li` must never pick
+     this up. */
+  .rail-index dt[data-imp="ed"] .tier-key::before{ width:9px; height:6px;
+    border:1px solid var(--ink); background:transparent; }
   .rail-note{ font-family:var(--serif); font-size:.75rem; line-height:1.45; color:var(--muted);
     margin:1.6em 0 0; padding-top:1em; border-top:1px solid var(--hair); }
 
