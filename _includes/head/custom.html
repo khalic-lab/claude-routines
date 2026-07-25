@@ -105,6 +105,23 @@ document.addEventListener('DOMContentLoaded', function () {
   .page__content a{ color:var(--ink); text-decoration:underline; text-decoration-thickness:1px;
     text-underline-offset:2px; text-decoration-color:var(--muted-ui); }
   .page__content a:hover{ color:var(--accent); text-decoration-color:var(--accent); }
+
+  /* THEME MOTION BLEED — the third category, after colour and layout. minimal-mistakes declares
+       b,i,strong,em,blockquote,p,q,span,figure,img,h1,h2,header,input,a,tr,td,… { transition:all .2s }
+     so every headline, paragraph and span on this site animates every animatable property that
+     changes — including the reflow when the display webfont lands. That is what "the text animates
+     to a smaller font on load" is: measured, the swap does NOT change font-size (60 / 37.98 / 33.94
+     / 24.24px are identical before and after), it changes WRAPPING, and `all` turns what should be
+     one instantaneous frame into a 200ms morph. Removing the animation does not make the reflow
+     smaller; it makes it stop being a thing you watch happen.
+     Scoped back to what a hover transition is actually for. Links keep theirs, explicitly and by
+     property name; prose keeps none. Our own components declare their own transitions in
+     _layouts/home.html, which is a <style> in the body and therefore later in source order — this
+     rule cannot reach them. */
+  b,i,strong,em,blockquote,p,q,span,figure,img,h1,h2,header,tr,td,
+  .highlight,.archive__item-teaser{ transition:none; }
+  a{ transition:color .15s ease, background-color .15s ease, border-color .15s ease,
+     text-decoration-color .15s ease; }
   strong,.page__content strong{ font-weight:600; }
 
   /* masthead — quiet, sans nav */
@@ -238,7 +255,16 @@ document.addEventListener('DOMContentLoaded', function () {
     src:local('Arial Narrow'),local('ArialNarrow'),local('Helvetica Neue Condensed Bold'),
         local('Roboto Condensed');
     font-weight:400 900; font-style:normal;
-    size-adjust:84.3%; ascent-override:140%; descent-override:39.1%; line-gap-override:0%;
+    /* 84.3% -> 86%, RE-TUNED ON THE REAL CORPUS. The original was fitted to one string
+       (HAMBURGEFONTSIV) at 100px, where it matches Anton to 0.3px. What the reader sees is not one
+       string at 100px, it is 82 live headlines at 60 / 38 / 34 / 24px, and there the fit was off:
+       the fallback set the page 293px shorter than Anton with 8 of 82 headlines wrapping to a
+       different number of lines. Swept 82-98% over the whole feed: 86% lands total headline height
+       EXACTLY on Anton's (delta 0px) with 6 of 82 mismatched, the minimum in the range — every
+       value above 88% is monotonically worse (88 -> 9, 90 -> 15, 94 -> 25, 98 -> 49).
+       6 of 82 is the floor for a different typeface pretending to be this one, which is why the
+       preload below matters more than this number does. */
+    size-adjust:86%; ascent-override:140%; descent-override:39.1%; line-gap-override:0%;
   }
 </style>
 <script>
