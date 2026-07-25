@@ -236,7 +236,7 @@ def card(s):
            if s.get("affiliation_label") else e(s["source_domain"]))
     return """<article class="fcard imp%(imp)s%(lead)s" data-topics="%(topics)s" data-imp="%(imp)s"%(og)s>
 <div class="fcard__in" style="--tc:%(color)s">
-<div class="fcard__top"><span class="fcard__beat" title="%(stream)s · %(dlabel)s"><span class="ff-dot"></span>%(tlabel)s</span><span class="fcard__rank" data-imp="%(imp)s"></span></div>
+<div class="fcard__top"><span class="fcard__beat" title="%(stream)s · %(dlabel)s"><span class="ff-dot"></span>%(tlabel)s</span><span class="fcard__rank" data-imp="%(imp)s">%(rank)s</span></div>
 <h2 class="fcard__hl">%(hl)s</h2>
 %(more)s%(summ)s%(why)s
 <div class="fcard__line"><span class="fcard__src">%(src)s</span>%(fresh)s<span class="fcard__date">%(dlabel)s</span>%(readbtn)s</div>
@@ -245,7 +245,8 @@ def card(s):
 <button class="ffb-t ffb-down" type="button" data-v="-1" aria-label="Not useful">%(svg)s</button>
 <span class="ffb-note" aria-live="polite"></span></div>
 </div></article>""" % {
-        "imp": s["importance"], "lead": lead, "topics": e(" ".join(s["topics"])), "og": og,
+        "imp": s["importance"], "rank": {3:"Lead",2:"Feature"}.get(s["importance"],"Brief"),
+        "lead": lead, "topics": e(" ".join(s["topics"])), "og": og,
         "color": s["topic_color"], "tlabel": e(s["topic_label"]), "hl": hl, "summ": summ, "why": why,
         "src": src, "fresh": fresh, "dlabel": e(s["date_label"]),
         "id": e(s.get("sid") or s["id"]), "date": e(s["date"]), "stream": e(s["stream"]), "svg": SVG,
@@ -266,7 +267,7 @@ def ed_card(e):
     return ('<article class="fcard fcard--ed" data-topics="" data-imp="2" data-story="ed-%s-%s">'
             '<div class="fcard__in"><div class="fcard__top">'
             '<span class="fcard__beat"><span class="ff-dot"></span>%s</span>'
-            '<span class="fcard__rank" data-imp="ed"></span></div>'
+            '<span class="fcard__rank" data-imp="ed">AI editorial</span></div>'
             '<h2 class="fcard__hl">%s</h2>'
             '<button class="fcard__more" type="button" aria-expanded="true">'
             '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'

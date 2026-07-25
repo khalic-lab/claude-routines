@@ -77,7 +77,7 @@ layout: archive
       <div class="fcard__in" style="--tc:{{ s.topic_color }}">
         <div class="fcard__top">
           <span class="fcard__beat" title="{{ s.stream_label }} · {{ s.date_label }}"><span class="ff-dot"></span>{{ s.topic_label }}</span>
-          <span class="fcard__rank" data-imp="{{ s.importance }}"></span>
+          <span class="fcard__rank" data-imp="{{ s.importance }}">{% case s.importance %}{% when 3 %}Lead{% when 2 %}Feature{% else %}Brief{% endcase %}</span>
         </div>
         <h2 class="fcard__hl">{% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.headline }}</a>{% else %}{{ s.headline }}{% endif %}</h2>
         {% if s.importance == 1 and s.summary != "" %}<button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>{% endif %}
@@ -106,7 +106,7 @@ layout: archive
       <div class="fcard__in">
         <div class="fcard__top">
           <span class="fcard__beat"><span class="ff-dot"></span>{{ e.kicker }}</span>
-          <span class="fcard__rank" data-imp="ed"></span>
+          <span class="fcard__rank" data-imp="ed">AI editorial</span>
         </div>
         <h2 class="fcard__hl">{{ e.title }}</h2>
         <button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>
@@ -425,17 +425,19 @@ layout: archive
   .fcard__beat .ff-dot{ width:6px; height:6px; }
   /* tier chip — the color code must read at a glance: solid accent (lead),
      outlined accent (feature), muted hairline (brief). */
+  /* The tier word is REAL TEXT in the span (2026-07-25), not ::after generated content. It used
+     to be an empty <span> whose label existed only in CSS, and the only other carrier —
+     .ff-legend — is aria-hidden AND display:none below 720px, so tier reached assistive tech
+     nowhere at all. Since the brief pages were unpublished this feed is the only reading surface,
+     which made that a page of 82 undifferentiated articles to a screen reader. Putting the word
+     in the DOM also deletes four CSS rules: WCAG 1.4.1 and less code, same edit. */
   .fcard__rank{ margin-left:auto; font-family:var(--sans); font-weight:700; font-size:.6rem;
     text-transform:uppercase; letter-spacing:.12em; white-space:nowrap; align-self:center;
     padding:2px 7px 1px; border:1px solid transparent; border-radius:2px; }
   .fcard__rank[data-imp="3"]{ background:var(--accent); color:var(--paper); }
-  .fcard__rank[data-imp="3"]::after{ content:"Lead"; }
   .fcard__rank[data-imp="2"]{ color:var(--accent); border-color:var(--accent); }
-  .fcard__rank[data-imp="2"]::after{ content:"Feature"; }
   .fcard__rank[data-imp="1"]{ color:var(--muted); border-color:var(--hair); }
-  .fcard__rank[data-imp="1"]::after{ content:"Brief"; }
   .fcard__rank[data-imp="ed"]{ background:var(--ink); color:var(--paper); }
-  .fcard__rank[data-imp="ed"]::after{ content:"AI editorial"; }
 
   /* editorial cards — the briefs' section-level synthesis (cross-cutting threads / why-it-
      matters), surfaced here since the individual brief pages were retired (2026-07-18) */
