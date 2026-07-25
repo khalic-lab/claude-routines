@@ -70,6 +70,15 @@ layout: archive
     as swatches, and this is the accessible copy of it.
   {%- endcomment -%}
   <aside class="folio-rail">
+    {%- comment -%}
+      THE NAMEPLATE, and the reason it is a <span> rather than a heading. The archive layout already
+      emits this page's one <h1> (`.page__title`, the word NEWS) and a page may have exactly one.
+      So this is DECORATION — aria-hidden, no heading semantics — and the real h1 is not deleted at
+      >=1280 but visually hidden, keeping the page's accessible title intact for anyone who never
+      sees the rail. Two renderings, one title, exactly as the beat chips are one control.
+      `aria-hidden` also stops a screen reader spelling out a rotated word.
+    {%- endcomment -%}
+    <span class="rail-nameplate" aria-hidden="true">News</span>
     <p class="rail-edition">{{ feed.stories.first.date_label }}</p>
     {%- comment -%}
       THE BEAT SELECTOR IS THE SAME CONTROL, RENDERED TWICE — never two selectors. Each rail
@@ -104,6 +113,14 @@ layout: archive
       <dd>The desk's own synthesis across the week. Not sourced reporting.</dd>
     </dl>
     <p class="rail-note">Ranked by date, then by how much the desk thinks each story matters. Position is the ranking.</p>
+    {%- comment -%} The SAME control as the one above the board, not a second one: both carry
+      `.hiw-open` and the modal script binds every instance. Only one is ever visible — the
+      centered header is hidden at >=1280 and the rail does not exist below it. {%- endcomment -%}
+    <button class="hiw-open hiw-open--rail" type="button" aria-haspopup="dialog"
+            aria-controls="hiwModal" aria-expanded="false">
+      <svg viewBox="0 0 30 8" aria-hidden="true"><circle cx="4" cy="4" r="2.2"/><path d="M8 4h4.8"/><circle cx="15" cy="4" r="2.2"/><path d="M19 4h4.8"/><circle cx="26" cy="4" r="2.2"/></svg>
+      How this works
+    </button>
   </aside>
   <div class="folio-grid" id="folioGrid" tabindex="-1">
     {%- comment -%}
@@ -336,7 +353,11 @@ layout: archive
 </div>
 <script>
 (function () {
-  var btn = document.getElementById('hiwOpen'), modal = document.getElementById('hiwModal');
+  // Every `.hiw-open` — the centered header's and the rail's are ONE control with two placements,
+  // the same shape as the beat chips. `btn` remains the element that owns aria-expanded and it is
+  // whichever one the reader actually pressed, so the state lands on the button they can see.
+  var btns = document.querySelectorAll('.hiw-open');
+  var btn = btns[0], modal = document.getElementById('hiwModal');
   if (!btn || !modal) return;
   var closeButtons = modal.querySelectorAll('[data-hiw-close]');
   var x = closeButtons[0], lastFocus = null;
@@ -357,7 +378,9 @@ layout: archive
     if (lastFocus && lastFocus.focus) lastFocus.focus();
     lastFocus = null;
   }
-  btn.addEventListener('click', show);
+  Array.prototype.forEach.call(btns, function (b) {
+    b.addEventListener('click', function () { btn = b; show(); });
+  });
   Array.prototype.forEach.call(closeButtons, function (closeButton) {
     closeButton.addEventListener('click', hide);
   });
@@ -498,6 +521,23 @@ layout: archive
      nameplate is one word and cannot wrap, so no diacritic can collide with a line above it. */
   .layout--home .page__title{ font-size:clamp(40px, 5vw, 76px); line-height:.85;
     letter-spacing:0; text-transform:uppercase; }
+  /* THE CENTERED HEADER DIES WHERE THE RAIL LIVES (>=1280). Title, tagline and the How-this-works
+     button are old-world chrome the mock does not have — it opens on the sheet, with the masthead
+     running up the rail. Below 1280 there is no rail, so the block stays and is the only masthead
+     the page has; this is a projection of the same information, not a deletion of it.
+     THE H1 IS HIDDEN, NOT REMOVED. `display:none` would take the page's only <h1> out of the
+     accessibility tree, and the rail's nameplate is deliberately a decorative aria-hidden <span>
+     (a second <h1> is not an option and a rotated word is not something to read aloud). So the
+     real title is clipped out of sight and still announced — the page keeps exactly one h1,
+     wherever you are reading from.
+     The tagline is dropped rather than moved: `.rail-note` already says the same thing in more
+     words ("Ranked by date, then by how much the desk thinks each story matters"), and printing
+     both would be the duplication the rail exists to remove. */
+  @media (min-width:1280px){
+    .layout--home .page__title{ position:absolute; width:1px; height:1px; margin:-1px;
+      overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+    .layout--home .home-tagline, .layout--home .hiw-open:not(.hiw-open--rail){ display:none; }
+  }
 
   .folio-board{ position:relative; padding:22px 0 10px; }
   .ff-crop{ position:absolute; width:14px; height:14px; pointer-events:none; }
@@ -633,6 +673,23 @@ layout: archive
        prose with the same glyphs, so a second copy in the bar is exactly the duplication this
        composition exists to remove. */
     .folio-filters .ff-chip, .ff-lbl, .ff-legend{ display:none; }
+  }
+  /* THE ROTATED NAMEPLATE (>=1280 only, because the rail is). The mock's masthead runs up the
+     left edge of the sheet, so the rail carries the title and the centered block above the board
+     stops existing — see the `.layout--home .page__title` rule below.
+     `writing-mode:vertical-rl` + `rotate:180deg` reads bottom-to-top, which is the broadsheet
+     convention and the direction that puts the first letter at the reader's eye level rather than
+     at the fold. `rotate` rather than `transform:rotate()` so it composes with nothing else and
+     cannot be clobbered by the theme's `transform` rules on adjacent elements.
+     Type is set in px against Anton for the same reason every other display size here is: the
+     theme steps the root 16->22px across exactly these breakpoints, and a rem nameplate would
+     inflate ~37% between 1280 and 1680 while the rail stayed a fixed 180px. */
+  .rail-nameplate{ display:none; }
+  @media (min-width:1280px){
+    .rail-nameplate{ display:block; writing-mode:vertical-rl; rotate:180deg;
+      font-family:var(--display); font-weight:700; text-transform:uppercase;
+      font-size:clamp(54px, 7.4vw, 104px); line-height:.85; letter-spacing:-.01em;
+      color:var(--ink); margin:0 0 .34em -.06em; }
   }
   .rail-edition{ font-family:var(--sans); font-size:.6rem; text-transform:uppercase;
     letter-spacing:.16em; color:var(--muted); margin:0 0 1.4em; }
@@ -1068,6 +1125,19 @@ layout: archive
   .hiw-open:hover{ color:var(--accent); border-color:var(--accent); }
   .hiw-open svg{ width:26px; height:8px; fill:none; stroke:currentColor; stroke-width:1.3; }
   .hiw-open svg circle{ fill:currentColor; stroke:none; }
+  /* The rail's copy of the same control — a rail item, not a centered pill. DECLARED HERE, after
+     the base rule, and that placement is the fix rather than a tidy-up: `.hiw-open--rail` and
+     `.hiw-open` are both one class, so at equal specificity source order decides. Sitting above
+     the base rule, `display:none` lost to `display:flex` and the button was only ever hidden by
+     `.folio-rail{display:none}` above it — correct on screen, but leaning on an ancestor that
+     exists for another reason. Measured before the move: 2 visible `.hiw-open` at 744 and 1024. */
+  .hiw-open--rail{ display:none; }
+  @media (min-width:1280px){
+    .hiw-open--rail{ display:flex; margin:1.5em 0 0; padding:0; border:0; border-radius:0;
+      text-align:start; font-size:.6rem; letter-spacing:.1em; color:var(--muted-ui); }
+    .hiw-open--rail:hover{ color:var(--accent); border:0; }
+    .hiw-open--rail svg{ width:20px; height:7px; }
+  }
 
   .hiw-lock{ overflow:hidden; }
   .hiw{ position:fixed; inset:0; display:none; align-items:flex-start; justify-content:center;

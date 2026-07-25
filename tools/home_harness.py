@@ -501,6 +501,65 @@ def _extract_rail(feed):
     return rail
 
 
+def _extract_block(start_re, label):
+    """Pull a static markup block out of the layout verbatim, like `_extract_rail` does.
+
+    Added 2026-07-25 for the page header and the How-this-works modal. Neither was ever in this
+    harness, so the nameplate/header composition and the modal's open path could not be reviewed
+    here at all — the same blindness that let the image slot and the tier legend go unseen. Both
+    blocks are pure static markup, so verbatim extraction is exact; any Liquid appearing in them
+    later is a hard error rather than a silent literal.
+    """
+    src = os.path.join(ROOT, "_layouts", "home.html")
+    with open(src) as fh:
+        body = fh.read()
+    m = re.search(start_re, body, re.S)
+    if not m:
+        raise SystemExit("home_harness: could not find the %s block in %s — if it was renamed, "
+                         "update this extractor deliberately" % (label, src))
+    block = m.group(0)
+    block = re.sub(r"\{%-?\s*comment\s*-?%\}.*?\{%-?\s*endcomment\s*-?%\}", "", block, flags=re.S)
+    # `| relative_url` on repo assets — same substitution the @font-face src needs, and for the
+    # same reason: this is a project Pages site under a baseurl, so Jekyll expands these and
+    # verbatim extraction does not. The modal's diagrams are the case in point; without this the
+    # harness would paint broken images and the guard below (correctly) refuses to let that pass.
+    block = re.sub(r"""\{\{\s*["'](/[^"']+)["']\s*\|\s*relative_url\s*\}\}""",
+                   lambda m: "file://" + ROOT + m.group(1), block)
+    leftover = re.findall(r"\{\{.*?\}\}|\{%.*?%\}", block, re.S)
+    if leftover:
+        raise SystemExit("home_harness: un-substituted Liquid in the %s block: %r"
+                         % (label, leftover[:3]))
+    return block
+
+
+def _hiw_stub():
+    """A CONTRACT stub for the How-this-works modal — deliberately not the real markup.
+
+    The real modal cannot be extracted: its proof section is a `{% if site.data.stats %}` block
+    with real Liquid logic, and expanding that here would mean reimplementing Liquid against
+    _data/stats — the mirror-that-drifts this harness keeps deleting. Its CONTENTS are also not
+    what any of this exercises. What is under test is the open path: two `.hiw-open` buttons in
+    different places, one binding, one modal.
+
+    So the stub carries only the contract the script depends on, and the contract is CHECKED
+    against the layout rather than assumed — if the real modal ever stops being `#hiwModal` with a
+    `[data-hiw-close]` inside it, this fails loudly instead of testing a fiction.
+    """
+    src = os.path.join(ROOT, "_layouts", "home.html")
+    with open(src) as fh:
+        body = fh.read()
+    for needle, what in (('id="hiwModal"', "the modal id"),
+                         ("data-hiw-close", "a close control")):
+        if needle not in body:
+            raise SystemExit("home_harness: %s is gone from %s — the modal stub below encodes it, "
+                             "so update both deliberately" % (what, src))
+    return ('<div class="hiw" id="hiwModal" aria-hidden="true">'
+            '<div class="hiw__box" role="dialog" aria-modal="true" aria-label="How this works">'
+            '<button type="button" class="hiw__x" data-hiw-close aria-label="Close">&times;</button>'
+            '<p>Harness stub — the real modal body is Liquid over site.data.stats.</p>'
+            '</div></div>')
+
+
 def ed_card(e):
     """Mirrors the editorial-card Liquid in _layouts/home.html (paras are pre-sanitized html)."""
     esc = lambda x: html.escape(str(x or ""))
@@ -566,9 +625,19 @@ def main():
     # reproduces exactly that chain, so `.wrap` is sized by a definite parent rather than by its
     # own contents. `width:100%` on `.wrap` fixes the symptom identically and says nothing about
     # why, so it is not what ships.
+    # The page header and the modal, extracted rather than mirrored. `<body class="layout--home">`
+    # is REQUIRED, not cosmetic: every header rule is scoped `.layout--home .page__title` /
+    # `.layout--home .home-tagline`, so without the class the harness would render the header and
+    # silently fail to apply the very rules under review. `<h1 class="page__title">` stands in for
+    # the archive layout's own — it is the element those rules target and the page's only h1.
+    header = ('<h1 class="page__title">News</h1>'
+              + _extract_block(r'<p class="home-tagline">.*?</button>', "page header"))
+    modal = _hiw_stub()
+
     page = """<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>home harness</title>%s%s
-<div class="harness-doc"><div class="wrap">
+<body class="layout--home">
+<div class="harness-doc"><div class="wrap">%s
 <div class="folio-filters" id="folioFilters"><span class="ff-lbl">Beat</span>
 <button class="ff-chip ff-all" type="button" data-topic="" aria-pressed="true">All <span class="ff-ct">%d</span></button>
 %s<span class="ff-read" role="group" aria-label="Read state"><button class="ff-rbtn" type="button" data-rs="" aria-pressed="true">All</button><button class="ff-rbtn" type="button" data-rs="unread" aria-pressed="false">Unread <span class="ff-ct ff-uct"></span></button><button class="ff-rbtn" type="button" data-rs="read" aria-pressed="false">Read</button></span>%s%s</div>
@@ -577,7 +646,8 @@ def main():
 %s<div class="folio-grid" id="folioGrid">%s</div>
 <div class="folio-empty" id="folioEmpty" hidden>No stories on that beat right now.</div>
 </div></div></div>
-%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, feed["count"], chips,
+%s
+%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, header, feed["count"], chips,
                SYNC_UI, LEGEND_UI,
                _extract_rail(feed),
                # Emission order mirrors _layouts/home.html: ED_AFTER stories, then the editorials,
@@ -585,7 +655,8 @@ def main():
                # this is the mirror that the published-DOM fixture is meant to retire.
                "".join(card(s) for s in feed["stories"][:ED_AFTER])
                + "".join(ed_card(e) for e in feed.get("editorials", []))
-               + "".join(card(s) for s in feed["stories"][ED_AFTER:]), PRE_SYNC, script, GEOM_CHECK, SYNC_CHECK)
+               + "".join(card(s) for s in feed["stories"][ED_AFTER:]),
+               modal, PRE_SYNC, script, GEOM_CHECK, SYNC_CHECK)
 
     with open(args.out, "w") as fh:
         fh.write(page)
