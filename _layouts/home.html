@@ -81,7 +81,12 @@ layout: archive
       accessibility tree, exactly one set is ever announced.
     {%- endcomment -%}
     <div class="rail-beats" role="group" aria-label="Filter by beat">
-      <h2 class="rail-title">Beat</h2>
+      {%- comment -%} A <p>, NOT a heading. Every story headline on this page is an <h2>, so a
+        rail <h2> would seat "Beat" in the same heading level as the 82 stories and put furniture
+        into a reader's heading-navigation list. The group's `aria-label` is already the accessible
+        name here, so a heading would also announce that name twice. This is styling only.
+        (`.rail-title` sets `margin:0 0 .9em`, so the <p> UA margin never applies.) {%- endcomment -%}
+      <p class="rail-title">Beat</p>
       <button class="ff-chip ff-all" type="button" data-topic="" aria-pressed="true">All <span class="ff-ct">{{ feed.count }}</span></button>
       {% for t in feed.topics %}
       <button class="ff-chip" type="button" data-topic="{{ t.key }}" aria-pressed="false" style="--tc:{{ t.color }}"><span class="ff-dot"></span>{{ t.label }} <span class="ff-ct">{{ t.count }}</span></button>
