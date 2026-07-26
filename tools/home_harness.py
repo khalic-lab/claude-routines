@@ -93,12 +93,15 @@ Two extra URL modes:
               SYNC edread=0) — read only the EMPTY line from a #bootempty run.
 """
 import argparse
+import glob
 import html
 import json
 import os
 import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 THEME_URL = "https://khalic-lab.github.io/claude-routines/assets/css/main.css"
 THEME_CACHE = "/tmp/mm-main.css"
@@ -982,6 +985,24 @@ def _extract_rail(feed):
     rail = re.sub(r"\{%-?\s*for\s+t\s+in\s+feed\.topics\s*-?%\}(.*?)\{%-?\s*endfor\s*-?%\}",
                   _topics, rail, flags=re.S)
     rail = re.sub(r"\{\{\s*feed\.count\s*\}\}", str(feed.get("count") or 0), rail)
+
+    # THE SUNDAY REVIEW LINK. Resolved from `_posts/*-evaluator.md` — the same files
+    # `site.categories.evaluator` resolves from, since evaluator posts are the only ones that opt
+    # back into rendering — rather than dropped, which would photograph a rail the page does not
+    # have. The permalink shape is `_config.yml`'s `/:year/:month/:day/:title/`.
+    evs = sorted(glob.glob(os.path.join(ROOT, "_posts", "*-evaluator.md")))
+    if evs:
+        d = os.path.basename(evs[-1])[:10]
+        y, mo, dy = d.split("-")
+        rail = re.sub(r"\{%-?\s*if\s+review\s*-?%\}(.*?)\{%-?\s*endif\s*-?%\}",
+                      lambda m: m.group(1), rail, flags=re.S)
+        rail = re.sub(r"\{\{\s*review\.url\s*\|\s*relative_url\s*\}\}",
+                      "/%s/%s/%s/evaluator/" % (y, mo, dy), rail)
+        rail = re.sub(r"""\{\{\s*review\.date\s*\|\s*date:\s*["'][^"']*["']\s*\}\}""",
+                      "%d %s" % (int(dy), _MONTHS[int(mo) - 1]), rail)
+    else:
+        rail = re.sub(r"\{%-?\s*if\s+review\s*-?%\}.*?\{%-?\s*endif\s*-?%\}", "", rail, flags=re.S)
+    rail = re.sub(r"\{%-?\s*assign\s+review\s*=[^%]*-?%\}", "", rail)
 
     leftover = re.findall(r"\{\{.*?\}\}|\{%.*?%\}", rail, re.S)
     if leftover:

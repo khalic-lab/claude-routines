@@ -114,10 +114,22 @@ layout: archive
       <dd>Worth your time, not urgent.</dd>
       <dt data-imp="1"><i class="tier-key" aria-hidden="true"></i>Brief</dt>
       <dd>Collapsed to its headline. Open it to read the rest.</dd>
+      {%- comment -%} READ IS AN ENTRY IN THIS INDEX because it is now a SIZE, like the three tiers
+        above it — the one reader-owned entry, which is why the index has to say so. Its mark is a
+        miniature of the ✓ the card itself shows, on the same principle as the AI-editorial box:
+        the legend reads literally ("this is what that looks like") rather than symbolically.
+      {%- endcomment -%}
+      <dt data-imp="read"><i class="tier-key" aria-hidden="true"></i>Read</dt>
+      <dd>Collapses to its headline where it stands. Position never changes.</dd>
       <dt data-imp="ed"><i class="tier-key" aria-hidden="true"></i>AI editorial</dt>
-      <dd>The desk's own synthesis across the week. Not sourced reporting.</dd>
+      <dd>The desk's own synthesis. It closes the day it belongs to.</dd>
     </dl>
-    <p class="rail-note">Ranked by date, then by how much the desk thinks each story matters. Position is the ranking.</p>
+    {%- comment -%} THE RULE, IN TWO SENTENCES, and every mechanism on the page is one of the two
+      clauses: the first is the ranking (server-side, immovable), the second is size (tier, age,
+      read, and what More does). It replaced "Ranked by date, then by how much the desk thinks each
+      story matters. Position is the ranking." — true, and silent about the half of the system the
+      reader actually operates. {%- endcomment -%}
+    <p class="rail-note"><strong>Newest first, then what the desk thinks matters most — position is the ranking, and nothing you do moves it.</strong> Everything else is size: a story you've read, or one that has aged past its edition, shrinks where it stands; opening one makes it longer down its own column, never wider.</p>
     {%- comment -%} The SAME control as the one above the board, not a second one: both carry
       `.hiw-open` and the modal script binds every instance. Only one is ever visible — the
       centered header is hidden at >=1280 and the rail does not exist below it. {%- endcomment -%}
@@ -126,6 +138,17 @@ layout: archive
       <svg viewBox="0 0 30 8" aria-hidden="true"><circle cx="4" cy="4" r="2.2"/><path d="M8 4h4.8"/><circle cx="15" cy="4" r="2.2"/><path d="M19 4h4.8"/><circle cx="26" cy="4" r="2.2"/></svg>
       How this works
     </button>
+    {%- comment -%} THE ONE LINK OFF THIS PAGE THAT IS NOT A STORY, and it belongs in the rail
+      rather than in the grid: the Sunday review is the desk auditing itself, which is furniture
+      about the paper, not an item in it. Evaluator posts are the only ones that still render a page
+      (`published: true` in their own front matter against `_config.yml`'s blanket
+      `published: false`), so `site.categories.evaluator` holds exactly them, newest first — no
+      filtering, and it cannot pick up a brief. Dated, because an undated "review" link says nothing
+      about whether anyone has looked lately. {%- endcomment -%}
+    {%- assign review = site.categories.evaluator | first -%}
+    {%- if review %}
+    <a class="rail-review" href="{{ review.url | relative_url }}">Weekly pipeline review · {{ review.date | date: "%-d %b" }}</a>
+    {%- endif %}
   </aside>
   <div class="folio-grid" id="folioGrid" tabindex="-1">
     {%- comment -%}
@@ -894,8 +917,27 @@ layout: archive
      this up. */
   .rail-index dt[data-imp="ed"] .tier-key::before{ width:9px; height:6px;
     border:1px solid var(--ink); background:transparent; }
+  /* READ — a miniature of the ✓ the card's own toggle shows, in the same --accent it turns. Two
+     borders and a rotation rather than an SVG or a glyph font: it is the only mark in this index
+     that stands for something the READER did, so it takes the accent the read button takes and
+     nothing else in the set does. Nudged up 1px because a rotated tick's optical centre sits below
+     its box's. Scoped to `.rail-index dt` exactly like the editorial box above: `.fcard__rank` and
+     `.ff-li` must never pick this up — there is no "Read" tier on a card. */
+  .rail-index dt[data-imp="read"] .tier-key::before{ width:8px; height:4px; margin-top:-1px;
+    border-left:1.5px solid var(--accent); border-bottom:1.5px solid var(--accent);
+    rotate:-45deg; }
   .rail-note{ font-family:var(--serif); font-size:.75rem; line-height:1.45; color:var(--muted);
     margin:1.6em 0 0; padding-top:1em; border-top:1px solid var(--hair); }
+  .rail-note strong{ color:var(--ink); font-weight:400; }
+  /* THE SUNDAY REVIEW LINK — rail furniture in the label voice, under the same hairline the rest of
+     the rail's furniture uses. Deliberately NOT an accent-coloured link: it is a quiet dated
+     pointer, and giving it the page's one accent would rank it above the stories it is about. */
+  .rail-review{ display:block; margin-top:1.5em; padding-top:1em;
+    border-top:1px solid var(--hair);
+    font-family:var(--sans); font-size:.6rem; text-transform:uppercase; letter-spacing:.14em;
+    line-height:1.5; color:var(--muted); text-decoration:none; }
+  .rail-review:hover, .rail-review:focus-visible{ color:var(--accent); }
+  .rail-review:visited{ color:var(--muted); }   /* the theme colours :visited links; this is furniture */
 
   /* THE RAIL'S BEAT LIST. Same `.ff-chip` element as the control bar's — only the SKIN differs,
      because a horizontal pill row does not fit a 160px measure. So: a vertical list, selection
