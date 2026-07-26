@@ -119,13 +119,14 @@ Added 2026-07-26 for the ordering/seen/expansion rework:
   #filtercheck ('FILTER', 4.35s) order and holes with a beat filter on — `.is-filtered` drops the
              composed band to uniform cells and re-places what survives, a placement problem the
              resting state never exercises. Restores the board and its prefs key.
-  #readcheck ('READ', 5.6s)    the read spine, as a state machine: per-tier collapse ratio
-             (`spineOk`, scoped to imp3/imp2 — a folded brief already hides body AND why, so its
-             spine is nearly its folded height and a blanket ratio would go red on correct code),
-             read-then-More re-opening in place (`reopen`, which pins the load-bearing
-             `:not(.is-open)` guards), the AI disclosure in all four editorial states (`edOk`,
-             folded/open/read/read+open), and the ALL-READ board — a geometry state this harness
-             had never seen — for order, holes and `gridDrop`. Restores everything, storage too.
+  #readcheck ('READ', 5.6s)    reading as a state machine, under the dims-never-hides ruling
+             (2026-07-26 night — the owner rejected the one-day read spine: "hiding the text for
+             read articles was a bad choice"): ticking ✓ must move NOTHING (`dimOnly` — per-card
+             height shift <=1px over a 6-card imp3/imp2 sample, image slot measured before and
+             after), only dim it (`dimHl`), More must still work on a read card (`reopen`), the
+             AI disclosure holds in all four editorial states (`edOk`), and the ALL-READ board
+             keeps the unread board's height (`gridSame`) and every photo (`imgKept`). Restores
+             everything, storage too.
   #shotcheck ('SHOT', 5.9s)    screenshot modes for the states the probes deliberately restore:
              `#open`, `#read`, `#allread`. Each abandons the page mid-state and therefore clears
              its own storage first.
@@ -156,9 +157,10 @@ does not:
   THE COLOUR SCHEME IS PINNED (`--scheme`, default dark) rather than inherited from the host's
   appearance — see MX_SCHEMES for why that is not optional.
 
-  THE READ STATE IS REACHED TWO WAYS, and they differ: `R1` seeds `homeRead:v1` before the layout
-  script runs (a returning reader), `R1c` clicks the ✓ now. `foldForRead` runs only from `setRead`,
-  so only the clicked path normalizes fold state — which is what `seamN` measures.
+  THE READ STATE IS REACHED TWO WAYS, and they must AGREE: `R1` seeds `homeRead:v1` before the
+  layout script runs (a returning reader), `R1c` clicks the ✓ now. Under the dims-never-hides
+  ruling (2026-07-26 night) neither path may change fold state or geometry at all — `lieN` and
+  `dropPct` are what hold both paths to that.
 """
 import argparse
 import glob
@@ -348,10 +350,10 @@ VOID_METRICS = """<script>
 /* THE BOOT-OPEN SET, CAPTURED ONCE, BEFORE ANY PROBE TOUCHES THE PAGE. This block parses straight
    after the layout's own IIFE, so the fold defaults have already run: whatever has a More button and
    no `is-folded` right now is a card that BOOTED open (today's leads).
-   It has to be captured, because reading such a card now normalizes it to folded and un-reading
-   deliberately does NOT restore that (see foldForRead in the layout). Every probe that mass-marks
-   the board therefore has to put boot-open back, or the probes that run after it measure a page the
-   reader never had — and the seam probe below could not see the state it exists to test. */
+   Under the dims-never-hides ruling (2026-07-26 night) reading no longer touches fold state, so
+   `__hmRestoreBootOpen` below SHOULD find nothing to restore — it is kept as a cheap safety net
+   after the mass-marking probes, and a non-zero return is itself a smell: something folded a card
+   no probe opened. */
 window.__hmBootOpen = [].slice.call(document.querySelectorAll('.fcard')).filter(function(c){
   return c.querySelector('.fcard__more') && !c.classList.contains('is-folded');
 });
@@ -557,13 +559,14 @@ setTimeout(function(){
 </script>"""
 
 
-# THE READ / BOOT-OPEN SEAM. Runs at 4.65s — after SYNC, BEFORE the probes that mass-mark the board —
-# because it is the only probe that needs a card still in its BOOT-open state, and reading such a card
-# normalizes it to folded for good (foldForRead; un-reading deliberately does not undo that).
-# The seam it pins: a boot-open card is open by the ABSENCE of `is-folded`, so before the fix, marking
-# it read left the body hidden by the spine rule while its own button still read "Less" with
-# aria-expanded="true" — and re-opening took TWO clicks, the first one against an already-hidden body.
-# So: one state transition, the control agreeing with what the card looks like, and ONE click to open.
+# THE BOOT-OPEN CARD, TICKED READ. Runs at 4.65s — after SYNC, BEFORE the probes that mass-mark the
+# board — because it needs a card still in its BOOT-open state. Under the dims-never-hides ruling
+# (2026-07-26 night) the claim INVERTED: reading a boot-open lead must change NOTHING but the dim —
+# body keeps its height, no fold class appears, the control keeps saying "Less"/aria-expanded=true
+# (which is now honest, since the body really is visible), and the card's height holds to the pixel.
+# When the spine existed this exact state was the SEAM (body hidden under a control claiming open);
+# now it is the specified behaviour, and this probe is what keeps the layout from re-growing a fold
+# consequence on any read path.
 LEADREAD_CHECK = """<script>
 setTimeout(function(){
   var grid=document.getElementById('folioGrid');
@@ -576,29 +579,28 @@ setTimeout(function(){
     var rb=c.querySelector('.fcard__read'), sy0=scrollY;
     var h0=Math.round(c.getBoundingClientRect().height);
     var bodyBefore=Math.round(sum.getBoundingClientRect().height);
-    rb.click();                                  // mark read
+    rb.click();                                  // mark read: only the dim may change
     var v1=window.__hmVoid();
     var lbl=mb.querySelector('span').textContent.trim();
     var aria=mb.getAttribute('aria-expanded');
-    var spined=(sum.getBoundingClientRect().height===0)?1:0;
-    var folded=(c.classList.contains('is-folded')&&!c.classList.contains('is-open'))?1:0;
+    var bodyKept=(Math.round(sum.getBoundingClientRect().height)===bodyBefore)?1:0;
+    var stayOpen=(!c.classList.contains('is-folded')&&!c.classList.contains('is-open'))?1:0;
+    var isRead=c.classList.contains('is-read')?1:0;
+    var dim=getComputedStyle(c.querySelector('.fcard__hl')).opacity;
     var h1=Math.round(c.getBoundingClientRect().height);
-    mb.click();                                  // ONE click must open it again
-    var oneClick=(sum.getBoundingClientRect().height>0)?1:0;
-    var v2=window.__hmVoid();
-    var upA=(v1.match(/upInv=(\\d+)/)||[0,'?'])[1], upB=(v2.match(/upInv=(\\d+)/)||[0,'?'])[1];
-    mb.click(); rb.click();                      // fold it back, then un-read
-    var restored=(window.__hmRestoreBootOpen()>=0
-      && !c.classList.contains('is-read')
+    var upA=(v1.match(/upInv=(\\d+)/)||[0,'?'])[1];
+    rb.click();                                  // un-read: still nothing moves
+    var restored=(!c.classList.contains('is-read')
       && !c.classList.contains('is-folded')
       && mb.querySelector('span').textContent.trim()==='Less'
       && Math.round(c.getBoundingClientRect().height)===h0)?1:0;
     scrollTo(0,sy0);
     try{ ['homeRead:v1','syncState:v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
     out='LEADREAD boot='+boot.length+' imp='+c.dataset.imp+' age='+c.dataset.age
-      +' bodyBefore='+bodyBefore+' spined='+spined+' folded='+folded
-      +' label='+lbl+' aria='+aria+' oneClick='+oneClick
-      +' h='+h0+'/'+h1+' upInvRead='+upA+' upInvOpen='+upB+' restored='+restored;
+      +' bodyBefore='+bodyBefore+' bodyKept='+bodyKept+' stayOpen='+stayOpen
+      +' isRead='+isRead+' dim='+dim
+      +' label='+lbl+' aria='+aria
+      +' h='+h0+'/'+h1+' hSame='+((h0===h1)?1:0)+' upInvRead='+upA+' restored='+restored;
   }
   var d=document.createElement('div');d.id='leadreadcheck';d.textContent=out;
   document.body.appendChild(d);
@@ -606,30 +608,23 @@ setTimeout(function(){
 </script>"""
 
 
-# THE READ SPINE — the one probe for the 2026-07-26 seen rework, and it is a state machine rather
-# than four probes fighting over the same page. In order:
-#   1. per-card, mark a lead and a feature read and measure the collapse (spine <= 0.70x folded,
-#      IMAGE SLOT EXCLUDED on both sides). The photo survives the read spine by owner ruling
-#      (2026-07-26 evening — an all-read board had gone imageless), and its clamp() height is
-#      identical folded and read, so subtracting it isolates the prose collapse.
-#      0.70 IS RE-DERIVED, NOT THE OLD 0.55 LOOSENED CASUALLY: the old bound was measured with
-#      the image in the DENOMINATOR only (the spine hid it), so the slot flattered every image
-#      card's ratio. Clean prose collapse measures 0.52 at 1024/1440 and 0.63 at 700 — at narrow
-#      containers the brief and feature headline scales converge under the cqi clamp floor, so
-#      the collapse there is mostly the why/body and the fixed chrome is a larger fraction. A
-#      spine that failed to collapse reads >=0.9, so 0.70 still separates the two states at
-#      every packed width without going red on correct code.
-#      SCOPED TO imp3/imp2 ON PURPOSE: a brief already hides its body AND its why when folded
-#      (`.fcard[data-imp="1"].is-folded`), and an editorial already hides its paragraphs, so for
-#      those tiers the spine IS very nearly the folded card and a blanket ratio would go red on a
-#      correct implementation.
-#   2. read -> More re-opens it in place: `.fcard__sum` gets a rect back. This pins the
-#      `:not(.is-open)` guards, which are load-bearing — drop one and More on a read card does
-#      nothing at all, silently.
+# READING, UNDER THE DIMS-NEVER-HIDES RULING (2026-07-26 night: the owner rejected the one-day
+# read spine — "hiding the text for read articles was a bad choice"). One state machine, and every
+# geometric claim the spine version made is INVERTED. In order:
+#   1. per-card, tick 6 folded lead/feature cards read and measure the SHIFT (`maxShift`): ticking
+#      ✓ may move nothing, so any per-card height change past a rounding pixel is the failure.
+#      The image is measured before AND after on each card, separately from the card height, so a
+#      re-hidden photo cannot cancel out against a re-grown body in one number (`imgKept` below
+#      pins the photos board-wide too). The dim itself is asserted as a number: computed opacity
+#      on the ticked card's headline (`dimHl`, expected 0.58).
+#      SCOPED TO imp3/imp2 for continuity with the spine-era sample — the claim is tier-blind now,
+#      but these are the tiers where a regression would cost the most height.
+#   2. read -> More still opens it: `.fcard__sum` gets a rect back. Read state must not interfere
+#      with the fold control in either direction.
 #   3. the disclosure in ALL FOUR editorial states (folded, open, read, read+open). It is
 #      transparency, not content, so it may never hide.
-#   4. the whole board read: a geometry state this harness has never seen. Order and holes must
-#      hold, and the page must actually get shorter (gridDrop).
+#   4. the whole board read: the page must NOT get shorter (`gridSame` — an all-read board is the
+#      unread board, dimmed), and every photo must survive (`imgKept`).
 # It restores everything it touched, including localStorage, because `file://` shares one origin
 # across every artifact ever opened from it — 82 read entries left behind here would boot the next
 # run of ANY harness into a half-read board.
@@ -643,42 +638,41 @@ setTimeout(function(){
   var cards=[].slice.call(grid.querySelectorAll('.fcard'));
   function h(c){ return c.getBoundingClientRect().height; }
   function tick(c){ var b=c.querySelector('.fcard__read'); if(b)b.click(); }
-  /* EVERY TICK PAYS BACK A SCROLL DELTA (setRead runs inside anchored(), because a spine is ~1/3 the
-     height of the card it replaces). ~180 of them accumulate, so this probe has to restore the
-     scroll position the way FOLD_CHECK always has — otherwise the next probe, and the screenshot,
-     open on a page scrolled somewhere arbitrary. */
+  /* setRead no longer scrolls (nothing moves, so anchored() left it — dims-never-hides), but the
+     scroll position is still saved and restored: a probe may not lean on the layout's internals
+     staying that way to keep its own hygiene. */
   var scroll0=scrollY;
   var gridH0=Math.round(grid.getBoundingClientRect().height);
 
-  // 1 + 2 — per-tier collapse, then re-open in place
-  var worst=0,measured=0,reopen=-1;
+  // 1 + 2 — ticking must move nothing, and More must still work on a read card
+  var maxShift=0,measured=0,reopen=-1,imgMoved=0,dimHl='-';
   function imgH(c){ var im=c.querySelector('.fimg'); return im?im.getBoundingClientRect().height:0; }
   var probe=cards.filter(function(c){
     return !c.classList.contains('fcard--ed')
       && (c.dataset.imp==='3'||c.dataset.imp==='2')
       // NOT ONE THAT IS ALREADY READ. The ✓ is a toggle, so in any mode that boots with read state
-      // (`#bsread` seeds the lead) ticking such a card UN-reads it and the ratio measures the card
-      // growing back — a probe reporting spineOk=0 for the spine working. Same class of instrument
-      // bug the EMPTY probe had before R17.
+      // (`#bsread` seeds the lead) ticking such a card UN-reads it — the direction of the claim is
+      // the same now (nothing may move either way), but the probe's bookkeeping (un-read them
+      // again below) would corrupt seeded state. Same class of instrument bug the EMPTY probe had
+      // before R17.
       && !c.classList.contains('is-read')
       && c.classList.contains('is-folded') && c.querySelector('.fcard__sum');
   }).slice(0,6);
   probe.forEach(function(c){
-    // THE IMAGE SLOT IS SUBTRACTED FROM BOTH SIDES: the photo survives the spine (owner ruling,
-    // 2026-07-26 evening) at an identical clamp() height, so the ratio below is the collapse of
-    // everything else — the geometry the 0.55 bound has always been about. Measured before AND
-    // after, not assumed equal: if the spine ever hid the image again, iH1 would go to 0 and the
-    // ratio would harden rather than flatter (and imgKept below goes red anyway).
+    // THE IMAGE IS ITS OWN ASSERTION, not a term in the card height: a photo that vanished while
+    // the body grew back by the same amount would leave the card height unchanged, so the two are
+    // measured separately — `imgMoved` counts any per-card image height change at all.
     var iH0=imgH(c),before=h(c);
     tick(c);
-    var iH1=imgH(c),denom=before-iH0;
-    var ratio=denom>0?(h(c)-iH1)/denom:9;
-    if(ratio>worst)worst=ratio;
+    if(Math.abs(imgH(c)-iH0)>0.5)imgMoved++;
+    var shift=Math.abs(h(c)-before);
+    if(shift>maxShift)maxShift=shift;
     measured++;
   });
   if(probe.length){
+    dimHl=getComputedStyle(probe[0].querySelector('.fcard__hl')).opacity;
     var c0=probe[0],mb=c0.querySelector('.fcard__more');
-    mb.click();                                  // read + More: the spine must open again
+    mb.click();                                  // read + More: the fold control still opens it
     var sum=c0.querySelector('.fcard__sum');
     reopen=(sum&&sum.getBoundingClientRect().height>0)?1:0;
     mb.click();
@@ -702,14 +696,14 @@ setTimeout(function(){
     edOk=(st.join('')==='1111')?1:0;
   }
 
-  // 4 — the whole board read
+  // 4 — the whole board read: the unread board, dimmed, and nothing else
   cards.forEach(function(c){ if(!c.classList.contains('is-read'))tick(c); });
   var allVoid=window.__hmVoid();
   var gridH1=Math.round(grid.getBoundingClientRect().height);
-  // EVERY PICTURE SURVIVES AN ALL-READ BOARD — the pin for the owner ruling above, measured on
-  // all ~76 image cards rather than the 6-card ratio sample so it cannot be vacuous. Filter-hidden
-  // cards are excluded (#synced runs this probe under a roamed Unread filter, where one card's
-  // display:none zeroes every rect it contains).
+  // EVERY PICTURE SURVIVES AN ALL-READ BOARD — measured on all ~76 image cards rather than the
+  // 6-card sample so it cannot be vacuous. Filter-hidden cards are excluded (#synced runs this
+  // probe under a roamed Unread filter, where one card's display:none zeroes every rect it
+  // contains).
   var imgTot=0,imgVis=0;
   cards.forEach(function(c){
     if(c.style.display==='none')return;
@@ -718,18 +712,20 @@ setTimeout(function(){
   });
   var imgKept=(imgTot>0&&imgVis===imgTot)?1:0;
   cards.forEach(function(c){ if(c.classList.contains('is-read'))tick(c); });
-  window.__hmRestoreBootOpen();          // reading normalized them to folded; un-reading does not undo it
+  window.__hmRestoreBootOpen();          // safety net only — reading no longer folds anything
   var gridH2=Math.round(grid.getBoundingClientRect().height);
   try{ ['homeRead:v1','syncState:v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
 
   scrollTo(0,scroll0);
   var drop=gridH0>0?Math.round(100*(gridH0-gridH1)/gridH0):-1;
   var d=document.createElement('div');d.id='readcheck';
-  d.textContent='READ measured='+measured+' worstRatio='+(Math.round(worst*100)/100)
-    +' spineOk='+((measured>0&&worst<=0.70)?1:0)
+  d.textContent='READ measured='+measured+' maxShift='+(Math.round(maxShift*10)/10)
+    +' dimOnly='+((measured>0&&maxShift<=1)?1:0)
+    +' imgMoved='+imgMoved+' dimHl='+dimHl
     +' imgTot='+imgTot+' imgKept='+imgKept
     +' reopen='+reopen+' edStates='+(edStates||'-')+' edOk='+edOk
     +' gridH0='+gridH0+' allReadH='+gridH1+' gridDrop='+drop
+    +' gridSame='+((Math.abs(gridH1-gridH0)<=8)?1:0)
     +' restored='+((Math.abs(gridH2-gridH0)<=8)?1:0)
     +' stillRead='+cards.filter(function(c){return c.classList.contains('is-read');}).length
     +' [allread: '+allVoid+']';
@@ -809,12 +805,12 @@ setTimeout(function(){
 # The axes, and how each is reached:
 #   R  read state   SEEDED into homeRead:v1 before the layout script runs (`R1`/`R2`/`R2s`), which
 #                   is how a returning reader arrives, or CLICKED at probe time (`R1c` — the same
-#                   state reached by ticking ✓ now). The suffix exists because the two used to
-#                   DIVERGE: `foldForRead` ran from setRead and never from paintRead, so a
-#                   click-marked card was normalized to `is-folded`/More while a boot-seeded one kept
-#                   whatever fold default it booted with — the seam, and what these cells found. Since
-#                   2026-07-26 both go through `paintReadState` and the two paths agree; the A/B stays,
-#                   because "they agree" is exactly the claim that has to keep being measured.
+#                   state reached by ticking ✓ now). The suffix exists because the two once DIVERGED
+#                   (the spine-era `foldForRead` ran only on the click path — the seam these cells
+#                   found). Under the dims-never-hides ruling both paths are pure paints and must
+#                   agree on a stronger claim: NEITHER may change geometry at all (`dropPct` ~ 0 on
+#                   every R cell). The A/B stays, because "they agree" is exactly the claim that has
+#                   to keep being measured.
 #   F  filter       CLICKED, not seeded — apply() + schedulePack is the path a reader takes, and
 #                   clicking gives the round-trip for free in EVERY filtered cell (measure at rest,
 #                   filter, measure, unfilter, compare) instead of in one designated cell. Boot-time
@@ -869,10 +865,10 @@ MATRIX_PRE = """<script>
   }
   /* THE ONE CARD THAT BOOTS OPEN, SEEDED READ — a returning reader who ticked today's lead earlier,
      or whose read state roamed in from another device. It is a DIFFERENT path from ticking it now:
-     the boot fold-default loop keys on `data-age="0" data-imp="3"` alone and never consults the read
-     map, and `paintRead` (which is what boot runs) does not call `foldForRead` (which is what the
-     click path runs). Seeded here, i.e. before the layout script reads localStorage, because that
-     ordering is the whole point of the cell. */
+     the boot fold-default loop keys on `data-age="0" data-imp="3"` alone and never consults the
+     read map. Under the dims-never-hides ruling both paths must leave the lead exactly as the fold
+     defaults do — open, body visible. Seeded here, i.e. before the layout script reads
+     localStorage, because that ordering is the whole point of the cell. */
   if (window.__mx && window.__mx.bslead){
     try {
       var lead = document.querySelector('.fcard[data-age="0"][data-imp="3"]');
@@ -884,10 +880,11 @@ MATRIX_PRE = """<script>
   }
   /* THE THIRD PATH TO A READ CARD: a ROAM landing after boot. Nothing is seeded read here — only a
      SESSION is, which is enough, because the layout's boot then calls pullRemote() -> the /readstate
-     stub PRE_SYNC already installed -> mergeRemote(), whose paint is `cards.forEach(paintRead)` with
-     no `foldForRead` either. The stub marks the FIRST card's story id read, and the first card of
-     this board is the boot-open lead, so this reproduces the seam without touching homeRead:v1 at
-     all. It exists so the roam path is MEASURED rather than inferred from a shared call site. */
+     stub PRE_SYNC already installed -> mergeRemote(), whose paint is `cards.forEach(paintRead)`.
+     The stub marks the FIRST card's story id read, and the first card of this board is the
+     boot-open lead, so this measures the roam path's paint on the most exposed card without
+     touching homeRead:v1 at all. It exists so the roam path is MEASURED rather than inferred from
+     a shared call site. */
   if (window.__mx && window.__mx.roam){
     try {
       localStorage.setItem('syncSession:v1',
@@ -937,7 +934,7 @@ setTimeout(function(){
 
   /* `data-age` IS CLAMPED AT 3 AND CANNOT ORDER DATES — measured 2026-07-26, and it cost this probe
      a false failure before it was found. The feed's `age_days` is the clamped expression the type
-     scale and the read spine speak (importance minus age minus read), so on a 15-day board eleven
+     scale speaks (importance minus age), so on a 15-day board eleven
      different dates all carry `data-age="3"`. Any probe that treats it as a date proxy silently
      loses resolution past three days: `ageMono` is kept because non-decreasing ages IS a true and
      useful claim, but "dates descend down the page" is read off the PRINTED LABEL instead.
@@ -1032,36 +1029,39 @@ setTimeout(function(){
     put(pfx + 'readN', rd.length);
     put(pfx + 'openN', cards.filter(function(c){ return c.classList.contains('is-open'); }).length);
     put(pfx + 'foldedN', cards.filter(function(c){ return c.classList.contains('is-folded'); }).length);
-    /* THE SPINE, ASSERTED PER CARD RATHER THAN AS A PAGE HEIGHT. The spec expected an R1 board (ten
-       of 82 read) to lose >=25% of its height, and at a packed width it arithmetically cannot: the
-       grid's height is its TALLEST COLUMN, so ten cards spread over three tracks take about a third
-       of their own height off each one — measured 18405 -> 16853, i.e. 8%, while the lead itself
-       collapsed 912 -> 228 (75%). The page really did spine; the page HEIGHT is simply the wrong
-       instrument for it below an all-read board. So: every read story card that is not explicitly
-       open must have a zero-height body, and the height drop is reported for the record.
-       Editorial cards are excluded because they have no `.fcard__sum` at all (their body is
-       `.fcard__edp`), which reads as -1 rather than 0 and would fail a naive count. */
-    var spineWant = rd.filter(function(c){
-      return !isEd(c) && c.querySelector('.fcard__sum') && !c.classList.contains('is-open'); });
-    put(pfx + 'spineWant', spineWant.length);
-    put(pfx + 'spineN', spineWant.filter(function(c){ return bodyH(c) === 0; }).length);
-    put(pfx + 'spineOk', spineWant.filter(function(c){ return bodyH(c) === 0; }).length
-      === spineWant.length ? 1 : 0);
-    /* THE READ / BOOT-OPEN SEAM, COUNTED — the invariant commit 3cc4b4d established, as a number
-       that every cell reports. A card that is read, has a More control, and carries neither
-       `is-folded` nor `is-open` has its body hidden by the spine rule while its own button still
-       says "Less" with aria-expanded="true": it looks collapsed and claims to be expanded, and it
-       takes TWO clicks to open (the first only adds `is-folded`). `foldForRead` closes that on the
-       CLICK path. This counts it wherever it occurs, on any path. */
-    var seam = cards.filter(function(c){
-      return c.classList.contains('is-read') && c.querySelector('.fcard__more')
-        && !c.classList.contains('is-folded') && !c.classList.contains('is-open'); });
-    put(pfx + 'seamN', seam.length);
-    if (seam.length){
-      var sb = seam[0].querySelector('.fcard__more');
-      put(pfx + 'seamLbl', sb.querySelector('span').textContent.trim());
-      put(pfx + 'seamAria', sb.getAttribute('aria-expanded'));
-      put(pfx + 'seamBody', bodyH(seam[0]));
+    /* FOLD STATE ALONE DECIDES WHAT TEXT SHOWS — the dims-never-hides ruling (2026-07-26 night),
+       asserted per card across the whole visible board: a folded story card's body is hidden, an
+       un-folded one's is visible, and READ STATE PLAYS NO PART in it. This is the rule the read
+       spine broke by design and the owner rejected; a read card with a zero-height body under no
+       `is-folded` is now a regression by definition, whatever path marked it. Editorial cards are
+       excluded because they have no `.fcard__sum` at all (their body is `.fcard__edp`), which
+       reads as -1 and would fail a naive count. */
+    var ftCards = V.filter(function(c){
+      return !isEd(c) && c.querySelector('.fcard__more') && c.querySelector('.fcard__sum'); });
+    var ftBad = ftCards.filter(function(c){
+      var hidden = bodyH(c) === 0;
+      return hidden !== c.classList.contains('is-folded'); });
+    put(pfx + 'foldTruthN', ftCards.length);
+    put(pfx + 'foldTruthBad', ftBad.length);
+    put(pfx + 'foldTruth', ftBad.length === 0 ? 1 : 0);
+    /* THE CONTROL NEVER LIES — the honesty half of the invariant commit 3cc4b4d established,
+       generalized: every More control's label and aria-expanded must agree with its card's fold
+       state, read or not. The spine-era seam (read + un-folded + control claiming "Less" over a
+       hidden body) is one instance of a lie; a fold that forgot its label is another. Counted
+       over every card with a More control, on any path into any state. */
+    var lies = cards.filter(function(c){
+      var b = c.querySelector('.fcard__more');
+      if (!b) return false;
+      var lbl = b.querySelector('span').textContent.trim(), ar = b.getAttribute('aria-expanded');
+      return c.classList.contains('is-folded')
+        ? (lbl !== 'More' || ar !== 'false')
+        : (lbl !== 'Less' || ar !== 'true'); });
+    put(pfx + 'lieN', lies.length);
+    if (lies.length){
+      var sb = lies[0].querySelector('.fcard__more');
+      put(pfx + 'lieLbl', sb.querySelector('span').textContent.trim());
+      put(pfx + 'lieAria', sb.getAttribute('aria-expanded'));
+      put(pfx + 'lieBody', bodyH(lies[0]));
     }
     put(pfx + 'r1H', r1h()); put(pfx + 'band', banded()); put(pfx + 'spanned', spannedN());
   }
@@ -1277,7 +1277,9 @@ setTimeout(function(){
     });
   }
 
-  // --- 2. the added cell: reading the BOOT-OPEN lead, which is open by the ABSENCE of is-folded
+  // --- 2. the added cell: reading the BOOT-OPEN lead, which is open by the ABSENCE of is-folded.
+  //     Dims-never-hides: the tick may change nothing but the dim — body height held, no fold
+  //     class, control still honestly saying "Less", card height held to the pixel.
   if (C.bootlead){
     steps.push(function(){
       var boot = (window.__hmBootOpen || []).filter(function(c){
@@ -1287,23 +1289,26 @@ setTimeout(function(){
       if (!boot.length){ notes.push('bootlead-SKIP'); return; }
       var c = boot[0], mb = c.querySelector('.fcard__more');
       var sy = scrollY, h0 = Math.round(c.getBoundingClientRect().height);
-      put('blBody0', bodyH(c));
+      var b0 = bodyH(c);
+      put('blBody0', b0);
       tick(c);
-      put('blSpined', bodyH(c) === 0 ? 1 : 0);
-      put('blFolded', (c.classList.contains('is-folded') && !c.classList.contains('is-open')) ? 1 : 0);
+      put('blRead', c.classList.contains('is-read') ? 1 : 0);
+      put('blBodyKept', bodyH(c) === b0 ? 1 : 0);
+      put('blOpenKept', (!c.classList.contains('is-folded') && !c.classList.contains('is-open')) ? 1 : 0);
       put('blLabel', mb.querySelector('span').textContent.trim());
       put('blAria', mb.getAttribute('aria-expanded'));
-      more(c);
-      put('blOneClick', bodyH(c) > 0 ? 1 : 0);
-      put('blH', h0 + '/' + Math.round(c.getBoundingClientRect().height));
-      if (!C.keep){ more(c); tick(c); window.__hmRestoreBootOpen(); }
+      var h1 = Math.round(c.getBoundingClientRect().height);
+      put('blH', h0 + '/' + h1);
+      put('blHSame', h0 === h1 ? 1 : 0);
+      if (!C.keep){ tick(c); window.__hmRestoreBootOpen(); }
       scrollTo(0, sy);
     });
   }
 
-  /* --- 2b. THE SAME SEAM, REACHED BY BOOTING INSTEAD OF CLICKING, and counted in clicks. `seamN`
-       above says the state exists; this says what it costs the reader: how many presses of More it
-       takes to get the body back. One is correct. Two is the pre-3cc4b4d behaviour. */
+  /* --- 2b. THE SAME STATE, REACHED BY BOOTING (or ROAMING) INSTEAD OF CLICKING, and counted in
+       clicks: how many presses of More it takes to see the lead's text. ZERO is correct under
+       dims-never-hides — the seeded-read lead boots open with its body already on screen. One was
+       the spine-era answer, two was the spine-era bug. */
   if (C.bslead || C.roam){
     steps.push(function(){
       var lead = grid.querySelector('.fcard[data-age="0"][data-imp="3"]');
@@ -1326,8 +1331,8 @@ setTimeout(function(){
          stubbed GET /prefs also roams `rs:'unread'`, so the lead this cell just painted read is
          filtered off the board (`vis` 81, its rect 0). Counting clicks against a `display:none` card
          measured "the card is hidden", not "the control lies" — it read 4 (the cap) with the body
-         never returning, which would have overstated a real finding. The seam STATE above is what
-         this cell proves on the roam path; the cost is quoted from the boot path. */
+         never returning, which would have overstated a real finding. The read STATE above is what
+         this cell proves on the roam path; the click cost is quoted from the boot path. */
       if (lead.style.display === 'none' || !lead.getBoundingClientRect().height){
         put('bsHidden', 1);
         notes.push('click-cost-not-measurable: lead filtered off the board');
@@ -1394,39 +1399,38 @@ setTimeout(function(){
     });
   }
   if (C.E === 'E3'){
-    /* More ON A READ SPINE — the `.is-open`-beats-`.is-read` cascade. The target is read first if
-       this cell's R has not already read it, because the state under test is "read, then opened",
-       not "read". */
+    /* More ON A READ CARD. Under dims-never-hides these are INVARIANCE claims: ticking a card
+       read may not move its headline scale (`e3HlReadSame` — the spine used to demote it to
+       brief), and More must open a read folded card exactly as it opens an unread one
+       (`e3Reopen`, plus `hlSame` across the More click, which the spine era could not assert
+       here because the demotion made the size move through More by design). */
     steps.push(function(){
       var t = pickFoldable(1, true), hlU = '';
       if (!t.length){
         t = pickFoldable(1);
-        /* THE UNREAD RANK SCALE, CAPTURED BEFORE THE TICK — the reference `e3HlRestored` needs, and
-           the only moment it exists. `hlSame` used to be asserted here and that was pinning the E4
-           bug as an invariant: reading demotes a headline to `--hl-brief` (the spine) and More is
-           supposed to LIFT that demotion, so a run where the size does not move through More is a run
-           where `:not(.is-open)` is missing. Measured at 1280 with the guard in place:
-           21.0394 -> 32.9617px, i.e. straight back to the card's own feature scale. */
+        // the unread scale, captured before the tick — the reference e3HlReadSame needs, and the
+        // only moment it exists (in cells whose R already read every candidate, the claim is
+        // simply not emitted and the judge skips it).
         if (t.length){ hlU = hlSize(t[0]); tick(t[0]); notes.push('E3-marked'); }
       }
       eTargets = t;
       put('eN', t.length);
       if (!t.length){ notes.push('E-SKIP no foldable module past rank 8'); return; }
       var c = t[0];
-      put('e3Spine', bodyH(c));
+      put('e3Body0', bodyH(c));
       put('hl0', hlSize(c));
       var w0 = Math.round(c.getBoundingClientRect().width);
       more(c);
       put('e3Body', bodyH(c));
       put('e3Reopen', bodyH(c) > 0 ? 1 : 0);
       put('hl1', hlSize(c));
+      put('hlSame', hlSize(c) === K.hl0 ? 1 : 0);
       // the width half of the More invariant still holds here, and it is the half `hlSame` was really
       // about: a `cqi` font-size can only move if the container did.
       put('openWSame', Math.round(c.getBoundingClientRect().width) === w0 ? 1 : 0);
       if (hlU){
         put('e3HlUnread', hlU);
-        put('e3HlDemoted', K.hl0 !== hlU ? 1 : 0);
-        put('e3HlRestored', hlSize(c) === hlU ? 1 : 0);
+        put('e3HlReadSame', K.hl0 === hlU ? 1 : 0);
       }
       put('e3Open', c.classList.contains('is-open') ? 1 : 0);
       put('e3Read', c.classList.contains('is-read') ? 1 : 0);
@@ -1434,9 +1438,11 @@ setTimeout(function(){
     });
   }
   if (C.E === 'E4'){
-    /* OPEN A MODULE, THEN MARK IT READ. `.is-open` is deliberately untouched by foldForRead — a
-       card the reader explicitly opened stays open when they tick it — so this cell pins the
-       documented behaviour as numbers rather than as a comment. */
+    /* OPEN A MODULE, THEN MARK IT READ. A card the reader explicitly opened stays open when they
+       tick it — under dims-never-hides that is one instance of the general rule (reading touches
+       nothing but the dim), and the cell stays pinned as numbers because this exact state is the
+       one the spine-era code broke twice (the missing `:not(.is-open)` guard, then the E4
+       headline demotion). */
     steps.push(function(){
       var t = pickFoldable(1);
       eTargets = t;
@@ -1447,11 +1453,12 @@ setTimeout(function(){
       more(c);
       /* `hlSame` IS THE More INVARIANT AND ONLY THAT, so it is read around the More click alone.
          `e4HlSame` is the second, separate claim: reading an OPEN card must not move its headline
-         either. It used to, and this cell is what found it — the five `display:none` read rules
-         carry `:not(.is-open)` and the font-size rule did not, so ticking an open lead gave back a
-         brief-sized headline over a full body (37.976px -> 24.24px at 1440). The guard landed in the
-         layout on 2026-07-26; both sizes are still reported (`hl0`, `e4HlRead`) so the number says
-         which way it broke rather than only that it did. */
+         either. It used to, and this cell is what found it — the spine's `display:none` rules
+         carried `:not(.is-open)` and its font-size rule did not, so ticking an open lead gave back
+         a brief-sized headline over a full body (37.976px -> 24.24px at 1440). The spine is gone
+         now (dims-never-hides) but the claim stays: reading may not move type, open or folded.
+         Both sizes are still reported (`hl0`, `e4HlRead`) so a regression says which way it broke
+         rather than only that it did. */
       put('hl1', hlSize(c));
       put('hlSame', hlSize(c) === K.hl0 ? 1 : 0);
       put('e4BodyOpen', bodyH(c));
@@ -1480,13 +1487,11 @@ setTimeout(function(){
   // --- 6. THE ROUND TRIP, in every cell that changed anything — unfilter, un-open, un-read, and
   //     compare against the resting numbers this same page load started from. `keep` is the
   //     screenshot path and deliberately abandons the state instead.
-  /* `bslead` HAS NO ROUND TRIP, and that is a property of the state rather than a gap in the probe.
-     It was true of the BUG — the boot state was read + un-folded + un-opened, and since the More
-     handler can only toggle `is-folded`, a card once clicked could reach "folded/More" or
-     "open/Less" but never the boot combination again. It stays true of the FIX for a different
-     reason: the cell's own click opens the card, and closing it would restore the boot state only
-     if un-reading restored the boot-open fold, which it deliberately does not (see `foldForRead`).
-     Either way, asserting a restore here would report a phantom failure. */
+  /* `bslead` HAS NO ROUND TRIP: its state was SEEDED before boot (the read map is the cell, not a
+     click to undo), and its click-cost loop may have pressed More — since the More handler can
+     only toggle `is-folded`/`is-open`, a card once clicked can never re-reach the boot-open
+     combination (open by ABSENCE of both classes). Asserting a restore here would report a
+     phantom failure; storage cleanup in step 7 is what actually matters. */
   if (!C.keep && !C.bslead){
     steps.push(function(){
       if (BEAT){ var f = chipFor(''); if (f.el) f.el.click(); }        // the All chip
@@ -1532,11 +1537,12 @@ setTimeout(function(){
     var order = ['cell','innerW','bootOpen','vis','visStory','visEd','r0vis','r0H',
       'ageMono','dbVis','dbPrinted','dbDesc','uct','unreadVis','unreadAll',
       'edN','edDiscMin','edDiscOk','emptyHidden','emptyH','emptyTop','emptyDot','emptyOk',
-      'readN','spinedN','openN','foldedN','r1H','band','spanned','H',
+      'readN','openN','foldedN','foldTruthN','foldTruthBad','foldTruth','lieN','r1H','band',
+      'spanned','H',
       'beat','chipN','chipVis','rs','rsVis','eN','eOpened','hl0','hl1','hlSame','openW','openWSame',
-      'drift','eBody','e3Spine','e3Body','e3Reopen','e3Open','e3Read',
+      'drift','eBody','e3Body0','e3Body','e3Reopen','e3HlUnread','e3HlReadSame','e3Open','e3Read',
       'e4BodyOpen','e4BodyRead','e4StaysOpen','e4Label','e4Aria','e4Read',
-      'blN','blBody0','blSpined','blFolded','blLabel','blAria','blOneClick','blH',
+      'blN','blBody0','blRead','blBodyKept','blOpenKept','blLabel','blAria','blH','blHSame',
       'roamGets','roamPainted',
       'bsRead','bsFolded','bsOpen','bsLabel','bsAria','bsBody','bsHidden','bsClicksToOpen',
       'bsBodyAfter',
@@ -1671,9 +1677,10 @@ PRE_SYNC = """<script>
   /* sidA IS THE BOOT-OPEN LEAD, DELIBERATELY, not merely the first card. It is the id the stubbed
      GET /readstate marks read, so it decides which card the ROAM path lands on — and the one card a
      roam can get wrong is exactly this one: today's lead boots OPEN by the absence of `is-folded`
-     (see the layout's fold defaults), so a mark that paints it read without folding it leaves the
-     seam. It happens to be the first card on today's feed; pinning it by selector means a feed whose
-     first card is a brief cannot silently retire the roam assertions in SYNC_CHECK. */
+     (see the layout's fold defaults), so it is the card a roamed paint would visibly disturb if it
+     ever touched fold state again (dims-never-hides forbids it). It happens to be the first card on
+     today's feed; pinning it by selector means a feed whose first card is a brief cannot silently
+     retire the roam assertions in SYNC_CHECK. */
   var leadEl = document.querySelector('.fcard[data-age="0"][data-imp="3"] .fcard__fb');
   var sidA = (leadEl && leadEl.dataset.story) || (fbs[0] && fbs[0].dataset.story), sidB = null;
   for (var i = 0; i < fbs.length; i++){
@@ -1713,12 +1720,12 @@ PRE_SYNC = """<script>
   }
   /* BOOT WITH TODAY'S LEAD ALREADY READ (#bsread) — the second of the three paths into read, and the
      one no click-driven probe can reach. A returning reader who ticked the lead yesterday, or whose
-     mark roamed in and persisted, loads the page with it in the read map; the boot pass paints it,
-     and until 2026-07-26 painting did not fold (see `paintReadState` in the layout). Seeded HERE
-     because "before the layout script reads localStorage" is the whole content of the cell — nothing
-     driven after boot can put a card back into that state, since the More handler can only toggle
-     `is-folded`. The state matrix proved the bug on this path (`bsClicksToOpen=2`); this is the same
-     cell in the STANDING oracle, so it cannot quietly reopen. */
+     mark roamed in and persisted, loads the page with it in the read map; the boot pass paints it.
+     Under the dims-never-hides ruling the claim is that the paint is ALL that happens: the lead
+     boots read AND open, exactly as the fold defaults leave it, body visible, control honest.
+     Seeded HERE because "before the layout script reads localStorage" is the whole content of the
+     cell. The path stays in the standing oracle because it broke twice while the spine existed —
+     any future fold consequence of reading has to face this cell first. */
   if (location.hash === '#bsread'){
     try {
       var one = {};
@@ -1749,9 +1756,11 @@ PRE_SYNC = """<script>
 
 # THE BOOT-SEEDED READ LEAD (`--hash '#bsread'`), promoted out of the state matrix into the standing
 # oracle (matrix report §9 item 2). READ_CHECK and LEADREAD_CHECK both reach read state by CLICKING
-# `.fcard__read`, which is the one path that was already correct — so 25 matrix cells could fail on
-# the boot and roam paths while this driver stayed green at every width. That is exactly the shape of
-# regression that must not be invisible twice.
+# `.fcard__read`; this is the boot path, which regressed invisibly twice while the spine existed.
+# Under the dims-never-hides ruling the expectation flipped: a lead seeded read boots exactly as the
+# fold defaults leave an unread one — OPEN (no `is-folded`), body visible, control saying "Less" and
+# meaning it, ZERO clicks needed to see the text. `lie` is the honesty invariant that replaced the
+# old seam: the control's label/aria must agree with the fold state, in any read state.
 # Runs at 4.4s: after FOLD (4.2s, which opens and restores a card past rank 8) and before anything
 # that mass-marks the board (LEADREAD 4.65s, EMPTY 4.8s, READ 5.6s), so the state it reads is still
 # the one the page BOOTED into. It clears the seed after measuring, because `file://` shares one
@@ -1769,25 +1778,23 @@ setTimeout(function(){
     var sy0=scrollY;
     var read=lead.classList.contains('is-read')?1:0;
     var fold0=lead.classList.contains('is-folded'),open0=lead.classList.contains('is-open');
-    var folded=(fold0&&!open0)?1:0;
-    // THE SEAM, READ OFF THE BOOT STATE AND NOT OFF THE POST-CLICK ONE. Computed after the click loop
-    // below it could never be 1 — the More handler always leaves `is-folded` or `is-open` set — so the
-    // row would have been an assertion that cannot fail. Caught by running this probe against the
-    // pre-fix layout, where it printed seam=0 beside four genuine failures.
-    var seam=(read&&!fold0&&!open0)?1:0;
     var lbl=mb?mb.querySelector('span').textContent.trim():'-';
     var aria=mb?mb.getAttribute('aria-expanded'):'-';
     var body0=sum?Math.round(sum.getBoundingClientRect().height):-1;
-    // THE COST IN CLICKS, which is what the reader actually feels. One is correct; two is the
-    // pre-fix behaviour, where the first press only added `is-folded` against an already-hidden body.
+    // THE HONESTY INVARIANT, read off the boot state: an un-folded card's control must say "Less"
+    // with aria-expanded=true, a folded one "More"/false — read state may not put the two out of
+    // step in either direction.
+    var lie=((fold0&&(lbl!=='More'||aria!=='false'))||(!fold0&&(lbl!=='Less'||aria!=='true')))?1:0;
+    // THE COST IN CLICKS. Zero is correct now: the body is already on screen. The loop is kept so
+    // a regression reports its actual cost (the spine-era bug read 2 here) instead of just "not 0".
     var clicks=0;
     while(mb&&sum&&sum.getBoundingClientRect().height===0&&clicks<4){ mb.click(); clicks++; }
     var v1=window.__hmVoid();
     var upA=(v1.match(/upInv=(\\d+)/)||[0,'?'])[1];
-    out='BSREAD read='+read+' folded='+folded+' label='+lbl+' aria='+aria
+    out='BSREAD read='+read+' folded='+((fold0&&!open0)?1:0)+' label='+lbl+' aria='+aria
       +' body0='+body0+' clicksToOpen='+clicks
       +' bodyAfter='+(sum?Math.round(sum.getBoundingClientRect().height):-1)
-      +' seam='+seam+' upInv='+upA;
+      +' lie='+lie+' upInv='+upA;
     scrollTo(0,sy0);
     try{ ['homeRead:v1','syncState:v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
   }
@@ -1818,27 +1825,29 @@ setTimeout(function(){
     var st = {}; try { st = JSON.parse(localStorage.getItem('syncState:v1') || '{}'); } catch(e){}
     shadow = (st[sids[0]] && st[sids[0]].v === 1 && st[sids[1]] && st[sids[1]].v === 0) ? 1 : 0;
   }
-  /* THE ROAM PATH INTO THE READ/FOLD SEAM — the third way a card becomes read, and the one this
-     driver could not see (matrix report §9 item 2). `sidA` is pinned to the boot-open lead in
-     PRE_SYNC, so the stubbed GET /readstate marks THAT card read and mergeRemote paints it: before
-     2026-07-26 it painted without folding, leaving the lead read + un-folded with its control still
-     saying "Less". State only, deliberately: the same stubbed roam also carries `rs:'unread'`, so the
-     card it just marked read is filtered off the board and a click count here would be measuring
-     `display:none` rather than the control (the matrix cell read 4 — the cap — for that reason). The
-     click cost is asserted on the boot path, in `#bsread`.
+  /* THE ROAM PATH — the third way a card becomes read, and the one this driver could not see
+     (matrix report §9 item 2). `sidA` is pinned to the boot-open lead in PRE_SYNC, so the stubbed
+     GET /readstate marks THAT card read and mergeRemote paints it. Under the dims-never-hides
+     ruling the paint is ALL that may happen: the lead stays exactly as the fold defaults left it
+     — open, body visible, control saying "Less" honestly. `roamLie` is the honesty invariant
+     (label/aria vs fold state); `roamOpen` pins that the roam did not fold it. State only,
+     deliberately: the same stubbed roam also carries `rs:'unread'`, so the lead is filtered off
+     the board here and rect-based claims would measure `display:none` — which is why the claims
+     are class/attribute reads, and the body-visibility half lives in `#bsread`.
      `roamLeadRead` IS THE PREMISE, asserted like any other row: if the roam ever stops landing on
      the lead, this must fail loudly rather than pass three vacuous assertions. */
-  var roamLeadRead = -1, roamFolded = -1, roamLabel = '-', roamAria = '-', roamSeam = -1;
+  var roamLeadRead = -1, roamOpen = -1, roamLabel = '-', roamAria = '-', roamLie = -1;
   var leadCard = document.querySelector('.fcard[data-age="0"][data-imp="3"]');
   if (location.hash === '#synced' && leadCard){
     var lmb = leadCard.querySelector('.fcard__more');
     var lFold = leadCard.classList.contains('is-folded');
     var lOpen = leadCard.classList.contains('is-open');
     roamLeadRead = leadCard.classList.contains('is-read') ? 1 : 0;
-    roamFolded = (lFold && !lOpen) ? 1 : 0;
+    roamOpen = (!lFold && !lOpen) ? 1 : 0;
     roamLabel = lmb ? lmb.querySelector('span').textContent.trim() : '-';
     roamAria = lmb ? lmb.getAttribute('aria-expanded') : '-';
-    roamSeam = (roamLeadRead && !lFold && !lOpen) ? 1 : 0;
+    roamLie = ((lFold && (roamLabel !== 'More' || roamAria !== 'false'))
+      || (!lFold && (roamLabel !== 'Less' || roamAria !== 'true'))) ? 1 : 0;
   }
   // editorial read state (2026-07-18): clicking the ✓ on an ed- card must toggle is-read and
   // land the ed-<stream>-<date> id in homeRead:v1; a second click must fully undo both.
@@ -1861,8 +1870,8 @@ setTimeout(function(){
     ' gets=' + gets + ' affordance=' + (aff && !aff.hidden ? 1 : 0) +
     ' painted=' + painted + ' unpainted=' + unpainted + ' shadow=' + shadow +
     ' prefsCalls=' + prefsCalls + ' prefsRs=' + prefsRs + ' edread=' + edread +
-    ' roamLeadRead=' + roamLeadRead + ' roamFolded=' + roamFolded +
-    ' roamLabel=' + roamLabel + ' roamAria=' + roamAria + ' roamSeam=' + roamSeam;
+    ' roamLeadRead=' + roamLeadRead + ' roamOpen=' + roamOpen +
+    ' roamLabel=' + roamLabel + ' roamAria=' + roamAria + ' roamLie=' + roamLie;
   document.body.appendChild(d);
 }, 4500);
 </script>"""
@@ -1938,7 +1947,7 @@ setTimeout(function(){
        above refuses to rely on. */
     if(boot){ try{ ['homeRead:v1','topicPrefs:v1','syncState:v1'].forEach(function(k){
       localStorage.removeItem(k); }); }catch(e){} }
-    window.__hmRestoreBootOpen();   // the mass-mark above normalized every boot-open card to folded
+    window.__hmRestoreBootOpen();   // safety net only — reading no longer folds anything
     setTimeout(function(){
       var back=cards.filter(function(c){return c.style.display!=='none';}).length;
       var spanned=cards.filter(function(c){return !!c.style.gridRow;}).length;
@@ -2246,20 +2255,25 @@ CHECKS = [
     ("FOLD", "holes", lambda v: v == "0", "the open state leaves no interior hole"),
     ("FOLD", "holePx", lambda v: v == "0", "...and no interior void px"),
     ("FOLD", "upInv", lambda v: v == "0", "order holds with a module open"),
-    ("LEADREAD", "spined", lambda v: v == "1", "reading a boot-open card collapses it to its spine"),
-    ("LEADREAD", "folded", lambda v: v == "1", "...and normalizes it to is-folded, without is-open"),
-    ("LEADREAD", "label", lambda v: v == "More", "its control agrees with what the card now looks like"),
-    ("LEADREAD", "aria", lambda v: v == "false", "...and so does aria-expanded"),
-    ("LEADREAD", "oneClick", lambda v: v == "1", "ONE click re-opens it (it used to take two)"),
+    ("LEADREAD", "isRead", lambda v: v == "1", "PREMISE: the tick really marked the boot-open card read"),
+    ("LEADREAD", "bodyKept", lambda v: v == "1",
+     "reading a boot-open card leaves its body exactly where it was (dims-never-hides)"),
+    ("LEADREAD", "stayOpen", lambda v: v == "1", "...and adds no fold class"),
+    ("LEADREAD", "hSame", lambda v: v == "1", "...and holds the card's height to the pixel"),
+    ("LEADREAD", "dim", lambda v: v == "0.58", "...while the headline dims to the pinned 0.58"),
+    ("LEADREAD", "label", lambda v: v == "Less", "its control still says Less — and is now honest"),
+    ("LEADREAD", "aria", lambda v: v == "true", "...and so does aria-expanded"),
     ("LEADREAD", "upInvRead", lambda v: v == "0", "order holds through the read transition"),
-    ("LEADREAD", "upInvOpen", lambda v: v == "0", "order holds through the re-open"),
-    ("LEADREAD", "restored", lambda v: v == "1", "the probe put the boot-open card back"),
-    ("READ", "spineOk", lambda v: v == "1",
-     "a read lead/feature collapses to <=0.70x its folded height (image slot excluded)"),
+    ("LEADREAD", "restored", lambda v: v == "1", "un-reading leaves it equally untouched"),
+    ("READ", "dimOnly", lambda v: v == "1",
+     "ticking read moves nothing — per-card height shift <=1px (dims-never-hides)"),
+    ("READ", "imgMoved", lambda v: v == "0", "...and no sampled card's photo changed height"),
+    ("READ", "dimHl", lambda v: v == "0.58", "...while the headline dims to the pinned 0.58"),
     ("READ", "imgKept", lambda v: v == "1", "every image card on an all-read board keeps its photo"),
-    ("READ", "reopen", lambda v: v == "1", "More re-opens a READ card in place (:not(.is-open) guards)"),
+    ("READ", "reopen", lambda v: v == "1", "More still opens a READ card"),
     ("READ", "edOk", lambda v: v == "1", "the AI disclosure is visible folded, open, read and read+open"),
-    ("READ", "gridDrop", lambda v: int(v) >= 25, "an all-read board is at least 25% shorter"),
+    ("READ", "gridSame", lambda v: v == "1",
+     "an all-read board keeps the unread board's height — it is the same board, dimmed"),
     ("READ", "upInv", lambda v: v == "0", "order holds with every card read"),
     ("READ", "holes", lambda v: v == "0", "no interior hole with every card read"),
     ("READ", "restored", lambda v: v == "1", "un-reading restores the board's height"),
@@ -2273,27 +2287,28 @@ CHECKS = [
     ("SYNC", "edread", lambda v: v == "1", "an editorial card's read toggle round-trips"),
 ]
 
-# Signed-in only (`--hash '#synced'`). Read state now changes GEOMETRY, so a roam landing after boot
-# is the highest-risk path in this rework — it repaints spines, some above the viewport, and it is
-# the reason mergeRemote() got the anchor bracket. Every row in CHECKS above holds in this mode too
-# (DAY correctly reports DAY-SKIP, since the roamed Unread filter makes it a filtered view).
+# Signed-in only (`--hash '#synced'`). A roam lands seconds after boot; under the dims-never-hides
+# ruling its paint may change NOTHING but the dim — the roamed lead keeps the exact state the fold
+# defaults booted it into. Every row in CHECKS above holds in this mode too (DAY correctly reports
+# DAY-SKIP, since the roamed Unread filter makes it a filtered view).
 SYNCED_CHECKS = [
     ("SYNC", "gets", lambda v: v == "1", "the signed-in boot pulls /readstate exactly once"),
     ("SYNC", "painted", lambda v: v == "1", "a remote mark paints the card read"),
     ("SYNC", "unpainted", lambda v: v == "1", "a newer remote tombstone un-marks a locally-read card"),
     ("SYNC", "shadow", lambda v: v == "1", "both land in the syncState:v1 shadow"),
     ("SYNC", "prefsRs", lambda v: v == "1", "a roamed read-filter lands on the segmented toggle"),
-    # THE ROAM PATH'S FOLD NORMALIZATION (2026-07-26). The premise first, then the three facts that
-    # were wrong before `mergeRemote` called `paintReadState`: 24 matrix cells failed on `seamN` and
-    # this driver could not see any of them, because every read state it reached, it reached by click.
+    # THE ROAM PATH'S PAINT, HELD TO THE DIMS-NEVER-HIDES RULING. The premise first, then the
+    # facts: the roamed mark may not fold the boot-open lead, and the control may not lie about
+    # fold state. (The spine era asserted the exact opposite of roamOpen here — the flip is the
+    # 2026-07-26 night owner ruling, not a drift.)
     ("SYNC", "roamLeadRead", lambda v: v == "1",
      "PREMISE: the stubbed roam really marks the boot-open lead read"),
-    ("SYNC", "roamFolded", lambda v: v == "1",
-     "...and a roamed mark folds the card it lands on, exactly as a click does"),
-    ("SYNC", "roamLabel", lambda v: v == "More", "...with its control agreeing"),
-    ("SYNC", "roamAria", lambda v: v == "false", "...and so does aria-expanded"),
-    ("SYNC", "roamSeam", lambda v: v == "0",
-     "...so no roamed card is left read, un-folded and claiming 'Less'"),
+    ("SYNC", "roamOpen", lambda v: v == "1",
+     "...and leaves it exactly as the fold defaults booted it — open, no fold class"),
+    ("SYNC", "roamLabel", lambda v: v == "Less", "...with its control still saying Less, honestly"),
+    ("SYNC", "roamAria", lambda v: v == "true", "...and aria-expanded still true"),
+    ("SYNC", "roamLie", lambda v: v == "0",
+     "...so no roamed card's control disagrees with its fold state"),
 ]
 
 # Boot-seeded-read only (`--hash '#bsread'`), and the ONLY rows scored in that mode — the seeded lead
@@ -2302,14 +2317,15 @@ SYNCED_CHECKS = [
 # `#bootempty` scores only EMPTY. The mode is driven by --check itself; see main().
 BSREAD_CHECKS = [
     ("BSREAD", "read", lambda v: v == "1", "PREMISE: the seed really booted the lead read"),
-    ("BSREAD", "folded", lambda v: v == "1",
-     "a lead that was ALREADY read at boot is folded, without is-open"),
-    ("BSREAD", "label", lambda v: v == "More", "...with its control agreeing"),
-    ("BSREAD", "aria", lambda v: v == "false", "...and so does aria-expanded"),
-    ("BSREAD", "body0", lambda v: v == "0", "...over a body the read spine is hiding"),
-    ("BSREAD", "clicksToOpen", lambda v: v == "1", "ONE click re-opens it (it used to take two)"),
-    ("BSREAD", "seam", lambda v: v == "0", "...i.e. the boot path leaves no un-folded read card"),
-    ("BSREAD", "upInv", lambda v: v == "0", "order holds through the re-open"),
+    ("BSREAD", "folded", lambda v: v == "0",
+     "a lead that was ALREADY read at boot keeps its boot-open state (dims-never-hides)"),
+    ("BSREAD", "label", lambda v: v == "Less", "...with its control saying Less, honestly"),
+    ("BSREAD", "aria", lambda v: v == "true", "...and aria-expanded true"),
+    ("BSREAD", "body0", lambda v: int(v) > 0, "...over a body that is visibly on screen"),
+    ("BSREAD", "clicksToOpen", lambda v: v == "0",
+     "ZERO clicks to see the text (the spine era cost one, its bug cost two)"),
+    ("BSREAD", "lie", lambda v: v == "0", "...and the boot path leaves no control lying about fold state"),
+    ("BSREAD", "upInv", lambda v: v == "0", "order holds on the boot-seeded board"),
 ]
 
 
@@ -2491,27 +2507,31 @@ MX_CHECKS = [
     ("openWSame", lambda v, c: v == "1", "expansion is height-only — the module never widens"),
     ("drift", lambda v, c: abs(int(v)) <= 1, "the opened module does not move under the cursor"),
     ("eOpened", lambda v, c: int(v) >= 1, "More actually opened the module"),
-    ("e3Reopen", lambda v, c: v == "1", "More re-opens a READ spine in place (.is-open beats .is-read)"),
-    # THE READ DEMOTION IS A PAIR, and both halves are asserted because either one alone passes on a
-    # broken page: demoted when read and folded, restored to the card's OWN rank scale when opened.
-    # Before the `:not(.is-open)` guard the second was false and `hlSame` recorded that as invariance.
-    ("e3HlDemoted", lambda v, c: v == "1", "reading a card demotes its headline to brief scale"),
-    ("e3HlRestored", lambda v, c: v == "1",
-     "...and More lifts the demotion exactly, back to the scale the card had unread"),
+    ("e3Reopen", lambda v, c: v == "1", "More opens a READ folded card exactly as an unread one"),
+    # READING MAY NOT MOVE TYPE (dims-never-hides — the spine-era demotion pair asserted the exact
+    # opposite here; the flip is the 2026-07-26 night owner ruling, not a drift).
+    ("e3HlReadSame", lambda v, c: v == "1",
+     "ticking a card read leaves its headline at the scale it had unread"),
     ("e4StaysOpen", lambda v, c: v == "1", "a module the reader opened stays open when it is ticked read"),
     ("e4Label", lambda v, c: v == "Less", "...and its control still says so"),
     ("e4HlSame", lambda v, c: v == "1",
      "...and its headline keeps its RANK scale — reading an open card may not demote its type"),
-    ("blSpined", lambda v, c: v == "1", "reading the boot-open lead collapses it to its spine"),
-    ("blFolded", lambda v, c: v == "1", "...in ONE state transition, to is-folded without is-open"),
-    ("blLabel", lambda v, c: v == "More", "...with its control agreeing"),
-    ("blOneClick", lambda v, c: v == "1", "...and ONE click re-opens it"),
-    ("spineOk", lambda v, c: v == "1", "every read story card that is not open shows a zero-height body"),
-    ("seamN", lambda v, c: v == "0",
-     "no read card is left un-folded and un-opened (body hidden, control still claiming 'Less')"),
-    ("bsClicksToOpen", lambda v, c: v == "1", "ONE click opens a boot-seeded-read lead"),
-    ("bsLabel", lambda v, c: v == "More", "...and its control says More before that click"),
-    ("bsAria", lambda v, c: v == "false", "...and so does aria-expanded"),
+    ("blRead", lambda v, c: v == "1", "PREMISE: the tick really marked the boot-open lead read"),
+    ("blBodyKept", lambda v, c: v == "1",
+     "reading the boot-open lead leaves its body exactly where it was (dims-never-hides)"),
+    ("blOpenKept", lambda v, c: v == "1", "...and adds no fold class"),
+    ("blHSame", lambda v, c: v == "1", "...and holds the card's height to the pixel"),
+    ("blLabel", lambda v, c: v == "Less", "...with its control still saying Less, honestly"),
+    ("blAria", lambda v, c: v == "true", "...and aria-expanded still true"),
+    ("foldTruth", lambda v, c: v == "1",
+     "fold state alone decides body visibility — read state plays no part (dims-never-hides)"),
+    ("lieN", lambda v, c: v == "0",
+     "no More control's label/aria disagrees with its card's fold state"),
+    ("bsClicksToOpen", lambda v, c: v == "0",
+     "ZERO clicks to see a boot-seeded-read lead's text — it boots open"),
+    ("bsLabel", lambda v, c: v == "Less", "...and its control says Less, honestly"),
+    ("bsAria", lambda v, c: v == "true", "...and so does aria-expanded"),
+    ("bsFolded", lambda v, c: v == "0", "...and no fold class appeared at boot"),
 ]
 
 
@@ -2656,7 +2676,7 @@ def _mx_cells():
     W_ALL = [1440, 1280, 1024, 800, 700, 390]
     cells = []
 
-    def add(w, tokens, shot=False, expect=None, note="", mindrop=None, h=None, idsfx="",
+    def add(w, tokens, shot=False, expect=None, note="", dropmax=None, h=None, idsfx="",
             shoth=None):
         # `idsfx` exists so the SAME tokens can be run at two window heights as two distinct cells
         # (the census at a laptop height and at the owner's), since the id is otherwise derived from
@@ -2664,7 +2684,7 @@ def _mx_cells():
         # the owner-height cell below for why the two heights differ.
         cid = "%d-%s%s" % (w, tokens.replace(",", "-"), idsfx)
         cells.append({"id": cid, "w": w, "tokens": tokens, "shot": shot,
-                      "expect": expect or {}, "note": note, "mindrop": mindrop, "h": h,
+                      "expect": expect or {}, "note": note, "dropmax": dropmax, "h": h,
                       "shoth": shoth})
 
     # 0. THE SCROLL / STRUCTURE CENSUS, first and at a REALISTIC VIEWPORT HEIGHT. 860px is a laptop
@@ -2689,15 +2709,16 @@ def _mx_cells():
     add(1440, "R0,F0,E0,struct", h=891, shoth=804, shot=True, idsfx="-owner804",
         note="the same census at the owner's measured 804px viewport — the reorder's acceptance cell")
 
-    # 1. every (W x R) resting — the width axis crossed with the read axis. The all-read board is
-    #    the only read state whose HEIGHT drop is a meaningful assertion (see `spineOk`), and only
-    #    where the board is packed: below 700px it is one column and every card is its own row.
+    # 1. every (W x R) resting — the width axis crossed with the read axis. Under dims-never-hides
+    #    a read board IS the unread board, dimmed, so every seeded read state must hold the R0
+    #    height at every width: `dropmax=1` allows one percentage point for row-unit rounding and
+    #    nothing more. (The spine era asserted mindrop=25 here — the flip is the owner ruling.)
     for w in W_ALL:
         for r in ("R0", "R1", "R2"):
             add(w, "%s,F0,E0" % r,
                 shot=(w, r) in {(1440, "R0"), (1440, "R1"), (1440, "R2"), (1024, "R1"),
                                 (800, "R1"), (700, "R0"), (390, "R0"), (390, "R1")},
-                mindrop=25 if (r == "R2" and w >= 700) else None)
+                dropmax=1 if r != "R0" else None)
     # 2. every (F x R) at 1440
     for r in ("R0", "R1", "R2"):
         for f in ("F1", "F2", "F3", "F4", "F5"):
@@ -2715,20 +2736,22 @@ def _mx_cells():
     # 5. the round trips, stated as their own cells rather than implied: every F cell round-trips
     #    its filter already, so what is left is read-then-unread — which is what `R1c` measures,
     #    since a clicked read state is un-clicked in the restore step.
-    add(1440, "R1c,F0,E0", note="read-then-unread round trip; also the boot-seeded vs clicked A/B")
-    add(1440, "R2c,F0,E0", note="all-read by click rather than by seed")
+    add(1440, "R1c,F0,E0", dropmax=1,
+        note="read-then-unread round trip; also the boot-seeded vs clicked A/B")
+    add(1440, "R2c,F0,E0", dropmax=1, note="all-read by click rather than by seed")
     # 6. THE ADDED CELLS (implementer report 2026-07-26)
     add(1440, "R2s,F1,E0", shot=True,
         expect={"uct": "0", "vis": "2", "visEd": "2", "visStory": "0", "emptyHidden": "1"},
         note="all 80 stories read, both editorials unread, Unread filter — the owner's "
              "reported-bug surface, pinned as exact numbers")
-    add(1440, "R0,F0,E0,bootlead", note="the read / boot-open lead seam, reached by CLICKING")
+    add(1440, "R0,F0,E0,bootlead",
+        note="the boot-open lead ticked read by CLICKING — nothing but the dim may change")
     add(1440, "R0,F0,E0,bslead", shot=True,
-        note="the same seam reached by BOOTING with the lead already read — the path foldForRead "
-             "does not run on")
+        note="the same state reached by BOOTING with the lead already read — it must boot open, "
+             "body visible, zero clicks")
     add(1440, "R0,F0,E0,roam",
         expect={"roamGets": "1", "roamPainted": "1"},
-        note="and the same seam reached by a ROAM landing after boot (mergeRemote -> paintRead), "
+        note="and the same state reached by a ROAM landing after boot (mergeRemote -> paintRead), "
              "with nothing seeded read locally. The two expectations are the cell's PREMISE — that "
              "the roam really landed and really painted the lead — so a stub that silently stopped "
              "working could not read as a pass")
@@ -2810,12 +2833,12 @@ def _mx_run(artifact, cells, shots_dir=None, log=None, budget=16000, scheme="dar
         if cell["w"] in base and "H" in kv and base[cell["w"]]:
             drop = round(100.0 * (base[cell["w"]] - int(kv["H"])) / base[cell["w"]])
             kv["dropPct"] = str(drop)
-        if cell.get("mindrop") is not None:
+        if cell.get("dropmax") is not None:
             if drop is None:
                 fails.append("dropPct: no R0 baseline at %dpx to compare against" % cell["w"])
-            elif drop < cell["mindrop"]:
-                fails.append("dropPct=%d — expected: an all-read board is at least %d%% shorter"
-                             % (drop, cell["mindrop"]))
+            elif abs(drop) > cell["dropmax"]:
+                fails.append("dropPct=%d — expected: a read board keeps the unread board's height "
+                             "(dims-never-hides; |drop| <= %d%%)" % (drop, cell["dropmax"]))
         rows.append({"cell": cell, "kv": kv, "text": text, "fails": fails})
         if fails:
             failed.append(cell["id"])
@@ -3145,19 +3168,27 @@ def _assert_reworked(page):
     """PROVE THE ARTIFACT EMBEDS THE REWORKED CODE BEFORE TRUSTING A SINGLE NUMBER OFF IT.
 
     Three green-while-broken pages in this repo's history all came from an instrument that did not
-    contain the code under test (see `verify the test tool first`). `data-daybreak` and `foldForRead`
-    exist only in the 2026-07-26 rework; `paintReadState` and `rail-d` only in the fix to it, so a
-    harness driven against an older layout cannot report on either one.
+    contain the code under test (see `verify the test tool first`). `data-daybreak` and `rail-d`
+    exist only in the 2026-07-26 rework; `dims-never-hides` only in the same-night reversal of its
+    read spine — so a harness driven against an older layout cannot carry all three. The ABSENCE
+    checks are the reversal's other half: `foldForRead(` and `paintReadState` exist ONLY in the
+    spine-era layout, so a page still carrying either is the pre-reversal code and every inverted
+    assertion in this file would score it exactly backwards.
     """
     for token, what in (("data-daybreak", "the daybreak attribute"),
-                        ("paintReadState", "the one read painter all three paths call"),
                         ("rail-d", "the rail's index disclosure"),
-                        ("foldForRead", "the read/boot-open normalization"),
+                        ("dims-never-hides", "the read-reversal ruling marker"),
                         ("packRowSpans", "the row-span pack engine"),
                         ("fcard__eddisc", "the AI disclosure")):
         if token not in page:
             raise SystemExit("home_harness: the artifact does not contain %r (%s) — "
                              "the harness is not testing the reworked page" % (token, what))
+    for token, what in (("paintReadState", "the spine-era read painter"),
+                        ("foldForRead(", "the spine-era fold normalization")):
+        if token in page:
+            raise SystemExit("home_harness: the artifact still contains %r (%s) — this is the "
+                             "PRE-reversal layout, and every read assertion here would score it "
+                             "backwards" % (token, what))
 
 
 def _run_census(feed, out_path):

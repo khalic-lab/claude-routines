@@ -1381,45 +1381,20 @@ layout: archive
   .fcard.is-read .fcard__sum, .fcard.is-read .fcard__why{ opacity:.58; }  /* keeps AA contrast in light theme */
   .fcard.is-read .fcard__edp, .fcard.is-read .fcard__eddisc{ opacity:.58; }
   .fcard.is-read .fimg{ opacity:.5; }
-  /* READING COLLAPSES A CARD TO ITS SPINE (2026-07-26), which is the whole of what the ✓ means now.
-     Before this, reading was cosmetic: four `opacity:.58` selectors, full size, forever — the page
-     you had read looked exactly as long as the page you had not. The signal was already there
-     (following a headline link has marked a story read since the feature shipped); what it lacked
-     was a consequence.
-     THE SPINE IS THE INDEX LINE THE CARD WOULD HAVE BEEN if the desk had ranked it a brief:
-     `.fcard__top` (beat + the tier word, still printed as real text) + headline at brief scale +
-     the photo, dimmed + More + the source/date footer + the feedback strip. Measured at 1440:
-     ~120-150px against a 300-420px unread folded feature, plus the image slot where one exists.
-     THE PHOTO STAYS, AND THAT IS AN OWNER RULING (2026-07-26 evening), not an oversight: the
-     spine originally hid `.fimg` too, and on a roamed mostly-read board that stripped every
-     picture off the resting page — the owner met an imageless front page and rejected it. The
-     spine hides PROSE; the picture keeps the paper looking like one, and the `opacity:.5` dim
-     above already marks it spent. The compaction this costs is the slot itself (~130-270px on
-     cards that carry one), accepted knowingly against the recede-so-unread-rises mechanic.
-     IT DOES NOT LIE ABOUT RANK. Position is untouched, the column span is untouched (read state
-     never writes `grid-column`), `.fcard__rank` still says Lead and the `.lead` accent inset stays.
-     The accent marks RANK; the type size marks LIVENESS. Reading compacts the page, so unread
-     material rises — geometrically, under the packer, with no reorder anywhere.
-     EVERY FOLD IS A WHOLE ELEMENT, never a clamp. One ellipsis and the never-crop ruling is gone.
-     `:not(.is-open)` IS LOAD-BEARING IN ALL FOUR SELECTORS: it is what lets More re-open a read
-     card in place. Drop one and More on a read card silently does nothing. Pinned in the probe.
-     THE DISCLOSURE APPEARS IN NO RULE HERE. `.fcard__eddisc` never hides — folded, expanded, read,
-     or read AND expanded. It is transparency, not content. Asserted in all four states. */
-  .fcard.is-read:not(.is-open) .fcard__deck,
-  .fcard.is-read:not(.is-open) .fcard__sum,
-  .fcard.is-read:not(.is-open) .fcard__why,
-  .fcard--ed.is-read:not(.is-open) .fcard__edp{ display:none; }
-  /* `:not(.is-open)` IS THE FIFTH GUARD, and it was missing until 2026-07-26 (state matrix, E4).
-     The four `display:none` rules above carry it; this font-size rule did not, so More on a read
-     card gave back the body and kept the brief-sized headline — measured on a read lead at 1440,
-     37.976px against 24.24px, i.e. the two halves of the read demotion disagreeing about what
-     `.is-open` overrides. Either the reader opened the card or they did not.
-     It also settles the specificity question this rule used to depend on: at (0,5,0) it now beats
-     the age demotion above on weight rather than on source order, so a read LEAD still lands on
-     brief scale instead of the demotion's feature scale, wherever the two rules sit.
-     Editorials stay excluded because their headline is a serif italic at a fixed 1.15rem — handing
-     it an Anton `cqi` clamp would make a read editorial's title BIGGER. */
-  .fcard.is-read:not(.is-open):not(.fcard--ed) .fcard__hl{ font-size:var(--hl-brief); }
+  /* READING DIMS AND NEVER HIDES — the opacity rules above are the WHOLE of what the ✓ does
+     (owner ruling, 2026-07-26 night, reversing that morning's f561ecc). For one day reading
+     collapsed a card to a "spine": four `display:none` rules stripped deck/summary/why/editorial
+     prose and a fifth demoted the headline to brief scale, so a read board compacted and unread
+     material rose geometrically. The owner pared it back the same evening (the photo survived,
+     dimmed — see `.fimg` above) and then rejected the mechanic outright: "hiding the text for
+     read articles was a bad choice." So: a read card keeps every element it had before it was
+     read, at the size it had. What text shows is the FOLD system's business alone — the boot
+     defaults plus the reader's own More/Less — and read state neither writes nor implies fold
+     state anywhere (the JS-side normalization `foldForRead` left with this ruling too).
+     Do not re-add compaction here without a new explicit ruling: this block is where it lived,
+     and it cost the owner a front page they wanted back. The dims stay AA-safe (measured at the
+     opacity rules above); `.fcard__eddisc` appears in no read rule, same as ever — the AI
+     disclosure never hides in any state. */
   .fcard__line{ display:flex; align-items:baseline; gap:.6em; margin-top:auto; padding-top:9px;
     border-top:1px solid var(--hair); font-family:var(--sans); font-size:.6rem; letter-spacing:.04em; color:var(--muted); }
   /* The source domain takes the red accent — in the mock the red domain is the module's
@@ -1752,10 +1727,12 @@ layout: archive
      The second getBoundingClientRect forces layout, so `after` is the settled position.
      Browser scroll-anchoring does not cover this: it protects content above the viewport top, not
      the element you are looking at.
-     FIVE CALL SITES, and each one is a path that changes a card's height: the More/Less control
-     (its original behaviour, unchanged), setRead (the spine), mergeRemote (a roam landing after
-     boot), and the vote-reason show/hide/send paths (review R9 — showing that field grew the first
-     card 26.1px past its assigned row and overlaid the next one, because nothing re-packed).
+     FOUR CALL SITES, and each one is a path that changes a card's height: the More/Less control
+     (its original behaviour, unchanged), mergeRemote (a roam landing after boot with a read
+     filter active), and the vote-reason show/hide/send paths (review R9 — showing that field grew
+     the first card 26.1px past its assigned row and overlaid the next one, because nothing
+     re-packed). setRead left the list with the read spine (dims-never-hides ruling): ticking ✓
+     changes opacity only, so it has no delta to pay back and no reason to force a repack.
      `el` may be null: then it is a repack with no anchor to preserve. ---- */
   function anchored(el, fn){
     var before = el ? el.getBoundingClientRect().top : 0;
@@ -1822,62 +1799,28 @@ layout: archive
     });
     var el = filters.querySelector('.ff-uct'); if (el) el.textContent = un;
   }
-  /* READING A BOOT-OPEN CARD NORMALIZES ITS FOLD STATE, and without this there is a seam.
-     Today's leads boot open as the ABSENCE of `is-folded` (see the fold-default loop — they must
-     not carry `.is-open`, or the read spine could never collapse them). Mark one read and the spine
-     rules hide its body, but its own control still said "Less" with `aria-expanded="true"` and no
-     `is-folded` — so the card looked collapsed while its button claimed it was expanded, and
-     re-opening it took TWO clicks: the first only added `is-folded` and flipped the label, against
-     a body the read rule was already hiding.
-     So on read, a card that is neither folded nor explicitly opened is moved to the state it now
-     LOOKS like: folded, labelled More, aria-expanded false. One click opens it after that.
-     `.is-open` cards are deliberately untouched — More overrides the spine by design, and a card
-     the reader explicitly opened stays open when they tick it read.
-     UN-READING DOES NOT RESTORE BOOT-OPEN, on purpose. Remembering per-card boot state to undo
-     this would be a second fold memory living beside the reader's own clicks, and the honest
-     simpler answer is that a card you have read and un-read is a card you have handled.
-     THERE ARE THREE PATHS INTO READ, NOT ONE, and this normalization has to run on all of them —
-     the state-matrix pass (2026-07-26) failed 25 of 53 cells on that single omission. A click goes
-     through setRead below; a card that is ALREADY read when the page loads is painted by the boot
-     pass; and a read state that roams in from another device is painted by mergeRemote. The last two
-     used to call `paintRead` alone, which sets `is-read` and never folds — so the reader who ticked
-     today's lead and reloaded, or whose read state arrived from their phone, got exactly the seam
-     described above: body hidden by the spine rule, control still saying "Less", two clicks to
-     re-open. Every one of the three now calls this. */
-  function foldForRead(card){
-    var b = card.querySelector('.fcard__more');
-    if (!b) return;
-    if (card.classList.contains('is-folded') || card.classList.contains('is-open')) return;
-    card.classList.add('is-folded');
-    b.setAttribute('aria-expanded', 'false');
-    var lbl = b.querySelector('span');
-    if (lbl) lbl.textContent = 'More';
-  }
-  /* PAINTING READ MEANS NORMALIZING THE FOLD, and this function is the only place that says so.
-     `paintRead` on its own is the half that produced the seam on the boot and roam paths, so the
-     three call sites (setRead, the boot pass, mergeRemote) all go through here and a fourth cannot
-     pick up half of it. Fold first, then paint: `foldForRead` reads the classes `paintRead` writes
-     nothing to, so the order is a convention rather than a dependency — but it is the click path's
-     order and it stays the one order. */
-  function paintReadState(card){
-    if (isRead(card)) foldForRead(card);
-    paintRead(card);
-  }
+  /* THERE IS NO FOLD NORMALIZATION ON READ, and that is a ruling, not an omission (2026-07-26
+     night — see the dims-never-hides block in the CSS). While reading collapsed cards to spines,
+     marking a boot-open lead read also had to FOLD it (`foldForRead`) or its More button lied
+     about a body the spine rule was hiding — a seam that once failed 25 of 53 state-matrix cells.
+     With the spine gone the seam cannot exist: reading changes opacity only, so fold state,
+     button label and `aria-expanded` always agree without help. All three paths into read (the ✓
+     click via setRead, the boot pass, a roamed state via mergeRemote) call `paintRead` alone —
+     if reading ever gets a geometric consequence again, the normalization has to come back on
+     ALL THREE, not just the click. */
   function setRead(card, v){
     var s = sidOf(card); if (!s) return;
-    /* READ STATE IS NOW GEOMETRY, so it goes through the anchor bracket. A spine is ~1/3 the
-       height of the card it replaces; without this the cards below jump up under the cursor the
-       instant you tick one. The fold normalization is inside the SAME bracket: it is part of the
-       one reflow, not a second one. */
-    anchored(card, function(){
-      if (v) readMap[s] = Date.now(); else delete readMap[s];
-      saveRead();
-      noteLocalRead(s, v);             // sync shadow (+ debounced push when signed in) — see below
-      cards.forEach(function(c){        // repaint sid twins too
-        if (sidOf(c) === s) paintReadState(c);
-      });
-      readCounts();
+    /* No anchor bracket and no repack here since the dims ruling: ticking ✓ moves nothing, so
+       there is no scroll delta to pay back. The one read path that still changes geometry — a ✓
+       under an active read FILTER — runs `apply()` from the click handler after this, and apply's
+       own coalesced pack covers it. */
+    if (v) readMap[s] = Date.now(); else delete readMap[s];
+    saveRead();
+    noteLocalRead(s, v);               // sync shadow (+ debounced push when signed in) — see below
+    cards.forEach(function(c){         // repaint sid twins too
+      if (sidOf(c) === s) paintRead(c);
     });
+    readCounts();
   }
 
   /* ---- topic filters (multi-select; a card matches if ANY of its topics is active) ---- */
@@ -1927,14 +1870,14 @@ layout: archive
      no-JS still renders the full text — the fold is presentation, never a crop. Ephemeral, no
      persistence; expanding is NOT an implicit read.
      It used to be unconditional: every card with a More button booted folded, including the day's
-     lead. `data-age="0"` AND `data-imp="3"` is the same clamped expression the type scale and the
-     read spine speak — importance minus age minus read — so the resting page opens as a front
-     page (today's leads reading in full) and recedes into an index below that.
-     A BOOT-OPEN CARD DOES NOT GET `.is-open`, and that distinction is load-bearing rather than
-     pedantic: `.is-open` means "the reader opened this", and it is what overrides the read spine
-     via the `:not(.is-open)` guards. If boot-open set it, ticking today's lead as read would
-     leave it at full size forever — the one card most likely to be read first. So boot-open is
-     the ABSENCE of `is-folded`, which is also exactly what no-JS renders. ---- */
+     lead. `data-age="0"` AND `data-imp="3"` is the same clamped expression the type scale speaks
+     — importance minus age — so the resting page opens as a front page (today's leads reading in
+     full) and recedes into an index below that.
+     A BOOT-OPEN CARD DOES NOT GET `.is-open`: `.is-open` means "the reader opened this", and
+     boot-open is the ABSENCE of `is-folded` — which is also exactly what no-JS renders. Keep the
+     distinction even though no CSS rule consumes `.is-open` since the read spine left
+     (dims-never-hides ruling): reader-opened vs boot-open is real state, and the last consumer
+     was added and removed inside one day. ---- */
   cards.forEach(function(c){
     var b = c.querySelector('.fcard__more');
     if (!b) return;
@@ -1946,13 +1889,11 @@ layout: archive
     c.classList.add('is-folded');
     b.setAttribute('aria-expanded', 'false');
   });
-  /* THE BOOT PAINT RUNS AFTER THE FOLD DEFAULTS, and the order is the whole fix. It used to run
-     before them and call `paintRead` alone, so a card that was already read at load — ticked on the
-     last visit, or roamed in and persisted — came out read but un-folded, and the fold-default loop
-     then labelled today's lead "Less" over a body the read spine was hiding. Painting after means
-     `paintReadState` sees the fold baseline and corrects the one card that needs it; putting this
-     back above the loop would re-open the seam silently, because the loop writes the label last. */
-  cards.forEach(paintReadState); readCounts();
+  /* Boot paint. `paintRead` writes `is-read` and the ✓ button state and nothing else — read state
+     does not touch fold state (dims-never-hides ruling) — so its order against the fold-default
+     loop above no longer carries the seam it once fixed. It stays after the loop regardless: if
+     reading ever regains a fold consequence, this is the order that was proven correct. */
+  cards.forEach(paintRead); readCounts();
   grid.addEventListener('click', function(e){
     var mb = e.target.closest('.fcard__more');
     if (!mb) return;
@@ -1963,8 +1904,8 @@ layout: archive
       var folded = mc.classList.toggle('is-folded');
       /* `is-open` is a POSITIVE marker rather than `:not(.is-folded)`. Only cards that have a More
          button ever get `is-folded`, so the negation would also match every card that never folds.
-         Its second job since 2026-07-26: it is what overrides the read spine, so a read card can
-         be re-opened in place. */
+         Currently no CSS rule consumes it (the read spine that did is gone — dims-never-hides
+         ruling); it stays as the record of reader intent. */
       mc.classList.toggle('is-open', !folded);
       mb.setAttribute('aria-expanded', String(!folded));
       var lbl = mb.querySelector('span');
@@ -2272,18 +2213,13 @@ layout: archive
       dirty = true;
     }
     if (dirty){ saveSync(); saveRead(); }
-    /* A ROAM LANDS SECONDS AFTER BOOT AND NOW CHANGES GEOMETRY. Signed in on a cold cache, the
-       page paints unread, packs, and then /readstate returns and collapses cards to spines — some
-       of them ABOVE the viewport. Without the anchor bracket that throws the reader down the page
-       while they are reading. The anchor is the topmost card still on screen, since nobody clicked
-       anything here. */
+    /* A roamed paint is opacity-only since the dims-never-hides ruling, so most roams move
+       nothing. The anchor bracket stays for the one that does: with a read FILTER active the
+       `apply()` below hides newly-read cards — possibly ABOVE the viewport — seconds after boot,
+       and without the bracket that throws the reader down the page while they are reading. The
+       anchor is the topmost card still on screen, since nobody clicked anything here. */
     anchored(topCard(), function(){
-      /* `paintReadState`, NOT `paintRead` — a roamed mark has to fold the card it lands on exactly
-         like a click does, or the reader whose phone marked today's lead read arrives at a spine
-         whose control says "Less" and takes two presses to open (the seam, on the third path).
-         Inside the existing anchor bracket on purpose: the fold is part of the ONE reflow the roam
-         causes, not a second one measured against a layout that has already moved. */
-      cards.forEach(paintReadState); readCounts();
+      cards.forEach(paintRead); readCounts();
       if (readState) apply();              // a read-filter is active — re-evaluate visibility
     });
   }
