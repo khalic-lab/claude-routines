@@ -424,11 +424,14 @@ setTimeout(function(){
     // restating rank. Height-only expansion cannot do that, and `hlSame` proves it rather than
     // asserting it in prose. `font-size` is not a transitioned property here, so it is safe to
     // read straight after a synthetic click (see this module's docstring on transitions).
-    // CAVEAT, MEASURED 2026-07-26 AGAINST THE PRE-FIX LAYOUT: a `cqi`-derived font-size read
-    // immediately after a synthetic click did NOT reflect the container's new width — the module
-    // measured 405 -> 810px and `getComputedStyle` still reported 24.24px both times. So `hlSame`
-    // alone could pass on a layout that DOES resize type; it is meaningful only next to
-    // `openWSame`, which is measured off rects and is the assertion that actually bites.
+    // BOTH NUMBERS ARE REPORTED, not just the boolean, and `openWSame` sits beside them: a `cqi`
+    // font-size can only move if the container did, so the two together say WHY. Verified by
+    // re-adding the deleted `.is-open{ grid-column:span 8 }` rule in a throwaway working tree
+    // (2026-07-26, one variable, same feed, same target card): `openW 405 -> 810`,
+    // `hl 37.976px -> 60px`, i.e. straight to the lead clamp's ceiling. With the rule gone:
+    // `405 -> 405`, `37.976px -> 37.976px`. The first target must NOT be an editorial for this to
+    // mean anything — `.fcard--ed .fcard__hl` is a fixed 1.15rem, so it reads identical either way;
+    // FOLD_CHECK picks the first foldable module past rank 8, which under the board is a story.
     var hl0=hlSizeBefore, hl1=hlSize(target);
     mb.click();
     var t2=target.getBoundingClientRect().top,h2=Math.round(target.getBoundingClientRect().height);
