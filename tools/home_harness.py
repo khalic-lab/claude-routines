@@ -794,13 +794,14 @@ MATRIX_PRE = """<script>
   var h = location.hash || '';
   if (h.indexOf('#mx:') !== 0){ window.__mx = null; return; }
   var C = { R:'R0', F:'F0', E:'E0', keep:false, bootlead:false, bslead:false, roam:false,
-            click:false, raw:h.slice(4) };
+            struct:false, click:false, raw:h.slice(4) };
   C.raw.split(',').forEach(function(t){
     t = t.trim(); if (!t) return;
     if (t === 'keep'){ C.keep = true; return; }
     if (t === 'bootlead'){ C.bootlead = true; return; }
     if (t === 'bslead'){ C.bslead = true; return; }
     if (t === 'roam'){ C.roam = true; return; }
+    if (t === 'struct'){ C.struct = true; return; }
     if (t.charAt(0) === 'R'){
       if (t.charAt(t.length - 1) === 'c'){ C.click = true; C.R = t.slice(0, -1); } else C.R = t;
       return;
@@ -1024,6 +1025,145 @@ setTimeout(function(){
       put(pfx + 'seamBody', bodyH(seam[0]));
     }
     put(pfx + 'r1H', r1h()); put(pfx + 'band', banded()); put(pfx + 'spanned', spannedN());
+  }
+
+  /* ============ THE SCROLL / STRUCTURE CENSUS (owner report 2026-07-26: "there's a double scroll
+     issue right at the top, maybe a rest of the header area"). It runs INSTEAD of the state machine
+     below and needs a REALISTIC VIEWPORT HEIGHT — every other cell here uses an 1800-5200px window
+     because it photographs a whole page, and at that height nothing on this page can overflow
+     vertically at all: the rail's `max-height:calc(100vh - 71px)` is 2529px in a 2600px window, so
+     the very container under suspicion is not a scroll container in any other cell. Struct cells run
+     at 860px (see _mx_cells), which is why this had to be its own kind of cell rather than one more
+     field on an existing one.
+     WHAT IT CAN AND CANNOT DO: it measures geometry and computed style. It does NOT dispatch wheel
+     events, because a synthesised WheelEvent is untrusted and Chrome does not scroll for it — a
+     probe that dispatched one and reported "the page did not move" would be reporting the
+     instrument. Scroll capture and chaining are read off the two facts that fully determine them:
+     whether the element under the pointer is a scroll container with room to move on that axis, and
+     whether `overscroll-behavior` lets it hand the rest to the page. ============ */
+  if (C.struct){
+    var cont = [], notes2 = [];
+    function selOf(el){
+      if (el === document.documentElement) return 'html';
+      if (el === document.body) return 'body';
+      var s = el.tagName.toLowerCase();
+      if (el.id) s += '#' + el.id;
+      var cl = (el.getAttribute('class') || '').trim().split(/\\s+/).filter(Boolean).slice(0, 3);
+      if (cl.length) s += '.' + cl.join('.');
+      return s;
+    }
+    function scrollable(el){
+      var cs = getComputedStyle(el);
+      var dW = el.scrollWidth - el.clientWidth, dH = el.scrollHeight - el.clientHeight;
+      var ox = cs.overflowX, oy = cs.overflowY;
+      var out = [];
+      if ((ox === 'auto' || ox === 'scroll') && dW > 2) out.push(['x', dW]);
+      if ((oy === 'auto' || oy === 'scroll') && dH > 2) out.push(['y', dH]);
+      if (!out.length) return null;
+      var r = el.getBoundingClientRect();
+      return out.map(function(a){
+        return { sel: selOf(el), axis: a[0], delta: a[1], ox: ox, oy: oy,
+          ob: cs.overscrollBehaviorX + '/' + cs.overscrollBehaviorY,
+          pos: cs.position, top: cs.top, mh: cs.maxHeight,
+          rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]
+            .join(',') };
+      });
+    }
+    var els = [document.documentElement, document.body];
+    [].push.apply(els, [].slice.call(document.querySelectorAll('body *')));
+    els.forEach(function(el){
+      var s = scrollable(el);
+      if (s) [].push.apply(cont, s);
+    });
+    /* THE html-vs-body DOUBLE SCROLLBAR, which is a different failure from a nested container: it is
+       both of them being independently scrollable, so the viewport shows two vertical bars and a
+       wheel hits whichever one the pointer is over. minimal-mistakes sets `body{display:flex}` here,
+       so this is worth asserting rather than assuming. */
+    var de = document.documentElement, bd = document.body;
+    var deD = de.scrollHeight - de.clientHeight, bdD = bd.scrollHeight - bd.clientHeight;
+    var deOv = getComputedStyle(de).overflowY, bdOv = getComputedStyle(bd).overflowY;
+    var deScrolls = deD > 2 && deOv !== 'hidden';
+    var bdScrolls = bdD > 2 && (bdOv === 'auto' || bdOv === 'scroll');
+    var K2 = {};
+    function put2(k, v){ K2[k] = v; }
+    put2('w', innerWidth); put2('h', innerHeight);
+    put2('docDelta', deD); put2('bodyDelta', bdD);
+    put2('docOv', deOv); put2('bodyOv', bdOv);
+    put2('doubleScroll', (deScrolls && bdScrolls) ? 1 : 0);
+    put2('nCont', cont.length);
+    // the two suspects, always reported by name whether or not they made the census
+    var fil = document.getElementById('folioFilters');
+    if (fil){
+      var fcs = getComputedStyle(fil), fr = fil.getBoundingClientRect();
+      put2('filOx', fcs.overflowX); put2('filOy', fcs.overflowY);
+      put2('filPos', fcs.position); put2('filTop', fcs.top); put2('filBottom', fcs.bottom);
+      put2('filDx', fil.scrollWidth - fil.clientWidth);
+      put2('filDy', fil.scrollHeight - fil.clientHeight);
+      put2('filRect', [Math.round(fr.left), Math.round(fr.top), Math.round(fr.width),
+                       Math.round(fr.height)].join(','));
+    }
+    var rail = document.querySelector('.folio-rail');
+    if (rail){
+      var rcs = getComputedStyle(rail), rr = rail.getBoundingClientRect();
+      put2('railOy', rcs.overflowY); put2('railOb', rcs.overscrollBehaviorY);
+      put2('railPos', rcs.position); put2('railTop', rcs.top); put2('railMaxH', rcs.maxHeight);
+      put2('railDy', rail.scrollHeight - rail.clientHeight);
+      put2('railClientH', rail.clientHeight); put2('railScrollH', rail.scrollHeight);
+      put2('railRect', [Math.round(rr.left), Math.round(rr.top), Math.round(rr.width),
+                        Math.round(rr.height)].join(','));
+      /* CAN IT CHAIN? A wheel over a container that still has room scrolls the container. When it
+         runs out, `overscroll-behavior: contain` refuses to hand the remainder to the page. Both
+         together are the symptom, so both are reported as one derived flag. */
+      put2('railTraps', (rail.scrollHeight - rail.clientHeight > 2
+        && rcs.overscrollBehaviorY === 'contain') ? 1 : 0);
+    } else put2('railPresent', 0);
+    /* ---- STRUCTURE ABOVE THE BOARD. What this artifact can see is what `_layouts/home.html`
+       owns: the h1, the tagline, the How-this-works trigger and the two chip sets. `.masthead`,
+       `.greedy-nav#site-nav` and `nav.skip-links` come from the minimal-mistakes DEFAULT LAYOUT,
+       not from home.html, so they are NOT in this artifact and their absence here is not evidence
+       of anything — they are reported as `notInHarness` and have to be checked on the built page. */
+    ['masthead', 'greedy-nav', 'skip-links'].forEach(function(c){
+      put2('has_' + c.replace('-', '_'), document.querySelector('.' + c) ? 1 : 0);
+    });
+    function visOf(sel){
+      var el = document.querySelector(sel);
+      if (!el) return 'absent';
+      var cs = getComputedStyle(el), r = el.getBoundingClientRect();
+      if (cs.display === 'none') return 'none';
+      if (cs.visibility === 'hidden') return 'hidden';
+      if (Math.round(r.width) <= 1 && Math.round(r.height) <= 1) return 'sronly';
+      return Math.round(r.width) + 'x' + Math.round(r.height);
+    }
+    put2('h1', visOf('h1.page__title')); put2('tagline', visOf('.home-tagline'));
+    put2('hiw', visOf('#hiwOpen'));
+    // exactly ONE chip set on screen, and the hidden one contributing no scroll width
+    function chipStats(sel){
+      var els2 = [].slice.call(document.querySelectorAll(sel));
+      var shown = els2.filter(function(e){ return e.offsetParent !== null; });
+      var w = 0;
+      shown.forEach(function(e){ w += e.getBoundingClientRect().width; });
+      return els2.length + '/' + shown.length + '/' + Math.round(w);
+    }
+    put2('barChips', chipStats('.folio-filters .ff-chip'));
+    put2('railChips', chipStats('.rail-beats .ff-chip'));
+    var barShown = document.querySelectorAll('.folio-filters .ff-chip')[1];
+    var railShown = document.querySelectorAll('.rail-beats .ff-chip')[1];
+    put2('barChipsVis', barShown && barShown.offsetParent !== null ? 1 : 0);
+    put2('railChipsVis', railShown && railShown.offsetParent !== null ? 1 : 0);
+    var d2 = document.createElement('div'); d2.id = 'mxstruct';
+    d2.setAttribute('style', 'display:none');
+    var parts2 = ['MXS'];
+    Object.keys(K2).forEach(function(k){ parts2.push(k + '=' + K2[k]); });
+    cont.forEach(function(c2){
+      parts2.push('|C sel=' + c2.sel + ' axis=' + c2.axis + ' delta=' + c2.delta
+        + ' ov=' + c2.ox + '/' + c2.oy + ' ob=' + c2.ob + ' pos=' + c2.pos
+        + ' top=' + c2.top + ' maxH=' + c2.mh + ' rect=' + c2.rect);
+    });
+    d2.textContent = parts2.join(' ');
+    document.body.appendChild(d2);
+    try { ['homeRead:v1','syncState:v1','topicPrefs:v1','syncSession:v1'].forEach(function(k){
+      localStorage.removeItem(k); }); } catch(e){}
+    return;
   }
 
   var steps = [];
@@ -2028,9 +2168,9 @@ var tries = 0;
   var done = 0;
   try {
     var d = document.getElementById('f').contentDocument;
-    var m = d && d.getElementById('mxcheck');
+    var m = d && (d.getElementById('mxcheck') || d.getElementById('mxstruct'));
     if (m){
-      var o = document.createElement('div'); o.id = 'mxcheck';
+      var o = document.createElement('div'); o.id = m.id;
       o.setAttribute('style','display:none');
       o.textContent = m.textContent + ' frameW=' + d.defaultView.innerWidth;
       document.body.appendChild(o); done = 1;
@@ -2127,6 +2267,73 @@ MX_CHECKS = [
 ]
 
 
+# THE SCROLL-CONTAINER WHITELIST, which is the whole of structure-cleanliness as an assertion: a
+# page with ONE scroller plus the two deliberate ones is clean, and anything else is a finding by
+# definition rather than by taste. Each entry is (selector-substring, axis, min_width, max_width,
+# prose). A censused container matching none of these fails its cell.
+#   - the rail is a scroll container BY DESIGN and only exists at >=1280 (its own comment: a 2000px
+#     index against a 1300px viewport could not be reached otherwise).
+#   - `.folio-filters` is a scroll container ONLY below 700px, where it is the fixed BOTTOM bar and
+#     its `overflow-x:auto` lets a long chip row be swiped. The director's brief expected it below
+#     1280; the CSS gives it `overflow:visible` from 700px up (line 533), so the whitelist follows
+#     the CSS and the discrepancy is reported rather than encoded.
+#   - `html` is the page scroller. It is expected and it is the ONLY expected vertical one outside
+#     the rail.
+MX_SCROLL_WHITELIST = [
+    ("html", "y", 0, 99999, "the page itself scrolls — this is the one that should"),
+    # MATCHED ON THE CLASS, NOT THE TAG: the rail is an `<aside>` and the first version of this
+    # whitelist said `div.folio-rail`, so the one container that is here BY DESIGN was reported as
+    # the finding at all three wide widths. A whitelist that misses its own entry manufactures
+    # exactly the failure it exists to suppress.
+    (".folio-rail", "y", 1280, 99999, "the rail's own index scroller (>=1280 by design)"),
+    (".folio-filters", "x", 0, 699, "the fixed bottom bar's swipeable chip row (<700px by design)"),
+]
+
+
+def _mx_struct_judge(cell, kv, conts):
+    """Score a struct cell: the whitelist, the double-scrollbar check, and the visibility bands."""
+    fails, w = [], cell["w"]
+    for c in conts:
+        ok = False
+        for sel, axis, lo, hi, _why in MX_SCROLL_WHITELIST:
+            if sel in c["sel"] and c["axis"] == axis and lo <= w <= hi:
+                ok = True
+                break
+        if not ok:
+            fails.append("unexpected %s scroller %s delta=%s ov=%s ob=%s pos=%s rect=%s"
+                         % (c["axis"], c["sel"], c["delta"], c.get("ov"), c.get("ob"),
+                            c.get("pos"), c.get("rect")))
+    if kv.get("doubleScroll") != "0":
+        fails.append("doubleScroll=%s — html and body are BOTH scrollable (two vertical bars): "
+                     "docDelta=%s bodyDelta=%s docOv=%s bodyOv=%s"
+                     % (kv.get("doubleScroll"), kv.get("docDelta"), kv.get("bodyDelta"),
+                        kv.get("docOv"), kv.get("bodyOv")))
+    # exactly ONE beat-chip set on screen per width — the duplicated set must not be visible twice
+    bar, rail = kv.get("barChipsVis"), kv.get("railChipsVis")
+    if bar is not None and rail is not None:
+        if bar == rail:
+            fails.append("barChipsVis=%s railChipsVis=%s — exactly one beat-chip set may be "
+                         "visible at a given width (bar=%s rail=%s)"
+                         % (bar, rail, kv.get("barChips"), kv.get("railChips")))
+        want_rail = "1" if w >= 1280 else "0"
+        if rail != want_rail:
+            fails.append("railChipsVis=%s at %dpx — the rail carries the chips from 1280 up"
+                         % (rail, w))
+    # the documented visibility bands for the page header
+    if w >= 1280:
+        for k in ("h1", "tagline", "hiw"):
+            if kv.get(k) not in ("none", "sronly", "hidden"):
+                fails.append("%s=%s at %dpx — from 1280 up the rail carries the nameplate, so this "
+                             "should be hidden or screen-reader-only" % (k, kv.get(k), w))
+    else:
+        for k in ("h1", "tagline", "hiw"):
+            v = kv.get(k)
+            if v in ("absent", "none"):
+                fails.append("%s=%s at %dpx — below 1280 this is the page's only masthead"
+                             % (k, v, w))
+    return fails
+
+
 def _mx_cells():
     """Every cell this pass runs, in the order it runs them.
 
@@ -2137,10 +2344,22 @@ def _mx_cells():
     W_ALL = [1440, 1280, 1024, 800, 700, 390]
     cells = []
 
-    def add(w, tokens, shot=False, expect=None, note="", mindrop=None):
+    def add(w, tokens, shot=False, expect=None, note="", mindrop=None, h=None):
         cid = "%d-%s" % (w, tokens.replace(",", "-"))
         cells.append({"id": cid, "w": w, "tokens": tokens, "shot": shot,
-                      "expect": expect or {}, "note": note, "mindrop": mindrop})
+                      "expect": expect or {}, "note": note, "mindrop": mindrop, "h": h})
+
+    # 0. THE SCROLL / STRUCTURE CENSUS, first and at a REALISTIC VIEWPORT HEIGHT. 860px is a laptop
+    #    window; at the 1800-5200px heights the rest of this matrix uses, `max-height:calc(100vh-71px)`
+    #    makes the rail taller than its own content and the container under suspicion cannot overflow
+    #    at all. 1512 and 1300 are here because they are the widths either side of the rail's 1280
+    #    breakpoint that the owner actually uses.
+    # +87 BECAUSE THE WINDOW IS NOT THE VIEWPORT: `--window-size=W,860` yields innerHeight 773 in
+    # headless-new, measured constant across all six widths. The brief asked for a ~860px viewport,
+    # so the window asks for 947 and the probe reports the innerHeight it actually got.
+    for w in (1512, 1440, 1300, 1024, 800, 390):
+        add(w, "R0,F0,E0,struct", h=947, shot=(w == 1440),
+            note="scroll-container census + structure cleanliness at a 860px viewport")
 
     # 1. every (W x R) resting — the width axis crossed with the read axis. The all-read board is
     #    the only read state whose HEIGHT drop is a meaningful assertion (see `spineOk`), and only
@@ -2224,9 +2443,25 @@ def _mx_run(artifact, cells, shots_dir=None, log=None, budget=16000, scheme="dar
     base = {}          # width -> the R0 resting grid height, for the read-state height drops
     for n, cell in enumerate(cells, 1):
         h = "#mx:" + cell["tokens"]
-        height = 2600 if cell["w"] >= MX_FLOOR else 1800
+        height = cell.get("h") or (2600 if cell["w"] >= MX_FLOOR else 1800)
         url, win = _mx_url(artifact, h, cell["w"], height)
         out = _mx_chrome(url, win, height, budget=budget, scheme=scheme)
+        if "struct" in cell["tokens"]:
+            rows.append(_mx_struct_row(cell, out, n, len(cells), log))
+            if rows[-1]["fails"]:
+                failed.append(cell["id"])
+            if shots_dir and cell["shot"]:
+                # A STRUCT CELL IS THE ONLY SHOT TAKEN AT A REAL WINDOW HEIGHT, and that is the point
+                # of photographing it: every other shot here is 2600-6200px tall, so the rail's
+                # `max-height:calc(100vh - 71px)` is larger than the rail's own content and no
+                # screenshot in this set has ever shown the rail clipped at its scrollport.
+                png = _mx_shot(artifact, cell, shots_dir, budget, scheme=scheme)
+                rows[-1]["png"] = png
+                print("        shot %s" % png, flush=True)
+                if log:
+                    with open(log, "a") as fh:
+                        fh.write("        shot %s\n" % png)
+            continue
         m = re.search(r'<div id="mxcheck"[^>]*>(.*?)</div>', out, re.S)
         if not m:
             kv, text = {}, "<MARKER MISSING>"
@@ -2286,7 +2521,7 @@ def _mx_shot(artifact, cell, shots_dir, budget=16000, scheme="dark"):
     import subprocess
     os.makedirs(shots_dir, exist_ok=True)
     png = os.path.join(shots_dir, cell["id"] + ".png")
-    height = 2600 if cell["w"] >= MX_FLOOR else 1800
+    height = cell.get("h") or (2600 if cell["w"] >= MX_FLOOR else 1800)
     # AN EXPANSION CELL NEEDS A TALLER WINDOW, not a scroll: its module is the first foldable one
     # past rank 8, which at 1440 begins around y=2000 and grows ~900px when it opens, so a 2600px
     # frame photographs the resting top of the page and misses the very thing the cell exists to
@@ -2313,6 +2548,65 @@ def _mx_shot(artifact, cell, shots_dir, budget=16000, scheme="dark"):
     return png
 
 
+def _mx_struct_row(cell, out, n, total, log=None):
+    """Parse and score one scroll/structure census cell, and print it as its own block.
+
+    The census is a LIST, not a set of scalars, so it does not fit the one-line `MX` shape the other
+    cells share — each censused container prints on its own line under the cell, which is also how a
+    reader wants to read it.
+    """
+    m = re.search(r'<div id="mxstruct"[^>]*>(.*?)</div>', out, re.S)
+    if not m:
+        row = {"cell": cell, "kv": {}, "text": "<MXS MARKER MISSING>", "conts": [],
+               "fails": ["the census never emitted — a probe that did not run cannot have passed"]}
+    else:
+        text = re.sub(r"\s+", " ", m.group(1)).strip()
+        head, _, tail = text.partition(" |C ")
+        kv = dict(re.findall(r"(\w+)=(\S+)", head))
+        conts = []
+        for chunk in ((" |C " + tail) if tail else "").split(" |C ")[1:]:
+            c = dict(re.findall(r"(\w+)=(\S+)", chunk))
+            c.setdefault("sel", "?")
+            conts.append(c)
+        row = {"cell": cell, "kv": kv, "text": text, "conts": conts,
+               "fails": _mx_struct_judge(cell, kv, conts)}
+    lines = ["%3d/%d %-26s %s  SCROLL/STRUCT %dx%s" % (
+        n, total, cell["id"], "FAIL" if row["fails"] else "ok  ", cell["w"],
+        row["kv"].get("h", "?"))]
+    k = row["kv"]
+    lines.append("        doc: docDelta=%s bodyDelta=%s docOv=%s bodyOv=%s doubleScroll=%s nCont=%s"
+                 % (k.get("docDelta"), k.get("bodyDelta"), k.get("docOv"), k.get("bodyOv"),
+                    k.get("doubleScroll"), k.get("nCont")))
+    lines.append("        filters: ov=%s/%s pos=%s top=%s bottom=%s dx=%s dy=%s rect=%s"
+                 % (k.get("filOx"), k.get("filOy"), k.get("filPos"), k.get("filTop"),
+                    k.get("filBottom"), k.get("filDx"), k.get("filDy"), k.get("filRect")))
+    lines.append("        rail: %s"
+                 % ("ABSENT" if k.get("railPresent") == "0" else
+                    "ov=%s ob=%s pos=%s top=%s maxH=%s client=%s scroll=%s dy=%s traps=%s rect=%s"
+                    % (k.get("railOy"), k.get("railOb"), k.get("railPos"), k.get("railTop"),
+                       k.get("railMaxH"), k.get("railClientH"), k.get("railScrollH"),
+                       k.get("railDy"), k.get("railTraps"), k.get("railRect"))))
+    lines.append("        header: h1=%s tagline=%s hiw=%s | chips bar=%s(vis %s) rail=%s(vis %s)"
+                 % (k.get("h1"), k.get("tagline"), k.get("hiw"), k.get("barChips"),
+                    k.get("barChipsVis"), k.get("railChips"), k.get("railChipsVis")))
+    lines.append("        theme chrome in this artifact: masthead=%s greedy-nav=%s skip-links=%s "
+                 "(all from the minimal-mistakes DEFAULT layout, not home.html -> absence here is "
+                 "expected, verify on the built page)"
+                 % (k.get("has_masthead"), k.get("has_greedy_nav"), k.get("has_skip_links")))
+    for c in row["conts"]:
+        lines.append("        [C] %s axis=%s delta=%s ov=%s ob=%s pos=%s top=%s maxH=%s rect=%s"
+                     % (c.get("sel"), c.get("axis"), c.get("delta"), c.get("ov"), c.get("ob"),
+                        c.get("pos"), c.get("top"), c.get("maxH"), c.get("rect")))
+    for f in row["fails"]:
+        lines.append("        FAIL %s" % f)
+    for ln in lines:
+        print(ln, flush=True)
+    if log:
+        with open(log, "a") as fh:
+            fh.write("\n".join(lines) + "\n")
+    return row
+
+
 def _mx_rows_from_log(log):
     """Reconstruct a run's rows from its progress log, so the contact sheet can be rebuilt without
     re-driving Chrome 70-odd times.
@@ -2330,7 +2624,20 @@ def _mx_rows_from_log(log):
                    "kv": _mx_row(m.group(3).strip()), "text": m.group(3).strip(), "fails": []}
             rows.append(cur)
             continue
+        # A SCROLL/STRUCT CELL PRINTS AS A BLOCK, not as one `MX` line, so it needs its own header
+        # pattern here — without it the census cells were silently dropped from the contact sheet
+        # while the sheet still reported a cell count, which is the quiet kind of wrong.
+        m = re.match(r"\s*\d+/\d+ (\S+)\s+(ok|FAIL)\s+(SCROLL/STRUCT .*)", ln)
+        if m:
+            cur = {"cell": {"id": m.group(1), "expect": {}, "note": ""},
+                   "kv": {"struct": "1"}, "text": m.group(3).strip(), "fails": []}
+            rows.append(cur)
+            continue
         if cur is None:
+            continue
+        m = re.match(r"\s+(?:doc|rail): (.*)", ln)
+        if m and cur["kv"].get("struct"):
+            cur["kv"].update(dict(re.findall(r"(\w+)=(\S+)", m.group(1))))
             continue
         m = re.match(r"\s+FAIL (.*)", ln)
         if m:
@@ -2359,8 +2666,9 @@ def _mx_sheet(rows, path, shots_dir):
         with open(src, "rb") as fh:
             b64 = base64.b64encode(fh.read()).decode()
         kv = r["kv"]
-        keys = [k for k in ("vis", "visStory", "visEd", "uct", "readN", "spinedN", "openN",
-                            "H", "upInv", "holes", "gridH", "emptyHidden", "shotScroll")
+        keys = [k for k in ("vis", "visStory", "visEd", "uct", "readN", "openN",
+                            "H", "upInv", "holes", "gridH", "emptyHidden",
+                            "nCont", "doubleScroll", "railDy", "traps", "eTop")
                 if k in kv]
         nums = " ".join("%s=%s" % (k, kv[k]) for k in keys)
         tiles.append(
