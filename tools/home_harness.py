@@ -2668,7 +2668,7 @@ def _mx_sheet(rows, path, shots_dir):
         kv = r["kv"]
         keys = [k for k in ("vis", "visStory", "visEd", "uct", "readN", "openN",
                             "H", "upInv", "holes", "gridH", "emptyHidden",
-                            "nCont", "doubleScroll", "railDy", "traps", "eTop")
+                            "nCont", "doubleScroll", "dy", "traps", "eTop")
                 if k in kv]
         nums = " ".join("%s=%s" % (k, kv[k]) for k in keys)
         tiles.append(
