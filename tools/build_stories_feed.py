@@ -18,8 +18,14 @@ The `--max` cap is per-edition-quota'd: over the cap, the largest editions lose 
 least-important tail stories first, and no edition drops below MIN_PER_EDITION — so a dense
 Weekend brief can't evict the weekly Science edition from the page.
 
+`feed["board"]` is the ONE ranked sequence the page renders — stories and editorials in a single
+order, `(date, tier, position)` with editorials ranked below briefs so each closes its own
+edition's date block (see build_board). `feed["stories"]`, `feed["editorials"]` and `feed["count"]`
+keep their exact meanings; nothing else reads position semantics.
+
 Run after `dedup.py record` (DEDUP.md Step D) and commit the result with the brief.
 Usage: python3 tools/build_stories_feed.py [--days 14] [--max 80] [--out _data/homefeed.json]
+                                           [--strict-parity]
 """
 import argparse
 import datetime as _dt
@@ -110,8 +116,36 @@ _HEALTH_KW = ["vaccine", "hiv", "antibody", "cancer", "clinical", "disease", "pr
 # and appends '{#st-…}' kramdown IALs to ### headings BEFORE Step D parses the post — every
 # matcher here must read both the anchored and the bare form (2026-07-07 regression: both
 # editions published anchored and the feed harvested zero stories from them).
-_BULLET_RE = re.compile(r'^-\s+(?:<a id="(st-[0-9a-f]{12})" class="st-a"></a>\s*)?\*\*(.+?)\*\*\.?\s*(.*)$')
-_BULLET_START_RE = re.compile(r'^-\s+(?:<a id="st-[0-9a-f]{12}" class="st-a"></a>\s*)?\*\*')
+# THE ANCHOR STUB IS STRUCTURE, WHATEVER ID IT CARRIES. This used to demand the canonical
+# `st-<12 hex>` shape inline, so a bullet anchored with any other id did not match as a bullet
+# AT ALL -- the optional group failed, `**` was no longer at the start, and the story vanished.
+# `_posts/2026-07-13-news.md` carries writer-authored anchors (`st-iran-hormuz-0713`), and that
+# edition therefore contributed ZERO of its 7 recorded stories to the front page. Matching the
+# stub structurally recovers them; the captured id is only HONORED as a story id when it is
+# canonical (see _CANON_SID_RE) -- a hand-written anchor is markup, not an identity, so those
+# cards fall back to story_id(url) like every pre-anchor post does.
+_ANCHOR_STUB = r'(?:<a id="([^"]*)" class="st-a"></a>\s*)?'
+_CANON_SID_RE = re.compile(r"^st-[0-9a-f]{12}$")
+_BULLET_RE = re.compile(r'^-\s+' + _ANCHOR_STUB + r'\*\*(.+?)\*\*\.?\s*(.*)$')
+_BULLET_START_RE = re.compile(r'^-\s+' + _ANCHOR_STUB + r'\*\*')
+# A PLAIN BULLET IS A STORY TOO (R4, external review 2026-07-25). The bold-lead form above is a
+# CONVENTION, not the contract: routines/src/weekend.md's format block specifies "## Week in
+# headlines" as bare `- ...` bullets, and three of the 2026-07-25 Weekend edition's five headline
+# bullets open on prose rather than on a bold lede ("The US bombing campaign against Iran
+# entered a **13th consecutive night**…"). They were recorded, anchored, embedded and
+# dedup-checked, and then silently never reached the only reading surface the site still has.
+# Matched only AFTER _BULLET_RE fails, so every bold-lead bullet keeps its exact current parse.
+# A PLAIN BULLET MUST CITE A SOURCE, and that is the whole guard against harvesting prose that
+# was never a story: this page's contract is that a story carries the link it came from, so a
+# linkless bullet is a desk aside (2026-07-18's "the most relevant on-device item this week is
+# community-side …") or a roundup label, and it stays out. The bold-lead form keeps its existing
+# licence to be linkless -- widening THAT is not what this fixes.
+_BULLET_PLAIN_RE = re.compile(r'^-\s+' + _ANCHOR_STUB + r'(\S.*)$')
+# Sentence end for the derived headline: the terminator must FOLLOW ordinary word/clause material
+# and be followed by space or EOL, which is what keeps "12.5%" and "U.S." and "arXiv:2607.19854"
+# from splitting a sentence in half.
+_SENT_END_RE = re.compile(r'(?<=[a-z0-9)\]"\'%”’])[.!?](?=\s|$)')
+HEADLINE_CAP = 90
 _H2_RE = re.compile(r"^##\s+(.*)$")
 _H3_RE = re.compile(r"^###\s+(.*)$")
 _H3_IAL_RE = re.compile(r"\s*\{#([^}]+)\}\s*$")
@@ -167,10 +201,42 @@ def _is_meta(p):
 
 
 _WHY_RE = re.compile(r"^\*{1,2}\s*Why (?:it|this) matters:?\s*\*{0,2}\s*", re.I)
-# A '## Why it matters' H2 ROUNDUP section (e.g. 2026-07-01-science.md's weekly takeaways)
-# is prose commentary, not stories -- its bullets must not be harvested as pseudo-stories.
-# Deliberately scoped to the bullet branch only (### paper headings never appear there).
-_WHY_SECTION_RE = re.compile(r"why it matters", re.I)
+
+
+def _is_editorial_section(section):
+    """True for an H2 whose text is one of the EDITORIAL sections (`Why it matters`,
+    `Cross-cutting threads`) -- prose commentary, not stories, so its bullets must not be
+    harvested as pseudo-stories. Those same sections are what load_editorials harvests, so the
+    two readers agree on the boundary BY SHARING THE VOCABULARY rather than by two regexes that
+    can drift: this resolves through `_EDITORIAL_HEADINGS`, exactly as `_editorial_heading` does.
+    It replaced a bare /why it matters/ search, which covered only one of the two headings --
+    survivable while every editorial bullet happened to open on a bold lede (those matched
+    _BULLET_RE), and not survivable once plain bullets became stories too.
+    Deliberately scoped to the bullet branch only (### paper headings never appear there)."""
+    return _editorial_heading("## " + (section or "")) is not None
+
+
+def _derived_headline(text):
+    """A headline for a bullet that has no bold lede: its FIRST SENTENCE, capped on a word
+    boundary, never mid-word, never with an ellipsis.
+
+    NOTHING IS CROPPED BY THIS, and that is why it is allowed to cap. Unlike the bold-lead form
+    -- where the lede becomes the headline and is CONSUMED out of the body -- a plain bullet's
+    full text stays in the body verbatim. So this is a derived LABEL over prose that is still
+    printed in full, not a truncation of what the reader gets. (Consuming was the first design
+    and it is unsafe here: the Iran bullet's first sentence runs ~280 chars, so consuming it
+    would have moved 190 characters of reporting into a place the card never prints.)
+    In practice the index record's curated `headline` overlays this on every recorded story; this
+    is the fallback for an unrecorded one, and the `hid` read-state key, so it must be stable."""
+    t = clean_body(text)
+    m = _SENT_END_RE.search(t)
+    if m:
+        t = t[:m.end()]
+    t = t.rstrip(" .")
+    if len(t) <= HEADLINE_CAP:
+        return t
+    cut = t.rfind(" ", 0, HEADLINE_CAP + 1)
+    return (t[:cut] if cut > 0 else t[:HEADLINE_CAP]).rstrip(" ,;:—–-")
 
 
 def _pick_body(paras):
@@ -245,8 +311,18 @@ def parse_post(md):
             i = j
             continue
         m = _BULLET_RE.match(line)
-        if m:                                           # bullet-style story (news / ai-ml / weekend headlines)
-            paras, j = [m.group(3).strip()], i + 1
+        plain = None if m else _BULLET_PLAIN_RE.match(line)
+        if m or plain:                                  # bullet-style story (news / ai-ml / weekend headlines)
+            if m:
+                sid, head, first = m.group(1), m.group(2).strip(), m.group(3).strip()
+            else:
+                # plain bullet: the whole text is prose and STAYS prose; the headline is derived
+                # from it rather than cut out of it. See _derived_headline.
+                sid, body_text = plain.group(1), plain.group(2).strip()
+                head, first = _derived_headline(body_text), body_text
+            if not _CANON_SID_RE.match(sid or ""):
+                sid = None                              # a non-canonical anchor is markup, not an id
+            paras, j = [first], i + 1
             while j < n:
                 nxt = lines[j]
                 if nxt.startswith("#"):
@@ -263,8 +339,11 @@ def parse_post(md):
                     break
                 paras.append(nxt.strip())
                 j += 1
-            if not _WHY_SECTION_RE.search(section):     # skip a why-it-matters roundup's bullets
-                emit(m.group(2).strip(), paras, anchor_sid=m.group(1))
+            # the source gate is checked over the WHOLE story (a wrapped bullet can carry its
+            # citation on a continuation line), and only the plain form has to pass it.
+            sourced = bool(m) or bool(_URL_RE.search(" ".join(paras)))
+            if sourced and not _is_editorial_section(section):   # skip an editorial roundup's bullets
+                emit(head, paras, anchor_sid=sid)
             i = j
             continue
         i += 1
@@ -346,17 +425,42 @@ def norm_url(url):
     return u.rstrip("/").lower()
 
 
-def load_index_meta(window_dates):
-    """(by_url, by_id) -> {topics, importance} from the dedup index, for authoritative overlay.
+_INDEX_FILE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-([a-z0-9-]+)\.jsonl$")
 
-    URL is the primary join key: the post's bold lead and the record's `headline` are written
-    independently by the routine, so slugified-headline ids only agree ~28% of the time. Both
-    sides cite the same primary-source URL, which survives the round trip."""
-    by_url, by_id = {}, {}
-    for path in glob.glob(os.path.join(INDEX_DIR, "*.jsonl")):
+
+def load_index_meta(window_dates):
+    """(by_edition_url, by_id) -> overlay metadata from the dedup index, keyed by EXACT EDITION
+    IDENTITY `(date, stream, norm_url)`.
+
+    URL is still the join key — the post's bold lead and the record's `headline` are written
+    independently by the routine, so slugified-headline ids only agree ~28% of the time, while
+    both sides cite the same primary-source URL — but a bare URL is NOT an identity. Two editions
+    legitimately re-cite one primary source (an ONGOING story; a Weekend recap of the week's
+    News), and this map used to hold one record per URL for the whole window, so filesystem glob
+    order silently decided which edition's curated headline/deck/body/importance every card got
+    (external review 2026-07-25, R3: a 24 July News card was rendering the 25 July Weekend Iran
+    framing at the Weekend's importance 2 instead of its own edition's importance 3; reversing
+    the iteration changed the winner). Keying the edition in makes the join a same-edition join,
+    so glob order cannot influence the result at all.
+
+    The edition comes from the index FILENAME, which is the same authority the story side uses
+    (load_recent derives date+stream from the post filename) — not from the record's own fields,
+    which a mis-stamped record could disagree with.
+
+    `by_id` needs no such fix: a record id is already `{date}-{stream}-{slug}`, so it is
+    edition-scoped by construction. It stays the secondary key.
+
+    SID is not a third key: the post's anchor sid is `story_id(norm_url)` of the RECORDED url,
+    so it carries exactly the discriminating power of `norm_url` and no more — the edition is the
+    part that was missing.
+    """
+    by_edition_url, by_id = {}, {}
+    for path in sorted(glob.glob(os.path.join(INDEX_DIR, "*.jsonl"))):
         base = os.path.basename(path)
         if not any(base.startswith(d) for d in window_dates):
             continue
+        fm = _INDEX_FILE_RE.match(base)
+        edition = (fm.group(1), fm.group(2)) if fm else None
         with open(path) as fh:
             for ln in fh:
                 if not ln.strip():
@@ -365,13 +469,13 @@ def load_index_meta(window_dates):
                 m = {"topics": r.get("topics"), "importance": r.get("importance"),
                      "headline": r.get("headline"), "deck": r.get("deck"),
                      "display_body": r.get("display_body"), "why": r.get("why"),
-                     "affiliations": r.get("affiliations")}
+                     "affiliations": r.get("affiliations"), "url": r.get("url")}
                 if r.get("id"):
                     by_id[r["id"]] = m
                 nu = norm_url(r.get("url"))
-                if nu:
-                    by_url[nu] = m
-    return by_url, by_id
+                if nu and edition:
+                    by_edition_url[(edition[0], edition[1], nu)] = m
+    return by_edition_url, by_id
 
 
 # --- editorials (2026-07-18) -----------------------------------------------------------------
@@ -460,8 +564,68 @@ def _ed_paragraphs(lines, cap=6):
     return [p for p in paras if p][:cap]
 
 
-def load_editorials(days):
-    """Latest edition's editorial section per stream, newest first, max 3 cards."""
+_ED_LEDE_RE = re.compile(r"^(-\s+)?\*\*(.+?)\*\*\.?\s*")
+ED_TITLE_CAP = 90
+
+
+def _ed_title(lines):
+    """(title, lines) -- the editorial's own opening bold lede, taken as the card title and
+    CONSUMED out of the prose it opened. `("", lines)` when there is none.
+
+    THE SCRAPED SECTION HEADING IS NOT A TITLE, and printing it as one is what put "Why it
+    matters" on the front page as a headline (owner report, 2026-07-26). The heading names the
+    SECTION; the desk's actual claim is the bold lede it opens with ("One nation, both trophies --
+    and an era confirmed"). The heading keeps a home in the kicker, where a section name belongs.
+
+    CONSUMED, because a title that is also the first line of the body prints the same sentence
+    twice. And FIT-OR-NOTHING rather than truncated: a lede longer than ED_TITLE_CAP is left in
+    the prose and the card renders titleless (no <h2> at all -- kicker + disclosure + prose).
+    Capping a CONSUMED lede would delete the tail of a sentence from the only surface that prints
+    it, which the never-crop ruling forbids; capping without consuming would print the opening
+    twice. Neither is worth a headline, and inventing one is not on the table.
+    """
+    for i, ln in enumerate(lines):
+        s = ln.strip()
+        if not s or _ED_HR_RE.match(s) or s.startswith("```"):
+            continue                          # blank / rule / fence: not yet the first chunk
+        m = _ED_LEDE_RE.match(s)
+        if not m:
+            return "", lines                  # the first chunk does not open on a bold lede
+        title = _strip_md(m.group(2)).strip()
+        if not title or len(title) > ED_TITLE_CAP:
+            return "", lines
+        rest = s[m.end():].strip()
+        out = list(lines)
+        # keep the bullet marker so _ed_paragraphs still chunks the remainder as its own
+        # paragraph; drop the line entirely when the lede WAS the whole line, or the bare
+        # marker would survive as a one-character paragraph.
+        out[i] = ((m.group(1) or "") + rest) if rest else ""
+        return title, out
+    return "", lines
+
+
+ED_MAX_AGE_DAYS = 7      # one full weekly cycle: past this an editorial is dropped outright
+
+
+def load_editorials(days, max_date, live_editions):
+    """One editorial per stream -- the latest edition's, newest first -- for every stream whose
+    editorial is still LIVE. No count cap.
+
+    THE `[:3]` CAP AND THE 14-DAY WINDOW WERE BOTH STANDING IN FOR AN EXPIRY RULE, badly. They
+    existed when editorials were injected as a block at board index 3, where a fourth card would
+    have stacked on the first screen; under the single ranked board (build_board) five editorials
+    scatter across five date blocks instead of piling up, so a count cap only ever deletes a
+    desk's work at random. `days` survives as the SCAN bound (how far back to read posts), never
+    as the rule. Two guards replace them, and they are invariants rather than heuristics:
+
+      ED_MAX_AGE_DAYS -- older than one weekly cycle and it is gone, whatever else is true. This
+        is the belt for a desk that stops firing: apply_cap's MIN_LATEST_EDITION protects a
+        stream's newest edition from draining forever, so "its edition is still on the board" on
+        its own is not an expiry.
+      live_editions -- the editorial's own `(date, stream)` edition must still have at least one
+        story on the capped board. An editorial is commentary ON that edition; outliving the
+        reporting it comments on is what made it read as a zombie.
+    """
     posts = []
     for path in glob.glob(os.path.join(POSTS_DIR, "*.md")):
         m = _FILE_RE.search(os.path.basename(path))
@@ -469,18 +633,23 @@ def load_editorials(days):
             posts.append((m.group(1), m.group(2), path))
     if not posts:
         return []
-    cutoff = (_dt.date.fromisoformat(max(p[0] for p in posts)) - _dt.timedelta(days=days)).isoformat()
+    newest = _dt.date.fromisoformat(max_date or max(p[0] for p in posts))
+    cutoff = (newest - _dt.timedelta(days=days)).isoformat()
 
     by_stream = {}
     for date, stream, path in sorted(posts):
         if date < cutoff:
             continue
+        if (newest - _dt.date.fromisoformat(date)).days > ED_MAX_AGE_DAYS:
+            continue
+        if (date, stream) not in live_editions:
+            continue
         with open(path) as fh:
             lines = fh.read().splitlines()
         i = 0
         while i < len(lines):
-            title = _editorial_heading(lines[i])
-            if title is None:
+            heading = _editorial_heading(lines[i])
+            if heading is None:
                 i += 1
                 continue
             j = i + 1
@@ -488,6 +657,7 @@ def load_editorials(days):
             while j < len(lines) and not lines[j].startswith("## "):
                 body.append(lines[j])
                 j += 1
+            title, body = _ed_title(body)
             paras = _ed_paragraphs(body)
             if paras:
                 d = _dt.date.fromisoformat(date)
@@ -495,11 +665,13 @@ def load_editorials(days):
                 by_stream[stream] = {         # later (newer) editions overwrite: latest wins
                     "stream": stream, "date": date,
                     "date_label": label,
-                    "kicker": "%s · %s" % (STREAM_LABEL.get(stream, stream), label),
+                    # the section name lives HERE, not in the headline slot
+                    "kicker": "%s · %s · %s" % (STREAM_LABEL.get(stream, stream), heading, label),
+                    "heading": heading,
                     "title": title, "paras": paras,
                 }
             i = j
-    return sorted(by_stream.values(), key=lambda e: e["date"], reverse=True)[:3]
+    return sorted(by_stream.values(), key=lambda e: e["date"], reverse=True)
 
 
 def load_recent(days):
@@ -538,7 +710,28 @@ def load_recent(days):
                     continue
                 replace_at = url_pos[nu]
             hid = "%s-%s-%s" % (date, stream, slugify(s["headline"]))
-            im = (nu and idx_by_url.get(nu)) or idx_by_id.get(hid) or {}
+            # SAME-EDITION JOIN ONLY (R3). `(date, stream, url)`, never a bare url: a story
+            # parsed out of THIS edition may only wear metadata this edition recorded. A card
+            # whose edition recorded nothing for it falls back to the parse, which is the honest
+            # answer — the alternative was wearing another edition's treatment.
+            #
+            # EVERY URL THE STORY CITES, not only the first. A story often cites two sources and
+            # the record names the one the desk treated as primary, which is not always the one
+            # that appears first in the prose — so a first-url-only join missed 4 cards in the
+            # current window, including 2026-07-26's LEAD, which printed its raw bold lede
+            # ("A van drove into a crowd at Berlin's Christopher Street Day (the city's Pride
+            # march) late on Saturday…") instead of the recorded front-page headline ("Van hits
+            # Berlin Pride crowd, one killed"). Alternates are tried in prose order, after the
+            # primary, and only inside the same edition — so this widens the join's reach without
+            # widening its identity.
+            im = (nu and idx_by_url.get((date, stream, nu))) or {}
+            if not im:
+                for alt in _URL_RE.findall(s["raw"] or "")[1:]:
+                    au = norm_url(alt)
+                    im = (au and idx_by_url.get((date, stream, au))) or {}
+                    if im:
+                        break
+            im = im or idx_by_id.get(hid) or {}
             overlaid = bool(im.get("topics") or im.get("importance"))
             topics = topic_for(s, stream, im.get("topics"))
             imp = importance_for(pos, lead_pos, singles[pos], im.get("importance"))
@@ -606,6 +799,141 @@ def load_recent(days):
     return stories, max_date, sum(ov_flags)
 
 
+ED_MIN_BOARD_INDEX = 3   # no editorial may sit in the composed top band (nth-child 1..3)
+AGE_MAX = 3              # data-age is a clamped bucket, not a duration
+
+
+def build_board(stories, editorials, max_date):
+    """One ranked sequence over stories AND editorials -- `feed["board"]`, the thing the page
+    iterates. `feed["stories"]` / `feed["editorials"]` / `feed["count"]` are untouched.
+
+    ONE RANKING, NOT TWO ARRAYS AND A SPLICE. Editorials used to be a separate array injected
+    after the third story, so nothing ever compared one against the other and a six-day-old
+    Sports editorial sat at position 4 of a page whose first three cards were today's
+    (owner report, 2026-07-26). The sort key has three terms and the middle one is the fix:
+
+        (date, 0 if editorial else importance, -position)   descending
+
+    Editorial rank 0 puts it BELOW briefs, so an editorial always CLOSES its own edition's date
+    block -- which is exactly where its day is, ~40 cards down when its day is six days old, and
+    on the first screen only when its desk published today. That is the promise the rail prints
+    ("position is the ranking"), paid rather than special-cased.
+
+    `-position` (with `reverse=True`, i.e. ascending) is what keeps the sort STABLE inside a
+    (date, rank) group: within one tier of one day, the desk's own filed order survives.
+
+    ED_MIN_BOARD_INDEX is the one exception and it is structural, not editorial: the composed top
+    band places board children 1-3 by `nth-child`, and a `.fcard--ed` in slot 1 renders at
+    `grid-area:1/1/2/13` -- 100% of the board width with no news on screen at all (documented
+    failure, 2026-07-25). An editorial landing there is pushed past the next story. It is a dead
+    branch on any normal day: MIN_LATEST_EDITION floors the newest edition at 6 stories, so its
+    editorial sorts to index >= 6.
+    """
+    # SHALLOW COPIES, so the board's own fields (`kind`, `age_days`, `daybreak`) land on the
+    # board and nowhere else. `feed["stories"]` is a pinned shape — test_feed_sid.py asserts
+    # field-for-field that nothing but `sid` was ever added to it — and `feed.count`, the harness,
+    # store/anchor.py and four test files all read it. The board is a VIEW; it may not edit the
+    # thing it is a view of.
+    board = []
+    for s in stories:
+        it = dict(s)
+        it["kind"] = "story"
+        board.append(it)
+    for e in editorials:
+        it = dict(e)
+        it["kind"] = "editorial"
+        board.append(it)
+    pos = {id(it): i for i, it in enumerate(board)}
+    board.sort(key=lambda it: (it["date"],
+                               0 if it["kind"] == "editorial" else it["importance"],
+                               -pos[id(it)]), reverse=True)
+
+    i = 0
+    while i < min(ED_MIN_BOARD_INDEX, len(board)):
+        if board[i]["kind"] != "editorial":
+            i += 1
+            continue
+        nxt = next((k for k in range(i + 1, len(board))
+                    if board[k]["kind"] != "editorial"), None)
+        if nxt is None:
+            break                      # nothing but editorials below: leave the order alone
+        # pop shifts that story down to nxt-1, so inserting AT nxt lands just after it
+        board.insert(nxt, board.pop(i))
+
+    newest = _dt.date.fromisoformat(max_date) if max_date else None
+    prev_date = None
+    for it in board:
+        if newest:
+            age = (newest - _dt.date.fromisoformat(it["date"])).days
+            it["age_days"] = max(0, min(AGE_MAX, age))
+        else:
+            it["age_days"] = 0
+        # DAYBREAK IS COMPUTED ON THE FINAL ORDER, over CONTIGUOUS runs rather than over the set
+        # of distinct dates, so it stays true even if ED_MIN_BOARD_INDEX has moved an editorial
+        # out of its own date block. What it marks is "a new date starts here", which is what the
+        # printed date on the card says.
+        it["daybreak"] = it["date"] != prev_date
+        prev_date = it["date"]
+    return board
+
+
+def edition_parity(date):
+    """[(edition, [unmapped record, ...])] for every stream published on `date`.
+
+    THE COUNT IS NOT THE CHECK (R4, external review 2026-07-25). `dedup.py record` decides which
+    stories an edition publishes; this script decides which of them reach the only reading
+    surface the site has. Those two sets silently disagreed for the whole 2026-07-25 Weekend
+    edition -- 40 cards against 44 kept records -- because the parser accepted only one of the two
+    bullet shapes the format contract permits. A count comparison would not even have noticed the
+    2026-07-13 News edition, whose 7 recorded stories all parsed and then all vanished on an
+    anchor-shape mismatch: 0 == 0 tells you nothing. So this matches records to cards by IDENTITY:
+    normalized url (over EVERY url in the story, since a story may cite two sources and the record
+    may name the second), then story-id, then the slug id.
+
+    Scoped to ONE edition date on purpose -- the current one. An older edition's gap is a writer
+    gap that cannot be fixed by re-running this script (2026-07-14 News recorded a Swiss-heatwave
+    story its post never printed), so screaming about it on every future run would train the reader
+    of this output to ignore it.
+    """
+    out = []
+    for path in sorted(glob.glob(os.path.join(POSTS_DIR, "*.md"))):
+        m = _FILE_RE.search(os.path.basename(path))
+        if not m or m.group(1) != date or m.group(2) not in CURRENT_STREAMS:
+            continue
+        stream = m.group(2)
+        idx = os.path.join(INDEX_DIR, "%s-%s.jsonl" % (date, stream))
+        if not os.path.exists(idx):
+            continue
+        with open(path) as fh:
+            parsed = [s for s in parse_post(fh.read()) if s["body"]]
+        urls, sids, hids = set(), set(), set()
+        for s in parsed:
+            for u in _URL_RE.findall(s["raw"] or ""):
+                nu = norm_url(u)
+                if nu:
+                    urls.add(nu)
+            if s.get("anchor_sid"):
+                sids.add(s["anchor_sid"])
+            hids.add("%s-%s-%s" % (date, stream, slugify(s["headline"])))
+        missing = []
+        with open(idx) as fh:
+            for ln in fh:
+                if not ln.strip():
+                    continue
+                r = json.loads(ln)
+                nu = norm_url(r.get("url"))
+                if nu and nu in urls:
+                    continue
+                if nu and _safe_story_id(r.get("url")) in sids:
+                    continue
+                if r.get("id") in hids:
+                    continue
+                missing.append(r)
+        if missing:
+            out.append(("%s-%s" % (date, stream), missing))
+    return out
+
+
 MIN_LATEST_EDITION = 6   # each stream's NEWEST edition keeps at least this many stories
 
 
@@ -650,6 +978,9 @@ def main():
     ap.add_argument("--days", type=int, default=14)
     ap.add_argument("--max", type=int, default=80, dest="cap", help="cap the front page (0 = no cap)")
     ap.add_argument("--out", default=DEFAULT_OUT)
+    ap.add_argument("--strict-parity", action="store_true",
+                    help="exit non-zero when the current edition has kept index records that "
+                         "reached no card (the feed is still written first)")
     args = ap.parse_args()
 
     stories, max_date, joined = load_recent(args.days)
@@ -666,9 +997,11 @@ def main():
     topics = [{"key": k, "label": TOPICS[k][0], "color": TOPICS[k][1], "count": counts[k]}
               for k in sorted(counts, key=lambda k: (-counts[k], k)) if k in TOPICS]
 
-    editorials = load_editorials(args.days)
+    live_editions = {(s["date"], s["stream"]) for s in stories}
+    editorials = load_editorials(args.days, max_date, live_editions)
+    board = build_board(stories, editorials, max_date)
     feed = {"generated": max_date, "count": len(stories), "topics": topics,
-            "editorials": editorials, "stories": stories}
+            "editorials": editorials, "stories": stories, "board": board}
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w") as fh:
         json.dump(feed, fh, ensure_ascii=False, indent=1)
@@ -680,8 +1013,25 @@ def main():
              os.path.relpath(args.out, ROOT), by[3], by[2], by[1], max_date))
     print("editorials: %d (%s)" % (len(editorials),
           ", ".join("%s %s" % (e["stream"], e["date"]) for e in editorials) or "none in window"))
+    eb = [i for i, it in enumerate(board) if it["kind"] == "editorial"]
+    print("board: %d items, %d daybreaks, editorials at %s"
+          % (len(board), sum(1 for it in board if it["daybreak"]),
+             ",".join(str(i) for i in eb) or "-"))
     print("index overlay: %d/%d stories carry writer-supplied topics/importance"
           % (joined, n_parsed))                      # 0 is EXPECTED until routines start tagging
+
+    # EDITION PARITY (R4). Printed AFTER the write on purpose: the reader surface should exist
+    # even when it is incomplete, and the operator should still be told loudly that it is.
+    gaps = edition_parity(max_date)
+    if gaps:
+        print("PARITY-FAIL: kept index records that reached no card in the current edition —")
+        for ed, recs in gaps:
+            for r in recs:
+                print("  %s  %s  %s" % (ed, (r.get("headline") or "?")[:60], r.get("url") or "-"))
+        print("  the post and the index disagree: either the writer never printed the story, or "
+              "the parser cannot see the shape it printed it in.")
+    else:
+        print("parity: every kept record in the %s edition(s) reached a card" % max_date)
 
     # Desk-stats piggyback (2026-07-11): every writer already runs this script
     # unconditionally, so regenerating _data/stats.json here needs zero prompt wiring.
@@ -694,6 +1044,14 @@ def main():
         _bs.main(["--root", ROOT])  # module global, so a test-patched ROOT is honored
     except Exception as e:  # stats are decorative; the feed must never fail on them
         print("stats build skipped (non-fatal): %s" % e)
+
+    # OPT-IN, and that is deliberate rather than timid: publish.py currently ignores this
+    # script's exit code (review R2, a separate task), so a default-fatal parity gate would be
+    # a gate that gates nothing while breaking every local re-run over an older edition's writer
+    # gap. The flag is here so the fatality-matrix work has a switch to flip.
+    if gaps and args.strict_parity:
+        raise SystemExit("build_stories_feed: PARITY-FAIL — %d kept record(s) reached no card"
+                         % sum(len(r) for _, r in gaps))
 
 
 if __name__ == "__main__":
