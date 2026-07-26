@@ -16,7 +16,10 @@ Usage:
 
     # or let it drive Chrome and JUDGE the result — this is the oracle, not a report:
     python3 tools/home_harness.py --check --widths 1440,1280,1024,800,390
-    python3 tools/home_harness.py --check --hash '#synced'      # the signed-in roam path
+    #   ...which ALSO drives, once, at the widest width asked for: '#bsread' (the boot-seeded read
+    #   lead), '#synced' (the roam path, SYNCED_CHECKS) and the six-cell scroll-container census at a
+    #   860px viewport. Those three were the oracle's blind spots and they are no longer optional.
+    python3 tools/home_harness.py --check --hash '#synced'      # ONE mode at every width — debugging
     python3 tools/home_harness.py --check --hash '#bootempty'   # boot-into-empty; EMPTY rows only
 
 `--check` PARSES EVERY PROBE MARKER AND EXITS NON-ZERO ON ANY FAILED ASSERTION (2026-07-26,
@@ -642,6 +645,11 @@ setTimeout(function(){
   var probe=cards.filter(function(c){
     return !c.classList.contains('fcard--ed')
       && (c.dataset.imp==='3'||c.dataset.imp==='2')
+      // NOT ONE THAT IS ALREADY READ. The ✓ is a toggle, so in any mode that boots with read state
+      // (`#bsread` seeds the lead) ticking such a card UN-reads it and the ratio measures the card
+      // growing back — a probe reporting spineOk=0 for the spine working. Same class of instrument
+      // bug the EMPTY probe had before R17.
+      && !c.classList.contains('is-read')
       && c.classList.contains('is-folded') && c.querySelector('.fcard__sum');
   }).slice(0,6);
   probe.forEach(function(c){
@@ -772,10 +780,12 @@ setTimeout(function(){
 # The axes, and how each is reached:
 #   R  read state   SEEDED into homeRead:v1 before the layout script runs (`R1`/`R2`/`R2s`), which
 #                   is how a returning reader arrives, or CLICKED at probe time (`R1c` — the same
-#                   state reached by ticking ✓ now). The two are NOT identical and the suffix
-#                   exists to prove it: `foldForRead` runs from setRead, never from paintRead, so a
-#                   click-marked card is normalized to `is-folded`/More while a boot-seeded one
-#                   keeps whatever fold default it booted with. Both are real reader states.
+#                   state reached by ticking ✓ now). The suffix exists because the two used to
+#                   DIVERGE: `foldForRead` ran from setRead and never from paintRead, so a
+#                   click-marked card was normalized to `is-folded`/More while a boot-seeded one kept
+#                   whatever fold default it booted with — the seam, and what these cells found. Since
+#                   2026-07-26 both go through `paintReadState` and the two paths agree; the A/B stays,
+#                   because "they agree" is exactly the claim that has to keep being measured.
 #   F  filter       CLICKED, not seeded — apply() + schedulePack is the path a reader takes, and
 #                   clicking gives the round-trip for free in EVERY filtered cell (measure at rest,
 #                   filter, measure, unfilter, compare) instead of in one designated cell. Boot-time
@@ -1109,6 +1119,12 @@ setTimeout(function(){
       put2('railPos', rcs.position); put2('railTop', rcs.top); put2('railMaxH', rcs.maxHeight);
       put2('railDy', rail.scrollHeight - rail.clientHeight);
       put2('railClientH', rail.clientHeight); put2('railScrollH', rail.scrollHeight);
+      /* WHETHER THE REFERENCE PROSE IS FOLDED, which is the state every rail number here is about.
+         `railScrollH` only means "the collapsed furniture" while this is 0; with the index open the
+         rail is SUPPOSED to be taller than its scrollport (the reader asked for it), so the ceiling
+         assertion in _mx_struct_judge is gated on this rather than applied blind. */
+      var rdet = rail.querySelector('.rail-d');
+      put2('railDetailsOpen', rdet ? (rdet.open ? 1 : 0) : -1);
       put2('railRect', [Math.round(rr.left), Math.round(rr.top), Math.round(rr.width),
                         Math.round(rr.height)].join(','));
       /* CAN IT CHAIN? A wheel over a container that still has room scrolls the container. When it
@@ -1122,15 +1138,18 @@ setTimeout(function(){
          `max-height` is viewport-relative and the rail's content is fixed, so the prediction is that
          the delta does not move -- measured rather than assumed, at the top and 4000px down, and the
          scroll position is put back (this file's own rule: a probe may not leak scrollY). */
-      var sy0 = scrollY;
+      var sy0 = scrollY, dy0 = rail.scrollHeight - rail.clientHeight;
       scrollTo(0, 4000);
-      put2('railDyScrolled', rail.scrollHeight - rail.clientHeight);
+      var dy1 = rail.scrollHeight - rail.clientHeight;
+      put2('railDyScrolled', dy1);
       var rr2 = rail.getBoundingClientRect();
       put2('railRectScrolled', [Math.round(rr2.left), Math.round(rr2.top), Math.round(rr2.width),
                                 Math.round(rr2.height)].join(','));
-      put2('railTrapConstant',
-        (rail.scrollHeight - rail.clientHeight) === (rr.height ? (2010 - Math.round(rr.height)) : -1)
-          ? 1 : 0);
+      /* THE CLAIM STATED AS THE COMPARISON IT IS: the hidden delta at the top equals the hidden delta
+         4000px down. It used to be computed against a pinned 2010px content height, which was the
+         PRE-FIX rail — after the index folded (968px) that constant reported a constant trap as
+         non-constant, i.e. an instrument measuring its own stale number. */
+      put2('railTrapConstant', dy1 === dy0 ? 1 : 0);
       scrollTo(0, sy0);
     } else put2('railPresent', 0);
     /* ---- STRUCTURE ABOVE THE BOARD. What this artifact can see is what `_layouts/home.html`
@@ -1152,6 +1171,12 @@ setTimeout(function(){
     }
     put2('h1', visOf('h1.page__title')); put2('tagline', visOf('.home-tagline'));
     put2('hiw', visOf('#hiwOpen'));
+    /* THE MODAL'S OWN SCROLLPORT is legitimate — `.hiw` is `overflow-y:auto` and its body is long —
+       but only while it is open, so the whitelist entry is gated on this flag rather than standing
+       open at all times. No census cell opens it yet (matrix report §9 item 3), so the entry is
+       documented-and-inert rather than verified; the flag is what a cell that opens it would need. */
+    var hiwM = document.getElementById('hiwModal');
+    put2('hiwModalOpen', hiwM && hiwM.classList.contains('on') ? 1 : 0);
     // exactly ONE chip set on screen, and the hidden one contributing no scroll width
     function chipStats(sel){
       var els2 = [].slice.call(document.querySelectorAll(sel));
@@ -1327,19 +1352,36 @@ setTimeout(function(){
        this cell's R has not already read it, because the state under test is "read, then opened",
        not "read". */
     steps.push(function(){
-      var t = pickFoldable(1, true);
-      if (!t.length){ t = pickFoldable(1); if (t.length){ tick(t[0]); notes.push('E3-marked'); } }
+      var t = pickFoldable(1, true), hlU = '';
+      if (!t.length){
+        t = pickFoldable(1);
+        /* THE UNREAD RANK SCALE, CAPTURED BEFORE THE TICK — the reference `e3HlRestored` needs, and
+           the only moment it exists. `hlSame` used to be asserted here and that was pinning the E4
+           bug as an invariant: reading demotes a headline to `--hl-brief` (the spine) and More is
+           supposed to LIFT that demotion, so a run where the size does not move through More is a run
+           where `:not(.is-open)` is missing. Measured at 1280 with the guard in place:
+           21.0394 -> 32.9617px, i.e. straight back to the card's own feature scale. */
+        if (t.length){ hlU = hlSize(t[0]); tick(t[0]); notes.push('E3-marked'); }
+      }
       eTargets = t;
       put('eN', t.length);
       if (!t.length){ notes.push('E-SKIP no foldable module past rank 8'); return; }
       var c = t[0];
       put('e3Spine', bodyH(c));
       put('hl0', hlSize(c));
+      var w0 = Math.round(c.getBoundingClientRect().width);
       more(c);
       put('e3Body', bodyH(c));
       put('e3Reopen', bodyH(c) > 0 ? 1 : 0);
       put('hl1', hlSize(c));
-      put('hlSame', hlSize(c) === K.hl0 ? 1 : 0);
+      // the width half of the More invariant still holds here, and it is the half `hlSame` was really
+      // about: a `cqi` font-size can only move if the container did.
+      put('openWSame', Math.round(c.getBoundingClientRect().width) === w0 ? 1 : 0);
+      if (hlU){
+        put('e3HlUnread', hlU);
+        put('e3HlDemoted', K.hl0 !== hlU ? 1 : 0);
+        put('e3HlRestored', hlSize(c) === hlU ? 1 : 0);
+      }
       put('e3Open', c.classList.contains('is-open') ? 1 : 0);
       put('e3Read', c.classList.contains('is-read') ? 1 : 0);
       put('eOpened', 1);
@@ -1358,10 +1400,12 @@ setTimeout(function(){
       put('hl0', hlSize(c));
       more(c);
       /* `hlSame` IS THE More INVARIANT AND ONLY THAT, so it is read around the More click alone.
-         Reading the card afterwards demotes its headline to `--hl-brief` BY DESIGN (line 1355 of
-         the layout, ungated by `:not(.is-open)`) — folding that into the same comparison would have
-         reported a type-scale regression in every E4 cell for a rule that is the read spine
-         working. The read-induced size is reported separately as `e4HlRead`. */
+         `e4HlSame` is the second, separate claim: reading an OPEN card must not move its headline
+         either. It used to, and this cell is what found it — the five `display:none` read rules
+         carry `:not(.is-open)` and the font-size rule did not, so ticking an open lead gave back a
+         brief-sized headline over a full body (37.976px -> 24.24px at 1440). The guard landed in the
+         layout on 2026-07-26; both sizes are still reported (`hl0`, `e4HlRead`) so the number says
+         which way it broke rather than only that it did. */
       put('hl1', hlSize(c));
       put('hlSame', hlSize(c) === K.hl0 ? 1 : 0);
       put('e4BodyOpen', bodyH(c));
@@ -1372,6 +1416,7 @@ setTimeout(function(){
       put('e4Aria', mb.getAttribute('aria-expanded'));
       put('e4Read', c.classList.contains('is-read') ? 1 : 0);
       put('e4HlRead', hlSize(c));
+      put('e4HlSame', hlSize(c) === K.hl0 ? 1 : 0);
       put('eOpened', 1);
       scrollTo(0, 0);
     });
@@ -1389,11 +1434,13 @@ setTimeout(function(){
   // --- 6. THE ROUND TRIP, in every cell that changed anything — unfilter, un-open, un-read, and
   //     compare against the resting numbers this same page load started from. `keep` is the
   //     screenshot path and deliberately abandons the state instead.
-  /* `bslead` HAS NO ROUND TRIP, and that is a property of the state rather than a gap in the probe:
-     the boot state it measures is read + un-folded + un-opened, and the More handler can only ever
-     toggle `is-folded`, so once clicked the card can reach "folded/More" or "open/Less" but never
-     the boot combination again. Asserting a restore here would have reported a phantom failure
-     against a state the page cannot re-enter — which is itself worth knowing. */
+  /* `bslead` HAS NO ROUND TRIP, and that is a property of the state rather than a gap in the probe.
+     It was true of the BUG — the boot state was read + un-folded + un-opened, and since the More
+     handler can only toggle `is-folded`, a card once clicked could reach "folded/More" or
+     "open/Less" but never the boot combination again. It stays true of the FIX for a different
+     reason: the cell's own click opens the card, and closing it would restore the boot state only
+     if un-reading restored the boot-open fold, which it deliberately does not (see `foldForRead`).
+     Either way, asserting a restore here would report a phantom failure. */
   if (!C.keep && !C.bslead){
     steps.push(function(){
       if (BEAT){ var f = chipFor(''); if (f.el) f.el.click(); }        // the All chip
@@ -1575,8 +1622,15 @@ PRE_SYNC = """<script>
   var SYNCED = location.hash === '#synced';
   try { ['homeRead:v1','syncState:v1','syncSession:v1','topicPrefs:v1'].forEach(function(k){ localStorage.removeItem(k); }); } catch(e){}
   var fbs = document.querySelectorAll('.fcard__fb');
-  var sidA = fbs[0] && fbs[0].dataset.story, sidB = null;
-  for (var i = 1; i < fbs.length; i++){
+  /* sidA IS THE BOOT-OPEN LEAD, DELIBERATELY, not merely the first card. It is the id the stubbed
+     GET /readstate marks read, so it decides which card the ROAM path lands on — and the one card a
+     roam can get wrong is exactly this one: today's lead boots OPEN by the absence of `is-folded`
+     (see the layout's fold defaults), so a mark that paints it read without folding it leaves the
+     seam. It happens to be the first card on today's feed; pinning it by selector means a feed whose
+     first card is a brief cannot silently retire the roam assertions in SYNC_CHECK. */
+  var leadEl = document.querySelector('.fcard[data-age="0"][data-imp="3"] .fcard__fb');
+  var sidA = (leadEl && leadEl.dataset.story) || (fbs[0] && fbs[0].dataset.story), sidB = null;
+  for (var i = 0; i < fbs.length; i++){
     if (fbs[i].dataset.story && fbs[i].dataset.story !== sidA){ sidB = fbs[i].dataset.story; break; }
   }
   window.__syncSids = [sidA, sidB];
@@ -1611,6 +1665,21 @@ PRE_SYNC = """<script>
       localStorage.setItem('homeRead:v1', JSON.stringify(seed));
     } catch(e){}
   }
+  /* BOOT WITH TODAY'S LEAD ALREADY READ (#bsread) — the second of the three paths into read, and the
+     one no click-driven probe can reach. A returning reader who ticked the lead yesterday, or whose
+     mark roamed in and persisted, loads the page with it in the read map; the boot pass paints it,
+     and until 2026-07-26 painting did not fold (see `paintReadState` in the layout). Seeded HERE
+     because "before the layout script reads localStorage" is the whole content of the cell — nothing
+     driven after boot can put a card back into that state, since the More handler can only toggle
+     `is-folded`. The state matrix proved the bug on this path (`bsClicksToOpen=2`); this is the same
+     cell in the STANDING oracle, so it cannot quietly reopen. */
+  if (location.hash === '#bsread'){
+    try {
+      var one = {};
+      if (sidA) one[sidA] = Date.now();
+      localStorage.setItem('homeRead:v1', JSON.stringify(one));
+    } catch(e){}
+  }
   // BOOT INTO AN EMPTY BOARD (#bootempty) — the owner's 2026-07-25 report exactly: a roamed
   // Unread filter plus every story already read, so the page's FIRST pack pass ever run sees zero
   // visible modules. It is a distinct path from filtering into empty at runtime, because the pack
@@ -1631,6 +1700,56 @@ PRE_SYNC = """<script>
   }
 })();
 </script>"""
+
+# THE BOOT-SEEDED READ LEAD (`--hash '#bsread'`), promoted out of the state matrix into the standing
+# oracle (matrix report §9 item 2). READ_CHECK and LEADREAD_CHECK both reach read state by CLICKING
+# `.fcard__read`, which is the one path that was already correct — so 25 matrix cells could fail on
+# the boot and roam paths while this driver stayed green at every width. That is exactly the shape of
+# regression that must not be invisible twice.
+# Runs at 4.4s: after FOLD (4.2s, which opens and restores a card past rank 8) and before anything
+# that mass-marks the board (LEADREAD 4.65s, EMPTY 4.8s, READ 5.6s), so the state it reads is still
+# the one the page BOOTED into. It clears the seed after measuring, because `file://` shares one
+# origin across every artifact ever opened from it.
+BSREAD_CHECK = """<script>
+setTimeout(function(){
+  if (location.hash !== '#bsread'){
+    var s=document.createElement('div');s.id='bsreadcheck';
+    s.textContent='BSREAD-SKIP not the boot-seeded-read mode';document.body.appendChild(s);return;
+  }
+  var lead=document.querySelector('.fcard[data-age="0"][data-imp="3"]');
+  var out='BSREAD-SKIP no age0/imp3 lead on this feed';
+  if(lead){
+    var mb=lead.querySelector('.fcard__more'),sum=lead.querySelector('.fcard__sum');
+    var sy0=scrollY;
+    var read=lead.classList.contains('is-read')?1:0;
+    var fold0=lead.classList.contains('is-folded'),open0=lead.classList.contains('is-open');
+    var folded=(fold0&&!open0)?1:0;
+    // THE SEAM, READ OFF THE BOOT STATE AND NOT OFF THE POST-CLICK ONE. Computed after the click loop
+    // below it could never be 1 — the More handler always leaves `is-folded` or `is-open` set — so the
+    // row would have been an assertion that cannot fail. Caught by running this probe against the
+    // pre-fix layout, where it printed seam=0 beside four genuine failures.
+    var seam=(read&&!fold0&&!open0)?1:0;
+    var lbl=mb?mb.querySelector('span').textContent.trim():'-';
+    var aria=mb?mb.getAttribute('aria-expanded'):'-';
+    var body0=sum?Math.round(sum.getBoundingClientRect().height):-1;
+    // THE COST IN CLICKS, which is what the reader actually feels. One is correct; two is the
+    // pre-fix behaviour, where the first press only added `is-folded` against an already-hidden body.
+    var clicks=0;
+    while(mb&&sum&&sum.getBoundingClientRect().height===0&&clicks<4){ mb.click(); clicks++; }
+    var v1=window.__hmVoid();
+    var upA=(v1.match(/upInv=(\\d+)/)||[0,'?'])[1];
+    out='BSREAD read='+read+' folded='+folded+' label='+lbl+' aria='+aria
+      +' body0='+body0+' clicksToOpen='+clicks
+      +' bodyAfter='+(sum?Math.round(sum.getBoundingClientRect().height):-1)
+      +' seam='+seam+' upInv='+upA;
+    scrollTo(0,sy0);
+    try{ ['homeRead:v1','syncState:v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
+  }
+  var d=document.createElement('div');d.id='bsreadcheck';d.textContent=out;
+  document.body.appendChild(d);
+},4400);
+</script>"""
+
 
 SYNC_CHECK = """<script>
 setTimeout(function(){
@@ -1653,6 +1772,28 @@ setTimeout(function(){
     var st = {}; try { st = JSON.parse(localStorage.getItem('syncState:v1') || '{}'); } catch(e){}
     shadow = (st[sids[0]] && st[sids[0]].v === 1 && st[sids[1]] && st[sids[1]].v === 0) ? 1 : 0;
   }
+  /* THE ROAM PATH INTO THE READ/FOLD SEAM — the third way a card becomes read, and the one this
+     driver could not see (matrix report §9 item 2). `sidA` is pinned to the boot-open lead in
+     PRE_SYNC, so the stubbed GET /readstate marks THAT card read and mergeRemote paints it: before
+     2026-07-26 it painted without folding, leaving the lead read + un-folded with its control still
+     saying "Less". State only, deliberately: the same stubbed roam also carries `rs:'unread'`, so the
+     card it just marked read is filtered off the board and a click count here would be measuring
+     `display:none` rather than the control (the matrix cell read 4 — the cap — for that reason). The
+     click cost is asserted on the boot path, in `#bsread`.
+     `roamLeadRead` IS THE PREMISE, asserted like any other row: if the roam ever stops landing on
+     the lead, this must fail loudly rather than pass three vacuous assertions. */
+  var roamLeadRead = -1, roamFolded = -1, roamLabel = '-', roamAria = '-', roamSeam = -1;
+  var leadCard = document.querySelector('.fcard[data-age="0"][data-imp="3"]');
+  if (location.hash === '#synced' && leadCard){
+    var lmb = leadCard.querySelector('.fcard__more');
+    var lFold = leadCard.classList.contains('is-folded');
+    var lOpen = leadCard.classList.contains('is-open');
+    roamLeadRead = leadCard.classList.contains('is-read') ? 1 : 0;
+    roamFolded = (lFold && !lOpen) ? 1 : 0;
+    roamLabel = lmb ? lmb.querySelector('span').textContent.trim() : '-';
+    roamAria = lmb ? lmb.getAttribute('aria-expanded') : '-';
+    roamSeam = (roamLeadRead && !lFold && !lOpen) ? 1 : 0;
+  }
   // editorial read state (2026-07-18): clicking the ✓ on an ed- card must toggle is-read and
   // land the ed-<stream>-<date> id in homeRead:v1; a second click must fully undo both.
   var edread = -1;
@@ -1673,7 +1814,9 @@ setTimeout(function(){
   d.textContent = 'SYNC mode=' + (location.hash === '#synced' ? 'in' : 'out') + ' rsCalls=' + rs.length +
     ' gets=' + gets + ' affordance=' + (aff && !aff.hidden ? 1 : 0) +
     ' painted=' + painted + ' unpainted=' + unpainted + ' shadow=' + shadow +
-    ' prefsCalls=' + prefsCalls + ' prefsRs=' + prefsRs + ' edread=' + edread;
+    ' prefsCalls=' + prefsCalls + ' prefsRs=' + prefsRs + ' edread=' + edread +
+    ' roamLeadRead=' + roamLeadRead + ' roamFolded=' + roamFolded +
+    ' roamLabel=' + roamLabel + ' roamAria=' + roamAria + ' roamSeam=' + roamSeam;
   document.body.appendChild(d);
 }, 4500);
 </script>"""
@@ -2028,7 +2171,7 @@ def _truthy(item, field):
     return bool(v) and v != ""
 
 
-MARKERS = ("GEOM", "DAY", "FILTER", "FOLD", "LEADREAD", "READ", "SYNC", "EMPTY")
+MARKERS = ("GEOM", "DAY", "FILTER", "FOLD", "LEADREAD", "BSREAD", "READ", "SYNC", "EMPTY")
 
 CHROME = os.environ.get("CHROME_BIN",
                         "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
@@ -2092,6 +2235,33 @@ SYNCED_CHECKS = [
     ("SYNC", "unpainted", lambda v: v == "1", "a newer remote tombstone un-marks a locally-read card"),
     ("SYNC", "shadow", lambda v: v == "1", "both land in the syncState:v1 shadow"),
     ("SYNC", "prefsRs", lambda v: v == "1", "a roamed read-filter lands on the segmented toggle"),
+    # THE ROAM PATH'S FOLD NORMALIZATION (2026-07-26). The premise first, then the three facts that
+    # were wrong before `mergeRemote` called `paintReadState`: 24 matrix cells failed on `seamN` and
+    # this driver could not see any of them, because every read state it reached, it reached by click.
+    ("SYNC", "roamLeadRead", lambda v: v == "1",
+     "PREMISE: the stubbed roam really marks the boot-open lead read"),
+    ("SYNC", "roamFolded", lambda v: v == "1",
+     "...and a roamed mark folds the card it lands on, exactly as a click does"),
+    ("SYNC", "roamLabel", lambda v: v == "More", "...with its control agreeing"),
+    ("SYNC", "roamAria", lambda v: v == "false", "...and so does aria-expanded"),
+    ("SYNC", "roamSeam", lambda v: v == "0",
+     "...so no roamed card is left read, un-folded and claiming 'Less'"),
+]
+
+# Boot-seeded-read only (`--hash '#bsread'`), and the ONLY rows scored in that mode — the seeded lead
+# makes the whole board a different state from the one every other probe on the page asserts about
+# (READ would tick an already-read card, LEADREAD's boot-open set is one card smaller), exactly as
+# `#bootempty` scores only EMPTY. The mode is driven by --check itself; see main().
+BSREAD_CHECKS = [
+    ("BSREAD", "read", lambda v: v == "1", "PREMISE: the seed really booted the lead read"),
+    ("BSREAD", "folded", lambda v: v == "1",
+     "a lead that was ALREADY read at boot is folded, without is-open"),
+    ("BSREAD", "label", lambda v: v == "More", "...with its control agreeing"),
+    ("BSREAD", "aria", lambda v: v == "false", "...and so does aria-expanded"),
+    ("BSREAD", "body0", lambda v: v == "0", "...over a body the read spine is hiding"),
+    ("BSREAD", "clicksToOpen", lambda v: v == "1", "ONE click re-opens it (it used to take two)"),
+    ("BSREAD", "seam", lambda v: v == "0", "...i.e. the boot path leaves no un-folded read card"),
+    ("BSREAD", "upInv", lambda v: v == "0", "order holds through the re-open"),
 ]
 
 
@@ -2114,6 +2284,7 @@ def _run_check(artifact, width, height=2800, budget=9000, hash=""):
     marks = {}
     for div_id, mk in (("geomcheck", "GEOM"), ("daycheck", "DAY"), ("filtercheck", "FILTER"),
                        ("foldcheck", "FOLD"), ("leadreadcheck", "LEADREAD"),
+                       ("bsreadcheck", "BSREAD"),
                        ("readcheck", "READ"), ("synccheck", "SYNC"), ("emptycheck", "EMPTY")):
         m = re.search(r'<div id="%s"[^>]*>(.*?)</div>' % div_id, out, re.S)
         if not m:
@@ -2134,6 +2305,11 @@ def _run_check(artifact, width, height=2800, budget=9000, hash=""):
         # expected noise there (GEOM cards=0, FOLD-SKIP, SYNC edread=0 — every card boots read), so
         # scoring them would be scoring the mode's own premise as a failure.
         rows = [r for r in CHECKS if r[0] == "EMPTY"]
+    elif hash == "#bsread":
+        # ONLY the boot-seeded rows, for the reason `#bootempty` scores only EMPTY: the mode's premise
+        # is a board one card of which is read before any probe runs, which is not the board the other
+        # eight probes assert about. Their lines are still printed, so the state is visible.
+        rows = BSREAD_CHECKS
     else:
         rows = CHECKS + (SYNCED_CHECKS if hash == "#synced" else [])
     for row in rows:
@@ -2268,8 +2444,16 @@ MX_CHECKS = [
     ("drift", lambda v, c: abs(int(v)) <= 1, "the opened module does not move under the cursor"),
     ("eOpened", lambda v, c: int(v) >= 1, "More actually opened the module"),
     ("e3Reopen", lambda v, c: v == "1", "More re-opens a READ spine in place (.is-open beats .is-read)"),
+    # THE READ DEMOTION IS A PAIR, and both halves are asserted because either one alone passes on a
+    # broken page: demoted when read and folded, restored to the card's OWN rank scale when opened.
+    # Before the `:not(.is-open)` guard the second was false and `hlSame` recorded that as invariance.
+    ("e3HlDemoted", lambda v, c: v == "1", "reading a card demotes its headline to brief scale"),
+    ("e3HlRestored", lambda v, c: v == "1",
+     "...and More lifts the demotion exactly, back to the scale the card had unread"),
     ("e4StaysOpen", lambda v, c: v == "1", "a module the reader opened stays open when it is ticked read"),
     ("e4Label", lambda v, c: v == "Less", "...and its control still says so"),
+    ("e4HlSame", lambda v, c: v == "1",
+     "...and its headline keeps its RANK scale — reading an open card may not demote its type"),
     ("blSpined", lambda v, c: v == "1", "reading the boot-open lead collapses it to its spine"),
     ("blFolded", lambda v, c: v == "1", "...in ONE state transition, to is-folded without is-open"),
     ("blLabel", lambda v, c: v == "More", "...with its control agreeing"),
@@ -2283,26 +2467,48 @@ MX_CHECKS = [
 ]
 
 
+# THE RAIL'S COLLAPSED HEIGHT, PINNED — the number that lets the census bite (2026-07-26). Measured
+# with the index disclosure closed: scrollHeight 968px at 1440 and 949px at 1300, composed of
+# nameplate 247 + edition 38 + beats 462 + How-this-works 52 + review 100 + summary 64 + padding 24.
+# Two rules key on it, and the pinning is what makes the first one non-vacuous: "the rail may scroll
+# only where the viewport is genuinely shorter than its collapsed furniture" is a tautology if the
+# collapsed height is read off the same element (a censused container is overflowing BY DEFINITION),
+# so the height has to come from outside the measurement.
+# A CEILING, NOT THE MEASUREMENT: ~30px of headroom for the theme's root-size ladder and no more, so
+# re-inflating the rail — prose added back outside the <details>, another block of furniture — fails
+# the census wherever it is censused instead of quietly restoring the trap.
+MX_RAIL_COLLAPSED_MAX = 1000
+
 # THE SCROLL-CONTAINER WHITELIST, which is the whole of structure-cleanliness as an assertion: a
-# page with ONE scroller plus the two deliberate ones is clean, and anything else is a finding by
+# page with ONE scroller plus the deliberate ones is clean, and anything else is a finding by
 # definition rather than by taste. Each entry is (selector-substring, axis, min_width, max_width,
-# prose). A censused container matching none of these fails its cell.
-#   - the rail is a scroll container BY DESIGN and only exists at >=1280 (its own comment: a 2000px
-#     index against a 1300px viewport could not be reached otherwise).
+# condition-on-the-cell's-numbers-or-None, prose). A censused container matching none of these fails
+# its cell.
+#   - the rail is a scroll container only as a SAFETY VALVE, and only at >=1280 where it exists: its
+#     `max-height`/`overflow-y` were introduced because a sticky box taller than the viewport pins at
+#     the top with everything past the fold unreachable. Since the index folded (2026-07-26) it is no
+#     longer the page's front door, so the entry is conditional — see MX_RAIL_COLLAPSED_MAX, and the
+#     two direct rail assertions in _mx_struct_judge, which are what actually guard the fix.
 #   - `.folio-filters` is a scroll container ONLY below 700px, where it is the fixed BOTTOM bar and
 #     its `overflow-x:auto` lets a long chip row be swiped. The director's brief expected it below
 #     1280; the CSS gives it `overflow:visible` from 700px up (line 533), so the whitelist follows
 #     the CSS and the discrepancy is reported rather than encoded.
-#   - `html` is the page scroller. It is expected and it is the ONLY expected vertical one outside
-#     the rail.
+#   - the How-this-works modal scrolls its own body, but only while it is OPEN.
+#   - `html` is the page scroller. It is expected and it is the ONLY unconditional vertical one.
 MX_SCROLL_WHITELIST = [
-    ("html", "y", 0, 99999, "the page itself scrolls — this is the one that should"),
+    ("html", "y", 0, 99999, None, "the page itself scrolls — this is the one that should"),
     # MATCHED ON THE CLASS, NOT THE TAG: the rail is an `<aside>` and the first version of this
     # whitelist said `div.folio-rail`, so the one container that is here BY DESIGN was reported as
     # the finding at all three wide widths. A whitelist that misses its own entry manufactures
     # exactly the failure it exists to suppress.
-    (".folio-rail", "y", 1280, 99999, "the rail's own index scroller (>=1280 by design)"),
-    (".folio-filters", "x", 0, 699, "the fixed bottom bar's swipeable chip row (<700px by design)"),
+    (".folio-rail", "y", 1280, 99999,
+     lambda kv: int(kv.get("h") or 0) - 71 < MX_RAIL_COLLAPSED_MAX,
+     "the rail's safety-valve scrollport — allowed ONLY where the viewport cannot hold its "
+     "collapsed furniture (max-height is calc(100vh - 71px))"),
+    (".folio-filters", "x", 0, 699, None,
+     "the fixed bottom bar's swipeable chip row (<700px by design)"),
+    ("hiwModal", "y", 0, 99999, lambda kv: kv.get("hiwModalOpen") == "1",
+     "the How-this-works modal scrolls its own body while it is open"),
 ]
 
 
@@ -2311,14 +2517,36 @@ def _mx_struct_judge(cell, kv, conts):
     fails, w = [], cell["w"]
     for c in conts:
         ok = False
-        for sel, axis, lo, hi, _why in MX_SCROLL_WHITELIST:
-            if sel in c["sel"] and c["axis"] == axis and lo <= w <= hi:
+        for sel, axis, lo, hi, cond, _why in MX_SCROLL_WHITELIST:
+            if sel in c["sel"] and c["axis"] == axis and lo <= w <= hi and (cond is None or cond(kv)):
                 ok = True
                 break
         if not ok:
             fails.append("unexpected %s scroller %s delta=%s ov=%s ob=%s pos=%s rect=%s"
                          % (c["axis"], c["sel"], c["delta"], c.get("ov"), c.get("ob"),
                             c.get("pos"), c.get("rect")))
+    # THE RAIL, ASSERTED DIRECTLY AND NOT ONLY THROUGH THE WHITELIST (2026-07-26). The whitelist can
+    # only ever say "this container is allowed here"; these two say what the fix actually was, and
+    # each catches a regression the other misses.
+    if w >= 1280 and "railOy" in kv:
+        # 1. IT MAY NOT TRAP. `overscroll-behavior:contain` is what turned 1221px of clipped rail into
+        #    the owner's "double scroll right at the top": the wheel ran the rail out and then refused
+        #    to hand the remainder to the page. Height-independent, so asserted unconditionally.
+        if kv.get("railOb") == "contain":
+            fails.append("railOb=contain — the rail refuses to chain its overscroll to the page, "
+                         "which is the trap the reader meets on arrival (delta=%s)"
+                         % kv.get("railDy"))
+        # 2. ITS COLLAPSED FURNITURE MAY NOT GROW. Exempt only where the disclosure is explicitly
+        #    OPEN — then the rail is supposed to exceed its scrollport, because the reader asked it
+        #    to. Gated on `!= "1"` rather than `== "0"` on purpose: the probe reports -1 when there is
+        #    no `.rail-d` at all, and deleting the disclosure is exactly the regression that must not
+        #    also delete the assertion (verified against the pre-fix layout, which reads -1/2010).
+        if kv.get("railDetailsOpen") != "1" and int(kv.get("railScrollH") or 0) > MX_RAIL_COLLAPSED_MAX:
+            fails.append("railScrollH=%s > %d with the index disclosure CLOSED — the rail's own "
+                         "furniture has re-inflated past what folding the prose bought "
+                         "(clientH=%s, hidden=%s)"
+                         % (kv.get("railScrollH"), MX_RAIL_COLLAPSED_MAX,
+                            kv.get("railClientH"), kv.get("railDy")))
     if kv.get("doubleScroll") != "0":
         fails.append("doubleScroll=%s — html and body are BOTH scrollable (two vertical bars): "
                      "docDelta=%s bodyDelta=%s docOv=%s bodyOv=%s"
@@ -2724,42 +2952,15 @@ failed an assertion; the failure is printed under the caption.</p>
     return path
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--out", default="/tmp/home-harness.html")
-    ap.add_argument("--refresh-theme", action="store_true",
-                    help="re-pull the compiled minimal-mistakes CSS into %s" % THEME_CACHE)
-    ap.add_argument("--check", action="store_true",
-                    help="render in headless Chrome, parse every probe marker, and exit non-zero "
-                         "on any failed assertion (see CHECKS)")
-    ap.add_argument("--widths", default="1440",
-                    help="--check only: comma-separated viewport widths")
-    ap.add_argument("--hash", default="",
-                    help="--check only: a URL hash mode to drive (e.g. '#synced', '#bootempty')")
-    ap.add_argument("--matrix", action="store_true",
-                    help="drive the state matrix: read state x filter x width x expansion, one "
-                         "Chrome run per cell, exits non-zero on any violated assertion")
-    ap.add_argument("--cells", default="",
-                    help="--matrix only: run only the cells whose id matches this regex")
-    ap.add_argument("--shots", default="",
-                    help="--matrix only: write the curated screenshots to this directory")
-    ap.add_argument("--sheet", default="",
-                    help="--matrix only: write the one-page contact sheet here (implies --shots)")
-    ap.add_argument("--log", default="",
-                    help="--matrix only: append per-cell progress here as each cell finishes")
-    ap.add_argument("--sheet-from", default="",
-                    help="--matrix only: rebuild --sheet from a previous run's --log instead of "
-                         "re-driving Chrome (see _mx_rows_from_log)")
-    ap.add_argument("--scheme", default="dark", choices=sorted(MX_SCHEMES),
-                    help="--matrix only: pin prefers-color-scheme rather than inheriting the "
-                         "host's appearance (see MX_SCHEMES)")
-    args = ap.parse_args()
-    if args.matrix and args.out == "/tmp/home-harness.html":
-        # A SEPARATE ARTIFACT, so a matrix run never clobbers the file another agent is driving —
-        # and because the matrix page carries a different probe bundle entirely.
-        args.out = "/tmp/home-matrix.html"
+def _build_page(feed, matrix=False, refresh_theme=False):
+    """The artifact, built from the LAYOUT ITSELF — styles, scripts and markup extracted, never
+    mirrored. `matrix` swaps the nine-probe bundle for the single state-matrix probe (see
+    MATRIX_CHECK's note on why they cannot share a page).
 
-    feed = json.load(open(os.path.join(ROOT, "_data", "homefeed.json")))
+    Lifted out of main() on 2026-07-26 so ONE run can build both artifacts: `--check` now also
+    drives the scroll-container census, which lives on the matrix page because that is where the
+    census probe is (matrix report §9 item 1). Two builds of the same source, not two sources.
+    """
     src = open(os.path.join(ROOT, "_layouts", "home.html")).read()
     styles = "\n".join(re.findall(r"<style>.*?</style>", src, re.S))
     _css_sanity("_layouts/home.html", styles)
@@ -2827,7 +3028,7 @@ def main():
 %s<div class="folio-grid" id="folioGrid">%s%s</div>
 </div>%s</div></div>
 %s
-%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, header, feed["count"], chips,
+%s%s%s%s""" % (_theme_css(refresh_theme) + TOKENS, styles, header, feed["count"], chips,
                SYNC_UI, LEGEND_UI,
                _extract_rail(feed),
                # ONE LOOP OVER feed.board, branching on `kind` — exactly what the layout does.
@@ -2835,30 +3036,105 @@ def main():
                        for it in _require_board(feed)),
                empty_state,
                propose,
-               modal, PRE_SYNC + (MATRIX_PRE if args.matrix else ""), script, VOID_METRICS,
+               modal, PRE_SYNC + (MATRIX_PRE if matrix else ""), script, VOID_METRICS,
                # THE MATRIX PAGE CARRIES ONE PROBE, and that is the point: the nine probes below
                # each measure the FULL board and restore it, so they cannot coexist with a cell that
                # has to still be filtered, still be read and still be open at measurement time.
-               MATRIX_CHECK if args.matrix else
-               (GEOM_CHECK + DAY_CHECK + FILTER_CHECK + FOLD_CHECK + SYNC_CHECK + LEADREAD_CHECK
-                + EMPTY_CHECK + READ_CHECK + SHOT_CHECK))
+               MATRIX_CHECK if matrix else
+               (GEOM_CHECK + DAY_CHECK + FILTER_CHECK + FOLD_CHECK + BSREAD_CHECK + SYNC_CHECK
+                + LEADREAD_CHECK + EMPTY_CHECK + READ_CHECK + SHOT_CHECK))
+    return page
+
+
+def _assert_reworked(page):
+    """PROVE THE ARTIFACT EMBEDS THE REWORKED CODE BEFORE TRUSTING A SINGLE NUMBER OFF IT.
+
+    Three green-while-broken pages in this repo's history all came from an instrument that did not
+    contain the code under test (see `verify the test tool first`). `data-daybreak` and `foldForRead`
+    exist only in the 2026-07-26 rework; `paintReadState` and `rail-d` only in the fix to it, so a
+    harness driven against an older layout cannot report on either one.
+    """
+    for token, what in (("data-daybreak", "the daybreak attribute"),
+                        ("paintReadState", "the one read painter all three paths call"),
+                        ("rail-d", "the rail's index disclosure"),
+                        ("foldForRead", "the read/boot-open normalization"),
+                        ("packRowSpans", "the row-span pack engine"),
+                        ("fcard__eddisc", "the AI disclosure")):
+        if token not in page:
+            raise SystemExit("home_harness: the artifact does not contain %r (%s) — "
+                             "the harness is not testing the reworked page" % (token, what))
+
+
+def _run_census(feed, out_path):
+    """The scroll-container census, scored inside the STANDING oracle (matrix report §9 item 1).
+
+    Structure cleanliness used to be scored only under `--matrix`, which is how a 1221px scroll trap
+    occupying the left 180px of the first screen lived behind a green `--check` at six widths: the
+    census needs a REALISTIC WINDOW HEIGHT (947, i.e. a 860px viewport) and every `--check` render is
+    2800px tall, where `max-height:calc(100vh - 71px)` exceeds the rail's own content and the suspect
+    container is not a scroll container at all.
+
+    It reuses the matrix census cells verbatim rather than re-keying them to `--widths`: 1512 and 1300
+    bracket the rail's 1280 breakpoint and are the widths the owner actually uses, which is the point
+    of those two cells. No screenshots here — that is the matrix run's job.
+    """
+    page = _build_page(feed, matrix=True)
+    _assert_reworked(page)
+    with open(out_path, "w") as fh:
+        fh.write(page)
+    cells = [c for c in _mx_cells() if "struct" in c["tokens"]]
+    print("census: %d cell(s) at a 860px viewport (%s)" % (len(cells), out_path), flush=True)
+    rows, failed = _mx_run(os.path.abspath(out_path), [dict(c, shot=False) for c in cells])
+    return sum(len(r["fails"]) for r in rows), failed
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", default="/tmp/home-harness.html")
+    ap.add_argument("--refresh-theme", action="store_true",
+                    help="re-pull the compiled minimal-mistakes CSS into %s" % THEME_CACHE)
+    ap.add_argument("--check", action="store_true",
+                    help="render in headless Chrome, parse every probe marker, and exit non-zero "
+                         "on any failed assertion (see CHECKS)")
+    ap.add_argument("--widths", default="1440",
+                    help="--check only: comma-separated viewport widths")
+    ap.add_argument("--hash", default="",
+                    help="--check only: drive ONLY this hash mode, at every width ('#synced', "
+                         "'#bsread', '#bootempty'). Omit it and the sweep drives the base mode at "
+                         "every width plus #bsread, #synced and the scroll census once each")
+    ap.add_argument("--matrix", action="store_true",
+                    help="drive the state matrix: read state x filter x width x expansion, one "
+                         "Chrome run per cell, exits non-zero on any violated assertion")
+    ap.add_argument("--cells", default="",
+                    help="--matrix only: run only the cells whose id matches this regex")
+    ap.add_argument("--shots", default="",
+                    help="--matrix only: write the curated screenshots to this directory")
+    ap.add_argument("--sheet", default="",
+                    help="--matrix only: write the one-page contact sheet here (implies --shots)")
+    ap.add_argument("--log", default="",
+                    help="--matrix only: append per-cell progress here as each cell finishes")
+    ap.add_argument("--sheet-from", default="",
+                    help="--matrix only: rebuild --sheet from a previous run's --log instead of "
+                         "re-driving Chrome (see _mx_rows_from_log)")
+    ap.add_argument("--scheme", default="dark", choices=sorted(MX_SCHEMES),
+                    help="--matrix only: pin prefers-color-scheme rather than inheriting the "
+                         "host's appearance (see MX_SCHEMES)")
+    args = ap.parse_args()
+    if args.matrix and args.out == "/tmp/home-harness.html":
+        # A SEPARATE ARTIFACT, so a matrix run never clobbers the file another agent is driving —
+        # and because the matrix page carries a different probe bundle entirely.
+        args.out = "/tmp/home-matrix.html"
+
+    feed = json.load(open(os.path.join(ROOT, "_data", "homefeed.json")))
+    page = _build_page(feed, matrix=args.matrix,
+                       refresh_theme=args.refresh_theme)
 
     with open(args.out, "w") as fh:
         fh.write(page)
     print("wrote %s (%d bytes, %d stories)" % (args.out, len(page), feed["count"]))
 
     if args.matrix:
-        # PROVE THE ARTIFACT EMBEDS THE REWORKED CODE BEFORE TRUSTING A SINGLE NUMBER OFF IT. Three
-        # green-while-broken pages in this repo's history all came from an instrument that did not
-        # contain the code under test (see `verify the test tool first`). `data-daybreak` and
-        # `foldForRead` exist only in the 2026-07-26 rework.
-        for token, what in (("data-daybreak", "the daybreak attribute"),
-                            ("foldForRead", "the read/boot-open normalization"),
-                            ("packRowSpans", "the row-span pack engine"),
-                            ("fcard__eddisc", "the AI disclosure")):
-            if token not in page:
-                raise SystemExit("home_harness --matrix: the artifact does not contain %r (%s) — "
-                                 "the harness is not testing the reworked page" % (token, what))
+        _assert_reworked(page)
         if args.sheet_from:
             if not args.sheet:
                 raise SystemExit("home_harness --matrix --sheet-from: needs --sheet too")
@@ -2890,17 +3166,39 @@ def main():
     if not args.check:
         return
     bad = 0
-    for w in [int(x) for x in args.widths.split(",") if x.strip()]:
-        failures, lines = _run_check(os.path.abspath(args.out), w, hash=args.hash)
-        print("--- %dpx%s" % (w, (" " + args.hash) if args.hash else ""))
+    widths = [int(x) for x in args.widths.split(",") if x.strip()]
+
+    def drive(w, hash):
+        failures, lines = _run_check(os.path.abspath(args.out), w, hash=hash)
+        print("--- %dpx%s" % (w, (" " + hash) if hash else ""))
         for ln in lines:
             print(ln)
         for f in failures:
             print("  FAIL %s" % f)
         print("  %s at %dpx%s (%d assertion(s) failed)"
               % ("PASS" if not failures else "FAIL", w,
-                 (" " + args.hash) if args.hash else "", len(failures)))
-        bad += len(failures)
+                 (" " + hash) if hash else "", len(failures)))
+        return len(failures)
+
+    for w in widths:
+        bad += drive(w, args.hash)
+    # THE DEFAULT SWEEP DRIVES THE SEAM MODES AND THE CENSUS TOO (2026-07-26), because a mode nobody
+    # remembers to pass is a mode nobody runs. Both were the SAME blind spot: 25 of 53 matrix cells
+    # failed on the read/fold seam while this oracle was green at six widths, since every read state it
+    # reaches, it reaches by CLICKING — and the rail's scroll trap was invisible here for want of a
+    # realistic window height. `#bsread` is the boot-seeded read lead; `#synced` carries the roam
+    # assertions (see SYNCED_CHECKS). Once each, at the widest width asked for: both are width-
+    # independent class/label facts, and paying six Chrome runs for them would buy nothing.
+    # An explicit `--hash` still drives exactly that mode and nothing else — it is the debugging path.
+    if not args.hash:
+        for mode in ("#bsread", "#synced"):
+            bad += drive(max(widths), mode)
+        cbad, cfailed = _run_census(feed, os.path.join(os.path.dirname(os.path.abspath(args.out)),
+                                                       "home-census.html"))
+        print("  %s census (%d assertion(s) failed%s)"
+              % ("PASS" if not cbad else "FAIL", cbad,
+                 (", cells: " + ", ".join(cfailed)) if cfailed else ""))
+        bad += cbad
     if bad:
         raise SystemExit("home_harness: %d assertion(s) failed" % bad)
 
