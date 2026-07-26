@@ -128,6 +128,34 @@ Added 2026-07-26 for the ordering/seen/expansion rework:
              its own storage first.
 `__hmVoid()` now also reports `upInv`/`maxUp`, so EVERY state that reads it reports order —
 resting, open, filtered and all-read — where that invariant used to be checked only at rest.
+
+THE STATE MATRIX (`--matrix`, 2026-07-26) is the other driver: read state x filter x width x
+expansion, ONE Chrome run per cell, one `MX` line per cell, non-zero exit on any violated assertion.
+
+    python3 tools/home_harness.py --matrix                       # 52 cells, numbers only
+    python3 tools/home_harness.py --matrix --shots /tmp/home-shots/matrix \\
+        --sheet /tmp/home-shots/matrix/contact-sheet.html --log /tmp/mx.log
+    python3 tools/home_harness.py --matrix --cells '^1440-R1' --scheme light
+
+It writes its OWN artifact (`/tmp/home-matrix.html`) carrying MATRIX_PRE + MATRIX_CHECK and none of
+the nine probes above, because those all measure the full board and restore it — they cannot coexist
+with a cell that must still be filtered, still be read and still be open when it is measured. A cell
+is addressed by hash: `#mx:R1,F3,E1` (`,keep` abandons the state for the screenshot). See MATRIX_PRE
+for the axes and MX_CHECKS for the assertion table. Three things it knows that the driver above
+does not:
+
+  THE 500px FLOOR IS REAL, and every "390" number this harness ever printed was taken at 500 —
+  `--window-size=390,2800` reports `innerW=500`, and `/tmp/home-shots/390-resting.png` is 500px wide.
+  Below the floor the matrix renders the artifact in an `<iframe>` of the exact width inside a 500px
+  window and copies the probe marker out of the frame, which needs `--allow-file-access-from-files`.
+  `frameW` is asserted against the requested width, so a silent fallback to 500 fails the cell.
+
+  THE COLOUR SCHEME IS PINNED (`--scheme`, default dark) rather than inherited from the host's
+  appearance — see MX_SCHEMES for why that is not optional.
+
+  THE READ STATE IS REACHED TWO WAYS, and they differ: `R1` seeds `homeRead:v1` before the layout
+  script runs (a returning reader), `R1c` clicks the ✓ now. `foldForRead` runs only from `setRead`,
+  so only the clicked path normalizes fold state — which is what `seamN` measures.
 """
 import argparse
 import glob
@@ -732,6 +760,560 @@ setTimeout(function(){
   var d=document.createElement('div');d.id='shotcheck';
   d.textContent='SHOT mode='+h.slice(1)+' '+what;document.body.appendChild(d);
 },5900);
+</script>"""
+
+
+# ---------------------------------------------------------------------------------------------
+# THE STATE MATRIX (2026-07-26). One cell = one page load = one measured state, addressed by a URL
+# hash: `#mx:R1,F3,E1`. It is a SEPARATE artifact from the check driver's, not a tenth probe on the
+# same page, because every probe above measures the FULL board and puts it back — nine of them
+# fighting over one page cannot hold a seeded read map and a filter still on at measurement time.
+#
+# The axes, and how each is reached:
+#   R  read state   SEEDED into homeRead:v1 before the layout script runs (`R1`/`R2`/`R2s`), which
+#                   is how a returning reader arrives, or CLICKED at probe time (`R1c` — the same
+#                   state reached by ticking ✓ now). The two are NOT identical and the suffix
+#                   exists to prove it: `foldForRead` runs from setRead, never from paintRead, so a
+#                   click-marked card is normalized to `is-folded`/More while a boot-seeded one
+#                   keeps whatever fold default it booted with. Both are real reader states.
+#   F  filter       CLICKED, not seeded — apply() + schedulePack is the path a reader takes, and
+#                   clicking gives the round-trip for free in EVERY filtered cell (measure at rest,
+#                   filter, measure, unfilter, compare) instead of in one designated cell. Boot-time
+#                   filter seeding is already covered by `#bootempty` in the check driver.
+#                   The chip clicked is the one VISIBLE at that width (>=1280 hides the bar's chips
+#                   and the rail carries them), and `chipVis` reports it rather than falling back
+#                   silently — a width where no chip is reachable must not pass by accident.
+#   E  expansion    CLICKED More, at probe time.
+# F5 IS NOT A PURE BEAT FILTER, and this is a finding rather than a shortcut: every chip on this
+# feed has a non-zero count (the smallest, `tech`, has 2), so "a beat with zero results" is
+# unreachable by beat alone. F5 is realized as the narrowest reachable zero-result beat view —
+# `tech` + Read with nothing read — which is also the only way to reach the empty message's
+# beat-clause composition.
+MATRIX_PRE = """<script>
+(function(){
+  var h = location.hash || '';
+  if (h.indexOf('#mx:') !== 0){ window.__mx = null; return; }
+  var C = { R:'R0', F:'F0', E:'E0', keep:false, bootlead:false, bslead:false, roam:false,
+            click:false, raw:h.slice(4) };
+  C.raw.split(',').forEach(function(t){
+    t = t.trim(); if (!t) return;
+    if (t === 'keep'){ C.keep = true; return; }
+    if (t === 'bootlead'){ C.bootlead = true; return; }
+    if (t === 'bslead'){ C.bslead = true; return; }
+    if (t === 'roam'){ C.roam = true; return; }
+    if (t.charAt(0) === 'R'){
+      if (t.charAt(t.length - 1) === 'c'){ C.click = true; C.R = t.slice(0, -1); } else C.R = t;
+      return;
+    }
+    if (t.charAt(0) === 'F'){ C.F = t; return; }
+    if (t.charAt(0) === 'E'){ C.E = t; return; }
+  });
+  window.__mx = C;
+  /* SEEDED READ STATE, written before the layout script reads localStorage — the same key and the
+     same shape production writes (`homeRead:v1`, sid -> ms timestamp). PRE_SYNC has just cleared
+     it, so the seed is the whole state and the run is deterministic. */
+  if (!C.click && C.R !== 'R0'){
+    try {
+      var map = {}, T = Date.now(), n = 0;
+      Array.prototype.forEach.call(document.querySelectorAll('.fcard'), function(c){
+        var ed = c.className.indexOf('fcard--ed') >= 0;
+        if (C.R === 'R2s' && ed) return;              // all STORIES read, editorials untouched
+        var fb = c.querySelector('.fcard__fb');
+        var sid = c.getAttribute('data-story') || (fb && fb.getAttribute('data-story'));
+        if (!sid) return;
+        if (C.R === 'R1'){ if (ed || n >= 10) return; n++; }   // the first ten STORY cards
+        map[sid] = T;
+      });
+      localStorage.setItem('homeRead:v1', JSON.stringify(map));
+    } catch(e){}
+  }
+  /* THE ONE CARD THAT BOOTS OPEN, SEEDED READ — a returning reader who ticked today's lead earlier,
+     or whose read state roamed in from another device. It is a DIFFERENT path from ticking it now:
+     the boot fold-default loop keys on `data-age="0" data-imp="3"` alone and never consults the read
+     map, and `paintRead` (which is what boot runs) does not call `foldForRead` (which is what the
+     click path runs). Seeded here, i.e. before the layout script reads localStorage, because that
+     ordering is the whole point of the cell. */
+  if (window.__mx && window.__mx.bslead){
+    try {
+      var lead = document.querySelector('.fcard[data-age="0"][data-imp="3"]');
+      var lb = lead && lead.querySelector('.fcard__fb');
+      var lsid = lead && (lead.getAttribute('data-story') || (lb && lb.getAttribute('data-story')));
+      if (lsid){ var m2 = {}; m2[lsid] = Date.now();
+        localStorage.setItem('homeRead:v1', JSON.stringify(m2)); }
+    } catch(e){}
+  }
+  /* THE THIRD PATH TO A READ CARD: a ROAM landing after boot. Nothing is seeded read here — only a
+     SESSION is, which is enough, because the layout's boot then calls pullRemote() -> the /readstate
+     stub PRE_SYNC already installed -> mergeRemote(), whose paint is `cards.forEach(paintRead)` with
+     no `foldForRead` either. The stub marks the FIRST card's story id read, and the first card of
+     this board is the boot-open lead, so this reproduces the seam without touching homeRead:v1 at
+     all. It exists so the roam path is MEASURED rather than inferred from a shared call site. */
+  if (window.__mx && window.__mx.roam){
+    try {
+      localStorage.setItem('syncSession:v1',
+        JSON.stringify({ token: new Array(65).join('a'), reader: 'rafael' }));
+    } catch(e){}
+  }
+})();
+</script>"""
+
+
+# THE MATRIX PROBE. Emits ONE `MX` line per cell, and exactly one `__hmVoid()` reading — the FINAL
+# state's, since the driver's kv parse keeps the last occurrence of a repeated key and the cell's
+# claim is about the state it ends in. Everything measured before that point carries its own prefix.
+MATRIX_CHECK = """<script>
+setTimeout(function(){
+  var C = window.__mx;
+  if (!C) return;
+  var grid = document.getElementById('folioGrid'), empty = document.getElementById('folioEmpty');
+  var filters = document.getElementById('folioFilters');
+  var cards = [].slice.call(grid.querySelectorAll('.fcard'));
+  var K = {}, notes = [];
+  function put(k, v){ K[k] = v; }
+  function shown(c){ return c.style.display !== 'none'; }
+  function visible(){ return cards.filter(shown); }
+  function isEd(c){ return c.classList.contains('fcard--ed'); }
+  function tick(c){ var b = c.querySelector('.fcard__read'); if (b) b.click(); return !!b; }
+  function more(c){ var b = c.querySelector('.fcard__more'); if (b) b.click(); return !!b; }
+  function bodyH(c){ var s = c.querySelector('.fcard__sum'); return s ? Math.round(s.getBoundingClientRect().height) : -1; }
+  function hlSize(c){ var e = c.querySelector('.fcard__hl'); return e ? getComputedStyle(e).fontSize : '-'; }
+  function gh(){ return Math.round(grid.getBoundingClientRect().height); }
+  function r1h(){ return cards.length ? Math.round(cards[0].getBoundingClientRect().height) : -1; }
+  function banded(){ return grid.classList.contains('is-filtered') ? 0 : 1; }
+  function spannedN(){ return cards.filter(function(c){ return !!c.style.gridRow; }).length; }
+  /* THE CHIP THE READER CAN ACTUALLY CLICK AT THIS WIDTH. Both chip sets share `data-topic` and
+     the layout's one `active` Set, but only one set is on screen at a given width, and clicking a
+     `display:none` control would test a path no reader has. */
+  function chipFor(topic){
+    var all = [].slice.call(document.querySelectorAll('.folio-filters .ff-chip, .rail-beats .ff-chip'))
+      .filter(function(c){ return (c.dataset.topic || '') === topic; });
+    var vis = all.filter(function(c){ return c.offsetParent !== null; });
+    return { el: vis[0] || all[0] || null, n: all.length, nVis: vis.length };
+  }
+  function rbtn(rs){ return filters.querySelector('.ff-rbtn[data-rs="' + rs + '"]'); }
+
+  var BEAT = { F3:'geopolitics', F4:'geopolitics', F5:'tech' }[C.F] || '';
+  var RS   = { F1:'unread', F2:'read', F4:'unread', F5:'read' }[C.F] || '';
+
+  /* `data-age` IS CLAMPED AT 3 AND CANNOT ORDER DATES — measured 2026-07-26, and it cost this probe
+     a false failure before it was found. The feed's `age_days` is the clamped expression the type
+     scale and the read spine speak (importance minus age minus read), so on a 15-day board eleven
+     different dates all carry `data-age="3"`. Any probe that treats it as a date proxy silently
+     loses resolution past three days: `ageMono` is kept because non-decreasing ages IS a true and
+     useful claim, but "dates descend down the page" is read off the PRINTED LABEL instead.
+     `Jul 26` has no year, so it is ordered as a within-year ordinal with one wrap allowed — over a
+     14-day window at most one Dec->Jan boundary can appear, and that is the only legal ascent. */
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function dnum(lbl){
+    var p = (lbl || '').trim().split(/\\s+/);
+    var m = MON.indexOf(p[0]), d = parseInt(p[1], 10);
+    return (m < 0 || isNaN(d)) ? -1 : m * 100 + d;
+  }
+  function measure(pfx){
+    var V = visible();
+    put(pfx + 'vis', V.length);
+    put(pfx + 'visStory', V.filter(function(c){ return !isEd(c); }).length);
+    put(pfx + 'visEd', V.filter(isEd).length);
+    put(pfx + 'H', gh());
+    var ages = V.map(function(c){ return parseInt(c.dataset.age, 10); });
+    var mono = 1;
+    for (var i = 1; i < ages.length; i++) if (ages[i] < ages[i-1]) mono = 0;
+    put(pfx + 'ageMono', mono);
+    // daybreak, among the cards that are VISIBLE: each must still print its day, and their dates
+    // must strictly descend (ages strictly increase). Daybreak is a BOARD property, so which cards
+    // carry it in a filtered view is not asserted here — only that the ones on screen are honest.
+    var db = V.filter(function(c){ return c.hasAttribute('data-daybreak'); });
+    var printed = 0, desc = 1, wraps = 0, last = -1;
+    db.forEach(function(c){
+      var d = c.querySelector('.fcard__day');
+      if (d && d.getBoundingClientRect().height > 0) printed++;
+      var dl = c.querySelector('.fcard__date');
+      var n = dnum(dl ? dl.textContent : '');
+      if (n < 0) desc = 0;
+      else if (last >= 0){
+        if (n > last){ wraps++; if (wraps > 1 || !(last < 200 && n > 1100)) desc = 0; }
+        else if (n === last) desc = 0;      // two daybreaks may never print the same date
+      }
+      last = n;
+    });
+    put(pfx + 'dbVis', db.length); put(pfx + 'dbPrinted', printed); put(pfx + 'dbDesc', desc);
+    /* DATE BLOCKING, the other half of "descending down the page": a date value may occupy exactly
+       ONE contiguous run in DOM order. A JS reorder that interleaved two days would keep every
+       daybreak card honest about its own date and still read as noise, and this is the metric that
+       would see it. Counted over the VISIBLE cards, so it holds in filtered views too. */
+    var runs = 0, uniq = {}, prevD = null;
+    V.forEach(function(c){
+      var dl = c.querySelector('.fcard__date');
+      var t = dl ? dl.textContent.trim() : '';
+      if (t !== prevD){ runs++; prevD = t; }
+      uniq[t] = 1;
+    });
+    put(pfx + 'dateRuns', runs); put(pfx + 'dateUniq', Object.keys(uniq).length);
+    put(pfx + 'dateBlocked', runs === Object.keys(uniq).length ? 1 : 0);
+    // the unread tally against what is on screen. Editorials are excluded BY DESIGN (the tally
+    // counts the same population as "All N", which is stories-only) — so this compares like with
+    // like, and the added cell below is where that design decision gets pinned as a number.
+    var uctEl = filters.querySelector('.ff-uct');
+    var uct = uctEl ? parseInt(uctEl.textContent || '-1', 10) : -1;
+    var unreadVis = V.filter(function(c){ return !isEd(c) && !c.classList.contains('is-read'); }).length;
+    var unreadAll = cards.filter(function(c){ return !isEd(c) && !c.classList.contains('is-read'); }).length;
+    put(pfx + 'uct', uct); put(pfx + 'unreadVis', unreadVis); put(pfx + 'unreadAll', unreadAll);
+    /* TWO READINGS OF THE SAME NUMBER, and they only agree in an unfiltered view. `readCounts()`
+       sweeps every card regardless of `display`, so the tally is the BOARD's unread story count —
+       self-consistent with the "All 80" beside it, and deliberately so. The spec's phrasing ("the
+       counter equals the visible unread story cards") is the same claim only while nothing is
+       filtered, so both are emitted and the judge scores the second one only where it means
+       something. Silently asserting one of them would have manufactured a failure per filtered
+       cell, or hidden a real one. */
+    put(pfx + 'uctOk', uct === unreadAll ? 1 : 0);
+    put(pfx + 'uctVisOk', uct === unreadVis ? 1 : 0);
+    // THE DISCLOSURE, on every editorial card on screen, in whatever state this cell is in.
+    var eds = V.filter(isEd), dmin = -1;
+    eds.forEach(function(c){
+      var d = c.querySelector('.fcard__eddisc');
+      var hh = d ? Math.round(d.getBoundingClientRect().height) : 0;
+      if (dmin < 0 || hh < dmin) dmin = hh;
+    });
+    put(pfx + 'edN', eds.length); put(pfx + 'edDiscMin', dmin);
+    put(pfx + 'edDiscOk', eds.length === 0 ? 1 : (dmin > 0 ? 1 : 0));
+    // the empty state, and the completeness of its sentence (this page forbids crops and ellipses)
+    var er = empty.getBoundingClientRect(), gr = grid.getBoundingClientRect();
+    var txt = (empty.textContent || '').trim();
+    put(pfx + 'emptyHidden', empty.hidden ? 1 : 0);
+    put(pfx + 'emptyH', Math.round(er.height));
+    put(pfx + 'emptyTop', Math.round(er.top - gr.top));
+    put(pfx + 'emptyDot', (txt.length > 12 && txt.charAt(txt.length - 1) === '.') ? 1 : 0);
+    put(pfx + 'emptyOk', V.length === 0
+      ? ((!empty.hidden && er.height > 0 && Math.abs(er.top - gr.top) <= 2
+          && txt.length > 12 && txt.charAt(txt.length - 1) === '.') ? 1 : 0)
+      : (empty.hidden ? 1 : 0));
+    // read/fold census
+    var rd = cards.filter(function(c){ return c.classList.contains('is-read'); });
+    put(pfx + 'readN', rd.length);
+    put(pfx + 'openN', cards.filter(function(c){ return c.classList.contains('is-open'); }).length);
+    put(pfx + 'foldedN', cards.filter(function(c){ return c.classList.contains('is-folded'); }).length);
+    /* THE SPINE, ASSERTED PER CARD RATHER THAN AS A PAGE HEIGHT. The spec expected an R1 board (ten
+       of 82 read) to lose >=25% of its height, and at a packed width it arithmetically cannot: the
+       grid's height is its TALLEST COLUMN, so ten cards spread over three tracks take about a third
+       of their own height off each one — measured 18405 -> 16853, i.e. 8%, while the lead itself
+       collapsed 912 -> 228 (75%). The page really did spine; the page HEIGHT is simply the wrong
+       instrument for it below an all-read board. So: every read story card that is not explicitly
+       open must have a zero-height body, and the height drop is reported for the record.
+       Editorial cards are excluded because they have no `.fcard__sum` at all (their body is
+       `.fcard__edp`), which reads as -1 rather than 0 and would fail a naive count. */
+    var spineWant = rd.filter(function(c){
+      return !isEd(c) && c.querySelector('.fcard__sum') && !c.classList.contains('is-open'); });
+    put(pfx + 'spineWant', spineWant.length);
+    put(pfx + 'spineN', spineWant.filter(function(c){ return bodyH(c) === 0; }).length);
+    put(pfx + 'spineOk', spineWant.filter(function(c){ return bodyH(c) === 0; }).length
+      === spineWant.length ? 1 : 0);
+    /* THE READ / BOOT-OPEN SEAM, COUNTED — the invariant commit 3cc4b4d established, as a number
+       that every cell reports. A card that is read, has a More control, and carries neither
+       `is-folded` nor `is-open` has its body hidden by the spine rule while its own button still
+       says "Less" with aria-expanded="true": it looks collapsed and claims to be expanded, and it
+       takes TWO clicks to open (the first only adds `is-folded`). `foldForRead` closes that on the
+       CLICK path. This counts it wherever it occurs, on any path. */
+    var seam = cards.filter(function(c){
+      return c.classList.contains('is-read') && c.querySelector('.fcard__more')
+        && !c.classList.contains('is-folded') && !c.classList.contains('is-open'); });
+    put(pfx + 'seamN', seam.length);
+    if (seam.length){
+      var sb = seam[0].querySelector('.fcard__more');
+      put(pfx + 'seamLbl', sb.querySelector('span').textContent.trim());
+      put(pfx + 'seamAria', sb.getAttribute('aria-expanded'));
+      put(pfx + 'seamBody', bodyH(seam[0]));
+    }
+    put(pfx + 'r1H', r1h()); put(pfx + 'band', banded()); put(pfx + 'spanned', spannedN());
+  }
+
+  var steps = [];
+  var rest = {};          // the resting state's numbers, kept for the round-trip comparison
+
+  // --- 0. the resting state for this R, at this width
+  steps.push(function(){
+    measure('r0');
+    rest = { vis: K.r0vis, H: K.r0H, r1H: K.r0r1H, band: K.r0band, spanned: K.r0spanned };
+    put('bootOpen', (window.__hmBootOpen || []).length);
+  });
+
+  // --- 1. R by CLICK, when the cell asks for the clicked path rather than the seeded one
+  if (C.click && C.R !== 'R0'){
+    steps.push(function(){
+      var n = 0;
+      cards.forEach(function(c){
+        if (C.R === 'R2s' && isEd(c)) return;
+        if (C.R === 'R1'){ if (isEd(c) || n >= 10) return; n++; }
+        if (!c.classList.contains('is-read')) tick(c);
+      });
+      scrollTo(0, 0);            // every tick pays back a scroll delta through anchored()
+      notes.push('clicked-read');
+    });
+  }
+
+  // --- 2. the added cell: reading the BOOT-OPEN lead, which is open by the ABSENCE of is-folded
+  if (C.bootlead){
+    steps.push(function(){
+      var boot = (window.__hmBootOpen || []).filter(function(c){
+        return shown(c) && !c.classList.contains('is-folded') && !c.classList.contains('is-open')
+          && c.querySelector('.fcard__sum'); });
+      put('blN', boot.length);
+      if (!boot.length){ notes.push('bootlead-SKIP'); return; }
+      var c = boot[0], mb = c.querySelector('.fcard__more');
+      var sy = scrollY, h0 = Math.round(c.getBoundingClientRect().height);
+      put('blBody0', bodyH(c));
+      tick(c);
+      put('blSpined', bodyH(c) === 0 ? 1 : 0);
+      put('blFolded', (c.classList.contains('is-folded') && !c.classList.contains('is-open')) ? 1 : 0);
+      put('blLabel', mb.querySelector('span').textContent.trim());
+      put('blAria', mb.getAttribute('aria-expanded'));
+      more(c);
+      put('blOneClick', bodyH(c) > 0 ? 1 : 0);
+      put('blH', h0 + '/' + Math.round(c.getBoundingClientRect().height));
+      if (!C.keep){ more(c); tick(c); window.__hmRestoreBootOpen(); }
+      scrollTo(0, sy);
+    });
+  }
+
+  /* --- 2b. THE SAME SEAM, REACHED BY BOOTING INSTEAD OF CLICKING, and counted in clicks. `seamN`
+       above says the state exists; this says what it costs the reader: how many presses of More it
+       takes to get the body back. One is correct. Two is the pre-3cc4b4d behaviour. */
+  if (C.bslead || C.roam){
+    steps.push(function(){
+      var lead = grid.querySelector('.fcard[data-age="0"][data-imp="3"]');
+      if (!lead){ notes.push('bslead-SKIP no age0/imp3 card'); return; }
+      if (C.roam){
+        /* proof the roam is what marked it, not a seeded map: the read map was empty at boot and
+           the only writer since was mergeRemote. Also proves the stub actually landed. */
+        var rs = (window.__fetchLog || []).filter(function(l){ return l.indexOf('/readstate') >= 0; });
+        put('roamGets', rs.length);
+        put('roamPainted', lead.classList.contains('is-read') ? 1 : 0);
+      }
+      var mb = lead.querySelector('.fcard__more');
+      put('bsRead', lead.classList.contains('is-read') ? 1 : 0);
+      put('bsFolded', lead.classList.contains('is-folded') ? 1 : 0);
+      put('bsOpen', lead.classList.contains('is-open') ? 1 : 0);
+      put('bsLabel', mb ? mb.querySelector('span').textContent.trim() : '-');
+      put('bsAria', mb ? mb.getAttribute('aria-expanded') : '-');
+      put('bsBody', bodyH(lead));
+      /* THE CLICK COST IS ONLY MEASURABLE ON A VISIBLE CARD, and on the roam path it is not one: the
+         stubbed GET /prefs also roams `rs:'unread'`, so the lead this cell just painted read is
+         filtered off the board (`vis` 81, its rect 0). Counting clicks against a `display:none` card
+         measured "the card is hidden", not "the control lies" — it read 4 (the cap) with the body
+         never returning, which would have overstated a real finding. The seam STATE above is what
+         this cell proves on the roam path; the cost is quoted from the boot path. */
+      if (lead.style.display === 'none' || !lead.getBoundingClientRect().height){
+        put('bsHidden', 1);
+        notes.push('click-cost-not-measurable: lead filtered off the board');
+      } else {
+        put('bsHidden', 0);
+        var clicks = 0;
+        while (mb && bodyH(lead) === 0 && clicks < 4){ mb.click(); clicks++; }
+        put('bsClicksToOpen', clicks);
+        put('bsBodyAfter', bodyH(lead));
+      }
+      scrollTo(0, 0);
+    });
+  }
+
+  // --- 3. F, by clicking what is on screen
+  if (BEAT){
+    steps.push(function(){
+      var f = chipFor(BEAT);
+      put('chipN', f.n); put('chipVis', f.nVis); put('beat', BEAT);
+      if (f.el) f.el.click(); else notes.push('no-chip');
+    });
+  }
+  if (RS){
+    steps.push(function(){
+      var b = rbtn(RS);
+      put('rsVis', b && b.offsetParent !== null ? 1 : 0); put('rs', RS);
+      if (b) b.click(); else notes.push('no-rbtn');
+    });
+  }
+
+  // --- 4. E, by clicking More. The target is picked the way FOLD_CHECK picks it: the first
+  //     foldable module past rank 8, i.e. a mid-page card rather than the composed top band.
+  var eTargets = [];
+  function pickFoldable(n, wantRead){
+    var V = visible(), out = [];
+    for (var i = 8; i < V.length && out.length < n; i++){
+      var c = V[i];
+      if (!c.querySelector('.fcard__more') || !c.querySelector('.fcard__sum')) continue;
+      if (isEd(c)) continue;
+      if (wantRead === true && !c.classList.contains('is-read')) continue;
+      out.push(c);
+    }
+    return out;
+  }
+  if (C.E === 'E1' || C.E === 'E2'){
+    steps.push(function(){
+      var n = C.E === 'E2' ? 2 : 1;
+      eTargets = pickFoldable(n);
+      put('eN', eTargets.length);
+      if (!eTargets.length){ notes.push('E-SKIP no foldable module past rank 8'); return; }
+      put('hl0', hlSize(eTargets[0]));
+      var body0 = eTargets.map(bodyH).join('/');
+      var t0 = eTargets[0].getBoundingClientRect().top;
+      var w0 = Math.round(eTargets[0].getBoundingClientRect().width);
+      eTargets.forEach(more);
+      put('hl1', hlSize(eTargets[0]));
+      put('hlSame', hlSize(eTargets[0]) === K.hl0 ? 1 : 0);
+      put('openW', Math.round(eTargets[0].getBoundingClientRect().width));
+      put('openWSame', Math.round(eTargets[0].getBoundingClientRect().width) === w0 ? 1 : 0);
+      put('drift', Math.round(eTargets[0].getBoundingClientRect().top - t0));
+      put('eBody', body0 + '>' + eTargets.map(bodyH).join('/'));
+      put('eOpened', eTargets.filter(function(c){
+        return c.classList.contains('is-open') && !c.classList.contains('is-folded'); }).length);
+    });
+  }
+  if (C.E === 'E3'){
+    /* More ON A READ SPINE — the `.is-open`-beats-`.is-read` cascade. The target is read first if
+       this cell's R has not already read it, because the state under test is "read, then opened",
+       not "read". */
+    steps.push(function(){
+      var t = pickFoldable(1, true);
+      if (!t.length){ t = pickFoldable(1); if (t.length){ tick(t[0]); notes.push('E3-marked'); } }
+      eTargets = t;
+      put('eN', t.length);
+      if (!t.length){ notes.push('E-SKIP no foldable module past rank 8'); return; }
+      var c = t[0];
+      put('e3Spine', bodyH(c));
+      put('hl0', hlSize(c));
+      more(c);
+      put('e3Body', bodyH(c));
+      put('e3Reopen', bodyH(c) > 0 ? 1 : 0);
+      put('hl1', hlSize(c));
+      put('hlSame', hlSize(c) === K.hl0 ? 1 : 0);
+      put('e3Open', c.classList.contains('is-open') ? 1 : 0);
+      put('e3Read', c.classList.contains('is-read') ? 1 : 0);
+      put('eOpened', 1);
+    });
+  }
+  if (C.E === 'E4'){
+    /* OPEN A MODULE, THEN MARK IT READ. `.is-open` is deliberately untouched by foldForRead — a
+       card the reader explicitly opened stays open when they tick it — so this cell pins the
+       documented behaviour as numbers rather than as a comment. */
+    steps.push(function(){
+      var t = pickFoldable(1);
+      eTargets = t;
+      put('eN', t.length);
+      if (!t.length){ notes.push('E-SKIP no foldable module past rank 8'); return; }
+      var c = t[0], mb = c.querySelector('.fcard__more');
+      put('hl0', hlSize(c));
+      more(c);
+      /* `hlSame` IS THE More INVARIANT AND ONLY THAT, so it is read around the More click alone.
+         Reading the card afterwards demotes its headline to `--hl-brief` BY DESIGN (line 1355 of
+         the layout, ungated by `:not(.is-open)`) — folding that into the same comparison would have
+         reported a type-scale regression in every E4 cell for a rule that is the read spine
+         working. The read-induced size is reported separately as `e4HlRead`. */
+      put('hl1', hlSize(c));
+      put('hlSame', hlSize(c) === K.hl0 ? 1 : 0);
+      put('e4BodyOpen', bodyH(c));
+      tick(c);
+      put('e4BodyRead', bodyH(c));
+      put('e4StaysOpen', bodyH(c) > 0 ? 1 : 0);
+      put('e4Label', mb.querySelector('span').textContent.trim());
+      put('e4Aria', mb.getAttribute('aria-expanded'));
+      put('e4Read', c.classList.contains('is-read') ? 1 : 0);
+      put('e4HlRead', hlSize(c));
+      put('eOpened', 1);
+      scrollTo(0, 0);
+    });
+  }
+
+  // --- 5. THE CELL'S OWN STATE. One void reading, and it is this one: the driver's kv parse keeps
+  //     the LAST occurrence of a repeated key, so a second `upInv=` from any other state would
+  //     silently become the number the assertion table scores.
+  var voidStr = '';
+  steps.push(function(){
+    measure('');
+    voidStr = window.__hmVoid();
+  });
+
+  // --- 6. THE ROUND TRIP, in every cell that changed anything — unfilter, un-open, un-read, and
+  //     compare against the resting numbers this same page load started from. `keep` is the
+  //     screenshot path and deliberately abandons the state instead.
+  /* `bslead` HAS NO ROUND TRIP, and that is a property of the state rather than a gap in the probe:
+     the boot state it measures is read + un-folded + un-opened, and the More handler can only ever
+     toggle `is-folded`, so once clicked the card can reach "folded/More" or "open/Less" but never
+     the boot combination again. Asserting a restore here would have reported a phantom failure
+     against a state the page cannot re-enter — which is itself worth knowing. */
+  if (!C.keep && !C.bslead){
+    steps.push(function(){
+      if (BEAT){ var f = chipFor(''); if (f.el) f.el.click(); }        // the All chip
+      if (RS){ var b = rbtn(''); if (b) b.click(); }
+      eTargets.forEach(function(c){ if (c.classList.contains('is-open')) more(c); });
+      if (C.E === 'E3' || C.E === 'E4'){
+        eTargets.forEach(function(c){ if (c.classList.contains('is-read')) tick(c); });
+      }
+      if (C.click) cards.forEach(function(c){ if (c.classList.contains('is-read')) tick(c); });
+      window.__hmRestoreBootOpen();
+      scrollTo(0, 0);
+    });
+    steps.push(function(){
+      put('rtVis', visible().length); put('rtH', gh()); put('rtR1H', r1h());
+      put('rtBand', banded()); put('rtSpanned', spannedN());
+      /* THE RESTORE IS AN ASSERTION, not cleanup: spans, counts and the composition band all have
+         to come back. `rtH` is compared with a small tolerance because a re-pack rounds each
+         module up to a whole 4px row unit and a seeded read map is not undone here (an R1 cell
+         restores to ITS resting height, which is what `r0H` recorded). */
+      put('rtOk', (visible().length === rest.vis && Math.abs(gh() - rest.H) <= 8
+        && banded() === rest.band && spannedN() === rest.spanned
+        && Math.abs(r1h() - rest.r1H) <= 4) ? 1 : 0);
+    });
+  }
+
+  // --- 7. emit, and CLEAN. `file://` shares one origin across every artifact ever opened from it,
+  //     so a cell that walked away leaving 82 read entries would boot the next one half-read.
+  steps.push(function(){
+    /* THE SCREENSHOT IS ALWAYS TAKEN FROM THE TOP OF THE DOCUMENT, and scrolling to frame a
+       mid-page module is not an option here — it produces a WRONG PICTURE, not a different one.
+       Tried and reverted 2026-07-26: scrolling to the opened module before the capture returned a
+       1440x2600 PNG with ~1500px of empty paper and the whole page, nameplate and control bar
+       included, displaced to the bottom. Headless `--screenshot` re-lays-out at the window size and
+       does not honour the scroll offset the way a viewport capture would. The E modules sit past
+       rank 8, so the driver photographs them with a TALLER WINDOW instead (see _mx_shot) and
+       `eTop` says where in the document to look. */
+    if (C.keep) scrollTo(0, 0);
+    if (eTargets.length){
+      put('eTop', Math.round(eTargets[0].getBoundingClientRect().top + scrollY));
+    }
+    try { ['homeRead:v1','syncState:v1','topicPrefs:v1','syncSession:v1'].forEach(function(k){
+      localStorage.removeItem(k); }); } catch(e){}
+    var order = ['cell','innerW','bootOpen','vis','visStory','visEd','r0vis','r0H',
+      'ageMono','dbVis','dbPrinted','dbDesc','uct','unreadVis','unreadAll',
+      'edN','edDiscMin','edDiscOk','emptyHidden','emptyH','emptyTop','emptyDot','emptyOk',
+      'readN','spinedN','openN','foldedN','r1H','band','spanned','H',
+      'beat','chipN','chipVis','rs','rsVis','eN','eOpened','hl0','hl1','hlSame','openW','openWSame',
+      'drift','eBody','e3Spine','e3Body','e3Reopen','e3Open','e3Read',
+      'e4BodyOpen','e4BodyRead','e4StaysOpen','e4Label','e4Aria','e4Read',
+      'blN','blBody0','blSpined','blFolded','blLabel','blAria','blOneClick','blH',
+      'roamGets','roamPainted',
+      'bsRead','bsFolded','bsOpen','bsLabel','bsAria','bsBody','bsHidden','bsClicksToOpen',
+      'bsBodyAfter',
+      'rtVis','rtH','rtR1H','rtBand','rtSpanned','rtOk','shotScroll'];
+    var parts = ['MX'];
+    order.forEach(function(k){ if (K[k] !== undefined) parts.push(k + '=' + K[k]); });
+    Object.keys(K).forEach(function(k){
+      if (order.indexOf(k) < 0) parts.push(k + '=' + K[k]); });
+    if (notes.length) parts.push('notes=' + notes.join('|'));
+    /* THE VOID GOES LAST AND BRACKETED, the way FOLD_CHECK's does: the driver's kv regex skips the
+       `[` and reads `upInv`, `holes`, `ovOk` and the rest as top-level keys, which is exactly how
+       the assertion table wants to name them. */
+    if (voidStr) parts.push('[' + voidStr + ']');
+    var d = document.createElement('div'); d.id = 'mxcheck'; d.textContent = parts.join(' ');
+    d.setAttribute('style', 'display:none');
+    document.body.appendChild(d);
+  });
+
+  put('cell', C.raw); put('innerW', innerWidth);
+  var i = 0;
+  (function run(){
+    if (i >= steps.length) return;
+    steps[i++]();
+    setTimeout(run, 320);     // apply()'s re-pack is coalesced through a timeout
+  })();
+}, 4000);
 </script>"""
 
 
@@ -1420,6 +2002,363 @@ def _run_check(artifact, width, height=2800, budget=9000, hash=""):
     return failures, lines
 
 
+# =============================================================================================
+# THE STATE MATRIX DRIVER — one Chrome run per cell, one row per cell, a real exit status.
+# =============================================================================================
+
+# HEADLESS CHROME CLAMPS `--window-size` WIDTH TO 500px, and nothing lifts it: not
+# `--hide-scrollbars`, not `--force-device-scale-factor`. Measured 2026-07-26 on this artifact —
+# `--window-size=390,2800` reports `innerW=500`, so EVERY "390px" number this harness has ever
+# printed (and `/tmp/home-shots/390-resting.png`, which is 500px wide) was taken at 500. Below the
+# floor the artifact is rendered inside an `<iframe>` of the exact width in a 500px window: media
+# queries fire against the iframe's viewport, and the parent copies the probe's marker out of the
+# frame so `--dump-dom` can see it. That copy needs `--allow-file-access-from-files` (two `file://`
+# documents are opaque origins to each other without it), and the flag is therefore passed on EVERY
+# matrix run, not only the narrow ones, so all widths are measured under one flag set.
+MX_FLOOR = 500
+
+MX_FRAME = """<!doctype html><meta charset="utf-8"><title>mx frame %(w)d</title>
+<style>html,body{margin:0;padding:0;background:#fff}iframe{border:0;display:block}</style>
+<body>
+<iframe id="f" src="%(src)s" style="width:%(w)dpx;height:%(h)dpx"></iframe>
+<script>
+var tries = 0;
+(function poll(){
+  tries++;
+  var done = 0;
+  try {
+    var d = document.getElementById('f').contentDocument;
+    var m = d && d.getElementById('mxcheck');
+    if (m){
+      var o = document.createElement('div'); o.id = 'mxcheck';
+      o.setAttribute('style','display:none');
+      o.textContent = m.textContent + ' frameW=' + d.defaultView.innerWidth;
+      document.body.appendChild(o); done = 1;
+    }
+  } catch(e){
+    var er = document.createElement('div'); er.id = 'mxcheck';
+    er.textContent = 'MX FRAME-ERROR ' + e.name; document.body.appendChild(er); done = 1;
+  }
+  if (!done && tries < 60) setTimeout(poll, 250);
+})();
+</script>
+"""
+
+
+def _mx_url(artifact, cell_hash, width, height, tmpdir="/tmp"):
+    """The URL to drive for a cell, and the real viewport width it will report.
+
+    At or above the 500px floor that is the artifact itself. Below it, a wrapper page holding an
+    iframe of the exact width — see MX_FLOOR.
+    """
+    if width >= MX_FLOOR:
+        return "file://" + artifact + cell_hash, width
+    path = os.path.join(tmpdir, "mx-frame-%d.html" % width)
+    with open(path, "w") as fh:
+        fh.write(MX_FRAME % {"src": "file://" + artifact + cell_hash, "w": width, "h": height})
+    return "file://" + path, MX_FLOOR
+
+
+# THE COLOUR SCHEME IS PINNED, BECAUSE HEADLESS CHROME INHERITS THE HOST'S APPEARANCE. Caught
+# 2026-07-26 in the middle of this pass: fifteen shots came out on dark paper and the four re-taken
+# twenty minutes later came out on light, from the same artifact and the same flags — the Mac's
+# appearance had changed under the run (`defaults read -g AppleInterfaceStyle`), and
+# `prefers-color-scheme` follows it. A screenshot set whose theme depends on the wall clock is not a
+# baseline. `--blink-settings=preferredColorScheme=0` is dark and `=1` is light (verified by reading
+# `matchMedia('(prefers-color-scheme: dark)').matches` back out of the page under each; `=2` yields
+# NEITHER media query matching, and `--force-dark-mode` also works but is the auto-darkening feature
+# rather than the media query, so it is not what this uses).
+# Geometry is theme-independent — 1440 E1 measured gridH=18709 under both, 390 E1 41606 under both —
+# so this pins the pictures, not the numbers. The numbers were never at risk; the review of them was.
+MX_SCHEMES = {"dark": "0", "light": "1"}
+
+
+def _mx_chrome(url, window_w, height, budget=16000, shot=None, scheme="dark"):
+    import subprocess
+    cmd = [CHROME, "--headless=new", "--hide-scrollbars", "--disable-gpu", "--no-sandbox",
+           "--allow-file-access-from-files",
+           "--blink-settings=preferredColorScheme=%s" % MX_SCHEMES[scheme],
+           "--virtual-time-budget=%d" % budget, "--window-size=%d,%d" % (window_w, height)]
+    cmd.append("--screenshot=" + shot if shot else "--dump-dom")
+    cmd.append(url)
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=300).stdout
+
+
+# THE MATRIX ASSERTION TABLE. Rows marked `all` hold in EVERY cell — they are the invariants the
+# spec asks for by name (order, holes, never-crop, the disclosure, the tally, the empty state, the
+# type scale under More, honest daybreaks). Rows keyed to a cell flag apply only where that state
+# exists. `min_width` gates the rows that are only true where the board has more than one column.
+MX_CHECKS = [
+    ("upInv", lambda v, c: v == "0", "DOM order == visual order: nothing is placed above its rank"),
+    # `maxUp` is asserted at ZERO, not at a tolerance, because that is what it measures: read,
+    # filtered, open and 390px states were all probed for it first (2026-07-26) and every one of
+    # them read 0, so a tolerance here would only hide a real upward drift.
+    ("maxUp", lambda v, c: v == "0", "...and not by a single pixel"),
+    ("holes", lambda v, c: v == "0", "no unfilled paper inside a column track"),
+    ("holePx", lambda v, c: v == "0", "...and no interior void px"),
+    ("ovOk", lambda v, c: v == "1", "overflow stays visible — a short span may never clip"),
+    ("edDiscOk", lambda v, c: v == "1", "the AI disclosure paints on every editorial card on screen"),
+    ("uctOk", lambda v, c: v == "1", "the unread tally equals the board's unread stories"),
+    ("uctVisOk", lambda v, c: v == "1" or c.get("band") != "1",
+     "...and in an UNFILTERED view that is also what is on screen"),
+    ("emptyOk", lambda v, c: v == "1", "the empty state shows iff the board is empty, with a whole sentence"),
+    ("ageMono", lambda v, c: v == "1", "no card carries a smaller data-age than one above it"),
+    ("dbDesc", lambda v, c: v == "1", "the daybreaks on screen are in strictly descending date order"),
+    ("dateBlocked", lambda v, c: v == "1", "each date holds one contiguous run — no interleaving"),
+    ("dbPrinted", lambda v, c: v == c.get("_dbVis"), "every daybreak card on screen prints its day"),
+    ("rtOk", lambda v, c: v == "1", "the round trip restores spans, counts and the composition band"),
+    ("hlSame", lambda v, c: v == "1", "type scale is invariant under More"),
+    ("openWSame", lambda v, c: v == "1", "expansion is height-only — the module never widens"),
+    ("drift", lambda v, c: abs(int(v)) <= 1, "the opened module does not move under the cursor"),
+    ("eOpened", lambda v, c: int(v) >= 1, "More actually opened the module"),
+    ("e3Reopen", lambda v, c: v == "1", "More re-opens a READ spine in place (.is-open beats .is-read)"),
+    ("e4StaysOpen", lambda v, c: v == "1", "a module the reader opened stays open when it is ticked read"),
+    ("e4Label", lambda v, c: v == "Less", "...and its control still says so"),
+    ("blSpined", lambda v, c: v == "1", "reading the boot-open lead collapses it to its spine"),
+    ("blFolded", lambda v, c: v == "1", "...in ONE state transition, to is-folded without is-open"),
+    ("blLabel", lambda v, c: v == "More", "...with its control agreeing"),
+    ("blOneClick", lambda v, c: v == "1", "...and ONE click re-opens it"),
+    ("spineOk", lambda v, c: v == "1", "every read story card that is not open shows a zero-height body"),
+    ("seamN", lambda v, c: v == "0",
+     "no read card is left un-folded and un-opened (body hidden, control still claiming 'Less')"),
+    ("bsClicksToOpen", lambda v, c: v == "1", "ONE click opens a boot-seeded-read lead"),
+    ("bsLabel", lambda v, c: v == "More", "...and its control says More before that click"),
+    ("bsAria", lambda v, c: v == "false", "...and so does aria-expanded"),
+]
+
+
+def _mx_cells():
+    """Every cell this pass runs, in the order it runs them.
+
+    Coverage is the spec's, not the full ~500-cell product: (W x R) at rest, (F x R) at 1440,
+    E1-E4 at the three packed widths, the empty state at both ends of the width range, and the two
+    cells the implementer's report added.
+    """
+    W_ALL = [1440, 1280, 1024, 800, 700, 390]
+    cells = []
+
+    def add(w, tokens, shot=False, expect=None, note="", mindrop=None):
+        cid = "%d-%s" % (w, tokens.replace(",", "-"))
+        cells.append({"id": cid, "w": w, "tokens": tokens, "shot": shot,
+                      "expect": expect or {}, "note": note, "mindrop": mindrop})
+
+    # 1. every (W x R) resting — the width axis crossed with the read axis. The all-read board is
+    #    the only read state whose HEIGHT drop is a meaningful assertion (see `spineOk`), and only
+    #    where the board is packed: below 700px it is one column and every card is its own row.
+    for w in W_ALL:
+        for r in ("R0", "R1", "R2"):
+            add(w, "%s,F0,E0" % r,
+                shot=(w, r) in {(1440, "R0"), (1440, "R1"), (1440, "R2"), (1024, "R1"),
+                                (800, "R1"), (700, "R0"), (390, "R0"), (390, "R1")},
+                mindrop=25 if (r == "R2" and w >= 700) else None)
+    # 2. every (F x R) at 1440
+    for r in ("R0", "R1", "R2"):
+        for f in ("F1", "F2", "F3", "F4", "F5"):
+            add(1440, "%s,%s,E0" % (r, f),
+                shot=(r, f) in {("R1", "F1"), ("R0", "F3"), ("R1", "F2"), ("R0", "F5")})
+    # 3. E1-E4 at the packed widths
+    for w in (1440, 1280, 1024):
+        for e in ("E1", "E2", "E3", "E4"):
+            add(w, "R0,F0,%s" % e,
+                shot=(w, e) in {(1440, "E1"), (1440, "E2"), (1024, "E1")})
+    # 4. the empty state at both ends of the width range, and expansion on the phone — where the
+    #    board is one unpacked column, so More is a pure height change with no packer involved
+    add(390, "R0,F5,E0", shot=True)
+    add(390, "R0,F0,E1", shot=True)
+    # 5. the round trips, stated as their own cells rather than implied: every F cell round-trips
+    #    its filter already, so what is left is read-then-unread — which is what `R1c` measures,
+    #    since a clicked read state is un-clicked in the restore step.
+    add(1440, "R1c,F0,E0", note="read-then-unread round trip; also the boot-seeded vs clicked A/B")
+    add(1440, "R2c,F0,E0", note="all-read by click rather than by seed")
+    # 6. THE ADDED CELLS (implementer report 2026-07-26)
+    add(1440, "R2s,F1,E0", shot=True,
+        expect={"uct": "0", "vis": "2", "visEd": "2", "visStory": "0", "emptyHidden": "1"},
+        note="all 80 stories read, both editorials unread, Unread filter — the owner's "
+             "reported-bug surface, pinned as exact numbers")
+    add(1440, "R0,F0,E0,bootlead", note="the read / boot-open lead seam, reached by CLICKING")
+    add(1440, "R0,F0,E0,bslead", shot=True,
+        note="the same seam reached by BOOTING with the lead already read — the path foldForRead "
+             "does not run on")
+    add(1440, "R0,F0,E0,roam",
+        expect={"roamGets": "1", "roamPainted": "1"},
+        note="and the same seam reached by a ROAM landing after boot (mergeRemote -> paintRead), "
+             "with nothing seeded read locally. The two expectations are the cell's PREMISE — that "
+             "the roam really landed and really painted the lead — so a stub that silently stopped "
+             "working could not read as a pass")
+    return cells
+
+
+def _mx_row(text):
+    """Parse an MX marker into a dict, the way _run_check parses the others."""
+    kv = dict(re.findall(r"(\w+)=([^\s\]]+)", text))
+    kv["_dbVis"] = kv.get("dbVis", "0")
+    return kv
+
+
+def _mx_judge(cell, kv):
+    """Score one cell. Returns a list of failure strings — empty means the cell passed."""
+    fails = []
+    for key, pred, why in MX_CHECKS:
+        if key not in kv:
+            continue          # the state this row describes does not exist in this cell
+        try:
+            ok = pred(kv[key], kv)
+        except (ValueError, TypeError):
+            ok = False
+        if not ok:
+            fails.append("%s=%s — expected: %s" % (key, kv[key], why))
+    for key, want in cell["expect"].items():
+        got = kv.get(key)
+        if got != want:
+            fails.append("%s=%s — this cell pins it at %s" % (key, got, want))
+    return fails
+
+
+def _mx_run(artifact, cells, shots_dir=None, log=None, budget=16000, scheme="dark"):
+    """Drive every cell, print a row each, and return (rows, failures).
+
+    Progress is appended to `log` the instant each cell finishes — a ~50-cell run is ten minutes
+    long and a batch that reports only at the end is a batch nobody can watch.
+    """
+    rows, failed = [], []
+    base = {}          # width -> the R0 resting grid height, for the read-state height drops
+    for n, cell in enumerate(cells, 1):
+        h = "#mx:" + cell["tokens"]
+        height = 2600 if cell["w"] >= MX_FLOOR else 1800
+        url, win = _mx_url(artifact, h, cell["w"], height)
+        out = _mx_chrome(url, win, height, budget=budget, scheme=scheme)
+        m = re.search(r'<div id="mxcheck"[^>]*>(.*?)</div>', out, re.S)
+        if not m:
+            kv, text = {}, "<MARKER MISSING>"
+            fails = ["the probe never emitted — a cell that did not run cannot have passed"]
+        else:
+            text = re.sub(r"\s+", " ", m.group(1)).strip()
+            kv = _mx_row(text)
+            fails = _mx_judge(cell, kv)
+            if cell["w"] < MX_FLOOR and kv.get("frameW") != str(cell["w"]):
+                fails.append("frameW=%s — the iframe did not render at %d px"
+                             % (kv.get("frameW"), cell["w"]))
+        # THE HEIGHT DROP IS A CROSS-CELL FACT, so the driver owns it: a cell seeded read at boot
+        # reports its OWN resting height in `r0H` and cannot know the unread board's. The R0 cell
+        # for each width runs first (see _mx_cells) and its height is the baseline.
+        drop = None
+        if cell["tokens"].startswith("R0,F0,E0") and "H" in kv:
+            base[cell["w"]] = int(kv["H"])
+        if cell["w"] in base and "H" in kv and base[cell["w"]]:
+            drop = round(100.0 * (base[cell["w"]] - int(kv["H"])) / base[cell["w"]])
+            kv["dropPct"] = str(drop)
+        if cell.get("mindrop") is not None:
+            if drop is None:
+                fails.append("dropPct: no R0 baseline at %dpx to compare against" % cell["w"])
+            elif drop < cell["mindrop"]:
+                fails.append("dropPct=%d — expected: an all-read board is at least %d%% shorter"
+                             % (drop, cell["mindrop"]))
+        rows.append({"cell": cell, "kv": kv, "text": text, "fails": fails})
+        if fails:
+            failed.append(cell["id"])
+        line = "%3d/%d %-26s %s  %s" % (n, len(cells), cell["id"],
+                                        "FAIL" if fails else "ok  ", text)
+        print(line, flush=True)
+        for f in fails:
+            print("        FAIL %s" % f, flush=True)
+        if log:
+            with open(log, "a") as fh:
+                fh.write(line + "\n")
+                for f in fails:
+                    fh.write("        FAIL %s\n" % f)
+        if shots_dir and cell["shot"]:
+            png = _mx_shot(artifact, cell, shots_dir, budget, scheme=scheme)
+            rows[-1]["png"] = png
+            print("        shot %s" % png, flush=True)
+            if log:
+                with open(log, "a") as fh:
+                    fh.write("        shot %s\n" % png)
+    return rows, failed
+
+
+def _mx_shot(artifact, cell, shots_dir, budget=16000, scheme="dark"):
+    """One curated screenshot, in the `keep` variant of the cell — which abandons the state instead
+    of restoring it, because a restored state photographs as the resting page.
+
+    Below the 500px floor the shot comes out of the iframe wrapper and is 500px wide with the page
+    on the left, so it is CROPPED to the real width rather than reported as if it were 390.
+    """
+    import subprocess
+    os.makedirs(shots_dir, exist_ok=True)
+    png = os.path.join(shots_dir, cell["id"] + ".png")
+    height = 2600 if cell["w"] >= MX_FLOOR else 1800
+    # AN EXPANSION CELL NEEDS A TALLER WINDOW, not a scroll: its module is the first foldable one
+    # past rank 8, which at 1440 begins around y=2000 and grows ~900px when it opens, so a 2600px
+    # frame photographs the resting top of the page and misses the very thing the cell exists to
+    # show. Scrolling instead was tried and produced a displaced, mostly-empty PNG (see the probe).
+    # Measured `eTop` (the probe reports it): 2057 at 1440, 2137 at 1280, 2278 at 1024 — and 4090 at
+    # 390, where one unpacked column puts rank 8 twice as far down the page.
+    if re.search(r"E[1-4]", cell["tokens"]):
+        height = 5200 if cell["w"] >= MX_FLOOR else 6200
+    url, win = _mx_url(artifact, "#mx:" + cell["tokens"] + ",keep", cell["w"], height)
+    _mx_chrome(url, win, height, budget=budget, shot=png, scheme=scheme)
+    if cell["w"] < MX_FLOOR and os.path.exists(png):
+        subprocess.run(["sips", "-c", str(height), str(cell["w"]), png],
+                       capture_output=True, text=True)
+    return png
+
+
+def _mx_sheet(rows, path, shots_dir):
+    """The contact sheet: one page, every shot embedded as a thumbnail, each captioned with its
+    cell id, verdict and the numbers that matter. Full-size PNGs sit beside it on disk.
+    """
+    import base64
+    import subprocess
+    tiles = []
+    for r in rows:
+        png = r.get("png")
+        if not png or not os.path.exists(png):
+            continue
+        thumb = png.replace(".png", "-thumb.png")
+        subprocess.run(["sips", "-Z", "560", png, "--out", thumb], capture_output=True, text=True)
+        src = thumb if os.path.exists(thumb) else png
+        with open(src, "rb") as fh:
+            b64 = base64.b64encode(fh.read()).decode()
+        kv = r["kv"]
+        keys = [k for k in ("vis", "visStory", "visEd", "uct", "readN", "spinedN", "openN",
+                            "H", "upInv", "holes", "gridH", "emptyHidden", "shotScroll")
+                if k in kv]
+        nums = " ".join("%s=%s" % (k, kv[k]) for k in keys)
+        tiles.append(
+            '<figure class="%s"><a href="%s"><img src="data:image/png;base64,%s" alt="%s"></a>'
+            '<figcaption><b>%s</b> <span class="v">%s</span><br><code>%s</code>%s</figcaption>'
+            '</figure>' % ("bad" if r["fails"] else "good", "file://" + os.path.abspath(png), b64,
+                           html.escape(r["cell"]["id"]), html.escape(r["cell"]["id"]),
+                           "FAILED" if r["fails"] else "pass", html.escape(nums),
+                           "".join("<br><em>%s</em>" % html.escape(f) for f in r["fails"])))
+    doc = """<!doctype html><meta charset="utf-8"><title>front page — state matrix contact sheet</title>
+<style>
+ body{margin:0;padding:26px;background:#f6f5f2;color:#141414;
+      font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+ h1{font-size:20px;margin:0 0 4px} p.sub{margin:0 0 22px;color:#555;max-width:64em}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+ figure{margin:0;background:#fff;border:1px solid #ddd;padding:8px}
+ figure.bad{border-color:#c8102e;box-shadow:0 0 0 2px rgba(200,16,46,.18)}
+ img{width:100%%;height:auto;display:block;border:1px solid #eee}
+ figcaption{font-size:12px;line-height:1.45;margin-top:7px;word-break:break-word}
+ code{font-size:11px;color:#444} .v{color:#137a3a;font-weight:600}
+ figure.bad .v{color:#c8102e} em{color:#c8102e;font-style:normal;font-size:11px}
+ @media (prefers-color-scheme:dark){
+   body{background:#151515;color:#eee} figure{background:#1e1e1e;border-color:#333}
+   p.sub{color:#aaa} code{color:#bbb} img{border-color:#2a2a2a}}
+</style>
+<h1>Front page — state matrix (%d shots)</h1>
+<p class="sub">Read state &times; filter &times; width &times; expansion, from
+<code>tools/home_harness.py --matrix</code>. Every shot is the cell's own state, abandoned rather
+than restored. Click a tile for the full-size PNG (in <code>%s</code>). Cells outlined in red
+failed an assertion; the failure is printed under the caption.</p>
+<div class="grid">%s</div>
+""" % (len(tiles), html.escape(shots_dir), "\n".join(tiles))
+    with open(path, "w") as fh:
+        fh.write(doc)
+    return path
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="/tmp/home-harness.html")
@@ -1432,7 +2371,25 @@ def main():
                     help="--check only: comma-separated viewport widths")
     ap.add_argument("--hash", default="",
                     help="--check only: a URL hash mode to drive (e.g. '#synced', '#bootempty')")
+    ap.add_argument("--matrix", action="store_true",
+                    help="drive the state matrix: read state x filter x width x expansion, one "
+                         "Chrome run per cell, exits non-zero on any violated assertion")
+    ap.add_argument("--cells", default="",
+                    help="--matrix only: run only the cells whose id matches this regex")
+    ap.add_argument("--shots", default="",
+                    help="--matrix only: write the curated screenshots to this directory")
+    ap.add_argument("--sheet", default="",
+                    help="--matrix only: write the one-page contact sheet here (implies --shots)")
+    ap.add_argument("--log", default="",
+                    help="--matrix only: append per-cell progress here as each cell finishes")
+    ap.add_argument("--scheme", default="dark", choices=sorted(MX_SCHEMES),
+                    help="--matrix only: pin prefers-color-scheme rather than inheriting the "
+                         "host's appearance (see MX_SCHEMES)")
     args = ap.parse_args()
+    if args.matrix and args.out == "/tmp/home-harness.html":
+        # A SEPARATE ARTIFACT, so a matrix run never clobbers the file another agent is driving —
+        # and because the matrix page carries a different probe bundle entirely.
+        args.out = "/tmp/home-matrix.html"
 
     feed = json.load(open(os.path.join(ROOT, "_data", "homefeed.json")))
     src = open(os.path.join(ROOT, "_layouts", "home.html")).read()
@@ -1510,13 +2467,49 @@ def main():
                        for it in _require_board(feed)),
                empty_state,
                propose,
-               modal, PRE_SYNC, script, VOID_METRICS,
-               GEOM_CHECK + DAY_CHECK + FILTER_CHECK + FOLD_CHECK + SYNC_CHECK + LEADREAD_CHECK + EMPTY_CHECK
-               + READ_CHECK + SHOT_CHECK)
+               modal, PRE_SYNC + (MATRIX_PRE if args.matrix else ""), script, VOID_METRICS,
+               # THE MATRIX PAGE CARRIES ONE PROBE, and that is the point: the nine probes below
+               # each measure the FULL board and restore it, so they cannot coexist with a cell that
+               # has to still be filtered, still be read and still be open at measurement time.
+               MATRIX_CHECK if args.matrix else
+               (GEOM_CHECK + DAY_CHECK + FILTER_CHECK + FOLD_CHECK + SYNC_CHECK + LEADREAD_CHECK
+                + EMPTY_CHECK + READ_CHECK + SHOT_CHECK))
 
     with open(args.out, "w") as fh:
         fh.write(page)
     print("wrote %s (%d bytes, %d stories)" % (args.out, len(page), feed["count"]))
+
+    if args.matrix:
+        # PROVE THE ARTIFACT EMBEDS THE REWORKED CODE BEFORE TRUSTING A SINGLE NUMBER OFF IT. Three
+        # green-while-broken pages in this repo's history all came from an instrument that did not
+        # contain the code under test (see `verify the test tool first`). `data-daybreak` and
+        # `foldForRead` exist only in the 2026-07-26 rework.
+        for token, what in (("data-daybreak", "the daybreak attribute"),
+                            ("foldForRead", "the read/boot-open normalization"),
+                            ("packRowSpans", "the row-span pack engine"),
+                            ("fcard__eddisc", "the AI disclosure")):
+            if token not in page:
+                raise SystemExit("home_harness --matrix: the artifact does not contain %r (%s) — "
+                                 "the harness is not testing the reworked page" % (token, what))
+        cells = _mx_cells()
+        if args.cells:
+            rx = re.compile(args.cells)
+            cells = [c for c in cells if rx.search(c["id"])]
+        shots = args.shots or (os.path.dirname(args.sheet) if args.sheet else "")
+        if args.log:
+            open(args.log, "w").close()
+        print("matrix: %d cell(s)%s" % (len(cells), (", shots -> " + shots) if shots else ""),
+              flush=True)
+        rows, failed = _mx_run(os.path.abspath(args.out), cells, shots_dir=shots or None,
+                               log=args.log or None, scheme=args.scheme)
+        if args.sheet:
+            print("sheet %s" % _mx_sheet(rows, args.sheet, shots), flush=True)
+        print("\nmatrix: %d/%d cells passed" % (len(rows) - len(failed), len(rows)))
+        if failed:
+            print("FAILED cells: %s" % ", ".join(failed))
+            raise SystemExit("home_harness --matrix: %d cell(s) failed" % len(failed))
+        return
+
     if not args.check:
         return
     bad = 0
