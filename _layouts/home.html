@@ -80,6 +80,40 @@ layout: archive
     {%- endcomment -%}
     <span class="rail-nameplate" aria-hidden="true">News</span>
     <p class="rail-edition">{{ feed.stories.first.date_label }}</p>
+    {%- comment -%} THE TWO ACTIONS COME BEFORE THE BEAT LIST (2026-07-26 ruling), and the measurement
+      is the argument. The rail carries 969px of furniture against a 733px scrollport at the owner's
+      804px viewport, so something is always below its fold; the question is only what. Two standalone
+      links below a fold are UNDISCOVERABLE — nothing on screen hints that they exist — while a beat
+      list visibly cut mid-tail is its own affordance: you can see there are more chips, and since the
+      trap is gone the wheel now chains. The tail is also the cheapest thing to put there, because the
+      list is count-sorted, so what falls below the fold is the least-used beats (Tech 2, Health 4,
+      Sports 5) while these two are the ONLY path to the review and to the explainer.
+      Offsets, measured with the disclosure closed: How this works 287..319, the review link 339..393 —
+      both inside the 733px scrollport at 804 and the 789px one at 860; beats 419..837, cut at its tail.
+      This SUPERSEDES the 2026-07-26 "actions above the reference prose" placement, which was the same
+      reasoning applied one block too high: it put both controls above the index and still left them
+      below the fold at the height the owner actually uses. The harness asserts the two offsets now
+      (`railActionsIn`), so the order cannot silently drift back. No element redesigned, copy unchanged.
+    {%- endcomment -%}
+    {%- comment -%} The SAME control as the one above the board, not a second one: both carry
+      `.hiw-open` and the modal script binds every instance. Only one is ever visible — the
+      centered header is hidden at >=1280 and the rail does not exist below it. {%- endcomment -%}
+    <button class="hiw-open hiw-open--rail" type="button" aria-haspopup="dialog"
+            aria-controls="hiwModal" aria-expanded="false">
+      <svg viewBox="0 0 30 8" aria-hidden="true"><circle cx="4" cy="4" r="2.2"/><path d="M8 4h4.8"/><circle cx="15" cy="4" r="2.2"/><path d="M19 4h4.8"/><circle cx="26" cy="4" r="2.2"/></svg>
+      How this works
+    </button>
+    {%- comment -%} THE ONE LINK OFF THIS PAGE THAT IS NOT A STORY, and it belongs in the rail
+      rather than in the grid: the Sunday review is the desk auditing itself, which is furniture
+      about the paper, not an item in it. Evaluator posts are the only ones that still render a page
+      (`published: true` in their own front matter against `_config.yml`'s blanket
+      `published: false`), so `site.categories.evaluator` holds exactly them, newest first — no
+      filtering, and it cannot pick up a brief. Dated, because an undated "review" link says nothing
+      about whether anyone has looked lately. {%- endcomment -%}
+    {%- assign review = site.categories.evaluator | first -%}
+    {%- if review %}
+    <a class="rail-review" href="{{ review.url | relative_url }}">Weekly pipeline review · {{ review.date | date: "%-d %b" }}</a>
+    {%- endif %}
     {%- comment -%}
       THE BEAT SELECTOR IS THE SAME CONTROL, RENDERED TWICE — never two selectors. Each rail
       button is a real `.ff-chip` carrying the same `data-topic`, so the script's ONE `active` Set
@@ -101,33 +135,6 @@ layout: archive
       <button class="ff-chip" type="button" data-topic="{{ t.key }}" aria-pressed="false" style="--tc:{{ t.color }}"><span class="ff-dot"></span>{{ t.label }} <span class="ff-ct">{{ t.count }}</span></button>
       {% endfor %}
     </div>
-    {%- comment -%} THE TWO ACTION ITEMS SIT ABOVE THE REFERENCE PROSE (2026-07-26), and that is a
-      reachability decision with a number behind it. The rail scrolls internally (max-height +
-      overflow-y:auto since 2026-07-25, because a sticky box taller than the viewport pins at the top
-      and everything past the fold is unreachable). Once the index gained a Read entry and the note
-      grew to the two-sentence rule, the rail measured 2004px against a 1142px window at a 1300px
-      viewport — so both of these CONTROLS sat 860px inside that internal scroll, where the index and
-      the note are reference material you read once. Actions before reference; the copy is unchanged.
-    {%- endcomment -%}
-    {%- comment -%} The SAME control as the one above the board, not a second one: both carry
-      `.hiw-open` and the modal script binds every instance. Only one is ever visible — the
-      centered header is hidden at >=1280 and the rail does not exist below it. {%- endcomment -%}
-    <button class="hiw-open hiw-open--rail" type="button" aria-haspopup="dialog"
-            aria-controls="hiwModal" aria-expanded="false">
-      <svg viewBox="0 0 30 8" aria-hidden="true"><circle cx="4" cy="4" r="2.2"/><path d="M8 4h4.8"/><circle cx="15" cy="4" r="2.2"/><path d="M19 4h4.8"/><circle cx="26" cy="4" r="2.2"/></svg>
-      How this works
-    </button>
-    {%- comment -%} THE ONE LINK OFF THIS PAGE THAT IS NOT A STORY, and it belongs in the rail
-      rather than in the grid: the Sunday review is the desk auditing itself, which is furniture
-      about the paper, not an item in it. Evaluator posts are the only ones that still render a page
-      (`published: true` in their own front matter against `_config.yml`'s blanket
-      `published: false`), so `site.categories.evaluator` holds exactly them, newest first — no
-      filtering, and it cannot pick up a brief. Dated, because an undated "review" link says nothing
-      about whether anyone has looked lately. {%- endcomment -%}
-    {%- assign review = site.categories.evaluator | first -%}
-    {%- if review %}
-    <a class="rail-review" href="{{ review.url | relative_url }}">Weekly pipeline review · {{ review.date | date: "%-d %b" }}</a>
-    {%- endif %}
     {%- comment -%} THE REFERENCE PROSE IS COLLAPSED BEHIND A NATIVE <details> (2026-07-26), and the
       number behind it is the rail's own scrollport. The rail measured 2010px of content against a
       789px scrollport at a real 860px laptop viewport — 1221px below its own fold, which is the left
@@ -987,9 +994,11 @@ layout: archive
   /* THE SUNDAY REVIEW LINK — rail furniture in the label voice, under the same hairline the rest of
      the rail's furniture uses. Deliberately NOT an accent-coloured link: it is a quiet dated
      pointer, and giving it the page's one accent would rank it above the stories it is about.
-     `margin-bottom` matches `.rail-beats`'s 2em because this is now a mid-rail block with the
-     "How to read this page" index under it, not the last thing in the rail. Without it the index's
-     own underlined title crowds this line into looking like its heading. */
+     `margin-bottom` is 2em because this is a mid-rail block, and since the 2026-07-26 reorder what
+     sits under it is the BEAT list — whose own `margin:0 0 2em` collapses against this one, so the
+     gap either side of that block is the same 2em. Without it the "Beat" title's underline crowds
+     this line into looking like its heading, which was the original reason for the number and holds
+     for whichever block follows. */
   .rail-review{ display:block; margin:1.5em 0 2em; padding-top:1em;
     border-top:1px solid var(--hair);
     font-family:var(--sans); font-size:.6rem; text-transform:uppercase; letter-spacing:.14em;

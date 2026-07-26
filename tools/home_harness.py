@@ -1125,6 +1125,23 @@ setTimeout(function(){
          assertion in _mx_struct_judge is gated on this rather than applied blind. */
       var rdet = rail.querySelector('.rail-d');
       put2('railDetailsOpen', rdet ? (rdet.open ? 1 : 0) : -1);
+      /* WHERE THE TWO ACTIONS END, in the rail's own content coordinates — the acceptance criterion of
+         the 2026-07-26 reorder ruling, measured rather than eyeballed. Something is always below this
+         rail's fold at a laptop height; the ruling is about WHAT. Two standalone links below a fold
+         are undiscoverable, a beat list cut mid-tail advertises itself, so the actions go first and
+         these numbers are what says they made it. Offsets, not rects, because the rail may already be
+         scrolled: rect-top delta plus scrollTop is the content-box position either way. */
+      function railBottom(sel){
+        var e = rail.querySelector(sel);
+        if (!e) return -1;
+        return Math.round(e.getBoundingClientRect().bottom - rr.top + rail.scrollTop);
+      }
+      var hiwB = railBottom('.hiw-open--rail'), revB = railBottom('.rail-review');
+      var beatsB = railBottom('.rail-beats');
+      put2('railHiwBottom', hiwB); put2('railReviewBottom', revB);
+      put2('railBeatsBottom', beatsB);
+      put2('railActionsIn',
+        (hiwB > 0 && revB > 0 && hiwB <= rail.clientHeight && revB <= rail.clientHeight) ? 1 : 0);
       put2('railRect', [Math.round(rr.left), Math.round(rr.top), Math.round(rr.width),
                         Math.round(rr.height)].join(','));
       /* CAN IT CHAIN? A wheel over a container that still has room scrolls the container. When it
@@ -2468,8 +2485,10 @@ MX_CHECKS = [
 
 
 # THE RAIL'S COLLAPSED HEIGHT, PINNED — the number that lets the census bite (2026-07-26). Measured
-# with the index disclosure closed: scrollHeight 968px at 1440 and 949px at 1300, composed of
-# nameplate 247 + edition 38 + beats 462 + How-this-works 52 + review 100 + summary 64 + padding 24.
+# with the index disclosure closed: scrollHeight 969px at 1440/1512 and 950px at 1300, composed of
+# nameplate 247 + edition 38 + How-this-works 52 + review 100 + beats 462 + summary 64 + padding 24
+# (that is the post-reorder order; the sum moved 968 -> 969 because the collapse above the button is
+# its own 1.5em rather than the edition line's 1.4em).
 # Two rules key on it, and the pinning is what makes the first one non-vacuous: "the rail may scroll
 # only where the viewport is genuinely shorter than its collapsed furniture" is a tautology if the
 # collapsed height is read off the same element (a censused container is overflowing BY DEFINITION),
@@ -2547,6 +2566,24 @@ def _mx_struct_judge(cell, kv, conts):
                          "(clientH=%s, hidden=%s)"
                          % (kv.get("railScrollH"), MX_RAIL_COLLAPSED_MAX,
                             kv.get("railClientH"), kv.get("railDy")))
+        # 3. THE TWO ACTIONS STAY INSIDE THE SCROLLPORT — the acceptance criterion of the reorder
+        #    ruling, and the one rule here that scores ORDER rather than size. Something is always
+        #    below this rail's fold at a laptop height; what may be below it is the beat list's tail
+        #    (count-sorted, so the least-used chips, and a cut list advertises that it continues),
+        #    never the only path to the review and the explainer. Fails if the actions drift back below
+        #    the beats, and equally if new furniture above them pushes them out.
+        if kv.get("railActionsIn") is None:
+            # A PROBE THAT DID NOT RUN CANNOT HAVE PASSED — this file's own doctrine, and the reason
+            # the absence is a failure rather than a skip: `.get()` returning None would otherwise
+            # quietly retire the acceptance criterion the moment a selector is renamed.
+            fails.append("railActionsIn absent from the census marker — the rail-order acceptance "
+                         "criterion did not run (renamed selector? probe edited?)")
+        elif kv["railActionsIn"] != "1":
+            fails.append("railActionsIn=0 — an action is below the rail's fold at a %spx viewport: "
+                         "How-this-works ends at %s, the review link at %s, scrollport is %s "
+                         "(beats end at %s). The actions come FIRST; only the beat tail may be cut."
+                         % (kv.get("h"), kv.get("railHiwBottom"), kv.get("railReviewBottom"),
+                            kv.get("railClientH"), kv.get("railBeatsBottom")))
     if kv.get("doubleScroll") != "0":
         fails.append("doubleScroll=%s — html and body are BOTH scrollable (two vertical bars): "
                      "docDelta=%s bodyDelta=%s docOv=%s bodyOv=%s"
@@ -2588,10 +2625,16 @@ def _mx_cells():
     W_ALL = [1440, 1280, 1024, 800, 700, 390]
     cells = []
 
-    def add(w, tokens, shot=False, expect=None, note="", mindrop=None, h=None):
-        cid = "%d-%s" % (w, tokens.replace(",", "-"))
+    def add(w, tokens, shot=False, expect=None, note="", mindrop=None, h=None, idsfx="",
+            shoth=None):
+        # `idsfx` exists so the SAME tokens can be run at two window heights as two distinct cells
+        # (the census at a laptop height and at the owner's), since the id is otherwise derived from
+        # width + tokens alone. `shoth` is the window height for the SCREENSHOT only — see the note on
+        # the owner-height cell below for why the two heights differ.
+        cid = "%d-%s%s" % (w, tokens.replace(",", "-"), idsfx)
         cells.append({"id": cid, "w": w, "tokens": tokens, "shot": shot,
-                      "expect": expect or {}, "note": note, "mindrop": mindrop, "h": h})
+                      "expect": expect or {}, "note": note, "mindrop": mindrop, "h": h,
+                      "shoth": shoth})
 
     # 0. THE SCROLL / STRUCTURE CENSUS, first and at a REALISTIC VIEWPORT HEIGHT. 860px is a laptop
     #    window; at the 1800-5200px heights the rest of this matrix uses, `max-height:calc(100vh-71px)`
@@ -2604,6 +2647,16 @@ def _mx_cells():
     for w in (1512, 1440, 1300, 1024, 800, 390):
         add(w, "R0,F0,E0,struct", h=947, shot=(w == 1440),
             note="scroll-container census + structure cleanliness at a 860px viewport")
+    # 0b. THE OWNER'S OWN WINDOW HEIGHT, as its own cell (2026-07-26 reorder ruling). The built page
+    #     measured an 804px viewport on his machine, which is 56px shorter than the laptop height above
+    #     — enough to change WHICH rail furniture is below the fold, i.e. exactly what the ruling is
+    #     about. So the acceptance criterion is scored at his height and not only near it.
+    #     +87 AGAIN for the measurement (`--window-size=W,891` yields innerHeight 804 under
+    #     --dump-dom), but the SHOT is taken at 804: `--screenshot` does NOT lose those 87px, so a
+    #     picture framed at 891 would show a ~820px scrollport and photograph a rail state the owner
+    #     never sees. Two heights, one for the numbers and one for the artifact, both 804 in effect.
+    add(1440, "R0,F0,E0,struct", h=891, shoth=804, shot=True, idsfx="-owner804",
+        note="the same census at the owner's measured 804px viewport — the reorder's acceptance cell")
 
     # 1. every (W x R) resting — the width axis crossed with the read axis. The all-read board is
     #    the only read state whose HEIGHT drop is a meaningful assertion (see `spineOk`), and only
@@ -2765,7 +2818,10 @@ def _mx_shot(artifact, cell, shots_dir, budget=16000, scheme="dark"):
     import subprocess
     os.makedirs(shots_dir, exist_ok=True)
     png = os.path.join(shots_dir, cell["id"] + ".png")
-    height = cell.get("h") or (2600 if cell["w"] >= MX_FLOOR else 1800)
+    # `shoth` overrides the window height for the picture. It exists because `--screenshot` and
+    # `--dump-dom` do not agree about the viewport at the same `--window-size` (the +87 note above), so
+    # a cell whose numbers must land at a given viewport asks for a different window than its shot.
+    height = cell.get("shoth") or cell.get("h") or (2600 if cell["w"] >= MX_FLOOR else 1800)
     # AN EXPANSION CELL NEEDS A TALLER WINDOW, not a scroll: its module is the first foldable one
     # past rank 8, which at 1440 begins around y=2000 and grows ~900px when it opens, so a 2600px
     # frame photographs the resting top of the page and misses the very thing the cell exists to
@@ -2832,6 +2888,14 @@ def _mx_struct_row(cell, out, n, total, log=None):
                        k.get("railMaxH"), k.get("railClientH"), k.get("railScrollH"),
                        k.get("railDy"), k.get("railTraps"), k.get("railRect"),
                        k.get("railDyScrolled"), k.get("railRectScrolled"))))
+    # THE REORDER'S ACCEPTANCE NUMBERS, PRINTED. The judge scores `railActionsIn`, and a scored number
+    # nobody can read in the log is how a reviewer ends up taking "ok" on trust.
+    if k.get("railActionsIn") is not None:
+        lines.append("        rail order: HIW ends %s, review ends %s, beats end %s, scrollport %s "
+                     "-> actions inside: %s (details open=%s)"
+                     % (k.get("railHiwBottom"), k.get("railReviewBottom"),
+                        k.get("railBeatsBottom"), k.get("railClientH"), k.get("railActionsIn"),
+                        k.get("railDetailsOpen")))
     lines.append("        header: h1=%s tagline=%s hiw=%s | chips bar=%s(vis %s) rail=%s(vis %s)"
                  % (k.get("h1"), k.get("tagline"), k.get("hiw"), k.get("barChips"),
                     k.get("barChipsVis"), k.get("railChips"), k.get("railChipsVis")))
