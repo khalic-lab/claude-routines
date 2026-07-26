@@ -1390,11 +1390,17 @@ layout: archive
   .fcard.is-read:not(.is-open) .fcard__why,
   .fcard.is-read:not(.is-open) .fimg,
   .fcard--ed.is-read:not(.is-open) .fcard__edp{ display:none; }
-  /* Declared AFTER the age demotion above, and that order decides a real tie: both selectors
-     compute (0,4,0), and a read LEAD must land on brief scale rather than on the demotion's
-     feature scale. Editorials are excluded because their headline is a serif italic at a fixed
-     1.15rem — handing it an Anton `cqi` clamp would make a read editorial's title BIGGER. */
-  .fcard.is-read:not(.fcard--ed) .fcard__hl{ font-size:var(--hl-brief); }
+  /* `:not(.is-open)` IS THE SIXTH GUARD, and it was missing until 2026-07-26 (state matrix, E4).
+     The five `display:none` rules above carry it; this font-size rule did not, so More on a read
+     card gave back the body and kept the brief-sized headline — measured on a read lead at 1440,
+     37.976px against 24.24px, i.e. the two halves of the read demotion disagreeing about what
+     `.is-open` overrides. Either the reader opened the card or they did not.
+     It also settles the specificity question this rule used to depend on: at (0,5,0) it now beats
+     the age demotion above on weight rather than on source order, so a read LEAD still lands on
+     brief scale instead of the demotion's feature scale, wherever the two rules sit.
+     Editorials stay excluded because their headline is a serif italic at a fixed 1.15rem — handing
+     it an Anton `cqi` clamp would make a read editorial's title BIGGER. */
+  .fcard.is-read:not(.is-open):not(.fcard--ed) .fcard__hl{ font-size:var(--hl-brief); }
   .fcard__line{ display:flex; align-items:baseline; gap:.6em; margin-top:auto; padding-top:9px;
     border-top:1px solid var(--hair); font-family:var(--sans); font-size:.6rem; letter-spacing:.04em; color:var(--muted); }
   /* The source domain takes the red accent — in the mock the red domain is the module's
@@ -1810,7 +1816,15 @@ layout: archive
      the reader explicitly opened stays open when they tick it read.
      UN-READING DOES NOT RESTORE BOOT-OPEN, on purpose. Remembering per-card boot state to undo
      this would be a second fold memory living beside the reader's own clicks, and the honest
-     simpler answer is that a card you have read and un-read is a card you have handled. */
+     simpler answer is that a card you have read and un-read is a card you have handled.
+     THERE ARE THREE PATHS INTO READ, NOT ONE, and this normalization has to run on all of them —
+     the state-matrix pass (2026-07-26) failed 25 of 53 cells on that single omission. A click goes
+     through setRead below; a card that is ALREADY read when the page loads is painted by the boot
+     pass; and a read state that roams in from another device is painted by mergeRemote. The last two
+     used to call `paintRead` alone, which sets `is-read` and never folds — so the reader who ticked
+     today's lead and reloaded, or whose read state arrived from their phone, got exactly the seam
+     described above: body hidden by the spine rule, control still saying "Less", two clicks to
+     re-open. Every one of the three now calls this. */
   function foldForRead(card){
     var b = card.querySelector('.fcard__more');
     if (!b) return;
@@ -1819,6 +1833,16 @@ layout: archive
     b.setAttribute('aria-expanded', 'false');
     var lbl = b.querySelector('span');
     if (lbl) lbl.textContent = 'More';
+  }
+  /* PAINTING READ MEANS NORMALIZING THE FOLD, and this function is the only place that says so.
+     `paintRead` on its own is the half that produced the seam on the boot and roam paths, so the
+     three call sites (setRead, the boot pass, mergeRemote) all go through here and a fourth cannot
+     pick up half of it. Fold first, then paint: `foldForRead` reads the classes `paintRead` writes
+     nothing to, so the order is a convention rather than a dependency — but it is the click path's
+     order and it stays the one order. */
+  function paintReadState(card){
+    if (isRead(card)) foldForRead(card);
+    paintRead(card);
   }
   function setRead(card, v){
     var s = sidOf(card); if (!s) return;
@@ -1831,9 +1855,7 @@ layout: archive
       saveRead();
       noteLocalRead(s, v);             // sync shadow (+ debounced push when signed in) — see below
       cards.forEach(function(c){        // repaint sid twins too
-        if (sidOf(c) !== s) return;
-        if (v) foldForRead(c);
-        paintRead(c);
+        if (sidOf(c) === s) paintReadState(c);
       });
       readCounts();
     });
@@ -1882,8 +1904,6 @@ layout: archive
       recordPrefsChange();               // the read filter roams with the topic selection (2026-07-18)
     });
   });
-  cards.forEach(paintRead); readCounts();
-
   /* ---- FOLD DEFAULTS: TODAY'S LEADS OPEN, EVERYTHING ELSE FOLDED (2026-07-26). JS-applied, so
      no-JS still renders the full text — the fold is presentation, never a crop. Ephemeral, no
      persistence; expanding is NOT an implicit read.
@@ -1907,6 +1927,13 @@ layout: archive
     c.classList.add('is-folded');
     b.setAttribute('aria-expanded', 'false');
   });
+  /* THE BOOT PAINT RUNS AFTER THE FOLD DEFAULTS, and the order is the whole fix. It used to run
+     before them and call `paintRead` alone, so a card that was already read at load — ticked on the
+     last visit, or roamed in and persisted — came out read but un-folded, and the fold-default loop
+     then labelled today's lead "Less" over a body the read spine was hiding. Painting after means
+     `paintReadState` sees the fold baseline and corrects the one card that needs it; putting this
+     back above the loop would re-open the seam silently, because the loop writes the label last. */
+  cards.forEach(paintReadState); readCounts();
   grid.addEventListener('click', function(e){
     var mb = e.target.closest('.fcard__more');
     if (!mb) return;
@@ -2232,7 +2259,12 @@ layout: archive
        while they are reading. The anchor is the topmost card still on screen, since nobody clicked
        anything here. */
     anchored(topCard(), function(){
-      cards.forEach(paintRead); readCounts();
+      /* `paintReadState`, NOT `paintRead` — a roamed mark has to fold the card it lands on exactly
+         like a click does, or the reader whose phone marked today's lead read arrives at a spine
+         whose control says "Less" and takes two presses to open (the seam, on the third path).
+         Inside the existing anchor bracket on purpose: the fold is part of the ONE reflow the roam
+         causes, not a second one measured against a layout that has already moved. */
+      cards.forEach(paintReadState); readCounts();
       if (readState) apply();              // a read-filter is active — re-evaluate visibility
     });
   }
