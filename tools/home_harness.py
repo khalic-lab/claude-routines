@@ -2298,9 +2298,48 @@ def _mx_shot(artifact, cell, shots_dir, budget=16000, scheme="dark"):
     url, win = _mx_url(artifact, "#mx:" + cell["tokens"] + ",keep", cell["w"], height)
     _mx_chrome(url, win, height, budget=budget, shot=png, scheme=scheme)
     if cell["w"] < MX_FLOOR and os.path.exists(png):
-        subprocess.run(["sips", "-c", str(height), str(cell["w"]), png],
-                       capture_output=True, text=True)
+        # CROPPED FROM THE TOP-LEFT, EXPLICITLY. `sips -c H W` crops from the CENTRE, so the first
+        # version of this took the middle 390px of the 500px frame and produced four phone shots
+        # missing 55px off each side — the rail's edge gone on the left, white paper on the right,
+        # and the headline clipped mid-word. It looked like a layout defect in the contact sheet and
+        # was the instrument. `magick -crop WxH+0+0` says where it cuts; `sips --cropOffset 0 0` is
+        # the fallback for a machine without ImageMagick.
+        box = "%dx%d+0+0" % (cell["w"], height)
+        if subprocess.run(["magick", png, "-crop", box, "+repage", png],
+                          capture_output=True, text=True).returncode != 0:
+            subprocess.run(["sips", "--cropOffset", "0", "0",
+                            "-c", str(height), str(cell["w"]), png],
+                           capture_output=True, text=True)
     return png
+
+
+def _mx_rows_from_log(log):
+    """Reconstruct a run's rows from its progress log, so the contact sheet can be rebuilt without
+    re-driving Chrome 70-odd times.
+
+    The log already holds everything the sheet needs — cell id, verdict, the full MX line, each
+    failure and each shot path — and a re-render that changes only how the PNGs are cut has no
+    business re-measuring the page. Written after a centre-crop bug meant four phone tiles had to be
+    re-cut: the alternative was a third full 14-minute run to redraw one HTML file.
+    """
+    rows, cur = [], None
+    for ln in open(log):
+        m = re.match(r"\s*\d+/\d+ (\S+)\s+(ok|FAIL)\s+(MX .*)", ln)
+        if m:
+            cur = {"cell": {"id": m.group(1), "expect": {}, "note": ""},
+                   "kv": _mx_row(m.group(3).strip()), "text": m.group(3).strip(), "fails": []}
+            rows.append(cur)
+            continue
+        if cur is None:
+            continue
+        m = re.match(r"\s+FAIL (.*)", ln)
+        if m:
+            cur["fails"].append(m.group(1).strip())
+            continue
+        m = re.match(r"\s+shot (\S+)", ln)
+        if m:
+            cur["png"] = m.group(1)
+    return rows
 
 
 def _mx_sheet(rows, path, shots_dir):
@@ -2382,6 +2421,9 @@ def main():
                     help="--matrix only: write the one-page contact sheet here (implies --shots)")
     ap.add_argument("--log", default="",
                     help="--matrix only: append per-cell progress here as each cell finishes")
+    ap.add_argument("--sheet-from", default="",
+                    help="--matrix only: rebuild --sheet from a previous run's --log instead of "
+                         "re-driving Chrome (see _mx_rows_from_log)")
     ap.add_argument("--scheme", default="dark", choices=sorted(MX_SCHEMES),
                     help="--matrix only: pin prefers-color-scheme rather than inheriting the "
                          "host's appearance (see MX_SCHEMES)")
@@ -2491,6 +2533,15 @@ def main():
             if token not in page:
                 raise SystemExit("home_harness --matrix: the artifact does not contain %r (%s) — "
                                  "the harness is not testing the reworked page" % (token, what))
+        if args.sheet_from:
+            if not args.sheet:
+                raise SystemExit("home_harness --matrix --sheet-from: needs --sheet too")
+            rows = _mx_rows_from_log(args.sheet_from)
+            shots = args.shots or os.path.dirname(args.sheet)
+            print("sheet %s (rebuilt from %s, %d cell(s), %d shot(s))"
+                  % (_mx_sheet(rows, args.sheet, shots), args.sheet_from, len(rows),
+                     sum(1 for r in rows if r.get("png"))))
+            return
         cells = _mx_cells()
         if args.cells:
             rx = re.compile(args.cells)
