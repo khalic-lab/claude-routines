@@ -64,6 +64,7 @@ def _safe_story_id(url):
 
 _FILE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})-([a-z0-9-]+)\.md$")
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 STREAM_LABEL = {"news": "News", "ai-ml": "AI/ML", "science": "Science", "weekend": "Weekend", "sports": "Sports"}
 CURRENT_STREAMS = {"news", "ai-ml", "science", "weekend", "sports"}
@@ -863,11 +864,16 @@ def build_board(stories, editorials, max_date):
     newest = _dt.date.fromisoformat(max_date) if max_date else None
     prev_date = None
     for it in board:
+        d = _dt.date.fromisoformat(it["date"])
         if newest:
-            age = (newest - _dt.date.fromisoformat(it["date"])).days
-            it["age_days"] = max(0, min(AGE_MAX, age))
+            it["age_days"] = max(0, min(AGE_MAX, (newest - d).days))
         else:
             it["age_days"] = 0
+        # The daybreak card prints this instead of nothing: weekday + full date, because the
+        # question a date block answers is "which day am I reading". Formatted HERE rather than
+        # by Liquid's `date` filter, so the page and tools/home_harness.py render one string
+        # from one place instead of two implementations of one format.
+        it["day_label"] = "%s %d %s" % (_DAYS[d.weekday()], d.day, _MONTHS[d.month - 1])
         # DAYBREAK IS COMPUTED ON THE FINAL ORDER, over CONTIGUOUS runs rather than over the set
         # of distinct dates, so it stays true even if ED_MIN_BOARD_INDEX has moved an editorial
         # out of its own date block. What it marks is "a new date starts here", which is what the

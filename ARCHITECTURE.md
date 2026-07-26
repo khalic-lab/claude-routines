@@ -825,8 +825,53 @@ text-only fallback, per-story thumbs posting `surface:"home"`), not the old edit
 prose (headline, body, and the writers' `Why it matters` paragraph — the dedup summary is a terse
 embedding one-liner, deliberately not used for display), then overlays `topics`/`importance` **and
 the writer-recorded `headline`/`deck`/`display_body`/`why` prose** from the matching `index/stories/*.jsonl`
-record — **joined by canonical URL** (slugified headlines diverge between the post's bold lead and the
-record's curated headline), slug-id as fallback; the build prints the join rate.
+record — **joined by exact edition identity `(date, stream, normalized_url)`** (slugified headlines
+diverge between the post's bold lead and the record's curated headline, so URL is the key; the
+edition is part of the key), slug-id as fallback; the build prints the join rate.
+
+**A BARE URL IS NOT AN IDENTITY (fixed 2026-07-26, external-review R3).** The join used to key one
+record per normalized URL for the whole 14-day window, so two editions that legitimately re-cite one
+primary source — an ONGOING story, a Weekend recap of the week's News — shared a map slot and
+**filesystem glob order** decided which edition's curated headline/deck/body/importance every card
+wore. Live corruption: the 2026-07-24 News Iran card rendered the 2026-07-25 Weekend framing at the
+Weekend's importance 2 instead of its own 3, and the same on 2026-07-18 News. The join also now tries
+**every URL the story cites**, in prose order, still inside the same edition — a story often cites two
+sources and the record names the primary, which is not always the one the prose reaches first (that
+missed 4 cards in the window, including 2026-07-26's lead). `tools/tests/test_feed_join.py` pins both,
+including a glob-order-independence test.
+
+**`feed["board"]` — the ONE ranked sequence the page renders (2026-07-26).** `build_board()` merges
+stories and editorials into a single order sorted `(date, tier, position)` **with editorials ranked
+below briefs**, so an editorial closes its own edition's date block instead of being spliced at a
+fixed index. Before this, `feed.editorials` was a separate array the layout emitted after the third
+story, and nothing ever compared one against the other — a six-day-old Sports editorial sat at
+position 4 of a page whose first three cards were that morning's (owner report, 2026-07-26). Guards
+are invariants, not side effects: `ED_MAX_AGE_DAYS = 7` (one weekly cycle, whatever else is true),
+the editorial's `(date, stream)` edition must still have a story on the capped board, and
+`ED_MIN_BOARD_INDEX = 3` keeps any editorial out of the composed top band (a `.fcard--ed` at
+`nth-child(1)` renders at 100% board width). The old 14-day window and `[:3]` count cap are gone.
+Each board item also carries `age_days` (clamped 0..3 — the card's `data-age`, which drives one step
+of type demotion and the fold default), `daybreak` (first card of each date block, which prints
+`day_label`) and `kind`. `feed["stories"]`/`feed["editorials"]`/`feed["count"]` keep their exact
+shapes — the board holds copies, and `test_feed_sid.py` pins that nothing leaked into the stories.
+
+**Editorial card titles are the editorial's own opening bold lede**, consumed out of the prose it
+opened, with the scraped `## ` section heading moved to the kicker (`Sports · Why it matters ·
+Jul 20`). It used to print the heading as the headline, which put "Why it matters" on the front page
+as a story title. A lede over 90 chars leaves the prose untouched and the card renders with no
+`<h2>` at all: capping a *consumed* lede would delete the tail of a sentence from the only surface
+that prints it.
+
+**Plain `- ` bullets are stories (fixed 2026-07-26, R4).** The parser accepted only `###` headings and
+bullets opening on a bold lede, while `routines/src/weekend.md`'s format block specifies bare
+bullets — 3 of the 2026-07-25 Weekend edition's 5 headline bullets were recorded, anchored, embedded,
+dedup-checked and then absent from the only reading surface the site has. A plain bullet must cite a
+source (a linkless one is a desk aside); an editorial section's bullets are still never harvested. The
+anchor stub is now matched structurally too: `_posts/2026-07-13-news.md` carries writer-authored
+anchors (`st-iran-hormuz-0713`) which made every one of its bullets fail to match at all, so that
+edition contributed **0 of its 7** recorded stories. A non-canonical anchor is markup, not an id.
+`edition_parity()` reports, by identity rather than by count, any kept record of the current edition
+that reached no card; `--strict-parity` makes it fatal.
 
 **The record's `headline` wins over the parsed one (2026-07-25), and it matters more than it looks.**
 The post's bold run is a *lead sentence* by the writers' spec ("a bolded lead sentence stating what

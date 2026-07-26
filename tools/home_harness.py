@@ -329,10 +329,19 @@ window.__hmVoid = function(){
     var last=inn.lastElementChild;if(!last)return;
     var o=last.getBoundingClientRect().bottom-R[i].bottom;if(o>maxOver)maxOver=o;
   });
+  // THE ORDER INVARIANT TRAVELS WITH THE VOID METRICS (2026-07-26), so every state that reads
+  // these — resting, open, filtered, all-read — reports it. It used to live only in GEOM_CHECK,
+  // i.e. only in the resting state, while the states most likely to break it were exactly the
+  // ones a read spine and an expanded module create. Absolute tops: a card may never be placed
+  // at a row ABOVE one earlier in DOM order.
+  var A=cards.map(function(c){return Math.round(c.getBoundingClientRect().top+scrollY);});
+  var upInv=0,maxUp=0;
+  for(var q=1;q<A.length;q++){var dd=A[q-1]-A[q];if(dd>1)upInv++;if(dd>maxUp)maxUp=dd;}
   // PROOF OF EXECUTION, produced at RUNTIME rather than by grepping the artifact for a name:
   // `spanned` can only be non-zero if the engine measured and wrote, and `rowUnit` can only be
   // fine if the class it is gated behind was set by that same pass.
-  return 'packed='+(grid.classList.contains('packed')?1:0)
+  return 'upInv='+upInv+' maxUp='+maxUp
+    +' packed='+(grid.classList.contains('packed')?1:0)
     +' spanned='+cards.filter(function(c){return !!c.style.gridRow;}).length
     +' rowUnit='+gs.gridAutoRows
     +' gridH='+Math.round(gb.height)
@@ -356,27 +365,221 @@ setTimeout(function(){
   var target=null;
   for(var i=8;i<vis.length;i++){ if(vis[i].querySelector('.fcard__more')){ target=vis[i]; break; } }
   var out='FOLD-SKIP no foldable module past rank 8';
+  function hlSize(c){ var h=c.querySelector('.fcard__hl');
+    return h?getComputedStyle(h).fontSize:'-'; }
   if(target){
     var mb=target.querySelector('.fcard__more');
     var t0=target.getBoundingClientRect().top,h0=Math.round(target.getBoundingClientRect().height);
+    var w0=Math.round(target.getBoundingClientRect().width);
+    var hlSizeBefore=hlSize(target);
     var s0=scrollY;
     mb.click();
     var t1=target.getBoundingClientRect().top,h1=Math.round(target.getBoundingClientRect().height);
     var w1=Math.round(target.getBoundingClientRect().width);
     var opened=(target.classList.contains('is-open')&&!target.classList.contains('is-folded'))?1:0;
     var openVoid=window.__hmVoid();
+    // TYPE SCALE IS INVARIANT UNDER More (2026-07-26), and this is the assertion that keeps it.
+    // Sideways expansion doubled the module's inline size, and `.fcard__hl` is sized in `cqi`, so
+    // opening a lead resized its headline from ~38px to the 60px clamp ceiling — a fold control
+    // restating rank. Height-only expansion cannot do that, and `hlSame` proves it rather than
+    // asserting it in prose. `font-size` is not a transitioned property here, so it is safe to
+    // read straight after a synthetic click (see this module's docstring on transitions).
+    // CAVEAT, MEASURED 2026-07-26 AGAINST THE PRE-FIX LAYOUT: a `cqi`-derived font-size read
+    // immediately after a synthetic click did NOT reflect the container's new width — the module
+    // measured 405 -> 810px and `getComputedStyle` still reported 24.24px both times. So `hlSame`
+    // alone could pass on a layout that DOES resize type; it is meaningful only next to
+    // `openWSame`, which is measured off rects and is the assertion that actually bites.
+    var hl0=hlSizeBefore, hl1=hlSize(target);
     mb.click();
     var t2=target.getBoundingClientRect().top,h2=Math.round(target.getBoundingClientRect().height);
     var back=(target.classList.contains('is-folded')&&!target.classList.contains('is-open')
               &&h2===h0&&mb.getAttribute('aria-expanded')==='false')?1:0;
     out='FOLD opened='+opened+' collapsed='+back+' drift='+Math.round(t1-t0)
       +' backDrift='+Math.round(t2-t0)+' grew='+(h1-h0)+' openW='+w1
+      +' openWSame='+(w1===w0?1:0)
+      +' hl='+hl0+'/'+hl1+' hlSame='+(hl0===hl1?1:0)
       +' [open: '+openVoid+']';
     scrollTo(0,s0);
   }
   var d=document.createElement('div');d.id='foldcheck';d.textContent=out;document.body.appendChild(d);
 },4200);
 </script>"""
+
+# DAYBREAK IS HONEST, or it is a decoration that lies about which day you are reading. The claim is
+# that exactly the FIRST card of each date block carries `data-daybreak` and prints its day — so the
+# expected count is derived from the DOM's own printed dates (`.fcard__date`, which every card
+# including the editorials has), never from the same attribute the probe is checking. A tautological
+# probe is how this repo shipped three green-while-broken pages.
+DAY_CHECK = """<script>
+setTimeout(function(){
+  var grid=document.getElementById('folioGrid');
+  var cards=[].slice.call(grid.querySelectorAll('.fcard'));
+  var prev=null,expected=0,marked=0,printed=0,mismatch=0;
+  cards.forEach(function(c){
+    var dEl=c.querySelector('.fcard__date'),d=dEl?dEl.textContent.trim():'';
+    var isFirst=(d!==prev);prev=d;
+    if(isFirst)expected++;
+    var flagged=c.hasAttribute('data-daybreak');
+    if(flagged)marked++;
+    if(flagged!==isFirst)mismatch++;
+    var day=c.querySelector('.fcard__day');
+    if(day&&day.getBoundingClientRect().height>0)printed++;
+  });
+  var d=document.createElement('div');d.id='daycheck';
+  d.textContent='DAY expected='+expected+' marked='+marked+' printed='+printed
+    +' mismatch='+mismatch+' dbOk='+((expected===marked&&marked===printed&&!mismatch)?1:0);
+  document.body.appendChild(d);
+},4100);
+</script>"""
+
+
+# THE READ SPINE — the one probe for the 2026-07-26 seen rework, and it is a state machine rather
+# than four probes fighting over the same page. In order:
+#   1. per-card, mark a lead and a feature read and measure the collapse (spine <= 0.55x folded).
+#      SCOPED TO imp3/imp2 ON PURPOSE: a brief already hides its body AND its why when folded
+#      (`.fcard[data-imp="1"].is-folded`), and an editorial already hides its paragraphs, so for
+#      those tiers the spine IS very nearly the folded card and a blanket ratio would go red on a
+#      correct implementation.
+#   2. read -> More re-opens it in place: `.fcard__sum` gets a rect back. This pins the
+#      `:not(.is-open)` guards, which are load-bearing — drop one and More on a read card does
+#      nothing at all, silently.
+#   3. the disclosure in ALL FOUR editorial states (folded, open, read, read+open). It is
+#      transparency, not content, so it may never hide.
+#   4. the whole board read: a geometry state this harness has never seen. Order and holes must
+#      hold, and the page must actually get shorter (gridDrop).
+# It restores everything it touched, including localStorage, because `file://` shares one origin
+# across every artifact ever opened from it — 82 read entries left behind here would boot the next
+# run of ANY harness into a half-read board.
+READ_CHECK = """<script>
+setTimeout(function(){
+  var grid=document.getElementById('folioGrid');
+  if(location.hash==='#empty'||location.hash==='#bootempty'){
+    var s=document.createElement('div');s.id='readcheck';
+    s.textContent='READ-SKIP empty-state mode';document.body.appendChild(s);return;
+  }
+  var cards=[].slice.call(grid.querySelectorAll('.fcard'));
+  function h(c){ return c.getBoundingClientRect().height; }
+  function tick(c){ var b=c.querySelector('.fcard__read'); if(b)b.click(); }
+  var gridH0=Math.round(grid.getBoundingClientRect().height);
+
+  // 1 + 2 — per-tier collapse, then re-open in place
+  var worst=0,measured=0,reopen=-1;
+  var probe=cards.filter(function(c){
+    return !c.classList.contains('fcard--ed')
+      && (c.dataset.imp==='3'||c.dataset.imp==='2')
+      && c.classList.contains('is-folded') && c.querySelector('.fcard__sum');
+  }).slice(0,6);
+  probe.forEach(function(c){
+    var before=h(c);
+    tick(c);
+    var ratio=before>0?h(c)/before:9;
+    if(ratio>worst)worst=ratio;
+    measured++;
+  });
+  if(probe.length){
+    var c0=probe[0],mb=c0.querySelector('.fcard__more');
+    mb.click();                                  // read + More: the spine must open again
+    var sum=c0.querySelector('.fcard__sum');
+    reopen=(sum&&sum.getBoundingClientRect().height>0)?1:0;
+    mb.click();
+  }
+  probe.forEach(tick);                           // un-read them again
+
+  // 3 — the AI disclosure, four states
+  var edOk=-1,edStates='';
+  var ed=grid.querySelector('.fcard--ed');
+  if(ed){
+    var disc=ed.querySelector('.fcard__eddisc'),edMore=ed.querySelector('.fcard__more');
+    function vis(){ return disc.getBoundingClientRect().height>0?1:0; }
+    var st=[];
+    st.push(vis());                              // folded (boot state)
+    edMore.click(); st.push(vis());               // open
+    edMore.click();                               // back to folded
+    tick(ed); st.push(vis());                     // read
+    edMore.click(); st.push(vis());               // read + open
+    edMore.click(); tick(ed);                     // restore
+    edStates=st.join('');
+    edOk=(st.join('')==='1111')?1:0;
+  }
+
+  // 4 — the whole board read
+  cards.forEach(function(c){ if(!c.classList.contains('is-read'))tick(c); });
+  var allVoid=window.__hmVoid();
+  var gridH1=Math.round(grid.getBoundingClientRect().height);
+  cards.forEach(function(c){ if(c.classList.contains('is-read'))tick(c); });
+  var gridH2=Math.round(grid.getBoundingClientRect().height);
+  try{ ['homeRead:v1','syncState:v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
+
+  var drop=gridH0>0?Math.round(100*(gridH0-gridH1)/gridH0):-1;
+  var d=document.createElement('div');d.id='readcheck';
+  d.textContent='READ measured='+measured+' worstRatio='+(Math.round(worst*100)/100)
+    +' spineOk='+((measured>0&&worst<=0.55)?1:0)
+    +' reopen='+reopen+' edStates='+(edStates||'-')+' edOk='+edOk
+    +' gridH0='+gridH0+' allReadH='+gridH1+' gridDrop='+drop
+    +' restored='+((Math.abs(gridH2-gridH0)<=8)?1:0)
+    +' stillRead='+cards.filter(function(c){return c.classList.contains('is-read');}).length
+    +' [allread: '+allVoid+']';
+  document.body.appendChild(d);
+},5600);
+</script>"""
+
+
+# THE FILTERED STATE, which `upInv` never saw: `.is-filtered` drops the composed band to uniform
+# span-4 cells and re-places whatever survives, so it is a different placement problem from the
+# resting board. Picks the first real beat chip, reads the metrics, and puts the board back.
+FILTER_CHECK = """<script>
+setTimeout(function(){
+  var chip=document.querySelector('.folio-filters .ff-chip:not(.ff-all)');
+  var out='FILTER-SKIP no beat chip';
+  if(chip){
+    chip.click();
+    var grid=document.getElementById('folioGrid');
+    out='FILTER beat='+(chip.dataset.topic||'?')
+      +' filtered='+(grid.classList.contains('is-filtered')?1:0)
+      +' vis='+[].slice.call(grid.querySelectorAll('.fcard')).filter(function(c){
+          return c.style.display!=='none';}).length
+      +' ['+window.__hmVoid()+']';
+    document.querySelector('.folio-filters .ff-all').click();
+    try{ localStorage.removeItem('topicPrefs:v1'); }catch(e){}
+  }
+  var d=document.createElement('div');d.id='filtercheck';d.textContent=out;
+  document.body.appendChild(d);
+},4350);
+</script>"""
+
+
+# SCREENSHOT MODES for the states the probes deliberately restore. Every other probe here puts the
+# page back — which is correct, because they all measure the full board — so without these there is
+# no way to PHOTOGRAPH an opened module, a page of spines, or an all-read board, and those are
+# exactly the states this rework changes. Runs last (5900ms), after READ_CHECK has restored and
+# cleared, so it composes with nothing. Like `#empty` it abandons the page mid-state and therefore
+# clears its own storage first: `file://` shares one origin across every artifact ever opened from
+# it, so read entries left behind here would boot the NEXT run of any harness half-read.
+SHOT_CHECK = """<script>
+setTimeout(function(){
+  var h=location.hash;
+  if(h!=='#open'&&h!=='#read'&&h!=='#allread')return;
+  var grid=document.getElementById('folioGrid');
+  var cards=[].slice.call(grid.querySelectorAll('.fcard'));
+  function tick(c){ var b=c.querySelector('.fcard__read'); if(b)b.click(); }
+  var what='';
+  if(h==='#open'){
+    for(var i=8;i<cards.length;i++){
+      var mb=cards[i].querySelector('.fcard__more');
+      if(mb){ mb.click(); what='opened card '+i; break; }
+    }
+  } else {
+    var n=(h==='#allread')?cards.length:10;
+    for(var j=0;j<n&&j<cards.length;j++) tick(cards[j]);
+    what='read '+Math.min(n,cards.length);
+  }
+  try{ ['homeRead:v1','syncState:v1','topicPrefs:v1'].forEach(function(k){
+    localStorage.removeItem(k); }); }catch(e){}
+  var d=document.createElement('div');d.id='shotcheck';
+  d.textContent='SHOT mode='+h.slice(1)+' '+what;document.body.appendChild(d);
+},5900);
+</script>"""
+
 
 GEOM_CHECK = """<script>
 setTimeout(function(){
@@ -688,9 +891,12 @@ def card(s):
     # institution-first source label (mirrors the Liquid in _layouts/home.html)
     src = ('<span class="fcard__aff">%s</span> · %s' % (e(s["affiliation_label"]), e(s["source_domain"]))
            if s.get("affiliation_label") else e(s["source_domain"]))
-    return """<article class="fcard imp%(imp)s%(lead)s" data-topics="%(topics)s" data-imp="%(imp)s"%(dk)s%(og)s>
+    # board fields (2026-07-26): `data-age` drives the age demotion and the fold default,
+    # `data-daybreak` + the printed day mark each date block's first card.
+    day = '<span class="fcard__day">%s</span>' % e(s.get("day_label")) if s.get("daybreak") else ""
+    return """<article class="fcard imp%(imp)s%(lead)s" data-topics="%(topics)s" data-imp="%(imp)s" data-age="%(age)s"%(db)s%(dk)s%(og)s>
 <div class="fcard__in" style="--tc:%(color)s">
-<div class="fcard__top"><span class="fcard__beat" title="%(stream)s · %(dlabel)s"><span class="ff-dot"></span>%(tlabel)s</span><span class="fcard__rank" data-imp="%(imp)s"><i class="tier-key" aria-hidden="true"></i>%(rank)s</span></div>
+<div class="fcard__top">%(day)s<span class="fcard__beat" title="%(stream)s · %(dlabel)s"><span class="ff-dot"></span>%(tlabel)s</span><span class="fcard__rank" data-imp="%(imp)s"><i class="tier-key" aria-hidden="true"></i>%(rank)s</span></div>
 <h2 class="fcard__hl%(dot)s">%(hl)s</h2>
 %(deck)s%(img)s%(summ)s%(why)s%(more)s
 <div class="fcard__line"><span class="fcard__src">%(src)s</span>%(fresh)s<span class="fcard__date">%(dlabel)s</span>%(readbtn)s</div>
@@ -706,26 +912,31 @@ def card(s):
         "id": e(s.get("sid") or s["id"]), "date": e(s["date"]), "stream": e(s["stream"]), "svg": SVG,
         "readbtn": readbtn, "more": more, "dot": dot, "deck": deck, "img": img,
         "dk": ' data-deck=""' if s.get("deck") else "",
+        "age": s.get("age_days", 0), "db": ' data-daybreak=""' if s.get("daybreak") else "",
+        "day": day,
     }
 
 
-def _extract_ed_after():
-    """How many stories precede the editorials — READ from the layout, not mirrored.
+def _require_board(feed):
+    """The page renders `feed.board` — ONE ranked sequence over stories and editorials — so this
+    harness must render the same sequence or every screenshot certifies an order the site does not
+    have.
 
-    A hand-copied `ED_AFTER = 3` with a "keep in step" comment is the same drift class the
-    palette extraction above exists to kill: the layout changes, the harness keeps splicing at
-    the old index, and every screenshot certifies an order production does not have.
+    What was here: `_extract_ed_after()`, which read `{% assign ed_after = 3 %}` out of the layout
+    so the harness spliced the editorials at production's index. That assign is gone with the
+    splice (2026-07-26); the board replaced it. Extraction was the right instinct then and the
+    right instinct now — the difference is that the order is data rather than a constant, so the
+    harness reads the data instead of scraping a number out of a template.
     """
-    src = os.path.join(ROOT, "_layouts", "home.html")
-    with open(src) as fh:
-        m = re.search(r"\{%-?\s*assign\s+ed_after\s*=\s*(\d+)", fh.read())
-    if not m:
-        raise SystemExit("home_harness: no `{% assign ed_after = N %}` in %s — did the "
-                         "editorial placement change shape?" % src)
-    return int(m.group(1))
-
-
-ED_AFTER = _extract_ed_after()
+    board = feed.get("board")
+    if not board:
+        raise SystemExit("home_harness: _data/homefeed.json has no `board` — regenerate it with "
+                         "tools/build_stories_feed.py; the layout renders feed.board")
+    for i, it in enumerate(board):
+        if it.get("kind") not in ("story", "editorial"):
+            raise SystemExit("home_harness: board[%d] has kind=%r — the layout branches on "
+                             "'editorial' vs everything else" % (i, it.get("kind")))
+    return board
 
 
 def _extract_rail(feed):
@@ -779,7 +990,7 @@ def _extract_rail(feed):
     return rail
 
 
-def _extract_block(start_re, label):
+def _extract_block(start_re, label, allow_liquid=False):
     """Pull a static markup block out of the layout verbatim, like `_extract_rail` does.
 
     Added 2026-07-25 for the page header and the How-this-works modal. Neither was ever in this
@@ -803,8 +1014,11 @@ def _extract_block(start_re, label):
     # harness would paint broken images and the guard below (correctly) refuses to let that pass.
     block = re.sub(r"""\{\{\s*["'](/[^"']+)["']\s*\|\s*relative_url\s*\}\}""",
                    lambda m: "file://" + ROOT + m.group(1), block)
+    # `allow_liquid` is for a block the CALLER substitutes (the editorial card, whose fields come
+    # from the feed the same way _extract_rail's do). It still has to answer for every tag: the
+    # caller runs the identical guard after substituting.
     leftover = re.findall(r"\{\{.*?\}\}|\{%.*?%\}", block, re.S)
-    if leftover:
+    if leftover and not allow_liquid:
         raise SystemExit("home_harness: un-substituted Liquid in the %s block: %r"
                          % (label, leftover[:3]))
     return block
@@ -838,29 +1052,157 @@ def _hiw_stub():
             '</div></div>')
 
 
+_ED_TEMPLATE = None
+
+
+def _ed_template():
+    """The editorial card's REAL markup, extracted from the layout once (review R17).
+
+    The hand-mirrored copy this replaces had already drifted: it emitted no `.fcard__fb` strip at
+    all, so the editorial card's two vote buttons and its note span — production markup since the
+    editorials shipped — were never on screen here, never measured, and never in a screenshot.
+    That is the same blindness as the image slot, the tier legend and the page header, and this
+    repo's standing answer to it is extraction rather than a "keep in step" comment.
+    """
+    global _ED_TEMPLATE
+    if _ED_TEMPLATE is None:
+        _ED_TEMPLATE = _extract_block(
+            r'<article class="fcard fcard--ed".*?</article>', "editorial card",
+            allow_liquid=True)
+    return _ED_TEMPLATE
+
+
 def ed_card(e):
-    """Mirrors the editorial-card Liquid in _layouts/home.html (paras are pre-sanitized html)."""
+    """The extracted editorial template with this item's fields substituted in.
+
+    Liquid handled here, and NOTHING else — any other tag is a hard error below, because rendering
+    `{{ ... }}` literally would change wrap widths and photograph as content.
+    """
     esc = lambda x: html.escape(str(x or ""))
-    paras = "".join('<p class="fcard__edp">%s</p>' % p for p in e.get("paras", []))
-    # `lead` deliberately absent (2026-07-25): it was giving editorials BOTH the span=2 width and
-    # -- via .fcard.lead .fcard__hl -- the largest headline treatment on the page, measured 32.8px,
-    # landing on a generic section title. The fold button is what .fcard--ed.is-folded acts on.
-    return ('<article class="fcard fcard--ed" data-topics="" data-imp="2" data-story="ed-%s-%s">'
-            '<div class="fcard__in"><div class="fcard__top">'
-            '<span class="fcard__beat"><span class="ff-dot"></span>%s</span>'
-            '<span class="fcard__rank" data-imp="ed">AI editorial</span></div>'
-            '<h2 class="fcard__hl">%s</h2>'
-            '<p class="fcard__eddisc">Opinion, written by the desk\'s AI — a synthesis across '
-            'the week\'s sourced stories, not itself sourced reporting.</p>%s'
-            '<button class="fcard__more" type="button" aria-expanded="true">'
-            '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
-            '<span>More</span></button>'
-            '<div class="fcard__line"><span class="fcard__date">%s</span>'
-            '<button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read"'
-            ' title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true">'
-            '<path d="M20 6L9 17l-5-5"/></svg></button></div></div></article>'
-            % (esc(e.get("stream")), esc(e.get("date")), esc(e.get("kicker")),
-               esc(e.get("title")), paras, esc(e.get("date_label"))))
+    block = _ed_template()
+
+    # {% if it.daybreak %}…{% endif %} / {% if it.title != blank %}…{% endif %}
+    def _cond(m):
+        return m.group(2) if _truthy(e, m.group(1)) else ""
+    block = re.sub(r"\{%-?\s*if\s+it\.(\w+)(?:\s*!=\s*blank)?\s*-?%\}(.*?)\{%-?\s*endif\s*-?%\}",
+                   _cond, block, flags=re.S)
+    # {% for p in it.paras %}<p …>{{ p }}</p>{% endfor %}  — paras are pre-sanitized html
+    block = re.sub(
+        r"\{%-?\s*for\s+p\s+in\s+it\.paras\s*-?%\}(.*?)\{%-?\s*endfor\s*-?%\}",
+        lambda m: "".join(re.sub(r"\{\{\s*p\s*\}\}", p, m.group(1)) for p in e.get("paras") or []),
+        block, flags=re.S)
+    block = re.sub(r"\{\{\s*it\.(\w+)\s*\}\}", lambda m: esc(e.get(m.group(1))), block)
+
+    leftover = re.findall(r"\{\{.*?\}\}|\{%.*?%\}", block, re.S)
+    if leftover:
+        raise SystemExit("home_harness: un-substituted Liquid in the editorial card: %r — add a "
+                         "substitution rather than rendering literal braces" % leftover[:3])
+    return block
+
+
+def _truthy(item, field):
+    v = item.get(field)
+    return bool(v) and v != ""
+
+
+CHROME = os.environ.get("CHROME_BIN",
+                        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+
+# THE ASSERTION TABLE — this is what turns the probes above from a REPORT into an ORACLE (review
+# R17). Until now every check appended diagnostic text and nothing on earth parsed it: the `#synced`
+# EMPTY probe printed `vis=1 hidden=1`, contradicting its own zero-card invariant, and the harness
+# still exited 0. A number nobody compares is a number nobody reads.
+# Each entry is (marker, key, predicate, prose). `min_width` gates the rows that are only true where
+# the board has more than one column — below 700px `packRowSpans` unpacks BY DESIGN, so demanding a
+# packed board there would be asserting the opposite of the code's intent.
+CHECKS = [
+    ("GEOM", "widthSane", lambda v: v == "1", "the board has not shrink-wrapped"),
+    ("GEOM", "upInv", lambda v: v == "0", "no card is placed above one ranked ahead of it"),
+    ("GEOM", "maxUp", lambda v: v == "0", "...and not by a single pixel"),
+    ("GEOM", "ovOk", lambda v: v == "1", "overflow stays visible — a short span may never clip"),
+    ("GEOM", "cards", lambda v: int(v) > 0, "the board rendered cards at all"),
+    ("DAY", "dbOk", lambda v: v == "1", "exactly the first card of each date block prints its day"),
+    ("FILTER", "upInv", lambda v: v == "0", "order holds in the filtered state"),
+    ("FILTER", "holes", lambda v: v == "0", "no interior hole in the filtered state"),
+    ("FOLD", "opened", lambda v: v == "1", "More opens the module"),
+    ("FOLD", "collapsed", lambda v: v == "1", "Less restores it byte-for-byte in height"),
+    ("FOLD", "drift", lambda v: abs(int(v)) <= 1, "the clicked module does not move under the cursor"),
+    ("FOLD", "openWSame", lambda v: v == "1", "expansion is height-only — the module never widens"),
+    ("FOLD", "hlSame", lambda v: v == "1", "type scale is invariant under More"),
+    ("FOLD", "holes", lambda v: v == "0", "the open state leaves no interior hole"),
+    ("FOLD", "holePx", lambda v: v == "0", "...and no interior void px"),
+    ("FOLD", "upInv", lambda v: v == "0", "order holds with a module open"),
+    ("READ", "spineOk", lambda v: v == "1", "a read lead/feature collapses to <=0.55x its folded height"),
+    ("READ", "reopen", lambda v: v == "1", "More re-opens a READ card in place (:not(.is-open) guards)"),
+    ("READ", "edOk", lambda v: v == "1", "the AI disclosure is visible folded, open, read and read+open"),
+    ("READ", "gridDrop", lambda v: int(v) >= 25, "an all-read board is at least 25% shorter"),
+    ("READ", "upInv", lambda v: v == "0", "order holds with every card read"),
+    ("READ", "holes", lambda v: v == "0", "no interior hole with every card read"),
+    ("READ", "restored", lambda v: v == "1", "un-reading restores the board's height"),
+    ("READ", "stillRead", lambda v: v == "0", "the probe cleaned up after itself"),
+    ("EMPTY", "vis", lambda v: v == "0", "the filter really emptied the board"),
+    ("EMPTY", "hidden", lambda v: v == "0", "and the empty message really shows"),
+    ("EMPTY", "topDelta", lambda v: abs(int(v)) <= 2, "it opens the sheet, not a rail-height void"),
+    ("EMPTY", "packedEmpty", lambda v: v == "0", "the 4px row unit came off for the empty state"),
+    ("EMPTY", "restored", lambda v: v == "1", "clearing the filter brings the board back"),
+    ("EMPTY", "rePacked", lambda v: v == "1", "...packed, i.e. the pack engine stayed armed", 700),
+    ("SYNC", "edread", lambda v: v == "1", "an editorial card's read toggle round-trips"),
+]
+
+
+def _run_check(artifact, width, height=2800, budget=9000):
+    """Render the artifact in headless Chrome, parse every probe marker, apply CHECKS.
+
+    Returns (failures, lines). A marker that never appears is itself a failure: a probe that did
+    not run cannot have passed, and a silently missing probe is exactly how a green harness
+    certified a broken page three times in this repo's history.
+    """
+    import subprocess
+    cmd = [CHROME, "--headless=new", "--hide-scrollbars", "--disable-gpu", "--no-sandbox",
+           "--virtual-time-budget=%d" % budget, "--window-size=%d,%d" % (width, height),
+           "--dump-dom", "file://" + artifact]
+    out = subprocess.run(cmd, capture_output=True, text=True, timeout=300).stdout
+    # PARSED OFF THE PROBE ELEMENTS, never off the page text. The dumped DOM contains the probes'
+    # own SOURCE — they are inline <script> bodies — so a bare search for `GEOM …` matches the code
+    # that emits the marker and reads its variable NAMES as values. Every probe appends
+    # `<div id="…check">`, so that is the only thing this looks at.
+    marks = {}
+    for div_id, mk in (("geomcheck", "GEOM"), ("daycheck", "DAY"), ("filtercheck", "FILTER"),
+                       ("foldcheck", "FOLD"), ("readcheck", "READ"), ("synccheck", "SYNC"),
+                       ("emptycheck", "EMPTY")):
+        m = re.search(r'<div id="%s"[^>]*>(.*?)</div>' % div_id, out, re.S)
+        if not m:
+            continue
+        text = re.sub(r"\s+", " ", m.group(1)).strip()
+        name = text.split(" ", 1)[0]
+        kv = dict(re.findall(r"(\w+)=([^\s\]]+)", text))
+        marks[mk] = (name, kv, text)
+    lines, failures = [], []
+    for mk in ("GEOM", "DAY", "FILTER", "FOLD", "READ", "SYNC", "EMPTY"):
+        if mk in marks:
+            lines.append("  %s" % marks[mk][2])
+        else:
+            lines.append("  %s  <MARKER MISSING>" % mk)
+    for row in CHECKS:
+        mk, key, pred, why = row[0], row[1], row[2], row[3]
+        if len(row) > 4 and width < row[4]:
+            continue
+        if mk not in marks:
+            failures.append("%s.%s: probe never emitted — %s" % (mk, key, why))
+            continue
+        name, kv, _ = marks[mk]
+        if name.endswith("-SKIP"):
+            continue
+        if key not in kv:
+            failures.append("%s.%s: key absent from the marker — %s" % (mk, key, why))
+            continue
+        try:
+            ok = pred(kv[key])
+        except (ValueError, TypeError):
+            ok = False
+        if not ok:
+            failures.append("%s.%s=%s — expected: %s" % (mk, key, kv[key], why))
+    return failures, lines
 
 
 def main():
@@ -868,6 +1210,11 @@ def main():
     ap.add_argument("--out", default="/tmp/home-harness.html")
     ap.add_argument("--refresh-theme", action="store_true",
                     help="re-pull the compiled minimal-mistakes CSS into %s" % THEME_CACHE)
+    ap.add_argument("--check", action="store_true",
+                    help="render in headless Chrome, parse every probe marker, and exit non-zero "
+                         "on any failed assertion (see CHECKS)")
+    ap.add_argument("--widths", default="1440",
+                    help="--check only: comma-separated viewport widths")
     args = ap.parse_args()
 
     feed = json.load(open(os.path.join(ROOT, "_data", "homefeed.json")))
@@ -938,23 +1285,36 @@ def main():
 %s<div class="folio-grid" id="folioGrid">%s%s</div>
 </div>%s</div></div>
 %s
-%s%s%s%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, header, feed["count"], chips,
+%s%s%s%s""" % (_theme_css(args.refresh_theme) + TOKENS, styles, header, feed["count"], chips,
                SYNC_UI, LEGEND_UI,
                _extract_rail(feed),
-               # Emission order mirrors _layouts/home.html: ED_AFTER stories, then the editorials,
-               # then the rest. Keep ED_AFTER in step with the layout's `{% assign ed_after %}` —
-               # this is the mirror that the published-DOM fixture is meant to retire.
-               "".join(card(s) for s in feed["stories"][:ED_AFTER])
-               + "".join(ed_card(e) for e in feed.get("editorials", []))
-               + "".join(card(s) for s in feed["stories"][ED_AFTER:]),
+               # ONE LOOP OVER feed.board, branching on `kind` — exactly what the layout does.
+               "".join(ed_card(it) if it["kind"] == "editorial" else card(it)
+                       for it in _require_board(feed)),
                empty_state,
                propose,
-               modal, PRE_SYNC, script, VOID_METRICS, GEOM_CHECK, FOLD_CHECK, SYNC_CHECK,
-               EMPTY_CHECK)
+               modal, PRE_SYNC, script, VOID_METRICS,
+               GEOM_CHECK + DAY_CHECK + FILTER_CHECK + FOLD_CHECK + SYNC_CHECK + EMPTY_CHECK
+               + READ_CHECK + SHOT_CHECK)
 
     with open(args.out, "w") as fh:
         fh.write(page)
     print("wrote %s (%d bytes, %d stories)" % (args.out, len(page), feed["count"]))
+    if not args.check:
+        return
+    bad = 0
+    for w in [int(x) for x in args.widths.split(",") if x.strip()]:
+        failures, lines = _run_check(os.path.abspath(args.out), w)
+        print("--- %dpx" % w)
+        for ln in lines:
+            print(ln)
+        for f in failures:
+            print("  FAIL %s" % f)
+        print("  %s at %dpx (%d assertion(s) failed)"
+              % ("PASS" if not failures else "FAIL", w, len(failures)))
+        bad += len(failures)
+    if bad:
+        raise SystemExit("home_harness: %d assertion(s) failed" % bad)
 
 
 if __name__ == "__main__":

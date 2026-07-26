@@ -129,29 +129,70 @@ layout: archive
   </aside>
   <div class="folio-grid" id="folioGrid" tabindex="-1">
     {%- comment -%}
-      Editorials are emitted AFTER the first ED_AFTER stories, not before all of them. Their old
-      position was never a ranking decision: feed.editorials and feed.stories are two independent
-      arrays (build_stories_feed.py sorts stories by (date, importance); load_editorials sorts only
-      editorials, by date) and nothing ever compares one against the other. They rendered first
-      purely because this loop was written above the stories loop, and the client JS never re-sorts.
-      Measured cost of that accident, 2026-07-25: at 390px the two editorial cards stacked to
-      4104px and the first news story started 4355px down — about 5.2 phone screens. At 1024px the
-      editorial was 100% of the board width with no news visible on screen at all.
-      NOT merged into feed.stories on purpose: apply_cap runs BEFORE load_editorials, so merging
-      then capping would silently evict real stories from the cap; merging after would change what
-      feed.count and the "All N" chip mean; and the two item schemas differ
-      (headline/summary/why/url vs title/paras/kicker).
-      NOT YET APPLIED — the reorder itself is pending. It needs the editorial loop moved INSIDE the
-      stories loop and emitted at `forloop.index == ed_after` (with a `forloop.last` fallback for a
-      short feed), because splitting into two `limit:`/`offset:` story loops would duplicate the
-      ~23-line card markup, and factoring that into an include forces every `s.x` reference to
-      become `include.s.x`. One structural edit, done deliberately, not squeezed in here.
+      ONE RANKED BOARD, ONE LOOP (2026-07-26). `feed.board` is a single ordered sequence over
+      stories AND editorials, built server-side by build_stories_feed.py::build_board and sorted
+      (date, tier, position) with editorials ranked BELOW briefs — so an editorial closes its own
+      edition's date block rather than being spliced in at a fixed index.
+      What was here before: two independent arrays and a splice. `feed.editorials` was emitted
+      after the third story, so nothing ever compared one against the other, and a six-day-old
+      Sports editorial sat at board position 4 of a page whose first three cards were today's
+      (owner report, 2026-07-26 — the card was also headlined "Why it matters", the scraped
+      section heading). Under the board that same editorial sits at 59, with its own day.
+      The splice's own history, kept because it explains why this is not a smaller change: the
+      editorials used to render FIRST, above every story, purely because their loop was written
+      above the stories loop. At 390px the two of them stacked to 4104px and the first news story
+      began 4355px down — 5.2 phone screens; at 1024px the editorial was 100% of the board width
+      with no news on screen at all. Moving them to index 3 fixed the symptom and kept the cause.
+      STILL NOT MERGED into feed.stories, and the three reasons are unchanged: apply_cap runs
+      before load_editorials, so merging then capping would evict real stories from the cap;
+      merging after would change what feed.count and the "All N" chip mean; and the two item
+      schemas differ (headline/summary/why/url vs title/paras/kicker). `feed.board` carries the
+      single ranking without disturbing any of them.
+      `| default: feed.stories` is a FAILURE MODE, not a migration shim: if a board ever fails to
+      reach the page, the reader gets the stories in server order rather than a blank sheet.
     {%- endcomment -%}
-    {% assign ed_after = 3 %}
-    {% for s in feed.stories %}
-    <article class="fcard imp{{ s.importance }}{% if s.is_lead %} lead{% endif %}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}"{% if s.deck %} data-deck=""{% endif %}{% if s.url and s.importance > 1 %} data-ogurl="{{ s.url }}"{% endif %}>
+    {% assign board = feed.board | default: feed.stories %}
+    {% for it in board %}
+    {% if it.kind == 'editorial' %}
+    <article class="fcard fcard--ed" data-topics="" data-imp="2" data-age="{{ it.age_days }}"{% if it.daybreak %} data-daybreak=""{% endif %} data-story="ed-{{ it.stream }}-{{ it.date }}">
+      <div class="fcard__in">
+        <div class="fcard__top">
+          {% if it.daybreak %}<span class="fcard__day">{{ it.day_label }}</span>{% endif %}
+          <span class="fcard__beat"><span class="ff-dot"></span>{{ it.kicker }}</span>
+          <span class="fcard__rank" data-imp="ed">AI editorial</span>
+        </div>
+        {%- comment -%} NO <h2> WHEN THERE IS NO TITLE, rather than an empty one. The title is the
+          editorial's own opening bold lede (build_stories_feed.py::_ed_title) and it is absent
+          whenever that lede is missing or too long to carry whole — the card then leads with its
+          kicker and disclosure, which is honest. It never prints the section heading as a
+          headline, which is what put "Why it matters" on the front page. {%- endcomment -%}
+        {% if it.title != blank %}<h2 class="fcard__hl">{{ it.title }}</h2>{% endif %}
+        <p class="fcard__eddisc">Opinion, written by the desk's AI — a synthesis across the week's sourced stories, not itself sourced reporting.</p>
+        {% for p in it.paras %}<p class="fcard__edp">{{ p }}</p>{% endfor %}
+        <button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>
+        <div class="fcard__line">
+          <span class="fcard__date">{{ it.date_label }}</span>
+          <button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read" title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></button>
+        </div>
+        <div class="fcard__fb" data-story="ed-{{ it.stream }}-{{ it.date }}" data-brief="{{ it.date }}-{{ it.stream }}">
+          <button class="ffb-t" type="button" data-v="1" aria-label="Useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+          <button class="ffb-t ffb-down" type="button" data-v="-1" aria-label="Not useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
+          <span class="ffb-note" aria-live="polite"></span>
+        </div>
+      </div>
+    </article>
+    {% else %}
+    {%- assign s = it -%}
+    <article class="fcard imp{{ s.importance }}{% if s.is_lead %} lead{% endif %}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}" data-age="{{ s.age_days }}"{% if s.daybreak %} data-daybreak=""{% endif %}{% if s.deck %} data-deck=""{% endif %}{% if s.url and s.importance > 1 %} data-ogurl="{{ s.url }}"{% endif %}>
       <div class="fcard__in" style="--tc:{{ s.topic_color }}">
         <div class="fcard__top">
+          {%- comment -%} DAYBREAK IS TYPOGRAPHIC, not a rule line. The board is column-packed, so
+            columns stack independently and there is no shared row line to thicken — a heavy top
+            border would be a short heavy segment across ONE card, not a line across the board.
+            So the first card of each date block prints its day, at beat-chip scale, and no new
+            grid child is introduced (the `.folio-empty` last-child invariant and the
+            `nth-child(1..3)` composition both count children). {%- endcomment -%}
+          {% if s.daybreak %}<span class="fcard__day">{{ s.day_label }}</span>{% endif %}
           <span class="fcard__beat" title="{{ s.stream_label }} · {{ s.date_label }}"><span class="ff-dot"></span>{{ s.topic_label }}</span>
           {%- comment -%} The glyph is aria-hidden and the WORD stays the accessible name — the tier
             became real text in 3281fb9 precisely because it reached assistive tech nowhere, and a
@@ -180,11 +221,14 @@ layout: archive
         {% if s.deck %}<p class="fcard__deck">{{ s.deck }}</p>{% endif %}
         {% if s.summary != "" %}<p class="fcard__sum">{{ s.summary }}</p>{% endif %}
         {% if s.why and s.why != "" %}<p class="fcard__why"><span class="fcard__why-lbl">Why it matters</span>{{ s.why }}</p>{% endif %}
-        {%- comment -%} After the prose, not between headline and body: the clamp ends in an
-          ellipsis and "More" is the thing that continues it, so it belongs at the cut. Before the
-          module diet only briefs had this button and their body was hidden, so its position was
-          invisible; now every tier carries one and putting it under the headline interrupted the
-          one flow the page most needs to keep. {%- endcomment -%}
+        {%- comment -%} After the prose, not between headline and body: "More" is what continues
+          the card, so it belongs where the card stops. (This comment used to say "the clamp ends
+          in an ellipsis and More is the thing that continues it" — there are no clamps and no
+          ellipses anywhere on this page since the 2026-07-25 never-crop ruling; the position is
+          still right, the reason was stale.) Before the module diet only briefs had this button
+          and their body was hidden, so its position was invisible; now every tier carries one and
+          putting it under the headline interrupted the one flow the page most needs to keep.
+        {%- endcomment -%}
         {%- comment -%} Only where it DOES something — still true, and now true of every card that
           has a body. Under the 2026-07-25 fold ruling `.fcard.is-folded .fcard__sum` hides the body
           on EVERY tier, so any card carrying a summary has something to reveal. The narrower
@@ -204,34 +248,6 @@ layout: archive
         </div>
       </div>
     </article>
-    {%- comment -%} editorials land here, after the first ED_AFTER stories -- see the note above.
-      forloop.index (1-based) rather than two limit:/offset: loops, which would duplicate this
-      card markup wholesale. The forloop.last clause is the short-feed fallback: without it a feed
-      with fewer than ED_AFTER stories would emit no editorials at all. {%- endcomment -%}
-    {% if forloop.index == ed_after or (forloop.last and feed.stories.size < ed_after) %}
-    {% for e in feed.editorials %}
-    <article class="fcard fcard--ed" data-topics="" data-imp="2" data-story="ed-{{ e.stream }}-{{ e.date }}">
-      <div class="fcard__in">
-        <div class="fcard__top">
-          <span class="fcard__beat"><span class="ff-dot"></span>{{ e.kicker }}</span>
-          <span class="fcard__rank" data-imp="ed">AI editorial</span>
-        </div>
-        <h2 class="fcard__hl">{{ e.title }}</h2>
-        <p class="fcard__eddisc">Opinion, written by the desk's AI — a synthesis across the week's sourced stories, not itself sourced reporting.</p>
-        {% for p in e.paras %}<p class="fcard__edp">{{ p }}</p>{% endfor %}
-        <button class="fcard__more" type="button" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg><span>More</span></button>
-        <div class="fcard__line">
-          <span class="fcard__date">{{ e.date_label }}</span>
-          <button class="fcard__read" type="button" aria-pressed="false" aria-label="Mark as read" title="mark as read"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></button>
-        </div>
-        <div class="fcard__fb" data-story="ed-{{ e.stream }}-{{ e.date }}" data-brief="{{ e.date }}-{{ e.stream }}">
-          <button class="ffb-t" type="button" data-v="1" aria-label="Useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
-          <button class="ffb-t ffb-down" type="button" data-v="-1" aria-label="Not useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
-          <span class="ffb-note" aria-live="polite"></span>
-        </div>
-      </div>
-    </article>
-    {% endfor %}
     {% endif %}
     {% endfor %}
     {%- comment -%} THE EMPTY STATE IS THE LAST GRID CHILD, NOT A SIBLING OF THE BOARD (2026-07-25).
@@ -730,29 +746,33 @@ layout: archive
        modules to one track of twelve. */
     .folio-grid.is-filtered > .fcard{ grid-area:auto; grid-column:span 4; }
   }
-  /* EXPANSION GOES SIDEWAYS, NOT DOWN (owner, 2026-07-25). Opening a span-4 module and pouring
-     the body into it made a 405px-wide, ~1,500px-tall ribbon that stretched its whole band and
-     left two voids beside it — "giant lines". A module that has to show more text should get more
-     ROOM, which on a track grid means more tracks: 8 of 12 on the sheet, 2 of 3 at 1024-1279.
-     Declared AFTER the `.is-filtered` fallback on purpose — both are (0,3,0), so source order is
-     what lets a card still expand while a beat filter is on.
-     The dominant is deliberately NOT covered: its rule is (0,4,0) and already spans all twelve, so
-     opening it changes its height and nothing else. Below 1024 nothing changes — modules are
-     already the full sheet there, and downward is the only direction that exists. */
-  @media (min-width:1024px) and (max-width:1279px){
-    .folio-grid > .fcard.is-open{ grid-column:span 2; }
-  }
-  @media (min-width:1280px){
-    .folio-grid > .fcard.is-open{ grid-column:span 8; }
-  }
-  /* Prose multicol, which is the measure fix and not the banned one: the ban was on multicol
-     across the CARD GRID, where it would break DOM-order == rank. Inside one module the reading
-     order is a single column of text flowing top-to-bottom then across, exactly as the dominant
-     has set its body since the composition landed. Without it an 810px module sets 110-character
-     lines, which is unreadable in a different way from a ribbon. */
-  @media (min-width:1024px){
-    .fcard.is-open .fcard__sum{ column-count:2; column-gap:28px; }
-  }
+  /* EXPANSION IS HEIGHT-ONLY, AT EVERY WIDTH — and this REVERSES the 2026-07-25 "expansion goes
+     sideways" ruling, on the grounds that the void sideways expansion was invented to fix was
+     fixed differently 98 minutes later the same evening.
+     WHAT WAS HERE: `.is-open{ grid-column:span 8 }` at >=1280 (span 2 at 1024-1279) plus a
+     2-column multicol on the open module's body. It was added at 20:03 to fix "a 405px-wide,
+     ~1,500px-tall ribbon that stretched its whole band and left two voids beside it". The
+     row-span packer landed at 21:41 and deleted the mechanism that produced those voids: a tall
+     module in a packed column no longer stretches anything, because its neighbours stack
+     independently against 4px row lines. The premise expired; the fix outlived it and became the
+     only construct on the page that MANUFACTURES a void — a span-8 module needs 8 contiguous
+     free tracks of twelve, sparse placement scans DOWN for them rather than back (`dense` is
+     banned, correctly), and the partial band it skips was the hole.
+     No CSS trick rescues it: with column-packed sparse placement and `dense`/`order:` banned, ANY
+     span wider than the tracks remaining beside the module must wait for the tallest column to
+     catch up. The void is not a wart on the feature, it is the feature.
+     THE SECOND REASON IS INDEPENDENT OF COMMIT ORDER. `.fcard{container-type:inline-size}` plus
+     `clamp(28px, 9.4cqi, 60px)` means span-4 -> span-8 roughly doubles the container, so clicking
+     More RESIZED THE HEADLINE — a lead jumped from ~38px to the 60px cap. A fold control was
+     restating rank. Height-only makes type scale invariant under More, which is assertable, and
+     the harness now asserts it.
+     WHAT REPLACES IT: nothing, which is the point. A span-4 module at 1440 with the rail is
+     ~430px wide and `.fcard__sum` at ~20px sets ~43 characters — a newspaper column, the correct
+     Swiss measure and the opposite of the 110-character line the span-8 module set. The "giant
+     lines" the owner objected to were a WIDTH problem that sideways expansion made worse and
+     multicol then patched.
+     The dominant was never covered by `.is-open` and still isn't: opening it changes its height,
+     as it always did. That case is now the general case rather than the exception. */
   /* THE RAIL IS 180 FIXED PIXELS, AND THAT IS WHY IT CAN LIVE AT 1280.
      It used to be `minmax(10rem,13rem)`, and rem was the bug: the theme steps the root 16 -> 18 ->
      20 -> 22px across exactly these breakpoints, so 13rem inflated from 208px to 286px precisely
@@ -950,10 +970,26 @@ layout: archive
   .fcard:hover{ background-color:color-mix(in srgb, var(--ink) 4%, transparent); }
   .fcard--ed:hover .fcard__in{ background-color:color-mix(in srgb, var(--ink) 4%, var(--panel)); }
 
-  .fcard__top{ display:flex; align-items:baseline; gap:.7em; }
+  /* `flex-wrap` is a SAFETY VALVE, not a layout change: this row is a ~60px beat and a ~45px tier
+     word in a >=316px panel, so it never wraps today. It can now hold a third item (the daybreak
+     date) beside an editorial kicker that grew to "Weekend · Cross-cutting threads · Jul 25", and
+     a row that would otherwise push `bodyScrollW` past `innerW` on a phone takes a second line
+     instead. Wrapping is the correct degradation here; a horizontal scrollbar is not. */
+  .fcard__top{ display:flex; align-items:baseline; gap:.7em; flex-wrap:wrap; }
   .fcard__beat{ font-family:var(--sans); text-transform:uppercase; letter-spacing:.1em; font-size:.6rem;
     color:var(--muted); display:inline-flex; align-items:center; gap:.5em; white-space:nowrap; }
+  /* the editorial's kicker carries the section name now ("Weekend · Cross-cutting threads · Jul
+     25"), which is too long to hold nowrap in a 352px panel — and nowrap is also what stops it
+     shrinking at all. */
+  .fcard--ed .fcard__beat{ white-space:normal; }
   .fcard__beat .ff-dot{ width:6px; height:6px; }
+  /* THE DAYBREAK MARK: the first card of a date block prints its day, and that is the entire
+     mechanism. At beat-chip scale so it joins the meta row rather than competing with the
+     headline, in --ink at 700 against the beat's --muted so the eye can tell a date from a beat
+     without a second colour or a glyph. Tabular figures so a column of them aligns.
+     It is not a rule line and not a grid child: see the Liquid comment where it is emitted. */
+  .fcard__day{ font-family:var(--sans); font-weight:700; font-size:.6rem; text-transform:uppercase;
+    letter-spacing:.14em; color:var(--ink); font-variant-numeric:tabular-nums; white-space:nowrap; }
   /* tier chip — the color code must read at a glance: solid accent (lead),
      outlined accent (feature), muted hairline (brief). */
   /* The tier word is REAL TEXT in the span (2026-07-25), not ::after generated content. It used
@@ -1075,17 +1111,37 @@ layout: archive
      every module to 1px wide (measured: domW 1, gridH 356,618 against 46,030). Inline-size
      containment makes a box's width independent of its contents, which the one-column track could
      not resolve. Scoped, both the win and the failure disappear. */
+  /* THE THREE SCALES ARE CUSTOM PROPERTIES, and that is what lets two other mechanisms speak the
+     same currency: a read card drops to the brief scale, and a card three days old drops one step.
+     Values are byte-copies of the literals that were here — nothing is re-typed, so this rule
+     changes no pixel on a fresh unread board. Declared TWICE on purpose: the `cqi` clamps only
+     mean anything where containment exists (>=700px, see the note below), so the sub-700 literals
+     are the base values and the media query rebinds the same three names. That is also why the
+     three `font-size` rules that used to live inside that media query are gone — the props carry
+     the values now, and one definition cannot drift from another. */
+  .fcard{ --hl-brief:1.15rem; --hl-feat:24px; --hl-lead:30px; }
   .fcard__hl{ font-family:var(--display); font-weight:600; line-height:1.10; margin:0;
     text-transform:uppercase; text-wrap:balance; color:var(--ink);
-    font-size:1.15rem; letter-spacing:.02em; }
-  .fcard.imp2 .fcard__hl{ font-size:24px; letter-spacing:.005em; }
-  .fcard.lead .fcard__hl{ font-size:30px; letter-spacing:.005em; }
+    font-size:var(--hl-brief); letter-spacing:.02em; }
+  .fcard.imp2 .fcard__hl{ font-size:var(--hl-feat); letter-spacing:.005em; }
+  .fcard.lead .fcard__hl{ font-size:var(--hl-lead); letter-spacing:.005em; }
   @media (min-width:700px){
-    .fcard{ container-type:inline-size; }
-    .fcard__hl{ font-size:clamp(15px, 6cqi, 26px); }
-    .fcard.imp2 .fcard__hl{ font-size:clamp(20px, 8.4cqi, 36px); }
-    .fcard.lead .fcard__hl{ font-size:clamp(28px, 9.4cqi, 60px); }
+    .fcard{ container-type:inline-size;
+      --hl-brief:clamp(15px, 6cqi, 26px); --hl-feat:clamp(20px, 8.4cqi, 36px);
+      --hl-lead:clamp(28px, 9.4cqi, 60px); }
   }
+  /* AGE IS SPOKEN IN THE SAME CURRENCY AS TIER, one step and only one. `data-age` is a clamped
+     bucket from the server (0..3, build_board), so this fires on everything three days old or
+     older: a lead drops to feature scale, a feature to brief scale, a brief is already at the
+     floor. Position and size therefore never contradict each other — date is the board's primary
+     sort key, so an older card is always both lower AND smaller.
+     DELIBERATELY NO OPACITY OR COLOUR AGEING. This file holds a 3:1/4.5:1 contrast discipline and
+     fading old-but-unread REPORTING spends contrast to say something size already says. Scale is
+     the honest lever here, and it is the one the theme-blind harness can measure.
+     Editorials carry neither `.lead` nor `.imp2`, so they age in position only — their headline is
+     a serif italic at a fixed size and has no step to take. */
+  .fcard[data-age="3"].lead .fcard__hl{ font-size:var(--hl-feat); }
+  .fcard[data-age="3"].imp2 .fcard__hl{ font-size:var(--hl-brief); }
   /* Two lead sizes, because the spec's 52px is a SPLASH size and a tier is not a width. Applied
      flat it put 52px into a 405px tail module and wrapped rank 2's headline to SEVEN lines at
      1024-1440 — the same pinching the rail diet just fixed, arriving through type instead of
@@ -1123,9 +1179,11 @@ layout: archive
   .fcard__why-lbl{ display:block; font-family:var(--sans); font-weight:700; font-size:.56rem;
     text-transform:uppercase; letter-spacing:.13em; color:var(--accent); margin-bottom:2px; }
 
-  /* THE MODULE DIET (2026-07-25). EVERY tier folds now, not only briefs, and the fold is a CLAMP
-     for leads and features rather than a hide. The full text is always authored and always in the
-     DOM, so no-JS renders all of it — the fold is presentation, never a crop.
+  /* THE MODULE DIET (2026-07-25). EVERY tier folds now, not only briefs, and the fold is a
+     WHOLE-ELEMENT HIDE. (It said "a CLAMP for leads and features rather than a hide" until
+     2026-07-26 — written before the never-crop ruling landed the same day and wrong from that
+     moment on: there is no clamp anywhere on this page.) The full text is always authored and
+     always in the DOM, so no-JS renders all of it — the fold is presentation, never a crop.
      Why: a lead module carrying its whole ~200-word summary measured 1533-1722px tall in one
      track, and that single fact defeated every composition attempt on this page. It made the
      mobile lead card ~1000px, it stretched a two-row dominant module to 3282px with ~2400px of
@@ -1214,6 +1272,34 @@ layout: archive
   .fcard.is-read .fcard__sum, .fcard.is-read .fcard__why{ opacity:.58; }  /* keeps AA contrast in light theme */
   .fcard.is-read .fcard__edp, .fcard.is-read .fcard__eddisc{ opacity:.58; }
   .fcard.is-read .fimg{ opacity:.5; }
+  /* READING COLLAPSES A CARD TO ITS SPINE (2026-07-26), which is the whole of what the ✓ means now.
+     Before this, reading was cosmetic: four `opacity:.58` selectors, full size, forever — the page
+     you had read looked exactly as long as the page you had not. The signal was already there
+     (following a headline link has marked a story read since the feature shipped); what it lacked
+     was a consequence.
+     THE SPINE IS THE INDEX LINE THE CARD WOULD HAVE BEEN if the desk had ranked it a brief:
+     `.fcard__top` (beat + the tier word, still printed as real text) + headline at brief scale +
+     More + the source/date footer + the feedback strip. Measured at 1440: ~120-150px against a
+     300-420px unread folded feature.
+     IT DOES NOT LIE ABOUT RANK. Position is untouched, the column span is untouched (read state
+     never writes `grid-column`), `.fcard__rank` still says Lead and the `.lead` accent inset stays.
+     The accent marks RANK; the type size marks LIVENESS. Reading compacts the page, so unread
+     material rises — geometrically, under the packer, with no reorder anywhere.
+     EVERY FOLD IS A WHOLE ELEMENT, never a clamp. One ellipsis and the never-crop ruling is gone.
+     `:not(.is-open)` IS LOAD-BEARING IN ALL FIVE SELECTORS: it is what lets More re-open a read
+     card in place. Drop one and More on a read card silently does nothing. Pinned in the probe.
+     THE DISCLOSURE APPEARS IN NO RULE HERE. `.fcard__eddisc` never hides — folded, expanded, read,
+     or read AND expanded. It is transparency, not content. Asserted in all four states. */
+  .fcard.is-read:not(.is-open) .fcard__deck,
+  .fcard.is-read:not(.is-open) .fcard__sum,
+  .fcard.is-read:not(.is-open) .fcard__why,
+  .fcard.is-read:not(.is-open) .fimg,
+  .fcard--ed.is-read:not(.is-open) .fcard__edp{ display:none; }
+  /* Declared AFTER the age demotion above, and that order decides a real tie: both selectors
+     compute (0,4,0), and a read LEAD must land on brief scale rather than on the demotion's
+     feature scale. Editorials are excluded because their headline is a serif italic at a fixed
+     1.15rem — handing it an Anton `cqi` clamp would make a read editorial's title BIGGER. */
+  .fcard.is-read:not(.fcard--ed) .fcard__hl{ font-size:var(--hl-brief); }
   .fcard__line{ display:flex; align-items:baseline; gap:.6em; margin-top:auto; padding-top:9px;
     border-top:1px solid var(--hair); font-family:var(--sans); font-size:.6rem; letter-spacing:.04em; color:var(--muted); }
   /* The source domain takes the red accent — in the mock the red domain is the module's
@@ -1518,13 +1604,55 @@ layout: archive
        against Arial Narrow's 0.716em, so a headline can gain a whole line at the swap. Measuring
        before it lands spans every module to a height it is about to outgrow.
        The timeout is not a nicety: if `fonts.ready` never settles the page must still pack, and
-       without the race it would sit in the banded layout forever with no error anywhere. */
-    var done = false;
-    function go(){ if (done) return; done = true; packRowSpans(); watchPack(); }
+       without the race it would sit in the banded layout forever with no error anywhere.
+       THE TIMEOUT PASS IS PROVISIONAL, AND THAT IS THE FIX (review R9). This was a one-shot race:
+       whichever fired first won and the other was discarded, so on a slow font load the 2.5s
+       timeout packed against fallback metrics and `document.fonts.ready` was then FORBIDDEN from
+       correcting it — measured, with Anton delayed four seconds: two modules overflowing their
+       rows by 19px, permanently, until an unrelated event happened to re-pack. Now both run:
+       `watchPack()` still installs exactly once, and a second `packRowSpans()` is idempotent —
+       it re-measures and rewrites the same spans when nothing changed. */
+    var armed = false;
+    function go(){
+      if (!armed){ armed = true; watchPack(); }
+      packRowSpans();
+    }
     if (document.fonts && document.fonts.ready && document.fonts.ready.then){
-      document.fonts.ready.then(go);
-      setTimeout(go, 2500);
+      setTimeout(go, 2500);                      // provisional: fonts may never settle
+      document.fonts.ready.then(go);             // final: always corrects the provisional pass
     } else { go(); }
+  }
+
+  /* ---- anchored(el, fn): RUN A HEIGHT-CHANGING MUTATION AND KEEP THE READER'S EYE STILL.
+     Read the anchor's viewport-relative top, mutate, re-derive every module's extent
+     synchronously, then pay back the difference. Under row-span packing a class toggle is only
+     half the reflow — the spans it invalidates are the other half — so the bracket has to span the
+     re-pack, or it pays back a number measured against a layout that is about to change again.
+     The second getBoundingClientRect forces layout, so `after` is the settled position.
+     Browser scroll-anchoring does not cover this: it protects content above the viewport top, not
+     the element you are looking at.
+     FIVE CALL SITES, and each one is a path that changes a card's height: the More/Less control
+     (its original behaviour, unchanged), setRead (the spine), mergeRemote (a roam landing after
+     boot), and the vote-reason show/hide/send paths (review R9 — showing that field grew the first
+     card 26.1px past its assigned row and overlaid the next one, because nothing re-packed).
+     `el` may be null: then it is a repack with no anchor to preserve. ---- */
+  function anchored(el, fn){
+    var before = el ? el.getBoundingClientRect().top : 0;
+    fn();
+    packRowSpans();
+    if (!el) return;
+    var after = el.getBoundingClientRect().top;
+    if (after !== before) window.scrollBy(0, after - before);
+  }
+  function topCard(){
+    /* the anchor for a mutation nobody clicked: the topmost card still intersecting the viewport.
+       A roam that collapses six cards ABOVE the fold would otherwise throw the reader down the
+       page four seconds after they started reading. */
+    for (var i = 0; i < cards.length; i++){
+      if (cards[i].style.display === 'none') continue;
+      if (cards[i].getBoundingClientRect().bottom > 0) return cards[i];
+    }
+    return null;
   }
 
   /* ---- read/unread — LOCAL-ONLY state in localStorage, keyed by the durable st- story id
@@ -1562,17 +1690,29 @@ layout: archive
   }
   var readState = '';                      // '' (all) | 'unread' | 'read'
   function readCounts(){
-    // every card with an id counts — story sids and editorial ed- ids alike
-    var un = 0; cards.forEach(function(c){ if (sidOf(c) && !isRead(c)) un++; });
+    /* EDITORIALS ARE EXCLUDED, so "Unread N" counts the same population as "All N" (2026-07-26).
+       `feed.count` is stories-only by definition, so counting the two editorial cards here shipped
+       "All 80" and "Unread 82" side by side on the same bar — a number that could exceed its own
+       total. Editorial cards stay read-MARKABLE; they are simply not part of this tally. */
+    var un = 0;
+    cards.forEach(function(c){
+      if (c.classList.contains('fcard--ed')) return;
+      if (sidOf(c) && !isRead(c)) un++;
+    });
     var el = filters.querySelector('.ff-uct'); if (el) el.textContent = un;
   }
   function setRead(card, v){
     var s = sidOf(card); if (!s) return;
-    if (v) readMap[s] = Date.now(); else delete readMap[s];
-    saveRead();
-    noteLocalRead(s, v);               // sync shadow (+ debounced push when signed in) — see below
-    cards.forEach(function(c){ if (sidOf(c) === s) paintRead(c); });  // repaint sid twins too
-    readCounts();
+    /* READ STATE IS NOW GEOMETRY, so it goes through the anchor bracket. A spine is ~1/3 the
+       height of the card it replaces; without this the cards below jump up under the cursor the
+       instant you tick one. */
+    anchored(card, function(){
+      if (v) readMap[s] = Date.now(); else delete readMap[s];
+      saveRead();
+      noteLocalRead(s, v);             // sync shadow (+ debounced push when signed in) — see below
+      cards.forEach(function(c){ if (sidOf(c) === s) paintRead(c); });  // repaint sid twins too
+      readCounts();
+    });
   }
 
   /* ---- topic filters (multi-select; a card matches if ANY of its topics is active) ---- */
@@ -1620,45 +1760,46 @@ layout: archive
   });
   cards.forEach(paintRead); readCounts();
 
-  /* ---- Brief-tier fold: imp-1 cards boot collapsed (JS-applied, so no-JS renders the full
-     text — the fold is presentation, never a crop). Ephemeral, no persistence; expanding is
-     NOT an implicit read. ---- */
+  /* ---- FOLD DEFAULTS: TODAY'S LEADS OPEN, EVERYTHING ELSE FOLDED (2026-07-26). JS-applied, so
+     no-JS still renders the full text — the fold is presentation, never a crop. Ephemeral, no
+     persistence; expanding is NOT an implicit read.
+     It used to be unconditional: every card with a More button booted folded, including the day's
+     lead. `data-age="0"` AND `data-imp="3"` is the same clamped expression the type scale and the
+     read spine speak — importance minus age minus read — so the resting page opens as a front
+     page (today's leads reading in full) and recedes into an index below that.
+     A BOOT-OPEN CARD DOES NOT GET `.is-open`, and that distinction is load-bearing rather than
+     pedantic: `.is-open` means "the reader opened this", and it is what overrides the read spine
+     via the `:not(.is-open)` guards. If boot-open set it, ticking today's lead as read would
+     leave it at full size forever — the one card most likely to be read first. So boot-open is
+     the ABSENCE of `is-folded`, which is also exactly what no-JS renders. ---- */
   cards.forEach(function(c){
     var b = c.querySelector('.fcard__more');
-    if (b){ c.classList.add('is-folded'); b.setAttribute('aria-expanded', 'false'); }
+    if (!b) return;
+    if (c.dataset.age === '0' && c.dataset.imp === '3'){
+      var lbl = b.querySelector('span');
+      if (lbl) lbl.textContent = 'Less';   // aria-expanded="true" is already the markup default
+      return;
+    }
+    c.classList.add('is-folded');
+    b.setAttribute('aria-expanded', 'false');
   });
   grid.addEventListener('click', function(e){
     var mb = e.target.closest('.fcard__more');
     if (!mb) return;
     var mc = mb.closest('.fcard');
-    /* Read the card's position BEFORE the class change, then again after, and pay back the
-       difference. Widening a module re-flows everything after it, which is sanctioned for a
-       user-initiated state — but the reader's eye is on the card they just clicked, and without
-       this the card can slide out from under the cursor (a span-8 module in the third column of
-       a 12-track sheet has no room left in its row, so auto-placement drops it to the next one).
-       Anchoring the CLICKED element makes that reflow invisible where it matters. The second
-       getBoundingClientRect forces layout, so `after` is the post-toggle position, not a stale
-       one. Browser scroll-anchoring does not cover this: it protects content above the viewport
-       top, not the element you are looking at.
-       THE BRACKET NOW SPANS THE RE-SPAN, and it has to. A fold changes BOTH the module's column
-       span and its content height, so under row-span packing the class toggle alone is only half
-       the reflow — the spans it invalidates are the other half, and paying the delta back before
-       they settle pays back a number measured against a layout that is about to change again.
-       Every module's extent is re-derived here, not just the clicked one: widening one module
-       re-wraps nothing else, but re-placing it moves what follows into different columns, and a
-       module's height depends on the width of the track it lands in. */
-    var before = mc.getBoundingClientRect().top;
-    var folded = mc.classList.toggle('is-folded');
-    /* `is-open` is a POSITIVE marker rather than `:not(.is-folded)`. Only cards that have a More
-       button ever get `is-folded`, so the negation would also match every card that never folds
-       and hand them an expanded span they never asked for. */
-    mc.classList.toggle('is-open', !folded);
-    mb.setAttribute('aria-expanded', String(!folded));
-    var lbl = mb.querySelector('span');
-    if (lbl) lbl.textContent = folded ? 'More' : 'Less';
-    packRowSpans();                        // synchronous: `after` must be the settled position
-    var after = mc.getBoundingClientRect().top;
-    if (after !== before) window.scrollBy(0, after - before);
+    /* The scroll-anchor bracket this handler introduced is now `anchored()` above, shared with
+       setRead, mergeRemote and the vote-reason paths. Behaviour here is unchanged. */
+    anchored(mc, function(){
+      var folded = mc.classList.toggle('is-folded');
+      /* `is-open` is a POSITIVE marker rather than `:not(.is-folded)`. Only cards that have a More
+         button ever get `is-folded`, so the negation would also match every card that never folds.
+         Its second job since 2026-07-26: it is what overrides the read spine, so a read card can
+         be re-opened in place. */
+      mc.classList.toggle('is-open', !folded);
+      mb.setAttribute('aria-expanded', String(!folded));
+      var lbl = mb.querySelector('span');
+      if (lbl) lbl.textContent = folded ? 'More' : 'Less';
+    });
   });
 
   grid.addEventListener('click', function(e){
@@ -1838,9 +1979,12 @@ layout: archive
     r.innerHTML = '<input type="text" placeholder="why? (optional)" maxlength="500" ' +
       'aria-label="Reason for this vote (optional)"/><button type="button">send</button>';
     var input = r.querySelector('input');
+    var card = box.closest('.fcard');
     function send(){
       var why = (input.value || '').trim();
-      r.style.display = 'none';
+      // R9: hiding the field shortens the card, so the row-span has to be re-derived. Before this
+      // the reason box grew the first card 26.1px past its assigned row and overlaid the next one.
+      anchored(card, function(){ r.style.display = 'none'; });
       if (!why) return;
       var onBtn = box.querySelector('.ffb-t.on');
       if (!onBtn) return;                    // vote was retracted before sending — nothing to attach to
@@ -1856,20 +2000,34 @@ layout: archive
     if (e.target.closest('.ffb-rzn')) return;           // typing/sending a reason, not voting
     var b = e.target.closest('.ffb-t'); if (!b) return;
     var box = b.closest('.fcard__fb'); var note = box.querySelector('.ffb-note');
+    var card = box.closest('.fcard');
     var noteFn = function(m){ note.textContent = m; };
     var was = b.classList.contains('on');
-    box.querySelectorAll('.ffb-t').forEach(function(x){ x.classList.remove('on'); });
-    var rz = box.querySelector('.ffb-rzn'); if (rz) rz.style.display = 'none';
-    if (was){ postFb(box, 0, noteFn); return; }  // second click on the same thumb = retract
-    b.classList.add('on');
+    /* R9: EVERY BRANCH BELOW CHANGES THE CARD'S HEIGHT — showing the reason field, hiding it on a
+       retract, hiding a previous card's field — and none of them re-packed, so the card grew past
+       the extent the last measurement pass gave it and painted over the next row. One bracket
+       around the whole mutation, so the clicked card also stays put. */
+    anchored(card, function(){
+      box.querySelectorAll('.ffb-t').forEach(function(x){ x.classList.remove('on'); });
+      var rz = box.querySelector('.ffb-rzn'); if (rz) rz.style.display = 'none';
+      if (was) return;                       // second click on the same thumb = retract
+      b.classList.add('on');
+      var up = +b.dataset.v === 1;
+      var r = rznFor(box, note), inp = r.querySelector('input');
+      inp.value = '';                        // shared box — never carry text across polarities
+      inp.placeholder = up ? 'what stood out? (optional)' : 'why? (optional)';
+      inp.setAttribute('aria-label', up ? 'Reason for thumbs-up (optional)' : 'Reason for thumbs-down (optional)');
+      r.style.display = 'flex';
+    });
+    /* The network call sits OUTSIDE the bracket: it is asynchronous, so including it would measure
+       `after` before anything it does could affect the layout, and `note`'s own text changes are
+       one line in an already-flowing strip. */
+    if (was){ postFb(box, 0, noteFn); return; }
     postFb(box, +b.dataset.v, noteFn);
-    var up = +b.dataset.v === 1;
-    var r = rznFor(box, note), inp = r.querySelector('input');
-    inp.value = '';                          // shared box — never carry text across polarities
-    inp.placeholder = up ? 'what stood out? (optional)' : 'why? (optional)';
-    inp.setAttribute('aria-label', up ? 'Reason for thumbs-up (optional)' : 'Reason for thumbs-down (optional)');
-    r.style.display = 'flex';
-    if (!up) inp.focus();                    // a complaint asks for the why; a compliment shouldn't demand one
+    if (+b.dataset.v !== 1){
+      var inp2 = box.querySelector('.ffb-rzn input');
+      if (inp2) inp2.focus();                // a complaint asks for the why; a compliment shouldn't
+    }
   });
 
   /* ---- passkey sync (2026-07-10): read-state roams across devices through the feedback
@@ -1944,8 +2102,15 @@ layout: archive
       dirty = true;
     }
     if (dirty){ saveSync(); saveRead(); }
-    cards.forEach(paintRead); readCounts();
-    if (readState) apply();                // a read-filter is active — re-evaluate visibility
+    /* A ROAM LANDS SECONDS AFTER BOOT AND NOW CHANGES GEOMETRY. Signed in on a cold cache, the
+       page paints unread, packs, and then /readstate returns and collapses cards to spines — some
+       of them ABOVE the viewport. Without the anchor bracket that throws the reader down the page
+       while they are reading. The anchor is the topmost card still on screen, since nobody clicked
+       anything here. */
+    anchored(topCard(), function(){
+      cards.forEach(paintRead); readCounts();
+      if (readState) apply();              // a read-filter is active — re-evaluate visibility
+    });
   }
   function pullRemote(){
     var s = session();
