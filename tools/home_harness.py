@@ -14,6 +14,20 @@ Usage:
         --hide-scrollbars --screenshot=/tmp/home.png --window-size=1440,2800 \
         --virtual-time-budget=8000 "file:///tmp/home-harness.html"
 
+    # or let it drive Chrome and JUDGE the result — this is the oracle, not a report:
+    python3 tools/home_harness.py --check --widths 1440,1280,1024,800,390
+    python3 tools/home_harness.py --check --hash '#synced'      # the signed-in roam path
+    python3 tools/home_harness.py --check --hash '#bootempty'   # boot-into-empty; EMPTY rows only
+
+`--check` PARSES EVERY PROBE MARKER AND EXITS NON-ZERO ON ANY FAILED ASSERTION (2026-07-26,
+external-review R17). Until then every check here appended diagnostic text and nothing on earth
+compared it: in `#synced` the EMPTY probe printed `vis=1 hidden=1` — contradicting its own
+zero-card invariant — and the harness still exited 0. The assertion table is `CHECKS` below, one row
+per claim with prose for what it means; a marker that never appears is itself a failure, because a
+probe that did not run cannot have passed. Markers are read off the probe ELEMENTS, never off the
+page text: the dumped DOM contains the probes' own source, so a bare search for `GEOM …` matches the
+code that EMITS the marker and reads its variable NAMES as values.
+
 `--hide-scrollbars` IS PART OF THE INVOCATION, not a screenshot nicety, and this line omitted it
 until 2026-07-25 — so the documented command produced numbers no report ever quoted. Headless
 Chrome lays out a 15px classic scrollbar on this 19,000px page and takes it out of the board:
@@ -90,7 +104,30 @@ Two extra URL modes:
               the only path where the pack engine's FIRST pass sees zero modules; `rePacked=1`
               there is what proves clearing the filter still packs. In this mode every card starts
               read, so the earlier probes read as expected noise (GEOM cards=0, FOLD-SKIP,
-              SYNC edread=0) — read only the EMPTY line from a #bootempty run.
+              SYNC edread=0) — read only the EMPTY line from a #bootempty run, which is exactly
+              what `--check --hash '#bootempty'` scores.
+
+Added 2026-07-26 for the ordering/seen/expansion rework:
+  #daycheck  ('DAY', 4.1s)     `data-daybreak` must be on exactly the first card of each date
+             block. Expected count is derived from the DOM's own printed `.fcard__date` values,
+             never from the attribute under test — a probe that reads its own answer is not a
+             probe. Reports DAY-SKIP in a filtered view, where daybreak is a property of the
+             BOARD and not of the view.
+  #filtercheck ('FILTER', 4.35s) order and holes with a beat filter on — `.is-filtered` drops the
+             composed band to uniform cells and re-places what survives, a placement problem the
+             resting state never exercises. Restores the board and its prefs key.
+  #readcheck ('READ', 5.6s)    the read spine, as a state machine: per-tier collapse ratio
+             (`spineOk`, scoped to imp3/imp2 — a folded brief already hides body AND why, so its
+             spine is nearly its folded height and a blanket ratio would go red on correct code),
+             read-then-More re-opening in place (`reopen`, which pins the load-bearing
+             `:not(.is-open)` guards), the AI disclosure in all four editorial states (`edOk`,
+             folded/open/read/read+open), and the ALL-READ board — a geometry state this harness
+             had never seen — for order, holes and `gridDrop`. Restores everything, storage too.
+  #shotcheck ('SHOT', 5.9s)    screenshot modes for the states the probes deliberately restore:
+             `#open`, `#read`, `#allread`. Each abandons the page mid-state and therefore clears
+             its own storage first.
+`__hmVoid()` now also reports `upInv`/`maxUp`, so EVERY state that reads it reports order —
+resting, open, filtered and all-read — where that invariant used to be checked only at rest.
 """
 import argparse
 import glob
@@ -417,6 +454,17 @@ DAY_CHECK = """<script>
 setTimeout(function(){
   var grid=document.getElementById('folioGrid');
   var cards=[].slice.call(grid.querySelectorAll('.fcard'));
+  // DAYBREAK IS A BOARD FACT, NOT A VIEW FACT, so this can only be asserted unfiltered. `daybreak`
+  // is set server-side on the first card of each date block of the WHOLE board; hide some of those
+  // cards behind a beat or read filter and the first VISIBLE card of a block need not carry it.
+  // That is accepted design, not a defect — but a probe that scored it as one reported dbOk=0 in
+  // `#synced` (one card hidden by a roamed Unread filter) and in `#bootempty` (all of them),
+  // which is a probe printing its own proof of a failure that is not there.
+  if(grid.classList.contains('is-filtered')){
+    var s=document.createElement('div');s.id='daycheck';
+    s.textContent='DAY-SKIP filtered state — daybreak is a property of the board, not of the view';
+    document.body.appendChild(s);return;
+  }
   var prev=null,expected=0,marked=0,printed=0,mismatch=0;
   cards.forEach(function(c){
     var dEl=c.querySelector('.fcard__date'),d=dEl?dEl.textContent.trim():'';
@@ -814,6 +862,12 @@ setTimeout(function(){
     var fb=c.querySelector('.fcard__fb');
     if(!(c.dataset.story||(fb&&fb.dataset.story)))noSid++;
     if(boot)return;                          // the seeded read map already did this
+    // ONLY WHAT IS NOT ALREADY READ — the ✓ is a TOGGLE, and this loop used to assume every card
+    // boots unread. In `#synced` a roamed remote mark lands one card read before this runs, so the
+    // click UN-read it: the probe then reported `vis=1 hidden=1` with a zero-rect message, which is
+    // the self-contradiction the external review caught (R17) and read as a broken empty state
+    // rather than as a broken probe.
+    if(c.classList.contains('is-read'))return;
     var b=c.querySelector('.fcard__read'); if(b)b.click();
   });
   if(!boot)document.querySelector('.ff-rbtn[data-rs="unread"]').click();
@@ -848,6 +902,12 @@ setTimeout(function(){
     document.querySelector('.ff-rbtn[data-rs=""]').click();      // back to All ...
     if(!boot)cards.forEach(function(c){ if(c.classList.contains('is-read')){
       var b=c.querySelector('.fcard__read'); if(b)b.click(); } });   // ... and unread again
+    /* `#bootempty` clears the map it was SEEDED with (PRE_SYNC wrote all 82 entries before the
+       layout script ran, so there is nothing for this probe to un-click). Leaning on PRE_SYNC's
+       own reset to cover it is a side effect of a different probe, which is exactly what the note
+       above refuses to rely on. */
+    if(boot){ try{ ['homeRead:v1','topicPrefs:v1','syncState:v1'].forEach(function(k){
+      localStorage.removeItem(k); }); }catch(e){} }
     setTimeout(function(){
       var back=cards.filter(function(c){return c.style.display!=='none';}).length;
       var spanned=cards.filter(function(c){return !!c.style.gridRow;}).length;
@@ -1170,8 +1230,20 @@ CHECKS = [
     ("SYNC", "edread", lambda v: v == "1", "an editorial card's read toggle round-trips"),
 ]
 
+# Signed-in only (`--hash '#synced'`). Read state now changes GEOMETRY, so a roam landing after boot
+# is the highest-risk path in this rework — it repaints spines, some above the viewport, and it is
+# the reason mergeRemote() got the anchor bracket. Every row in CHECKS above holds in this mode too
+# (DAY correctly reports DAY-SKIP, since the roamed Unread filter makes it a filtered view).
+SYNCED_CHECKS = [
+    ("SYNC", "gets", lambda v: v == "1", "the signed-in boot pulls /readstate exactly once"),
+    ("SYNC", "painted", lambda v: v == "1", "a remote mark paints the card read"),
+    ("SYNC", "unpainted", lambda v: v == "1", "a newer remote tombstone un-marks a locally-read card"),
+    ("SYNC", "shadow", lambda v: v == "1", "both land in the syncState:v1 shadow"),
+    ("SYNC", "prefsRs", lambda v: v == "1", "a roamed read-filter lands on the segmented toggle"),
+]
 
-def _run_check(artifact, width, height=2800, budget=9000):
+
+def _run_check(artifact, width, height=2800, budget=9000, hash=""):
     """Render the artifact in headless Chrome, parse every probe marker, apply CHECKS.
 
     Returns (failures, lines). A marker that never appears is itself a failure: a probe that did
@@ -1181,7 +1253,7 @@ def _run_check(artifact, width, height=2800, budget=9000):
     import subprocess
     cmd = [CHROME, "--headless=new", "--hide-scrollbars", "--disable-gpu", "--no-sandbox",
            "--virtual-time-budget=%d" % budget, "--window-size=%d,%d" % (width, height),
-           "--dump-dom", "file://" + artifact]
+           "--dump-dom", "file://" + artifact + hash]
     out = subprocess.run(cmd, capture_output=True, text=True, timeout=300).stdout
     # PARSED OFF THE PROBE ELEMENTS, never off the page text. The dumped DOM contains the probes'
     # own SOURCE — they are inline <script> bodies — so a bare search for `GEOM …` matches the code
@@ -1204,7 +1276,15 @@ def _run_check(artifact, width, height=2800, budget=9000):
             lines.append("  %s" % marks[mk][2])
         else:
             lines.append("  %s  <MARKER MISSING>" % mk)
-    for row in CHECKS:
+    if hash == "#bootempty":
+        # The ONLY mode where the pack engine's first pass ever sees zero modules, and the only
+        # thing it can prove: clearing the filter re-arms the packer. Every other row here is
+        # expected noise there (GEOM cards=0, FOLD-SKIP, SYNC edread=0 — every card boots read), so
+        # scoring them would be scoring the mode's own premise as a failure.
+        rows = [r for r in CHECKS if r[0] == "EMPTY"]
+    else:
+        rows = CHECKS + (SYNCED_CHECKS if hash == "#synced" else [])
+    for row in rows:
         mk, key, pred, why = row[0], row[1], row[2], row[3]
         if len(row) > 4 and width < row[4]:
             continue
@@ -1236,6 +1316,8 @@ def main():
                          "on any failed assertion (see CHECKS)")
     ap.add_argument("--widths", default="1440",
                     help="--check only: comma-separated viewport widths")
+    ap.add_argument("--hash", default="",
+                    help="--check only: a URL hash mode to drive (e.g. '#synced', '#bootempty')")
     args = ap.parse_args()
 
     feed = json.load(open(os.path.join(ROOT, "_data", "homefeed.json")))
@@ -1325,14 +1407,15 @@ def main():
         return
     bad = 0
     for w in [int(x) for x in args.widths.split(",") if x.strip()]:
-        failures, lines = _run_check(os.path.abspath(args.out), w)
-        print("--- %dpx" % w)
+        failures, lines = _run_check(os.path.abspath(args.out), w, hash=args.hash)
+        print("--- %dpx%s" % (w, (" " + args.hash) if args.hash else ""))
         for ln in lines:
             print(ln)
         for f in failures:
             print("  FAIL %s" % f)
-        print("  %s at %dpx (%d assertion(s) failed)"
-              % ("PASS" if not failures else "FAIL", w, len(failures)))
+        print("  %s at %dpx%s (%d assertion(s) failed)"
+              % ("PASS" if not failures else "FAIL", w,
+                 (" " + args.hash) if args.hash else "", len(failures)))
         bad += len(failures)
     if bad:
         raise SystemExit("home_harness: %d assertion(s) failed" % bad)
