@@ -1388,24 +1388,29 @@ layout: archive
      was a consequence.
      THE SPINE IS THE INDEX LINE THE CARD WOULD HAVE BEEN if the desk had ranked it a brief:
      `.fcard__top` (beat + the tier word, still printed as real text) + headline at brief scale +
-     More + the source/date footer + the feedback strip. Measured at 1440: ~120-150px against a
-     300-420px unread folded feature.
+     the photo, dimmed + More + the source/date footer + the feedback strip. Measured at 1440:
+     ~120-150px against a 300-420px unread folded feature, plus the image slot where one exists.
+     THE PHOTO STAYS, AND THAT IS AN OWNER RULING (2026-07-26 evening), not an oversight: the
+     spine originally hid `.fimg` too, and on a roamed mostly-read board that stripped every
+     picture off the resting page — the owner met an imageless front page and rejected it. The
+     spine hides PROSE; the picture keeps the paper looking like one, and the `opacity:.5` dim
+     above already marks it spent. The compaction this costs is the slot itself (~130-270px on
+     cards that carry one), accepted knowingly against the recede-so-unread-rises mechanic.
      IT DOES NOT LIE ABOUT RANK. Position is untouched, the column span is untouched (read state
      never writes `grid-column`), `.fcard__rank` still says Lead and the `.lead` accent inset stays.
      The accent marks RANK; the type size marks LIVENESS. Reading compacts the page, so unread
      material rises — geometrically, under the packer, with no reorder anywhere.
      EVERY FOLD IS A WHOLE ELEMENT, never a clamp. One ellipsis and the never-crop ruling is gone.
-     `:not(.is-open)` IS LOAD-BEARING IN ALL FIVE SELECTORS: it is what lets More re-open a read
+     `:not(.is-open)` IS LOAD-BEARING IN ALL FOUR SELECTORS: it is what lets More re-open a read
      card in place. Drop one and More on a read card silently does nothing. Pinned in the probe.
      THE DISCLOSURE APPEARS IN NO RULE HERE. `.fcard__eddisc` never hides — folded, expanded, read,
      or read AND expanded. It is transparency, not content. Asserted in all four states. */
   .fcard.is-read:not(.is-open) .fcard__deck,
   .fcard.is-read:not(.is-open) .fcard__sum,
   .fcard.is-read:not(.is-open) .fcard__why,
-  .fcard.is-read:not(.is-open) .fimg,
   .fcard--ed.is-read:not(.is-open) .fcard__edp{ display:none; }
-  /* `:not(.is-open)` IS THE SIXTH GUARD, and it was missing until 2026-07-26 (state matrix, E4).
-     The five `display:none` rules above carry it; this font-size rule did not, so More on a read
+  /* `:not(.is-open)` IS THE FIFTH GUARD, and it was missing until 2026-07-26 (state matrix, E4).
+     The four `display:none` rules above carry it; this font-size rule did not, so More on a read
      card gave back the body and kept the brief-sized headline — measured on a read lead at 1440,
      37.976px against 24.24px, i.e. the two halves of the read demotion disagreeing about what
      `.is-open` overrides. Either the reader opened the card or they did not.

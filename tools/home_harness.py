@@ -608,7 +608,17 @@ setTimeout(function(){
 
 # THE READ SPINE — the one probe for the 2026-07-26 seen rework, and it is a state machine rather
 # than four probes fighting over the same page. In order:
-#   1. per-card, mark a lead and a feature read and measure the collapse (spine <= 0.55x folded).
+#   1. per-card, mark a lead and a feature read and measure the collapse (spine <= 0.70x folded,
+#      IMAGE SLOT EXCLUDED on both sides). The photo survives the read spine by owner ruling
+#      (2026-07-26 evening — an all-read board had gone imageless), and its clamp() height is
+#      identical folded and read, so subtracting it isolates the prose collapse.
+#      0.70 IS RE-DERIVED, NOT THE OLD 0.55 LOOSENED CASUALLY: the old bound was measured with
+#      the image in the DENOMINATOR only (the spine hid it), so the slot flattered every image
+#      card's ratio. Clean prose collapse measures 0.52 at 1024/1440 and 0.63 at 700 — at narrow
+#      containers the brief and feature headline scales converge under the cqi clamp floor, so
+#      the collapse there is mostly the why/body and the fixed chrome is a larger fraction. A
+#      spine that failed to collapse reads >=0.9, so 0.70 still separates the two states at
+#      every packed width without going red on correct code.
 #      SCOPED TO imp3/imp2 ON PURPOSE: a brief already hides its body AND its why when folded
 #      (`.fcard[data-imp="1"].is-folded`), and an editorial already hides its paragraphs, so for
 #      those tiers the spine IS very nearly the folded card and a blanket ratio would go red on a
@@ -642,6 +652,7 @@ setTimeout(function(){
 
   // 1 + 2 — per-tier collapse, then re-open in place
   var worst=0,measured=0,reopen=-1;
+  function imgH(c){ var im=c.querySelector('.fimg'); return im?im.getBoundingClientRect().height:0; }
   var probe=cards.filter(function(c){
     return !c.classList.contains('fcard--ed')
       && (c.dataset.imp==='3'||c.dataset.imp==='2')
@@ -653,9 +664,15 @@ setTimeout(function(){
       && c.classList.contains('is-folded') && c.querySelector('.fcard__sum');
   }).slice(0,6);
   probe.forEach(function(c){
-    var before=h(c);
+    // THE IMAGE SLOT IS SUBTRACTED FROM BOTH SIDES: the photo survives the spine (owner ruling,
+    // 2026-07-26 evening) at an identical clamp() height, so the ratio below is the collapse of
+    // everything else — the geometry the 0.55 bound has always been about. Measured before AND
+    // after, not assumed equal: if the spine ever hid the image again, iH1 would go to 0 and the
+    // ratio would harden rather than flatter (and imgKept below goes red anyway).
+    var iH0=imgH(c),before=h(c);
     tick(c);
-    var ratio=before>0?h(c)/before:9;
+    var iH1=imgH(c),denom=before-iH0;
+    var ratio=denom>0?(h(c)-iH1)/denom:9;
     if(ratio>worst)worst=ratio;
     measured++;
   });
@@ -689,6 +706,17 @@ setTimeout(function(){
   cards.forEach(function(c){ if(!c.classList.contains('is-read'))tick(c); });
   var allVoid=window.__hmVoid();
   var gridH1=Math.round(grid.getBoundingClientRect().height);
+  // EVERY PICTURE SURVIVES AN ALL-READ BOARD — the pin for the owner ruling above, measured on
+  // all ~76 image cards rather than the 6-card ratio sample so it cannot be vacuous. Filter-hidden
+  // cards are excluded (#synced runs this probe under a roamed Unread filter, where one card's
+  // display:none zeroes every rect it contains).
+  var imgTot=0,imgVis=0;
+  cards.forEach(function(c){
+    if(c.style.display==='none')return;
+    var im=c.querySelector('.fimg'); if(!im)return;
+    imgTot++; if(im.getBoundingClientRect().height>0)imgVis++;
+  });
+  var imgKept=(imgTot>0&&imgVis===imgTot)?1:0;
   cards.forEach(function(c){ if(c.classList.contains('is-read'))tick(c); });
   window.__hmRestoreBootOpen();          // reading normalized them to folded; un-reading does not undo it
   var gridH2=Math.round(grid.getBoundingClientRect().height);
@@ -698,7 +726,8 @@ setTimeout(function(){
   var drop=gridH0>0?Math.round(100*(gridH0-gridH1)/gridH0):-1;
   var d=document.createElement('div');d.id='readcheck';
   d.textContent='READ measured='+measured+' worstRatio='+(Math.round(worst*100)/100)
-    +' spineOk='+((measured>0&&worst<=0.55)?1:0)
+    +' spineOk='+((measured>0&&worst<=0.70)?1:0)
+    +' imgTot='+imgTot+' imgKept='+imgKept
     +' reopen='+reopen+' edStates='+(edStates||'-')+' edOk='+edOk
     +' gridH0='+gridH0+' allReadH='+gridH1+' gridDrop='+drop
     +' restored='+((Math.abs(gridH2-gridH0)<=8)?1:0)
@@ -2225,7 +2254,9 @@ CHECKS = [
     ("LEADREAD", "upInvRead", lambda v: v == "0", "order holds through the read transition"),
     ("LEADREAD", "upInvOpen", lambda v: v == "0", "order holds through the re-open"),
     ("LEADREAD", "restored", lambda v: v == "1", "the probe put the boot-open card back"),
-    ("READ", "spineOk", lambda v: v == "1", "a read lead/feature collapses to <=0.55x its folded height"),
+    ("READ", "spineOk", lambda v: v == "1",
+     "a read lead/feature collapses to <=0.70x its folded height (image slot excluded)"),
+    ("READ", "imgKept", lambda v: v == "1", "every image card on an all-read board keeps its photo"),
     ("READ", "reopen", lambda v: v == "1", "More re-opens a READ card in place (:not(.is-open) guards)"),
     ("READ", "edOk", lambda v: v == "1", "the AI disclosure is visible folded, open, read and read+open"),
     ("READ", "gridDrop", lambda v: int(v) >= 25, "an all-read board is at least 25% shorter"),
