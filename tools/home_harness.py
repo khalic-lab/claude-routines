@@ -1116,6 +1116,22 @@ setTimeout(function(){
          together are the symptom, so both are reported as one derived flag. */
       put2('railTraps', (rail.scrollHeight - rail.clientHeight > 2
         && rcs.overscrollBehaviorY === 'contain') ? 1 : 0);
+      /* IS THE TRAP TOP-SPECIFIC, OR PERMANENT? The owner reports it "right at the top", and the
+         answer changes what a fix would even be: a bug that only bites at scrollY=0 is a different
+         thing from a standing property of the left column that you happen to meet on arrival.
+         `max-height` is viewport-relative and the rail's content is fixed, so the prediction is that
+         the delta does not move -- measured rather than assumed, at the top and 4000px down, and the
+         scroll position is put back (this file's own rule: a probe may not leak scrollY). */
+      var sy0 = scrollY;
+      scrollTo(0, 4000);
+      put2('railDyScrolled', rail.scrollHeight - rail.clientHeight);
+      var rr2 = rail.getBoundingClientRect();
+      put2('railRectScrolled', [Math.round(rr2.left), Math.round(rr2.top), Math.round(rr2.width),
+                                Math.round(rr2.height)].join(','));
+      put2('railTrapConstant',
+        (rail.scrollHeight - rail.clientHeight) === (rr.height ? (2010 - Math.round(rr.height)) : -1)
+          ? 1 : 0);
+      scrollTo(0, sy0);
     } else put2('railPresent', 0);
     /* ---- STRUCTURE ABOVE THE BOARD. What this artifact can see is what `_layouts/home.html`
        owns: the h1, the tagline, the How-this-works trigger and the two chip sets. `.masthead`,
@@ -2582,10 +2598,12 @@ def _mx_struct_row(cell, out, n, total, log=None):
                     k.get("filBottom"), k.get("filDx"), k.get("filDy"), k.get("filRect")))
     lines.append("        rail: %s"
                  % ("ABSENT" if k.get("railPresent") == "0" else
-                    "ov=%s ob=%s pos=%s top=%s maxH=%s client=%s scroll=%s dy=%s traps=%s rect=%s"
+                    "ov=%s ob=%s pos=%s top=%s maxH=%s client=%s scroll=%s dy=%s traps=%s "
+                    "rect=%s | scrolled-4000px: dy=%s rect=%s"
                     % (k.get("railOy"), k.get("railOb"), k.get("railPos"), k.get("railTop"),
                        k.get("railMaxH"), k.get("railClientH"), k.get("railScrollH"),
-                       k.get("railDy"), k.get("railTraps"), k.get("railRect"))))
+                       k.get("railDy"), k.get("railTraps"), k.get("railRect"),
+                       k.get("railDyScrolled"), k.get("railRectScrolled"))))
     lines.append("        header: h1=%s tagline=%s hiw=%s | chips bar=%s(vis %s) rail=%s(vis %s)"
                  % (k.get("h1"), k.get("tagline"), k.get("hiw"), k.get("barChips"),
                     k.get("barChipsVis"), k.get("railChips"), k.get("railChipsVis")))
