@@ -128,12 +128,24 @@ layout: archive
     {%- if review %}
     <a class="rail-review" href="{{ review.url | relative_url }}">Weekly pipeline review · {{ review.date | date: "%-d %b" }}</a>
     {%- endif %}
-    {%- comment -%} A <p>, not an <h2>, for the reason the Beat label is one: every story headline
-      on this page is an <h2>, so a rail heading seats furniture in the level that means "a story"
-      and lands in a reader's heading-navigation list among 82 headlines. The index keeps a
-      programmatic name through `aria-labelledby` on the <dl>, so nothing is lost by dropping the
-      heading semantics — the label is still announced when the list is entered. {%- endcomment -%}
-    <p class="rail-title" id="railIndexTitle">How to read this page</p>
+    {%- comment -%} THE REFERENCE PROSE IS COLLAPSED BEHIND A NATIVE <details> (2026-07-26), and the
+      number behind it is the rail's own scrollport. The rail measured 2010px of content against a
+      789px scrollport at a real 860px laptop viewport — 1221px below its own fold, which is the left
+      180px of the entire first screen and what the owner reported as "a double scroll issue right at
+      the top". The index and the two-sentence rule are 1042 of those pixels and they are read ONCE;
+      the beats, the How-this-works trigger and the review link are controls and stay in the open.
+      Copy is unchanged and nothing is trimmed — a fold, never a crop, exactly like `.fcard__more`.
+      NATIVE, so no script runs for it: with JS off the summary still opens the index (the same
+      reasoning as the propose disclosure at the page foot, 25b6a62). Collapsed the rail measures
+      ~968px, so `overflow-y:auto` + `max-height` stay as the safety valve for viewports shorter than
+      that — see the rail's CSS, where `overscroll-behavior` is deliberately NOT `contain` any more.
+      A <summary>, not an <h2>, for the reason the Beat label is a <p>: every story headline on this
+      page is an <h2>, so a rail heading seats furniture in the level that means "a story" and lands
+      in a reader's heading-navigation list among 82 headlines. `<summary>` is announced as a
+      disclosure control, and it keeps the id `aria-labelledby` on the <dl> resolves against, so the
+      index is still named when it is entered. {%- endcomment -%}
+    <details class="rail-d">
+    <summary class="rail-title rail-s" id="railIndexTitle">How to read this page</summary>
     <dl class="rail-index" aria-labelledby="railIndexTitle">
       <dt data-imp="3"><i class="tier-key" aria-hidden="true"></i>Lead</dt>
       <dd>The day's most consequential reporting. Largest type, top of the page.</dd>
@@ -157,6 +169,7 @@ layout: archive
       story matters. Position is the ranking." — true, and silent about the half of the system the
       reader actually operates. {%- endcomment -%}
     <p class="rail-note"><strong>Newest first, then what the desk thinks matters most — position is the ranking, and nothing you do moves it.</strong> Everything else is size: a story you've read, or one that has aged past its edition, shrinks where it stands; opening one makes it longer down its own column, never wider.</p>
+    </details>
   </aside>
   <div class="folio-grid" id="folioGrid" tabindex="-1">
     {%- comment -%}
@@ -829,10 +842,21 @@ layout: archive
        `top:55px` clears the sticky control bar exactly — that bar is `top:0` and 47px tall here,
        so 55 leaves 8px of air rather than the old 64px guess. The max-height subtracts the same
        offset plus a bottom gap, which is what keeps the last rail item on screen.
-       `overscroll-behavior:contain` stops a flick inside the rail from chaining into the page and
-       scrolling the sheet out from under the reader once the rail hits its end. */
+       `overscroll-behavior` IS DELIBERATELY LEFT AT `auto`, and it used to be `contain` — that is
+       the owner's "double scroll issue right at the top", removed 2026-07-26. `contain` was there to
+       stop a flick inside the rail from scrolling the sheet out from under the reader; what it
+       actually did was refuse to hand the remainder to the page, so a wheel anywhere in the left
+       180px of the first screen scrolled 1221px of clipped rail and then stopped dead. A rail that
+       chains at its boundary can be over-scrolled; a rail that traps cannot be left. The measurement
+       is in the census (`railTraps`), and the harness now asserts this is not `contain`.
+       THE OTHER HALF OF THAT FIX IS THE MARKUP: the index and the rule note moved behind a closed
+       `<details>` (see the rail above), which took the rail from 2010px of content to ~968px against
+       a 789px scrollport at an 860px viewport. It does not reach zero and cannot: the 13-chip beat
+       list (418px) and the nameplate (247px) are 69% of that budget and both are controls or the
+       masthead. So this scrollport stays — as the safety valve it was introduced to be, for viewports
+       genuinely shorter than the rail's collapsed furniture, and no longer as the page's front door. */
     .folio-rail{ display:block; grid-column:1; align-self:start; position:sticky; top:55px;
-      max-height:calc(100vh - 71px); overflow-y:auto; overscroll-behavior:contain;
+      max-height:calc(100vh - 71px); overflow-y:auto;
       scrollbar-width:thin;
       padding:0 20px 24px 0; border-inline-end:1px solid var(--rule); }
     .folio-grid{ grid-column:2; }
@@ -869,6 +893,24 @@ layout: archive
   .rail-title{ font-family:var(--sans); font-size:.62rem; font-weight:700; text-transform:uppercase;
     letter-spacing:.15em; color:var(--ink); margin:0 0 .9em; padding-bottom:.7em;
     border-bottom:1px solid var(--rule); }
+  /* THE INDEX DISCLOSURE (2026-07-26) — the same native <details> the propose form uses (25b6a62),
+     because the rail had 1221px of reference prose below its own scrollport's fold and the fix is a
+     fold, not a cut. Reuses `.rail-title` for the voice, so the label reads identically to "Beat"
+     above it, and adds only what a summary needs.
+     THE UA TRIANGLE HAS TO BE KILLED TWICE: `display:flex` drops the list-item box (Chrome/Firefox)
+     and `::-webkit-details-marker` is Safari's separate marker element. Remove either one alone and
+     the triangle comes back in half the browsers.
+     THE +/- IS PUSHED TO THE RULE rather than leading the label as the propose form's does, and that
+     is the rail's own idiom: `.rail-beats .ff-chip .ff-ct` sends its count the same way. It also keeps
+     both rail titles' labels on one left edge — a leading marker would indent "How to read this page"
+     ~14px past "Beat" and read as a different kind of line. */
+  .rail-d{ margin:0; }
+  .rail-s{ display:flex; align-items:center; cursor:pointer; list-style:none; }
+  .rail-s::-webkit-details-marker{ display:none; }
+  .rail-s::before{ content:'+'; margin-inline-start:auto; padding-inline-start:.6em;
+    font-size:1rem; line-height:0; font-weight:400; letter-spacing:0; color:var(--muted-ui); }
+  .rail-d[open] > .rail-s::before{ content:'\2212'; }
+  .rail-s:hover::before{ color:var(--accent); }
   .rail-index{ margin:0; font-family:var(--sans); }
   .rail-index dt{ display:flex; align-items:center; gap:.55em; font-size:.62rem; font-weight:700;
     text-transform:uppercase; letter-spacing:.12em; color:var(--ink); margin-top:1.1em; }
@@ -1390,7 +1432,8 @@ layout: archive
   .ffs-invite:focus-visible, .fcard__read:focus-visible, .ffb-rzn input:focus-visible{
     outline:2px solid var(--accent); outline-offset:1px; }
   .ffs-btn:focus-visible, .ffs-lnk:focus-visible, .fcard__more:focus-visible, .ffb-t:focus-visible,
-  .hiw-open:focus-visible, .hiw__x:focus-visible, .hiw__close-end:focus-visible{
+  .hiw-open:focus-visible, .hiw__x:focus-visible, .hiw__close-end:focus-visible,
+  .rail-s:focus-visible{
     outline:2px solid var(--accent); outline-offset:2px; }
 
   /* THE EMPTY BOARD (2026-07-25). One quiet flush-LEFT line where the first module would be, and
