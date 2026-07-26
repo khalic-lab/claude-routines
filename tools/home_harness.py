@@ -341,6 +341,7 @@ window.__hmRestoreBootOpen = function(){
      synchronously; open-then-close is the pass, and FOLD_CHECK already asserts that round trip
      restores the card byte-for-byte in height. No test hook is added to the layout for this. */
   if (n){
+    var sy = scrollY;                 // the fold toggle below pays back a scroll delta for ITS card
     var other = null, all = document.querySelectorAll('.fcard.is-folded');
     for (var i = 0; i < all.length; i++){
       if (window.__hmBootOpen.indexOf(all[i]) < 0 && all[i].querySelector('.fcard__more')){
@@ -348,6 +349,7 @@ window.__hmRestoreBootOpen = function(){
       }
     }
     if (other){ var mb = other.querySelector('.fcard__more'); mb.click(); mb.click(); }
+    scrollTo(0, sy);
   }
   return n;
 };
@@ -540,7 +542,7 @@ setTimeout(function(){
   var out='LEADREAD-SKIP no boot-open card with a body';
   if(boot.length){
     var c=boot[0], mb=c.querySelector('.fcard__more'), sum=c.querySelector('.fcard__sum');
-    var rb=c.querySelector('.fcard__read');
+    var rb=c.querySelector('.fcard__read'), sy0=scrollY;
     var h0=Math.round(c.getBoundingClientRect().height);
     var bodyBefore=Math.round(sum.getBoundingClientRect().height);
     rb.click();                                  // mark read
@@ -560,6 +562,7 @@ setTimeout(function(){
       && !c.classList.contains('is-folded')
       && mb.querySelector('span').textContent.trim()==='Less'
       && Math.round(c.getBoundingClientRect().height)===h0)?1:0;
+    scrollTo(0,sy0);
     try{ ['homeRead:v1','syncState:v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
     out='LEADREAD boot='+boot.length+' imp='+c.dataset.imp+' age='+c.dataset.age
       +' bodyBefore='+bodyBefore+' spined='+spined+' folded='+folded
@@ -599,6 +602,11 @@ setTimeout(function(){
   var cards=[].slice.call(grid.querySelectorAll('.fcard'));
   function h(c){ return c.getBoundingClientRect().height; }
   function tick(c){ var b=c.querySelector('.fcard__read'); if(b)b.click(); }
+  /* EVERY TICK PAYS BACK A SCROLL DELTA (setRead runs inside anchored(), because a spine is ~1/3 the
+     height of the card it replaces). ~180 of them accumulate, so this probe has to restore the
+     scroll position the way FOLD_CHECK always has — otherwise the next probe, and the screenshot,
+     open on a page scrolled somewhere arbitrary. */
+  var scroll0=scrollY;
   var gridH0=Math.round(grid.getBoundingClientRect().height);
 
   // 1 + 2 — per-tier collapse, then re-open in place
@@ -650,6 +658,7 @@ setTimeout(function(){
   var gridH2=Math.round(grid.getBoundingClientRect().height);
   try{ ['homeRead:v1','syncState:v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
 
+  scrollTo(0,scroll0);
   var drop=gridH0>0?Math.round(100*(gridH0-gridH1)/gridH0):-1;
   var d=document.createElement('div');d.id='readcheck';
   d.textContent='READ measured='+measured+' worstRatio='+(Math.round(worst*100)/100)
@@ -715,6 +724,11 @@ setTimeout(function(){
   }
   try{ ['homeRead:v1','syncState:v1','topicPrefs:v1'].forEach(function(k){
     localStorage.removeItem(k); }); }catch(e){}
+  /* THE SCREENSHOT OPENS AT THE TOP OF THE PAGE, always. Marking read runs through anchored(), which
+     pays back a scroll delta per card, so a mode that ticks ten of them ends up looking at wherever
+     the last compensation left it — a 1440-read10 shot came back with 790px of blank paper above the
+     board. What this mode photographs is the resting first screen in a given state, so it says so. */
+  scrollTo(0,0);
   var d=document.createElement('div');d.id='shotcheck';
   d.textContent='SHOT mode='+h.slice(1)+' '+what;document.body.appendChild(d);
 },5900);
