@@ -101,6 +101,33 @@ layout: archive
       <button class="ff-chip" type="button" data-topic="{{ t.key }}" aria-pressed="false" style="--tc:{{ t.color }}"><span class="ff-dot"></span>{{ t.label }} <span class="ff-ct">{{ t.count }}</span></button>
       {% endfor %}
     </div>
+    {%- comment -%} THE TWO ACTION ITEMS SIT ABOVE THE REFERENCE PROSE (2026-07-26), and that is a
+      reachability decision with a number behind it. The rail scrolls internally (max-height +
+      overflow-y:auto since 2026-07-25, because a sticky box taller than the viewport pins at the top
+      and everything past the fold is unreachable). Once the index gained a Read entry and the note
+      grew to the two-sentence rule, the rail measured 2004px against a 1142px window at a 1300px
+      viewport — so both of these CONTROLS sat 860px inside that internal scroll, where the index and
+      the note are reference material you read once. Actions before reference; the copy is unchanged.
+    {%- endcomment -%}
+    {%- comment -%} The SAME control as the one above the board, not a second one: both carry
+      `.hiw-open` and the modal script binds every instance. Only one is ever visible — the
+      centered header is hidden at >=1280 and the rail does not exist below it. {%- endcomment -%}
+    <button class="hiw-open hiw-open--rail" type="button" aria-haspopup="dialog"
+            aria-controls="hiwModal" aria-expanded="false">
+      <svg viewBox="0 0 30 8" aria-hidden="true"><circle cx="4" cy="4" r="2.2"/><path d="M8 4h4.8"/><circle cx="15" cy="4" r="2.2"/><path d="M19 4h4.8"/><circle cx="26" cy="4" r="2.2"/></svg>
+      How this works
+    </button>
+    {%- comment -%} THE ONE LINK OFF THIS PAGE THAT IS NOT A STORY, and it belongs in the rail
+      rather than in the grid: the Sunday review is the desk auditing itself, which is furniture
+      about the paper, not an item in it. Evaluator posts are the only ones that still render a page
+      (`published: true` in their own front matter against `_config.yml`'s blanket
+      `published: false`), so `site.categories.evaluator` holds exactly them, newest first — no
+      filtering, and it cannot pick up a brief. Dated, because an undated "review" link says nothing
+      about whether anyone has looked lately. {%- endcomment -%}
+    {%- assign review = site.categories.evaluator | first -%}
+    {%- if review %}
+    <a class="rail-review" href="{{ review.url | relative_url }}">Weekly pipeline review · {{ review.date | date: "%-d %b" }}</a>
+    {%- endif %}
     {%- comment -%} A <p>, not an <h2>, for the reason the Beat label is one: every story headline
       on this page is an <h2>, so a rail heading seats furniture in the level that means "a story"
       and lands in a reader's heading-navigation list among 82 headlines. The index keeps a
@@ -130,25 +157,6 @@ layout: archive
       story matters. Position is the ranking." — true, and silent about the half of the system the
       reader actually operates. {%- endcomment -%}
     <p class="rail-note"><strong>Newest first, then what the desk thinks matters most — position is the ranking, and nothing you do moves it.</strong> Everything else is size: a story you've read, or one that has aged past its edition, shrinks where it stands; opening one makes it longer down its own column, never wider.</p>
-    {%- comment -%} The SAME control as the one above the board, not a second one: both carry
-      `.hiw-open` and the modal script binds every instance. Only one is ever visible — the
-      centered header is hidden at >=1280 and the rail does not exist below it. {%- endcomment -%}
-    <button class="hiw-open hiw-open--rail" type="button" aria-haspopup="dialog"
-            aria-controls="hiwModal" aria-expanded="false">
-      <svg viewBox="0 0 30 8" aria-hidden="true"><circle cx="4" cy="4" r="2.2"/><path d="M8 4h4.8"/><circle cx="15" cy="4" r="2.2"/><path d="M19 4h4.8"/><circle cx="26" cy="4" r="2.2"/></svg>
-      How this works
-    </button>
-    {%- comment -%} THE ONE LINK OFF THIS PAGE THAT IS NOT A STORY, and it belongs in the rail
-      rather than in the grid: the Sunday review is the desk auditing itself, which is furniture
-      about the paper, not an item in it. Evaluator posts are the only ones that still render a page
-      (`published: true` in their own front matter against `_config.yml`'s blanket
-      `published: false`), so `site.categories.evaluator` holds exactly them, newest first — no
-      filtering, and it cannot pick up a brief. Dated, because an undated "review" link says nothing
-      about whether anyone has looked lately. {%- endcomment -%}
-    {%- assign review = site.categories.evaluator | first -%}
-    {%- if review %}
-    <a class="rail-review" href="{{ review.url | relative_url }}">Weekly pipeline review · {{ review.date | date: "%-d %b" }}</a>
-    {%- endif %}
   </aside>
   <div class="folio-grid" id="folioGrid" tabindex="-1">
     {%- comment -%}
@@ -931,8 +939,11 @@ layout: archive
   .rail-note strong{ color:var(--ink); font-weight:400; }
   /* THE SUNDAY REVIEW LINK — rail furniture in the label voice, under the same hairline the rest of
      the rail's furniture uses. Deliberately NOT an accent-coloured link: it is a quiet dated
-     pointer, and giving it the page's one accent would rank it above the stories it is about. */
-  .rail-review{ display:block; margin-top:1.5em; padding-top:1em;
+     pointer, and giving it the page's one accent would rank it above the stories it is about.
+     `margin-bottom` matches `.rail-beats`'s 2em because this is now a mid-rail block with the
+     "How to read this page" index under it, not the last thing in the rail. Without it the index's
+     own underlined title crowds this line into looking like its heading. */
+  .rail-review{ display:block; margin:1.5em 0 2em; padding-top:1em;
     border-top:1px solid var(--hair);
     font-family:var(--sans); font-size:.6rem; text-transform:uppercase; letter-spacing:.14em;
     line-height:1.5; color:var(--muted); text-decoration:none; }
@@ -1743,16 +1754,44 @@ layout: archive
     });
     var el = filters.querySelector('.ff-uct'); if (el) el.textContent = un;
   }
+  /* READING A BOOT-OPEN CARD NORMALIZES ITS FOLD STATE, and without this there is a seam.
+     Today's leads boot open as the ABSENCE of `is-folded` (see the fold-default loop — they must
+     not carry `.is-open`, or the read spine could never collapse them). Mark one read and the spine
+     rules hide its body, but its own control still said "Less" with `aria-expanded="true"` and no
+     `is-folded` — so the card looked collapsed while its button claimed it was expanded, and
+     re-opening it took TWO clicks: the first only added `is-folded` and flipped the label, against
+     a body the read rule was already hiding.
+     So on read, a card that is neither folded nor explicitly opened is moved to the state it now
+     LOOKS like: folded, labelled More, aria-expanded false. One click opens it after that.
+     `.is-open` cards are deliberately untouched — More overrides the spine by design, and a card
+     the reader explicitly opened stays open when they tick it read.
+     UN-READING DOES NOT RESTORE BOOT-OPEN, on purpose. Remembering per-card boot state to undo
+     this would be a second fold memory living beside the reader's own clicks, and the honest
+     simpler answer is that a card you have read and un-read is a card you have handled. */
+  function foldForRead(card){
+    var b = card.querySelector('.fcard__more');
+    if (!b) return;
+    if (card.classList.contains('is-folded') || card.classList.contains('is-open')) return;
+    card.classList.add('is-folded');
+    b.setAttribute('aria-expanded', 'false');
+    var lbl = b.querySelector('span');
+    if (lbl) lbl.textContent = 'More';
+  }
   function setRead(card, v){
     var s = sidOf(card); if (!s) return;
     /* READ STATE IS NOW GEOMETRY, so it goes through the anchor bracket. A spine is ~1/3 the
        height of the card it replaces; without this the cards below jump up under the cursor the
-       instant you tick one. */
+       instant you tick one. The fold normalization is inside the SAME bracket: it is part of the
+       one reflow, not a second one. */
     anchored(card, function(){
       if (v) readMap[s] = Date.now(); else delete readMap[s];
       saveRead();
       noteLocalRead(s, v);             // sync shadow (+ debounced push when signed in) — see below
-      cards.forEach(function(c){ if (sidOf(c) === s) paintRead(c); });  // repaint sid twins too
+      cards.forEach(function(c){        // repaint sid twins too
+        if (sidOf(c) !== s) return;
+        if (v) foldForRead(c);
+        paintRead(c);
+      });
       readCounts();
     });
   }

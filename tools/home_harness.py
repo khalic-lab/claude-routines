@@ -314,6 +314,43 @@ def _wants_image(s):
 # measuring only the resting state would miss it. One function, two call sites, no second copy of
 # the arithmetic to drift.
 VOID_METRICS = """<script>
+/* THE BOOT-OPEN SET, CAPTURED ONCE, BEFORE ANY PROBE TOUCHES THE PAGE. This block parses straight
+   after the layout's own IIFE, so the fold defaults have already run: whatever has a More button and
+   no `is-folded` right now is a card that BOOTED open (today's leads).
+   It has to be captured, because reading such a card now normalizes it to folded and un-reading
+   deliberately does NOT restore that (see foldForRead in the layout). Every probe that mass-marks
+   the board therefore has to put boot-open back, or the probes that run after it measure a page the
+   reader never had — and the seam probe below could not see the state it exists to test. */
+window.__hmBootOpen = [].slice.call(document.querySelectorAll('.fcard')).filter(function(c){
+  return c.querySelector('.fcard__more') && !c.classList.contains('is-folded');
+});
+window.__hmRestoreBootOpen = function(){
+  var n = 0;
+  window.__hmBootOpen.forEach(function(c){
+    if (!c.classList.contains('is-folded')) return;
+    c.classList.remove('is-folded'); c.classList.remove('is-open');
+    var b = c.querySelector('.fcard__more');
+    if (b){ b.setAttribute('aria-expanded','true');
+      var l = b.querySelector('span'); if (l) l.textContent = 'Less'; }
+    n++;
+  });
+  /* AND THEN RE-PACK, THROUGH A REAL PATH. Writing classes changes a card's CONTENT height, but
+     under `.packed` its RENDERED height is the row span the last measurement pass wrote — so
+     without this the restore reads back at the spine's height and every probe after it measures a
+     grid whose extents no longer match its contents. A fold toggle calls packRowSpans()
+     synchronously; open-then-close is the pass, and FOLD_CHECK already asserts that round trip
+     restores the card byte-for-byte in height. No test hook is added to the layout for this. */
+  if (n){
+    var other = null, all = document.querySelectorAll('.fcard.is-folded');
+    for (var i = 0; i < all.length; i++){
+      if (window.__hmBootOpen.indexOf(all[i]) < 0 && all[i].querySelector('.fcard__more')){
+        other = all[i]; break;
+      }
+    }
+    if (other){ var mb = other.querySelector('.fcard__more'); mb.click(); mb.click(); }
+  }
+  return n;
+};
 window.__hmVoid = function(){
   var grid=document.getElementById('folioGrid');
   var cards=[].slice.call(grid.querySelectorAll('.fcard')).filter(function(c){return c.style.display!=='none';});
@@ -487,6 +524,54 @@ setTimeout(function(){
 </script>"""
 
 
+# THE READ / BOOT-OPEN SEAM. Runs at 4.65s — after SYNC, BEFORE the probes that mass-mark the board —
+# because it is the only probe that needs a card still in its BOOT-open state, and reading such a card
+# normalizes it to folded for good (foldForRead; un-reading deliberately does not undo that).
+# The seam it pins: a boot-open card is open by the ABSENCE of `is-folded`, so before the fix, marking
+# it read left the body hidden by the spine rule while its own button still read "Less" with
+# aria-expanded="true" — and re-opening took TWO clicks, the first one against an already-hidden body.
+# So: one state transition, the control agreeing with what the card looks like, and ONE click to open.
+LEADREAD_CHECK = """<script>
+setTimeout(function(){
+  var grid=document.getElementById('folioGrid');
+  var boot=(window.__hmBootOpen||[]).filter(function(c){
+    return c.style.display!=='none' && !c.classList.contains('is-folded')
+      && !c.classList.contains('is-open') && c.querySelector('.fcard__sum'); });
+  var out='LEADREAD-SKIP no boot-open card with a body';
+  if(boot.length){
+    var c=boot[0], mb=c.querySelector('.fcard__more'), sum=c.querySelector('.fcard__sum');
+    var rb=c.querySelector('.fcard__read');
+    var h0=Math.round(c.getBoundingClientRect().height);
+    var bodyBefore=Math.round(sum.getBoundingClientRect().height);
+    rb.click();                                  // mark read
+    var v1=window.__hmVoid();
+    var lbl=mb.querySelector('span').textContent.trim();
+    var aria=mb.getAttribute('aria-expanded');
+    var spined=(sum.getBoundingClientRect().height===0)?1:0;
+    var folded=(c.classList.contains('is-folded')&&!c.classList.contains('is-open'))?1:0;
+    var h1=Math.round(c.getBoundingClientRect().height);
+    mb.click();                                  // ONE click must open it again
+    var oneClick=(sum.getBoundingClientRect().height>0)?1:0;
+    var v2=window.__hmVoid();
+    var upA=(v1.match(/upInv=(\\d+)/)||[0,'?'])[1], upB=(v2.match(/upInv=(\\d+)/)||[0,'?'])[1];
+    mb.click(); rb.click();                      // fold it back, then un-read
+    var restored=(window.__hmRestoreBootOpen()>=0
+      && !c.classList.contains('is-read')
+      && !c.classList.contains('is-folded')
+      && mb.querySelector('span').textContent.trim()==='Less'
+      && Math.round(c.getBoundingClientRect().height)===h0)?1:0;
+    try{ ['homeRead:v1','syncState:v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
+    out='LEADREAD boot='+boot.length+' imp='+c.dataset.imp+' age='+c.dataset.age
+      +' bodyBefore='+bodyBefore+' spined='+spined+' folded='+folded
+      +' label='+lbl+' aria='+aria+' oneClick='+oneClick
+      +' h='+h0+'/'+h1+' upInvRead='+upA+' upInvOpen='+upB+' restored='+restored;
+  }
+  var d=document.createElement('div');d.id='leadreadcheck';d.textContent=out;
+  document.body.appendChild(d);
+},4650);
+</script>"""
+
+
 # THE READ SPINE — the one probe for the 2026-07-26 seen rework, and it is a state machine rather
 # than four probes fighting over the same page. In order:
 #   1. per-card, mark a lead and a feature read and measure the collapse (spine <= 0.55x folded).
@@ -561,6 +646,7 @@ setTimeout(function(){
   var allVoid=window.__hmVoid();
   var gridH1=Math.round(grid.getBoundingClientRect().height);
   cards.forEach(function(c){ if(c.classList.contains('is-read'))tick(c); });
+  window.__hmRestoreBootOpen();          // reading normalized them to folded; un-reading does not undo it
   var gridH2=Math.round(grid.getBoundingClientRect().height);
   try{ ['homeRead:v1','syncState:v1'].forEach(function(k){ localStorage.removeItem(k); }); }catch(e){}
 
@@ -911,6 +997,7 @@ setTimeout(function(){
        above refuses to rely on. */
     if(boot){ try{ ['homeRead:v1','topicPrefs:v1','syncState:v1'].forEach(function(k){
       localStorage.removeItem(k); }); }catch(e){} }
+    window.__hmRestoreBootOpen();   // the mass-mark above normalized every boot-open card to folded
     setTimeout(function(){
       var back=cards.filter(function(c){return c.style.display!=='none';}).length;
       var spanned=cards.filter(function(c){return !!c.style.gridRow;}).length;
@@ -1189,6 +1276,8 @@ def _truthy(item, field):
     return bool(v) and v != ""
 
 
+MARKERS = ("GEOM", "DAY", "FILTER", "FOLD", "LEADREAD", "READ", "SYNC", "EMPTY")
+
 CHROME = os.environ.get("CHROME_BIN",
                         "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
 
@@ -1216,6 +1305,14 @@ CHECKS = [
     ("FOLD", "holes", lambda v: v == "0", "the open state leaves no interior hole"),
     ("FOLD", "holePx", lambda v: v == "0", "...and no interior void px"),
     ("FOLD", "upInv", lambda v: v == "0", "order holds with a module open"),
+    ("LEADREAD", "spined", lambda v: v == "1", "reading a boot-open card collapses it to its spine"),
+    ("LEADREAD", "folded", lambda v: v == "1", "...and normalizes it to is-folded, without is-open"),
+    ("LEADREAD", "label", lambda v: v == "More", "its control agrees with what the card now looks like"),
+    ("LEADREAD", "aria", lambda v: v == "false", "...and so does aria-expanded"),
+    ("LEADREAD", "oneClick", lambda v: v == "1", "ONE click re-opens it (it used to take two)"),
+    ("LEADREAD", "upInvRead", lambda v: v == "0", "order holds through the read transition"),
+    ("LEADREAD", "upInvOpen", lambda v: v == "0", "order holds through the re-open"),
+    ("LEADREAD", "restored", lambda v: v == "1", "the probe put the boot-open card back"),
     ("READ", "spineOk", lambda v: v == "1", "a read lead/feature collapses to <=0.55x its folded height"),
     ("READ", "reopen", lambda v: v == "1", "More re-opens a READ card in place (:not(.is-open) guards)"),
     ("READ", "edOk", lambda v: v == "1", "the AI disclosure is visible folded, open, read and read+open"),
@@ -1264,8 +1361,8 @@ def _run_check(artifact, width, height=2800, budget=9000, hash=""):
     # `<div id="…check">`, so that is the only thing this looks at.
     marks = {}
     for div_id, mk in (("geomcheck", "GEOM"), ("daycheck", "DAY"), ("filtercheck", "FILTER"),
-                       ("foldcheck", "FOLD"), ("readcheck", "READ"), ("synccheck", "SYNC"),
-                       ("emptycheck", "EMPTY")):
+                       ("foldcheck", "FOLD"), ("leadreadcheck", "LEADREAD"),
+                       ("readcheck", "READ"), ("synccheck", "SYNC"), ("emptycheck", "EMPTY")):
         m = re.search(r'<div id="%s"[^>]*>(.*?)</div>' % div_id, out, re.S)
         if not m:
             continue
@@ -1274,7 +1371,7 @@ def _run_check(artifact, width, height=2800, budget=9000, hash=""):
         kv = dict(re.findall(r"(\w+)=([^\s\]]+)", text))
         marks[mk] = (name, kv, text)
     lines, failures = [], []
-    for mk in ("GEOM", "DAY", "FILTER", "FOLD", "READ", "SYNC", "EMPTY"):
+    for mk in MARKERS:
         if mk in marks:
             lines.append("  %s" % marks[mk][2])
         else:
@@ -1400,7 +1497,7 @@ def main():
                empty_state,
                propose,
                modal, PRE_SYNC, script, VOID_METRICS,
-               GEOM_CHECK + DAY_CHECK + FILTER_CHECK + FOLD_CHECK + SYNC_CHECK + EMPTY_CHECK
+               GEOM_CHECK + DAY_CHECK + FILTER_CHECK + FOLD_CHECK + SYNC_CHECK + LEADREAD_CHECK + EMPTY_CHECK
                + READ_CHECK + SHOT_CHECK)
 
     with open(args.out, "w") as fh:
