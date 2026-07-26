@@ -903,14 +903,19 @@ layout: archive
      THE +/- IS PUSHED TO THE RULE rather than leading the label as the propose form's does, and that
      is the rail's own idiom: `.rail-beats .ff-chip .ff-ct` sends its count the same way. It also keeps
      both rail titles' labels on one left edge — a leading marker would indent "How to read this page"
-     ~14px past "Beat" and read as a different kind of line. */
+     ~14px past "Beat" and read as a different kind of line.
+     IT HAS TO BE `::after`, AND THAT IS NOT A STYLE PREFERENCE. As `::before` it is the FIRST flex
+     item, and `margin-inline-start:auto` on the first item can only consume FREE space — this label
+     wraps to two lines in a 160px rail, so there is none, the auto margin resolved to 0 and the marker
+     sat at the left overlapping the label (photographed, 2026-07-26). Last item, auto start margin:
+     the marker is pinned to the inline end whatever the label does. */
   .rail-d{ margin:0; }
   .rail-s{ display:flex; align-items:center; cursor:pointer; list-style:none; }
   .rail-s::-webkit-details-marker{ display:none; }
-  .rail-s::before{ content:'+'; margin-inline-start:auto; padding-inline-start:.6em;
+  .rail-s::after{ content:'+'; flex:none; margin-inline-start:auto; padding-inline-start:.6em;
     font-size:1rem; line-height:0; font-weight:400; letter-spacing:0; color:var(--muted-ui); }
-  .rail-d[open] > .rail-s::before{ content:'\2212'; }
-  .rail-s:hover::before{ color:var(--accent); }
+  .rail-d[open] > .rail-s::after{ content:'\2212'; }
+  .rail-s:hover::after{ color:var(--accent); }
   .rail-index{ margin:0; font-family:var(--sans); }
   .rail-index dt{ display:flex; align-items:center; gap:.55em; font-size:.62rem; font-weight:700;
     text-transform:uppercase; letter-spacing:.12em; color:var(--ink); margin-top:1.1em; }
