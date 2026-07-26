@@ -47,3 +47,10 @@
   stories: weekend 2026-07-18 Iran "seventh and final strike wave" — "'Final' should be in quotes,
   given their history of not following through"; news 2026-07-18 ESA "species merely listed as
   'threatened'" — "'merely'… this is the framing of the US admin, we need to stay impartial").
+- 2026-07-26: treat US-administration self-characterizations as an unreliable narrator — do not relay
+  the claim flat; attribute/quote the loaded word AND supply the missing legal or factual context the
+  administration omits (2× 👎 on distinct stories: news 2026-07-20 Iran "final" night — "you said
+  'final' night and the US just continued… assume an unreliable narrator from the Trump
+  administration"; news 2026-07-21 Swiss forced-labour tariff — "no legal basis for these new
+  tariffs… context… lying administration"). Extends the 2026-07-19 impartiality line from attribution
+  to actively adding the skeptical context, since the "final"-class framing recurred.

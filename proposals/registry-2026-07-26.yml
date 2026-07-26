@@ -1,0 +1,48 @@
+date: 2026-07-26
+applied: false
+patches:
+  # Reach flips. The evaluator sandbox holds no fetch-proxy bearer and its egress allowlist
+  # blocked every direct re-probe this run except srf.ch (200); all others -> CONNECT tunnel 403.
+  # So the writers' own footers this window are the reach evidence, not the evaluator's probes.
+  # Two of last week's (2026-07-19) proposed flips are REVISED here because this week's writer
+  # footers contradicted them:
+  - domain: science.org
+    from: direct
+    to: proxy
+    evidence: "REVISES 2026-07-19 (which proposed direct->search-only). 2026-07-22-science footer: 'science.org {1 fail HTTP 403, 1 ok via proxy}' - it DID succeed via proxy this week, so proxy is correct, not search-only. Recorded reach: direct still wrong (direct 403). Third consecutive week flagged; last-applied never."
+  - domain: swissinfo.ch
+    from: direct
+    to: proxy
+    evidence: "REVISES/WITHDRAWS 2026-07-19 (which proposed direct->blocked). swissinfo.ch was cited successfully in 2026-07-25-weekend (US forced-labour tariff item, st-83093c241e47); health.json feeds shows swissinfo.ch {fail 4, ok_proxy 1}. It is flaky, NOT fully blocked - flipping to 'blocked' would have been wrong. Correct flip is direct->proxy."
+  - domain: cell.com
+    from: direct
+    to: proxy
+    evidence: "Carried from 2026-07-19. 2026-07-22-science footer: 'cell.com {2 fail HTTP 403}' direct; but cell.com was anchored in 2026-07-25-weekend (heart intracardiac-ganglia item, st-7b3a46527fc9) after 30+ days idle, so it is reachable via proxy. reach: direct is wrong."
+  - domain: journals.aps.org
+    from: direct
+    to: proxy
+    evidence: "Carried UNAPPLIED from 2026-07-12 and 2026-07-19. 2026-07-22-science footer: 'journals.aps.org {2 fail HTTP 403}' direct. Recorded reach: direct never yields; try proxy (writers confirm with bearer at next PRL/PRX citation)."
+  # Candidate promotions from the Sunday scout. Worst-deficit stream this week = SPORTS
+  # (new_domains 4 = lowest; top5_share 1.00; waiver_rate 1.00; unique_domains 4). Sports'
+  # deficit is REACHABILITY: its official primaries (fifa.com, letour.fr, formula1.com,
+  # feeds.bbci.co.uk/sport, en.wikipedia.org) were all Cloudflare/ERR:56-walled in the sports
+  # sandbox on 2026-07-20, leaving srf.ch (curl) the only working direct feed. These candidates
+  # are genuine primary/near-primary sports sources the sports affinity lacks; appended to
+  # sources/candidates.jsonl as reach: proxy-needed (evaluator egress blocked direct vetting;
+  # writers vet at first citation with their bearer).
+  - domain: esv.ch
+    from: candidate
+    to: probation
+    evidence: "scout 2026-07-26: Eidgenoessischer Schwingerverband - official Swiss wrestling (Schwingen) federation, a genuine primary for the Rigi-Schwinget-class coverage in 2026-07-20-sports (st-2be17a902214) and Swiss (personalization). reach: proxy-needed."
+  - domain: olympics.com
+    from: candidate
+    to: probation
+    evidence: "scout 2026-07-26: IOC official newsroom, primary sports-governance/results source across disciplines; fills sports' near-total lack of reachable official primaries. reach: proxy-needed."
+  - domain: uci.ch
+    from: candidate
+    to: probation
+    evidence: "scout 2026-07-26: Union Cycliste Internationale, official world cycling federation - primary for the Tour de France / cycling coverage (st-e4e55168304f) where letour.fr was sandbox-walled. reach: proxy-needed."
+  - domain: rts.ch
+    from: candidate
+    to: probation
+    evidence: "scout 2026-07-26: RTS Sport (Swiss French public broadcaster sport desk); rts.ch already reaches via proxy in the news sandbox (health.json rts.ch ok_proxy 5), giving sports a second reliable Swiss primary alongside srf.ch. reach: proxy-needed; Swiss personalization."
