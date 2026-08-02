@@ -1,0 +1,43 @@
+date: 2026-08-02
+applied: false
+patches:
+  # Reach flips CARRIED UNAPPLIED from registry-2026-07-26.yml (and earlier). The evaluator
+  # sandbox held no fetch-proxy bearer this run and every direct re-probe 403'd/ERR:56'd, so the
+  # reach evidence remains the writers' own in-window footers, not evaluator probes. Registry
+  # still shows reach: direct on all four; the writers keep reaching them via proxy.
+  - domain: science.org
+    from: direct
+    to: proxy
+    evidence: "CARRIED from 2026-07-26 (and 2026-07-19). Registry still reach: direct. Writers' footers show science.org direct 403 but ok via proxy (2026-07-29-science: 'science.org {2 fail ERR:56, 1 fail HTTP 403, 1 ok via proxy}'). Fourth consecutive week flagged; never applied."
+  - domain: swissinfo.ch
+    from: direct
+    to: proxy
+    evidence: "CARRIED from 2026-07-26. Registry still reach: direct. health.json feeds: swissinfo.ch {fail 4, ok 0} direct this week, but it was cited successfully via proxy in prior weeks. Flaky-direct, reachable-via-proxy — correct flip is direct->proxy."
+  - domain: cell.com
+    from: direct
+    to: proxy
+    evidence: "CARRIED from 2026-07-26 / 2026-07-19. Registry still reach: direct. Direct 403s; reachable via proxy at last citation. Not cited this window (science/weekend bio leaned on nature.com/DOIs), so no fresh footer evidence — carried on prior weeks' record."
+  - domain: journals.aps.org
+    from: direct
+    to: proxy
+    evidence: "CARRIED UNAPPLIED from 2026-07-12 / 2026-07-19 / 2026-07-26. Registry still reach: direct. Recorded direct never yields (403); writers confirm proxy at next PRL/PRX citation. Fourth-week carry."
+  # Candidate promotions CARRIED from registry-2026-07-26.yml. olympics.com LANDED (now
+  # status: probation, reach: proxy) but is unstamped; the rest are still status: candidate.
+  # These fill Sports' near-total lack of reachable official primaries (Sports waiver_rate=1.00).
+  - domain: esv.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED from 2026-07-26 scout. Still status: candidate in registry. Eidgenoessischer Schwingerverband, official Swiss wrestling federation; genuine primary for Schwingen/Swiss-personalization sports coverage. reach: proxy-needed."
+  - domain: uci.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED from 2026-07-26 scout. Still status: candidate. Union Cycliste Internationale, official world cycling federation; primary for Tour de France/cycling coverage where letour.fr is sandbox-walled. reach: proxy-needed."
+  - domain: rts.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED from 2026-07-26 scout, DID NOT LAND. Registry's rts.ch is a separate news-stream probation entry (reach: direct); the proposed sports-affinity RTS Sport promotion is distinct. Add sports to rts.ch streams so the Sports writer can cite RTS Sport (reaches via proxy in the news sandbox: health.json rts.ch ok_proxy). reach: proxy-needed."
+  # New scout candidates appended to sources/candidates.jsonl this run (Science, worst-deficit
+  # stream). Listed here for visibility; they need a probation cycle before promotion, so no
+  # from/to transition is proposed yet.
+  # - physicsworld.com (IOP/Institute of Physics), symmetrymagazine.org (Fermilab/SLAC),
+  #   cerncourier.com (CERN) — all reach: proxy-needed, evaluator egress blocked direct vetting.

@@ -1,0 +1,33 @@
+{
+ "date": "2026-08-02",
+ "proposals": [
+  {
+   "id": "rm-1",
+   "target": "routines/src/science.md",
+   "action": "Add to the Discovery/sourcing block: before waiving discovery, attempt at least two registered science-affinity domains with last_cited=None (dormant) from the preflight plan; only waive if they are unreachable or off-topic, and name which were tried in the waiver reason.",
+   "evidence": "Science top5_share=1.00, waiver_rate=0.75, unique_domains=7 (source-health), yet the registry already carries ~10 dormant science primaries (cern.ch, eso.org, esa.int, mpg.de, elifesciences.org, journals.plos.org, pnas.org, aasnova.org, simonsfoundation.org, quantamagazine.org). 07-29-science reached two on merit (Simons Foundation, AAS Nova [new source]) but waived further discovery while concentrating on nature.com+arXiv+Quanta. Deficit is dormancy, not absence. Human-gated prompt patch.",
+   "applied": false
+  },
+  {
+   "id": "rm-2",
+   "target": "tools/publish.py",
+   "action": "After the push+retry sequence completes, re-verify HEAD against origin/main (fetch first) and only append the 'git push failed ... NOT reached origin' footer if HEAD is genuinely absent from origin after all retries. Never leave the footer on a push that later succeeds.",
+   "evidence": "8 of 11 briefs this window carry the stale failure footer (07-27-sports, 07-28-ai-ml, 07-29-news, 07-29-science, 07-30-news, 07-31-ai-ml, 08-01-news, 08-01-weekend) yet all 8 are provably on origin/main (HEAD==origin/main==28fd077). 07-31-news needed a follow-up commit (d328d0c) just to strip the line. Highest-frequency, self-inflicted pipeline defect this week; pollutes the footer telemetry the evaluator reads.",
+   "applied": false
+  },
+  {
+   "id": "rm-3",
+   "target": "tools/evaluator/metrics.py",
+   "action": "CARRIED OVER UNAPPLIED from 2026-07-19 rm-3 and 2026-07-26 rm-3 (3rd week). In build_off_main(), replace 'git log --all --not main' with '--not origin/main'. The routine runs in detached HEAD after 'git pull --ff-only'; the local 'main' ref stays stale, so every pulled commit is reported off-main.",
+   "evidence": "This run reproduced the exact false positive: continuity.off_main.commits_not_on_main listed 14 commits, all provably on origin/main (HEAD==origin/main==28fd077, local main stale at 77c025c, detached HEAD), remote_branches []. All 14 are normal News/AI-ML/Weekend/drain publishes. Guard cries wolf every detached-HEAD run. Now 3 consecutive weeks flagged, never applied.",
+   "applied": false
+  },
+  {
+   "id": "rm-4",
+   "target": "tools/evaluator/metrics.py",
+   "action": "CARRIED OVER UNAPPLIED from 2026-07-19 rm-4 and 2026-07-26 rm-4 (3rd week). Detect empty sections by absence of body text (e.g. <200 non-whitespace chars AND zero st- anchors), not by absence of st- anchors alone, so anchor-free analytical/prose sections are not false-flagged.",
+   "evidence": "This run flagged THREE false-positive empty sections: 2026-08-01-weekend '🧠 Cross-cutting threads' (four dense synthesis paragraphs) and '🍎 Apple Silicon / local inference ecosystem' (two paragraphs on llama.cpp/MLX), plus 2026-07-29-science '🧠 Why it matters' (a prose synthesis bullet). All non-empty; the parser keys on st- anchors. False-positive class grew from 2 sections (07-26) to 3 across 2 streams.",
+   "applied": false
+  }
+ ]
+}
