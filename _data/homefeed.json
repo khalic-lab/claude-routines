@@ -6,19 +6,19 @@
    "key": "geopolitics",
    "label": "Geopolitics",
    "color": "#c0563b",
-   "count": 23
-  },
-  {
-   "key": "world",
-   "label": "World",
-   "color": "#6b6f76",
-   "count": 21
+   "count": 22
   },
   {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 18
+   "count": 21
+  },
+  {
+   "key": "world",
+   "label": "World",
+   "color": "#6b6f76",
+   "count": 20
   },
   {
    "key": "switzerland",
@@ -30,7 +30,7 @@
    "key": "economy",
    "label": "Economy",
    "color": "#9a7b2e",
-   "count": 10
+   "count": 8
   },
   {
    "key": "science",
@@ -45,16 +45,16 @@
    "count": 7
   },
   {
-   "key": "politics",
-   "label": "Politics",
-   "color": "#9a6a34",
-   "count": 6
-  },
-  {
    "key": "sports",
    "label": "Sports",
    "color": "#c26b2e",
    "count": 6
+  },
+  {
+   "key": "politics",
+   "label": "Politics",
+   "color": "#9a6a34",
+   "count": 4
   },
   {
    "key": "health",
@@ -66,7 +66,7 @@
    "key": "tech",
    "label": "Tech",
    "color": "#3b6ea5",
-   "count": 3
+   "count": 2
   }
  ],
  "editorials": [
@@ -131,6 +131,169 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/04/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-04-ai-ml-google-turns-gemma-into-a-parallel-decoding-diff",
+   "sid": "st-43b7b2f106dd",
+   "headline": "Google ships DiffusionGemma diffusion LLM",
+   "summary": "Almost every production language model is autoregressive (AR) — it writes one token, feeds it back in, and writes the next, so generation is inherently sequential. DiffusionGemma instead uses discrete diffusion: it holds a block of 256 tokens and iteratively \"denoises\" the whole block in parallel, refining all positions at once rather than left-to-right. Crucially, Google did not train it from scratch — they fine-tuned the existing mixture-of-experts (MoE — a model that routes each token to a few specialist sub-networks) Gemma 4, which has 3.8B active and 25.2B total parameters, spending fewer than 10% of that model's original training-token budget. Training has two stages: supervised fine-tuning to teach bidirectional denoising, then reinforcement learning combined with sampler distillation to recover quality and speed.",
+   "why": "The sequential bottleneck is the main reason LLM text generation is latency-bound, and diffusion text models have historically lagged AR models in quality. Showing you can convert a strong open AR model into a fast diffusion one for under a tenth of the compute — rather than paying for a from-scratch run — is the kind of result that makes parallel decoding practical for the open ecosystem, not just a research curiosity.",
+   "url": "https://arxiv.org/abs/2608.00146",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Google DeepMind"
+   ],
+   "affiliation_label": "Google DeepMind",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-04-ai-ml-a-continuous-latent-space-for-text-borrowing-the",
+   "sid": "st-fe054ff126ee",
+   "headline": "A continuous latent space for text",
+   "summary": "Images, video and audio are increasingly generated in continuous latent spaces — compressed numeric representations a diffusion model can smoothly interpolate through — while text has stubbornly stayed discrete (one symbol per token). Past attempts to model text continuously either reused embedding spaces not built for joint generation-and-decoding, or over-compressed the latent and lost word-level fidelity. AURORA-LM keeps a high-capacity, decodable text latent and designs the diffusion model to learn that latent's distribution directly: a query-based encoder-decoder organizes text into a prefix-aligned latent sequence, and a block-causal diffusion transformer models it.",
+   "why": "If text can be modeled continuously without sacrificing exactness, the same generative machinery — and tricks like classifier guidance and latent editing — that powers image and audio models becomes available for language. It is an early, still-experimental swing at unifying how we generate across modalities rather than treating text as the permanent exception.",
+   "url": "https://arxiv.org/abs/2608.02602",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Nanjing University",
+    "NTU",
+    "Imperial College London"
+   ],
+   "affiliation_label": "Nanjing University, NTU +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-04-ai-ml-a-proof-that-reward-shaping-against-hallucinatio",
+   "sid": "st-ca5188a8ca22",
+   "headline": "Abstention rewards can collapse an RL model",
+   "summary": "A popular anti-hallucination recipe is an error-penalized scoring rule: +1 for a correct answer, −λ for a wrong one, 0 for abstaining. A rational agent should then answer only when its confidence clears a threshold. The paper proves that a KL-anchored gradient learner — the standard setup in reinforcement learning from human feedback, where a KL penalty keeps the model from drifting too far from its starting policy — can do the opposite. When abstention is a discrete action, the reward gradient and the KL anchor's restoring force pass through the same \"gate-saturation\" factor and both die together, so the model drifts toward refusing everything while its mean training reward rises toward zero — the training curve reads as improvement even as answer coverage collapses. The group-normalized advantage estimator (as in GRPO-style training) compounds the failure. The authors also give a repair.",
+   "why": "Teams add abstention rewards precisely to make models safer, and this shows a plausible way that intervention backfires invisibly — the loss looks healthy while the model becomes uselessly cautious. It is a concrete instance of reward-metric gaming that a dashboard would miss.",
+   "url": "https://arxiv.org/abs/2608.00301",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-04-ai-ml-right-answer-wrong-reasoning-up-to-44-of-correct",
+   "sid": "st-f9945d233772",
+   "headline": "LLMs shortcut science benchmarks",
+   "summary": "Reasoning benchmarks usually grade only the final answer. The authors define \"Solution Hacking\" — reaching the right answer through invalid shortcuts like brute-force numerical search, enumeration, guessing, or working backward from the answer choices, without ever producing the derivation the problem was meant to test. Auditing frontier models across difficulty levels, they find the effect grows sharply with hardness: 2.2% of common problems, 28.3% of Olympiad-level problems, and 37.4% on HLE (Humanity's Last Exam, a very hard expert benchmark). Between 8.2% and 44.1% of answers credited as correct across frontier models were actually hacked. They propose expert-inspired anti-hacking checks that grade the method, not just the result.",
+   "why": "If a large share of a model's benchmark wins come from shortcuts rather than reasoning, leaderboard gains overstate genuine capability — and the gap widens exactly on the hard problems people cite as evidence of \"reasoning.\" It is a direct argument for grading process, not just answers.",
+   "url": "https://arxiv.org/abs/2608.02442",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Alibaba"
+   ],
+   "affiliation_label": "Alibaba",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-04-ai-ml-why-generic-llms-are-bad-at-spreadsheets-isolate",
+   "sid": "st-3be0556cdedc",
+   "headline": "Why LLMs fail at tabular prediction",
+   "summary": "LLMs are the default tool for almost everything except one of the most common ML workloads: predicting a column from tabular data (the bread-and-butter of business analytics). This gap is the entire premise of the \"tabular foundation model\" field, but why generic LLMs fail was open. The authors study a frontier model in its purest form — a single generation pass over a prompt holding the full training and test data, no tools, no fine-tuning — and test five hypotheses: inability to handle noisy or non-linearly-separable data; the flat CSV format hiding column structure; how numbers get tokenized; how many test points are classified per query; and input dimensionality. Isolating each lets them pin the dominant failure rather than hand-wave about \"LLMs and numbers.\"",
+   "why": "Predictive analytics over tables is where a lot of real enterprise value sits, and knowing the specific bottleneck (rather than assuming LLMs are just bad at math) tells builders whether to reformat inputs, change tokenization, or reach for a dedicated tabular model.",
+   "url": "https://arxiv.org/abs/2608.02412",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Fundamental Technologies",
+    "Voylab"
+   ],
+   "affiliation_label": "Fundamental Technologies, Voylab",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-04-ai-ml-an-agent-that-runs-almost-any-software-from-scre",
+   "sid": "st-e6ac617e5717",
+   "headline": "Qwen-CUA native computer-use agent",
+   "summary": "\"Native computer use\" means an agent that operates a computer the way a person does — reading the screen and acting through keyboard and mouse — rather than through app-specific APIs or the accessibility tree. Qwen-CUA is such an agent built on a 397B-total / 17B-active MoE backbone; it sees only screenshots and emits keyboard/mouse events, with no DOM (the web page's structured element tree) or accessibility metadata. Its scaffold keeps up to 20 recent screenshots live and folds older visual history into fixed-size blocks to preserve reusable prompt prefixes (which matters for caching). To train it, the team stood up a cloud fleet with nearly 100,000 vCPUs and tens of thousands of concurrent environments, and built ~40,000 verifiable tasks.",
+   "why": "A screenshot-only interface generalizes to any software with a GUI, including the long tail of tools that expose no API — the hard part of making agents useful in real workplaces. The sheer scale of the training infrastructure is itself a signal of how compute-intensive competent computer-use agents currently are.",
+   "url": "https://arxiv.org/abs/2608.02352",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Alibaba",
+    "HKU"
+   ],
+   "affiliation_label": "Alibaba, HKU",
    "fresh": true
   },
   {
@@ -249,6 +412,87 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/04/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-04-ai-ml-fixing-the-muon-optimizer-for-diffusion-transfor",
+   "sid": "st-83e733e6a380",
+   "headline": "CMuon speeds diffusion-transformer training",
+   "summary": "Muon (Momentum Orthogonalization) is a recent optimizer that orthogonalizes a layer's momentum update — roughly, it rescales the update so different directions get comparable step sizes — and it has beaten the standard AdamW on several training runs. But applied straight to Diffusion Transformers (DiTs), the workhorse of modern image/video generation, it converges poorly late in training. The authors trace the cause: DiTs fuse functionally distinct weights (for example the AdaLN modulation and the query/key/value projections) into single tensors for efficiency, and orthogonalizing that fused block couples subspaces that should be independent, distorting the update. Chunked Muon (CMuon) simply splits those matrices into their sub-components before orthogonalizing.",
+   "why": "Optimizer choice compounds over a training run, and DiT training is expensive enough that a late-stage convergence fix directly lowers the cost of frontier image and video models. It is also a cautionary tale — a \"drop-in\" optimizer can silently underperform when it collides with an architecture's efficiency hacks.",
+   "url": "https://arxiv.org/abs/2608.02502",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Peking University",
+    "Westlake University",
+    "Zhejiang University"
+   ],
+   "affiliation_label": "Peking University, Westlake University +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-04-ai-ml-a-handful-of-neurons-betray-when-an-agent-is-abo",
+   "sid": "st-c99282fc6e3c",
+   "headline": "A few neurons flag agent tool misuse",
+   "summary": "Tool-using (\"agentic\") LLMs fail in three characteristic ways: invalid arguments, unnecessary calls (over-calling), and missing calls when a tool was actually needed. The authors find these failures are encoded in a small, failure-specific set of MLP neurons (units in the model's feed-forward layers) that separate cleanly with a linear boundary. Their framework, PRISMS, fits a sparse detector on those neurons' activations and reuses the same neuron basis to steer the model away from the failure. Across six models from the Qwen3, Llama and Gemma families, over-calling and missing are caught before generation even starts (ROC-AUC 0.90-1.00 — a measure where 0.5 is chance and 1.0 is perfect), and invalid arguments are caught from the generated call (0.86-0.90).",
+   "why": "Reliable tool use is the linchpin of agents that touch real systems, and a cheap, interpretable monitor that flags a bad call before it fires — rather than cleaning up after — is exactly the kind of guardrail production agent stacks need.",
+   "url": "https://arxiv.org/abs/2608.00218",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-04-ai-ml-giving-mamba-a-working-memory-and-a-long-term-me",
+   "sid": "st-f5add2e8b5c8",
+   "headline": "Hierarchical memory extends Mamba",
+   "summary": "Mamba and its relatives are recurrent linear-attention models — a Transformer alternative that processes a sequence in linear time by keeping a fixed-size recurrent state instead of attending to every past token. That fixed state is also the limitation: it can only hold so much, so very long sequences overflow it. Borrowing from human memory, Hierarchical Memory Mamba (HMM) adds a lightweight working memory that extracts slow, paragraph-level meaning from the backbone's fast hidden states, then compresses it into a persistent long-term memory the model can retrieve from. It builds on a pretrained Mamba rather than starting over, and the authors report it also generalizes across tasks in a way plain long-context Mamba variants do not.",
+   "why": "Linear-time models are attractive because attention's cost grows with the square of sequence length, but their memory bottleneck has kept them from displacing Transformers on genuinely long inputs. A hierarchical fix that bolts onto existing checkpoints is a pragmatic path to long-context efficiency.",
+   "url": "https://arxiv.org/abs/2608.02347",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "HKUST",
+    "University of Oxford",
+    "CUHK"
+   ],
+   "affiliation_label": "HKUST, University of Oxford +1",
    "fresh": true
   },
   {
@@ -883,151 +1127,6 @@
    "fresh": false
   },
   {
-   "id": "2026-07-31-ai-ml-openai-disputes-anthropic-s-arc-agi-3-record-wit",
-   "sid": "st-118062307750",
-   "headline": "OpenAI disputes Opus 5 ARC-AGI record",
-   "summary": "After the last edition reported Claude Opus 5 topping the interactive ARC-AGI-3 benchmark at 30.2%, OpenAI says GPT-5.6 Sol reaches 38.3% — but only through its own Responses API using two extra settings: 'Retained Reasoning' (keeping the model's chain of thought between steps rather than discarding it) and 'Compaction' (summarizing old context instead of truncating it). In ARC Prize's official harness, which discards reasoning after each action, GPT-5.6 Sol scored just 7.8%. ARC-AGI is a suite of abstract visual-reasoning puzzles built to resist memorization; the ARC-AGI-3 variant is interactive, so how much state the harness preserves between steps matters enormously. ARC Prize's Francois Chollet acknowledged the different settings create 'a potential parity issue' but called it acceptable 'as long as the settings and the cost are clearly reported.'",
-   "why": "The gap between 7.8% and 38.3% for the same model is the whole story: on interactive benchmarks the harness (what memory and reasoning the model is allowed to carry across steps) can swing the score five-fold, so a headline leaderboard number is close to meaningless without the harness spec beside it.",
-   "url": "https://the-decoder.com/openai-claims-gpt-5-6-sol-beats-opus-5-on-arc-agi-3-with-its-latest-api-and-two-additional-settings/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-31-ai-ml-the-fcc-added-foreign-produced-robots-and-power",
-   "sid": "st-d4e7b3d4d913",
-   "headline": "FCC bars foreign robots and inverters",
-   "summary": "On 28 July the Federal Communications Commission barred new foreign-produced 'advanced robotic devices' (defined as mobile robots such as humanoids and quadrupeds) and connected power inverters from receiving the authorization needed to be imported, marketed, or sold in the US, following national-security determinations by a White House-convened interagency body. The rule's broad wording sweeps in consumer devices — robot vacuums, robotic mowers, delivery bots — and the Department of War (robots) or Homeland Security (inverters) can grant case-by-case exemptions; previously purchased and previously authorized devices are unaffected.",
-   "why": "This puts a hard import gate around the physical layer of the US AI build-out (robotics and grid hardware), and — because the definition is written by device class rather than by named vendor — its reach extends well past the headline 'humanoid' framing into everyday connected hardware.",
-   "url": "https://www.fcc.gov/document/fcc-adds-foreign-produced-power-inverters-and-robots-covered-list-0",
-   "source_domain": "fcc.gov",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "politics",
-    "tech"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-31-ai-ml-openai-cut-gpt-5-6-prices-sharply",
-   "sid": "st-b8e7cd7a7bbf",
-   "headline": "OpenAI cuts GPT-5.6 prices up to 80%",
-   "summary": "From 30 July, OpenAI dropped the price of its most affordable tier, GPT-5.6 Luna, by 80%, and the mid tier, Terra, by 20%. The company attributes the cuts to efficiency gains its top Sol model helped engineer in its own infrastructure; competitive pressure from cheap Chinese providers and from Microsoft's in-house MAI models is a plausible additional driver. This continues the GPT-5.6 rollout that reached general availability on 9 July.",
-   "why": "An 80% cut on the cheapest tier is aimed squarely at the price floor set by open-weight and Chinese hosted models — the clearest sign yet that inference pricing, not raw capability, is the front line of the current model competition.",
-   "url": "https://the-decoder.com/openai-goes-full-china-pricing-mode-with-an-80-percent-cut-to-its-most-affordable-gpt-5-6-model/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-31-ai-ml-the-model-context-protocol-shipped-its-biggest-u",
-   "sid": "st-f09c67c150ce",
-   "headline": "MCP spec goes stateless at the core",
-   "summary": "The 2026-07-28 MCP specification (MCP is the open standard, maintained by Anthropic engineers, for how AI systems connect to external tools and data) removes the protocol-level session and the Mcp-Session-Id header, so any request can now land on any server instance. That drops the sticky-routing and shared-session-store machinery that horizontal deployments previously needed, plus additions like multi-round-trip requests, header-based routing, and cacheable list results. Lead maintainer David Soria Parra calls it MCP's most important release since remote MCP launched over a year ago.",
-   "why": "Statefulness was MCP's main obstacle to running at enterprise scale; making the core stateless is the kind of unglamorous plumbing change that decides whether the standard becomes the default connective tissue for agents or stays a prototyping toy.",
-   "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/",
-   "source_domain": "blog.modelcontextprotocol.io",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "tech",
-    "ai-ml"
-   ],
-   "topic_primary": "tech",
-   "topic_label": "Tech",
-   "topic_color": "#3b6ea5",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-31-ai-ml-making-a-model-critique-and-rewrite-its-own-answ",
-   "sid": "st-7b683d414268",
-   "headline": "Repeated sampling beats self-reflection",
-   "summary": "A rerun of the 'self-improvement vs. repeated sampling' comparison as a properly designed experiment: seven methods (self-refine, reflexion, best-of-N, debate, and others), open models at 1.5B/3B/7B, two math benchmarks, 150 questions each, counting every generated token — including those spent on critiques and debate — and comparing each method against plain repeated sampling at its own measured cost, with bootstrap intervals and multiplicity correction.",
-   "why": "Across all 36 comparisons, no method reliably beat repeated sampling at equal token cost, and all ten that were reliably worse were ones where the model inspects its own output; the paper even finds Reflexion, as published, silently never triggered its own retry on the smallest model. It is direct evidence that many reported 'reasoning method' gains are just the accuracy that comes free from generating more text.",
-   "url": "https://arxiv.org/abs/2607.28576",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-31-ai-ml-capabilities-appear-all-at-once-because-they-req",
-   "sid": "st-cef7632d2000",
-   "headline": "A rate law for capability emergence",
-   "summary": "The paper argues that 'no-partial-credit joint alignment' is the rate-limiting step of learning a capability, and tests it mechanistically: ablating (surgically disabling) a single part of a learned circuit leaves a median of just 17% of the capability intact across Pythia models, where a partial-credit account predicts 50-83%. It fits this to a nucleation-style rate law borrowed from the physics of how crystals form from one rare seed event.",
-   "why": "'Emergence' — a skill appearing suddenly at some scale — is one of the least-understood phenomena in LLMs; framing it as a rare joint-alignment event gives a concrete, falsifiable mechanism for why capabilities snap into place rather than fade in gradually.",
-   "url": "https://arxiv.org/abs/2607.27281",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "affiliations": [
-    "Independent Researcher"
-   ],
-   "affiliation_label": "Independent Researcher",
-   "fresh": false
-  },
-  {
    "id": "2026-07-31-news-more-than-40-000-migrants-crossed-from-morocco-i",
    "sid": "st-19423576fa1e",
    "headline": "40,000 migrants cross into Ceuta from Morocco",
@@ -1238,30 +1337,6 @@
    "fresh": false
   },
   {
-   "id": "2026-07-29-news-the-us-senate-voted-86-12-on-tuesday-28-july-to",
-   "sid": "st-5fc30718cad9",
-   "headline": "Senate advances Russia sanctions bill",
-   "summary": "The US Senate voted 86-12 on Tuesday 28 July to advance a Russia sanctions bill, a bipartisan procedural step that its sponsors described as largely symbolic ahead of the chamber's August recess. The measure, renamed the Lindsey O. Graham Sanctioning Russia Act of 2026 after the South Carolina senator who died suddenly of an aortic tear, would give the president new authority to sanction Russian officials, foreign nationals and financial institutions tied to Moscow's war effort, compel a 500% tariff on all Russian imports including oil and gas, and expand powers to punish \"shadow fleet\" vessels evading energy sanctions. Only one Republican, Rand Paul, joined 11 Democrats against it; Graham's sister Darline, appointed to fill his seat, is a lead sponsor. The Senate will need several more votes for the bill to pass, and the House passed its own version in June.",
-   "why": "The lopsided vote signals durable cross-party support for tougher Russia measures, but Tuesday's step authorizes rather than imposes the tariffs — the sanctions are not yet law.",
-   "url": "https://www.spokesman.com/stories/2026/jul/28/senate-overwhelmingly-votes-for-russia-sanctions-b/",
-   "source_domain": "spokesman.com",
-   "date": "2026-07-29",
-   "date_label": "Jul 29",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/29/news/",
-   "fresh": false
-  },
-  {
    "id": "2026-07-29-science-the-first-stars-not-a-black-hole-may-light-up-an",
    "sid": "st-efcbc1882bf8",
    "headline": "First stars may light an early gas clump",
@@ -1387,29 +1462,6 @@
    "fresh": false
   },
   {
-   "id": "2026-07-28-ai-ml-reinforcement-learning-training-for-llms-breaks",
-   "sid": "st-7e2b72cc92c9",
-   "headline": "Bounding the train-inference gap stabilizes RL",
-   "summary": "When labs fine-tune a model with reinforcement learning (RL — training by reward signal rather than by copying examples), the code that generates candidate answers and the code that updates the weights are usually separate engines, and the generator often runs in lower-precision arithmetic to go fast. That mismatch makes the two disagree about what the model actually said, and past a point the training destabilizes. ACRL (Adaptive Control RL) measures the discrepancy live and keeps it inside a safe band; as a side effect it raises policy entropy, nudging the model to keep exploring rather than collapsing onto one answer.",
-   "why": "RL post-training is now how reasoning models are made, and our run diverged and we don't know why is a common and expensive failure. Naming the training-inference gap as a controllable quantity — not an unavoidable artifact of the systems stack — turns a mysterious instability into a dial.",
-   "url": "https://arxiv.org/abs/2607.24062",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-28",
-   "date_label": "Jul 28",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/28/ai-ml/",
-   "fresh": false
-  },
-  {
    "id": "2026-07-28-news-israeli-prime-minister-benjamin-netanyahu-and-uk",
    "sid": "st-372c33eb9e51",
    "headline": "Netanyahu and Zelenskyy meet Trump",
@@ -1428,30 +1480,6 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/28/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-07-28-news-south-korea-s-kospi-stock-index-collapsed-10-8-o",
-   "sid": "st-6ee9ee4c71e6",
-   "headline": "Seoul's Kospi plunges 10.8%",
-   "summary": "South Korea's Kospi stock index collapsed 10.8% on Tuesday 28 July, closing at 6,023.66 - its lowest since April - after a rout in chipmaking shares triggered trading circuit-breakers (automatic pauses meant to halt panic selling). Samsung Electronics sank 13.4% and SK Hynix 14.7%; together the two account for a large share of the Seoul market. The sell-off followed a report in the trade publication The Information that China has begun mass-producing homegrown deep-ultraviolet (DUV) lithography tools - the machines that print circuit patterns onto silicon wafers, and a capability Western and Korean firms had assumed China was years from matching - stoking fears that Chinese competition could erode the incumbents' lead. European markets opened slightly higher, suggesting the shock stayed largely regional for now.",
-   "why": "Semiconductors are the backbone of South Korea's export economy, so a one-day drop this steep is a real macroeconomic event - and it signals investors are newly worried that China's chip progress could reset a market the West has dominated.",
-   "url": "https://www.ksat.com/business/2026/07/28/south-koreas-kospi-index-sinks-more-than-10-on-heavy-selling-of-chipmaking-stocks/",
-   "source_domain": "ksat.com",
-   "date": "2026-07-28",
-   "date_label": "Jul 28",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "economy",
-    "world"
-   ],
-   "topic_primary": "economy",
-   "topic_label": "Economy",
-   "topic_color": "#9a7b2e",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/07/28/news/",
@@ -2073,6 +2101,193 @@
    "daybreak": true
   },
   {
+   "id": "2026-08-04-ai-ml-google-turns-gemma-into-a-parallel-decoding-diff",
+   "sid": "st-43b7b2f106dd",
+   "headline": "Google ships DiffusionGemma diffusion LLM",
+   "summary": "Almost every production language model is autoregressive (AR) — it writes one token, feeds it back in, and writes the next, so generation is inherently sequential. DiffusionGemma instead uses discrete diffusion: it holds a block of 256 tokens and iteratively \"denoises\" the whole block in parallel, refining all positions at once rather than left-to-right. Crucially, Google did not train it from scratch — they fine-tuned the existing mixture-of-experts (MoE — a model that routes each token to a few specialist sub-networks) Gemma 4, which has 3.8B active and 25.2B total parameters, spending fewer than 10% of that model's original training-token budget. Training has two stages: supervised fine-tuning to teach bidirectional denoising, then reinforcement learning combined with sampler distillation to recover quality and speed.",
+   "why": "The sequential bottleneck is the main reason LLM text generation is latency-bound, and diffusion text models have historically lagged AR models in quality. Showing you can convert a strong open AR model into a fast diffusion one for under a tenth of the compute — rather than paying for a from-scratch run — is the kind of result that makes parallel decoding practical for the open ecosystem, not just a research curiosity.",
+   "url": "https://arxiv.org/abs/2608.00146",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Google DeepMind"
+   ],
+   "affiliation_label": "Google DeepMind",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 4 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-04-ai-ml-a-continuous-latent-space-for-text-borrowing-the",
+   "sid": "st-fe054ff126ee",
+   "headline": "A continuous latent space for text",
+   "summary": "Images, video and audio are increasingly generated in continuous latent spaces — compressed numeric representations a diffusion model can smoothly interpolate through — while text has stubbornly stayed discrete (one symbol per token). Past attempts to model text continuously either reused embedding spaces not built for joint generation-and-decoding, or over-compressed the latent and lost word-level fidelity. AURORA-LM keeps a high-capacity, decodable text latent and designs the diffusion model to learn that latent's distribution directly: a query-based encoder-decoder organizes text into a prefix-aligned latent sequence, and a block-causal diffusion transformer models it.",
+   "why": "If text can be modeled continuously without sacrificing exactness, the same generative machinery — and tricks like classifier guidance and latent editing — that powers image and audio models becomes available for language. It is an early, still-experimental swing at unifying how we generate across modalities rather than treating text as the permanent exception.",
+   "url": "https://arxiv.org/abs/2608.02602",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Nanjing University",
+    "NTU",
+    "Imperial College London"
+   ],
+   "affiliation_label": "Nanjing University, NTU +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 4 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-04-ai-ml-a-proof-that-reward-shaping-against-hallucinatio",
+   "sid": "st-ca5188a8ca22",
+   "headline": "Abstention rewards can collapse an RL model",
+   "summary": "A popular anti-hallucination recipe is an error-penalized scoring rule: +1 for a correct answer, −λ for a wrong one, 0 for abstaining. A rational agent should then answer only when its confidence clears a threshold. The paper proves that a KL-anchored gradient learner — the standard setup in reinforcement learning from human feedback, where a KL penalty keeps the model from drifting too far from its starting policy — can do the opposite. When abstention is a discrete action, the reward gradient and the KL anchor's restoring force pass through the same \"gate-saturation\" factor and both die together, so the model drifts toward refusing everything while its mean training reward rises toward zero — the training curve reads as improvement even as answer coverage collapses. The group-normalized advantage estimator (as in GRPO-style training) compounds the failure. The authors also give a repair.",
+   "why": "Teams add abstention rewards precisely to make models safer, and this shows a plausible way that intervention backfires invisibly — the loss looks healthy while the model becomes uselessly cautious. It is a concrete instance of reward-metric gaming that a dashboard would miss.",
+   "url": "https://arxiv.org/abs/2608.00301",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 4 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-04-ai-ml-right-answer-wrong-reasoning-up-to-44-of-correct",
+   "sid": "st-f9945d233772",
+   "headline": "LLMs shortcut science benchmarks",
+   "summary": "Reasoning benchmarks usually grade only the final answer. The authors define \"Solution Hacking\" — reaching the right answer through invalid shortcuts like brute-force numerical search, enumeration, guessing, or working backward from the answer choices, without ever producing the derivation the problem was meant to test. Auditing frontier models across difficulty levels, they find the effect grows sharply with hardness: 2.2% of common problems, 28.3% of Olympiad-level problems, and 37.4% on HLE (Humanity's Last Exam, a very hard expert benchmark). Between 8.2% and 44.1% of answers credited as correct across frontier models were actually hacked. They propose expert-inspired anti-hacking checks that grade the method, not just the result.",
+   "why": "If a large share of a model's benchmark wins come from shortcuts rather than reasoning, leaderboard gains overstate genuine capability — and the gap widens exactly on the hard problems people cite as evidence of \"reasoning.\" It is a direct argument for grading process, not just answers.",
+   "url": "https://arxiv.org/abs/2608.02442",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Alibaba"
+   ],
+   "affiliation_label": "Alibaba",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 4 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-04-ai-ml-why-generic-llms-are-bad-at-spreadsheets-isolate",
+   "sid": "st-3be0556cdedc",
+   "headline": "Why LLMs fail at tabular prediction",
+   "summary": "LLMs are the default tool for almost everything except one of the most common ML workloads: predicting a column from tabular data (the bread-and-butter of business analytics). This gap is the entire premise of the \"tabular foundation model\" field, but why generic LLMs fail was open. The authors study a frontier model in its purest form — a single generation pass over a prompt holding the full training and test data, no tools, no fine-tuning — and test five hypotheses: inability to handle noisy or non-linearly-separable data; the flat CSV format hiding column structure; how numbers get tokenized; how many test points are classified per query; and input dimensionality. Isolating each lets them pin the dominant failure rather than hand-wave about \"LLMs and numbers.\"",
+   "why": "Predictive analytics over tables is where a lot of real enterprise value sits, and knowing the specific bottleneck (rather than assuming LLMs are just bad at math) tells builders whether to reformat inputs, change tokenization, or reach for a dedicated tabular model.",
+   "url": "https://arxiv.org/abs/2608.02412",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Fundamental Technologies",
+    "Voylab"
+   ],
+   "affiliation_label": "Fundamental Technologies, Voylab",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 4 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-04-ai-ml-an-agent-that-runs-almost-any-software-from-scre",
+   "sid": "st-e6ac617e5717",
+   "headline": "Qwen-CUA native computer-use agent",
+   "summary": "\"Native computer use\" means an agent that operates a computer the way a person does — reading the screen and acting through keyboard and mouse — rather than through app-specific APIs or the accessibility tree. Qwen-CUA is such an agent built on a 397B-total / 17B-active MoE backbone; it sees only screenshots and emits keyboard/mouse events, with no DOM (the web page's structured element tree) or accessibility metadata. Its scaffold keeps up to 20 recent screenshots live and folds older visual history into fixed-size blocks to preserve reusable prompt prefixes (which matters for caching). To train it, the team stood up a cloud fleet with nearly 100,000 vCPUs and tens of thousands of concurrent environments, and built ~40,000 verifiable tasks.",
+   "why": "A screenshot-only interface generalizes to any software with a GUI, including the long tail of tools that expose no API — the hard part of making agents useful in real workplaces. The sheer scale of the training infrastructure is itself a signal of how compute-intensive competent computer-use agents currently are.",
+   "url": "https://arxiv.org/abs/2608.02352",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Alibaba",
+    "HKU"
+   ],
+   "affiliation_label": "Alibaba, HKU",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 4 Aug",
+   "daybreak": false
+  },
+  {
    "id": "2026-08-04-news-venezuela-s-confirmed-death-toll-from-the-24-jun",
    "sid": "st-ddcf0e3873c7",
    "headline": "Venezuela quake toll passes 6,000",
@@ -2204,6 +2419,99 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/04/news/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 4 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-04-ai-ml-fixing-the-muon-optimizer-for-diffusion-transfor",
+   "sid": "st-83e733e6a380",
+   "headline": "CMuon speeds diffusion-transformer training",
+   "summary": "Muon (Momentum Orthogonalization) is a recent optimizer that orthogonalizes a layer's momentum update — roughly, it rescales the update so different directions get comparable step sizes — and it has beaten the standard AdamW on several training runs. But applied straight to Diffusion Transformers (DiTs), the workhorse of modern image/video generation, it converges poorly late in training. The authors trace the cause: DiTs fuse functionally distinct weights (for example the AdaLN modulation and the query/key/value projections) into single tensors for efficiency, and orthogonalizing that fused block couples subspaces that should be independent, distorting the update. Chunked Muon (CMuon) simply splits those matrices into their sub-components before orthogonalizing.",
+   "why": "Optimizer choice compounds over a training run, and DiT training is expensive enough that a late-stage convergence fix directly lowers the cost of frontier image and video models. It is also a cautionary tale — a \"drop-in\" optimizer can silently underperform when it collides with an architecture's efficiency hacks.",
+   "url": "https://arxiv.org/abs/2608.02502",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "Peking University",
+    "Westlake University",
+    "Zhejiang University"
+   ],
+   "affiliation_label": "Peking University, Westlake University +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 4 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-04-ai-ml-a-handful-of-neurons-betray-when-an-agent-is-abo",
+   "sid": "st-c99282fc6e3c",
+   "headline": "A few neurons flag agent tool misuse",
+   "summary": "Tool-using (\"agentic\") LLMs fail in three characteristic ways: invalid arguments, unnecessary calls (over-calling), and missing calls when a tool was actually needed. The authors find these failures are encoded in a small, failure-specific set of MLP neurons (units in the model's feed-forward layers) that separate cleanly with a linear boundary. Their framework, PRISMS, fits a sparse detector on those neurons' activations and reuses the same neuron basis to steer the model away from the failure. Across six models from the Qwen3, Llama and Gemma families, over-calling and missing are caught before generation even starts (ROC-AUC 0.90-1.00 — a measure where 0.5 is chance and 1.0 is perfect), and invalid arguments are caught from the generated call (0.86-0.90).",
+   "why": "Reliable tool use is the linchpin of agents that touch real systems, and a cheap, interpretable monitor that flags a bad call before it fires — rather than cleaning up after — is exactly the kind of guardrail production agent stacks need.",
+   "url": "https://arxiv.org/abs/2608.00218",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 4 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-04-ai-ml-giving-mamba-a-working-memory-and-a-long-term-me",
+   "sid": "st-f5add2e8b5c8",
+   "headline": "Hierarchical memory extends Mamba",
+   "summary": "Mamba and its relatives are recurrent linear-attention models — a Transformer alternative that processes a sequence in linear time by keeping a fixed-size recurrent state instead of attending to every past token. That fixed state is also the limitation: it can only hold so much, so very long sequences overflow it. Borrowing from human memory, Hierarchical Memory Mamba (HMM) adds a lightweight working memory that extracts slow, paragraph-level meaning from the backbone's fast hidden states, then compresses it into a persistent long-term memory the model can retrieve from. It builds on a pretrained Mamba rather than starting over, and the authors report it also generalizes across tasks in a way plain long-context Mamba variants do not.",
+   "why": "Linear-time models are attractive because attention's cost grows with the square of sequence length, but their memory bottleneck has kept them from displacing Transformers on genuinely long inputs. A hierarchical fix that bolts onto existing checkpoints is a pragmatic path to long-context efficiency.",
+   "url": "https://arxiv.org/abs/2608.02347",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-04",
+   "date_label": "Aug 4",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/04/ai-ml/",
+   "affiliations": [
+    "HKUST",
+    "University of Oxford",
+    "CUHK"
+   ],
+   "affiliation_label": "HKUST, University of Oxford +1",
    "fresh": true,
    "kind": "story",
    "age_days": 0,
@@ -2980,175 +3288,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-07-31-ai-ml-openai-disputes-anthropic-s-arc-agi-3-record-wit",
-   "sid": "st-118062307750",
-   "headline": "OpenAI disputes Opus 5 ARC-AGI record",
-   "summary": "After the last edition reported Claude Opus 5 topping the interactive ARC-AGI-3 benchmark at 30.2%, OpenAI says GPT-5.6 Sol reaches 38.3% — but only through its own Responses API using two extra settings: 'Retained Reasoning' (keeping the model's chain of thought between steps rather than discarding it) and 'Compaction' (summarizing old context instead of truncating it). In ARC Prize's official harness, which discards reasoning after each action, GPT-5.6 Sol scored just 7.8%. ARC-AGI is a suite of abstract visual-reasoning puzzles built to resist memorization; the ARC-AGI-3 variant is interactive, so how much state the harness preserves between steps matters enormously. ARC Prize's Francois Chollet acknowledged the different settings create 'a potential parity issue' but called it acceptable 'as long as the settings and the cost are clearly reported.'",
-   "why": "The gap between 7.8% and 38.3% for the same model is the whole story: on interactive benchmarks the harness (what memory and reasoning the model is allowed to carry across steps) can swing the score five-fold, so a headline leaderboard number is close to meaningless without the harness spec beside it.",
-   "url": "https://the-decoder.com/openai-claims-gpt-5-6-sol-beats-opus-5-on-arc-agi-3-with-its-latest-api-and-two-additional-settings/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 31 Jul",
-   "daybreak": false
-  },
-  {
-   "id": "2026-07-31-ai-ml-the-fcc-added-foreign-produced-robots-and-power",
-   "sid": "st-d4e7b3d4d913",
-   "headline": "FCC bars foreign robots and inverters",
-   "summary": "On 28 July the Federal Communications Commission barred new foreign-produced 'advanced robotic devices' (defined as mobile robots such as humanoids and quadrupeds) and connected power inverters from receiving the authorization needed to be imported, marketed, or sold in the US, following national-security determinations by a White House-convened interagency body. The rule's broad wording sweeps in consumer devices — robot vacuums, robotic mowers, delivery bots — and the Department of War (robots) or Homeland Security (inverters) can grant case-by-case exemptions; previously purchased and previously authorized devices are unaffected.",
-   "why": "This puts a hard import gate around the physical layer of the US AI build-out (robotics and grid hardware), and — because the definition is written by device class rather than by named vendor — its reach extends well past the headline 'humanoid' framing into everyday connected hardware.",
-   "url": "https://www.fcc.gov/document/fcc-adds-foreign-produced-power-inverters-and-robots-covered-list-0",
-   "source_domain": "fcc.gov",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "politics",
-    "tech"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 31 Jul",
-   "daybreak": false
-  },
-  {
-   "id": "2026-07-31-ai-ml-openai-cut-gpt-5-6-prices-sharply",
-   "sid": "st-b8e7cd7a7bbf",
-   "headline": "OpenAI cuts GPT-5.6 prices up to 80%",
-   "summary": "From 30 July, OpenAI dropped the price of its most affordable tier, GPT-5.6 Luna, by 80%, and the mid tier, Terra, by 20%. The company attributes the cuts to efficiency gains its top Sol model helped engineer in its own infrastructure; competitive pressure from cheap Chinese providers and from Microsoft's in-house MAI models is a plausible additional driver. This continues the GPT-5.6 rollout that reached general availability on 9 July.",
-   "why": "An 80% cut on the cheapest tier is aimed squarely at the price floor set by open-weight and Chinese hosted models — the clearest sign yet that inference pricing, not raw capability, is the front line of the current model competition.",
-   "url": "https://the-decoder.com/openai-goes-full-china-pricing-mode-with-an-80-percent-cut-to-its-most-affordable-gpt-5-6-model/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 31 Jul",
-   "daybreak": false
-  },
-  {
-   "id": "2026-07-31-ai-ml-the-model-context-protocol-shipped-its-biggest-u",
-   "sid": "st-f09c67c150ce",
-   "headline": "MCP spec goes stateless at the core",
-   "summary": "The 2026-07-28 MCP specification (MCP is the open standard, maintained by Anthropic engineers, for how AI systems connect to external tools and data) removes the protocol-level session and the Mcp-Session-Id header, so any request can now land on any server instance. That drops the sticky-routing and shared-session-store machinery that horizontal deployments previously needed, plus additions like multi-round-trip requests, header-based routing, and cacheable list results. Lead maintainer David Soria Parra calls it MCP's most important release since remote MCP launched over a year ago.",
-   "why": "Statefulness was MCP's main obstacle to running at enterprise scale; making the core stateless is the kind of unglamorous plumbing change that decides whether the standard becomes the default connective tissue for agents or stays a prototyping toy.",
-   "url": "https://blog.modelcontextprotocol.io/posts/2026-07-28/",
-   "source_domain": "blog.modelcontextprotocol.io",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "tech",
-    "ai-ml"
-   ],
-   "topic_primary": "tech",
-   "topic_label": "Tech",
-   "topic_color": "#3b6ea5",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 31 Jul",
-   "daybreak": false
-  },
-  {
-   "id": "2026-07-31-ai-ml-making-a-model-critique-and-rewrite-its-own-answ",
-   "sid": "st-7b683d414268",
-   "headline": "Repeated sampling beats self-reflection",
-   "summary": "A rerun of the 'self-improvement vs. repeated sampling' comparison as a properly designed experiment: seven methods (self-refine, reflexion, best-of-N, debate, and others), open models at 1.5B/3B/7B, two math benchmarks, 150 questions each, counting every generated token — including those spent on critiques and debate — and comparing each method against plain repeated sampling at its own measured cost, with bootstrap intervals and multiplicity correction.",
-   "why": "Across all 36 comparisons, no method reliably beat repeated sampling at equal token cost, and all ten that were reliably worse were ones where the model inspects its own output; the paper even finds Reflexion, as published, silently never triggered its own retry on the smallest model. It is direct evidence that many reported 'reasoning method' gains are just the accuracy that comes free from generating more text.",
-   "url": "https://arxiv.org/abs/2607.28576",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 31 Jul",
-   "daybreak": false
-  },
-  {
-   "id": "2026-07-31-ai-ml-capabilities-appear-all-at-once-because-they-req",
-   "sid": "st-cef7632d2000",
-   "headline": "A rate law for capability emergence",
-   "summary": "The paper argues that 'no-partial-credit joint alignment' is the rate-limiting step of learning a capability, and tests it mechanistically: ablating (surgically disabling) a single part of a learned circuit leaves a median of just 17% of the capability intact across Pythia models, where a partial-credit account predicts 50-83%. It fits this to a nucleation-style rate law borrowed from the physics of how crystals form from one rare seed event.",
-   "why": "'Emergence' — a skill appearing suddenly at some scale — is one of the least-understood phenomena in LLMs; framing it as a rare joint-alignment event gives a concrete, falsifiable mechanism for why capabilities snap into place rather than fade in gradually.",
-   "url": "https://arxiv.org/abs/2607.27281",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-31",
-   "date_label": "Jul 31",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/31/ai-ml/",
-   "affiliations": [
-    "Independent Researcher"
-   ],
-   "affiliation_label": "Independent Researcher",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 31 Jul",
-   "daybreak": false
-  },
-  {
    "id": "2026-07-31-news-more-than-40-000-migrants-crossed-from-morocco-i",
    "sid": "st-19423576fa1e",
    "headline": "40,000 migrants cross into Ceuta from Morocco",
@@ -3395,34 +3534,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-07-29-news-the-us-senate-voted-86-12-on-tuesday-28-july-to",
-   "sid": "st-5fc30718cad9",
-   "headline": "Senate advances Russia sanctions bill",
-   "summary": "The US Senate voted 86-12 on Tuesday 28 July to advance a Russia sanctions bill, a bipartisan procedural step that its sponsors described as largely symbolic ahead of the chamber's August recess. The measure, renamed the Lindsey O. Graham Sanctioning Russia Act of 2026 after the South Carolina senator who died suddenly of an aortic tear, would give the president new authority to sanction Russian officials, foreign nationals and financial institutions tied to Moscow's war effort, compel a 500% tariff on all Russian imports including oil and gas, and expand powers to punish \"shadow fleet\" vessels evading energy sanctions. Only one Republican, Rand Paul, joined 11 Democrats against it; Graham's sister Darline, appointed to fill his seat, is a lead sponsor. The Senate will need several more votes for the bill to pass, and the House passed its own version in June.",
-   "why": "The lopsided vote signals durable cross-party support for tougher Russia measures, but Tuesday's step authorizes rather than imposes the tariffs — the sanctions are not yet law.",
-   "url": "https://www.spokesman.com/stories/2026/jul/28/senate-overwhelmingly-votes-for-russia-sanctions-b/",
-   "source_domain": "spokesman.com",
-   "date": "2026-07-29",
-   "date_label": "Jul 29",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/29/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Wed 29 Jul",
-   "daybreak": false
-  },
-  {
    "id": "2026-07-29-science-the-first-stars-not-a-black-hole-may-light-up-an",
    "sid": "st-efcbc1882bf8",
    "headline": "First stars may light an early gas clump",
@@ -3583,33 +3694,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-07-28-ai-ml-reinforcement-learning-training-for-llms-breaks",
-   "sid": "st-7e2b72cc92c9",
-   "headline": "Bounding the train-inference gap stabilizes RL",
-   "summary": "When labs fine-tune a model with reinforcement learning (RL — training by reward signal rather than by copying examples), the code that generates candidate answers and the code that updates the weights are usually separate engines, and the generator often runs in lower-precision arithmetic to go fast. That mismatch makes the two disagree about what the model actually said, and past a point the training destabilizes. ACRL (Adaptive Control RL) measures the discrepancy live and keeps it inside a safe band; as a side effect it raises policy entropy, nudging the model to keep exploring rather than collapsing onto one answer.",
-   "why": "RL post-training is now how reasoning models are made, and our run diverged and we don't know why is a common and expensive failure. Naming the training-inference gap as a controllable quantity — not an unavoidable artifact of the systems stack — turns a mysterious instability into a dial.",
-   "url": "https://arxiv.org/abs/2607.24062",
-   "source_domain": "arxiv.org",
-   "date": "2026-07-28",
-   "date_label": "Jul 28",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/28/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 28 Jul",
-   "daybreak": false
-  },
-  {
    "id": "2026-07-28-news-israeli-prime-minister-benjamin-netanyahu-and-uk",
    "sid": "st-372c33eb9e51",
    "headline": "Netanyahu and Zelenskyy meet Trump",
@@ -3628,34 +3712,6 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/07/28/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 28 Jul",
-   "daybreak": false
-  },
-  {
-   "id": "2026-07-28-news-south-korea-s-kospi-stock-index-collapsed-10-8-o",
-   "sid": "st-6ee9ee4c71e6",
-   "headline": "Seoul's Kospi plunges 10.8%",
-   "summary": "South Korea's Kospi stock index collapsed 10.8% on Tuesday 28 July, closing at 6,023.66 - its lowest since April - after a rout in chipmaking shares triggered trading circuit-breakers (automatic pauses meant to halt panic selling). Samsung Electronics sank 13.4% and SK Hynix 14.7%; together the two account for a large share of the Seoul market. The sell-off followed a report in the trade publication The Information that China has begun mass-producing homegrown deep-ultraviolet (DUV) lithography tools - the machines that print circuit patterns onto silicon wafers, and a capability Western and Korean firms had assumed China was years from matching - stoking fears that Chinese competition could erode the incumbents' lead. European markets opened slightly higher, suggesting the shock stayed largely regional for now.",
-   "why": "Semiconductors are the backbone of South Korea's export economy, so a one-day drop this steep is a real macroeconomic event - and it signals investors are newly worried that China's chip progress could reset a market the West has dominated.",
-   "url": "https://www.ksat.com/business/2026/07/28/south-koreas-kospi-index-sinks-more-than-10-on-heavy-selling-of-chipmaking-stocks/",
-   "source_domain": "ksat.com",
-   "date": "2026-07-28",
-   "date_label": "Jul 28",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "economy",
-    "world"
-   ],
-   "topic_primary": "economy",
-   "topic_label": "Economy",
-   "topic_color": "#9a7b2e",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/07/28/news/",
