@@ -32,6 +32,18 @@ Three desks, deep over broad: pick the week's genuinely-new findings, read the p
 - Science.org — use its RSS feeds (e.g. `https://www.science.org/rss/news_current.xml`, plus journal feeds); the article HTML is unreachable, so cite the DOI / article landing URL.
 - APS journals (`journals.aps.org` — PRL / PRX / PRX Quantum): the recent-articles RSS. Cite the article DOI / landing URL.
 
+**Dormant-source activation — do this BEFORE waiving discovery.** The registry carries a stack of
+science domains stuck at `candidate` status in the plan's `candidates_to_try` — Swiss and European
+research institutions (ETH Zürich, EPFL, PSI, Empa, WSL, the cantonal universities), national labs,
+agency newsrooms, society journals — never cited, or cited once and quiet since. Pick at least **two**
+of them each week and actually attempt their newsroom/feed for the window. A domain in
+`candidates_to_try` is ALREADY in the registry, so it can be neither tagged `[new source]` nor counted
+toward `met` — probing it strengthens the edition and makes the waiver honest, it does not satisfy the
+quota. The one path from a dormant-institution probe to a real discovery is landing on a host that is
+not in the registry: an institution's newsroom subdomain is its own domain (`ai.ethz.ch` is registered
+separately from `ethz.ch`), so tag and count that. If both probes come back empty or unreachable, name
+the two you probed in the waiver reason.
+
 **Nature-abstract fallback (Patch-4):** when a Nature primary research item (`s41586-…`) has no fetchable abstract from the sandbox, locate the matching arXiv cross-list preprint (search the title via the arXiv API / Semantic Scholar) and summarise *that*, tagged `[preprint]` — do NOT emit a title-only stub.
 
 # Affiliations (the provenance element)
@@ -77,6 +89,14 @@ Coverage: JWST and other space telescopes, ESO/ALMA, exoplanets, cosmology, grav
 ## 🧠 Why it matters (optional — only if warranted)
 
 1–2 synthesis threads across the week's science: a connection between findings, a shifting consensus, a method that's spreading across fields. This is the one place to be opinionated. Omit entirely if no genuine cross-cutting thread emerged — do not manufacture one.
+
+# Swiss/European relevance pass (after drafting, before publishing)
+
+Reread the finished items and ask of each: does this have a real Swiss or European angle — a Swiss/EU
+institution in the author list or funding it, a policy, regulatory or funding consequence that lands
+here, a practical consequence for the reader? Where the angle is real, write it into that item (a
+clause in the summary or the *Why it matters:* line is enough; do not add a section for it). Where it
+is not, leave the item alone — a manufactured local hook is worse than none.
 
 # Format
 

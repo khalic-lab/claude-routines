@@ -101,7 +101,7 @@ For each paper:
 - **Quanta Magazine RSS** — heavy weight here, math + fundamental physics.
 - **Nature journals RSS**: nature.rss, nphys.rss (Nature Physics), natastron.rss (Nature Astronomy).
 
-T1 (HTML fallback): journals.aps.org (PRL, PRX, PRX Quantum), science.org, cern.ch/news, eso.org/public/news, nasa.gov/news.
+T1 (HTML fallback): journals.aps.org (PRL, PRX, PRX Quantum), science.org, home.cern/news, eso.org/public/news, nasa.gov/news.
 T2: terrytao.wordpress.com, scottaaronson.blog, astrobites.org.
 
 Up to ~8 papers across the fundamental sciences — quality is the cap; skip a category with nothing genuinely notable. Rough bias when choosing among candidates (a tiebreaker, not a floor to fill):

@@ -57,6 +57,13 @@ T2 commentary (discovery + framing, never the primary cite): simonwillison.net, 
 
 If you DO have papers inside the window: because this is a multi-day window (two fires/week), target **~8–12 papers** — bias toward RL, efficient inference, interpretability, agents, and novel architectures. Dedup by arXiv ID within this batch so no paper appears twice.
 
+**Rank, then cut.** Order the papers by likely relevance to THIS reader — strongest first — never by
+submission order or the order the feeds handed them to you. Open the section, before the first paper
+bullet, with a 2–4 sentence **throughline** in plain prose: what actually mattered this cycle (the
+theme, the shift, the disagreement between papers) and which 2–3 of them are worth reading in full.
+The ~8–12 is a ceiling, not a quota — cut the low-signal papers instead of padding to a count; six
+ranked papers under a real throughline beat twelve same-shaped ones off one day's listing.
+
 <!-- include: _shared/affiliations.md -->
 
 Format each paper as a **multi-paragraph story bullet** (one `-` per paper, so the section is a bulleted

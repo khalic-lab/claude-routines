@@ -30,7 +30,7 @@ In practice: go to the primary source and read it yourself; report what it actua
 **Discovery footer contract (exactly one line, lint-verified).** Every brief's Coverage footer ends with exactly ONE of:
 - `- Discovery: met (<the genuinely new domain(s) you anchored this edition, each tagged [new source]>)`
 - `- Discovery: waived — <concrete reason>`
-"met" is recomputed against your stream's discovery quota (stated in the preflight plan's discovery section) — never claim it without the tagged citations to back it; a false "met" is a violation, an honest waiver is not. The waiver is free but counted: give a real reason ("pursued X and Y, both paywalled"), not boilerplate. Zero lines, two lines, or any other wording all fail the lint.
+"met" is machine-checked for domain novelty against your stream's discovery quota (stated in the preflight plan's discovery section); on top of that, only new PRIMARY/institutional domains count toward it, never a first-time mainstream outlet (see "What counts toward the quota" in the Source plan section) — the lint verifies novelty, the primary test is on you. Never claim it without the tagged citations to back it; a false "met" is a violation, an honest waiver is not. The waiver is free but counted: give a real reason ("pursued X and Y, both paywalled"), not boilerplate. Zero lines, two lines, or any other wording all fail the lint.
 
 # Sourcing rules (non-negotiable)
 
@@ -68,7 +68,7 @@ It reads `sources/registry.yml` and prints the plan that is the AUTHORITY on wha
 
 - **Fetch list** — the domains/feeds affine to this stream, each with its probe URL and method (curl or proxy). Sweep these first.
 - **Pressure** — per-domain rolling-30-day citation shares, with a `SATURATED` flag on any domain over its share bar (hubs like arXiv are exempt). Report-only — no story is dropped for it — but when two sources carry the same story, prefer the unsaturated one, and cite no outlet domain more than twice in one edition (hubs exempt).
-- **Discovery** — this stream's discovery quota and `candidates_to_try` (registry candidates and dormant domains worth a probe this run). Work at least the quota's worth of genuinely new or dormant domains into your research; the Discovery footer line reports the outcome.
+- **Discovery** — this stream's discovery quota and `candidates_to_try` (registry candidates and dormant domains worth a probe this run). Work at least the quota's worth of genuinely new or dormant domains into your research; the Discovery footer line reports the outcome. Only new **primary** domains satisfy the quota — see "What counts toward the quota" below.
 
 **EMERGENCY SLATE — degraded mode only (a floor, never the ceiling).** If preflight errors or prints `source-plan unavailable`, fall back to these known-good feeds and note `source-plan unavailable` in the Gaps footer:
 - News desks: SRF `https://www.srf.ch/news/bnf/rss/1646`, Le Temps `https://www.letemps.ch/articles.rss`, Al Jazeera `https://www.aljazeera.com/xml/rss/all.xml`.
@@ -76,6 +76,20 @@ It reads `sources/registry.yml` and prints the plan that is the AUTHORITY on wha
 Still research beyond this floor as the brief demands — the slate is where you start when the plan is missing, never a cap on where you look.
 
 **New-source citation rule.** T3 aggregators (HN/Reddit/X) remain never-cited. But a **genuine primary source discovered through search or a T3 lead MAY be cited immediately even if it is absent from `sources/registry.yml`** — tag it with the literal marker `[new source]` next to the citation. Tag ONLY domains genuinely absent from the registry (grep `sources/registry.yml` for the domain first): the source lint recomputes novelty itself at publish, and both a missing tag on an unregistered domain and a `[new source]` tag on a registered one are violations. This is how the registry grows — a tagged citation auto-enters the domain as a `candidate`.
+
+**What counts toward the quota.** The plan prints the quota's NUMBER; this rule defines what counts
+toward it (the plan's "novel-or-dormant" wording is the count, not the test). The `[new source]` tag
+is registry bookkeeping and goes on every unregistered domain you cite, outlet or not. The *quota* is
+narrower: a discovery counts toward `met`
+ONLY when the new domain is a **primary/institutional publisher** — a lab, university, research
+institute, journal, observatory, regulator, government body or ministry, court, parliament,
+federation, standards body, or the first-party site of the company/organization the story is about.
+A general news outlet is still cited and still tagged, but a never-before-cited mainstream outlet is
+not a discovery and does NOT satisfy the quota. The test is what KIND OF BODY published the page, not
+the registry's `class:` field — that field feeds the saturation math and files plenty of universities
+and institutes as `outlet`; a lab, university or federation counts as primary regardless. When the
+edition surfaced no new primary domain, take the waiver honestly (it is free but counted) rather than
+claiming `met` off an outlet.
 
 ## Fetch mechanics
 
@@ -138,6 +152,13 @@ T2 commentary (discovery + framing, never the primary cite): simonwillison.net, 
   Replace N with the actual count. Do NOT substitute older/stale papers to fill the section.
 
 If you DO have papers inside the window: because this is a multi-day window (two fires/week), target **~8–12 papers** — bias toward RL, efficient inference, interpretability, agents, and novel architectures. Dedup by arXiv ID within this batch so no paper appears twice.
+
+**Rank, then cut.** Order the papers by likely relevance to THIS reader — strongest first — never by
+submission order or the order the feeds handed them to you. Open the section, before the first paper
+bullet, with a 2–4 sentence **throughline** in plain prose: what actually mattered this cycle (the
+theme, the shift, the disagreement between papers) and which 2–3 of them are worth reading in full.
+The ~8–12 is a ceiling, not a quota — cut the low-signal papers instead of padding to a count; six
+ranked papers under a real throughline beat twelve same-shaped ones off one day's listing.
 
 **Affiliations — the paper's provenance element (machine-parsed):** every paper byline carries
 the lead authors' institutional affiliations. They are the paper's editorial source —
@@ -319,4 +340,4 @@ python3 tools/publish.py --slug ai-ml --date {YYYY-MM-DD} \
 
 - `{teaser}` rules: ≤200 chars. Most interesting item from this brief — typically a striking arXiv paper, a major lab release, a notable open-weight model drop, a significant benchmark result, or a regulatory/funding event. Concrete and specific (e.g. "New RLVR method tops MATH in today's arXiv batch; Anthropic ships Claude Opus 4.8; EU AI Office opens probe into Meta"), not generic. Pass it as a plain shell argument; no quote-escaping.
 - Omit `--final` if dedup was unavailable — note "dedup unavailable" in the Gaps line first.
-- It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the edition is committed but not on origin (retry `git push origin main` before the session ends). Never redo its steps by hand.
+- It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the edition is committed but not on origin (retry `git push origin HEAD:refs/heads/main` before the session ends). Never redo its steps by hand.

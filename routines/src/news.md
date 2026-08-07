@@ -20,6 +20,7 @@ Broad coverage of major local + world news, light filter — include items even 
 6. **No fabrication.** Never invent a URL, author, date, or quote. **The no-fabrication rule extends to date claims** — date accuracy matters most in this edition (elections, Swiss federal/cantonal votes, scheduled diplomatic events): never report a scheduled or future event as a result, and carry each event's real date forward rather than re-deriving it (see Date discipline below).
 7. **Volume cap.** 4–7 items per section. Better to omit than dilute.
 8. **Fetch transparency.** A confirmed fetch gets no marker; a citation resting only on a search-engine snippet gets `[via snippet]`.
+9. **Primary document rule.** When the story IS a document — a court ruling, a bill or law, a regulator's decision, an official report, a published legal opinion — go find the document itself (the court's, parliament's, regulator's, ministry's or party's own site) and cite it alongside the outlet, before settling for outlet-only sourcing. Search it by case number, bill number, docket or title; the outlet's article is what tells you the document exists, not a substitute for it. If the document is genuinely unreachable, say where it lives ("the judgment is on the tribunal's docket page, not yet published in full") instead of letting the write-up stand as the record.
 
 <!-- include: _shared/reader-profile-source-weights.md -->
 

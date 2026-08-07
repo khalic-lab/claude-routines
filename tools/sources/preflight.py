@@ -112,7 +112,9 @@ def build_discovery_section(slug, reg):
     quota = QUOTA[slug]
     non_hub_note = " (non-hub)" if slug == "ai-ml" else ""
     lines.append("- Discovery quota for %s: >= %d novel-or-dormant anchor domain(s)%s "
-                 "required this edition (waived-but-counted footer escape allowed)." %
+                 "required this edition (waived-but-counted footer escape allowed); "
+                 "only primary/institutional publishers count toward it, never a "
+                 "first-time mainstream outlet." %
                  (slug, quota, non_hub_note))
     candidates = []
     for domain, rec in reg.items():
