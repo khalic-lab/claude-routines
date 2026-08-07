@@ -9,16 +9,16 @@
    "count": 22
   },
   {
-   "key": "world",
-   "label": "World",
-   "color": "#6b6f76",
-   "count": 20
-  },
-  {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 17
+   "count": 19
+  },
+  {
+   "key": "world",
+   "label": "World",
+   "color": "#6b6f76",
+   "count": 18
   },
   {
    "key": "science",
@@ -45,15 +45,15 @@
    "count": 6
   },
   {
-   "key": "security",
-   "label": "Security",
-   "color": "#6a4b8a",
-   "count": 5
-  },
-  {
    "key": "politics",
    "label": "Politics",
    "color": "#9a6a34",
+   "count": 4
+  },
+  {
+   "key": "security",
+   "label": "Security",
+   "color": "#6a4b8a",
    "count": 4
   },
   {
@@ -119,6 +119,85 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/07/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-07-ai-ml-letting-models-call-tools-by-writing-code-not-fi",
+   "sid": "st-f2748bffdaad",
+   "headline": "Code beats JSON for LLM tool calls",
+   "summary": "An LLM \"agent\" acts on the world by calling external tools. The usual method exposes each tool as a rigid JSON form the model fills in. This paper instead exposes tools as typed Python function stubs the model invokes by writing a short script — so it can chain and parallelize several calls in one turn (they call this programmatic tool calling, PTC). They run both head-to-head on BFCL v4 (the Berkeley Function-Calling Leaderboard, a standard tool-use benchmark) across 14 models. PTC matches or beats native JSON calling in 11 of 14 models — the GPT-5.6 family gains 10.6% — matches or wins in 13 of 14 under parallel \"fan-out,\" and stays stable under \"context rot\" (long, cluttered conversations) where the JSON baseline slips ~2.3%.",
+   "why": "As agents take on more multi-step work, how you let them call tools is a real performance lever, not an implementation detail. The result — with its nod to Sutton's \"bitter lesson\" that general, compute-scaling methods win — says the code-native path improves as models get more capable, while the JSON path does not.",
+   "url": "https://arxiv.org/abs/2608.06370",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "PwC"
+   ],
+   "affiliation_label": "PwC",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-07-ai-ml-a-learning-algorithm-that-finally-hits-the-theor",
+   "sid": "st-ebbf6946b8d4",
+   "headline": "An optimal agnostic PAC learner",
+   "summary": "PAC learning (Probably Approximately Correct — the standard theoretical model of supervised learning) asks how many labelled examples you need to come close to the best classifier in a given family. In the harder \"agnostic\" setting — where you do not assume the data can be perfectly separated — a lower bound on the achievable error has been known since the 1990s, but no algorithm had been proven to match it. This paper constructs a learner whose error is provably within a single universal constant of that lower bound, for any hypothesis family of finite VC dimension (VC dimension — a standard measure of a model family's capacity).",
+   "why": "It settles a long-standing open question in learning theory — the sample complexity of agnostic PAC learning is now pinned down up to constants at every noise level. This is foundational rather than a product; the payoff is conceptual clarity about the fundamental limits of learning from data.",
+   "url": "https://arxiv.org/abs/2608.06363",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "Aarhus University",
+    "HKU",
+    "UC Berkeley"
+   ],
+   "affiliation_label": "Aarhus University, HKU +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-07-ai-ml-self-improving-agents-can-quietly-poison-themsel",
+   "sid": "st-b8ad1abff107",
+   "headline": "Self-evolving agents poison their own skills",
+   "summary": "\"Self-evolving\" agents get better by distilling reusable skills from their own past runs into a growing library. This paper shows the process is not monotonic: past a critical library size, newly added skills start hurting performance. The cause is structural — once a defective skill enters the decision context it becomes reference material for distilling later skills, forming cross-round contamination chains — and it is largely irreversible: deleting the original culprit afterward recovers only a small fraction of the lost performance. Their fix, Verifier-as-Gatekeeper (VaG), screens each candidate skill with three complementary critics (structural validity, behavioral harmlessness, semantic consistency) before admission. On Terminal-Bench 2, unfiltered accumulation peaks and then decays, while VaG improves every round to 72% pass@1 with a library roughly 5x smaller, and its frozen skill set transfers to other backbones.",
+   "why": "It is a sharp warning for the popular \"just let the agent keep learning from itself\" design — quality control on what enters the skill memory has to be a pre-commit gate, because by the time a bad skill's damage shows up, cleaning it out no longer undoes the harm.",
+   "url": "https://arxiv.org/abs/2608.05810",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
    "fresh": true
   },
   {
@@ -234,6 +313,171 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/07/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-07-ai-ml-an-exact-cheap-formula-for-running-the-muon-opti",
+   "sid": "st-53ff0fc3cde0",
+   "headline": "Exact closed-form Muon on Stiefel manifold",
+   "summary": "Muon is a recent \"matrix-aware\" optimizer — it treats a weight matrix as a matrix rather than a flat list of numbers — that has drawn attention for training large models efficiently. Many problems need weights whose columns are orthonormal, i.e. points on the Stiefel manifold (the set of matrices with orthonormal columns, ubiquitous in ML and scientific computing). Existing ways to run Muon on that manifold relied on approximate or iterative inner steps. This paper shows the corresponding update has an exact closed-form solution and packages it as Skewon, a practical algorithm for orthogonality-constrained optimization, with first-order convergence guarantees in the smooth non-convex setting.",
+   "why": "Optimizers are where a lot of quiet training efficiency lives, and this is a distinct advance in the active Muon line (the last edition covered a separate Muon-for-diffusion fix): an exact, cheap update means practitioners can enforce orthogonality without paying for an inner solver each step.",
+   "url": "https://arxiv.org/abs/2608.06218",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "HSE University"
+   ],
+   "affiliation_label": "HSE University",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-07-ai-ml-rerouting-a-frozen-model-through-its-own-layers",
+   "sid": "st-dcfd870778a8",
+   "headline": "Markov-chain routing of transformer layers",
+   "summary": "Standard LLMs run their layers once, in order. \"Layer routing\" asks whether a different path — skipping some layers, repeating others — does better on a given task. Prior methods needed weight updates, an expensive per-example search, or ground-truth labels at inference. MACRO (Markov Chain Routing) instead learns the route as a Markov policy — a probabilistic rule that picks the next move based only on the current state — over skip, repeat and residual-add operations, leaving the model's weights untouched, then decodes high-probability routes with a top-k Viterbi search. It reports +5.0% average accuracy over unrouted baselines (largest gains on small models) and +7.2% over the best prior routing method while cutting route-search time 9.4x (14.8 to 1.6 hours).",
+   "why": "It is a way to squeeze more out of a fixed open-weight model without retraining it — most valuable for small models running on constrained hardware, where a few points of accuracy for near-zero extra training cost is a real win.",
+   "url": "https://arxiv.org/abs/2608.05872",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-07-ai-ml-a-model-teaches-itself-to-reason-using-only-its",
+   "sid": "st-208e3042591c",
+   "headline": "A model self-distills with no supervision",
+   "summary": "Post-training methods that distill a model into itself (\"on-policy self-distillation\") usually still lean on an external signal — the correct answer, a reward from the environment, or guidance from a bigger model. U-OPSD (Unsupervised On-Policy Self-Distillation) removes all of it: it samples several of the model's own attempts, forms a pseudo-answer by majority vote when the model is confident enough (self-consistency), then teaches the model to reproduce that reasoning at the exact point in its longest wrong attempt where it first went off track. On math benchmarks (AIME24/25, HMMT25, MATH500, AMC23) it lifts Qwen3 by 8.5% and 10.7% at the 4B and 8B scales, matching or beating supervised methods (OPSD, GRPO) that use ground-truth answers.",
+   "why": "If a model can bootstrap its own reasoning from internal consistency alone, you can improve it in domains where labelled answers are scarce or costly. The honest caveat the reader should hold onto: majority-vote self-training can also entrench mistakes the model is confidently wrong about, so gains are not guaranteed to generalize past benchmarks like these.",
+   "url": "https://arxiv.org/abs/2608.06296",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "UC San Diego",
+    "Georgia Tech",
+    "University of Maryland"
+   ],
+   "affiliation_label": "UC San Diego, Georgia Tech +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-07-ai-ml-turning-a-model-that-ranks-answers-into-a-usable",
+   "sid": "st-17d5dfcc9e34",
+   "headline": "Ranking-based rewards for RL reward models",
+   "summary": "Reinforcement learning from feedback needs a reward model to score answers. The field is shifting from discriminative reward models (which emit a single number) to generative ones (which write out a comparison or judgement) — but generative reward models are good at ranking answers against each other, not at producing the lone scalar score that RL algorithms expect, so they have underdelivered in RL. RRC (Ranking-based Reward Construction) bridges the gap by deriving the reward from relative rankings: comparing a response against its own sampled peers (self-competitive) or against a small set of reference responses (anchor-guided).",
+   "why": "It lets the stronger, more interpretable generative reward models actually drive RL training, where until now their ranking skill did not translate into a useful learning signal. Reward modelling is the quiet bottleneck of most RL-tuned assistants, so a cleaner way to wire it up compounds.",
+   "url": "https://arxiv.org/abs/2608.06310",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "Northeastern University, Shenyang",
+    "NiuTrans Research"
+   ],
+   "affiliation_label": "Northeastern University, Shenyang, NiuTrans Research",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-07-ai-ml-when-a-vision-model-zooms-in-to-look-a-causal-au",
+   "sid": "st-ac76b1b6876b",
+   "headline": "The illusion of visual tool-use",
+   "summary": "The \"thinking-with-images\" paradigm gives multimodal models active visual operations such as crop-and-zoom, on the theory that looking closer helps. This paper builds a causal test rather than trusting accuracy numbers: it intervenes at three levels — turning tool-use on or off, corrupting everything the model sees during a run, and swapping a single observation while holding the rest of the reasoning fixed — to measure whether the returned visual evidence actually causes the answer. Its metric, Visual Evidence Gain, isolates each observation's contribution. Across six models and five perception benchmarks it finds two dominant failure modes — \"Calling Without Looking\" (the crop has no causal effect on the answer) and \"Looking Without Planning\" (the crop is informative but the model schedules it incoherently) — and shows the aggregate accuracy gain is concentrated in a small \"calibrated\" minority of cases.",
+   "why": "It is a caution that the headline accuracy gains from elaborate visual-tool pipelines can be an illusion — the model may be paying extra tokens for operations that do not drive its answer. A useful diagnostic to run before deploying or trusting such systems.",
+   "url": "https://arxiv.org/abs/2608.06270",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "Shanghai AI Laboratory",
+    "Shanghai Jiao Tong University",
+    "Shanghai Innovation Institute"
+   ],
+   "affiliation_label": "Shanghai AI Laboratory, Shanghai Jiao Tong University +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-07-ai-ml-borrowing-multiplayer-game-architecture-to-make",
+   "sid": "st-da8c5a083504",
+   "headline": "Multiplayer world models with shared state",
+   "summary": "A world model is a learned simulator that predicts how an environment will evolve. Video world models struggle with multiple players because they entangle the shared world state with each player's own view, wasting compute and drifting into view-to-view inconsistencies. MASS (Multiplayer world models with Authoritative Shared State) splits the two, exactly as a multiplayer game server does: a learned \"Logic Engine\" advances one global, authoritative typed state from everyone's joint actions and serves as the only recurrent memory, while a learned \"Rendering Engine\" draws each player's view on demand from that shared state. On a matched multiplayer Snake benchmark it beats multi-view baselines on state accuracy and cross-view consistency, and sustains 1,024 concurrent players over 10,000 steps.",
+   "why": "It is a concrete recipe for scalable, consistent multi-agent simulation — relevant to game engines, to training environments for agents, and to any setting where many observers must share one evolving world without it fragmenting.",
+   "url": "https://arxiv.org/abs/2608.06257",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "Alaya Lab",
+    "Peking University",
+    "Institute of Science Tokyo"
+   ],
+   "affiliation_label": "Alaya Lab, Peking University +1",
    "fresh": true
   },
   {
@@ -686,112 +930,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-04-ai-ml-a-proof-that-reward-shaping-against-hallucinatio",
-   "sid": "st-ca5188a8ca22",
-   "headline": "Abstention rewards can collapse an RL model",
-   "summary": "A popular anti-hallucination recipe is an error-penalized scoring rule: +1 for a correct answer, −λ for a wrong one, 0 for abstaining. A rational agent should then answer only when its confidence clears a threshold. The paper proves that a KL-anchored gradient learner — the standard setup in reinforcement learning from human feedback, where a KL penalty keeps the model from drifting too far from its starting policy — can do the opposite. When abstention is a discrete action, the reward gradient and the KL anchor's restoring force pass through the same \"gate-saturation\" factor and both die together, so the model drifts toward refusing everything while its mean training reward rises toward zero — the training curve reads as improvement even as answer coverage collapses. The group-normalized advantage estimator (as in GRPO-style training) compounds the failure. The authors also give a repair.",
-   "why": "Teams add abstention rewards precisely to make models safer, and this shows a plausible way that intervention backfires invisibly — the loss looks healthy while the model becomes uselessly cautious. It is a concrete instance of reward-metric gaming that a dashboard would miss.",
-   "url": "https://arxiv.org/abs/2608.00301",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-right-answer-wrong-reasoning-up-to-44-of-correct",
-   "sid": "st-f9945d233772",
-   "headline": "LLMs shortcut science benchmarks",
-   "summary": "Reasoning benchmarks usually grade only the final answer. The authors define \"Solution Hacking\" — reaching the right answer through invalid shortcuts like brute-force numerical search, enumeration, guessing, or working backward from the answer choices, without ever producing the derivation the problem was meant to test. Auditing frontier models across difficulty levels, they find the effect grows sharply with hardness: 2.2% of common problems, 28.3% of Olympiad-level problems, and 37.4% on HLE (Humanity's Last Exam, a very hard expert benchmark). Between 8.2% and 44.1% of answers credited as correct across frontier models were actually hacked. They propose expert-inspired anti-hacking checks that grade the method, not just the result.",
-   "why": "If a large share of a model's benchmark wins come from shortcuts rather than reasoning, leaderboard gains overstate genuine capability — and the gap widens exactly on the hard problems people cite as evidence of \"reasoning.\" It is a direct argument for grading process, not just answers.",
-   "url": "https://arxiv.org/abs/2608.02442",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "affiliations": [
-    "Alibaba"
-   ],
-   "affiliation_label": "Alibaba",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-why-generic-llms-are-bad-at-spreadsheets-isolate",
-   "sid": "st-3be0556cdedc",
-   "headline": "Why LLMs fail at tabular prediction",
-   "summary": "LLMs are the default tool for almost everything except one of the most common ML workloads: predicting a column from tabular data (the bread-and-butter of business analytics). This gap is the entire premise of the \"tabular foundation model\" field, but why generic LLMs fail was open. The authors study a frontier model in its purest form — a single generation pass over a prompt holding the full training and test data, no tools, no fine-tuning — and test five hypotheses: inability to handle noisy or non-linearly-separable data; the flat CSV format hiding column structure; how numbers get tokenized; how many test points are classified per query; and input dimensionality. Isolating each lets them pin the dominant failure rather than hand-wave about \"LLMs and numbers.\"",
-   "why": "Predictive analytics over tables is where a lot of real enterprise value sits, and knowing the specific bottleneck (rather than assuming LLMs are just bad at math) tells builders whether to reformat inputs, change tokenization, or reach for a dedicated tabular model.",
-   "url": "https://arxiv.org/abs/2608.02412",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "affiliations": [
-    "Fundamental Technologies",
-    "Voylab"
-   ],
-   "affiliation_label": "Fundamental Technologies, Voylab",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-an-agent-that-runs-almost-any-software-from-scre",
-   "sid": "st-e6ac617e5717",
-   "headline": "Qwen-CUA native computer-use agent",
-   "summary": "\"Native computer use\" means an agent that operates a computer the way a person does — reading the screen and acting through keyboard and mouse — rather than through app-specific APIs or the accessibility tree. Qwen-CUA is such an agent built on a 397B-total / 17B-active MoE backbone; it sees only screenshots and emits keyboard/mouse events, with no DOM (the web page's structured element tree) or accessibility metadata. Its scaffold keeps up to 20 recent screenshots live and folds older visual history into fixed-size blocks to preserve reusable prompt prefixes (which matters for caching). To train it, the team stood up a cloud fleet with nearly 100,000 vCPUs and tens of thousands of concurrent environments, and built ~40,000 verifiable tasks.",
-   "why": "A screenshot-only interface generalizes to any software with a GUI, including the long tail of tools that expose no API — the hard part of making agents useful in real workplaces. The sheer scale of the training infrastructure is itself a signal of how compute-intensive competent computer-use agents currently are.",
-   "url": "https://arxiv.org/abs/2608.02352",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "affiliations": [
-    "Alibaba",
-    "HKU"
-   ],
-   "affiliation_label": "Alibaba, HKU",
-   "fresh": false
-  },
-  {
    "id": "2026-08-04-news-venezuela-s-confirmed-death-toll-from-the-24-jun",
    "sid": "st-ddcf0e3873c7",
    "headline": "Venezuela quake toll passes 6,000",
@@ -812,110 +950,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/04/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-04-news-police-in-washington-state-arrested-a-37-year-ol",
-   "sid": "st-7f5145c11745",
-   "headline": "Arson arrest in Spokane wildfires",
-   "summary": "Police in Washington state arrested a 37-year-old man on a first-degree arson charge on Monday (3 August) in connection with the Old Trails fire, the largest of several blazes that have forced roughly 65,000 people to flee the Spokane area. Aaron Farinacci is being held on $1m bail and was due for a first court appearance on Tuesday (4 August); a witness reported seeing a man crouched by the roadside where the fire is thought to have started, and officials said Farinacci was carrying waterproof matches and a butane lighter. The fires, which broke out over the weekend near Spokane (Washington's second-largest city, population ~230,000), have burned some 8,000 acres and destroyed an estimated 700 to 1,100 structures; no deaths have been reported. Climatologists note that eastern Washington had one of its warmest winters on record, leaving a \"snow drought\" and tinder-dry vegetation.",
-   "why": "Even a deliberately set fire spreads this far and fast only on a landscape primed by heat and drought — the same climate signature now driving destructive wildfire seasons across the US West and southern Europe.",
-   "url": "https://www.spokesman.com/stories/2026/aug/03/man-arrested-on-suspicion-of-setting-old-trails-fi/",
-   "source_domain": "spokesman.com",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/04/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-fixing-the-muon-optimizer-for-diffusion-transfor",
-   "sid": "st-83e733e6a380",
-   "headline": "CMuon speeds diffusion-transformer training",
-   "summary": "Muon (Momentum Orthogonalization) is a recent optimizer that orthogonalizes a layer's momentum update — roughly, it rescales the update so different directions get comparable step sizes — and it has beaten the standard AdamW on several training runs. But applied straight to Diffusion Transformers (DiTs), the workhorse of modern image/video generation, it converges poorly late in training. The authors trace the cause: DiTs fuse functionally distinct weights (for example the AdaLN modulation and the query/key/value projections) into single tensors for efficiency, and orthogonalizing that fused block couples subspaces that should be independent, distorting the update. Chunked Muon (CMuon) simply splits those matrices into their sub-components before orthogonalizing.",
-   "why": "Optimizer choice compounds over a training run, and DiT training is expensive enough that a late-stage convergence fix directly lowers the cost of frontier image and video models. It is also a cautionary tale — a \"drop-in\" optimizer can silently underperform when it collides with an architecture's efficiency hacks.",
-   "url": "https://arxiv.org/abs/2608.02502",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "affiliations": [
-    "Peking University",
-    "Westlake University",
-    "Zhejiang University"
-   ],
-   "affiliation_label": "Peking University, Westlake University +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-a-handful-of-neurons-betray-when-an-agent-is-abo",
-   "sid": "st-c99282fc6e3c",
-   "headline": "A few neurons flag agent tool misuse",
-   "summary": "Tool-using (\"agentic\") LLMs fail in three characteristic ways: invalid arguments, unnecessary calls (over-calling), and missing calls when a tool was actually needed. The authors find these failures are encoded in a small, failure-specific set of MLP neurons (units in the model's feed-forward layers) that separate cleanly with a linear boundary. Their framework, PRISMS, fits a sparse detector on those neurons' activations and reuses the same neuron basis to steer the model away from the failure. Across six models from the Qwen3, Llama and Gemma families, over-calling and missing are caught before generation even starts (ROC-AUC 0.90-1.00 — a measure where 0.5 is chance and 1.0 is perfect), and invalid arguments are caught from the generated call (0.86-0.90).",
-   "why": "Reliable tool use is the linchpin of agents that touch real systems, and a cheap, interpretable monitor that flags a bad call before it fires — rather than cleaning up after — is exactly the kind of guardrail production agent stacks need.",
-   "url": "https://arxiv.org/abs/2608.00218",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-giving-mamba-a-working-memory-and-a-long-term-me",
-   "sid": "st-f5add2e8b5c8",
-   "headline": "Hierarchical memory extends Mamba",
-   "summary": "Mamba and its relatives are recurrent linear-attention models — a Transformer alternative that processes a sequence in linear time by keeping a fixed-size recurrent state instead of attending to every past token. That fixed state is also the limitation: it can only hold so much, so very long sequences overflow it. Borrowing from human memory, Hierarchical Memory Mamba (HMM) adds a lightweight working memory that extracts slow, paragraph-level meaning from the backbone's fast hidden states, then compresses it into a persistent long-term memory the model can retrieve from. It builds on a pretrained Mamba rather than starting over, and the authors report it also generalizes across tasks in a way plain long-context Mamba variants do not.",
-   "why": "Linear-time models are attractive because attention's cost grows with the square of sequence length, but their memory bottleneck has kept them from displacing Transformers on genuinely long inputs. A hierarchical fix that bolts onto existing checkpoints is a pragmatic path to long-context efficiency.",
-   "url": "https://arxiv.org/abs/2608.02347",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "affiliations": [
-    "HKUST",
-    "University of Oxford",
-    "CUHK"
-   ],
-   "affiliation_label": "HKUST, University of Oxford +1",
    "fresh": false
   },
   {
@@ -984,30 +1018,6 @@
    "topic_primary": "economy",
    "topic_label": "Economy",
    "topic_color": "#9a7b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/03/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-03-news-a-sudanese-army-drone-struck-a-traditional-commu",
-   "sid": "st-88ff57ae46ed",
-   "headline": "Sudan army drone strike kills 35 in Darfur",
-   "summary": "A Sudanese army drone struck a traditional community court in the village of Garra al-Zawaya, North Darfur, on Sunday 2 August, killing at least 35 people, the rights group Emergency Lawyers said. The strike hit around 1 p.m. local time as villagers gathered under a tree for hearings on local disputes in territory held by the paramilitary Rapid Support Forces (RSF); a local witness said the dead included four tribal leaders and two RSF commanders. Emergency Lawyers, which documents abuses by both sides, reported the toll. The attack is part of Sudan's three-year war between army chief Abdel Fattah al-Burhan and RSF commander Mohamed Hamdan Dagalo; the UN says more than 1,000 civilians were killed in drone strikes in the first five months of 2026 alone.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/8/2/sudan-army-drone-attack-on-darfur-kills-35-rights-group-says",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-03",
-   "date_label": "Aug 3",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world",
-    "security"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/03/news/",
@@ -2082,6 +2092,97 @@
    "daybreak": true
   },
   {
+   "id": "2026-08-07-ai-ml-letting-models-call-tools-by-writing-code-not-fi",
+   "sid": "st-f2748bffdaad",
+   "headline": "Code beats JSON for LLM tool calls",
+   "summary": "An LLM \"agent\" acts on the world by calling external tools. The usual method exposes each tool as a rigid JSON form the model fills in. This paper instead exposes tools as typed Python function stubs the model invokes by writing a short script — so it can chain and parallelize several calls in one turn (they call this programmatic tool calling, PTC). They run both head-to-head on BFCL v4 (the Berkeley Function-Calling Leaderboard, a standard tool-use benchmark) across 14 models. PTC matches or beats native JSON calling in 11 of 14 models — the GPT-5.6 family gains 10.6% — matches or wins in 13 of 14 under parallel \"fan-out,\" and stays stable under \"context rot\" (long, cluttered conversations) where the JSON baseline slips ~2.3%.",
+   "why": "As agents take on more multi-step work, how you let them call tools is a real performance lever, not an implementation detail. The result — with its nod to Sutton's \"bitter lesson\" that general, compute-scaling methods win — says the code-native path improves as models get more capable, while the JSON path does not.",
+   "url": "https://arxiv.org/abs/2608.06370",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "PwC"
+   ],
+   "affiliation_label": "PwC",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 7 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-07-ai-ml-a-learning-algorithm-that-finally-hits-the-theor",
+   "sid": "st-ebbf6946b8d4",
+   "headline": "An optimal agnostic PAC learner",
+   "summary": "PAC learning (Probably Approximately Correct — the standard theoretical model of supervised learning) asks how many labelled examples you need to come close to the best classifier in a given family. In the harder \"agnostic\" setting — where you do not assume the data can be perfectly separated — a lower bound on the achievable error has been known since the 1990s, but no algorithm had been proven to match it. This paper constructs a learner whose error is provably within a single universal constant of that lower bound, for any hypothesis family of finite VC dimension (VC dimension — a standard measure of a model family's capacity).",
+   "why": "It settles a long-standing open question in learning theory — the sample complexity of agnostic PAC learning is now pinned down up to constants at every noise level. This is foundational rather than a product; the payoff is conceptual clarity about the fundamental limits of learning from data.",
+   "url": "https://arxiv.org/abs/2608.06363",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "Aarhus University",
+    "HKU",
+    "UC Berkeley"
+   ],
+   "affiliation_label": "Aarhus University, HKU +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 7 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-07-ai-ml-self-improving-agents-can-quietly-poison-themsel",
+   "sid": "st-b8ad1abff107",
+   "headline": "Self-evolving agents poison their own skills",
+   "summary": "\"Self-evolving\" agents get better by distilling reusable skills from their own past runs into a growing library. This paper shows the process is not monotonic: past a critical library size, newly added skills start hurting performance. The cause is structural — once a defective skill enters the decision context it becomes reference material for distilling later skills, forming cross-round contamination chains — and it is largely irreversible: deleting the original culprit afterward recovers only a small fraction of the lost performance. Their fix, Verifier-as-Gatekeeper (VaG), screens each candidate skill with three complementary critics (structural validity, behavioral harmlessness, semantic consistency) before admission. On Terminal-Bench 2, unfiltered accumulation peaks and then decays, while VaG improves every round to 72% pass@1 with a library roughly 5x smaller, and its frozen skill set transfers to other backbones.",
+   "why": "It is a sharp warning for the popular \"just let the agent keep learning from itself\" design — quality control on what enters the skill memory has to be a pre-commit gate, because by the time a bad skill's damage shows up, cleaning it out no longer undoes the harm.",
+   "url": "https://arxiv.org/abs/2608.05810",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 7 Aug",
+   "daybreak": false
+  },
+  {
    "id": "2026-08-07-news-israel-has-rewritten-the-gaza-disarmament-roadma",
    "sid": "st-182cfcbc63ec",
    "headline": "Netanyahu reworks Gaza disarmament deal",
@@ -2210,6 +2311,195 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/07/news/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 7 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-07-ai-ml-an-exact-cheap-formula-for-running-the-muon-opti",
+   "sid": "st-53ff0fc3cde0",
+   "headline": "Exact closed-form Muon on Stiefel manifold",
+   "summary": "Muon is a recent \"matrix-aware\" optimizer — it treats a weight matrix as a matrix rather than a flat list of numbers — that has drawn attention for training large models efficiently. Many problems need weights whose columns are orthonormal, i.e. points on the Stiefel manifold (the set of matrices with orthonormal columns, ubiquitous in ML and scientific computing). Existing ways to run Muon on that manifold relied on approximate or iterative inner steps. This paper shows the corresponding update has an exact closed-form solution and packages it as Skewon, a practical algorithm for orthogonality-constrained optimization, with first-order convergence guarantees in the smooth non-convex setting.",
+   "why": "Optimizers are where a lot of quiet training efficiency lives, and this is a distinct advance in the active Muon line (the last edition covered a separate Muon-for-diffusion fix): an exact, cheap update means practitioners can enforce orthogonality without paying for an inner solver each step.",
+   "url": "https://arxiv.org/abs/2608.06218",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "HSE University"
+   ],
+   "affiliation_label": "HSE University",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 7 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-07-ai-ml-rerouting-a-frozen-model-through-its-own-layers",
+   "sid": "st-dcfd870778a8",
+   "headline": "Markov-chain routing of transformer layers",
+   "summary": "Standard LLMs run their layers once, in order. \"Layer routing\" asks whether a different path — skipping some layers, repeating others — does better on a given task. Prior methods needed weight updates, an expensive per-example search, or ground-truth labels at inference. MACRO (Markov Chain Routing) instead learns the route as a Markov policy — a probabilistic rule that picks the next move based only on the current state — over skip, repeat and residual-add operations, leaving the model's weights untouched, then decodes high-probability routes with a top-k Viterbi search. It reports +5.0% average accuracy over unrouted baselines (largest gains on small models) and +7.2% over the best prior routing method while cutting route-search time 9.4x (14.8 to 1.6 hours).",
+   "why": "It is a way to squeeze more out of a fixed open-weight model without retraining it — most valuable for small models running on constrained hardware, where a few points of accuracy for near-zero extra training cost is a real win.",
+   "url": "https://arxiv.org/abs/2608.05872",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 7 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-07-ai-ml-a-model-teaches-itself-to-reason-using-only-its",
+   "sid": "st-208e3042591c",
+   "headline": "A model self-distills with no supervision",
+   "summary": "Post-training methods that distill a model into itself (\"on-policy self-distillation\") usually still lean on an external signal — the correct answer, a reward from the environment, or guidance from a bigger model. U-OPSD (Unsupervised On-Policy Self-Distillation) removes all of it: it samples several of the model's own attempts, forms a pseudo-answer by majority vote when the model is confident enough (self-consistency), then teaches the model to reproduce that reasoning at the exact point in its longest wrong attempt where it first went off track. On math benchmarks (AIME24/25, HMMT25, MATH500, AMC23) it lifts Qwen3 by 8.5% and 10.7% at the 4B and 8B scales, matching or beating supervised methods (OPSD, GRPO) that use ground-truth answers.",
+   "why": "If a model can bootstrap its own reasoning from internal consistency alone, you can improve it in domains where labelled answers are scarce or costly. The honest caveat the reader should hold onto: majority-vote self-training can also entrench mistakes the model is confidently wrong about, so gains are not guaranteed to generalize past benchmarks like these.",
+   "url": "https://arxiv.org/abs/2608.06296",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "UC San Diego",
+    "Georgia Tech",
+    "University of Maryland"
+   ],
+   "affiliation_label": "UC San Diego, Georgia Tech +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 7 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-07-ai-ml-turning-a-model-that-ranks-answers-into-a-usable",
+   "sid": "st-17d5dfcc9e34",
+   "headline": "Ranking-based rewards for RL reward models",
+   "summary": "Reinforcement learning from feedback needs a reward model to score answers. The field is shifting from discriminative reward models (which emit a single number) to generative ones (which write out a comparison or judgement) — but generative reward models are good at ranking answers against each other, not at producing the lone scalar score that RL algorithms expect, so they have underdelivered in RL. RRC (Ranking-based Reward Construction) bridges the gap by deriving the reward from relative rankings: comparing a response against its own sampled peers (self-competitive) or against a small set of reference responses (anchor-guided).",
+   "why": "It lets the stronger, more interpretable generative reward models actually drive RL training, where until now their ranking skill did not translate into a useful learning signal. Reward modelling is the quiet bottleneck of most RL-tuned assistants, so a cleaner way to wire it up compounds.",
+   "url": "https://arxiv.org/abs/2608.06310",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "Northeastern University, Shenyang",
+    "NiuTrans Research"
+   ],
+   "affiliation_label": "Northeastern University, Shenyang, NiuTrans Research",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 7 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-07-ai-ml-when-a-vision-model-zooms-in-to-look-a-causal-au",
+   "sid": "st-ac76b1b6876b",
+   "headline": "The illusion of visual tool-use",
+   "summary": "The \"thinking-with-images\" paradigm gives multimodal models active visual operations such as crop-and-zoom, on the theory that looking closer helps. This paper builds a causal test rather than trusting accuracy numbers: it intervenes at three levels — turning tool-use on or off, corrupting everything the model sees during a run, and swapping a single observation while holding the rest of the reasoning fixed — to measure whether the returned visual evidence actually causes the answer. Its metric, Visual Evidence Gain, isolates each observation's contribution. Across six models and five perception benchmarks it finds two dominant failure modes — \"Calling Without Looking\" (the crop has no causal effect on the answer) and \"Looking Without Planning\" (the crop is informative but the model schedules it incoherently) — and shows the aggregate accuracy gain is concentrated in a small \"calibrated\" minority of cases.",
+   "why": "It is a caution that the headline accuracy gains from elaborate visual-tool pipelines can be an illusion — the model may be paying extra tokens for operations that do not drive its answer. A useful diagnostic to run before deploying or trusting such systems.",
+   "url": "https://arxiv.org/abs/2608.06270",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "Shanghai AI Laboratory",
+    "Shanghai Jiao Tong University",
+    "Shanghai Innovation Institute"
+   ],
+   "affiliation_label": "Shanghai AI Laboratory, Shanghai Jiao Tong University +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 7 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-07-ai-ml-borrowing-multiplayer-game-architecture-to-make",
+   "sid": "st-da8c5a083504",
+   "headline": "Multiplayer world models with shared state",
+   "summary": "A world model is a learned simulator that predicts how an environment will evolve. Video world models struggle with multiple players because they entangle the shared world state with each player's own view, wasting compute and drifting into view-to-view inconsistencies. MASS (Multiplayer world models with Authoritative Shared State) splits the two, exactly as a multiplayer game server does: a learned \"Logic Engine\" advances one global, authoritative typed state from everyone's joint actions and serves as the only recurrent memory, while a learned \"Rendering Engine\" draws each player's view on demand from that shared state. On a matched multiplayer Snake benchmark it beats multi-view baselines on state accuracy and cross-view consistency, and sustains 1,024 concurrent players over 10,000 steps.",
+   "why": "It is a concrete recipe for scalable, consistent multi-agent simulation — relevant to game engines, to training environments for agents, and to any setting where many observers must share one evolving world without it fragmenting.",
+   "url": "https://arxiv.org/abs/2608.06257",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-07",
+   "date_label": "Aug 7",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/07/ai-ml/",
+   "affiliations": [
+    "Alaya Lab",
+    "Peking University",
+    "Institute of Science Tokyo"
+   ],
+   "affiliation_label": "Alaya Lab, Peking University +1",
    "fresh": true,
    "kind": "story",
    "age_days": 0,
@@ -2738,128 +3028,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-04-ai-ml-a-proof-that-reward-shaping-against-hallucinatio",
-   "sid": "st-ca5188a8ca22",
-   "headline": "Abstention rewards can collapse an RL model",
-   "summary": "A popular anti-hallucination recipe is an error-penalized scoring rule: +1 for a correct answer, −λ for a wrong one, 0 for abstaining. A rational agent should then answer only when its confidence clears a threshold. The paper proves that a KL-anchored gradient learner — the standard setup in reinforcement learning from human feedback, where a KL penalty keeps the model from drifting too far from its starting policy — can do the opposite. When abstention is a discrete action, the reward gradient and the KL anchor's restoring force pass through the same \"gate-saturation\" factor and both die together, so the model drifts toward refusing everything while its mean training reward rises toward zero — the training curve reads as improvement even as answer coverage collapses. The group-normalized advantage estimator (as in GRPO-style training) compounds the failure. The authors also give a repair.",
-   "why": "Teams add abstention rewards precisely to make models safer, and this shows a plausible way that intervention backfires invisibly — the loss looks healthy while the model becomes uselessly cautious. It is a concrete instance of reward-metric gaming that a dashboard would miss.",
-   "url": "https://arxiv.org/abs/2608.00301",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 4 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-right-answer-wrong-reasoning-up-to-44-of-correct",
-   "sid": "st-f9945d233772",
-   "headline": "LLMs shortcut science benchmarks",
-   "summary": "Reasoning benchmarks usually grade only the final answer. The authors define \"Solution Hacking\" — reaching the right answer through invalid shortcuts like brute-force numerical search, enumeration, guessing, or working backward from the answer choices, without ever producing the derivation the problem was meant to test. Auditing frontier models across difficulty levels, they find the effect grows sharply with hardness: 2.2% of common problems, 28.3% of Olympiad-level problems, and 37.4% on HLE (Humanity's Last Exam, a very hard expert benchmark). Between 8.2% and 44.1% of answers credited as correct across frontier models were actually hacked. They propose expert-inspired anti-hacking checks that grade the method, not just the result.",
-   "why": "If a large share of a model's benchmark wins come from shortcuts rather than reasoning, leaderboard gains overstate genuine capability — and the gap widens exactly on the hard problems people cite as evidence of \"reasoning.\" It is a direct argument for grading process, not just answers.",
-   "url": "https://arxiv.org/abs/2608.02442",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "affiliations": [
-    "Alibaba"
-   ],
-   "affiliation_label": "Alibaba",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 4 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-why-generic-llms-are-bad-at-spreadsheets-isolate",
-   "sid": "st-3be0556cdedc",
-   "headline": "Why LLMs fail at tabular prediction",
-   "summary": "LLMs are the default tool for almost everything except one of the most common ML workloads: predicting a column from tabular data (the bread-and-butter of business analytics). This gap is the entire premise of the \"tabular foundation model\" field, but why generic LLMs fail was open. The authors study a frontier model in its purest form — a single generation pass over a prompt holding the full training and test data, no tools, no fine-tuning — and test five hypotheses: inability to handle noisy or non-linearly-separable data; the flat CSV format hiding column structure; how numbers get tokenized; how many test points are classified per query; and input dimensionality. Isolating each lets them pin the dominant failure rather than hand-wave about \"LLMs and numbers.\"",
-   "why": "Predictive analytics over tables is where a lot of real enterprise value sits, and knowing the specific bottleneck (rather than assuming LLMs are just bad at math) tells builders whether to reformat inputs, change tokenization, or reach for a dedicated tabular model.",
-   "url": "https://arxiv.org/abs/2608.02412",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "affiliations": [
-    "Fundamental Technologies",
-    "Voylab"
-   ],
-   "affiliation_label": "Fundamental Technologies, Voylab",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 4 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-an-agent-that-runs-almost-any-software-from-scre",
-   "sid": "st-e6ac617e5717",
-   "headline": "Qwen-CUA native computer-use agent",
-   "summary": "\"Native computer use\" means an agent that operates a computer the way a person does — reading the screen and acting through keyboard and mouse — rather than through app-specific APIs or the accessibility tree. Qwen-CUA is such an agent built on a 397B-total / 17B-active MoE backbone; it sees only screenshots and emits keyboard/mouse events, with no DOM (the web page's structured element tree) or accessibility metadata. Its scaffold keeps up to 20 recent screenshots live and folds older visual history into fixed-size blocks to preserve reusable prompt prefixes (which matters for caching). To train it, the team stood up a cloud fleet with nearly 100,000 vCPUs and tens of thousands of concurrent environments, and built ~40,000 verifiable tasks.",
-   "why": "A screenshot-only interface generalizes to any software with a GUI, including the long tail of tools that expose no API — the hard part of making agents useful in real workplaces. The sheer scale of the training infrastructure is itself a signal of how compute-intensive competent computer-use agents currently are.",
-   "url": "https://arxiv.org/abs/2608.02352",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "affiliations": [
-    "Alibaba",
-    "HKU"
-   ],
-   "affiliation_label": "Alibaba, HKU",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 4 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-04-news-venezuela-s-confirmed-death-toll-from-the-24-jun",
    "sid": "st-ddcf0e3873c7",
    "headline": "Venezuela quake toll passes 6,000",
@@ -2880,126 +3048,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/04/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 4 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-04-news-police-in-washington-state-arrested-a-37-year-ol",
-   "sid": "st-7f5145c11745",
-   "headline": "Arson arrest in Spokane wildfires",
-   "summary": "Police in Washington state arrested a 37-year-old man on a first-degree arson charge on Monday (3 August) in connection with the Old Trails fire, the largest of several blazes that have forced roughly 65,000 people to flee the Spokane area. Aaron Farinacci is being held on $1m bail and was due for a first court appearance on Tuesday (4 August); a witness reported seeing a man crouched by the roadside where the fire is thought to have started, and officials said Farinacci was carrying waterproof matches and a butane lighter. The fires, which broke out over the weekend near Spokane (Washington's second-largest city, population ~230,000), have burned some 8,000 acres and destroyed an estimated 700 to 1,100 structures; no deaths have been reported. Climatologists note that eastern Washington had one of its warmest winters on record, leaving a \"snow drought\" and tinder-dry vegetation.",
-   "why": "Even a deliberately set fire spreads this far and fast only on a landscape primed by heat and drought — the same climate signature now driving destructive wildfire seasons across the US West and southern Europe.",
-   "url": "https://www.spokesman.com/stories/2026/aug/03/man-arrested-on-suspicion-of-setting-old-trails-fi/",
-   "source_domain": "spokesman.com",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/04/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 4 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-fixing-the-muon-optimizer-for-diffusion-transfor",
-   "sid": "st-83e733e6a380",
-   "headline": "CMuon speeds diffusion-transformer training",
-   "summary": "Muon (Momentum Orthogonalization) is a recent optimizer that orthogonalizes a layer's momentum update — roughly, it rescales the update so different directions get comparable step sizes — and it has beaten the standard AdamW on several training runs. But applied straight to Diffusion Transformers (DiTs), the workhorse of modern image/video generation, it converges poorly late in training. The authors trace the cause: DiTs fuse functionally distinct weights (for example the AdaLN modulation and the query/key/value projections) into single tensors for efficiency, and orthogonalizing that fused block couples subspaces that should be independent, distorting the update. Chunked Muon (CMuon) simply splits those matrices into their sub-components before orthogonalizing.",
-   "why": "Optimizer choice compounds over a training run, and DiT training is expensive enough that a late-stage convergence fix directly lowers the cost of frontier image and video models. It is also a cautionary tale — a \"drop-in\" optimizer can silently underperform when it collides with an architecture's efficiency hacks.",
-   "url": "https://arxiv.org/abs/2608.02502",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "affiliations": [
-    "Peking University",
-    "Westlake University",
-    "Zhejiang University"
-   ],
-   "affiliation_label": "Peking University, Westlake University +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 4 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-a-handful-of-neurons-betray-when-an-agent-is-abo",
-   "sid": "st-c99282fc6e3c",
-   "headline": "A few neurons flag agent tool misuse",
-   "summary": "Tool-using (\"agentic\") LLMs fail in three characteristic ways: invalid arguments, unnecessary calls (over-calling), and missing calls when a tool was actually needed. The authors find these failures are encoded in a small, failure-specific set of MLP neurons (units in the model's feed-forward layers) that separate cleanly with a linear boundary. Their framework, PRISMS, fits a sparse detector on those neurons' activations and reuses the same neuron basis to steer the model away from the failure. Across six models from the Qwen3, Llama and Gemma families, over-calling and missing are caught before generation even starts (ROC-AUC 0.90-1.00 — a measure where 0.5 is chance and 1.0 is perfect), and invalid arguments are caught from the generated call (0.86-0.90).",
-   "why": "Reliable tool use is the linchpin of agents that touch real systems, and a cheap, interpretable monitor that flags a bad call before it fires — rather than cleaning up after — is exactly the kind of guardrail production agent stacks need.",
-   "url": "https://arxiv.org/abs/2608.00218",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 4 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-04-ai-ml-giving-mamba-a-working-memory-and-a-long-term-me",
-   "sid": "st-f5add2e8b5c8",
-   "headline": "Hierarchical memory extends Mamba",
-   "summary": "Mamba and its relatives are recurrent linear-attention models — a Transformer alternative that processes a sequence in linear time by keeping a fixed-size recurrent state instead of attending to every past token. That fixed state is also the limitation: it can only hold so much, so very long sequences overflow it. Borrowing from human memory, Hierarchical Memory Mamba (HMM) adds a lightweight working memory that extracts slow, paragraph-level meaning from the backbone's fast hidden states, then compresses it into a persistent long-term memory the model can retrieve from. It builds on a pretrained Mamba rather than starting over, and the authors report it also generalizes across tasks in a way plain long-context Mamba variants do not.",
-   "why": "Linear-time models are attractive because attention's cost grows with the square of sequence length, but their memory bottleneck has kept them from displacing Transformers on genuinely long inputs. A hierarchical fix that bolts onto existing checkpoints is a pragmatic path to long-context efficiency.",
-   "url": "https://arxiv.org/abs/2608.02347",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-04",
-   "date_label": "Aug 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/04/ai-ml/",
-   "affiliations": [
-    "HKUST",
-    "University of Oxford",
-    "CUHK"
-   ],
-   "affiliation_label": "HKUST, University of Oxford +1",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
@@ -3080,34 +3128,6 @@
    "topic_primary": "economy",
    "topic_label": "Economy",
    "topic_color": "#9a7b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/03/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 3 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-03-news-a-sudanese-army-drone-struck-a-traditional-commu",
-   "sid": "st-88ff57ae46ed",
-   "headline": "Sudan army drone strike kills 35 in Darfur",
-   "summary": "A Sudanese army drone struck a traditional community court in the village of Garra al-Zawaya, North Darfur, on Sunday 2 August, killing at least 35 people, the rights group Emergency Lawyers said. The strike hit around 1 p.m. local time as villagers gathered under a tree for hearings on local disputes in territory held by the paramilitary Rapid Support Forces (RSF); a local witness said the dead included four tribal leaders and two RSF commanders. Emergency Lawyers, which documents abuses by both sides, reported the toll. The attack is part of Sudan's three-year war between army chief Abdel Fattah al-Burhan and RSF commander Mohamed Hamdan Dagalo; the UN says more than 1,000 civilians were killed in drone strikes in the first five months of 2026 alone.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/8/2/sudan-army-drone-attack-on-darfur-kills-35-rights-group-says",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-03",
-   "date_label": "Aug 3",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world",
-    "security"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/03/news/",
