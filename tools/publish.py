@@ -12,7 +12,10 @@ sync went uninvoked 2026-07-07..07-10 and starved discovery).
 Every PREPROCESSING step is NON-FATAL (the repo's failure semantics: a tool crash
 degrades, it never costs an edition); each prints an OK/FAIL line as it runs. The
 git tail is the exception: a failed commit or push means nothing was published,
-so it prints FAILED (never DONE) and exits 1 -- the writer must react. The notification
+so it prints FAILED (never DONE) and exits 1 -- the writer must react. "Published"
+is decided by what ORIGIN holds (the commit's own SHA pushed to refs/heads/main, then
+read back with ls-remote), never by the exit code of a push of the local `main` ref --
+that ref is stale in the routines' detached-HEAD sandbox. The notification
 stub is written with real JSON encoding (no hand-escaped quotes) and a computed
 UTC timestamp; a bare `date:` in the post's front matter is normalized to a full
 ISO timestamp (the same-day sort-order bug class, closed at the root).
@@ -252,12 +255,82 @@ def staged_changes(root, dry_run):
     return proc.returncode != 0
 
 
+def _rev_parse(root, ref):
+    """The SHA a ref resolves to locally, or None."""
+    try:
+        proc = subprocess.run(["git", "rev-parse", "--verify", ref], cwd=root,
+                              capture_output=True, text=True)
+    except OSError:
+        return None
+    out = proc.stdout.strip()
+    return out if proc.returncode == 0 and out else None
+
+
+def _remote_main(root, slug):
+    """What origin's main ACTUALLY points at, asked of the REMOTE -- never read from a
+    local `origin/main` tracking ref, which a detached sandbox that never fetched can
+    leave arbitrarily stale. None when the remote can't be reached or read."""
+    try:
+        proc = subprocess.run(git(root, slug, ["ls-remote", "origin", "refs/heads/main"]),
+                              cwd=root, capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return None
+    lines = proc.stdout.split()
+    return lines[0] if lines else None
+
+
+def push_commit(root, slug, name, sha, dry_run):
+    """Push THIS commit -- by SHA, to refs/heads/main -- and answer whether origin holds it.
+
+    Two defects meet here, and one refspec closes both. `push origin main` pushed the local
+    `main` REF, which in the routines' detached-HEAD sandbox is NOT the commit just created:
+    the push succeeded as a no-op on a stale branch, the run printed DONE, and the edition
+    never reached origin (R1, the 2026-07-25 review's one blocker). The converse followed from
+    the same ref: with local `main` stale, the retry pushed the stale ref too and exited
+    non-zero, so 8 of the 11 briefs in the week to 2026-08-02 were marked "has NOT reached
+    origin" while sitting on origin/main all along.
+
+    So the verdict comes from the remote, not from a ref that never described this edition:
+    published when the push of THIS SHA exits 0, or when origin/main already resolves to it
+    (a retry, a concurrent routine, or the bridge's drain-reconcile got there first)."""
+    ok = run_step(name, git(root, slug,
+                            ["push", "origin", "%s:refs/heads/main" % (sha or "HEAD")]),
+                  root, dry_run)
+    if dry_run:
+        return True
+    remote = _remote_main(root, slug)
+    short = (sha or "HEAD")[:12]
+    if sha and remote == sha:
+        say("push: verified origin/main == %s" % short)
+        return True
+    if ok and remote is None:
+        say("push: %s pushed (exit 0) but origin/main is UNVERIFIED -- ls-remote could not "
+            "be read; treating the push's own exit status as the answer" % short)
+        return True
+    if ok:
+        say("push: %s pushed (exit 0); origin/main has since advanced to %s" % (short, remote[:12]))
+        return True
+    say("push: FAILED -- origin/main is %s, not the published commit %s"
+        % (remote[:12] if remote else "unreadable", short))
+    return False
+
+
 def commit_and_push(root, slug, message, no_push, dry_run):
     """Returns 'ok', 'commit-failed', or 'push-failed'.
 
     A failed `git commit` followed by a no-op push used to print DONE and exit 0
     (the push of an unchanged branch succeeds) -- the one failure shape a writer
-    must NEVER mistake for success, since nothing was published at all."""
+    must NEVER mistake for success, since nothing was published at all.
+
+    'push-failed' is reported to the OPERATOR only -- the log line and exit 1 -- and never
+    written into the brief. A failure note used to be appended to the post and amended into
+    the commit, so it would "survive the sandbox". It does, and that is the flaw: the note is
+    readable only once the commit carrying it reaches origin, which is exactly when it has
+    become false. All 23 briefs that carried it are on origin/main -- 8 in the single week to
+    2026-08-02, one needing a follow-up commit to strip it (07-31 news), one of them the
+    evaluator review that filed the defect (2026-08-02 Patch 2)."""
     # A missing pathspec makes `git add` abort WITHOUT staging the ones that do
     # exist (fatal, not partial) -- which cascades into the exact false-DONE shape
     # this function guards against. Only add directories that exist.
@@ -280,7 +353,9 @@ def commit_and_push(root, slug, message, no_push, dry_run):
     if no_push:
         say("push: skipped (--no-push)")
         return "ok"
-    if run_step("git-push", git(root, slug, ["push", "origin", "main"]), root, dry_run):
+    # The commit to publish is HEAD's -- resolved as a SHA so the refspec names THIS edition
+    # even when the sandbox is detached and `main` points somewhere else entirely.
+    if push_commit(root, slug, "git-push", _rev_parse(root, "HEAD"), dry_run):
         return "ok"
     # Concurrent editions both rewrite _data/homefeed.json; the fix is always:
     # rebase, REGENERATE the feed from the merged tree, continue, push again.
@@ -293,28 +368,24 @@ def commit_and_push(root, slug, message, no_push, dry_run):
                     git(root, slug, ["-c", "core.editor=true", "rebase", "--continue"]),
                     root, dry_run):
         run_step("git-amend", git(root, slug, ["commit", "--amend", "--no-edit"]), root, dry_run)
-    if run_step("git-push-retry", git(root, slug, ["push", "origin", "main"]), root, dry_run):
+    # An unresolved conflict leaves HEAD at the rebase's ONTO commit -- origin's own tip.
+    # Pushing that is a no-op that verifies as success and reports a lost edition as DONE.
+    # `git ls-files -u` (the unmerged index) is the load-bearing check, not the presence of
+    # .git/rebase-merge: the unmerged index is what makes BOTH `rebase --continue` and
+    # `commit --amend` fail above, and it reads correctly where `.git` is a file (worktrees).
+    # The retry regenerates and stages `_data/` only, so a conflict anywhere else -- e.g.
+    # sources/registry.yml, EOF-appended by registry-sync on every writer run -- survives it.
+    if not dry_run:
+        unmerged = subprocess.run(["git", "ls-files", "-u"], cwd=root,
+                                  capture_output=True, text=True).stdout.strip()
+        if unmerged:
+            say("push: FAILED -- rebase left unmerged paths; HEAD is origin's own tip, not this "
+                "edition. Resolve the conflict and push HEAD:refs/heads/main manually.")
+            return "push-failed"
+    # Re-resolve: the rebase moved HEAD, and the amend fallback above moved it again.
+    if push_commit(root, slug, "git-push-retry", _rev_parse(root, "HEAD"), dry_run):
         return "ok"
     return "push-failed"
-
-
-def record_push_failure(root, slug, post_path, dry_run):
-    """Append the failure note to the post AND amend it into the commit -- an
-    unstaged note dies with the sandbox working tree, so it must travel with the
-    commit to mean anything on a later successful push."""
-    note = ("- git push failed: this edition has NOT reached origin -- retry "
-            "`git push origin main` before the session ends.")
-    if dry_run:
-        return
-    try:
-        with open(post_path, "a", encoding="utf-8") as fh:
-            fh.write(note + "\n")
-    except OSError:
-        return
-    run_step("git-add-note", git(root, slug, ["add", os.path.relpath(post_path, root)]),
-             root, dry_run)
-    run_step("git-amend-note", git(root, slug, ["commit", "--amend", "--no-edit"]),
-             root, dry_run)
 
 
 def main(argv=None):
@@ -411,9 +482,12 @@ def main(argv=None):
         say("FAILED (git commit errored -- NOTHING was published; fix the error above and rerun)")
         return 1
     if outcome == "push-failed":
-        record_push_failure(root, args.slug, post, args.dry_run)
+        # The log line and exit 1 ARE the report -- nothing is written into the brief; see
+        # commit_and_push's docstring for why a note in the body could only ever read as false.
+        # HEAD:refs/heads/main, not `main`: the retry instruction must not be the very
+        # command whose stale-ref behaviour lost editions in the first place (R1).
         say("FAILED (push -- edition committed locally but NOT on origin; "
-            "retry `git push origin main` before the session ends)")
+            "retry `git push origin HEAD:refs/heads/main` before the session ends)")
         return 1
     say("DONE")
     return 0

@@ -5,8 +5,9 @@ registry/institutions sync -> date lint -> feed -> health -> stub -> git), real
 JSON encoding in the notification stub (no hand-escaped quotes), bare front-matter
 date normalization, and the record-skip path when dedup was unavailable.
 RealGitTest exercises the git tail against real local repos: a failed commit or
-push must surface as 'commit-failed'/'push-failed' (never a silent DONE), and the
-push-failure note must be AMENDED INTO the commit, not left unstaged.
+push must surface as 'commit-failed'/'push-failed' (never a silent DONE), and a
+failed push must leave the brief's body untouched. The refspec/origin-verification
+half of that tail lives in test_publish_push.py.
 """
 import importlib.util
 import json
@@ -599,20 +600,21 @@ class RealGitTest(unittest.TestCase):
         show = _git(self.work, "show", "--stat", "--format=", "HEAD")
         self.assertNotIn("reader-profile.md", show.stdout)
 
-    def test_push_failure_reported_and_note_amended_into_commit(self):
+    def test_push_failure_reported_without_writing_into_the_brief(self):
+        """A failed push is reported to the operator (push-failed + a loud line), and the
+        brief's body is left exactly as written. The note this used to amend into the commit
+        was readable only once that commit reached origin -- i.e. only once it was false."""
         self._write_post("Edition body.\n")
         _git(self.work, "remote", "set-url", "origin",
              os.path.join(self.tmp, "no-such-remote.git"))
         outcome, _ = self._capture(publish.commit_and_push, self.work, "news",
                                    "News — test", False, False)
         self.assertEqual(outcome, "push-failed")
-        _, out = self._capture(publish.record_push_failure, self.work, "news",
-                               self.post, False)
         with open(self.post) as fh:
-            self.assertIn("git push failed", fh.read())
+            self.assertNotIn("git push failed", fh.read())
         show = _git(self.work, "show", "--format=", "HEAD", "--", "_posts/2026-07-18-news.md")
-        self.assertIn("git push failed", show.stdout,
-                      "the failure note must travel WITH the commit, not sit unstaged")
+        self.assertNotIn("git push failed", show.stdout,
+                         "the commit must never carry a note that a later push falsifies")
 
 
 if __name__ == "__main__":

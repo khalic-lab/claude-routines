@@ -220,4 +220,3 @@ Concentration (Science top-5 ~1.0, Sports waiver ~1.0) is flat vs 2026-07-26 —
 2. **The `git push failed` footer (Patch 2)** is the highest-frequency defect this week and self-inflicted by the publish path. Worth prioritising over the content patches.
 3. **Sports reachability** remains structurally blocked (all official primaries JS-walled). Last week's scout candidates (esv.ch, olympics.com, uci.ch, rts.ch) are the intended fix but mostly unpromoted — olympics.com landed, the rest are still `candidate`. Promote them so the writer can start citing official sports primaries via proxy?
 4. No reader brief-proposals (`proposals/*.jsonl`) directory exists yet — nothing to surface.
-- git push failed: this edition has NOT reached origin -- retry `git push origin main` before the session ends.

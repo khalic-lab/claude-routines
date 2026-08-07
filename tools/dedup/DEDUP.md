@@ -191,5 +191,5 @@ categories: [{slug}]
 git add _posts/ pending-notifications/ index/ _data/ && git add sources/ 2>/dev/null || true
 git -c user.email=routine@khalic-lab -c user.name="News Routine" -c commit.gpgsign=false \
   commit -m "{Title} — {YYYY-MM-DD}"
-git push origin main || (git pull --rebase origin main && git push origin main)
+git push origin HEAD:refs/heads/main || (git pull --rebase origin main && git push origin HEAD:refs/heads/main)
 ```
