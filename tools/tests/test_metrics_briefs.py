@@ -7,6 +7,7 @@ hand-counting -- the schema here is the contract the evaluator prompt reads.
 """
 import importlib.util
 import os
+import subprocess
 import tempfile
 import unittest
 
@@ -90,6 +91,64 @@ title: n
 """
 
 
+# --- rm-4 regression fixtures: the three sections the 2026-07-19/26/08-02
+# --- evaluators reported as false-positive "empty" (anchor-free prose) -------
+SCIENCE_VITALITY = """---
+title: s
+---
+
+## 🔬 Findings
+
+- **Finding.** Text. [Src](https://nature.com/a)
+
+## 🧠 Why it matters
+
+Three of this week's results point the same way: measurement precision is
+outrunning theory in condensed matter, and the gap is now wide enough that
+the interesting question is which model breaks first rather than which one
+fits best. That reframes the next round of experiments as elimination, not
+confirmation, and it explains why two of the groups above published null
+results without apology.
+
+## Coverage footer
+- Gaps: none.
+"""
+
+WEEKEND_VITALITY = """---
+title: w
+---
+
+## 🧠 Cross-cutting threads
+
+**1. Inference is moving to the edge.** The quantisation work and the two
+runtime papers below converge on the same claim: the accuracy cost of 4-bit
+weights is now small enough that the deciding factor is memory bandwidth,
+not perplexity.
+
+**2. Benchmarks are being rewritten mid-flight.** Two of this week's
+harness disputes turn on evaluation-time details rather than model quality,
+which is a sign the field is out of headroom on the current suites.
+
+## 🍎 Apple Silicon / local inference ecosystem
+
+llama.cpp landed a Metal path for the new attention kernel this week, and
+MLX picked up matching support a day later, so the two runtimes are back in
+step on M-series hardware for the first time since spring.
+
+The practical upshot for a 36 GB machine is that the 70B-class quants that
+used to swap now fit with room for a long context window.
+
+## 🪫 Stub section
+
+One line, nothing else.
+
+## 🕳️ Blank section
+
+## Coverage footer
+- Gaps: none.
+"""
+
+
 class BriefsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -146,6 +205,90 @@ class BriefsTest(unittest.TestCase):
 
     def test_off_main_degrades_outside_git(self):
         self.assertEqual(self.health["continuity"]["off_main"], {"available": False})
+
+
+class SectionVitalityTest(unittest.TestCase):
+    """rm-4 (proposed 2026-07-19, re-proposed 07-26 + 08-02): a section is empty
+    only when it carries no items AND almost no prose. Anchor-free synthesis
+    sections -- the three the evaluators kept false-flagging -- are alive."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.root = tempfile.mkdtemp(prefix="vitality-test-")
+        posts = os.path.join(cls.root, "_posts")
+        os.makedirs(posts)
+        for name, text in (("2026-07-15-science.md", SCIENCE_VITALITY),
+                           ("2026-07-18-weekend.md", WEEKEND_VITALITY)):
+            with open(os.path.join(posts, name), "w") as fh:
+                fh.write(text)
+        cls.briefs = metrics.compute_health(cls.root, "2026-07-18")["briefs"]
+
+    def test_prose_sections_are_not_empty(self):
+        """The three reported false positives: Science "Why it matters",
+        weekend "Cross-cutting threads" and "Apple Silicon"."""
+        flagged = {e["section"] for s in self.briefs["by_stream"].values()
+                   for e in s["empty_sections"]}
+        self.assertNotIn("🧠 Why it matters", flagged)
+        self.assertNotIn("🧠 Cross-cutting threads", flagged)
+        self.assertNotIn("🍎 Apple Silicon / local inference ecosystem", flagged)
+        self.assertEqual(self.briefs["by_stream"]["science"]["empty_sections"], [])
+
+    def test_blank_and_stub_sections_still_flagged(self):
+        """The threshold's low side: a truly blank section AND a one-line stub
+        (the risk the 08-02 proposal flagged) both still count as empty."""
+        weekend = self.briefs["by_stream"]["weekend"]
+        self.assertEqual(weekend["sections"], 4)
+        self.assertEqual(weekend["empty_sections"],
+                         [{"post": "2026-07-18-weekend.md", "section": "🪫 Stub section"},
+                          {"post": "2026-07-18-weekend.md", "section": "🕳️ Blank section"}])
+
+
+def _git(root, *argv):
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@e",
+                    "-c", "commit.gpgsign=false"] + list(argv),
+                   cwd=root, check=True, capture_output=True, text=True)
+
+
+def _sha(root, rev):
+    return subprocess.run(["git", "rev-parse", rev], cwd=root, check=True,
+                          capture_output=True, text=True).stdout.strip()
+
+
+class OffMainTest(unittest.TestCase):
+    """rm-3 (proposed 2026-07-19, re-proposed 07-26 + 08-02): the guard must
+    compare against `origin/main`, not the local `main` ref. The evaluator runs
+    detached after `git pull --ff-only`, which leaves local `main` stale --
+    against it every pulled commit read as off-main (~14-20 phantoms a week)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.root = tempfile.mkdtemp(prefix="offmain-test-")
+        _git(cls.root, "-c", "init.defaultBranch=main", "init", "-q")
+        for msg in ("A base", "B pulled", "C pulled"):
+            _git(cls.root, "commit", "--allow-empty", "-q", "-m", msg)
+        head = _sha(cls.root, "HEAD")
+        _git(cls.root, "update-ref", "refs/remotes/origin/main", head)
+        # a genuinely stranded commit: pushed to a claude/* branch, never merged
+        _git(cls.root, "checkout", "-q", "-b", "claude/stranded")
+        _git(cls.root, "commit", "--allow-empty", "-q", "-m", "D stranded")
+        cls.stranded = _sha(cls.root, "HEAD")
+        _git(cls.root, "update-ref", "refs/remotes/origin/claude/stranded", cls.stranded)
+        # the sandbox's real state: detached at origin/main, local `main` stale
+        _git(cls.root, "checkout", "-q", "--detach", head)
+        _git(cls.root, "branch", "-q", "-D", "claude/stranded")
+        _git(cls.root, "branch", "-q", "-f", "main", _sha(cls.root, "HEAD~2"))
+        cls.off_main = metrics.build_off_main(cls.root, "2026-01-01")
+
+    def test_pulled_commits_are_not_reported_off_main(self):
+        subjects = [l.split(" ", 1)[1] for l in self.off_main["commits_not_on_main"]]
+        self.assertNotIn("B pulled", subjects)
+        self.assertNotIn("C pulled", subjects)
+
+    def test_genuinely_stranded_commit_still_caught(self):
+        self.assertTrue(self.off_main["available"])
+        self.assertEqual([l.split(" ", 1)[1] for l in self.off_main["commits_not_on_main"]],
+                         ["D stranded"])
+        self.assertEqual(self.off_main["remote_branches"], ["origin/claude/stranded"])
 
 
 if __name__ == "__main__":

@@ -44,6 +44,14 @@ COMMENT_HEADER = ("<!-- operational telemetry — machine/evaluator-read; comput
 COMPUTED_PREFIXES = ("- Sources used:", "- Direct fetches:", "- Word count:",
                      "- Token estimate", "- Feeds hit")
 
+# Third citation register, beyond the lint's bullet/heading-cite pair: a bold-lead
+# PARAGRAPH story (ai-ml's industry / new-models items) -- `**Story lead sentence.**
+# prose ... ([Src](url) [via snippet])`. Non-greedy so a lead carrying inline *italics*
+# still terminates at its own closing `**`. Label-lead continuation paragraphs
+# (`**Why it matters:**`, `**Issue:**`) are prose, not citations: their bold run ends
+# in a colon, which is what tells the two apart.
+PARA_CITE_RE = re.compile(r"^\*\*(.+?)\*\*")
+
 _MD_LINK_RE = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 _HTML_RE = re.compile(r"<[^>]+>")
 _COMMENT_RE = re.compile(r"<!--.*?-->", re.S)
@@ -74,12 +82,20 @@ def split_post(text):
     return fm_text, rest, ""
 
 
+def is_citation_line(line):
+    """The lint's own registers (bullet / heading-cite, anchor-tolerant) plus the
+    bold-lead paragraph register the lint doesn't carry -- see PARA_CITE_RE."""
+    if _lint.BULLET_RE.match(line) or _lint.HEADING_CITE_RE.match(line):
+        return True
+    m = PARA_CITE_RE.match(line)
+    return bool(m) and not m.group(1).rstrip().endswith(":")
+
+
 def citation_lines(text):
-    """Citation lines per the lint's own registers (bullet / heading-cite,
-    anchor-tolerant, first-link attribution)."""
+    """Citation lines per the three registers (first-link attribution)."""
     out = []
     for line in text.split("\n"):
-        if not (_lint.BULLET_RE.match(line) or _lint.HEADING_CITE_RE.match(line)):
+        if not is_citation_line(line):
             continue
         urls = _lint.LINK_RE.findall(line)
         if urls:

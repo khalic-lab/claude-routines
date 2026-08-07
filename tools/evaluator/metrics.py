@@ -30,6 +30,14 @@ _EDITION_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-(.+)$")
 _EVALUATOR_POST_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-evaluator\.md$")
 _LOOKBACK_DAYS = 14
 _WINDOW_DAYS = 7
+# A `## ` section counts as empty only if it carries no items AND less than this
+# many non-whitespace body chars (rm-4, 2026-07-19/26/08-02): anchor-free
+# synthesis prose ("Cross-cutting threads", "Why it matters") is not emptiness.
+# Tuned against the real false positives: the thinnest anchor-free prose section
+# in July/August is science 2026-07-29 "Why it matters" at 362 chars (next 469,
+# weekend threads run 2.4k-5.3k), so 200 clears every one with ~1.8x margin and
+# still flags a one-line stub (~20-30 chars).
+_MIN_SECTION_CHARS = 200
 
 # --- brief-text dimensions (B/D/F/G/H/K/L), computed so the evaluator reads
 # --- instead of recounting (same principle as A/I since 2026-07-07) ----------
@@ -318,16 +326,23 @@ def _window_posts(root, start, end):
 
 
 def _sections(body):
-    """[(name, item_count)] per `## ` section (citation bullets + heading-register items)."""
+    """[(name, item_count, text_len)] per `## ` section (citation bullets +
+    heading-register items; text_len = non-whitespace chars of everything
+    between the heading and the next `## `, excluding the heading itself).
+    Sections run to the next `## ` only -- post bodies carry no `# ` (the
+    title lives in front matter), so that is the same-or-higher-level
+    boundary in practice."""
     sections = []
     for line in body.split("\n"):
         m = _SECTION_RE.match(line)
         if m:
-            sections.append([m.group(1).strip(), 0])
-        elif sections and (_BULLET_RE.match(line) or _HEADING_CITE_RE.match(line)
-                           or line.startswith("### ")):
-            sections[-1][1] += 1
-    return [(name, count) for name, count in sections]
+            sections.append([m.group(1).strip(), 0, 0])
+        elif sections:
+            if (_BULLET_RE.match(line) or _HEADING_CITE_RE.match(line)
+                    or line.startswith("### ")):
+                sections[-1][1] += 1
+            sections[-1][2] += len("".join(line.split()))
+    return [(name, count, text_len) for name, count, text_len in sections]
 
 
 def _parse_feeds(footer, feeds_acc):
@@ -398,9 +413,9 @@ def build_briefs(root, window_start, window_end):
             s["tags"][tag] += body.count("[%s]" % tag)
         s["single_source"] += body.count("[single-source]")
 
-        for name, items in _sections(body):
+        for name, items, text_len in _sections(body):
             s["sections"] += 1
-            if items == 0:
+            if items == 0 and text_len < _MIN_SECTION_CHARS:
                 s["empty_sections"].append({"post": post_name, "section": name})
             if slug == "weekend" and re.search(r"papers?", name, re.I):
                 weekend_seen = True
@@ -450,15 +465,22 @@ def _git_lines(root, argv):
 
 def build_off_main(root, window_start):
     """Self-delivery guard, computed: remote branches besides origin/main + recent
-    commits not reachable from main (the `outcomes`-stranding class). Only runs
-    when root itself is a git repo -- fixture trees degrade to available:false."""
+    commits not reachable from origin/main (the `outcomes`-stranding class). Only
+    runs when root itself is a git repo -- fixture trees degrade to available:false.
+
+    The comparison is against `origin/main`, NOT the local `main` ref (rm-3,
+    2026-07-19/26/08-02): the routine runs detached after `git pull --ff-only`,
+    which leaves local `main` stale and made every pulled commit look off-main
+    (~14-20 phantoms a week). No fetch here -- the fire-start already pulled, so
+    the local `origin/main` ref is current; if it cannot be resolved this
+    degrades to available:false rather than falling back to the stale ref."""
     if not os.path.isdir(os.path.join(root, ".git")):
         return {"available": False}
     try:
         branches = [b.strip() for b in _git_lines(root, ["branch", "-r", "--format=%(refname:short)"])
                     if b.strip() not in ("", "origin", "origin/main") and "HEAD" not in b]
         commits = _git_lines(root, ["log", "--all", "--oneline",
-                                    "--since=%s" % window_start, "--not", "main"])
+                                    "--since=%s" % window_start, "--not", "origin/main"])
         return {"available": True, "remote_branches": branches,
                 "commits_not_on_main": commits[:20]}
     except (OSError, RuntimeError):
