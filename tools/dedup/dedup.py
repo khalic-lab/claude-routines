@@ -71,6 +71,23 @@ _store_spec = importlib.util.spec_from_file_location(
 store = importlib.util.module_from_spec(_store_spec)
 _store_spec.loader.exec_module(store)
 
+_FEED_PATH = os.path.join(_STORE_HERE, "..", "build_stories_feed.py")
+_feed_mod = None
+
+
+def feed():
+    """tools/build_stories_feed.py, loaded by fixed path on FIRST USE. Lazy, unlike store
+    above: only `record` needs it, and the module is the post parser -- nothing else in
+    dedup.py should pay for it or break on it."""
+    global _feed_mod
+    if _feed_mod is None:
+        spec = importlib.util.spec_from_file_location("_feed_for_dedup", _FEED_PATH)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        _feed_mod = mod
+    return _feed_mod
+
+
 REPO = os.environ.get("REPO") or os.getcwd()
 INDEX_DIR = os.path.join(REPO, "index", "stories")
 POSTS_DIR = os.path.join(REPO, "_posts")
@@ -1002,6 +1019,49 @@ def converge_target(story, vec, existing, claimed):
     return None
 
 
+def post_prose(date, slug):
+    """{norm_url: {"display_body", "why"}} for every story the PUBLISHED brief prints.
+
+    THE POST IS THE PROSE. `display_body`/`why` in a Step C payload are the writer RE-TYPING
+    its own published paragraphs into JSON, and a hand-copy drifts: the 2026-07-28 ai-ml
+    edition lost every double quote on the way, so the front page printed a "Why it matters"
+    that opened mid-quotation with its first words apparently cropped (owner report). Reading
+    them back out of the markdown that actually shipped takes the transcription out of the
+    trust chain entirely, instead of arbitrating between two copies.
+
+    Safe by construction to call before the brief exists: publish.py refuses to run at all
+    without the post (it FATALs first, then records, then anchors -- so the file is here and
+    still un-anchored, which parse_post's optional anchor stub already handles), but a
+    hand-run `record` need not be, and a missing post must never blank a record. `{}` on any
+    miss, and the caller keeps the payload copy.
+    """
+    path = os.path.join(POSTS_DIR, f"{date}-{slug}.md")
+    if not os.path.exists(path):
+        return {}
+    try:
+        mod = feed()
+        with open(path) as f:
+            parsed = mod.parse_post(f.read())
+        prose = {}
+        for s in parsed:
+            printed = {"display_body": (s.get("display_body") or "").strip(),
+                       "why": (s.get("why") or "").strip()}
+            # EVERY URL THE STORY CITES, not only the first, exactly as the feed's own join
+            # does (load_recent, R4): a story often cites two sources and the payload names
+            # the one the desk treated as primary, which is not always the one that appears
+            # first in the prose. First-url-only left 3 of the 2026-08-07 AI/ML edition's 13
+            # records unjoined -- i.e. silently stuck on the hand-copy this fix exists to drop.
+            for u in mod._URL_RE.findall(s.get("raw") or ""):
+                nu = mod.norm_url(u)
+                if nu and nu not in prose:              # first telling wins, as the feed's does
+                    prose[nu] = printed
+        return prose
+    except Exception as e:
+        # Same posture as the ledger dual-write below: enrichment must never cost an edition.
+        print(f"post-derived prose unavailable (non-fatal): {e}")
+        return {}
+
+
 def cmd_record(args):
     with open(args.stories) as f:
         stories = json.load(f)
@@ -1025,6 +1085,8 @@ def cmd_record(args):
     # follow this newer payload. A first run has no edition file: `existing` is [] and
     # every story records exactly as before (byte-identical, golden-enforced).
     existing = load_edition_records(date, slug)
+    # the brief's own printed prose, keyed by canonical url -- see post_prose.
+    prose = post_prose(date, slug)
     claimed = set()
     records = []
     for s, v in zip(stories, vecs):
@@ -1091,6 +1153,18 @@ def cmd_record(args):
         ents = s.get("entities")
         if not (isinstance(ents, list) and ents) and prior is not None:
             ents = prior.get("entities")
+        # display_body / why: DERIVED FROM THE POST, with the payload as the fallback (see
+        # post_prose). Fallback fires on exactly three misses, all of them legitimate: no post
+        # on disk, a url the brief never cites (so no join), and a field the brief never prints
+        # -- the Weekend headline bullets carry no why, and the payload is that field's only
+        # carrier there. Both urls are tried because convergence may have swapped in the
+        # FIRST recording's url while the post cites the one this payload named.
+        printed = {}
+        for cand in (url, s.get("url")):
+            nu = feed().norm_url(cand) if (prose and cand) else None
+            if nu and nu in prose:
+                printed = prose[nu]
+                break
         rec = {
             "id": hid,
             "date": date,
@@ -1105,11 +1179,11 @@ def cmd_record(args):
             # verbatim — build_stories_feed.py derives a fallback for records that lack them.
             "topics": s.get("topics", []),
             "importance": s.get("importance"),
-            # the story's PUBLISHED prose, writer-supplied at record time: the explanatory
-            # paragraph as it appears in the brief, plus the "Why it matters" line if any.
-            # The homepage feed prefers these over re-parsing the markdown post.
-            "display_body": s.get("display_body", ""),
-            "why": s.get("why", ""),
+            # the story's PUBLISHED prose: the explanatory paragraph as it appears in the
+            # brief, plus the "Why it matters" line if any. The homepage feed prefers these
+            # over re-parsing the markdown post.
+            "display_body": printed.get("display_body") or s.get("display_body", ""),
+            "why": printed.get("why") or s.get("why", ""),
             "thread_id": thread_id or hid,
             "first_seen_date": first_seen_date or date,
             "event_date": event_date,

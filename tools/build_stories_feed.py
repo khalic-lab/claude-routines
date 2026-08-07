@@ -151,7 +151,13 @@ _H2_RE = re.compile(r"^##\s+(.*)$")
 _H3_RE = re.compile(r"^###\s+(.*)$")
 _H3_IAL_RE = re.compile(r"\s*\{#([^}]+)\}\s*$")
 _URL_RE = re.compile(r"https?://[^\s)\]]+")
-_TAG_RE = re.compile(r"`?\[(single-source|via snippet|preprint|disputed|vendor pr|ongoing since[^\]]*)\]`?", re.I)
+# EVERY LITERAL WRITER TAG MUST BE LISTED HERE, or `strip_trailing_citations` half-cuts.
+# `[new source]` and `[official PR]` are mandated by routines/_shared/feed-first-source-order.md
+# and were missing: the glue walk between two citations then broke on the tag, cut only the
+# last citation, and in doing so unbalanced the citation paren — so `clean_body`'s
+# `_CITE_PAREN_RE` could no longer rescue it either, and the card printed
+# "… Al Jazeera, 4 Aug 2026 · NY State of Politics, 3 Aug 2026 [new source]" as prose.
+_TAG_RE = re.compile(r"`?\[(single-source|via snippet|new source|preprint|disputed|vendor pr|official pr|ongoing since[^\]]*)\]`?", re.I)
 _META_ITALIC_RE = re.compile(r"\s*_[^_]*(?:announced|submitted|published|reported)[^_]*_\s*", re.I)
 
 
@@ -171,13 +177,23 @@ def clean_body(text):
     text = _META_ITALIC_RE.sub(" ", text)                 # _Announced …_ / _submitted …_
     text = text.replace("**", "").replace("*", "").replace("`", "")
     text = re.sub(r"\s+", " ", text).strip()
-    text = re.sub(r"^[\s—–-]+", "", text)               # drop a leading dash lead-in ("— the week's…")
+    # drop leading lead-in punctuation: a dash ("— the week's…"), and the orphaned terminator
+    # left behind when the paragraph OPENED on a stripped tag ("[ongoing since 2026-07-30]. Under
+    # the Board of Peace framework…" -> ". Under the Board…", which the card then printed).
+    text = re.sub(r"^[\s—–;.,-]+", "", text)
     return text
 
 
 def _is_meta(p):
-    """A citation / author / date byline, not story prose."""
-    p = p.strip()
+    """A citation / author / date byline, not story prose.
+
+    Status tags come off FIRST. `[ongoing since …]` / `[single-source]` are annotations the
+    writer hangs on ordinary prose, and they open with a bracket — so the leading-link test
+    below read a whole Gaza bullet ("**…had 'not agreed' to withdraw…** [ongoing since
+    2026-07-30]. Under the Board of Peace framework…") as a byline, which cost it its lede,
+    its paragraph break and its `Why it matters` all three.
+    """
+    p = _TAG_RE.sub("", p or "").strip()
     if not p:
         return True
     if re.match(r"^\*{0,2}\[", p):                      # leading link: **[Nature](…) or [arXiv…]
@@ -202,6 +218,120 @@ def _is_meta(p):
 
 
 _WHY_RE = re.compile(r"^\*{1,2}\s*Why (?:it|this) matters:?\s*\*{0,2}\s*", re.I)
+# The news form prints its why INSIDE the bullet paragraph ("… surface features. Why it
+# matters: …"), unlabelled by asterisks, so the block-level _WHY_RE above never saw it and the
+# why sentence stayed glued to the body while the `why` field came out empty.
+_INLINE_WHY_RE = re.compile(r"(?:^|\s+)\*{0,2}Why (?:it|this) matters:\s*\*{0,2}\s*", re.I)
+_WHY_LABEL = "*Why it matters:* "     # normalized label, so _pick_why/_pick_body see one form
+
+
+def _paragraphs(lines):
+    """Stripped lines (blanks kept as "") -> paragraphs.
+
+    A LINE IS NOT A PARAGRAPH. The science/weekend paper forms hard-wrap their prose and their
+    `*Why it matters:*` across several lines with no blank between them, and reading each line
+    as its own paragraph truncated both fields at the first wrap. Lines join unless one of
+    three things starts a new block: a blank line, a `Why it matters` label, or the
+    meta/byline boundary (a citation line and the prose under it are never one paragraph).
+    """
+    paras, cur = [], []
+
+    def flush():
+        if cur:
+            paras.append(" ".join(cur))
+            del cur[:]
+
+    for ln in lines:
+        s = ln.strip()
+        if not s:
+            flush()
+            continue
+        if _WHY_RE.match(s) or _is_meta_para(s) or (cur and _is_meta_para(cur[0])):
+            flush()
+        cur.append(s)
+    flush()
+    return paras
+
+
+def _split_inline_why(paras):
+    """Split an inline `Why it matters:` out of its paragraph, relabelled to the block form so
+    _pick_body / _pick_why both resolve through the single _WHY_RE they already share."""
+    out = []
+    for p in paras:
+        if _WHY_RE.match(p) or _is_meta_para(p):
+            out.append(p)
+            continue
+        m = _INLINE_WHY_RE.search(p)
+        if not m:
+            out.append(p)
+            continue
+        head = p[:m.start()].rstrip()
+        if head:
+            out.append(head)
+        out.append(_WHY_LABEL + p[m.end():])
+    return out
+
+
+# Trailing citation furniture: the dated source links a bullet closes on
+# ("[SRF, 20 Jul 2026](u); oil: [Le Temps, 20 Jul 2026](u) [ongoing since 2026-06-20]") and the
+# paper form's bracketed link list ("[[Scorecard](u)] · [[Leaderboard](u)]"). THE DATE (or the
+# double bracket) IS THE KEY: an undated link inside the last sentence is load-bearing prose
+# ("… and released [the full report](u)") and must survive.
+# THE DATE MAY SIT OUTSIDE THE LINK TEXT: the ai-ml form writes "— [Ars Technica](u), 2026-07-29",
+# so the third alternative below matches a link FOLLOWED by a date. It still keys on the date,
+# which is what keeps the undated prose link untouched.
+_CITE_DATE = (r"(?:\d{4}-\d{2}-\d{2}"
+              r"|\d{1,2}\s+[A-Z][a-z]{2,8}\.?\s+\d{4}"
+              r"|[A-Z][a-z]{2,8}\.?\s+\d{1,2},?\s+\d{4})")
+_CITE_LINK_RE = re.compile(r"\[\[[^\[\]]+\]\([^)]*\)\]"
+                           r"|\[[^\[\]]*" + _CITE_DATE + r"[^\[\]]*\]\([^)]*\)"
+                           r"|\[[^\[\]]+\]\([^)]*\)[,;]?\s*" + _CITE_DATE)
+# what may sit BETWEEN or AFTER trailing citations and still be furniture: punctuation, an
+# `[ongoing since …]`-style tag (stripped first), or a short label introducing the next one
+# ("; oil: ").
+_CITE_GLUE_RE = re.compile(r"^[\s.,;:·—–\-()\[\]]*(?:[A-Za-z][A-Za-z0-9 '’\-]{0,24}:\s*)?$")
+_CITE_EDGE = " \t([{;,:·—–-"
+
+
+def strip_trailing_citations(text):
+    """Drop the run of citation links a paragraph ENDS on, and only that run: the walk starts
+    at the last one and stops at the first gap that is not furniture, so a dated link in the
+    middle of a sentence is never touched."""
+    ms = list(_CITE_LINK_RE.finditer(text))
+    if not ms:
+        return text
+    cut = len(text)
+    for m in reversed(ms):
+        if m.end() > cut:
+            continue                                    # already inside the cut tail
+        if not _CITE_GLUE_RE.match(_TAG_RE.sub("", text[m.end():cut])):
+            break
+        cut = m.start()
+    return text if cut == len(text) else text[:cut].rstrip(_CITE_EDGE)
+
+
+def _is_meta_para(p):
+    """`_is_meta` over a paragraph whose TRAILING CITATION RUN has been removed first.
+
+    A bullet that merely ENDS on citations is prose, not a byline, and that distinction is the
+    whole point: `_is_meta`'s ` · ` branches were written for a remainder that IS a byline, so
+    the standard two-source news tail ("[The Guardian, 4 Aug 2026](u) · [Al Jazeera, 5 Aug
+    2026](u)") planted both a middot and a source-domain-shaped token into ordinary prose and
+    made the lede read as a paper title — the card then lost its opening sentence, its `why`,
+    and printed the literal "Why it matters:" glued into the body.
+
+    An all-citation remainder leaves NOTHING once the run is gone, and empty IS meta (it is the
+    paper/title form) — which keeps `_is_meta("")`'s existing answer for that case.
+
+    Only the TRAILING edge is trimmed. `_CITE_EDGE` contains `(` and `[`, and `_is_meta`
+    identifies a byline BY ITS LEADING BRACKET ("[arXiv…", "— [*Nature Communications*, 21 May
+    2026]"), so stripping both ends would blind the very test this delegates to.
+
+    Defined after `_paragraphs`/`_split_inline_why` textually on purpose: Python resolves module
+    globals at call time and every call arrives through `parse_post`.
+    """
+    core = strip_trailing_citations(_TAG_RE.sub("", p or "").strip()).rstrip(_CITE_EDGE)
+    return _is_meta(core) if core else True
 
 
 def _is_editorial_section(section):
@@ -240,28 +370,78 @@ def _derived_headline(text):
     return (t[:cut] if cut > 0 else t[:HEADLINE_CAP]).rstrip(" ,;:—–-")
 
 
-def _pick_body(paras):
+def _is_title(first):
+    """True when a bold bullet's remainder marks the bold as a TITLE rather than a LEAD
+    SENTENCE — i.e. the paper form, where the remainder is a citation/author byline and the
+    prose lives in its own paragraph below. Only a title is kept out of `display_body`.
+
+    Status tags are stripped before the test, and that is load-bearing: `[ongoing since …]`
+    opens with a bracket, so `_is_meta` read "**…Netanyahu said Israel had not agreed…**
+    [ongoing since 2026-07-30]. Under the Board of Peace framework…" as a citation byline and
+    dropped the whole lede off the card. An EMPTY remainder counts as a lead sentence on
+    purpose — `_is_meta("")` is True, so inheriting its answer would delete the only prose a
+    lede-only bullet has.
+
+    The test runs through `_is_meta_para`, so the trailing citation run comes off too: a news
+    lede that CLOSES on two middot-separated dated sources is a lead sentence, not a title.
+    """
+    rest = _TAG_RE.sub("", first or "").strip()
+    return bool(rest) and _is_meta_para(rest)
+
+
+def _pick_body_para(paras):
+    """The story's prose paragraph, still RAW markdown — `body` and `display_body` clean it
+    two different ways (see _display_body).
+
+    THE SECOND PASS RELAXES THE LENGTH FLOOR AND NOTHING ELSE. It used to drop the meta skip as
+    well, so a block whose every paragraph read as meta — the science/weekend paper form, where
+    `_is_meta` fires on any "et al" and the prose itself routinely names one — returned the
+    citation BYLINE as the body. `dedup.py record` prefers a non-empty derivation over the
+    writer's payload, so an 86-character byline silently replaced 769 characters of authored
+    prose and was written into the append-only ledger. Returning "" is the honest answer: it
+    fires the documented payload fallback (a field the brief never prints)."""
     for p in paras:
-        if _is_meta(p) or _WHY_RE.match(p.strip()):     # the why-block is its own field, not the body
+        if _is_meta_para(p) or _WHY_RE.match(p.strip()):  # the why-block is its own field, not the body
             continue
-        c = clean_body(p)
-        if len(c) >= 40:
-            return c
+        if len(clean_body(p)) >= 40:
+            return p
     for p in paras:                                     # relax the length floor
-        if _WHY_RE.match(p.strip()):
+        if _is_meta_para(p) or _WHY_RE.match(p.strip()):
             continue
-        c = clean_body(p)
-        if c:
-            return c
+        if clean_body(p):
+            return p
     return ""
 
 
+def _pick_body(paras):
+    return clean_body(_pick_body_para(paras))
+
+
+def _display_body(lede, paras):
+    """The story's PRINTED prose, as the card shows it — what `dedup.py record` derives
+    `display_body` from, so it must read as the brief reads.
+
+    Two things separate it from `body`, which stays exactly what it always was (the recovered
+    summary the feed falls back on, pinned by golden-feed.json):
+      * a bold LEAD SENTENCE is prose the bullet regex cut out of the paragraph, so it is
+        prepended back with the sentence period the regex ate. A bold TITLE (the ### and paper
+        forms) is not prose and is never prepended — the card would print its headline twice.
+      * trailing citation furniture is dropped: it is source apparatus the card renders from
+        `url`/`source_domain` separately, not a sentence the writer wrote.
+    """
+    body = clean_body(strip_trailing_citations(_pick_body_para(paras)))
+    if not lede:
+        return body
+    return "%s. %s" % (lede, body) if body else lede + "."
+
+
 def _pick_why(paras):
-    """The writers' `**Why it matters:**` (ai-ml) / `*Why it matters:*` (science) paragraph."""
+    """The writers' `**Why it matters:**` (ai-ml) / `*Why it matters:*` (science) paragraph,
+    or the news form's inline one (normalized to the same label by _split_inline_why)."""
     for p in paras:
         m = _WHY_RE.match(p.strip())
         if m:
-            return clean_body(p.strip()[m.end():])
+            return clean_body(strip_trailing_citations(p.strip()[m.end():]))
     return ""
 
 
@@ -270,13 +450,16 @@ def parse_post(md):
     lines = md.splitlines()
     out, section, in_footer, i, n = [], "", False, 0, len(lines)
 
-    def emit(headline, paras, anchor_sid=None):
+    def emit(headline, block, anchor_sid=None, lede=False):
         if headline.replace("*", "").rstrip().endswith(":"):
             return                                      # '**Datasets:** …' roundup label, not a story
-        raw = " ".join(paras)
+        raw = " ".join(l for l in block if l)           # blanks are block structure, never prose
         urls = _URL_RE.findall(raw)
-        out.append({"section": section, "headline": _strip_md(headline),
+        head = _strip_md(headline)
+        paras = _split_inline_why(_paragraphs(block))
+        out.append({"section": section, "headline": head,
                     "body": _pick_body(paras), "why": _pick_why(paras),
+                    "display_body": _display_body(head if lede else "", paras),
                     "url": urls[0] if urls else None, "raw": raw,
                     "anchor_sid": anchor_sid})
 
@@ -295,20 +478,19 @@ def parse_post(md):
             continue
         h3 = _H3_RE.match(line)
         if h3:                                          # heading-style story (science/weekend papers)
-            paras, j = [], i + 1
+            block, j = [], i + 1
             while j < n:
                 nx = lines[j]
                 if _H2_RE.match(nx) or _H3_RE.match(nx) or nx.startswith("# "):
                     break
                 if _BULLET_START_RE.match(nx.lstrip()):
                     break
-                if nx.strip():
-                    paras.append(nx.strip())
+                block.append(nx.strip())                # "" for a blank: _paragraphs needs the break
                 j += 1
             head = h3.group(1).strip()
             ial = _H3_IAL_RE.search(head)
             h3_sid = ial.group(1) if ial and ial.group(1).startswith("st-") else None
-            emit(_H3_IAL_RE.sub("", head).strip(), paras, anchor_sid=h3_sid)
+            emit(_H3_IAL_RE.sub("", head).strip(), block, anchor_sid=h3_sid)
             i = j
             continue
         m = _BULLET_RE.match(line)
@@ -323,7 +505,7 @@ def parse_post(md):
                 head, first = _derived_headline(body_text), body_text
             if not _CANON_SID_RE.match(sid or ""):
                 sid = None                              # a non-canonical anchor is markup, not an id
-            paras, j = [first], i + 1
+            block, j = [first], i + 1
             while j < n:
                 nxt = lines[j]
                 if nxt.startswith("#"):
@@ -333,18 +515,19 @@ def parse_post(md):
                     while k < n and not lines[k].strip():
                         k += 1
                     if (k < n and lines[k][:1] in (" ", "\t") and not lines[k].lstrip().startswith("- ")):
+                        block.append("")                # kept: the blank separates two paragraphs
                         j += 1
                         continue
                     break
                 if nxt.lstrip().startswith("- "):
                     break
-                paras.append(nxt.strip())
+                block.append(nxt.strip())
                 j += 1
             # the source gate is checked over the WHOLE story (a wrapped bullet can carry its
             # citation on a continuation line), and only the plain form has to pass it.
-            sourced = bool(m) or bool(_URL_RE.search(" ".join(paras)))
+            sourced = bool(m) or bool(_URL_RE.search(" ".join(block)))
             if sourced and not _is_editorial_section(section):   # skip an editorial roundup's bullets
-                emit(head, paras, anchor_sid=sid)
+                emit(head, block, anchor_sid=sid, lede=bool(m) and not _is_title(first))
             i = j
             continue
         i += 1
