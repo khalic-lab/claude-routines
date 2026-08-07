@@ -1,8 +1,8 @@
 # News Brief Pipeline — Architecture
 
-> Written 2026-05-25; §3–§7 status updated 2026-06-22. §1 (current state) is read from live trigger
-> configs, `bridge.sh`, the user crontab, `_config.yml`, and `_includes/head/custom.html` — not
-> inferred. The two-plane design in §3–§7 is now **partially built**: **Phase 1 — the compose-time
+> Written 2026-05-25; §1 updated 2026-08-07; §3–§7 status updated 2026-06-22. §1 (current state) is
+> read from live trigger configs, `bridge.sh`, the user crontab, `_config.yml`, and
+> `_includes/head/custom.html` — not inferred. The two-plane design in §3–§7 is now **partially built**: **Phase 1 — the compose-time
 > embeddings dedup (online plane)** is LIVE (`tools/dedup/dedup.py`, the `embed-proxy` Worker, the
 > in-repo `index/stories/` index; calibrated 2026-05-31). **Phase 2 — the analytical plane — is
 > BUILT (2026-07-18: `tools/plane/query.py`, SERVERLESS — the ledger is the database, folded
@@ -69,7 +69,114 @@
    └──────────────────────────────────┘
 ```
 
-> **Changed 2026-07-25 (latest): reader-site fixes — passkeys-only writes, sessions that
+> **Fixed 2026-08-07 (latest): the publish push contract — `publish.py` pushed a ref that never
+> described the edition.** `git push origin main` pushed the local `main` REF, which in the
+> routines' detached-HEAD sandbox is not the commit just created. Both failure directions follow
+> from that one refspec: a no-op push of a stale branch exits 0, so a run could print DONE with
+> nothing on origin (R1, the newsdesk review's one blocker); and — the direction that actually
+> fired — the retry pushed the same stale ref, exited non-zero, and marked **8 of the 11 briefs in
+> the week to 2026-08-02** as "has NOT reached origin" while they sat on `origin/main` all along.
+> The commit is now pushed **by SHA to `refs/heads/main`**, and "published" is decided by what
+> ORIGIN holds — read back with `ls-remote`, never from a local `origin/main` tracking ref, which a
+> sandbox that never fetched can leave arbitrarily stale; an unreadable remote falls back to the
+> push's own exit status instead of inventing a verdict. The conflict path is closed with it: an
+> unresolved rebase leaves HEAD at the ONTO commit — origin's own tip — so pushing THAT is a no-op
+> that *verifies*, i.e. reports a lost edition as DONE. `git ls-files -u` (the unmerged index is the
+> load-bearing check, not the presence of `.git/rebase-merge` — it also reads correctly where `.git`
+> is a file) now returns `push-failed` there. **`record_push_failure` is deleted**: the note it
+> appended to the post and amended into the commit is readable only once that commit reaches origin,
+> which is exactly when it has become false. **23 published briefs carried it, every one of them on
+> `origin/main`** — including the 2026-08-02 review that filed the defect — and the 23 stale lines
+> are stripped from `_posts/`. A push failure is an OPERATOR signal now: the log line and exit 1,
+> never the brief.
+>
+> **Fixed 2026-08-07: the Coverage footer's third citation register.** `footer.py` shared the lint's
+> bullet/heading-cite pair, so a **bold-lead PARAGRAPH** story — ai-ml's industry and new-model items,
+> `**Lead sentence.** prose … ([Src](url) [via snippet])` — counted as no citation at all, and the
+> computed direct-fetch/via-snippet split was blind to every paragraph-form story in the edition.
+> `PARA_CITE_RE` adds that register: non-greedy, so a lead carrying inline *italics* still terminates
+> at its own closing `**`, and **colon-discriminated** — a label lead (`**Why it matters:**`,
+> `**Issue:**`) is prose, and the trailing colon is what tells the two apart.
+>
+> **Applied 2026-08-07: the Evaluator's own metrics fixes, rm-3 and rm-4** — re-proposed three weeks
+> running (2026-07-19, 07-26, 08-02) before anyone applied them. **rm-3:** the off-main self-delivery
+> guard compared against the LOCAL `main` ref, which `git pull --ff-only` + detached HEAD leaves
+> stale, so every pulled commit read as off-main — ~14–20 phantom `commits_not_on_main` a week, in
+> the one metric that exists to catch a real stranding. It compares `--not origin/main` now, with no
+> fetch of its own (the fire-start already pulled) and `available:false` rather than a fall back to
+> the stale ref. **rm-4:** section vitality counted items only, so anchor-free synthesis prose
+> ("Cross-cutting threads", "Why it matters") was reported EMPTY. A section is empty now only with no
+> items AND under `_MIN_SECTION_CHARS = 200` non-whitespace body chars: the thinnest real anchor-free
+> section in the window is science 2026-07-29's "Why it matters" at 362 chars, so 200 clears every
+> false positive with ~1.8× margin and still flags a one-line stub.
+>
+> **Added 2026-08-07: prose derivation — THE POST IS THE PROSE** (specified 2026-07-28, built today).
+> `display_body`/`why` in a Step C payload are the writer RE-TYPING its own published paragraphs into
+> JSON, and a hand-copy drifts: the 2026-07-28 ai-ml edition lost every double quote on the way, so
+> the front page printed a "Why it matters" that opened mid-quotation looking cropped (owner report).
+> `dedup.py record` now DERIVES both fields from the markdown that actually shipped, through
+> `build_stories_feed.py`'s `parse_post` (loaded by fixed path on first use — only `record` needs the
+> parser, and nothing else in `dedup.py` should pay for it or break on it), joined by canonical URL
+> and trying **every URL the story cites**, as the feed's own join does — first-url-only left 3 of
+> the 2026-08-07 AI/ML edition's 13 records unjoined, i.e. silently stuck on the hand-copy this fix
+> exists to drop. The payload survives as the fallback for exactly three legitimate misses: no post
+> on disk, a URL the brief never cites, and a field the brief never prints (Weekend's headline
+> bullets carry no `why`, and the payload is that field's only carrier there); a parser failure is
+> non-fatal and never blanks a record. `parse_post` learned the forms the briefs actually print — the
+> news stream's **inline** `Why it matters:` inside the bullet paragraph (the block-level regex never
+> saw it, so the why stayed glued to the body while the field came out empty), **trailing-citation
+> stripping keyed on THE DATE** (an undated link inside the last sentence is load-bearing prose and
+> survives; every literal writer tag must be listed or the walk half-cuts and unbalances the citation
+> paren), and a new **`display_body`** key: the story's printed prose, byte-faithful, quotes included.
+> Spec `tools/tests/test_prose_derivation.py`, 17/17.
+>
+> **Added 2026-08-07: registry 251 → 274 domains — Swiss and European primaries.** 23 scouted
+> candidates, all entering as `status: candidate` so preflight surfaces them and the lifecycle
+> promotes them on real citations: `snf.ch`, the admin.ch family (`admin.ch`, `bfs.admin.ch`,
+> `meteoswiss.admin.ch`), `bger.ch`, `swiss-ai.org`, `cscs.ch`, `idiap.ch`, `ai.ethz.ch`, `csem.ch`,
+> `eawag.ch`, `chemrxiv.org`, `blog.eleuther.ai`, `rsi.ch`, `24heures.ch`, `republik.ch`,
+> `reportagen.com`, `noemamag.com`, `swissolympic.ch`, `swiss-ski.ch`, `swiss-athletics.ch`,
+> `swisstennis.ch`. **`reach` is re-measured, not assumed:** four entries flipped `direct` → `proxy`
+> (`science.org`, `swissinfo.ch`, `cell.com`, `journals.aps.org`). `home.cern` replaces **`cern.ch`,
+> retired on HTTP 0** — Weekend's T1 fallback list is retargeted to `home.cern/news` in the same pass,
+> so the prompt cannot keep naming a host the registry has buried. The `ai-ml` stream was added to
+> `ethz.ch`/`epfl.ch`/`psi.ch` (they publish AI research and the desk had no institutional Swiss
+> route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
+> `hklaw.com`, `macrumors.com`, `wtvbam.com`.
+>
+> **Changed 2026-08-07: the prompt layer — the discovery quota now means PRIMARY discovery.** Any
+> unregistered domain satisfied it, so a first-time mainstream outlet counted as a discovery. Only a
+> new **primary/institutional publisher** does now — a lab, university, research institute, journal,
+> observatory, regulator, government body or ministry, court, parliament, federation, standards body,
+> or the first-party site of the organization the story is about. **The test is what KIND OF BODY
+> published the page, not the registry's `class:` field**, which feeds the saturation math and files
+> plenty of universities and institutes as `outlet`. `[new source]` tagging is untouched (registry
+> bookkeeping, every unregistered domain, outlet or not) — it is the *quota* that narrowed, and an
+> honest waiver is the intended outcome when the edition surfaced no new primary. The rule lands in
+> `_shared/feed-first-source-order.md` + `newsroom-ethos.md` **and** in `preflight.py`'s printed plan,
+> so the plan and the rule cannot drift apart. Per stream: **news** gained a **primary-document rule**
+> (when the story IS a document — a ruling, bill, regulator's decision, official report — fetch it
+> from the court's/parliament's/regulator's own site and cite it alongside the outlet; the article is
+> what tells you the document exists, not a substitute for it). **ai-ml**'s arXiv section must **rank
+> then cut** — strongest first, never submission order — and open with a 2–4 sentence throughline;
+> the ~8–12 is a ceiling, not a quota. **science** must probe **two dormant registry candidates
+> before waiving** discovery and name them in the waiver reason; a `candidates_to_try` domain is
+> already registered, so probing it can be neither tagged nor counted — the one path from it to a
+> real discovery is landing on a newsroom SUBdomain that isn't (`ai.ethz.ch` is its own domain, not
+> `ethz.ch`) — plus a Swiss/European relevance pass after drafting: write the angle into the item
+> where it is real, leave the item alone where it is not, because a manufactured local hook is worse
+> than none. **Evaluator:** feedback triage is completeness-first — every window `ev:"feedback"` event
+> with a non-empty `reason`, selected by the EVENT's own `ts` (a vote cast this week on an older story
+> still counts), gets an explicit disposition: applied / deferred / rejected. The noise filter decides
+> what becomes a proposal, never what gets listed. Its manual push fallback — the one git escape hatch
+> left outside `publish.py` — was still `git push origin main`, i.e. the exact defect above; it and
+> both prompts' FAILED-reaction lines now say `git push origin HEAD:refs/heads/main`.
+>
+> Spec suite 502 → 545 (539 pass locally; the 6 failures are environment-dependent — PyYAML date
+> coercion in `test_sources_registry` ×5 and `test_reconcile_lint` ×1 — and fail identically at the
+> prior HEAD).
+
+> **Changed 2026-07-25: reader-site fixes — passkeys-only writes, sessions that
 > actually live, editorial votes, both-thumbs reasons, a reader-facing "How this works".**
 > Diagnosed by a 4-agent workflow, applied by hand. **(1) Sessions were dying silently**, three
 > ways: the 30-day rolling threshold left a dead zone (KV TTL anchors to the last PUT, so weeks
@@ -341,7 +448,7 @@
 > records are left as-is (homepage recovered their prose via the URL join). Spec suite
 > 353 → 363. The plane is read-only and optional: nothing in the publish path depends on it.
 
-> **Changed 2026-07-18 (latest): homepage frontend review → slim-down + packing/table fixes.**
+> **Changed 2026-07-18: homepage frontend review → slim-down + packing/table fixes.**
 > A 4-agent specialist review (css-layout, js-state, architecture reviewers + adversarial Opus
 > synthesis; 24 findings verified against source, 2 struck as factually wrong) drove two commits:
 > **(1) Slim-down (`e7c8745`)** — `_includes/head/custom.html` 842 → 301 lines. The brief-page
@@ -610,7 +717,7 @@
 | Read state (sync) | Cloudflare KV `readstate:{reader}` (not in repo) | `{sid: {ts, v: 0\|1}}` LWW tombstone map; client shadow `syncState:v1` + paint source `homeRead:v1` in localStorage | homepage JS ↔ feedback-sink Worker (passkey session) |
 | Institutions ledger | `sources/institutions.yml` | `meta.synced_editions` + `aliases:` + per-institution `{class, status, streams, first_seen, last_cited, citations, lifecycle}` | writer bylines → Step C `affiliations` → `institutions.py sync` (Step C.25c); class + aliases hand-curated |
 | Passkey auth | Cloudflare KV `cred:{id}` / `session:{token}` / `chal:{kind}:{c}` (not in repo) | credential pubkey+counter; 90d rolling sessions; single-use challenges TTL 300s | feedback-sink `/auth/*` (registration invite-gated by `INVITE_TOKEN` secret) |
-| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 366 tests: store invariants, fold, registry, institutions, affiliations + prompt-mirror drift, lint, metrics (+ computed briefs dimensions), dedup convergence, reconcile, dual-write byte-identity goldens, fetch wrapper, computed footer, publish orchestrator, watch gate, linkcheck, plane (bake artifact roundtrip, cosine/groupbys, entities + blank-headline record path, thread enrichment) | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`); worker smokes run separately (`node tools/feedback-sink/test/smoke.mjs` 46 checks, `node tools/embed-proxy/test/smoke.mjs` 23 checks) |
+| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 545 tests (539 pass locally; the 6 failures are environment-dependent — PyYAML date coercion in `test_sources_registry` ×5, `test_reconcile_lint` ×1 — and fail identically at the prior HEAD): store invariants, fold, registry, institutions, affiliations + prompt-mirror drift, lint, metrics (+ computed briefs dimensions), dedup convergence, post-derived prose, reconcile, dual-write byte-identity goldens, fetch wrapper, computed footer, publish orchestrator, watch gate, linkcheck, plane (bake artifact roundtrip, cosine/groupbys, entities + blank-headline record path, thread enrichment) | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`); worker smokes run separately (`node tools/feedback-sink/test/smoke.mjs` 46 checks, `node tools/embed-proxy/test/smoke.mjs` 23 checks) |
 | Plane artifact | Cloudflare KV `plane:v1` on embed-proxy (not in repo; namespace `459b76a2…`) | magic `PLANEv1\0` + meta JSON (n, dim, ts, norms, compact stories incl. entities) + n×1024 float32 vectors (~7.4MB), baked from the ledger | `tools/plane/bake.py --push` (publish-tail `plane-push`, every edition) → embed-proxy `/plane/*` queries (dedup check thread-enrichment, Weekend cross-cutting grounding, ad-hoc); `tools/plane/query.py` = offline reference twin |
 
 ### 1.3 Dedup today

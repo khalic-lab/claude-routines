@@ -1,10 +1,26 @@
 # SPIKE — Writer token levers (the real spend)
 
-> Status: **investigation / proposal** (nothing implemented). Written 2026-05-30.
+> Status: **partly implemented** (instrumentation shipped, Lever 2 partly landed; Levers 1, 3 and 4
+> still OPEN). Written 2026-05-30.
 > Follow-up to `SPIKE-model-tiering.md`, which found the writers are ~90% of the token bill
 > once they're on Opus. Model tier is now fixed (writing = latest Opus, user constraint), so
 > the only remaining reductions are about **how much the writers do per run** and **how often
 > they run at full depth**. Decision owner: Rafael.
+>
+> **Updated 2026-08-07.** *Instrumentation* — the stated prerequisite — is DONE, and went further
+> than proposed: `tools/footer.py` computes `- Word count:` (body words + the logged research
+> tool-call count) and a token estimate into every Coverage footer, and
+> `tools/evaluator/metrics.py` reports the per-stream mean alongside the previous week's as
+> dimension L, so the trend is read rather than recounted. *Lever 2* landed in part with it
+> (`d1dc891`, 2026-06-22): the writer prompts' word targets are now ai-ml **1500–2500**, science
+> **1500–3000**, sports **1200–2500**, news carries no explicit target (its per-section item caps
+> govern), and Weekend stays exempt at 4000–8000 as this spike recommended — so the "2000–4000
+> words/brief" in Lever 2 below is the pre-2026-06-22 target, not the current one. **Levers 1
+> (quiet-day skip), 3 (tool-call cap) and 4 (Watch cadence) are still OPEN** — none implemented,
+> none rejected; the three questions at the foot of this file are still awaiting a decision. Read
+> "Recommended experiment order" below as pre-2026-06-22 too: its step 1 (output caps, with the
+> instrumentation first) is the part that happened, so the live question is step 2 — Lever 1, versus
+> continuing to hold 3 and 4.
 
 ## Why this spike
 

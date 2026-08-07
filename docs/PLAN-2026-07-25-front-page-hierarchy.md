@@ -1,7 +1,19 @@
 # PLAN v2 — front page: the ranked list is the model
 
-**Date:** 2026-07-25 · **Status:** PROPOSED · **Supersedes:** PLAN v1 (same path, 2026-07-25) and
+**Date:** 2026-07-25 · **Status:** PARTLY SHIPPED — **Stages 1–5 shipped 2026-07-26**; **Stages 6–9
+OPEN** (masonry deletion → CSS-grid ruled layout, thumb-zone controls + tier index as real text, the
+wide projection, imagery) · **Supersedes:** PLAN v1 (same path, 2026-07-25) and
 `docs/SPIKE-2026-07-25-front-page-redesign.md` §5 + A.8.
+
+**Updated 2026-08-07.** Stage 5 shipped as a straight flip, not behind `--policy`: the shipped form
+is `apply_cap`'s per-edition drop order with each stream's newest edition floored at
+`MIN_LATEST_EDITION` (`build_stories_feed.py`), which is Amendment A.1's base of the pyramid. Nothing
+in Stages 6–9 is built — `home_harness.py` still renders and asserts a masonry board. Stage 6 is the
+gate (7 and 8 depend on it, 9 on 8) and it cannot start on this plan alone: **§4 D-II is unanswered**
+— "does the front page show ~12 modules with the rest behind beat filters and scroll, or all 80 in
+descending prominence? Stage 6 needs the answer; Stages 1–5 do not." Awaiting that decision.
+Invariants **I2** (a correct ranked list with no JavaScript) and **I3** (tier reaches assistive tech
+as real text) are still owed, by Stages 6 and 7 respectively.
 
 v1 was a plan to refine a masonry packer. That was wrong. This is a plan to **delete** it, because
 the page's hierarchy already exists in two places the current code throws away: the ranked order of
