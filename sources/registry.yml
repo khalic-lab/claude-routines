@@ -379,7 +379,7 @@ cell.com:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - weekend
     - science
@@ -391,10 +391,13 @@ cell.com:
     - date: 2026-07-10
       event: seed-science-stream
       status: probation
+    - date: 2026-08-07
+      event: reach-flip
+      note: direct fetches failed repeatedly -- evaluator reviews 2026-07-12..2026-08-02
 cern.ch:
   class: outlet
   tier: T1
-  status: probation
+  status: retired
   reach: direct
   streams:
     - science
@@ -403,6 +406,9 @@ cern.ch:
     - date: 2026-07-10
       event: seed-2026-07-10 (science venue list from routines/src/science.md)
       status: probation
+    - date: 2026-08-07
+      event: retired
+      note: superseded by home.cern -- cern.ch returns HTTP 0 direct and via proxy
 climate.copernicus.eu:
   class: outlet
   tier: T2
@@ -518,7 +524,7 @@ deepmind.google:
 deepswe.datacurve.ai:
   class: outlet
   tier: T2
-  status: probation
+  status: retired
   reach: direct
   streams:
     - ai-ml
@@ -527,6 +533,9 @@ deepswe.datacurve.ai:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-08-07
+      event: retired
+      note: pruned 2026-08-07 -- uncited since bootstrap
 deploymentsafety.openai.com:
   class: outlet
   tier: T2
@@ -858,7 +867,7 @@ hf.co:
 hklaw.com:
   class: outlet
   tier: T2
-  status: probation
+  status: retired
   reach: direct
   streams:
     - ai-ml
@@ -867,6 +876,9 @@ hklaw.com:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-08-07
+      event: retired
+      note: pruned 2026-08-07 -- uncited since bootstrap
 huggingface.co:
   class: hub
   tier: T1
@@ -943,7 +955,7 @@ journals.aps.org:
   class: outlet
   tier: T1
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - science
   last_cited: null
@@ -951,6 +963,9 @@ journals.aps.org:
     - date: 2026-07-10
       event: seed-2026-07-10 (science venue list from routines/src/science.md)
       status: probation
+    - date: 2026-08-07
+      event: reach-flip
+      note: direct fetches failed repeatedly -- evaluator reviews 2026-07-12..2026-08-02
 kyivindependent.com:
   class: outlet
   tier: T2
@@ -1073,7 +1088,7 @@ machinelearning.apple.com:
 macrumors.com:
   class: outlet
   tier: T2
-  status: probation
+  status: retired
   reach: direct
   streams:
     - ai-ml
@@ -1082,6 +1097,9 @@ macrumors.com:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-08-07
+      event: retired
+      note: pruned 2026-08-07 -- uncited since bootstrap
 medium.com:
   class: outlet
   tier: T2
@@ -1404,7 +1422,7 @@ science.org:
   class: outlet
   tier: T1
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - science
   last_cited: null
@@ -1412,6 +1430,9 @@ science.org:
     - date: 2026-07-10
       event: seed-2026-07-10 (science venue list from routines/src/science.md)
       status: probation
+    - date: 2026-08-07
+      event: reach-flip
+      note: direct fetches failed repeatedly -- evaluator reviews 2026-07-12..2026-08-02
 scottaaronson.blog:
   class: outlet
   tier: T2
@@ -1570,7 +1591,7 @@ swissinfo.ch:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-06-11
@@ -1578,6 +1599,9 @@ swissinfo.ch:
     - date: 2026-07-10
       event: backfill-retired-streams (cited 3x in overview/cyber-papers history; prevents false [new source] novelty)
       status: probation
+    - date: 2026-08-07
+      event: reach-flip
+      note: direct fetches failed repeatedly -- evaluator reviews 2026-07-12..2026-08-02
 tbench.ai:
   class: outlet
   tier: T2
@@ -1874,7 +1898,7 @@ whitehouse.gov:
 wtvbam.com:
   class: outlet
   tier: T2
-  status: probation
+  status: retired
   reach: direct
   streams:
     - ai-ml
@@ -1883,6 +1907,9 @@ wtvbam.com:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-08-07
+      event: retired
+      note: pruned 2026-08-07 -- uncited since bootstrap
 x.ai:
   class: outlet
   tier: T2
@@ -1926,11 +1953,15 @@ ethz.ch:
   reach: direct
   streams:
     - science
+    - ai-ml
   last_cited: 2026-07-12
   lifecycle:
     - date: 2026-07-13
       event: candidate
       status: candidate
+    - date: 2026-08-07
+      event: stream-added
+      note: ai-ml added -- Swiss AI research output was invisible to the stream
 epfl.ch:
   class: outlet
   tier: T2
@@ -1938,11 +1969,15 @@ epfl.ch:
   reach: direct
   streams:
     - science
+    - ai-ml
   last_cited: 2026-07-12
   lifecycle:
     - date: 2026-07-13
       event: candidate
       status: candidate
+    - date: 2026-08-07
+      event: stream-added
+      note: ai-ml added -- Swiss AI research output was invisible to the stream
 psi.ch:
   class: outlet
   tier: T2
@@ -1950,11 +1985,15 @@ psi.ch:
   reach: direct
   streams:
     - science
+    - ai-ml
   last_cited: 2026-07-12
   lifecycle:
     - date: 2026-07-13
       event: candidate
       status: candidate
+    - date: 2026-08-07
+      event: stream-added
+      note: ai-ml added -- Swiss AI research output was invisible to the stream
 france24.com:
   class: outlet
   tier: T2
@@ -3242,3 +3281,285 @@ balkaninsight.com:
     - date: 2026-08-07
       event: candidate
       status: candidate
+swiss-ai.org:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: direct
+  streams:
+    - ai-ml
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+cscs.ch:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - ai-ml
+    - science
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+idiap.ch:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - ai-ml
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+ai.ethz.ch:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - ai-ml
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+csem.ch:
+  class: outlet
+  tier: T2
+  status: candidate
+  reach: proxy
+  streams:
+    - ai-ml
+    - science
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+blog.eleuther.ai:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - ai-ml
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+admin.ch:
+  class: institutional
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - news
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+rsi.ch:
+  class: outlet
+  tier: T2
+  status: candidate
+  reach: direct
+  streams:
+    - news
+    - sports
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+bfs.admin.ch:
+  class: institutional
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - news
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+24heures.ch:
+  class: outlet
+  tier: T2
+  status: candidate
+  reach: proxy
+  streams:
+    - news
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+bger.ch:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - news
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+snf.ch:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - science
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+home.cern:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: direct
+  streams:
+    - science
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+eawag.ch:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - science
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+meteoswiss.admin.ch:
+  class: institutional
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - science
+    - news
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+chemrxiv.org:
+  class: outlet
+  tier: T2
+  status: candidate
+  reach: proxy
+  streams:
+    - science
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+swissolympic.ch:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - sports
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+swiss-ski.ch:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - sports
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+swiss-athletics.ch:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - sports
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+swisstennis.ch:
+  class: outlet
+  tier: T1
+  status: candidate
+  reach: proxy
+  streams:
+    - sports
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+republik.ch:
+  class: outlet
+  tier: T2
+  status: candidate
+  reach: proxy
+  streams:
+    - weekend
+    - news
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+reportagen.com:
+  class: outlet
+  tier: T2
+  status: candidate
+  reach: proxy
+  streams:
+    - weekend
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
+noemamag.com:
+  class: outlet
+  tier: T2
+  status: candidate
+  reach: proxy
+  streams:
+    - weekend
+    - ai-ml
+  last_cited: null
+  lifecycle:
+    - date: 2026-08-07
+      event: candidate
+      note: scout 2026-08-07 (state review)
