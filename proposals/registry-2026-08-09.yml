@@ -1,0 +1,25 @@
+date: 2026-08-09
+applied: false
+patches:
+  # Reach flips from registry-2026-08-02.yml (science.org, swissinfo.ch, cell.com,
+  # journals.aps.org direct->proxy) all LANDED this week — sources/registry.yml now shows
+  # reach: proxy on all four. Verified, not re-proposed. The proposal YAML was never stamped
+  # applied: true (see review Open question 3) but the registry itself is correct.
+  #
+  # Sports candidate promotions CARRIED UNAPPLIED from registry-2026-08-02.yml. Both still
+  # status: candidate in the registry; they fill Sports' primary-source gap (waiver_rate=0.667,
+  # unique_domains=10). No fresh evaluator probe evidence this run (evaluator sandbox egress
+  # 403'd all direct probes), carried on prior-week record.
+  - domain: esv.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED from 2026-08-02 / 2026-07-26 scout. Still status: candidate. Eidgenoessischer Schwingerverband, official Swiss wrestling federation; genuine primary for Schwingen/Swiss-personalization sports coverage. reach: proxy-needed."
+  - domain: uci.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED from 2026-08-02 / 2026-07-26 scout. Still status: candidate. Union Cycliste Internationale, official world cycling federation; primary for Tour de France/cycling coverage where letour.fr is sandbox-walled. reach: proxy-needed."
+  # New scout candidates appended to sources/candidates.jsonl this run (Science, worst-deficit
+  # stream by new_domains). Listed for visibility; they need a probation cycle before promotion,
+  # so no from/to transition proposed yet. Both reach: proxy-needed (evaluator egress 403'd direct).
+  # - scipost.org (SciPost open-access physics/science publisher; absent from registry)
+  # - news.uzh.ch (University of Zurich official newsroom; Swiss science personalization primary)
