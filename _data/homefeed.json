@@ -6,19 +6,13 @@
    "key": "geopolitics",
    "label": "Geopolitics",
    "color": "#c0563b",
-   "count": 26
+   "count": 25
   },
   {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 19
-  },
-  {
-   "key": "world",
-   "label": "World",
-   "color": "#6b6f76",
-   "count": 16
+   "count": 21
   },
   {
    "key": "science",
@@ -27,34 +21,40 @@
    "count": 15
   },
   {
+   "key": "world",
+   "label": "World",
+   "color": "#6b6f76",
+   "count": 15
+  },
+  {
+   "key": "security",
+   "label": "Security",
+   "color": "#6a4b8a",
+   "count": 7
+  },
+  {
+   "key": "economy",
+   "label": "Economy",
+   "color": "#9a7b2e",
+   "count": 6
+  },
+  {
    "key": "sports",
    "label": "Sports",
    "color": "#c26b2e",
    "count": 6
   },
   {
-   "key": "economy",
-   "label": "Economy",
-   "color": "#9a7b2e",
+   "key": "switzerland",
+   "label": "Switzerland",
+   "color": "#c2454a",
    "count": 5
   },
   {
    "key": "politics",
    "label": "Politics",
    "color": "#9a6a34",
-   "count": 5
-  },
-  {
-   "key": "security",
-   "label": "Security",
-   "color": "#6a4b8a",
-   "count": 5
-  },
-  {
-   "key": "switzerland",
-   "label": "Switzerland",
-   "color": "#c2454a",
-   "count": 5
+   "count": 4
   },
   {
    "key": "health",
@@ -66,7 +66,7 @@
    "key": "tech",
    "label": "Tech",
    "color": "#3b6ea5",
-   "count": 1
+   "count": 2
   }
  ],
  "editorials": [
@@ -99,6 +99,30 @@
  ],
  "stories": [
   {
+   "id": "2026-08-11-ai-ml-meta-returns-to-open-weights-with-muse-glimmer-a",
+   "sid": "st-3a404d65a0b9",
+   "headline": "Meta returns with open Muse Glimmer",
+   "summary": "Meta returns to open weights with Muse Glimmer, a 30B multimodal agent model. After more than a year without an open release, Meta published Muse-Glimmer-30B (29.8B parameters, Apache-2.0) — the first open model from its new Superintelligence Labs — a multimodal (image-and-text-in) model built for agentic tool use that fits in under ~20 GB of memory once its weights are compressed, i.e. runnable on consumer hardware. A companion essay from Mark Zuckerberg defends distilling other labs' models and argues for fewer restrictions on US labs — read widely as a shot at OpenAI and Anthropic — and an open-weight Muse Spark 1.2 is reported to follow. Meta / Hugging Face model card",
+   "why": "an Apache-2.0 multimodal agent model that runs locally is directly useful to developers, and Meta re-entering the open field resets the competitive floor. The distillation defense is notable given how much of this cycle's research (above) is about distilling expensive models into cheap ones.",
+   "url": "https://hf.co/meta-models/Muse-Glimmer-30B",
+   "source_domain": "hf.co",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/11/ai-ml/",
+   "fresh": true
+  },
+  {
    "id": "2026-08-11-news-a-magnitude-7-4-earthquake-devastated-western-co",
    "sid": "st-d4ef2eebc6cc",
    "headline": "M7.4 quake devastates western Colombia",
@@ -119,6 +143,194 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/11/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-11-ai-ml-a-compiled-skill-lets-a-cheap-model-match-reason",
+   "sid": "st-898e3cdce99a",
+   "headline": "Distilled skill beats reasoning mode",
+   "summary": "Reasoning models — the ones that \"think out loud\" before answering — beat their plain counterparts on multi-step agent tasks but pay a 3–6× premium in output tokens, much of it spent re-deriving the same procedures episode after episode. The authors have a coding agent read a small set of past trajectories from a training split and compile them into a compact natural-language \"skill\" — a paragraph of instructions injected into a non-reasoning model's system prompt. On-policy distillation (learning from the model's own attempts rather than a fixed dataset) is the broader family this belongs to.",
+   "why": "across four agentic benchmarks (ALFWorld, τ²-bench telecom and retail, SpreadsheetBench-Verified), the skill recovers 55%–100%+ of the reasoning gap for GPT-5.4-mini on held-out tasks — beating reasoning mode outright on two of four — while emitting 2.7–6× fewer output tokens and zero reasoning tokens. It suggests much of what \"thinking\" buys is reusable and can be cached as text, not re-paid every call.",
+   "url": "https://arxiv.org/abs/2608.07885",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "Microsoft"
+   ],
+   "affiliation_label": "Microsoft",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-11-ai-ml-a-codec-pushes-the-kv-cache-below-two-bits-witho",
+   "sid": "st-575d3ab3a93c",
+   "headline": "KV cache pushed past 2-bit cliff",
+   "summary": "As models read longer inputs — whole codebases, long conversations — inference memory is dominated by the KV cache (key-value cache: the stored attention keys and values for every token seen so far, re-read on every new token). The standard fix is quantization — storing each value at low precision — but quality drops sharply at a \"2-bit cliff\": four levels are too few for the cache's outlier-heavy values, where a few large entries eat all the levels. SPECTRA first rotates the cache into a coordinate system computed from its own statistics (a spectral transform that removes the correlations between channels), after which a small fraction of channels carries almost all the information; it then spends the bit budget there. It is training-free and drop-in.",
+   "why": "long-context and agentic workloads live or die on cache memory, and the 2-bit cliff has been a practical floor for a while. A training-free codec that gets under it cleanly is the kind of change that quietly widens what fits on a given GPU.",
+   "url": "https://arxiv.org/abs/2608.07915",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "Nokia",
+    "Rice University"
+   ],
+   "affiliation_label": "Nokia, Rice University",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-11-ai-ml-thought-level-beam-search-allocates-test-time-co",
+   "sid": "st-0d7ea75b9e5f",
+   "headline": "Thought-level beam search for reasoning",
+   "summary": "\"Test-time compute\" means spending extra computation at answer time — sampling many reasoning traces, or thinking longer — to get better answers. Existing approaches waste it: parallel sampling treats traces independently and bottlenecks memory, while pruning starves the hardware. Gambit runs a beam search at the level of whole thoughts: it periodically prunes unpromising trajectories and immediately branches from the strong prefixes, steered by a lightweight scorer that probes the model's hidden states, keeping the GPU busy throughout.",
+   "why": "under identical hardware limits, Gambit reports up to +6.7% absolute accuracy on HMMT-24 and +3.3% on AIME-25 (competition-math benchmarks) over pruning baselines, >2× throughput on trace completion, and up to 68.5% fewer tokens than standard parallel sampling — a concrete recipe for getting more reasoning per fixed compute budget.",
+   "url": "https://arxiv.org/abs/2608.08020",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "Princeton University",
+    "MIT CSAIL",
+    "Meta AI"
+   ],
+   "affiliation_label": "Princeton University, MIT CSAIL +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-11-ai-ml-a-multilingual-model-detects-harm-the-same-way-i",
+   "sid": "st-30ceb10eaed6",
+   "headline": "Multilingual refusal circuit located",
+   "summary": "Safety alignment is uneven across languages: a model that refuses a harmful English request often complies with the same request in a lower-resource language. Studying sarvam, an Indic-multilingual mixture-of-experts (MoE — many specialist sub-networks, only a few active per token) reasoning model, the authors trace this mechanistically. Harm is encoded as an internal direction that is nearly language-invariant in mid-network (English-vs-Indic cosine ≈0.9), and steering that direction causally controls refusal. But that detection direction is orthogonal to the change that actually writes the refusal, which is assembled late over the course of generation by a specific, localizable MoE circuit held in check by an \"attention opposer.\"",
+   "why": "it reframes the multilingual safety gap as a failure to act on detected harm, not to detect it — the model knows, but the refusal machinery doesn't fire. That points interventions at a different, narrower target than \"teach it to recognize harm in Hindi.\"",
+   "url": "https://arxiv.org/abs/2608.08032",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "Gödel Machines",
+    "IIT Madras"
+   ],
+   "affiliation_label": "Gödel Machines, IIT Madras",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-11-ai-ml-openai-ships-gpt-5-6-cyber-a-defender-focused-se",
+   "sid": "st-89876a9c2997",
+   "headline": "OpenAI ships GPT-5.6-Cyber for defenders",
+   "summary": "OpenAI ships GPT-5.6-Cyber, a defender-focused security model, behind identity checks. OpenAI released a cyber-specialized model that it says answers up to 98.5% of security queries a general model would refuse, and reports it has already surfaced two previously unknown Chrome vulnerabilities. Access requires verified identity, and OpenAI frames the release around a shrinking window in which defenders must find flaws before attackers do (its paired \"Daybreak\" and \"trusted hands\" posts). Treat the capability numbers as the vendor's own.",
+   "why": "a gated, offense-capable model marketed for defense is the concrete form of the \"dual-use\" debate — the same tool that finds a bug for a defender finds it for an attacker, so the identity gate is doing a lot of the safety work.",
+   "url": "https://openai.com/index/putting-frontier-cyber-models-in-more-trusted-hands",
+   "source_domain": "openai.com",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-11-ai-ml-motif-3-a-314b-mixture-of-experts-model-with-a-n",
+   "sid": "st-1f5f9659c1d4",
+   "headline": "Motif 3 314B MoE with latent attention",
+   "summary": "Motif 3: a 314B mixture-of-experts model with a novel latent-attention design. Motif Technologies detailed Motif 3, a decoder-only MoE with 314B total parameters but only 13.2B active per token (384 routed experts, 8 selected). Its centerpiece is Grouped Differential Latent Attention (GDLA), which pairs \"differential\" attention with the compressed key-value representation of Multi-head Latent Attention to cut inference memory; pretraining ran on ~12.5T tokens with context up to 256K, and — fittingly for this cycle — post-training leaned on multi-teacher on-policy distillation. arXiv:2608.09119 ·",
+   "why": "it's a from-scratch frontier-scale architecture that bets on fine-grained sparsity plus latent attention for efficiency — a concrete data point on how far the MoE-plus-compressed-attention recipe scales outside the biggest US labs.",
+   "url": "https://arxiv.org/abs/2608.09119",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "Motif Technologies"
+   ],
+   "affiliation_label": "Motif Technologies",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-11-ai-ml-nvidia-anchors-a-500b-third-party-financing-plat",
+   "sid": "st-0fb377bfb29f",
+   "headline": "Nvidia backs $500B compute financing",
+   "summary": "Nvidia anchors a $500B+ third-party financing platform for AI compute. Nvidia announced partnerships with Apollo, BlackRock, Blackstone, Brookfield, Goldman Sachs and KKR to establish independent financing platforms meant to mobilize over $500 billion of third-party capital, turning its compute and full-stack infrastructure into what it calls \"an investable asset class.\" Secondary reporting adds that Nvidia is guaranteeing up to 25% of the residual value of its own hardware to reassure investors, and that the Bank of England has warned of systemic risk if the AI sector contracts.",
+   "why": "a chipmaker underwriting the residual value of its own product to unlock outside financing is a striking blurring of vendor and financier — and the BoE's warning names the tail risk if AI demand softens.",
+   "url": "https://nvidianews.nvidia.com/news/nvidia-partners-with-apollo-blackrock-blackstone-brookfield-goldman-sachs-and-kkr-to-establish-ai-compute-infrastructure-financing-platforms-to-mobilize-over-500-billion-of-third-party-capital",
+   "source_domain": "nvidianews.nvidia.com",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
    "fresh": true
   },
   {
@@ -188,6 +400,35 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/11/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-11-ai-ml-on-policy-distillation-has-a-failure-mode-studen",
+   "sid": "st-c4b3a50bdd87",
+   "headline": "On-policy distillation gaming exposed",
+   "summary": "On-policy distillation (OPD) — training a student model to match a teacher on the student's own generated outputs — is now standard in post-training pipelines. The authors expose \"degenerate agreement\": students learn repetitive loops that score near-perfect token-level agreement with the teacher while producing globally flawed answers. Shifting focus from agreement to mismatch, they categorize the disagreements into student-excess tokens (student emits them, teacher assigns near-zero probability — their corrections blow up and destabilize training) and student-deficit tokens (teacher prefers them, student rarely samples them — blocking transfer of the teacher's reasoning). Their method, TIDE, handles each direction separately.",
+   "why": "it names a concrete way a widely used training recipe can look like it's working (high agreement) while quietly failing, and gives a fix — useful diligence for anyone shipping distilled models.",
+   "url": "https://arxiv.org/abs/2608.09836",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "HKU",
+    "USTC",
+    "CUHK"
+   ],
+   "affiliation_label": "HKU, USTC +1",
    "fresh": true
   },
   {
@@ -643,30 +884,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-08-news-spain-will-impose-temporary-border-checks-on-tra",
-   "sid": "st-4a406e83aaae",
-   "headline": "Spain imposes border checks on Italy",
-   "summary": "Spain will impose temporary border checks on travellers arriving from Italy from midnight on Saturday 8 August until 7 September, retaliating after Rome introduced its own checks — a rare Schengen dispute between two EU and NATO allies. Spain's interior ministry said the measure responds to \"persistent irregular migration pressure,\" hours after Madrid had threatened countermeasures if Rome did not lift its checks, drawing a rebuff. The row was triggered when tens of thousands of people crossed from Morocco into Spain's north African enclave of Ceuta on 30–31 July in an unprecedented and deadly rush; Italy imposed checks on arrivals from Spain in response, and Spain has now reciprocated.",
-   "why": "passport-free travel inside the Schengen zone is a load-bearing part of European life, and allies reinstating internal border controls against each other over a migration spat signals how quickly that norm frays under pressure.",
-   "url": "https://www.theguardian.com/world/2026/aug/07/spain-to-introduce-temporary-border-checks-on-visitors-from-italy",
-   "source_domain": "theguardian.com",
-   "date": "2026-08-08",
-   "date_label": "Aug 8",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/08/news/",
-   "fresh": false
-  },
-  {
    "id": "2026-08-08-weekend-agents-that-rehearse-their-own-environments",
    "sid": "st-6e30dd3a36a0",
    "headline": "Agents rehearse their own environments",
@@ -902,221 +1119,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/07/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-07-news-a-teenage-gunman-killed-five-people-at-a-school",
-   "sid": "st-b91663c11dcd",
-   "headline": "Teen gunman kills five at Thai school",
-   "summary": "A teenage gunman killed five people at a school on the outskirts of Bangkok on Friday 7 August 2026 after fatally shooting his grandparents at home. Police said the suspect — a student enrolled at Debsirin Nonthaburi School in Nonthaburi province — opened fire with his grandfather's handgun, firing at least 26 rounds and carrying 34 more; at least 23 people were wounded, several critically. The attacker was also killed. Authorities initially reported six dead before revising the toll to five.",
-   "why": "Mass shootings remain rare in Thailand relative to firearm-related violence overall, and a school attack by a minor will renew scrutiny of gun access in a country with high civilian ownership.",
-   "url": "https://www.france24.com/en/asia-pacific/20260807-teachers-students-killed-thai-school-shooting-near-bangkok",
-   "source_domain": "france24.com",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/07/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-an-exact-cheap-formula-for-running-the-muon-opti",
-   "sid": "st-53ff0fc3cde0",
-   "headline": "Exact closed-form Muon on Stiefel manifold",
-   "summary": "Muon is a recent \"matrix-aware\" optimizer — it treats a weight matrix as a matrix rather than a flat list of numbers — that has drawn attention for training large models efficiently. Many problems need weights whose columns are orthonormal, i.e. points on the Stiefel manifold (the set of matrices with orthonormal columns, ubiquitous in ML and scientific computing). Existing ways to run Muon on that manifold relied on approximate or iterative inner steps. This paper shows the corresponding update has an exact closed-form solution and packages it as Skewon, a practical algorithm for orthogonality-constrained optimization, with first-order convergence guarantees in the smooth non-convex setting.",
-   "why": "Optimizers are where a lot of quiet training efficiency lives, and this is a distinct advance in the active Muon line (the last edition covered a separate Muon-for-diffusion fix): an exact, cheap update means practitioners can enforce orthogonality without paying for an inner solver each step.",
-   "url": "https://arxiv.org/abs/2608.06218",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "HSE University"
-   ],
-   "affiliation_label": "HSE University",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-rerouting-a-frozen-model-through-its-own-layers",
-   "sid": "st-dcfd870778a8",
-   "headline": "Markov-chain routing of transformer layers",
-   "summary": "Standard LLMs run their layers once, in order. \"Layer routing\" asks whether a different path — skipping some layers, repeating others — does better on a given task. Prior methods needed weight updates, an expensive per-example search, or ground-truth labels at inference. MACRO (Markov Chain Routing) instead learns the route as a Markov policy — a probabilistic rule that picks the next move based only on the current state — over skip, repeat and residual-add operations, leaving the model's weights untouched, then decodes high-probability routes with a top-k Viterbi search. It reports +5.0% average accuracy over unrouted baselines (largest gains on small models) and +7.2% over the best prior routing method while cutting route-search time 9.4x (14.8 to 1.6 hours).",
-   "why": "It is a way to squeeze more out of a fixed open-weight model without retraining it — most valuable for small models running on constrained hardware, where a few points of accuracy for near-zero extra training cost is a real win.",
-   "url": "https://arxiv.org/abs/2608.05872",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-a-model-teaches-itself-to-reason-using-only-its",
-   "sid": "st-208e3042591c",
-   "headline": "A model self-distills with no supervision",
-   "summary": "Post-training methods that distill a model into itself (\"on-policy self-distillation\") usually still lean on an external signal — the correct answer, a reward from the environment, or guidance from a bigger model. U-OPSD (Unsupervised On-Policy Self-Distillation) removes all of it: it samples several of the model's own attempts, forms a pseudo-answer by majority vote when the model is confident enough (self-consistency), then teaches the model to reproduce that reasoning at the exact point in its longest wrong attempt where it first went off track. On math benchmarks (AIME24/25, HMMT25, MATH500, AMC23) it lifts Qwen3 by 8.5% and 10.7% at the 4B and 8B scales, matching or beating supervised methods (OPSD, GRPO) that use ground-truth answers.",
-   "why": "If a model can bootstrap its own reasoning from internal consistency alone, you can improve it in domains where labelled answers are scarce or costly. The honest caveat the reader should hold onto: majority-vote self-training can also entrench mistakes the model is confidently wrong about, so gains are not guaranteed to generalize past benchmarks like these.",
-   "url": "https://arxiv.org/abs/2608.06296",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "UC San Diego",
-    "Georgia Tech",
-    "University of Maryland"
-   ],
-   "affiliation_label": "UC San Diego, Georgia Tech +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-turning-a-model-that-ranks-answers-into-a-usable",
-   "sid": "st-17d5dfcc9e34",
-   "headline": "Ranking-based rewards for RL reward models",
-   "summary": "Reinforcement learning from feedback needs a reward model to score answers. The field is shifting from discriminative reward models (which emit a single number) to generative ones (which write out a comparison or judgement) — but generative reward models are good at ranking answers against each other, not at producing the lone scalar score that RL algorithms expect, so they have underdelivered in RL. RRC (Ranking-based Reward Construction) bridges the gap by deriving the reward from relative rankings: comparing a response against its own sampled peers (self-competitive) or against a small set of reference responses (anchor-guided).",
-   "why": "It lets the stronger, more interpretable generative reward models actually drive RL training, where until now their ranking skill did not translate into a useful learning signal. Reward modelling is the quiet bottleneck of most RL-tuned assistants, so a cleaner way to wire it up compounds.",
-   "url": "https://arxiv.org/abs/2608.06310",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "Northeastern University, Shenyang",
-    "NiuTrans Research"
-   ],
-   "affiliation_label": "Northeastern University, Shenyang, NiuTrans Research",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-when-a-vision-model-zooms-in-to-look-a-causal-au",
-   "sid": "st-ac76b1b6876b",
-   "headline": "The illusion of visual tool-use",
-   "summary": "The \"thinking-with-images\" paradigm gives multimodal models active visual operations such as crop-and-zoom, on the theory that looking closer helps. This paper builds a causal test rather than trusting accuracy numbers: it intervenes at three levels — turning tool-use on or off, corrupting everything the model sees during a run, and swapping a single observation while holding the rest of the reasoning fixed — to measure whether the returned visual evidence actually causes the answer. Its metric, Visual Evidence Gain, isolates each observation's contribution. Across six models and five perception benchmarks it finds two dominant failure modes — \"Calling Without Looking\" (the crop has no causal effect on the answer) and \"Looking Without Planning\" (the crop is informative but the model schedules it incoherently) — and shows the aggregate accuracy gain is concentrated in a small \"calibrated\" minority of cases.",
-   "why": "It is a caution that the headline accuracy gains from elaborate visual-tool pipelines can be an illusion — the model may be paying extra tokens for operations that do not drive its answer. A useful diagnostic to run before deploying or trusting such systems.",
-   "url": "https://arxiv.org/abs/2608.06270",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "Shanghai AI Laboratory",
-    "Shanghai Jiao Tong University",
-    "Shanghai Innovation Institute"
-   ],
-   "affiliation_label": "Shanghai AI Laboratory, Shanghai Jiao Tong University +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-borrowing-multiplayer-game-architecture-to-make",
-   "sid": "st-da8c5a083504",
-   "headline": "Multiplayer world models with shared state",
-   "summary": "A world model is a learned simulator that predicts how an environment will evolve. Video world models struggle with multiple players because they entangle the shared world state with each player's own view, wasting compute and drifting into view-to-view inconsistencies. MASS (Multiplayer world models with Authoritative Shared State) splits the two, exactly as a multiplayer game server does: a learned \"Logic Engine\" advances one global, authoritative typed state from everyone's joint actions and serves as the only recurrent memory, while a learned \"Rendering Engine\" draws each player's view on demand from that shared state. On a matched multiplayer Snake benchmark it beats multi-view baselines on state accuracy and cross-view consistency, and sustains 1,024 concurrent players over 10,000 steps.",
-   "why": "It is a concrete recipe for scalable, consistent multi-agent simulation — relevant to game engines, to training environments for agents, and to any setting where many observers must share one evolving world without it fragmenting.",
-   "url": "https://arxiv.org/abs/2608.06257",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "Alaya Lab",
-    "Peking University",
-    "Institute of Science Tokyo"
-   ],
-   "affiliation_label": "Alaya Lab, Peking University +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-the-em-dash-gives-it-away-a-population-level-llm",
-   "sid": "st-4a7e19517b94",
-   "headline": "Em-dash surge marks LLMs in Congress",
-   "summary": "LLM-assisted writing leaves faint stylistic traces; the most-discussed is the unspaced em-dash (word-word), which is normal in typeset prose but unusual in US press writing, where AP style calls for spaced dashes. In a preregistered study of 146,239 congressional press releases (480 House and Senate offices, 2021-2025), the author measured the density of unspaced em-dashes per 1,000 characters. It held at 0.10-0.12 through 2021-2024, then jumped to 0.217 in 2025 — more than double the four-year baseline — with the share of releases containing one rising from ~13% to 24.8%. The rise was net-new (plain hyphen use stayed flat), held within individual offices, and survived placebo cut-offs and falsification tests; it was symmetric across parties and chambers.",
-   "why": "It is careful, honest evidence that LLM-assisted writing diffused broadly into official US communications by 2025 — and a model of how to measure such a claim without overclaiming. The author flags that a formal preregistered validation gate was narrowly breached, so the interpretation is offered as exploratory, and stresses the em-dash is a population-level marker, not a per-document detector: you cannot use it to catch any single release.",
-   "url": "https://arxiv.org/abs/2608.05889",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "Polish Association for Artificial Intelligence in Medicine"
-   ],
-   "affiliation_label": "Polish Association for Artificial Intelligence in Medicine",
    "fresh": false
   },
   {
@@ -2075,6 +2077,34 @@
  ],
  "board": [
   {
+   "id": "2026-08-11-ai-ml-meta-returns-to-open-weights-with-muse-glimmer-a",
+   "sid": "st-3a404d65a0b9",
+   "headline": "Meta returns with open Muse Glimmer",
+   "summary": "Meta returns to open weights with Muse Glimmer, a 30B multimodal agent model. After more than a year without an open release, Meta published Muse-Glimmer-30B (29.8B parameters, Apache-2.0) — the first open model from its new Superintelligence Labs — a multimodal (image-and-text-in) model built for agentic tool use that fits in under ~20 GB of memory once its weights are compressed, i.e. runnable on consumer hardware. A companion essay from Mark Zuckerberg defends distilling other labs' models and argues for fewer restrictions on US labs — read widely as a shot at OpenAI and Anthropic — and an open-weight Muse Spark 1.2 is reported to follow. Meta / Hugging Face model card",
+   "why": "an Apache-2.0 multimodal agent model that runs locally is directly useful to developers, and Meta re-entering the open field resets the competitive floor. The distillation defense is notable given how much of this cycle's research (above) is about distilling expensive models into cheap ones.",
+   "url": "https://hf.co/meta-models/Muse-Glimmer-30B",
+   "source_domain": "hf.co",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/11/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 11 Aug",
+   "daybreak": true
+  },
+  {
    "id": "2026-08-11-news-a-magnitude-7-4-earthquake-devastated-western-co",
    "sid": "st-d4ef2eebc6cc",
    "headline": "M7.4 quake devastates western Colombia",
@@ -2099,7 +2129,223 @@
    "kind": "story",
    "age_days": 0,
    "day_label": "Tue 11 Aug",
-   "daybreak": true
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-11-ai-ml-a-compiled-skill-lets-a-cheap-model-match-reason",
+   "sid": "st-898e3cdce99a",
+   "headline": "Distilled skill beats reasoning mode",
+   "summary": "Reasoning models — the ones that \"think out loud\" before answering — beat their plain counterparts on multi-step agent tasks but pay a 3–6× premium in output tokens, much of it spent re-deriving the same procedures episode after episode. The authors have a coding agent read a small set of past trajectories from a training split and compile them into a compact natural-language \"skill\" — a paragraph of instructions injected into a non-reasoning model's system prompt. On-policy distillation (learning from the model's own attempts rather than a fixed dataset) is the broader family this belongs to.",
+   "why": "across four agentic benchmarks (ALFWorld, τ²-bench telecom and retail, SpreadsheetBench-Verified), the skill recovers 55%–100%+ of the reasoning gap for GPT-5.4-mini on held-out tasks — beating reasoning mode outright on two of four — while emitting 2.7–6× fewer output tokens and zero reasoning tokens. It suggests much of what \"thinking\" buys is reusable and can be cached as text, not re-paid every call.",
+   "url": "https://arxiv.org/abs/2608.07885",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "Microsoft"
+   ],
+   "affiliation_label": "Microsoft",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 11 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-11-ai-ml-a-codec-pushes-the-kv-cache-below-two-bits-witho",
+   "sid": "st-575d3ab3a93c",
+   "headline": "KV cache pushed past 2-bit cliff",
+   "summary": "As models read longer inputs — whole codebases, long conversations — inference memory is dominated by the KV cache (key-value cache: the stored attention keys and values for every token seen so far, re-read on every new token). The standard fix is quantization — storing each value at low precision — but quality drops sharply at a \"2-bit cliff\": four levels are too few for the cache's outlier-heavy values, where a few large entries eat all the levels. SPECTRA first rotates the cache into a coordinate system computed from its own statistics (a spectral transform that removes the correlations between channels), after which a small fraction of channels carries almost all the information; it then spends the bit budget there. It is training-free and drop-in.",
+   "why": "long-context and agentic workloads live or die on cache memory, and the 2-bit cliff has been a practical floor for a while. A training-free codec that gets under it cleanly is the kind of change that quietly widens what fits on a given GPU.",
+   "url": "https://arxiv.org/abs/2608.07915",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "Nokia",
+    "Rice University"
+   ],
+   "affiliation_label": "Nokia, Rice University",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 11 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-11-ai-ml-thought-level-beam-search-allocates-test-time-co",
+   "sid": "st-0d7ea75b9e5f",
+   "headline": "Thought-level beam search for reasoning",
+   "summary": "\"Test-time compute\" means spending extra computation at answer time — sampling many reasoning traces, or thinking longer — to get better answers. Existing approaches waste it: parallel sampling treats traces independently and bottlenecks memory, while pruning starves the hardware. Gambit runs a beam search at the level of whole thoughts: it periodically prunes unpromising trajectories and immediately branches from the strong prefixes, steered by a lightweight scorer that probes the model's hidden states, keeping the GPU busy throughout.",
+   "why": "under identical hardware limits, Gambit reports up to +6.7% absolute accuracy on HMMT-24 and +3.3% on AIME-25 (competition-math benchmarks) over pruning baselines, >2× throughput on trace completion, and up to 68.5% fewer tokens than standard parallel sampling — a concrete recipe for getting more reasoning per fixed compute budget.",
+   "url": "https://arxiv.org/abs/2608.08020",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "Princeton University",
+    "MIT CSAIL",
+    "Meta AI"
+   ],
+   "affiliation_label": "Princeton University, MIT CSAIL +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 11 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-11-ai-ml-a-multilingual-model-detects-harm-the-same-way-i",
+   "sid": "st-30ceb10eaed6",
+   "headline": "Multilingual refusal circuit located",
+   "summary": "Safety alignment is uneven across languages: a model that refuses a harmful English request often complies with the same request in a lower-resource language. Studying sarvam, an Indic-multilingual mixture-of-experts (MoE — many specialist sub-networks, only a few active per token) reasoning model, the authors trace this mechanistically. Harm is encoded as an internal direction that is nearly language-invariant in mid-network (English-vs-Indic cosine ≈0.9), and steering that direction causally controls refusal. But that detection direction is orthogonal to the change that actually writes the refusal, which is assembled late over the course of generation by a specific, localizable MoE circuit held in check by an \"attention opposer.\"",
+   "why": "it reframes the multilingual safety gap as a failure to act on detected harm, not to detect it — the model knows, but the refusal machinery doesn't fire. That points interventions at a different, narrower target than \"teach it to recognize harm in Hindi.\"",
+   "url": "https://arxiv.org/abs/2608.08032",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "Gödel Machines",
+    "IIT Madras"
+   ],
+   "affiliation_label": "Gödel Machines, IIT Madras",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 11 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-11-ai-ml-openai-ships-gpt-5-6-cyber-a-defender-focused-se",
+   "sid": "st-89876a9c2997",
+   "headline": "OpenAI ships GPT-5.6-Cyber for defenders",
+   "summary": "OpenAI ships GPT-5.6-Cyber, a defender-focused security model, behind identity checks. OpenAI released a cyber-specialized model that it says answers up to 98.5% of security queries a general model would refuse, and reports it has already surfaced two previously unknown Chrome vulnerabilities. Access requires verified identity, and OpenAI frames the release around a shrinking window in which defenders must find flaws before attackers do (its paired \"Daybreak\" and \"trusted hands\" posts). Treat the capability numbers as the vendor's own.",
+   "why": "a gated, offense-capable model marketed for defense is the concrete form of the \"dual-use\" debate — the same tool that finds a bug for a defender finds it for an attacker, so the identity gate is doing a lot of the safety work.",
+   "url": "https://openai.com/index/putting-frontier-cyber-models-in-more-trusted-hands",
+   "source_domain": "openai.com",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 11 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-11-ai-ml-motif-3-a-314b-mixture-of-experts-model-with-a-n",
+   "sid": "st-1f5f9659c1d4",
+   "headline": "Motif 3 314B MoE with latent attention",
+   "summary": "Motif 3: a 314B mixture-of-experts model with a novel latent-attention design. Motif Technologies detailed Motif 3, a decoder-only MoE with 314B total parameters but only 13.2B active per token (384 routed experts, 8 selected). Its centerpiece is Grouped Differential Latent Attention (GDLA), which pairs \"differential\" attention with the compressed key-value representation of Multi-head Latent Attention to cut inference memory; pretraining ran on ~12.5T tokens with context up to 256K, and — fittingly for this cycle — post-training leaned on multi-teacher on-policy distillation. arXiv:2608.09119 ·",
+   "why": "it's a from-scratch frontier-scale architecture that bets on fine-grained sparsity plus latent attention for efficiency — a concrete data point on how far the MoE-plus-compressed-attention recipe scales outside the biggest US labs.",
+   "url": "https://arxiv.org/abs/2608.09119",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "Motif Technologies"
+   ],
+   "affiliation_label": "Motif Technologies",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 11 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-11-ai-ml-nvidia-anchors-a-500b-third-party-financing-plat",
+   "sid": "st-0fb377bfb29f",
+   "headline": "Nvidia backs $500B compute financing",
+   "summary": "Nvidia anchors a $500B+ third-party financing platform for AI compute. Nvidia announced partnerships with Apollo, BlackRock, Blackstone, Brookfield, Goldman Sachs and KKR to establish independent financing platforms meant to mobilize over $500 billion of third-party capital, turning its compute and full-stack infrastructure into what it calls \"an investable asset class.\" Secondary reporting adds that Nvidia is guaranteeing up to 25% of the residual value of its own hardware to reassure investors, and that the Bank of England has warned of systemic risk if the AI sector contracts.",
+   "why": "a chipmaker underwriting the residual value of its own product to unlock outside financing is a striking blurring of vendor and financier — and the BoE's warning names the tail risk if AI demand softens.",
+   "url": "https://nvidianews.nvidia.com/news/nvidia-partners-with-apollo-blackrock-blackstone-brookfield-goldman-sachs-and-kkr-to-establish-ai-compute-infrastructure-financing-platforms-to-mobilize-over-500-billion-of-third-party-capital",
+   "source_domain": "nvidianews.nvidia.com",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 11 Aug",
+   "daybreak": false
   },
   {
    "id": "2026-08-11-news-a-damascus-criminal-court-on-tuesday-11-august-s",
@@ -2176,6 +2422,39 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/11/news/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 11 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-11-ai-ml-on-policy-distillation-has-a-failure-mode-studen",
+   "sid": "st-c4b3a50bdd87",
+   "headline": "On-policy distillation gaming exposed",
+   "summary": "On-policy distillation (OPD) — training a student model to match a teacher on the student's own generated outputs — is now standard in post-training pipelines. The authors expose \"degenerate agreement\": students learn repetitive loops that score near-perfect token-level agreement with the teacher while producing globally flawed answers. Shifting focus from agreement to mismatch, they categorize the disagreements into student-excess tokens (student emits them, teacher assigns near-zero probability — their corrections blow up and destabilize training) and student-deficit tokens (teacher prefers them, student rarely samples them — blocking transfer of the teacher's reasoning). Their method, TIDE, handles each direction separately.",
+   "why": "it names a concrete way a widely used training recipe can look like it's working (high agreement) while quietly failing, and gives a fix — useful diligence for anyone shipping distilled models.",
+   "url": "https://arxiv.org/abs/2608.09836",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-11",
+   "date_label": "Aug 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/11/ai-ml/",
+   "affiliations": [
+    "HKU",
+    "USTC",
+    "CUHK"
+   ],
+   "affiliation_label": "HKU, USTC +1",
    "fresh": true,
    "kind": "story",
    "age_days": 0,
@@ -2727,34 +3006,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-08-news-spain-will-impose-temporary-border-checks-on-tra",
-   "sid": "st-4a406e83aaae",
-   "headline": "Spain imposes border checks on Italy",
-   "summary": "Spain will impose temporary border checks on travellers arriving from Italy from midnight on Saturday 8 August until 7 September, retaliating after Rome introduced its own checks — a rare Schengen dispute between two EU and NATO allies. Spain's interior ministry said the measure responds to \"persistent irregular migration pressure,\" hours after Madrid had threatened countermeasures if Rome did not lift its checks, drawing a rebuff. The row was triggered when tens of thousands of people crossed from Morocco into Spain's north African enclave of Ceuta on 30–31 July in an unprecedented and deadly rush; Italy imposed checks on arrivals from Spain in response, and Spain has now reciprocated.",
-   "why": "passport-free travel inside the Schengen zone is a load-bearing part of European life, and allies reinstating internal border controls against each other over a migration spat signals how quickly that norm frays under pressure.",
-   "url": "https://www.theguardian.com/world/2026/aug/07/spain-to-introduce-temporary-border-checks-on-visitors-from-italy",
-   "source_domain": "theguardian.com",
-   "date": "2026-08-08",
-   "date_label": "Aug 8",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/08/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 8 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-08-weekend-agents-that-rehearse-their-own-environments",
    "sid": "st-6e30dd3a36a0",
    "headline": "Agents rehearse their own environments",
@@ -3040,253 +3291,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/07/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 7 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-07-news-a-teenage-gunman-killed-five-people-at-a-school",
-   "sid": "st-b91663c11dcd",
-   "headline": "Teen gunman kills five at Thai school",
-   "summary": "A teenage gunman killed five people at a school on the outskirts of Bangkok on Friday 7 August 2026 after fatally shooting his grandparents at home. Police said the suspect — a student enrolled at Debsirin Nonthaburi School in Nonthaburi province — opened fire with his grandfather's handgun, firing at least 26 rounds and carrying 34 more; at least 23 people were wounded, several critically. The attacker was also killed. Authorities initially reported six dead before revising the toll to five.",
-   "why": "Mass shootings remain rare in Thailand relative to firearm-related violence overall, and a school attack by a minor will renew scrutiny of gun access in a country with high civilian ownership.",
-   "url": "https://www.france24.com/en/asia-pacific/20260807-teachers-students-killed-thai-school-shooting-near-bangkok",
-   "source_domain": "france24.com",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/07/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 7 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-an-exact-cheap-formula-for-running-the-muon-opti",
-   "sid": "st-53ff0fc3cde0",
-   "headline": "Exact closed-form Muon on Stiefel manifold",
-   "summary": "Muon is a recent \"matrix-aware\" optimizer — it treats a weight matrix as a matrix rather than a flat list of numbers — that has drawn attention for training large models efficiently. Many problems need weights whose columns are orthonormal, i.e. points on the Stiefel manifold (the set of matrices with orthonormal columns, ubiquitous in ML and scientific computing). Existing ways to run Muon on that manifold relied on approximate or iterative inner steps. This paper shows the corresponding update has an exact closed-form solution and packages it as Skewon, a practical algorithm for orthogonality-constrained optimization, with first-order convergence guarantees in the smooth non-convex setting.",
-   "why": "Optimizers are where a lot of quiet training efficiency lives, and this is a distinct advance in the active Muon line (the last edition covered a separate Muon-for-diffusion fix): an exact, cheap update means practitioners can enforce orthogonality without paying for an inner solver each step.",
-   "url": "https://arxiv.org/abs/2608.06218",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "HSE University"
-   ],
-   "affiliation_label": "HSE University",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 7 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-rerouting-a-frozen-model-through-its-own-layers",
-   "sid": "st-dcfd870778a8",
-   "headline": "Markov-chain routing of transformer layers",
-   "summary": "Standard LLMs run their layers once, in order. \"Layer routing\" asks whether a different path — skipping some layers, repeating others — does better on a given task. Prior methods needed weight updates, an expensive per-example search, or ground-truth labels at inference. MACRO (Markov Chain Routing) instead learns the route as a Markov policy — a probabilistic rule that picks the next move based only on the current state — over skip, repeat and residual-add operations, leaving the model's weights untouched, then decodes high-probability routes with a top-k Viterbi search. It reports +5.0% average accuracy over unrouted baselines (largest gains on small models) and +7.2% over the best prior routing method while cutting route-search time 9.4x (14.8 to 1.6 hours).",
-   "why": "It is a way to squeeze more out of a fixed open-weight model without retraining it — most valuable for small models running on constrained hardware, where a few points of accuracy for near-zero extra training cost is a real win.",
-   "url": "https://arxiv.org/abs/2608.05872",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 7 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-a-model-teaches-itself-to-reason-using-only-its",
-   "sid": "st-208e3042591c",
-   "headline": "A model self-distills with no supervision",
-   "summary": "Post-training methods that distill a model into itself (\"on-policy self-distillation\") usually still lean on an external signal — the correct answer, a reward from the environment, or guidance from a bigger model. U-OPSD (Unsupervised On-Policy Self-Distillation) removes all of it: it samples several of the model's own attempts, forms a pseudo-answer by majority vote when the model is confident enough (self-consistency), then teaches the model to reproduce that reasoning at the exact point in its longest wrong attempt where it first went off track. On math benchmarks (AIME24/25, HMMT25, MATH500, AMC23) it lifts Qwen3 by 8.5% and 10.7% at the 4B and 8B scales, matching or beating supervised methods (OPSD, GRPO) that use ground-truth answers.",
-   "why": "If a model can bootstrap its own reasoning from internal consistency alone, you can improve it in domains where labelled answers are scarce or costly. The honest caveat the reader should hold onto: majority-vote self-training can also entrench mistakes the model is confidently wrong about, so gains are not guaranteed to generalize past benchmarks like these.",
-   "url": "https://arxiv.org/abs/2608.06296",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "UC San Diego",
-    "Georgia Tech",
-    "University of Maryland"
-   ],
-   "affiliation_label": "UC San Diego, Georgia Tech +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 7 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-turning-a-model-that-ranks-answers-into-a-usable",
-   "sid": "st-17d5dfcc9e34",
-   "headline": "Ranking-based rewards for RL reward models",
-   "summary": "Reinforcement learning from feedback needs a reward model to score answers. The field is shifting from discriminative reward models (which emit a single number) to generative ones (which write out a comparison or judgement) — but generative reward models are good at ranking answers against each other, not at producing the lone scalar score that RL algorithms expect, so they have underdelivered in RL. RRC (Ranking-based Reward Construction) bridges the gap by deriving the reward from relative rankings: comparing a response against its own sampled peers (self-competitive) or against a small set of reference responses (anchor-guided).",
-   "why": "It lets the stronger, more interpretable generative reward models actually drive RL training, where until now their ranking skill did not translate into a useful learning signal. Reward modelling is the quiet bottleneck of most RL-tuned assistants, so a cleaner way to wire it up compounds.",
-   "url": "https://arxiv.org/abs/2608.06310",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "Northeastern University, Shenyang",
-    "NiuTrans Research"
-   ],
-   "affiliation_label": "Northeastern University, Shenyang, NiuTrans Research",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 7 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-when-a-vision-model-zooms-in-to-look-a-causal-au",
-   "sid": "st-ac76b1b6876b",
-   "headline": "The illusion of visual tool-use",
-   "summary": "The \"thinking-with-images\" paradigm gives multimodal models active visual operations such as crop-and-zoom, on the theory that looking closer helps. This paper builds a causal test rather than trusting accuracy numbers: it intervenes at three levels — turning tool-use on or off, corrupting everything the model sees during a run, and swapping a single observation while holding the rest of the reasoning fixed — to measure whether the returned visual evidence actually causes the answer. Its metric, Visual Evidence Gain, isolates each observation's contribution. Across six models and five perception benchmarks it finds two dominant failure modes — \"Calling Without Looking\" (the crop has no causal effect on the answer) and \"Looking Without Planning\" (the crop is informative but the model schedules it incoherently) — and shows the aggregate accuracy gain is concentrated in a small \"calibrated\" minority of cases.",
-   "why": "It is a caution that the headline accuracy gains from elaborate visual-tool pipelines can be an illusion — the model may be paying extra tokens for operations that do not drive its answer. A useful diagnostic to run before deploying or trusting such systems.",
-   "url": "https://arxiv.org/abs/2608.06270",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "Shanghai AI Laboratory",
-    "Shanghai Jiao Tong University",
-    "Shanghai Innovation Institute"
-   ],
-   "affiliation_label": "Shanghai AI Laboratory, Shanghai Jiao Tong University +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 7 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-borrowing-multiplayer-game-architecture-to-make",
-   "sid": "st-da8c5a083504",
-   "headline": "Multiplayer world models with shared state",
-   "summary": "A world model is a learned simulator that predicts how an environment will evolve. Video world models struggle with multiple players because they entangle the shared world state with each player's own view, wasting compute and drifting into view-to-view inconsistencies. MASS (Multiplayer world models with Authoritative Shared State) splits the two, exactly as a multiplayer game server does: a learned \"Logic Engine\" advances one global, authoritative typed state from everyone's joint actions and serves as the only recurrent memory, while a learned \"Rendering Engine\" draws each player's view on demand from that shared state. On a matched multiplayer Snake benchmark it beats multi-view baselines on state accuracy and cross-view consistency, and sustains 1,024 concurrent players over 10,000 steps.",
-   "why": "It is a concrete recipe for scalable, consistent multi-agent simulation — relevant to game engines, to training environments for agents, and to any setting where many observers must share one evolving world without it fragmenting.",
-   "url": "https://arxiv.org/abs/2608.06257",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "Alaya Lab",
-    "Peking University",
-    "Institute of Science Tokyo"
-   ],
-   "affiliation_label": "Alaya Lab, Peking University +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 7 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-the-em-dash-gives-it-away-a-population-level-llm",
-   "sid": "st-4a7e19517b94",
-   "headline": "Em-dash surge marks LLMs in Congress",
-   "summary": "LLM-assisted writing leaves faint stylistic traces; the most-discussed is the unspaced em-dash (word-word), which is normal in typeset prose but unusual in US press writing, where AP style calls for spaced dashes. In a preregistered study of 146,239 congressional press releases (480 House and Senate offices, 2021-2025), the author measured the density of unspaced em-dashes per 1,000 characters. It held at 0.10-0.12 through 2021-2024, then jumped to 0.217 in 2025 — more than double the four-year baseline — with the share of releases containing one rising from ~13% to 24.8%. The rise was net-new (plain hyphen use stayed flat), held within individual offices, and survived placebo cut-offs and falsification tests; it was symmetric across parties and chambers.",
-   "why": "It is careful, honest evidence that LLM-assisted writing diffused broadly into official US communications by 2025 — and a model of how to measure such a claim without overclaiming. The author flags that a formal preregistered validation gate was narrowly breached, so the interpretation is offered as exploratory, and stresses the em-dash is a population-level marker, not a per-document detector: you cannot use it to catch any single release.",
-   "url": "https://arxiv.org/abs/2608.05889",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "Polish Association for Artificial Intelligence in Medicine"
-   ],
-   "affiliation_label": "Polish Association for Artificial Intelligence in Medicine",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
