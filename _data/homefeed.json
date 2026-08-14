@@ -6,13 +6,13 @@
    "key": "geopolitics",
    "label": "Geopolitics",
    "color": "#c0563b",
-   "count": 25
+   "count": 23
   },
   {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 20
+   "count": 22
   },
   {
    "key": "world",
@@ -24,19 +24,13 @@
    "key": "science",
    "label": "Science",
    "color": "#4c6b3c",
-   "count": 13
+   "count": 14
   },
   {
    "key": "security",
    "label": "Security",
    "color": "#6a4b8a",
-   "count": 9
-  },
-  {
-   "key": "economy",
-   "label": "Economy",
-   "color": "#9a7b2e",
-   "count": 7
+   "count": 8
   },
   {
    "key": "politics",
@@ -51,6 +45,12 @@
    "count": 6
   },
   {
+   "key": "economy",
+   "label": "Economy",
+   "color": "#9a7b2e",
+   "count": 5
+  },
+  {
    "key": "switzerland",
    "label": "Switzerland",
    "color": "#c2454a",
@@ -60,7 +60,7 @@
    "key": "tech",
    "label": "Tech",
    "color": "#3b6ea5",
-   "count": 2
+   "count": 4
   },
   {
    "key": "health",
@@ -99,6 +99,33 @@
  ],
  "stories": [
   {
+   "id": "2026-08-14-ai-ml-a-27b-ai-scientist-beats-claude-opus-4-8-and-gpt",
+   "sid": "st-9c90df4598b6",
+   "headline": "AI Scientist agent beats Opus 4.8 on replication",
+   "summary": "Replication — taking a published paper and reproducing its results from scratch — is harder than it sounds, because papers routinely leave methodological details unstated, so a faithful redo demands the same open-ended, hypothesis-driven work as original research. The authors build Replica, a large task space of replication challenges, and an auto-generated rubric-based judge (a checklist grader) that they show is low-noise and agrees with human assessments of replication quality. Using that as a reward signal, they post-train Faraday, a 27B agent that calls coding agents as tools.",
+   "why": "on held-out replication tasks Faraday reportedly surpasses Claude Opus 4.8 and GPT-5.5 — a small, purpose-trained model beating two frontier systems at a concrete scientific-labor task, not a toy benchmark. Treat the head-to-head numbers as the authors' own until reproduced, but the result is a real data point in the \"how close are autonomous researchers\" debate.",
+   "url": "https://arxiv.org/abs/2608.13331",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "Inherent"
+   ],
+   "affiliation_label": "Inherent",
+   "fresh": true
+  },
+  {
    "id": "2026-08-14-news-swiss-gdp-rebounded-sharply-in-the-second-quarte",
    "sid": "st-1ca9ab829649",
    "headline": "Swiss GDP rebounds on pharma exports",
@@ -120,6 +147,218 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/14/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-14-ai-ml-a-hard-look-at-research-agents-finds-optimizers",
+   "sid": "st-183973b8f6bc",
+   "headline": "Research agents act like optimizers not scientists",
+   "summary": "Most agent evaluations report only a final score, which hides where an agent gained or lost ground and whether it actually learned from earlier attempts. This study runs seven frontier models across 36 long-horizon R&D tasks under a framework that scores the process — how an agent frames a solution, executes it, and responds to feedback — and separately tests whether experience from one run improves later ones.",
+   "why": "the verdict is a useful cold shower: current agents \"operate more like engineering optimizers than fully autonomous researchers\" — good at grinding a well-posed objective, weak at the reuse-of-experience that defines a scientist. Read against the Faraday result above, the two papers frame the live disagreement about how far this capability really extends.",
+   "url": "https://arxiv.org/abs/2608.13417",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "Meituan",
+    "University of Chinese Academy of Sciences"
+   ],
+   "affiliation_label": "Meituan, University of Chinese Academy of Sciences",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-14-ai-ml-a-popular-is-the-model-aware-it-s-being-tested-p",
+   "sid": "st-0d70d77aa41b",
+   "headline": "Eval-awareness probe measures the prompt, not the model",
+   "summary": "A model that acts differently when it senses an evaluation would quietly corrupt the evals we trust, so researchers have tried to read that \"sense\" straight from activations: contrast the model's internal state on prompts that announce a test against prompts that don't, extract the difference as a direction, and report how cleanly it separates held-out cases — then compare that score across models and correlate it with scale. The catch, the author shows, is that \"a prompt that announces an evaluation\" is not one prompt but a choice among many, and the method never pins down which.",
+   "why": "holding the task fixed and varying only that unstated choice, both the headline score and even the direction in which it trends with model size follow the prompt rather than the model. It's a clean warning that a widely cited interpretability result may be an artifact of prompt selection — exactly the kind of honest self-check the safety-eval literature needs.",
+   "url": "https://arxiv.org/abs/2608.13329",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "Devoteam"
+   ],
+   "affiliation_label": "Devoteam",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-14-ai-ml-the-standard-way-to-score-a-sparse-autoencoder-l",
+   "sid": "st-5e088c03cff8",
+   "headline": "SAE ablation scores depend on where you measure",
+   "summary": "Sparse autoencoders (SAEs) try to name the concepts a model computes; the usual test of whether a discovered feature matters is to switch it off and see what changes. But a feature fires at many tokens, and the effect must be read at one of them — and the convention (measure where the feature fires hardest) means the dictionary being evaluated picks the measurement point. Take two SAEs Google released for the same model, match their features by similarity, and even near-identical features get measured at different tokens.",
+   "why": "two dictionaries \"compared\" under the standard protocol are often not being measured on the same footing at all, so leaderboard-style SAE comparisons can reward measurement choices rather than better features. It's a distinct paper from the earlier \"which SAE you trained decides causality\" line, but it points the same way: interpretability's evaluation plumbing needs auditing before its scores can be trusted.",
+   "url": "https://arxiv.org/abs/2608.13337",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "Devoteam"
+   ],
+   "affiliation_label": "Devoteam",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-14-ai-ml-a-recurrent-memory-that-routes-by-content-keeps",
+   "sid": "st-8560880a9d3c",
+   "headline": "Content-routed anchors give recurrent memory long recall",
+   "summary": "Transformers recall far-back tokens well because they keep a per-token memory (the KV cache) that grows with the input — but that means quadratic training cost and a cache that swells linearly at inference. Recurrent models fix the cost by squeezing all history into a fixed-size state, but they forget: new updates overwrite old associations, so only recent context survives. MARCH (Memory-Anchor Routing across Context History) adds content-routed state anchors — a fixed set of memory slots that incoming information is routed to by what it's about, so older associations are preserved in the slot they belong to rather than being overwritten.",
+   "why": "the long-context/recurrent trade-off — cheap decoding versus reliable recall — is one of the central architectural tensions in scaling, and a fixed-size state that stops forgetting is a genuine attempt to get both. From a top Chinese lab consortium, it's worth watching whether the recall gains hold on the hardest retrieval tasks.",
+   "url": "https://arxiv.org/abs/2608.12435",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "Shanghai AI Laboratory",
+    "Tsinghua University",
+    "Fudan University"
+   ],
+   "affiliation_label": "Shanghai AI Laboratory, Tsinghua University +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-14-ai-ml-a-single-symmetry-explains-why-networks-learn-in",
+   "sid": "st-498dd69866d6",
+   "headline": "A minimal model unifies sudden learning and scaling laws",
+   "summary": "Two puzzling training behaviors coexist: the loss can sit on a long plateau and then drop abruptly (learning in steps), while at the same time training curves follow smooth power laws (scaling laws) — and both appear in wildly different architectures, hinting that a few \"collective variables\" govern the dynamics regardless of the microscopic details. The authors show a symmetry fixes those variables: a layer is a sum over interchangeable units, so relabeling units changes nothing; that permutation symmetry, plus smoothness, forces a universal leading form near the small initial weights — a quadratic Tr[WWᵀA(x)] in which every architectural detail is packed into one \"structure matrix\" A(x).",
+   "why": "if a single minimal model reproduces both sudden learning and smooth scaling from symmetry alone, it's a rare piece of theory that unifies two empirical mysteries deep learning has mostly just catalogued — the kind of result that can eventually make scaling behavior predictable rather than measured after the fact.",
+   "url": "https://arxiv.org/abs/2608.13335",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "science"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "MIT",
+    "EPFL"
+   ],
+   "affiliation_label": "MIT, EPFL",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-14-ai-ml-google-ships-gemini-3-7-flash-and-halves-the-pri",
+   "sid": "st-7703df8ac857",
+   "headline": "Gemini 3.7 Flash undercuts predecessor by 50%",
+   "summary": "Google ships Gemini 3.7 Flash and halves the price of a model three weeks old. Google released Gemini 3.7 Flash with improved coding performance, undercutting its own predecessor's price by 50% barely three weeks after that predecessor launched — a cadence and price trajectory that says as much about the competitive squeeze on inference margins as about the model.",
+   "why": "",
+   "url": "https://the-decoder.com/gemini-3-7-flash-lands-with-coding-gains-and-undercuts-its-three-week-old-predecessors-price-by-50/",
+   "source_domain": "the-decoder.com",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-14-ai-ml-deepseek-ships-v4-pro-0813-open-sources-its-agen",
+   "sid": "st-6cc83ebca515",
+   "headline": "DeepSeek V4 Pro ships with open agent software",
+   "summary": "DeepSeek ships V4-Pro-0813, open-sources its agent software, and raises API prices. The MIT-licensed model card describes an official V4-Pro release with \"greatly enhanced agentic capabilities,\" built on the V4-Pro Preview structure with a DSpark speculative-decoding module bolted on, and calls itself broadly competitive with the strongest proprietary models. Notably, DeepSeek simultaneously open-sourced its agent software and raised API prices — a \"give away the weights, charge for the service\" posture worth watching.",
+   "why": "",
+   "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813",
+   "source_domain": "huggingface.co",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-14-ai-ml-zhipu-s-glm-5-3-claims-the-strongest-open-coding",
+   "sid": "st-2997a71b71fc",
+   "headline": "Zhipu GLM-5.3 claims strongest open coding model",
+   "summary": "Zhipu's GLM-5.3 claims the strongest open coding model — and was trained to hunt vulnerabilities — but the weights aren't out yet. GLM-5.3 shares GLM-5.2's base, with all gains from extended post-training, and Zhipu says it leads open models on agentic coding. Distinctively, it was trained on data and environments for finding software vulnerabilities; working with Chinese security teams, Zhipu says it surfaced 2,436 flaws across 269 projects (some in code up to 40 years old), logged in a public registry. Important caveat: despite the \"open-weights\" framing, the weights are only scheduled to open in about two weeks, after security review — today it is API-only.",
+   "why": "",
+   "url": "https://the-decoder.com/zhipu-ai-releases-glm-5-3-claims-its-the-strongest-open-weights-coding-model/",
+   "source_domain": "the-decoder.com",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
    "fresh": true
   },
   {
@@ -668,167 +907,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-11-ai-ml-a-codec-pushes-the-kv-cache-below-two-bits-witho",
-   "sid": "st-575d3ab3a93c",
-   "headline": "KV cache pushed past 2-bit cliff",
-   "summary": "As models read longer inputs — whole codebases, long conversations — inference memory is dominated by the KV cache (key-value cache: the stored attention keys and values for every token seen so far, re-read on every new token). The standard fix is quantization — storing each value at low precision — but quality drops sharply at a \"2-bit cliff\": four levels are too few for the cache's outlier-heavy values, where a few large entries eat all the levels. SPECTRA first rotates the cache into a coordinate system computed from its own statistics (a spectral transform that removes the correlations between channels), after which a small fraction of channels carries almost all the information; it then spends the bit budget there. It is training-free and drop-in.",
-   "why": "long-context and agentic workloads live or die on cache memory, and the 2-bit cliff has been a practical floor for a while. A training-free codec that gets under it cleanly is the kind of change that quietly widens what fits on a given GPU.",
-   "url": "https://arxiv.org/abs/2608.07915",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "affiliations": [
-    "Nokia",
-    "Rice University"
-   ],
-   "affiliation_label": "Nokia, Rice University",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-thought-level-beam-search-allocates-test-time-co",
-   "sid": "st-0d7ea75b9e5f",
-   "headline": "Thought-level beam search for reasoning",
-   "summary": "\"Test-time compute\" means spending extra computation at answer time — sampling many reasoning traces, or thinking longer — to get better answers. Existing approaches waste it: parallel sampling treats traces independently and bottlenecks memory, while pruning starves the hardware. Gambit runs a beam search at the level of whole thoughts: it periodically prunes unpromising trajectories and immediately branches from the strong prefixes, steered by a lightweight scorer that probes the model's hidden states, keeping the GPU busy throughout.",
-   "why": "under identical hardware limits, Gambit reports up to +6.7% absolute accuracy on HMMT-24 and +3.3% on AIME-25 (competition-math benchmarks) over pruning baselines, >2× throughput on trace completion, and up to 68.5% fewer tokens than standard parallel sampling — a concrete recipe for getting more reasoning per fixed compute budget.",
-   "url": "https://arxiv.org/abs/2608.08020",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "affiliations": [
-    "Princeton University",
-    "MIT CSAIL",
-    "Meta AI"
-   ],
-   "affiliation_label": "Princeton University, MIT CSAIL +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-a-multilingual-model-detects-harm-the-same-way-i",
-   "sid": "st-30ceb10eaed6",
-   "headline": "Multilingual refusal circuit located",
-   "summary": "Safety alignment is uneven across languages: a model that refuses a harmful English request often complies with the same request in a lower-resource language. Studying sarvam, an Indic-multilingual mixture-of-experts (MoE — many specialist sub-networks, only a few active per token) reasoning model, the authors trace this mechanistically. Harm is encoded as an internal direction that is nearly language-invariant in mid-network (English-vs-Indic cosine ≈0.9), and steering that direction causally controls refusal. But that detection direction is orthogonal to the change that actually writes the refusal, which is assembled late over the course of generation by a specific, localizable MoE circuit held in check by an \"attention opposer.\"",
-   "why": "it reframes the multilingual safety gap as a failure to act on detected harm, not to detect it — the model knows, but the refusal machinery doesn't fire. That points interventions at a different, narrower target than \"teach it to recognize harm in Hindi.\"",
-   "url": "https://arxiv.org/abs/2608.08032",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "affiliations": [
-    "Gödel Machines",
-    "IIT Madras"
-   ],
-   "affiliation_label": "Gödel Machines, IIT Madras",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-openai-ships-gpt-5-6-cyber-a-defender-focused-se",
-   "sid": "st-89876a9c2997",
-   "headline": "OpenAI ships GPT-5.6-Cyber for defenders",
-   "summary": "OpenAI ships GPT-5.6-Cyber, a defender-focused security model, behind identity checks. OpenAI released a cyber-specialized model that it says answers up to 98.5% of security queries a general model would refuse, and reports it has already surfaced two previously unknown Chrome vulnerabilities. Access requires verified identity, and OpenAI frames the release around a shrinking window in which defenders must find flaws before attackers do (its paired \"Daybreak\" and \"trusted hands\" posts). Treat the capability numbers as the vendor's own.",
-   "why": "a gated, offense-capable model marketed for defense is the concrete form of the \"dual-use\" debate — the same tool that finds a bug for a defender finds it for an attacker, so the identity gate is doing a lot of the safety work.",
-   "url": "https://openai.com/index/putting-frontier-cyber-models-in-more-trusted-hands",
-   "source_domain": "openai.com",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-motif-3-a-314b-mixture-of-experts-model-with-a-n",
-   "sid": "st-1f5f9659c1d4",
-   "headline": "Motif 3 314B MoE with latent attention",
-   "summary": "Motif 3: a 314B mixture-of-experts model with a novel latent-attention design. Motif Technologies detailed Motif 3, a decoder-only MoE with 314B total parameters but only 13.2B active per token (384 routed experts, 8 selected). Its centerpiece is Grouped Differential Latent Attention (GDLA), which pairs \"differential\" attention with the compressed key-value representation of Multi-head Latent Attention to cut inference memory; pretraining ran on ~12.5T tokens with context up to 256K, and — fittingly for this cycle — post-training leaned on multi-teacher on-policy distillation. arXiv:2608.09119 ·",
-   "why": "it's a from-scratch frontier-scale architecture that bets on fine-grained sparsity plus latent attention for efficiency — a concrete data point on how far the MoE-plus-compressed-attention recipe scales outside the biggest US labs.",
-   "url": "https://arxiv.org/abs/2608.09119",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "affiliations": [
-    "Motif Technologies"
-   ],
-   "affiliation_label": "Motif Technologies",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-nvidia-anchors-a-500b-third-party-financing-plat",
-   "sid": "st-0fb377bfb29f",
-   "headline": "Nvidia backs $500B compute financing",
-   "summary": "Nvidia anchors a $500B+ third-party financing platform for AI compute. Nvidia announced partnerships with Apollo, BlackRock, Blackstone, Brookfield, Goldman Sachs and KKR to establish independent financing platforms meant to mobilize over $500 billion of third-party capital, turning its compute and full-stack infrastructure into what it calls \"an investable asset class.\" Secondary reporting adds that Nvidia is guaranteeing up to 25% of the residual value of its own hardware to reassure investors, and that the Bank of England has warned of systemic risk if the AI sector contracts.",
-   "why": "a chipmaker underwriting the residual value of its own product to unlock outside financing is a striking blurring of vendor and financier — and the BoE's warning names the tail risk if AI demand softens.",
-   "url": "https://nvidianews.nvidia.com/news/nvidia-partners-with-apollo-blackrock-blackstone-brookfield-goldman-sachs-and-kkr-to-establish-ai-compute-infrastructure-financing-platforms-to-mobilize-over-500-billion-of-third-party-capital",
-   "source_domain": "nvidianews.nvidia.com",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "fresh": false
-  },
-  {
    "id": "2026-08-11-news-a-damascus-criminal-court-on-tuesday-11-august-s",
    "sid": "st-095c81f28630",
    "headline": "Assad sentenced to death in absentia",
@@ -872,35 +950,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/11/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-on-policy-distillation-has-a-failure-mode-studen",
-   "sid": "st-c4b3a50bdd87",
-   "headline": "On-policy distillation gaming exposed",
-   "summary": "On-policy distillation (OPD) — training a student model to match a teacher on the student's own generated outputs — is now standard in post-training pipelines. The authors expose \"degenerate agreement\": students learn repetitive loops that score near-perfect token-level agreement with the teacher while producing globally flawed answers. Shifting focus from agreement to mismatch, they categorize the disagreements into student-excess tokens (student emits them, teacher assigns near-zero probability — their corrections blow up and destabilize training) and student-deficit tokens (teacher prefers them, student rarely samples them — blocking transfer of the teacher's reasoning). Their method, TIDE, handles each direction separately.",
-   "why": "it names a concrete way a widely used training recipe can look like it's working (high agreement) while quietly failing, and gives a fix — useful diligence for anyone shipping distilled models.",
-   "url": "https://arxiv.org/abs/2608.09836",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "affiliations": [
-    "HKU",
-    "USTC",
-    "CUHK"
-   ],
-   "affiliation_label": "HKU, USTC +1",
    "fresh": false
   },
   {
@@ -965,30 +1014,6 @@
    "topics": [
     "geopolitics",
     "world"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/10/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-10-news-us-president-donald-trump-said-in-an-interview-p",
-   "sid": "st-da474089ed80",
-   "headline": "Trump shifts to economic pressure on Iran",
-   "summary": "US President Donald Trump said in an interview published Sunday 9 August 2026 that Washington is relying on economic pressure rather than new military strikes to push Iran toward a deal, telling Axios \"we are low-keying it\" and that the US is \"only semi-negotiating\" with Tehran. Trump claimed Iran was in \"very bad shape\" financially — citing high inflation and trouble paying its own troops — and credited a US naval blockade in place since April; he also noted oil prices had eased to just above $75 a barrel, softening the war's impact on American consumers (\"It always works out. It's like a chess game\"). His remarks came as Oman-mediated talks on reopening the Strait of Hormuz — the chokepoint through which roughly a fifth of the world's seaborne oil passes, shut to commercial shipping since a June ceasefire collapsed — reached what Iran's foreign ministry called their \"final\" stages, with the two sides said to be nearing agreement on coordinates for a new shipping route; Iranian officials are separately reported to be weighing transit fees for any reopened traffic. Tehran maintains it will not fully reopen the waterway until the US \"corrects its behaviour,\" including lifting the blockade, halting attacks and paying war damages, and since the ceasefire's collapse Iran has kept up intermittent strikes on US bases in Kuwait, Bahrain and Jordan.",
-   "why": "Trump's characterisations of Iran's distress are his own and should be read with caution, but the shift he describes — from bombing to blockade-and-sanctions while a Hormuz deal is haggled over — would, if it holds, lower the odds of a fresh military escalation and ease the oil-price risk that has hung over Europe.",
-   "url": "https://www.aljazeera.com/economy/2026/8/10/trump-signals-shift-to-economic-pressure-on-iran-over-new-military-strikes",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-10",
-   "date_label": "Aug 10",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "economy"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
@@ -1099,29 +1124,6 @@
    "why": "the list formalises and broadens Iran's terms — explicitly extending its red lines to Yemen and Iraq — and the daylight between the council's maximalism and the president's opening reflects the internal split that will shape whether the standoff eases or hardens.",
    "url": "https://www.tehrantimes.com/news/528962/Iran-sets-six-conditions-for-reopening-the-Strait-of-Hormuz",
    "source_domain": "tehrantimes.com",
-   "date": "2026-08-09",
-   "date_label": "Aug 9",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/09/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-09-news-israel-s-land-authority-published-a-tender-on-we",
-   "sid": "st-a91bf8c54ba7",
-   "headline": "Israel tenders 627 West Bank settler homes",
-   "summary": "Israel's Land Authority published a tender on Wednesday 6 August 2026 for 627 settler homes at Kochav Yaakov, an existing settlement north of Jerusalem built on land of the occupied West Bank's Ramallah and al-Bireh governorate. The tender, numbered 177/2026, sets 30 November 2026 as the deadline for construction firms to bid and covers about 253 dunums (roughly 25 hectares); the project was approved in April 2025, so the release marks its move from planning to construction. Palestinian monitors at the Colonization and Wall Resistance Commission — a body that tracks Israeli settlement activity — recorded 12 such tenders in the first half of 2026, covering 1,138 units across five settlement blocs. Settlements in the occupied West Bank are considered illegal under international law, a position Israel disputes.",
-   "why": "continued tendering entrenches Israeli construction on occupied land around Ramallah even as a fragile Gaza ceasefire is being renegotiated, narrowing the territorial basis for any future Palestinian state.",
-   "url": "https://english.wafa.ps/Pages/Details/173366",
-   "source_domain": "english.wafa.ps",
    "date": "2026-08-09",
    "date_label": "Aug 9",
    "stream": "news",
@@ -2092,6 +2094,37 @@
  ],
  "board": [
   {
+   "id": "2026-08-14-ai-ml-a-27b-ai-scientist-beats-claude-opus-4-8-and-gpt",
+   "sid": "st-9c90df4598b6",
+   "headline": "AI Scientist agent beats Opus 4.8 on replication",
+   "summary": "Replication — taking a published paper and reproducing its results from scratch — is harder than it sounds, because papers routinely leave methodological details unstated, so a faithful redo demands the same open-ended, hypothesis-driven work as original research. The authors build Replica, a large task space of replication challenges, and an auto-generated rubric-based judge (a checklist grader) that they show is low-noise and agrees with human assessments of replication quality. Using that as a reward signal, they post-train Faraday, a 27B agent that calls coding agents as tools.",
+   "why": "on held-out replication tasks Faraday reportedly surpasses Claude Opus 4.8 and GPT-5.5 — a small, purpose-trained model beating two frontier systems at a concrete scientific-labor task, not a toy benchmark. Treat the head-to-head numbers as the authors' own until reproduced, but the result is a real data point in the \"how close are autonomous researchers\" debate.",
+   "url": "https://arxiv.org/abs/2608.13331",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "Inherent"
+   ],
+   "affiliation_label": "Inherent",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 14 Aug",
+   "daybreak": true
+  },
+  {
    "id": "2026-08-14-news-swiss-gdp-rebounded-sharply-in-the-second-quarte",
    "sid": "st-1ca9ab829649",
    "headline": "Swiss GDP rebounds on pharma exports",
@@ -2117,7 +2150,251 @@
    "kind": "story",
    "age_days": 0,
    "day_label": "Fri 14 Aug",
-   "daybreak": true
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-14-ai-ml-a-hard-look-at-research-agents-finds-optimizers",
+   "sid": "st-183973b8f6bc",
+   "headline": "Research agents act like optimizers not scientists",
+   "summary": "Most agent evaluations report only a final score, which hides where an agent gained or lost ground and whether it actually learned from earlier attempts. This study runs seven frontier models across 36 long-horizon R&D tasks under a framework that scores the process — how an agent frames a solution, executes it, and responds to feedback — and separately tests whether experience from one run improves later ones.",
+   "why": "the verdict is a useful cold shower: current agents \"operate more like engineering optimizers than fully autonomous researchers\" — good at grinding a well-posed objective, weak at the reuse-of-experience that defines a scientist. Read against the Faraday result above, the two papers frame the live disagreement about how far this capability really extends.",
+   "url": "https://arxiv.org/abs/2608.13417",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "Meituan",
+    "University of Chinese Academy of Sciences"
+   ],
+   "affiliation_label": "Meituan, University of Chinese Academy of Sciences",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 14 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-14-ai-ml-a-popular-is-the-model-aware-it-s-being-tested-p",
+   "sid": "st-0d70d77aa41b",
+   "headline": "Eval-awareness probe measures the prompt, not the model",
+   "summary": "A model that acts differently when it senses an evaluation would quietly corrupt the evals we trust, so researchers have tried to read that \"sense\" straight from activations: contrast the model's internal state on prompts that announce a test against prompts that don't, extract the difference as a direction, and report how cleanly it separates held-out cases — then compare that score across models and correlate it with scale. The catch, the author shows, is that \"a prompt that announces an evaluation\" is not one prompt but a choice among many, and the method never pins down which.",
+   "why": "holding the task fixed and varying only that unstated choice, both the headline score and even the direction in which it trends with model size follow the prompt rather than the model. It's a clean warning that a widely cited interpretability result may be an artifact of prompt selection — exactly the kind of honest self-check the safety-eval literature needs.",
+   "url": "https://arxiv.org/abs/2608.13329",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "Devoteam"
+   ],
+   "affiliation_label": "Devoteam",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 14 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-14-ai-ml-the-standard-way-to-score-a-sparse-autoencoder-l",
+   "sid": "st-5e088c03cff8",
+   "headline": "SAE ablation scores depend on where you measure",
+   "summary": "Sparse autoencoders (SAEs) try to name the concepts a model computes; the usual test of whether a discovered feature matters is to switch it off and see what changes. But a feature fires at many tokens, and the effect must be read at one of them — and the convention (measure where the feature fires hardest) means the dictionary being evaluated picks the measurement point. Take two SAEs Google released for the same model, match their features by similarity, and even near-identical features get measured at different tokens.",
+   "why": "two dictionaries \"compared\" under the standard protocol are often not being measured on the same footing at all, so leaderboard-style SAE comparisons can reward measurement choices rather than better features. It's a distinct paper from the earlier \"which SAE you trained decides causality\" line, but it points the same way: interpretability's evaluation plumbing needs auditing before its scores can be trusted.",
+   "url": "https://arxiv.org/abs/2608.13337",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "Devoteam"
+   ],
+   "affiliation_label": "Devoteam",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 14 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-14-ai-ml-a-recurrent-memory-that-routes-by-content-keeps",
+   "sid": "st-8560880a9d3c",
+   "headline": "Content-routed anchors give recurrent memory long recall",
+   "summary": "Transformers recall far-back tokens well because they keep a per-token memory (the KV cache) that grows with the input — but that means quadratic training cost and a cache that swells linearly at inference. Recurrent models fix the cost by squeezing all history into a fixed-size state, but they forget: new updates overwrite old associations, so only recent context survives. MARCH (Memory-Anchor Routing across Context History) adds content-routed state anchors — a fixed set of memory slots that incoming information is routed to by what it's about, so older associations are preserved in the slot they belong to rather than being overwritten.",
+   "why": "the long-context/recurrent trade-off — cheap decoding versus reliable recall — is one of the central architectural tensions in scaling, and a fixed-size state that stops forgetting is a genuine attempt to get both. From a top Chinese lab consortium, it's worth watching whether the recall gains hold on the hardest retrieval tasks.",
+   "url": "https://arxiv.org/abs/2608.12435",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "Shanghai AI Laboratory",
+    "Tsinghua University",
+    "Fudan University"
+   ],
+   "affiliation_label": "Shanghai AI Laboratory, Tsinghua University +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 14 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-14-ai-ml-a-single-symmetry-explains-why-networks-learn-in",
+   "sid": "st-498dd69866d6",
+   "headline": "A minimal model unifies sudden learning and scaling laws",
+   "summary": "Two puzzling training behaviors coexist: the loss can sit on a long plateau and then drop abruptly (learning in steps), while at the same time training curves follow smooth power laws (scaling laws) — and both appear in wildly different architectures, hinting that a few \"collective variables\" govern the dynamics regardless of the microscopic details. The authors show a symmetry fixes those variables: a layer is a sum over interchangeable units, so relabeling units changes nothing; that permutation symmetry, plus smoothness, forces a universal leading form near the small initial weights — a quadratic Tr[WWᵀA(x)] in which every architectural detail is packed into one \"structure matrix\" A(x).",
+   "why": "if a single minimal model reproduces both sudden learning and smooth scaling from symmetry alone, it's a rare piece of theory that unifies two empirical mysteries deep learning has mostly just catalogued — the kind of result that can eventually make scaling behavior predictable rather than measured after the fact.",
+   "url": "https://arxiv.org/abs/2608.13335",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "science"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "affiliations": [
+    "MIT",
+    "EPFL"
+   ],
+   "affiliation_label": "MIT, EPFL",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 14 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-14-ai-ml-google-ships-gemini-3-7-flash-and-halves-the-pri",
+   "sid": "st-7703df8ac857",
+   "headline": "Gemini 3.7 Flash undercuts predecessor by 50%",
+   "summary": "Google ships Gemini 3.7 Flash and halves the price of a model three weeks old. Google released Gemini 3.7 Flash with improved coding performance, undercutting its own predecessor's price by 50% barely three weeks after that predecessor launched — a cadence and price trajectory that says as much about the competitive squeeze on inference margins as about the model.",
+   "why": "",
+   "url": "https://the-decoder.com/gemini-3-7-flash-lands-with-coding-gains-and-undercuts-its-three-week-old-predecessors-price-by-50/",
+   "source_domain": "the-decoder.com",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 14 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-14-ai-ml-deepseek-ships-v4-pro-0813-open-sources-its-agen",
+   "sid": "st-6cc83ebca515",
+   "headline": "DeepSeek V4 Pro ships with open agent software",
+   "summary": "DeepSeek ships V4-Pro-0813, open-sources its agent software, and raises API prices. The MIT-licensed model card describes an official V4-Pro release with \"greatly enhanced agentic capabilities,\" built on the V4-Pro Preview structure with a DSpark speculative-decoding module bolted on, and calls itself broadly competitive with the strongest proprietary models. Notably, DeepSeek simultaneously open-sourced its agent software and raised API prices — a \"give away the weights, charge for the service\" posture worth watching.",
+   "why": "",
+   "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813",
+   "source_domain": "huggingface.co",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 14 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-14-ai-ml-zhipu-s-glm-5-3-claims-the-strongest-open-coding",
+   "sid": "st-2997a71b71fc",
+   "headline": "Zhipu GLM-5.3 claims strongest open coding model",
+   "summary": "Zhipu's GLM-5.3 claims the strongest open coding model — and was trained to hunt vulnerabilities — but the weights aren't out yet. GLM-5.3 shares GLM-5.2's base, with all gains from extended post-training, and Zhipu says it leads open models on agentic coding. Distinctively, it was trained on data and environments for finding software vulnerabilities; working with Chinese security teams, Zhipu says it surfaced 2,436 flaws across 269 projects (some in code up to 40 years old), logged in a public registry. Important caveat: despite the \"open-weights\" framing, the weights are only scheduled to open in about two weeks, after security review — today it is API-only.",
+   "why": "",
+   "url": "https://the-decoder.com/zhipu-ai-releases-glm-5-3-claims-its-the-strongest-open-weights-coding-model/",
+   "source_domain": "the-decoder.com",
+   "date": "2026-08-14",
+   "date_label": "Aug 14",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/14/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 14 Aug",
+   "daybreak": false
   },
   {
    "id": "2026-08-14-news-the-white-house-accused-more-than-40-countries-o",
@@ -2753,191 +3030,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-11-ai-ml-a-codec-pushes-the-kv-cache-below-two-bits-witho",
-   "sid": "st-575d3ab3a93c",
-   "headline": "KV cache pushed past 2-bit cliff",
-   "summary": "As models read longer inputs — whole codebases, long conversations — inference memory is dominated by the KV cache (key-value cache: the stored attention keys and values for every token seen so far, re-read on every new token). The standard fix is quantization — storing each value at low precision — but quality drops sharply at a \"2-bit cliff\": four levels are too few for the cache's outlier-heavy values, where a few large entries eat all the levels. SPECTRA first rotates the cache into a coordinate system computed from its own statistics (a spectral transform that removes the correlations between channels), after which a small fraction of channels carries almost all the information; it then spends the bit budget there. It is training-free and drop-in.",
-   "why": "long-context and agentic workloads live or die on cache memory, and the 2-bit cliff has been a practical floor for a while. A training-free codec that gets under it cleanly is the kind of change that quietly widens what fits on a given GPU.",
-   "url": "https://arxiv.org/abs/2608.07915",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "affiliations": [
-    "Nokia",
-    "Rice University"
-   ],
-   "affiliation_label": "Nokia, Rice University",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 11 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-thought-level-beam-search-allocates-test-time-co",
-   "sid": "st-0d7ea75b9e5f",
-   "headline": "Thought-level beam search for reasoning",
-   "summary": "\"Test-time compute\" means spending extra computation at answer time — sampling many reasoning traces, or thinking longer — to get better answers. Existing approaches waste it: parallel sampling treats traces independently and bottlenecks memory, while pruning starves the hardware. Gambit runs a beam search at the level of whole thoughts: it periodically prunes unpromising trajectories and immediately branches from the strong prefixes, steered by a lightweight scorer that probes the model's hidden states, keeping the GPU busy throughout.",
-   "why": "under identical hardware limits, Gambit reports up to +6.7% absolute accuracy on HMMT-24 and +3.3% on AIME-25 (competition-math benchmarks) over pruning baselines, >2× throughput on trace completion, and up to 68.5% fewer tokens than standard parallel sampling — a concrete recipe for getting more reasoning per fixed compute budget.",
-   "url": "https://arxiv.org/abs/2608.08020",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "affiliations": [
-    "Princeton University",
-    "MIT CSAIL",
-    "Meta AI"
-   ],
-   "affiliation_label": "Princeton University, MIT CSAIL +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 11 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-a-multilingual-model-detects-harm-the-same-way-i",
-   "sid": "st-30ceb10eaed6",
-   "headline": "Multilingual refusal circuit located",
-   "summary": "Safety alignment is uneven across languages: a model that refuses a harmful English request often complies with the same request in a lower-resource language. Studying sarvam, an Indic-multilingual mixture-of-experts (MoE — many specialist sub-networks, only a few active per token) reasoning model, the authors trace this mechanistically. Harm is encoded as an internal direction that is nearly language-invariant in mid-network (English-vs-Indic cosine ≈0.9), and steering that direction causally controls refusal. But that detection direction is orthogonal to the change that actually writes the refusal, which is assembled late over the course of generation by a specific, localizable MoE circuit held in check by an \"attention opposer.\"",
-   "why": "it reframes the multilingual safety gap as a failure to act on detected harm, not to detect it — the model knows, but the refusal machinery doesn't fire. That points interventions at a different, narrower target than \"teach it to recognize harm in Hindi.\"",
-   "url": "https://arxiv.org/abs/2608.08032",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "affiliations": [
-    "Gödel Machines",
-    "IIT Madras"
-   ],
-   "affiliation_label": "Gödel Machines, IIT Madras",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 11 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-openai-ships-gpt-5-6-cyber-a-defender-focused-se",
-   "sid": "st-89876a9c2997",
-   "headline": "OpenAI ships GPT-5.6-Cyber for defenders",
-   "summary": "OpenAI ships GPT-5.6-Cyber, a defender-focused security model, behind identity checks. OpenAI released a cyber-specialized model that it says answers up to 98.5% of security queries a general model would refuse, and reports it has already surfaced two previously unknown Chrome vulnerabilities. Access requires verified identity, and OpenAI frames the release around a shrinking window in which defenders must find flaws before attackers do (its paired \"Daybreak\" and \"trusted hands\" posts). Treat the capability numbers as the vendor's own.",
-   "why": "a gated, offense-capable model marketed for defense is the concrete form of the \"dual-use\" debate — the same tool that finds a bug for a defender finds it for an attacker, so the identity gate is doing a lot of the safety work.",
-   "url": "https://openai.com/index/putting-frontier-cyber-models-in-more-trusted-hands",
-   "source_domain": "openai.com",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 11 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-motif-3-a-314b-mixture-of-experts-model-with-a-n",
-   "sid": "st-1f5f9659c1d4",
-   "headline": "Motif 3 314B MoE with latent attention",
-   "summary": "Motif 3: a 314B mixture-of-experts model with a novel latent-attention design. Motif Technologies detailed Motif 3, a decoder-only MoE with 314B total parameters but only 13.2B active per token (384 routed experts, 8 selected). Its centerpiece is Grouped Differential Latent Attention (GDLA), which pairs \"differential\" attention with the compressed key-value representation of Multi-head Latent Attention to cut inference memory; pretraining ran on ~12.5T tokens with context up to 256K, and — fittingly for this cycle — post-training leaned on multi-teacher on-policy distillation. arXiv:2608.09119 ·",
-   "why": "it's a from-scratch frontier-scale architecture that bets on fine-grained sparsity plus latent attention for efficiency — a concrete data point on how far the MoE-plus-compressed-attention recipe scales outside the biggest US labs.",
-   "url": "https://arxiv.org/abs/2608.09119",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "affiliations": [
-    "Motif Technologies"
-   ],
-   "affiliation_label": "Motif Technologies",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 11 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-nvidia-anchors-a-500b-third-party-financing-plat",
-   "sid": "st-0fb377bfb29f",
-   "headline": "Nvidia backs $500B compute financing",
-   "summary": "Nvidia anchors a $500B+ third-party financing platform for AI compute. Nvidia announced partnerships with Apollo, BlackRock, Blackstone, Brookfield, Goldman Sachs and KKR to establish independent financing platforms meant to mobilize over $500 billion of third-party capital, turning its compute and full-stack infrastructure into what it calls \"an investable asset class.\" Secondary reporting adds that Nvidia is guaranteeing up to 25% of the residual value of its own hardware to reassure investors, and that the Bank of England has warned of systemic risk if the AI sector contracts.",
-   "why": "a chipmaker underwriting the residual value of its own product to unlock outside financing is a striking blurring of vendor and financier — and the BoE's warning names the tail risk if AI demand softens.",
-   "url": "https://nvidianews.nvidia.com/news/nvidia-partners-with-apollo-blackrock-blackstone-brookfield-goldman-sachs-and-kkr-to-establish-ai-compute-infrastructure-financing-platforms-to-mobilize-over-500-billion-of-third-party-capital",
-   "source_domain": "nvidianews.nvidia.com",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 11 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-11-news-a-damascus-criminal-court-on-tuesday-11-august-s",
    "sid": "st-095c81f28630",
    "headline": "Assad sentenced to death in absentia",
@@ -2985,39 +3077,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/11/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 11 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-11-ai-ml-on-policy-distillation-has-a-failure-mode-studen",
-   "sid": "st-c4b3a50bdd87",
-   "headline": "On-policy distillation gaming exposed",
-   "summary": "On-policy distillation (OPD) — training a student model to match a teacher on the student's own generated outputs — is now standard in post-training pipelines. The authors expose \"degenerate agreement\": students learn repetitive loops that score near-perfect token-level agreement with the teacher while producing globally flawed answers. Shifting focus from agreement to mismatch, they categorize the disagreements into student-excess tokens (student emits them, teacher assigns near-zero probability — their corrections blow up and destabilize training) and student-deficit tokens (teacher prefers them, student rarely samples them — blocking transfer of the teacher's reasoning). Their method, TIDE, handles each direction separately.",
-   "why": "it names a concrete way a widely used training recipe can look like it's working (high agreement) while quietly failing, and gives a fix — useful diligence for anyone shipping distilled models.",
-   "url": "https://arxiv.org/abs/2608.09836",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-11",
-   "date_label": "Aug 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/11/ai-ml/",
-   "affiliations": [
-    "HKU",
-    "USTC",
-    "CUHK"
-   ],
-   "affiliation_label": "HKU, USTC +1",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
@@ -3094,34 +3153,6 @@
    "topics": [
     "geopolitics",
     "world"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/10/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 10 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-10-news-us-president-donald-trump-said-in-an-interview-p",
-   "sid": "st-da474089ed80",
-   "headline": "Trump shifts to economic pressure on Iran",
-   "summary": "US President Donald Trump said in an interview published Sunday 9 August 2026 that Washington is relying on economic pressure rather than new military strikes to push Iran toward a deal, telling Axios \"we are low-keying it\" and that the US is \"only semi-negotiating\" with Tehran. Trump claimed Iran was in \"very bad shape\" financially — citing high inflation and trouble paying its own troops — and credited a US naval blockade in place since April; he also noted oil prices had eased to just above $75 a barrel, softening the war's impact on American consumers (\"It always works out. It's like a chess game\"). His remarks came as Oman-mediated talks on reopening the Strait of Hormuz — the chokepoint through which roughly a fifth of the world's seaborne oil passes, shut to commercial shipping since a June ceasefire collapsed — reached what Iran's foreign ministry called their \"final\" stages, with the two sides said to be nearing agreement on coordinates for a new shipping route; Iranian officials are separately reported to be weighing transit fees for any reopened traffic. Tehran maintains it will not fully reopen the waterway until the US \"corrects its behaviour,\" including lifting the blockade, halting attacks and paying war damages, and since the ceasefire's collapse Iran has kept up intermittent strikes on US bases in Kuwait, Bahrain and Jordan.",
-   "why": "Trump's characterisations of Iran's distress are his own and should be read with caution, but the shift he describes — from bombing to blockade-and-sanctions while a Hormuz deal is haggled over — would, if it holds, lower the odds of a fresh military escalation and ease the oil-price risk that has hung over Europe.",
-   "url": "https://www.aljazeera.com/economy/2026/8/10/trump-signals-shift-to-economic-pressure-on-iran-over-new-military-strikes",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-10",
-   "date_label": "Aug 10",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "economy"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
@@ -3268,33 +3299,6 @@
    "why": "the list formalises and broadens Iran's terms — explicitly extending its red lines to Yemen and Iraq — and the daylight between the council's maximalism and the president's opening reflects the internal split that will shape whether the standoff eases or hardens.",
    "url": "https://www.tehrantimes.com/news/528962/Iran-sets-six-conditions-for-reopening-the-Strait-of-Hormuz",
    "source_domain": "tehrantimes.com",
-   "date": "2026-08-09",
-   "date_label": "Aug 9",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/09/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sun 9 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-09-news-israel-s-land-authority-published-a-tender-on-we",
-   "sid": "st-a91bf8c54ba7",
-   "headline": "Israel tenders 627 West Bank settler homes",
-   "summary": "Israel's Land Authority published a tender on Wednesday 6 August 2026 for 627 settler homes at Kochav Yaakov, an existing settlement north of Jerusalem built on land of the occupied West Bank's Ramallah and al-Bireh governorate. The tender, numbered 177/2026, sets 30 November 2026 as the deadline for construction firms to bid and covers about 253 dunums (roughly 25 hectares); the project was approved in April 2025, so the release marks its move from planning to construction. Palestinian monitors at the Colonization and Wall Resistance Commission — a body that tracks Israeli settlement activity — recorded 12 such tenders in the first half of 2026, covering 1,138 units across five settlement blocs. Settlements in the occupied West Bank are considered illegal under international law, a position Israel disputes.",
-   "why": "continued tendering entrenches Israeli construction on occupied land around Ramallah even as a fragile Gaza ceasefire is being renegotiated, narrowing the territorial basis for any future Palestinian state.",
-   "url": "https://english.wafa.ps/Pages/Details/173366",
-   "source_domain": "english.wafa.ps",
    "date": "2026-08-09",
    "date_label": "Aug 9",
    "stream": "news",
