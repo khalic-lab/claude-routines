@@ -1,0 +1,28 @@
+date: 2026-08-16
+applied: false
+patches:
+  # No fresh reach flips this run: the evaluator sandbox holds no fetch-proxy bearer and its
+  # direct egress is fully walled this window (linkcheck 4/20 resolve; all Sunday-scout probes
+  # returned ERR:56). Reach truth stays with the writers' bearer + the deterministic probes.
+  #
+  # CARRIED, still unapplied from registry-2026-08-09.yml / -08-02.yml: both remain status:
+  # candidate in sources/registry.yml. They fill the Sports primary-source gap (sports
+  # waiver_rate=0.50, unique_domains=12, top5_share=0.588) and are reinforced this week by
+  # letour.fr failing again in 2026-08-10-sports (ERR:56 + HTTP 404, 0 ok) — the cycling-primary
+  # hole uci.ch would plug. No fresh evaluator probe evidence (egress walled); carried on record.
+  - domain: esv.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED from 2026-08-09 / 2026-08-02 / 2026-07-26 scout. Still status: candidate. Eidgenoessischer Schwingerverband, official Swiss wrestling federation; genuine primary for Schwingen / Swiss-personalization sports coverage. reach: proxy-needed."
+  - domain: uci.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED from 2026-08-09 / 2026-08-02 / 2026-07-26 scout. Still status: candidate. Union Cycliste Internationale, official world cycling federation; primary for Tour de France / cycling coverage where letour.fr is sandbox-walled (failed again 0 ok in 2026-08-10-sports). reach: proxy-needed."
+  # New scout candidates appended to sources/candidates.jsonl this run (Science = worst-deficit
+  # stream by new_domains=8). All three are genuine primary Swiss science bodies absent from the
+  # registry, directly relevant to this week's heavy climate/forest/glacier/water science coverage.
+  # They need a probation cycle before promotion, so no from/to transition proposed yet.
+  # All reach: proxy-needed (evaluator egress walled — writers vet at first citation).
+  # - slf.ch    (WSL Institute for Snow and Avalanche Research; glacier/snow/climate primary)
+  # - unil.ch   (University of Lausanne official newsroom; Vaud science personalization primary)
+  # - scnat.ch  (Swiss Academy of Sciences; genuine primary science body)
