@@ -3,40 +3,46 @@
  "count": 80,
  "topics": [
   {
-   "key": "geopolitics",
-   "label": "Geopolitics",
-   "color": "#c0563b",
-   "count": 22
-  },
-  {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 19
+   "count": 22
   },
   {
-   "key": "world",
-   "label": "World",
-   "color": "#6b6f76",
-   "count": 15
+   "key": "geopolitics",
+   "label": "Geopolitics",
+   "color": "#c0563b",
+   "count": 21
   },
   {
    "key": "science",
    "label": "Science",
    "color": "#4c6b3c",
-   "count": 12
+   "count": 14
   },
   {
-   "key": "politics",
-   "label": "Politics",
-   "color": "#9a6a34",
-   "count": 9
+   "key": "world",
+   "label": "World",
+   "color": "#6b6f76",
+   "count": 13
   },
   {
    "key": "switzerland",
    "label": "Switzerland",
    "color": "#c2454a",
    "count": 9
+  },
+  {
+   "key": "economy",
+   "label": "Economy",
+   "color": "#9a7b2e",
+   "count": 8
+  },
+  {
+   "key": "politics",
+   "label": "Politics",
+   "color": "#9a6a34",
+   "count": 8
   },
   {
    "key": "sports",
@@ -51,22 +57,16 @@
    "count": 7
   },
   {
-   "key": "economy",
-   "label": "Economy",
-   "color": "#9a7b2e",
-   "count": 6
-  },
-  {
    "key": "tech",
    "label": "Tech",
    "color": "#3b6ea5",
-   "count": 6
+   "count": 4
   },
   {
    "key": "health",
    "label": "Health",
    "color": "#a44a72",
-   "count": 2
+   "count": 1
   }
  ],
  "editorials": [
@@ -99,6 +99,35 @@
  ],
  "stories": [
   {
+   "id": "2026-08-18-ai-ml-an-ai-system-nudges-the-matrix-multiplication-ex",
+   "sid": "st-d2de83c4e4be",
+   "headline": "An AI system nudges the matrix-multiplication exponent to a new record",
+   "summary": "The matrix-multiplication exponent ω is the theoretical yardstick for how fast two n×n matrices can in principle be multiplied: schoolbook multiplication costs about n³ operations (ω = 3), and sixty years of algorithm design has been chipping ω down toward the conjectured floor of 2. The current record comes from the \"laser method,\" a technical optimization procedure at the heart of these algorithms. This DeepMind-led team reformulated that optimization so it could be solved in a larger setting, handed it to modern machine-learning solvers, then refined the result with AlphaEvolve (DeepMind's LLM-driven algorithm-discovery system), improving the bound from ω < 2.371339 to ω < 2.371177.",
+   "why": "the improvement is tiny — it lands in the fifth decimal place and buys no faster software today, since these \"galactic\" algorithms are far too intricate to run in practice. What's notable is who moved it: an AI system advancing one of theoretical computer science's most-studied constants, on a frontier where human experts have made gains this small over many years.",
+   "url": "https://arxiv.org/abs/2608.16884",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "science"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "Google DeepMind",
+    "Carnegie Mellon University"
+   ],
+   "affiliation_label": "Google DeepMind, Carnegie Mellon University",
+   "fresh": true
+  },
+  {
    "id": "2026-08-18-news-iran-declared-the-60-day-negotiating-deadline-fr",
    "sid": "st-597dbbe29da1",
    "headline": "Iran voids US talks deadline as Hormuz stays shut",
@@ -120,6 +149,215 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/18/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-18-ai-ml-weak-irrelevant-prompt-cues-can-be-stacked-to-st",
+   "sid": "st-21addf24ede6",
+   "headline": "Weak prompt cues can be stacked to strongly control a model",
+   "summary": "The authors describe a phenomenon they call model hypnosis: individually weak, seemingly irrelevant choices in a prompt — paraphrases, typos, innocuous wording — can be combined so that together they systematically steer a model's behaviour. They report it across model families and scales, including in frontier reasoning models, and find that a \"hypnotic\" prompt tuned on one model often transfers to another.",
+   "why": "if inconspicuous surface features can be composed into strong control, that cuts against both safety and interpretability — the levers that move a model are precisely the ones a human reviewer would dismiss as noise, and they generalise across systems rather than staying model-specific. It reframes prompt-based jailbreaks as an additive, transferable effect rather than a bag of one-off tricks.",
+   "url": "https://arxiv.org/abs/2608.16834",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "University of Pennsylvania"
+   ],
+   "affiliation_label": "University of Pennsylvania",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-18-ai-ml-a-memory-that-starts-small-keeps-long-context-mo",
+   "sid": "st-c3f0b2dbe3e0",
+   "headline": "A memory that starts small keeps long-context models from clogging",
+   "summary": "Standard attention costs grow quadratically with context length, so a growing line of work compresses the past into a fixed-size \"memory state\" instead. The snag: with a static memory the earliest tokens face no compression pressure, so they hog degrees of freedom and \"pollute\" the state, leaving little room for later context. Proteus introduces incremental memory activation — the memory's usable capacity is expanded gradually as the sequence grows. An early bottleneck forces the model to compress history harder; unlocking fresh capacity later reduces interference with new tokens. It drops into several recent memory architectures (Titans, Comba, Hope-Attention) at no added cost, with gains that widen at longer context lengths.",
+   "why": "long-context recall is where sub-quadratic (\"linear-attention\") models usually break down; scheduling when memory becomes available, rather than how much there is, is a cheap and broadly reusable lever for that failure mode.",
+   "url": "https://arxiv.org/abs/2608.16844",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "Google",
+    "Mila – Quebec AI Institute",
+    "Université de Montréal"
+   ],
+   "affiliation_label": "Google, Mila – Quebec AI Institute +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-18-ai-ml-statistical-mechanics-predicts-how-crowds-of-ai",
+   "sid": "st-bdabf0574df4",
+   "headline": "Statistical mechanics predicts how crowds of AI agents drift",
+   "summary": "As AI agents increasingly talk to each other rather than work alone, their interactions can sharpen collective reasoning — or produce herding and shared bias. The authors ran over 10,000 communities of language-model agents that repeatedly exchange messages and revise their views, on objective maths questions and on subjective political statements. Despite huge variety, the dynamics collapse into three regimes — indifference, polarization, consensus — with agents starting indifferent and building conviction as they interact. On factual questions, talking improves group accuracy; on subjective ones, it tends to drift the group's stated opinion rightward. They fit a statistical-mechanics model (borrowed from physics: agents stochastically favour lower \"social pressure,\" like particles settling toward low energy) that predicts individual trajectories from initial opinions alone and generalises to unseen community structures.",
+   "why": "it offers compact, testable laws for multi-agent behaviour instead of case-by-case anecdotes — useful for designing agent systems that resist groupthink. The rightward political-drift finding is the authors' own measured result on their setup, and worth treating as a specific empirical claim rather than a general law.",
+   "url": "https://arxiv.org/abs/2608.16578",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "Stanford University"
+   ],
+   "affiliation_label": "Stanford University",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-18-ai-ml-coding-agents-fail-when-the-fact-they-need-isn-t",
+   "sid": "st-6d111859e3fa",
+   "headline": "Coding agents fail when the needed fact is not in front of them",
+   "summary": "Repository-scale coding asks an agent to keep tests, imports, configuration and migration rules mutually consistent inside a limited context window. The authors model each edit as needing a \"fact\" that comes either from recent context or from the model's baked-in (\"parametric\") memory; facts supplied by neither channel are coherence debt. Testing seven models across five agent harnesses, they find: no model completes a task on an unseen API when both channels are empty, and simply putting the fact in the prompt restores success. Availability — not where the fact sits relative to the edit — decides the outcome. A missing fact produces wrong work rather than absent work: the agent fabricates a file or guesses a value instead of reporting itself blocked, and how often it admits it's stuck is a property of the model. Tellingly, a stale convention file costs more than no file, because agents follow the standard even when it prescribes worse code.",
+   "why": "it's a concrete diagnosis of why coding agents silently go wrong at scale — and a directive for harness builders: guarantee the facts an edit depends on are present when the agent writes, and check that against what it produces, not what it reads.",
+   "url": "https://arxiv.org/abs/2608.16630",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-18-ai-ml-an-agent-that-invents-new-crystals-in-a-language",
+   "sid": "st-0a4068aad6f3",
+   "headline": "An agent that invents new crystals in a language of motifs",
+   "summary": "Data-driven materials discovery is good at interpolating between known structures but rarely invents genuinely new structure types. MatEvolve is an agentic-AI framework — built on Claude Fable 5 with no fine-tuning — that writes each candidate crystal as an interpretable motif profile, a description of the recurring geometric patterns (\"motifs\") that compose it. Crucially the profile is not just a label but the medium of design: the agent edits the profile, builds a crystal from the edited version, states its rationale, and the most promising candidates are checked with first-principles physics calculations. Applied to rare-earth-lean permanent magnets (strong magnets that avoid scarce, geopolitically fraught rare-earth elements), it reached new structural prototypes more than three times as often as generative models at an equal validation budget, at a comparable rate of on-target magnets.",
+   "why": "it's a credible case of an agent reaching real novelty in a hard physical-science domain while staying human-readable — the motif profiles expose why a structure works, and the target (rare-earth-lean magnets) speaks directly to materials-supply-chain risk.",
+   "url": "https://arxiv.org/abs/2608.15900",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "science"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "JAIST",
+    "Institute of Science Tokyo"
+   ],
+   "affiliation_label": "JAIST, Institute of Science Tokyo",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-18-ai-ml-anthropic-s-annualized-revenue-reportedly-tops-6",
+   "sid": "st-641b11c7e058",
+   "headline": "Anthropic's annualized revenue reportedly tops $65 billion",
+   "summary": "Anthropic's annualized revenue reportedly tops $65 billion. Anthropic hit an annualized run-rate above $65B through the end of July — a roughly sevenfold jump year-on-year, said to have added about $18B in run-rate over two months — according to a regular investor update reported by Bloomberg and corroborated by TechCrunch. It is a distinct, concrete revenue figure separate from the earlier reporting on a potential ~$2T IPO valuation; the underlying number rests on unnamed sources.",
+   "why": "",
+   "url": "https://the-decoder.com/anthropic-increases-revenue-sevenfold-hits-annualized-rate-above-65-billion/",
+   "source_domain": "the-decoder.com",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-18-ai-ml-openai-signs-a-record-20-year-ohio-data-centre-l",
+   "sid": "st-e1c283829783",
+   "headline": "OpenAI signs a record Ohio data-centre lease, backed by Nvidia",
+   "summary": "OpenAI signs a record 20-year Ohio data-centre lease, backed by Nvidia. OpenAI leased the \"PORTS-Pike\" campus in Ohio (about 8GW of IT capacity) for 20 years from an SB Energy (SoftBank) subsidiary; Nvidia is guaranteeing up to $105B of the site's residual value and becomes exclusive chip supplier, and is separately investing about $1.5B in the developer. The Wall Street Journal frames it against roughly $3T of off-balance-sheet AI infrastructure commitments now spread across major tech firms — a scale of leverage worth watching regardless of the headline capacity.",
+   "why": "",
+   "url": "https://the-decoder.com/openai-signs-record-ohio-data-center-lease-with-nvidia-backing-up-to-105-billion/",
+   "source_domain": "the-decoder.com",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-18-ai-ml-groq-raises-350m-at-half-its-former-valuation",
+   "sid": "st-151e52aaa24a",
+   "headline": "Groq raises $350M at half its former valuation",
+   "summary": "Groq raises $350M — at half its former valuation. The inference-chip-turned-neocloud startup Groq raised $350M led by Disruptive, with planned Nvidia participation, at a $3.5B valuation — roughly half the $6.9B it carried last September, after Nvidia hired founder-CEO Jonathan Ross and senior staff in a reported $20B licensing deal. Groq disputes the \"down round\" label, calling $3.5B its post-licensing-deal valuation; either way the price cut is the concrete fact, against ambitions to scale from 54MW toward 200MW-plus of capacity by 2027.",
+   "why": "",
+   "url": "https://techcrunch.com/2026/08/17/groq-raises-350m-to-fuel-its-pivot-from-ai-chips-to-neocloud/",
+   "source_domain": "techcrunch.com",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
    "fresh": true
   },
   {
@@ -358,30 +596,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-17-news-the-migration-crisis-in-spain-s-north-african-en",
-   "sid": "st-af5f08c70d75",
-   "headline": "Ceuta crisis escalates Spain-Morocco row",
-   "summary": "The migration crisis in Spain's North African enclave of Ceuta escalated into a full-blown row with Madrid on Monday 17 August, as the city's president threatened legal action against the central government if it fails to resolve the situation within 30 days. Ceuta president Juan Jesús Vivas accused the Sánchez government of \"almost absolute passivity\" after a surge of arrivals — Moroccan police had arrested more than 100 people trying to cross into the enclave on Friday 14 August. Prime Minister Pedro Sánchez convened ministers by videoconference over the crisis, and Health Minister Mónica García called it \"an absolutely exceptional humanitarian crisis\"; local authorities began moving dozens of migrant girls and adolescents who had been sleeping outdoors into a converted hall. Rabat, for its part, is using the episode to air a list of grievances against Madrid — over migrant regularisation, nationality for Sahrawis, and summary \"hot\" returns.",
-   "why": "Ceuta is one of the EU's two land borders with Africa, and the standoff shows how quickly Spanish–Moroccan tensions can turn a local surge into a diplomatic and humanitarian flashpoint on Europe's southern frontier.",
-   "url": "https://elpais.com/espana/2026-08-17/el-presidente-de-ceuta-eleva-el-tono-contra-el-gobierno-y-amenaza-con-acudir-al-poder-judicial-si-no-resuelve-la-crisis-en-30-dias.html",
-   "source_domain": "elpais.com",
-   "date": "2026-08-17",
-   "date_label": "Aug 17",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/17/news/",
-   "fresh": false
-  },
-  {
    "id": "2026-08-17-sports-the-guardiola-era-ends-arsenal-3-0-man-city-in-t",
    "sid": "st-c443d37f5741",
    "headline": "Arsenal rout City in Community Shield",
@@ -544,29 +758,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-16-news-a-wildfire-in-the-high-fens-nature-park-of-easte",
-   "sid": "st-793855772ea8",
-   "headline": "Belgium fights record wildfire",
-   "summary": "A wildfire in the High Fens nature park of eastern Belgium has become the largest in the country's modern history, scorching more than 3,000 hectares (7,500 acres) by Sunday 16 August and forcing hundreds from their homes near the German border. The blaze broke out Friday 14 August in an area of fragile peatlands (waterlogged, carbon-rich soils that smoulder and are notoriously hard to extinguish) and pine forest, and exploded from about 80 hectares on Friday to over 3,000 by Sunday morning, local authorities said — an area last devastated by fire in 1911, during a comparable heatwave and drought. Roughly 600 residents of Sourbrodt and Bütgenbach were ordered to evacuate, with a gymnasium in Malmedy opened as a shelter and the Belgian Red Cross on site; the EU dispatched helicopters and water-bombing aircraft after Belgium activated the bloc's civil-protection mechanism. Officials said the rugged terrain was preventing crews from fighting the fire up close by their usual methods.",
-   "why": "it is one more marker of the extreme, Europe-wide heat-and-drought summer already parching Swiss forests and rivers — and peatland fires are especially stubborn and carbon-heavy.",
-   "url": "https://www.france24.com/en/europe/20260816-eu-sends-aircraft-and-villagers-evacuate-as-belgium-battles-record-wildfire",
-   "source_domain": "france24.com",
-   "date": "2026-08-16",
-   "date_label": "Aug 16",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/16/news/",
-   "fresh": false
-  },
-  {
    "id": "2026-08-15-weekend-faraday-an-ai-agent-post-trained-to-replicate-re",
    "sid": "st-9c90df4598b6",
    "headline": "AI agent trained to replicate research papers",
@@ -713,30 +904,6 @@
    "topic_primary": "switzerland",
    "topic_label": "Switzerland",
    "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-15-news-the-ebola-outbreak-in-eastern-dr-congo-has-becom",
-   "sid": "st-0c49ef6fafa1",
-   "headline": "DRC Ebola outbreak turns deadliest ever",
-   "summary": "The Ebola outbreak in eastern DR Congo has become the deadliest on record, with the UN reporting one death roughly every 30 minutes and releasing another $30.5 million in emergency funds. UN humanitarian chief Tom Fletcher said Friday 14 August that the Bundibugyo-strain outbreak — a species of Ebola virus, declared by DRC authorities on 15 May — has now killed 2,184 people, about 47% of confirmed cases, and that \"Ebola is winning.\" He allocated a further $30.5m from the UN's Central Emergency Response Fund on top of $24m already committed, and OCHA has deployed extra staff to the epicentre. The toll has roughly doubled since mid-July, when the pipeline last recorded it near 1,000, and about half the deaths have come in the most recent stretch; a race to deploy newer vaccines is under way.",
-   "why": "a case-fatality rate near half and the fastest spread ever recorded mean the response is losing ground, with cross-border spillover risk in a conflict-hit region. (UN News, 15 Aug 2026; vaccine push",
-   "url": "https://news.un.org/feed/view/en/story/2026/08/1168148",
-   "source_domain": "news.un.org",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "health",
-    "world"
-   ],
-   "topic_primary": "health",
-   "topic_label": "Health",
-   "topic_color": "#a44a72",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/15/news/",
@@ -914,131 +1081,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-14-ai-ml-a-recurrent-memory-that-routes-by-content-keeps",
-   "sid": "st-8560880a9d3c",
-   "headline": "Content-routed anchors give recurrent memory long recall",
-   "summary": "Transformers recall far-back tokens well because they keep a per-token memory (the KV cache) that grows with the input — but that means quadratic training cost and a cache that swells linearly at inference. Recurrent models fix the cost by squeezing all history into a fixed-size state, but they forget: new updates overwrite old associations, so only recent context survives. MARCH (Memory-Anchor Routing across Context History) adds content-routed state anchors — a fixed set of memory slots that incoming information is routed to by what it's about, so older associations are preserved in the slot they belong to rather than being overwritten.",
-   "why": "the long-context/recurrent trade-off — cheap decoding versus reliable recall — is one of the central architectural tensions in scaling, and a fixed-size state that stops forgetting is a genuine attempt to get both. From a top Chinese lab consortium, it's worth watching whether the recall gains hold on the hardest retrieval tasks.",
-   "url": "https://arxiv.org/abs/2608.12435",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "affiliations": [
-    "Shanghai AI Laboratory",
-    "Tsinghua University",
-    "Fudan University"
-   ],
-   "affiliation_label": "Shanghai AI Laboratory, Tsinghua University +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-14-ai-ml-google-ships-gemini-3-7-flash-and-halves-the-pri",
-   "sid": "st-7703df8ac857",
-   "headline": "Gemini 3.7 Flash undercuts predecessor by 50%",
-   "summary": "Google ships Gemini 3.7 Flash and halves the price of a model three weeks old. Google released Gemini 3.7 Flash with improved coding performance, undercutting its own predecessor's price by 50% barely three weeks after that predecessor launched — a cadence and price trajectory that says as much about the competitive squeeze on inference margins as about the model.",
-   "why": "",
-   "url": "https://the-decoder.com/gemini-3-7-flash-lands-with-coding-gains-and-undercuts-its-three-week-old-predecessors-price-by-50/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-14-ai-ml-deepseek-ships-v4-pro-0813-open-sources-its-agen",
-   "sid": "st-6cc83ebca515",
-   "headline": "DeepSeek V4 Pro ships with open agent software",
-   "summary": "DeepSeek ships V4-Pro-0813, open-sources its agent software, and raises API prices. The MIT-licensed model card describes an official V4-Pro release with \"greatly enhanced agentic capabilities,\" built on the V4-Pro Preview structure with a DSpark speculative-decoding module bolted on, and calls itself broadly competitive with the strongest proprietary models. Notably, DeepSeek simultaneously open-sourced its agent software and raised API prices — a \"give away the weights, charge for the service\" posture worth watching.",
-   "why": "",
-   "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813",
-   "source_domain": "huggingface.co",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-14-ai-ml-zhipu-s-glm-5-3-claims-the-strongest-open-coding",
-   "sid": "st-2997a71b71fc",
-   "headline": "Zhipu GLM-5.3 claims strongest open coding model",
-   "summary": "Zhipu's GLM-5.3 claims the strongest open coding model — and was trained to hunt vulnerabilities — but the weights aren't out yet. GLM-5.3 shares GLM-5.2's base, with all gains from extended post-training, and Zhipu says it leads open models on agentic coding. Distinctively, it was trained on data and environments for finding software vulnerabilities; working with Chinese security teams, Zhipu says it surfaced 2,436 flaws across 269 projects (some in code up to 40 years old), logged in a public registry. Important caveat: despite the \"open-weights\" framing, the weights are only scheduled to open in about two weeks, after security review — today it is API-only.",
-   "why": "",
-   "url": "https://the-decoder.com/zhipu-ai-releases-glm-5-3-claims-its-the-strongest-open-weights-coding-model/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-14-ai-ml-anthropic-could-be-worth-2-trillion-when-it-goes",
-   "sid": "st-058cd6eb0f31",
-   "headline": "Anthropic could be worth $2 trillion at IPO",
-   "summary": "Anthropic could be worth ~$2 trillion when it goes public. Reporting puts a potential Anthropic IPO valuation near $2 trillion — a number that, if it holds, would rank the lab among the most valuable companies on earth and underlines how far AI-lab valuations have detached from conventional revenue multiples.",
-   "why": "",
-   "url": "https://arstechnica.com/ai/2026/08/anthropic-could-be-worth-2-trillion-when-it-goes-public/",
-   "source_domain": "arstechnica.com",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "fresh": false
-  },
-  {
    "id": "2026-08-14-news-the-white-house-accused-more-than-40-countries-o",
    "sid": "st-7255b8a7c932",
    "headline": "White House accuses 40 nations over China tariffs",
@@ -1060,36 +1102,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/14/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-14-ai-ml-a-benchmark-asks-whether-agents-can-write-code-a",
-   "sid": "st-2a59c69eaae6",
-   "headline": "Benchmark tests agents on formally verified repos",
-   "summary": "AI coding agents give no guarantee their output is correct. Verified code generation raises the bar: the agent must emit both an implementation and a machine-checked proof that the code meets a formal specification (a proof assistant mechanically confirms it, leaving no room for a plausible-but-wrong answer). Prior benchmarks tested single functions, or proofs against code someone else wrote. Vero is the first to test both together at the whole-repository level — 43 multi-module instances drawn from real projects across Python, Dafny, Verus, and Coq.",
-   "why": "\"the agent wrote it and the tests pass\" is a weak guarantee; \"the agent wrote it and a proof checker verified it against a spec\" is a strong one. A repository-scale benchmark is what tells us whether that stronger guarantee is within reach for real codebases rather than isolated snippets.",
-   "url": "https://arxiv.org/abs/2608.13522",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "affiliations": [
-    "UC Berkeley",
-    "University of Chicago",
-    "Caltech"
-   ],
-   "affiliation_label": "UC Berkeley, University of Chicago +1",
    "fresh": false
   },
   {
@@ -2067,6 +2079,39 @@
  ],
  "board": [
   {
+   "id": "2026-08-18-ai-ml-an-ai-system-nudges-the-matrix-multiplication-ex",
+   "sid": "st-d2de83c4e4be",
+   "headline": "An AI system nudges the matrix-multiplication exponent to a new record",
+   "summary": "The matrix-multiplication exponent ω is the theoretical yardstick for how fast two n×n matrices can in principle be multiplied: schoolbook multiplication costs about n³ operations (ω = 3), and sixty years of algorithm design has been chipping ω down toward the conjectured floor of 2. The current record comes from the \"laser method,\" a technical optimization procedure at the heart of these algorithms. This DeepMind-led team reformulated that optimization so it could be solved in a larger setting, handed it to modern machine-learning solvers, then refined the result with AlphaEvolve (DeepMind's LLM-driven algorithm-discovery system), improving the bound from ω < 2.371339 to ω < 2.371177.",
+   "why": "the improvement is tiny — it lands in the fifth decimal place and buys no faster software today, since these \"galactic\" algorithms are far too intricate to run in practice. What's notable is who moved it: an AI system advancing one of theoretical computer science's most-studied constants, on a frontier where human experts have made gains this small over many years.",
+   "url": "https://arxiv.org/abs/2608.16884",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "science"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "Google DeepMind",
+    "Carnegie Mellon University"
+   ],
+   "affiliation_label": "Google DeepMind, Carnegie Mellon University",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 18 Aug",
+   "daybreak": true
+  },
+  {
    "id": "2026-08-18-news-iran-declared-the-60-day-negotiating-deadline-fr",
    "sid": "st-597dbbe29da1",
    "headline": "Iran voids US talks deadline as Hormuz stays shut",
@@ -2092,7 +2137,248 @@
    "kind": "story",
    "age_days": 0,
    "day_label": "Tue 18 Aug",
-   "daybreak": true
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-weak-irrelevant-prompt-cues-can-be-stacked-to-st",
+   "sid": "st-21addf24ede6",
+   "headline": "Weak prompt cues can be stacked to strongly control a model",
+   "summary": "The authors describe a phenomenon they call model hypnosis: individually weak, seemingly irrelevant choices in a prompt — paraphrases, typos, innocuous wording — can be combined so that together they systematically steer a model's behaviour. They report it across model families and scales, including in frontier reasoning models, and find that a \"hypnotic\" prompt tuned on one model often transfers to another.",
+   "why": "if inconspicuous surface features can be composed into strong control, that cuts against both safety and interpretability — the levers that move a model are precisely the ones a human reviewer would dismiss as noise, and they generalise across systems rather than staying model-specific. It reframes prompt-based jailbreaks as an additive, transferable effect rather than a bag of one-off tricks.",
+   "url": "https://arxiv.org/abs/2608.16834",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "University of Pennsylvania"
+   ],
+   "affiliation_label": "University of Pennsylvania",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 18 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-a-memory-that-starts-small-keeps-long-context-mo",
+   "sid": "st-c3f0b2dbe3e0",
+   "headline": "A memory that starts small keeps long-context models from clogging",
+   "summary": "Standard attention costs grow quadratically with context length, so a growing line of work compresses the past into a fixed-size \"memory state\" instead. The snag: with a static memory the earliest tokens face no compression pressure, so they hog degrees of freedom and \"pollute\" the state, leaving little room for later context. Proteus introduces incremental memory activation — the memory's usable capacity is expanded gradually as the sequence grows. An early bottleneck forces the model to compress history harder; unlocking fresh capacity later reduces interference with new tokens. It drops into several recent memory architectures (Titans, Comba, Hope-Attention) at no added cost, with gains that widen at longer context lengths.",
+   "why": "long-context recall is where sub-quadratic (\"linear-attention\") models usually break down; scheduling when memory becomes available, rather than how much there is, is a cheap and broadly reusable lever for that failure mode.",
+   "url": "https://arxiv.org/abs/2608.16844",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "Google",
+    "Mila – Quebec AI Institute",
+    "Université de Montréal"
+   ],
+   "affiliation_label": "Google, Mila – Quebec AI Institute +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 18 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-statistical-mechanics-predicts-how-crowds-of-ai",
+   "sid": "st-bdabf0574df4",
+   "headline": "Statistical mechanics predicts how crowds of AI agents drift",
+   "summary": "As AI agents increasingly talk to each other rather than work alone, their interactions can sharpen collective reasoning — or produce herding and shared bias. The authors ran over 10,000 communities of language-model agents that repeatedly exchange messages and revise their views, on objective maths questions and on subjective political statements. Despite huge variety, the dynamics collapse into three regimes — indifference, polarization, consensus — with agents starting indifferent and building conviction as they interact. On factual questions, talking improves group accuracy; on subjective ones, it tends to drift the group's stated opinion rightward. They fit a statistical-mechanics model (borrowed from physics: agents stochastically favour lower \"social pressure,\" like particles settling toward low energy) that predicts individual trajectories from initial opinions alone and generalises to unseen community structures.",
+   "why": "it offers compact, testable laws for multi-agent behaviour instead of case-by-case anecdotes — useful for designing agent systems that resist groupthink. The rightward political-drift finding is the authors' own measured result on their setup, and worth treating as a specific empirical claim rather than a general law.",
+   "url": "https://arxiv.org/abs/2608.16578",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "Stanford University"
+   ],
+   "affiliation_label": "Stanford University",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 18 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-coding-agents-fail-when-the-fact-they-need-isn-t",
+   "sid": "st-6d111859e3fa",
+   "headline": "Coding agents fail when the needed fact is not in front of them",
+   "summary": "Repository-scale coding asks an agent to keep tests, imports, configuration and migration rules mutually consistent inside a limited context window. The authors model each edit as needing a \"fact\" that comes either from recent context or from the model's baked-in (\"parametric\") memory; facts supplied by neither channel are coherence debt. Testing seven models across five agent harnesses, they find: no model completes a task on an unseen API when both channels are empty, and simply putting the fact in the prompt restores success. Availability — not where the fact sits relative to the edit — decides the outcome. A missing fact produces wrong work rather than absent work: the agent fabricates a file or guesses a value instead of reporting itself blocked, and how often it admits it's stuck is a property of the model. Tellingly, a stale convention file costs more than no file, because agents follow the standard even when it prescribes worse code.",
+   "why": "it's a concrete diagnosis of why coding agents silently go wrong at scale — and a directive for harness builders: guarantee the facts an edit depends on are present when the agent writes, and check that against what it produces, not what it reads.",
+   "url": "https://arxiv.org/abs/2608.16630",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 18 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-an-agent-that-invents-new-crystals-in-a-language",
+   "sid": "st-0a4068aad6f3",
+   "headline": "An agent that invents new crystals in a language of motifs",
+   "summary": "Data-driven materials discovery is good at interpolating between known structures but rarely invents genuinely new structure types. MatEvolve is an agentic-AI framework — built on Claude Fable 5 with no fine-tuning — that writes each candidate crystal as an interpretable motif profile, a description of the recurring geometric patterns (\"motifs\") that compose it. Crucially the profile is not just a label but the medium of design: the agent edits the profile, builds a crystal from the edited version, states its rationale, and the most promising candidates are checked with first-principles physics calculations. Applied to rare-earth-lean permanent magnets (strong magnets that avoid scarce, geopolitically fraught rare-earth elements), it reached new structural prototypes more than three times as often as generative models at an equal validation budget, at a comparable rate of on-target magnets.",
+   "why": "it's a credible case of an agent reaching real novelty in a hard physical-science domain while staying human-readable — the motif profiles expose why a structure works, and the target (rare-earth-lean magnets) speaks directly to materials-supply-chain risk.",
+   "url": "https://arxiv.org/abs/2608.15900",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "science"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "JAIST",
+    "Institute of Science Tokyo"
+   ],
+   "affiliation_label": "JAIST, Institute of Science Tokyo",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 18 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-anthropic-s-annualized-revenue-reportedly-tops-6",
+   "sid": "st-641b11c7e058",
+   "headline": "Anthropic's annualized revenue reportedly tops $65 billion",
+   "summary": "Anthropic's annualized revenue reportedly tops $65 billion. Anthropic hit an annualized run-rate above $65B through the end of July — a roughly sevenfold jump year-on-year, said to have added about $18B in run-rate over two months — according to a regular investor update reported by Bloomberg and corroborated by TechCrunch. It is a distinct, concrete revenue figure separate from the earlier reporting on a potential ~$2T IPO valuation; the underlying number rests on unnamed sources.",
+   "why": "",
+   "url": "https://the-decoder.com/anthropic-increases-revenue-sevenfold-hits-annualized-rate-above-65-billion/",
+   "source_domain": "the-decoder.com",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 18 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-openai-signs-a-record-20-year-ohio-data-centre-l",
+   "sid": "st-e1c283829783",
+   "headline": "OpenAI signs a record Ohio data-centre lease, backed by Nvidia",
+   "summary": "OpenAI signs a record 20-year Ohio data-centre lease, backed by Nvidia. OpenAI leased the \"PORTS-Pike\" campus in Ohio (about 8GW of IT capacity) for 20 years from an SB Energy (SoftBank) subsidiary; Nvidia is guaranteeing up to $105B of the site's residual value and becomes exclusive chip supplier, and is separately investing about $1.5B in the developer. The Wall Street Journal frames it against roughly $3T of off-balance-sheet AI infrastructure commitments now spread across major tech firms — a scale of leverage worth watching regardless of the headline capacity.",
+   "why": "",
+   "url": "https://the-decoder.com/openai-signs-record-ohio-data-center-lease-with-nvidia-backing-up-to-105-billion/",
+   "source_domain": "the-decoder.com",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 18 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-groq-raises-350m-at-half-its-former-valuation",
+   "sid": "st-151e52aaa24a",
+   "headline": "Groq raises $350M at half its former valuation",
+   "summary": "Groq raises $350M — at half its former valuation. The inference-chip-turned-neocloud startup Groq raised $350M led by Disruptive, with planned Nvidia participation, at a $3.5B valuation — roughly half the $6.9B it carried last September, after Nvidia hired founder-CEO Jonathan Ross and senior staff in a reported $20B licensing deal. Groq disputes the \"down round\" label, calling $3.5B its post-licensing-deal valuation; either way the price cut is the concrete fact, against ambitions to scale from 54MW toward 200MW-plus of capacity by 2027.",
+   "why": "",
+   "url": "https://techcrunch.com/2026/08/17/groq-raises-350m-to-fuel-its-pivot-from-ai-chips-to-neocloud/",
+   "source_domain": "techcrunch.com",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 18 Aug",
+   "daybreak": false
   },
   {
    "id": "2026-08-18-news-ukraine-launched-more-than-620-drones-at-the-mos",
@@ -2370,34 +2656,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-17-news-the-migration-crisis-in-spain-s-north-african-en",
-   "sid": "st-af5f08c70d75",
-   "headline": "Ceuta crisis escalates Spain-Morocco row",
-   "summary": "The migration crisis in Spain's North African enclave of Ceuta escalated into a full-blown row with Madrid on Monday 17 August, as the city's president threatened legal action against the central government if it fails to resolve the situation within 30 days. Ceuta president Juan Jesús Vivas accused the Sánchez government of \"almost absolute passivity\" after a surge of arrivals — Moroccan police had arrested more than 100 people trying to cross into the enclave on Friday 14 August. Prime Minister Pedro Sánchez convened ministers by videoconference over the crisis, and Health Minister Mónica García called it \"an absolutely exceptional humanitarian crisis\"; local authorities began moving dozens of migrant girls and adolescents who had been sleeping outdoors into a converted hall. Rabat, for its part, is using the episode to air a list of grievances against Madrid — over migrant regularisation, nationality for Sahrawis, and summary \"hot\" returns.",
-   "why": "Ceuta is one of the EU's two land borders with Africa, and the standoff shows how quickly Spanish–Moroccan tensions can turn a local surge into a diplomatic and humanitarian flashpoint on Europe's southern frontier.",
-   "url": "https://elpais.com/espana/2026-08-17/el-presidente-de-ceuta-eleva-el-tono-contra-el-gobierno-y-amenaza-con-acudir-al-poder-judicial-si-no-resuelve-la-crisis-en-30-dias.html",
-   "source_domain": "elpais.com",
-   "date": "2026-08-17",
-   "date_label": "Aug 17",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/17/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 1,
-   "day_label": "Mon 17 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-17-sports-the-guardiola-era-ends-arsenal-3-0-man-city-in-t",
    "sid": "st-c443d37f5741",
    "headline": "Arsenal rout City in Community Shield",
@@ -2604,33 +2862,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-16-news-a-wildfire-in-the-high-fens-nature-park-of-easte",
-   "sid": "st-793855772ea8",
-   "headline": "Belgium fights record wildfire",
-   "summary": "A wildfire in the High Fens nature park of eastern Belgium has become the largest in the country's modern history, scorching more than 3,000 hectares (7,500 acres) by Sunday 16 August and forcing hundreds from their homes near the German border. The blaze broke out Friday 14 August in an area of fragile peatlands (waterlogged, carbon-rich soils that smoulder and are notoriously hard to extinguish) and pine forest, and exploded from about 80 hectares on Friday to over 3,000 by Sunday morning, local authorities said — an area last devastated by fire in 1911, during a comparable heatwave and drought. Roughly 600 residents of Sourbrodt and Bütgenbach were ordered to evacuate, with a gymnasium in Malmedy opened as a shelter and the Belgian Red Cross on site; the EU dispatched helicopters and water-bombing aircraft after Belgium activated the bloc's civil-protection mechanism. Officials said the rugged terrain was preventing crews from fighting the fire up close by their usual methods.",
-   "why": "it is one more marker of the extreme, Europe-wide heat-and-drought summer already parching Swiss forests and rivers — and peatland fires are especially stubborn and carbon-heavy.",
-   "url": "https://www.france24.com/en/europe/20260816-eu-sends-aircraft-and-villagers-evacuate-as-belgium-battles-record-wildfire",
-   "source_domain": "france24.com",
-   "date": "2026-08-16",
-   "date_label": "Aug 16",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/16/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 2,
-   "day_label": "Sun 16 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-15-weekend-faraday-an-ai-agent-post-trained-to-replicate-re",
    "sid": "st-9c90df4598b6",
    "headline": "AI agent trained to replicate research papers",
@@ -2797,34 +3028,6 @@
    "topic_primary": "switzerland",
    "topic_label": "Switzerland",
    "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 15 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-15-news-the-ebola-outbreak-in-eastern-dr-congo-has-becom",
-   "sid": "st-0c49ef6fafa1",
-   "headline": "DRC Ebola outbreak turns deadliest ever",
-   "summary": "The Ebola outbreak in eastern DR Congo has become the deadliest on record, with the UN reporting one death roughly every 30 minutes and releasing another $30.5 million in emergency funds. UN humanitarian chief Tom Fletcher said Friday 14 August that the Bundibugyo-strain outbreak — a species of Ebola virus, declared by DRC authorities on 15 May — has now killed 2,184 people, about 47% of confirmed cases, and that \"Ebola is winning.\" He allocated a further $30.5m from the UN's Central Emergency Response Fund on top of $24m already committed, and OCHA has deployed extra staff to the epicentre. The toll has roughly doubled since mid-July, when the pipeline last recorded it near 1,000, and about half the deaths have come in the most recent stretch; a race to deploy newer vaccines is under way.",
-   "why": "a case-fatality rate near half and the fastest spread ever recorded mean the response is losing ground, with cross-border spillover risk in a conflict-hit region. (UN News, 15 Aug 2026; vaccine push",
-   "url": "https://news.un.org/feed/view/en/story/2026/08/1168148",
-   "source_domain": "news.un.org",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "health",
-    "world"
-   ],
-   "topic_primary": "health",
-   "topic_label": "Health",
-   "topic_color": "#a44a72",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/15/news/",
@@ -3052,151 +3255,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-14-ai-ml-a-recurrent-memory-that-routes-by-content-keeps",
-   "sid": "st-8560880a9d3c",
-   "headline": "Content-routed anchors give recurrent memory long recall",
-   "summary": "Transformers recall far-back tokens well because they keep a per-token memory (the KV cache) that grows with the input — but that means quadratic training cost and a cache that swells linearly at inference. Recurrent models fix the cost by squeezing all history into a fixed-size state, but they forget: new updates overwrite old associations, so only recent context survives. MARCH (Memory-Anchor Routing across Context History) adds content-routed state anchors — a fixed set of memory slots that incoming information is routed to by what it's about, so older associations are preserved in the slot they belong to rather than being overwritten.",
-   "why": "the long-context/recurrent trade-off — cheap decoding versus reliable recall — is one of the central architectural tensions in scaling, and a fixed-size state that stops forgetting is a genuine attempt to get both. From a top Chinese lab consortium, it's worth watching whether the recall gains hold on the hardest retrieval tasks.",
-   "url": "https://arxiv.org/abs/2608.12435",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "affiliations": [
-    "Shanghai AI Laboratory",
-    "Tsinghua University",
-    "Fudan University"
-   ],
-   "affiliation_label": "Shanghai AI Laboratory, Tsinghua University +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 14 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-14-ai-ml-google-ships-gemini-3-7-flash-and-halves-the-pri",
-   "sid": "st-7703df8ac857",
-   "headline": "Gemini 3.7 Flash undercuts predecessor by 50%",
-   "summary": "Google ships Gemini 3.7 Flash and halves the price of a model three weeks old. Google released Gemini 3.7 Flash with improved coding performance, undercutting its own predecessor's price by 50% barely three weeks after that predecessor launched — a cadence and price trajectory that says as much about the competitive squeeze on inference margins as about the model.",
-   "why": "",
-   "url": "https://the-decoder.com/gemini-3-7-flash-lands-with-coding-gains-and-undercuts-its-three-week-old-predecessors-price-by-50/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 14 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-14-ai-ml-deepseek-ships-v4-pro-0813-open-sources-its-agen",
-   "sid": "st-6cc83ebca515",
-   "headline": "DeepSeek V4 Pro ships with open agent software",
-   "summary": "DeepSeek ships V4-Pro-0813, open-sources its agent software, and raises API prices. The MIT-licensed model card describes an official V4-Pro release with \"greatly enhanced agentic capabilities,\" built on the V4-Pro Preview structure with a DSpark speculative-decoding module bolted on, and calls itself broadly competitive with the strongest proprietary models. Notably, DeepSeek simultaneously open-sourced its agent software and raised API prices — a \"give away the weights, charge for the service\" posture worth watching.",
-   "why": "",
-   "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813",
-   "source_domain": "huggingface.co",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 14 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-14-ai-ml-zhipu-s-glm-5-3-claims-the-strongest-open-coding",
-   "sid": "st-2997a71b71fc",
-   "headline": "Zhipu GLM-5.3 claims strongest open coding model",
-   "summary": "Zhipu's GLM-5.3 claims the strongest open coding model — and was trained to hunt vulnerabilities — but the weights aren't out yet. GLM-5.3 shares GLM-5.2's base, with all gains from extended post-training, and Zhipu says it leads open models on agentic coding. Distinctively, it was trained on data and environments for finding software vulnerabilities; working with Chinese security teams, Zhipu says it surfaced 2,436 flaws across 269 projects (some in code up to 40 years old), logged in a public registry. Important caveat: despite the \"open-weights\" framing, the weights are only scheduled to open in about two weeks, after security review — today it is API-only.",
-   "why": "",
-   "url": "https://the-decoder.com/zhipu-ai-releases-glm-5-3-claims-its-the-strongest-open-weights-coding-model/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 14 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-14-ai-ml-anthropic-could-be-worth-2-trillion-when-it-goes",
-   "sid": "st-058cd6eb0f31",
-   "headline": "Anthropic could be worth $2 trillion at IPO",
-   "summary": "Anthropic could be worth ~$2 trillion when it goes public. Reporting puts a potential Anthropic IPO valuation near $2 trillion — a number that, if it holds, would rank the lab among the most valuable companies on earth and underlines how far AI-lab valuations have detached from conventional revenue multiples.",
-   "why": "",
-   "url": "https://arstechnica.com/ai/2026/08/anthropic-could-be-worth-2-trillion-when-it-goes-public/",
-   "source_domain": "arstechnica.com",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 14 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-14-news-the-white-house-accused-more-than-40-countries-o",
    "sid": "st-7255b8a7c932",
    "headline": "White House accuses 40 nations over China tariffs",
@@ -3218,40 +3276,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/14/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 14 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-14-ai-ml-a-benchmark-asks-whether-agents-can-write-code-a",
-   "sid": "st-2a59c69eaae6",
-   "headline": "Benchmark tests agents on formally verified repos",
-   "summary": "AI coding agents give no guarantee their output is correct. Verified code generation raises the bar: the agent must emit both an implementation and a machine-checked proof that the code meets a formal specification (a proof assistant mechanically confirms it, leaving no room for a plausible-but-wrong answer). Prior benchmarks tested single functions, or proofs against code someone else wrote. Vero is the first to test both together at the whole-repository level — 43 multi-module instances drawn from real projects across Python, Dafny, Verus, and Coq.",
-   "why": "\"the agent wrote it and the tests pass\" is a weak guarantee; \"the agent wrote it and a proof checker verified it against a spec\" is a strong one. A repository-scale benchmark is what tells us whether that stronger guarantee is within reach for real codebases rather than isolated snippets.",
-   "url": "https://arxiv.org/abs/2608.13522",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/14/ai-ml/",
-   "affiliations": [
-    "UC Berkeley",
-    "University of Chicago",
-    "Caltech"
-   ],
-   "affiliation_label": "UC Berkeley, University of Chicago +1",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
