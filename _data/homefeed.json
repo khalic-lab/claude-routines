@@ -12,13 +12,13 @@
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 20
+   "count": 23
   },
   {
    "key": "science",
    "label": "Science",
    "color": "#4c6b3c",
-   "count": 16
+   "count": 14
   },
   {
    "key": "switzerland",
@@ -33,22 +33,22 @@
    "count": 9
   },
   {
-   "key": "politics",
-   "label": "Politics",
-   "color": "#9a6a34",
-   "count": 8
-  },
-  {
    "key": "sports",
    "label": "Sports",
    "color": "#c26b2e",
    "count": 8
   },
   {
+   "key": "politics",
+   "label": "Politics",
+   "color": "#9a6a34",
+   "count": 7
+  },
+  {
    "key": "economy",
    "label": "Economy",
    "color": "#9a7b2e",
-   "count": 7
+   "count": 5
   },
   {
    "key": "security",
@@ -57,16 +57,16 @@
    "count": 5
   },
   {
-   "key": "health",
-   "label": "Health",
-   "color": "#a44a72",
-   "count": 3
-  },
-  {
    "key": "tech",
    "label": "Tech",
    "color": "#3b6ea5",
-   "count": 3
+   "count": 4
+  },
+  {
+   "key": "health",
+   "label": "Health",
+   "color": "#a44a72",
+   "count": 2
   }
  ],
  "editorials": [
@@ -111,6 +111,30 @@
  ],
  "stories": [
   {
+   "id": "2026-08-21-ai-ml-nvidia-strikes-a-reported-6b-licensing-deal-for",
+   "sid": "st-e4304b869b4d",
+   "headline": "Nvidia strikes $6B Poolside model deal",
+   "summary": "Multiple outlets report Nvidia has agreed a non-exclusive $6 billion deal to license the \"Model Factory\" — the system Poolside (an AI coding-model startup, maker of the Laguna model) uses to build its models — alongside a separate $1 billion investment at a reported $12 billion pre-money valuation. Roughly 109 Poolside staff, largely researchers, are said to be getting Nvidia job offers, while the three founders stay to run Poolside independently. Note the structure, which the reporting stresses: this is not a clean acquisition or acqui-hire — the license is non-exclusive (Poolside can still sell the same technology elsewhere), and Poolside continues as a company. As of writing there is no first-party Nvidia or Poolside press release; the terms rest on sourced reporting.",
+   "why": "it's the window's largest single AI-industry move, and the unusual shape is the story — a chip vendor paying billions to license the model-building capability and hire the people, while leaving the startup standing, rather than buying it outright. It echoes the \"reverse-acquihire\" pattern regulators have scrutinised in earlier AI deals (structure a talent-and-tech absorption to avoid a merger review), and points to Nvidia moving further up the stack from selling compute toward owning the recipe for frontier models.",
+   "url": "https://www.theinformation.com/briefings/nvidia-reportedly-pay-6-billion-licensing-hiring-deal-ai-model-startup-poolside",
+   "source_domain": "theinformation.com",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/21/ai-ml/",
+   "fresh": true
+  },
+  {
    "id": "2026-08-21-news-seven-western-governments-issued-a-joint-stateme",
    "sid": "st-c1ec491f2b2b",
    "headline": "Western states condemn Israel's E1 plan",
@@ -131,6 +155,156 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/21/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-21-ai-ml-most-self-improvement-gains-vanish-once-you-add",
+   "sid": "st-1d0329964362",
+   "headline": "Audit exposes phantom self-improvement gains",
+   "summary": "The paper audits a now-common claim: that a model, retrained on its own outputs, has \"improved itself.\" The authors run three rounds of low-rank self-training (rank-32 LoRA — a lightweight fine-tuning method that adjusts a small add-on rather than all the weights) on Qwen3-8B, but critically also push a frozen, untrained copy through the identical measurement pipeline as a control. They find seven distinct measurement failures — several of them standard practice — and each one, on its own, inverts a reported finding when the control is missing. One example: scoring with a single greedy decode (taking the model's top-choice answer once) manufactures apparent capability changes even on the untrained model, largely an artifact of how examples are batched at inference.",
+   "why": "the field increasingly grades self-improvement not by average accuracy but by which specific problems a model newly solves or breaks — and that means subtracting two noisy measurements, exactly where artifacts hide. This is a concrete, reproducible checklist for telling a real gain from a measurement mirage, and a caution that a lot of the \"models bootstrapping themselves\" literature may be measuring its own pipeline.",
+   "url": "https://arxiv.org/abs/2608.20290",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "affiliations": [
+    "University College Dublin",
+    "Georgia Tech",
+    "Dalian University of Technology"
+   ],
+   "affiliation_label": "University College Dublin, Georgia Tech +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-21-ai-ml-agent-memories-can-store-the-right-facts-and-sti",
+   "sid": "st-1bd26122381e",
+   "headline": "Agent memory fails at state tracking",
+   "summary": "Most memory benchmarks test recall — can the agent fetch a fact it saw earlier. This paper argues that real deployments need state tracking: as facts, constraints, and decisions get revised over a long interaction, the answer must reflect the current state, not a superseded one. StateMemBench is 234 multi-session scenarios with closed-pool grading that explicitly scores whether an answer reflects the current state, a stale (superseded) state, or neither — separating \"tracked the wrong version\" from other errors by construction. Existing memory systems find it hard.",
+   "why": "the single most common way a long-running assistant goes wrong is confidently acting on something you changed three turns ago. Naming and measuring that failure mode — distinct from ordinary recall — gives memory-system builders a target that matches how agents actually break in production.",
+   "url": "https://arxiv.org/abs/2608.19652",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "affiliations": [
+    "UIUC"
+   ],
+   "affiliation_label": "UIUC",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-21-ai-ml-on-real-scientific-code-the-best-coding-agent-st",
+   "sid": "st-f961a73c1c1a",
+   "headline": "Coding agents struggle on science code",
+   "summary": "SWE-bench Science is a repository-level benchmark of 119 tasks from 98 GitHub repositories across 20 scientific domains, sorted into three paradigms (issue-driven, expert-exploratory, engineering-integration). The framing is that scientific software is part of the instrument — a bug can corrupt the evidence, not just the program. The headline result: even the strongest agent tested, Claude Code with Opus-5 (max), lands a pass@1 below 50% (pass@1 = solves it on the first attempt). A paired ablation finds scientific guidance is not uniformly helpful — well-grounded context helps, but poorly aligned guidance can anchor the agent onto a wrong repair.",
+   "why": "the reader works in software, and \"can a coding agent fix a real repo\" is the concrete version of the agent-hype question. A sub-50% first-try rate on scientific code — where domain knowledge and correctness both bite — is a sober, well-measured counterweight to leaderboard-topping SWE-bench numbers, and the failure taxonomy is a practical guide to where these agents break.",
+   "url": "https://arxiv.org/abs/2608.19799",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-21-ai-ml-teaching-a-model-to-allocate-its-own-thinking-bu",
+   "sid": "st-6ab8343d65c8",
+   "headline": "Model learns when to think",
+   "summary": "Reasoning models usually run at a fixed token budget, over-thinking easy problems and under-thinking hard ones. This paper lets the model pick, as its first token, one of three modes — NoThink, Short, or Long — learned inside GRPO (Group Relative Policy Optimization, the reward-based post-training recipe behind recent reasoning models) with no separate router, using a shaped reward plus hard per-mode token caps. On a 1.5B model trained on MATH the modes emerge without collapsing, and accuracy holds (0.782 vs 0.796 base on held-out MATH500) while mean response length drops from 4,796 to 2,811 tokens — a 41% cut. It transfers untrained to other benchmarks, e.g. 76% fewer tokens on GSM8K.",
+   "why": "inference cost is roughly proportional to tokens generated, so a model that spends effort in proportion to difficulty — and learns the dial itself, rather than a hand-set \"reasoning effort\" slider — is a cheap, broadly reusable efficiency lever.",
+   "url": "https://arxiv.org/abs/2608.20256",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-21-ai-ml-a-robot-foundation-model-that-learns-a-new-task",
+   "sid": "st-5fe6d0c549c1",
+   "headline": "Robot model learns tasks from one demo",
+   "summary": "Generalist AI released GEN-1.5, an \"embodied foundation model\" it describes as the first it knows of to show one-shot and few-shot learning of physical skills at scale. A single demonstration of 3–12 seconds is inserted into the model's context as a \"physical prompt,\" and the robot attempts the task immediately, with no gradient update in between — the same in-context learning that makes language models pick up a pattern from a few examples, applied to physical action. It is a multimodal model that ingests video plus sensor, language, and proprioceptive (body-position) input and emits action trajectories at 100 Hz, holding 30 seconds of memory. Across 10 tasks (opening jars, unzipping pouches, retrieving money from a purse), one-shot in-context prompting averaged 59% success straight from pretraining; ten gradient steps on five minutes of data raised that to 83%. The company reports capabilities that emerged from pretraining rather than being trained for — sim-to-real transfer, novel tool use, ambidextrous work. Figures are company-reported and not yet independently reproduced.",
+   "why": "robotics' bottleneck has been data — every new skill traditionally means fresh teleoperation and retraining. If a pretrained model can genuinely acquire a usable skill from one short demo, that changes the economics of deploying robots, which is why commentators are floating a \"ChatGPT moment for robotics\" framing. Treat that framing as a claim to verify, not a settled result: the 59% one-shot number and the emergent-capability list are the vendor's own.",
+   "url": "https://generalistai.com/blog/gen-1.5",
+   "source_domain": "generalistai.com",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-21-ai-ml-anthropic-plans-to-loosen-its-enterprise-data-re",
+   "sid": "st-457b40d1bbe4",
+   "headline": "Anthropic eases enterprise data retention",
+   "summary": "Per sourced reporting, Anthropic intends to let business customers keep the data its most capable models retain on their own cloud infrastructure rather than on Anthropic's — while still requiring a 30-day retention window. This walks back part of a June policy under which Anthropic said it would retain all customer data for its more powerful models for 30 days to detect novel AI-enabled cyberattacks; the company itself acknowledged at the time that the rule would be \"unpopular with customers who have come to expect zero retention.\" The new safety system, developed with 100-plus customers including Salesforce, is expected to roll out later this year. This is a reported plan, not yet a published Anthropic policy.",
+   "why": "data retention is a live procurement and compliance question for anyone deploying frontier models in a regulated or privacy-sensitive setting — including Swiss and EU enterprises bound by strict data-handling rules. The move shows the safety-vs-confidentiality tension being negotiated in the open, with a \"keep it on your own cloud\" compromise as the emerging middle ground (OpenAI is reported to be testing a similar \"private safety processing\" approach).",
+   "url": "https://www.bloomberg.com/news/articles/2026-08-20/anthropic-plans-to-change-data-retention-policy-for-advanced-ai",
+   "source_domain": "bloomberg.com",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
    "fresh": true
   },
   {
@@ -251,6 +425,57 @@
    "fresh": true
   },
   {
+   "id": "2026-08-21-ai-ml-a-benchmark-that-asks-whether-agents-can-improve",
+   "sid": "st-f5e87bae0e17",
+   "headline": "Benchmark tests AI self-improvement design",
+   "summary": "Recursive self-improvement (RSI) — the idea that an AI could improve the process that builds AIs, so each generation inherits the gain — hinges on one specific ability: can an agent design a better training algorithm (a better objective or update rule), as opposed to just collecting more data or tuning hyperparameters? AI4AI-Bench isolates exactly that, with 10 frozen research repositories spanning 10 training-algorithm families; a change counts only if it alters how the model learns, not how a run is executed. The authors argue no prior suite separates those two.",
+   "why": "\"recursive self-improvement\" is invoked constantly in AI-risk and AGI-timeline debates, usually without a way to measure it. Pairing this with Phantom Gains above, the cycle's message is consistent: the burden of proof on self-improvement claims is being raised, and the honest current answer is \"not yet, and here's how we'll know.\"",
+   "url": "https://arxiv.org/abs/2608.20318",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "affiliations": [
+    "Tsinghua University",
+    "Einsia.AI"
+   ],
+   "affiliation_label": "Tsinghua University, Einsia.AI",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-21-ai-ml-even-correct-relevant-memories-can-sabotage-the",
+   "sid": "st-fa8800580d12",
+   "headline": "Relevant memories can trap model reasoning",
+   "summary": "The companion failure mode to state-tracking. MemTrapBench shows that even memories that are faithfully recorded and semantically relevant can distort a model's reasoning or beliefs and drag down performance on the task in front of it. The authors define two \"cognitive traps\": Reasoning Fixation (a retrieved memory locks the model onto a prior line of thought it should abandon) and Belief Distortion (a memory shifts what the model treats as true). Both show up across two model families.",
+   "why": "the reflexive fix for agent errors is \"give it more memory / better retrieval.\" This is evidence that more retrieved context is not free — the wrong-but-relevant memory is a live hazard, not just missing memory — which argues for memory systems that decide whether to use a retrieved item, not only how to fetch it.",
+   "url": "https://arxiv.org/abs/2608.20202",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "fresh": true
+  },
+  {
    "id": "2026-08-21-news-a-new-report-from-the-swiss-academies-of-science",
    "sid": "st-b1b9b0e9ce86",
    "headline": "New Swiss reactor could cost up to 43bn francs",
@@ -316,29 +541,6 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/20/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-20-news-a-chinese-court-sentenced-evergrande-founder-hui",
-   "sid": "st-758df9a7be74",
-   "headline": "Evergrande founder gets life sentence",
-   "summary": "A Chinese court sentenced Evergrande founder Hui Ka Yan to life in prison on Thursday 20 August for fraud and bribery, ordering all his personal property confiscated. The Shenzhen Intermediate People's Court found that Hui — once Asia's richest man, who pleaded guilty in April — ran continuous, large-scale financial fraud to inflate the developer's assets and conceal its liabilities; investigators had found Evergrande overstated revenue by roughly $80 billion in 2019 and 2020. The court fined Evergrande 8.82 billion yuan ($1.31 billion) and its main subsidiary Hengda Real Estate 7 billion yuan, and handed six-to-18-year terms to five other executives. Evergrande defaulted in 2021 on most of its roughly $300 billion in liabilities, was ordered liquidated in 2024 and delisted in 2025 — the defining symbol of China's property-sector crisis.",
-   "why": "The sentence draws a line under the company whose collapse triggered China's property bust, signalling Beijing will pin the debt crisis on individual executives even as the underlying downturn in housing continues to weigh on the economy.",
-   "url": "https://www.dw.com/en/evergrande-founder-hui-ka-yan-sentenced-to-life-in-prison/a-78439153",
-   "source_domain": "dw.com",
-   "date": "2026-08-20",
-   "date_label": "Aug 20",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "economy"
-   ],
-   "topic_primary": "economy",
-   "topic_label": "Economy",
-   "topic_color": "#9a7b2e",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/20/news/",
@@ -415,30 +617,6 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/19/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-19-news-france-s-assisted-dying-law-was-promulgated-by-p",
-   "sid": "st-e3e0640a7618",
-   "headline": "France enacts assisted-dying law",
-   "summary": "France's assisted-dying law was promulgated by President Emmanuel Macron and formally took effect on Wednesday 19 August, making medical aid in dying legal for the first time. The step follows the Constitutional Council's ruling on Friday 14 August that found no grounds to strike the text down, which itself followed the National Assembly's final adoption on 15 July after years of debate. Under the law, adults with a \"serious and incurable\" illness in an advanced or terminal phase, suffering that cannot be relieved, may request assistance to die; access will phase in as implementing decrees follow. It is one of France's most consequential social reforms in a decade.",
-   "why": "France joins the small group of European states with a legal right to die, resolving a debate that has run through French politics for years — and the outcome next door feeds directly into how Switzerland, which already permits assisted suicide, and its neighbours frame their own end-of-life rules.",
-   "url": "https://www.lemonde.fr/societe/article/2026/08/19/l-aide-a-mourir-officiellement-autorisee-en-france-apres-la-promulgation-de-la-loi-par-emmanuel-macron_6749291_3224.html",
-   "source_domain": "lemonde.fr",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "politics",
-    "health"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/19/news/",
@@ -650,35 +828,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-19-science-the-milky-way-ate-a-galaxy-even-earlier-than-we",
-   "sid": "st-86e729dc2452",
-   "headline": "Milky Way's oldest known merger revealed",
-   "summary": "The Milky Way grew by devouring smaller galaxies, and the largest early merger securely known — Gaia-Sausage-Enceladus (a dwarf galaxy that fell in) — dates to about 10 billion years ago. Using globular clusters as tracers and a new method to date them, the INAF Bologna-led team found the clusters split into three distinct age–metallicity sequences: one native to the proto-Milky Way, one from Gaia-Sausage-Enceladus, and one pointing to an earlier, previously unrecognised major accretion event some 1.8 billion years before it.",
-   "why": "Each identified merger is a chapter in the Galaxy's origin story; finding an even older one pushes back the clock on when the Milky Way began assembling in earnest.",
-   "url": "https://www.nature.com/articles/s41550-026-02931-5",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "INAF",
-    "University of Bologna",
-    "University of Groningen"
-   ],
-   "affiliation_label": "INAF, University of Bologna +1",
-   "fresh": false
-  },
-  {
    "id": "2026-08-18-ai-ml-an-ai-system-nudges-the-matrix-multiplication-ex",
    "sid": "st-d2de83c4e4be",
    "headline": "An AI system nudges the matrix-multiplication exponent to a new record",
@@ -757,163 +906,6 @@
     "University of Pennsylvania"
    ],
    "affiliation_label": "University of Pennsylvania",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-a-memory-that-starts-small-keeps-long-context-mo",
-   "sid": "st-c3f0b2dbe3e0",
-   "headline": "A memory that starts small keeps long-context models from clogging",
-   "summary": "Standard attention costs grow quadratically with context length, so a growing line of work compresses the past into a fixed-size \"memory state\" instead. The snag: with a static memory the earliest tokens face no compression pressure, so they hog degrees of freedom and \"pollute\" the state, leaving little room for later context. Proteus introduces incremental memory activation — the memory's usable capacity is expanded gradually as the sequence grows. An early bottleneck forces the model to compress history harder; unlocking fresh capacity later reduces interference with new tokens. It drops into several recent memory architectures (Titans, Comba, Hope-Attention) at no added cost, with gains that widen at longer context lengths.",
-   "why": "long-context recall is where sub-quadratic (\"linear-attention\") models usually break down; scheduling when memory becomes available, rather than how much there is, is a cheap and broadly reusable lever for that failure mode.",
-   "url": "https://arxiv.org/abs/2608.16844",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
-   "affiliations": [
-    "Google",
-    "Mila – Quebec AI Institute",
-    "Université de Montréal"
-   ],
-   "affiliation_label": "Google, Mila – Quebec AI Institute +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-statistical-mechanics-predicts-how-crowds-of-ai",
-   "sid": "st-bdabf0574df4",
-   "headline": "Statistical mechanics predicts how crowds of AI agents drift",
-   "summary": "As AI agents increasingly talk to each other rather than work alone, their interactions can sharpen collective reasoning — or produce herding and shared bias. The authors ran over 10,000 communities of language-model agents that repeatedly exchange messages and revise their views, on objective maths questions and on subjective political statements. Despite huge variety, the dynamics collapse into three regimes — indifference, polarization, consensus — with agents starting indifferent and building conviction as they interact. On factual questions, talking improves group accuracy; on subjective ones, it tends to drift the group's stated opinion rightward. They fit a statistical-mechanics model (borrowed from physics: agents stochastically favour lower \"social pressure,\" like particles settling toward low energy) that predicts individual trajectories from initial opinions alone and generalises to unseen community structures.",
-   "why": "it offers compact, testable laws for multi-agent behaviour instead of case-by-case anecdotes — useful for designing agent systems that resist groupthink. The rightward political-drift finding is the authors' own measured result on their setup, and worth treating as a specific empirical claim rather than a general law.",
-   "url": "https://arxiv.org/abs/2608.16578",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
-   "affiliations": [
-    "Stanford University"
-   ],
-   "affiliation_label": "Stanford University",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-coding-agents-fail-when-the-fact-they-need-isn-t",
-   "sid": "st-6d111859e3fa",
-   "headline": "Coding agents fail when the needed fact is not in front of them",
-   "summary": "Repository-scale coding asks an agent to keep tests, imports, configuration and migration rules mutually consistent inside a limited context window. The authors model each edit as needing a \"fact\" that comes either from recent context or from the model's baked-in (\"parametric\") memory; facts supplied by neither channel are coherence debt. Testing seven models across five agent harnesses, they find: no model completes a task on an unseen API when both channels are empty, and simply putting the fact in the prompt restores success. Availability — not where the fact sits relative to the edit — decides the outcome. A missing fact produces wrong work rather than absent work: the agent fabricates a file or guesses a value instead of reporting itself blocked, and how often it admits it's stuck is a property of the model. Tellingly, a stale convention file costs more than no file, because agents follow the standard even when it prescribes worse code.",
-   "why": "it's a concrete diagnosis of why coding agents silently go wrong at scale — and a directive for harness builders: guarantee the facts an edit depends on are present when the agent writes, and check that against what it produces, not what it reads.",
-   "url": "https://arxiv.org/abs/2608.16630",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-an-agent-that-invents-new-crystals-in-a-language",
-   "sid": "st-0a4068aad6f3",
-   "headline": "An agent that invents new crystals in a language of motifs",
-   "summary": "Data-driven materials discovery is good at interpolating between known structures but rarely invents genuinely new structure types. MatEvolve is an agentic-AI framework — built on Claude Fable 5 with no fine-tuning — that writes each candidate crystal as an interpretable motif profile, a description of the recurring geometric patterns (\"motifs\") that compose it. Crucially the profile is not just a label but the medium of design: the agent edits the profile, builds a crystal from the edited version, states its rationale, and the most promising candidates are checked with first-principles physics calculations. Applied to rare-earth-lean permanent magnets (strong magnets that avoid scarce, geopolitically fraught rare-earth elements), it reached new structural prototypes more than three times as often as generative models at an equal validation budget, at a comparable rate of on-target magnets.",
-   "why": "it's a credible case of an agent reaching real novelty in a hard physical-science domain while staying human-readable — the motif profiles expose why a structure works, and the target (rare-earth-lean magnets) speaks directly to materials-supply-chain risk.",
-   "url": "https://arxiv.org/abs/2608.15900",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "science"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
-   "affiliations": [
-    "JAIST",
-    "Institute of Science Tokyo"
-   ],
-   "affiliation_label": "JAIST, Institute of Science Tokyo",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-anthropic-s-annualized-revenue-reportedly-tops-6",
-   "sid": "st-641b11c7e058",
-   "headline": "Anthropic's annualized revenue reportedly tops $65 billion",
-   "summary": "Anthropic's annualized revenue reportedly tops $65 billion. Anthropic hit an annualized run-rate above $65B through the end of July — a roughly sevenfold jump year-on-year, said to have added about $18B in run-rate over two months — according to a regular investor update reported by Bloomberg and corroborated by TechCrunch. It is a distinct, concrete revenue figure separate from the earlier reporting on a potential ~$2T IPO valuation; the underlying number rests on unnamed sources.",
-   "why": "",
-   "url": "https://the-decoder.com/anthropic-increases-revenue-sevenfold-hits-annualized-rate-above-65-billion/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-openai-signs-a-record-20-year-ohio-data-centre-l",
-   "sid": "st-e1c283829783",
-   "headline": "OpenAI signs a record Ohio data-centre lease, backed by Nvidia",
-   "summary": "OpenAI signs a record 20-year Ohio data-centre lease, backed by Nvidia. OpenAI leased the \"PORTS-Pike\" campus in Ohio (about 8GW of IT capacity) for 20 years from an SB Energy (SoftBank) subsidiary; Nvidia is guaranteeing up to $105B of the site's residual value and becomes exclusive chip supplier, and is separately investing about $1.5B in the developer. The Wall Street Journal frames it against roughly $3T of off-balance-sheet AI infrastructure commitments now spread across major tech firms — a scale of leverage worth watching regardless of the headline capacity.",
-   "why": "",
-   "url": "https://the-decoder.com/openai-signs-record-ohio-data-center-lease-with-nvidia-backing-up-to-105-billion/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
    "fresh": false
   },
   {
@@ -2111,6 +2103,34 @@
  ],
  "board": [
   {
+   "id": "2026-08-21-ai-ml-nvidia-strikes-a-reported-6b-licensing-deal-for",
+   "sid": "st-e4304b869b4d",
+   "headline": "Nvidia strikes $6B Poolside model deal",
+   "summary": "Multiple outlets report Nvidia has agreed a non-exclusive $6 billion deal to license the \"Model Factory\" — the system Poolside (an AI coding-model startup, maker of the Laguna model) uses to build its models — alongside a separate $1 billion investment at a reported $12 billion pre-money valuation. Roughly 109 Poolside staff, largely researchers, are said to be getting Nvidia job offers, while the three founders stay to run Poolside independently. Note the structure, which the reporting stresses: this is not a clean acquisition or acqui-hire — the license is non-exclusive (Poolside can still sell the same technology elsewhere), and Poolside continues as a company. As of writing there is no first-party Nvidia or Poolside press release; the terms rest on sourced reporting.",
+   "why": "it's the window's largest single AI-industry move, and the unusual shape is the story — a chip vendor paying billions to license the model-building capability and hire the people, while leaving the startup standing, rather than buying it outright. It echoes the \"reverse-acquihire\" pattern regulators have scrutinised in earlier AI deals (structure a talent-and-tech absorption to avoid a merger review), and points to Nvidia moving further up the stack from selling compute toward owning the recipe for frontier models.",
+   "url": "https://www.theinformation.com/briefings/nvidia-reportedly-pay-6-billion-licensing-hiring-deal-ai-model-startup-poolside",
+   "source_domain": "theinformation.com",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/21/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 21 Aug",
+   "daybreak": true
+  },
+  {
    "id": "2026-08-21-news-seven-western-governments-issued-a-joint-stateme",
    "sid": "st-c1ec491f2b2b",
    "headline": "Western states condemn Israel's E1 plan",
@@ -2135,7 +2155,181 @@
    "kind": "story",
    "age_days": 0,
    "day_label": "Fri 21 Aug",
-   "daybreak": true
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-21-ai-ml-most-self-improvement-gains-vanish-once-you-add",
+   "sid": "st-1d0329964362",
+   "headline": "Audit exposes phantom self-improvement gains",
+   "summary": "The paper audits a now-common claim: that a model, retrained on its own outputs, has \"improved itself.\" The authors run three rounds of low-rank self-training (rank-32 LoRA — a lightweight fine-tuning method that adjusts a small add-on rather than all the weights) on Qwen3-8B, but critically also push a frozen, untrained copy through the identical measurement pipeline as a control. They find seven distinct measurement failures — several of them standard practice — and each one, on its own, inverts a reported finding when the control is missing. One example: scoring with a single greedy decode (taking the model's top-choice answer once) manufactures apparent capability changes even on the untrained model, largely an artifact of how examples are batched at inference.",
+   "why": "the field increasingly grades self-improvement not by average accuracy but by which specific problems a model newly solves or breaks — and that means subtracting two noisy measurements, exactly where artifacts hide. This is a concrete, reproducible checklist for telling a real gain from a measurement mirage, and a caution that a lot of the \"models bootstrapping themselves\" literature may be measuring its own pipeline.",
+   "url": "https://arxiv.org/abs/2608.20290",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "affiliations": [
+    "University College Dublin",
+    "Georgia Tech",
+    "Dalian University of Technology"
+   ],
+   "affiliation_label": "University College Dublin, Georgia Tech +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 21 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-21-ai-ml-agent-memories-can-store-the-right-facts-and-sti",
+   "sid": "st-1bd26122381e",
+   "headline": "Agent memory fails at state tracking",
+   "summary": "Most memory benchmarks test recall — can the agent fetch a fact it saw earlier. This paper argues that real deployments need state tracking: as facts, constraints, and decisions get revised over a long interaction, the answer must reflect the current state, not a superseded one. StateMemBench is 234 multi-session scenarios with closed-pool grading that explicitly scores whether an answer reflects the current state, a stale (superseded) state, or neither — separating \"tracked the wrong version\" from other errors by construction. Existing memory systems find it hard.",
+   "why": "the single most common way a long-running assistant goes wrong is confidently acting on something you changed three turns ago. Naming and measuring that failure mode — distinct from ordinary recall — gives memory-system builders a target that matches how agents actually break in production.",
+   "url": "https://arxiv.org/abs/2608.19652",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "affiliations": [
+    "UIUC"
+   ],
+   "affiliation_label": "UIUC",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 21 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-21-ai-ml-on-real-scientific-code-the-best-coding-agent-st",
+   "sid": "st-f961a73c1c1a",
+   "headline": "Coding agents struggle on science code",
+   "summary": "SWE-bench Science is a repository-level benchmark of 119 tasks from 98 GitHub repositories across 20 scientific domains, sorted into three paradigms (issue-driven, expert-exploratory, engineering-integration). The framing is that scientific software is part of the instrument — a bug can corrupt the evidence, not just the program. The headline result: even the strongest agent tested, Claude Code with Opus-5 (max), lands a pass@1 below 50% (pass@1 = solves it on the first attempt). A paired ablation finds scientific guidance is not uniformly helpful — well-grounded context helps, but poorly aligned guidance can anchor the agent onto a wrong repair.",
+   "why": "the reader works in software, and \"can a coding agent fix a real repo\" is the concrete version of the agent-hype question. A sub-50% first-try rate on scientific code — where domain knowledge and correctness both bite — is a sober, well-measured counterweight to leaderboard-topping SWE-bench numbers, and the failure taxonomy is a practical guide to where these agents break.",
+   "url": "https://arxiv.org/abs/2608.19799",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 21 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-21-ai-ml-teaching-a-model-to-allocate-its-own-thinking-bu",
+   "sid": "st-6ab8343d65c8",
+   "headline": "Model learns when to think",
+   "summary": "Reasoning models usually run at a fixed token budget, over-thinking easy problems and under-thinking hard ones. This paper lets the model pick, as its first token, one of three modes — NoThink, Short, or Long — learned inside GRPO (Group Relative Policy Optimization, the reward-based post-training recipe behind recent reasoning models) with no separate router, using a shaped reward plus hard per-mode token caps. On a 1.5B model trained on MATH the modes emerge without collapsing, and accuracy holds (0.782 vs 0.796 base on held-out MATH500) while mean response length drops from 4,796 to 2,811 tokens — a 41% cut. It transfers untrained to other benchmarks, e.g. 76% fewer tokens on GSM8K.",
+   "why": "inference cost is roughly proportional to tokens generated, so a model that spends effort in proportion to difficulty — and learns the dial itself, rather than a hand-set \"reasoning effort\" slider — is a cheap, broadly reusable efficiency lever.",
+   "url": "https://arxiv.org/abs/2608.20256",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 21 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-21-ai-ml-a-robot-foundation-model-that-learns-a-new-task",
+   "sid": "st-5fe6d0c549c1",
+   "headline": "Robot model learns tasks from one demo",
+   "summary": "Generalist AI released GEN-1.5, an \"embodied foundation model\" it describes as the first it knows of to show one-shot and few-shot learning of physical skills at scale. A single demonstration of 3–12 seconds is inserted into the model's context as a \"physical prompt,\" and the robot attempts the task immediately, with no gradient update in between — the same in-context learning that makes language models pick up a pattern from a few examples, applied to physical action. It is a multimodal model that ingests video plus sensor, language, and proprioceptive (body-position) input and emits action trajectories at 100 Hz, holding 30 seconds of memory. Across 10 tasks (opening jars, unzipping pouches, retrieving money from a purse), one-shot in-context prompting averaged 59% success straight from pretraining; ten gradient steps on five minutes of data raised that to 83%. The company reports capabilities that emerged from pretraining rather than being trained for — sim-to-real transfer, novel tool use, ambidextrous work. Figures are company-reported and not yet independently reproduced.",
+   "why": "robotics' bottleneck has been data — every new skill traditionally means fresh teleoperation and retraining. If a pretrained model can genuinely acquire a usable skill from one short demo, that changes the economics of deploying robots, which is why commentators are floating a \"ChatGPT moment for robotics\" framing. Treat that framing as a claim to verify, not a settled result: the 59% one-shot number and the emergent-capability list are the vendor's own.",
+   "url": "https://generalistai.com/blog/gen-1.5",
+   "source_domain": "generalistai.com",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 21 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-21-ai-ml-anthropic-plans-to-loosen-its-enterprise-data-re",
+   "sid": "st-457b40d1bbe4",
+   "headline": "Anthropic eases enterprise data retention",
+   "summary": "Per sourced reporting, Anthropic intends to let business customers keep the data its most capable models retain on their own cloud infrastructure rather than on Anthropic's — while still requiring a 30-day retention window. This walks back part of a June policy under which Anthropic said it would retain all customer data for its more powerful models for 30 days to detect novel AI-enabled cyberattacks; the company itself acknowledged at the time that the rule would be \"unpopular with customers who have come to expect zero retention.\" The new safety system, developed with 100-plus customers including Salesforce, is expected to roll out later this year. This is a reported plan, not yet a published Anthropic policy.",
+   "why": "data retention is a live procurement and compliance question for anyone deploying frontier models in a regulated or privacy-sensitive setting — including Swiss and EU enterprises bound by strict data-handling rules. The move shows the safety-vs-confidentiality tension being negotiated in the open, with a \"keep it on your own cloud\" compromise as the emerging middle ground (OpenAI is reported to be testing a similar \"private safety processing\" approach).",
+   "url": "https://www.bloomberg.com/news/articles/2026-08-20/anthropic-plans-to-change-data-retention-policy-for-advanced-ai",
+   "source_domain": "bloomberg.com",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 21 Aug",
+   "daybreak": false
   },
   {
    "id": "2026-08-21-news-north-korea-launched-about-10-short-range-ballis",
@@ -2275,6 +2469,65 @@
    "daybreak": false
   },
   {
+   "id": "2026-08-21-ai-ml-a-benchmark-that-asks-whether-agents-can-improve",
+   "sid": "st-f5e87bae0e17",
+   "headline": "Benchmark tests AI self-improvement design",
+   "summary": "Recursive self-improvement (RSI) — the idea that an AI could improve the process that builds AIs, so each generation inherits the gain — hinges on one specific ability: can an agent design a better training algorithm (a better objective or update rule), as opposed to just collecting more data or tuning hyperparameters? AI4AI-Bench isolates exactly that, with 10 frozen research repositories spanning 10 training-algorithm families; a change counts only if it alters how the model learns, not how a run is executed. The authors argue no prior suite separates those two.",
+   "why": "\"recursive self-improvement\" is invoked constantly in AI-risk and AGI-timeline debates, usually without a way to measure it. Pairing this with Phantom Gains above, the cycle's message is consistent: the burden of proof on self-improvement claims is being raised, and the honest current answer is \"not yet, and here's how we'll know.\"",
+   "url": "https://arxiv.org/abs/2608.20318",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "affiliations": [
+    "Tsinghua University",
+    "Einsia.AI"
+   ],
+   "affiliation_label": "Tsinghua University, Einsia.AI",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 21 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-21-ai-ml-even-correct-relevant-memories-can-sabotage-the",
+   "sid": "st-fa8800580d12",
+   "headline": "Relevant memories can trap model reasoning",
+   "summary": "The companion failure mode to state-tracking. MemTrapBench shows that even memories that are faithfully recorded and semantically relevant can distort a model's reasoning or beliefs and drag down performance on the task in front of it. The authors define two \"cognitive traps\": Reasoning Fixation (a retrieved memory locks the model onto a prior line of thought it should abandon) and Belief Distortion (a memory shifts what the model treats as true). Both show up across two model families.",
+   "why": "the reflexive fix for agent errors is \"give it more memory / better retrieval.\" This is evidence that more retrieved context is not free — the wrong-but-relevant memory is a live hazard, not just missing memory — which argues for memory systems that decide whether to use a retrieved item, not only how to fetch it.",
+   "url": "https://arxiv.org/abs/2608.20202",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 21 Aug",
+   "daybreak": false
+  },
+  {
    "id": "2026-08-21-news-a-new-report-from-the-swiss-academies-of-science",
    "sid": "st-b1b9b0e9ce86",
    "headline": "New Swiss reactor could cost up to 43bn francs",
@@ -2348,33 +2601,6 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/20/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 1,
-   "day_label": "Thu 20 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-20-news-a-chinese-court-sentenced-evergrande-founder-hui",
-   "sid": "st-758df9a7be74",
-   "headline": "Evergrande founder gets life sentence",
-   "summary": "A Chinese court sentenced Evergrande founder Hui Ka Yan to life in prison on Thursday 20 August for fraud and bribery, ordering all his personal property confiscated. The Shenzhen Intermediate People's Court found that Hui — once Asia's richest man, who pleaded guilty in April — ran continuous, large-scale financial fraud to inflate the developer's assets and conceal its liabilities; investigators had found Evergrande overstated revenue by roughly $80 billion in 2019 and 2020. The court fined Evergrande 8.82 billion yuan ($1.31 billion) and its main subsidiary Hengda Real Estate 7 billion yuan, and handed six-to-18-year terms to five other executives. Evergrande defaulted in 2021 on most of its roughly $300 billion in liabilities, was ordered liquidated in 2024 and delisted in 2025 — the defining symbol of China's property-sector crisis.",
-   "why": "The sentence draws a line under the company whose collapse triggered China's property bust, signalling Beijing will pin the debt crisis on individual executives even as the underlying downturn in housing continues to weigh on the economy.",
-   "url": "https://www.dw.com/en/evergrande-founder-hui-ka-yan-sentenced-to-life-in-prison/a-78439153",
-   "source_domain": "dw.com",
-   "date": "2026-08-20",
-   "date_label": "Aug 20",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "economy"
-   ],
-   "topic_primary": "economy",
-   "topic_label": "Economy",
-   "topic_color": "#9a7b2e",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/20/news/",
@@ -2463,34 +2689,6 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/19/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 2,
-   "day_label": "Wed 19 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-19-news-france-s-assisted-dying-law-was-promulgated-by-p",
-   "sid": "st-e3e0640a7618",
-   "headline": "France enacts assisted-dying law",
-   "summary": "France's assisted-dying law was promulgated by President Emmanuel Macron and formally took effect on Wednesday 19 August, making medical aid in dying legal for the first time. The step follows the Constitutional Council's ruling on Friday 14 August that found no grounds to strike the text down, which itself followed the National Assembly's final adoption on 15 July after years of debate. Under the law, adults with a \"serious and incurable\" illness in an advanced or terminal phase, suffering that cannot be relieved, may request assistance to die; access will phase in as implementing decrees follow. It is one of France's most consequential social reforms in a decade.",
-   "why": "France joins the small group of European states with a legal right to die, resolving a debate that has run through French politics for years — and the outcome next door feeds directly into how Switzerland, which already permits assisted suicide, and its neighbours frame their own end-of-life rules.",
-   "url": "https://www.lemonde.fr/societe/article/2026/08/19/l-aide-a-mourir-officiellement-autorisee-en-france-apres-la-promulgation-de-la-loi-par-emmanuel-macron_6749291_3224.html",
-   "source_domain": "lemonde.fr",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "politics",
-    "health"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/19/news/",
@@ -2734,39 +2932,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-19-science-the-milky-way-ate-a-galaxy-even-earlier-than-we",
-   "sid": "st-86e729dc2452",
-   "headline": "Milky Way's oldest known merger revealed",
-   "summary": "The Milky Way grew by devouring smaller galaxies, and the largest early merger securely known — Gaia-Sausage-Enceladus (a dwarf galaxy that fell in) — dates to about 10 billion years ago. Using globular clusters as tracers and a new method to date them, the INAF Bologna-led team found the clusters split into three distinct age–metallicity sequences: one native to the proto-Milky Way, one from Gaia-Sausage-Enceladus, and one pointing to an earlier, previously unrecognised major accretion event some 1.8 billion years before it.",
-   "why": "Each identified merger is a chapter in the Galaxy's origin story; finding an even older one pushes back the clock on when the Milky Way began assembling in earnest.",
-   "url": "https://www.nature.com/articles/s41550-026-02931-5",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "INAF",
-    "University of Bologna",
-    "University of Groningen"
-   ],
-   "affiliation_label": "INAF, University of Bologna +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 2,
-   "day_label": "Wed 19 Aug",
-   "daybreak": false
-  },
-  {
    "stream": "science",
    "date": "2026-08-19",
    "date_label": "Aug 19",
@@ -2869,187 +3034,6 @@
     "University of Pennsylvania"
    ],
    "affiliation_label": "University of Pennsylvania",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 18 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-a-memory-that-starts-small-keeps-long-context-mo",
-   "sid": "st-c3f0b2dbe3e0",
-   "headline": "A memory that starts small keeps long-context models from clogging",
-   "summary": "Standard attention costs grow quadratically with context length, so a growing line of work compresses the past into a fixed-size \"memory state\" instead. The snag: with a static memory the earliest tokens face no compression pressure, so they hog degrees of freedom and \"pollute\" the state, leaving little room for later context. Proteus introduces incremental memory activation — the memory's usable capacity is expanded gradually as the sequence grows. An early bottleneck forces the model to compress history harder; unlocking fresh capacity later reduces interference with new tokens. It drops into several recent memory architectures (Titans, Comba, Hope-Attention) at no added cost, with gains that widen at longer context lengths.",
-   "why": "long-context recall is where sub-quadratic (\"linear-attention\") models usually break down; scheduling when memory becomes available, rather than how much there is, is a cheap and broadly reusable lever for that failure mode.",
-   "url": "https://arxiv.org/abs/2608.16844",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
-   "affiliations": [
-    "Google",
-    "Mila – Quebec AI Institute",
-    "Université de Montréal"
-   ],
-   "affiliation_label": "Google, Mila – Quebec AI Institute +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 18 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-statistical-mechanics-predicts-how-crowds-of-ai",
-   "sid": "st-bdabf0574df4",
-   "headline": "Statistical mechanics predicts how crowds of AI agents drift",
-   "summary": "As AI agents increasingly talk to each other rather than work alone, their interactions can sharpen collective reasoning — or produce herding and shared bias. The authors ran over 10,000 communities of language-model agents that repeatedly exchange messages and revise their views, on objective maths questions and on subjective political statements. Despite huge variety, the dynamics collapse into three regimes — indifference, polarization, consensus — with agents starting indifferent and building conviction as they interact. On factual questions, talking improves group accuracy; on subjective ones, it tends to drift the group's stated opinion rightward. They fit a statistical-mechanics model (borrowed from physics: agents stochastically favour lower \"social pressure,\" like particles settling toward low energy) that predicts individual trajectories from initial opinions alone and generalises to unseen community structures.",
-   "why": "it offers compact, testable laws for multi-agent behaviour instead of case-by-case anecdotes — useful for designing agent systems that resist groupthink. The rightward political-drift finding is the authors' own measured result on their setup, and worth treating as a specific empirical claim rather than a general law.",
-   "url": "https://arxiv.org/abs/2608.16578",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
-   "affiliations": [
-    "Stanford University"
-   ],
-   "affiliation_label": "Stanford University",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 18 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-coding-agents-fail-when-the-fact-they-need-isn-t",
-   "sid": "st-6d111859e3fa",
-   "headline": "Coding agents fail when the needed fact is not in front of them",
-   "summary": "Repository-scale coding asks an agent to keep tests, imports, configuration and migration rules mutually consistent inside a limited context window. The authors model each edit as needing a \"fact\" that comes either from recent context or from the model's baked-in (\"parametric\") memory; facts supplied by neither channel are coherence debt. Testing seven models across five agent harnesses, they find: no model completes a task on an unseen API when both channels are empty, and simply putting the fact in the prompt restores success. Availability — not where the fact sits relative to the edit — decides the outcome. A missing fact produces wrong work rather than absent work: the agent fabricates a file or guesses a value instead of reporting itself blocked, and how often it admits it's stuck is a property of the model. Tellingly, a stale convention file costs more than no file, because agents follow the standard even when it prescribes worse code.",
-   "why": "it's a concrete diagnosis of why coding agents silently go wrong at scale — and a directive for harness builders: guarantee the facts an edit depends on are present when the agent writes, and check that against what it produces, not what it reads.",
-   "url": "https://arxiv.org/abs/2608.16630",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 18 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-an-agent-that-invents-new-crystals-in-a-language",
-   "sid": "st-0a4068aad6f3",
-   "headline": "An agent that invents new crystals in a language of motifs",
-   "summary": "Data-driven materials discovery is good at interpolating between known structures but rarely invents genuinely new structure types. MatEvolve is an agentic-AI framework — built on Claude Fable 5 with no fine-tuning — that writes each candidate crystal as an interpretable motif profile, a description of the recurring geometric patterns (\"motifs\") that compose it. Crucially the profile is not just a label but the medium of design: the agent edits the profile, builds a crystal from the edited version, states its rationale, and the most promising candidates are checked with first-principles physics calculations. Applied to rare-earth-lean permanent magnets (strong magnets that avoid scarce, geopolitically fraught rare-earth elements), it reached new structural prototypes more than three times as often as generative models at an equal validation budget, at a comparable rate of on-target magnets.",
-   "why": "it's a credible case of an agent reaching real novelty in a hard physical-science domain while staying human-readable — the motif profiles expose why a structure works, and the target (rare-earth-lean magnets) speaks directly to materials-supply-chain risk.",
-   "url": "https://arxiv.org/abs/2608.15900",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "science"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
-   "affiliations": [
-    "JAIST",
-    "Institute of Science Tokyo"
-   ],
-   "affiliation_label": "JAIST, Institute of Science Tokyo",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 18 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-anthropic-s-annualized-revenue-reportedly-tops-6",
-   "sid": "st-641b11c7e058",
-   "headline": "Anthropic's annualized revenue reportedly tops $65 billion",
-   "summary": "Anthropic's annualized revenue reportedly tops $65 billion. Anthropic hit an annualized run-rate above $65B through the end of July — a roughly sevenfold jump year-on-year, said to have added about $18B in run-rate over two months — according to a regular investor update reported by Bloomberg and corroborated by TechCrunch. It is a distinct, concrete revenue figure separate from the earlier reporting on a potential ~$2T IPO valuation; the underlying number rests on unnamed sources.",
-   "why": "",
-   "url": "https://the-decoder.com/anthropic-increases-revenue-sevenfold-hits-annualized-rate-above-65-billion/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 18 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-openai-signs-a-record-20-year-ohio-data-centre-l",
-   "sid": "st-e1c283829783",
-   "headline": "OpenAI signs a record Ohio data-centre lease, backed by Nvidia",
-   "summary": "OpenAI signs a record 20-year Ohio data-centre lease, backed by Nvidia. OpenAI leased the \"PORTS-Pike\" campus in Ohio (about 8GW of IT capacity) for 20 years from an SB Energy (SoftBank) subsidiary; Nvidia is guaranteeing up to $105B of the site's residual value and becomes exclusive chip supplier, and is separately investing about $1.5B in the developer. The Wall Street Journal frames it against roughly $3T of off-balance-sheet AI infrastructure commitments now spread across major tech firms — a scale of leverage worth watching regardless of the headline capacity.",
-   "why": "",
-   "url": "https://the-decoder.com/openai-signs-record-ohio-data-center-lease-with-nvidia-backing-up-to-105-billion/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/18/ai-ml/",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
