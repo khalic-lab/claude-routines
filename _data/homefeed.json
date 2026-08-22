@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-21",
+ "generated": "2026-08-22",
  "count": 80,
  "topics": [
   {
@@ -12,7 +12,7 @@
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 23
+   "count": 22
   },
   {
    "key": "science",
@@ -21,15 +21,15 @@
    "count": 14
   },
   {
-   "key": "switzerland",
-   "label": "Switzerland",
-   "color": "#c2454a",
+   "key": "politics",
+   "label": "Politics",
+   "color": "#9a6a34",
    "count": 10
   },
   {
-   "key": "world",
-   "label": "World",
-   "color": "#6b6f76",
+   "key": "switzerland",
+   "label": "Switzerland",
+   "color": "#c2454a",
    "count": 9
   },
   {
@@ -39,16 +39,16 @@
    "count": 8
   },
   {
-   "key": "politics",
-   "label": "Politics",
-   "color": "#9a6a34",
-   "count": 7
+   "key": "world",
+   "label": "World",
+   "color": "#6b6f76",
+   "count": 8
   },
   {
    "key": "economy",
    "label": "Economy",
    "color": "#9a7b2e",
-   "count": 5
+   "count": 6
   },
   {
    "key": "security",
@@ -60,16 +60,30 @@
    "key": "tech",
    "label": "Tech",
    "color": "#3b6ea5",
-   "count": 4
+   "count": 5
   },
   {
    "key": "health",
    "label": "Health",
    "color": "#a44a72",
-   "count": 2
+   "count": 3
   }
  ],
  "editorials": [
+  {
+   "stream": "weekend",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "kicker": "Weekend · Cross-cutting threads · Aug 22",
+   "heading": "Cross-cutting threads",
+   "title": "1. The self-improvement story meets its control group",
+   "paras": [
+    "This was the week arXiv turned its skepticism on the \"AI improves itself / does its own research\" narrative — and did it with unusual coordination. <em>Phantom Gains</em> (University College Dublin; Georgia Tech) ran three rounds of self-training on Qwen3-8B but, crucially, pushed a <em>frozen, untrained</em> copy through the identical measurement pipeline; seven common measurement practices each <strong>invert their reported finding</strong> once that control is present, and the honest residue is that external distillation genuinely extends a model's reach while self-training mostly <em>corrupts</em> problems the model already solved (<a href=\"https://arxiv.org/abs/2608.20290\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.20290</a>). <em>AI4AI-Bench</em> isolates the single ability recursive self-improvement actually requires — can an agent design a better <em>training algorithm</em>, not just tune knobs — and finds the strongest system closes under a fifth of the distance to optimum, with most attempts never changing how the model learns at all (<a href=\"https://arxiv.org/abs/2608.20318\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.20318</a>). <em>FormalTCS</em> shows models can't reliably even <em>state</em> a theoretical-computer-science claim formally (a score of 11.5 versus 28.6 when handed the formal statement to prove) (<a href=\"https://arxiv.org/abs/2608.20153\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.20153</a>). And <em>Test-Time Scaling in the Wild</em> (Thomson Reuters) lands the sharpest cut: on open-ended tasks the candidate pool is fine — spending compute to <em>generate</em> more options works — but <em>selection</em> is near-random, because reward models correlate only ρ≈0.12 with true quality, so extra budget buys almost nothing (<a href=\"https://arxiv.org/abs/2608.18931\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.18931</a>). Set this against last week's \"AI scientist\" reality check and a clean shape appears: the narrow, <em>verifiable</em> slices move — replication, or a single galactic-algorithm constant, where AlphaEvolve nudged the matrix-multiplication exponent to ω &lt; 2.371177 this week (<a href=\"https://arxiv.org/abs/2608.16884\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.16884</a>) — but the open-ended loop the marketing implies does not close. The most encouraging part is not the debunking; it is that the field is now building the null models and benchmarks to say <em>precisely</em> where the loop breaks. The unintentional capstone: the week's fresh open-weight release, Ornith-1.5, advertises an \"end-to-end self-improvement loop\" as its headline method (see Models below). For the reader who wants the argument in prose rather than tables, Melanie Mitchell's Quanta interview this week is the same caution at essay length (see Essays).",
+    "<strong>2. The critic comes back to reinforcement learning.</strong> Group-Relative Policy Optimization (GRPO — the reward-based recipe behind most reasoning models) won the LLM post-training era partly by <em>throwing away</em> the value function, the \"critic\" that scores partial outputs token by token: it was fiddly, memory-hungry, and comparing a batch of whole answers was good enough. This week three independent papers argue the pendulum is swinging back, each defusing the critic's cost a different way. <em>Le Critique</em> (Mistral AI; Mila) keeps a learned critic but feeds it \"privileged\" task signal without biasing what the policy learns, then adaptively blends critic- and group-based baselines — and beats GRPO (<a href=\"https://arxiv.org/abs/2608.16739\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.16739</a>). <em>SAPO</em> (Xiamen; NTU) folds the critic <em>into the policy's own backbone</em>, predicting value and action at different points of the same generation, and beats both PPO and GRPO by +15 and +12 points while cutting per-iteration runtime a third and removing the separate critic model entirely (<a href=\"https://arxiv.org/abs/2608.19842\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.19842</a>). And <em>QWM</em> (Stanford; Peking University — Finn and Sadigh among the authors) revives the <em>world model</em> for value-based RL, but uses it only for test-time search over imagined trajectories while training value and policy purely on real transitions — sidestepping the compounding bias that sank Dreamer-style \"train on imagination\" methods (<a href=\"https://arxiv.org/abs/2608.17163\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.17163</a>). The through-line: temporal credit assignment — deciding <em>which</em> of many steps in a long task earned the reward — is the central difficulty in training agents, and after two years of critic-free orthodoxy the field has decided the critic is worth the engineering after all, provided you make it cheap. (Read alongside last week's CrEST and this week's turn-level RTPO for the fuller convergence.)",
+    "<strong>3. Understanding by subtraction.</strong> Physics kept winning this week by stripping a phenomenon to its smallest surviving piece. A Fudan-led team peeled a cuprate superconductor down to a <em>single</em> copper-oxygen plane — the irreducible unit of high-temperature superconductivity — and it still superconducts, turning a 40-year mystery into a clean, gate-tunable \"hydrogen atom\" of the problem (<a href=\"https://www.nature.com/articles/s41586-026-10857-1\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 12 Aug 2026</a>). An EPFL group built a graphene <em>antidot</em> — a single controllable bump that behaves as an artificial impurity — and read out one-third of an electron's charge directly, dodging the bulk/edge confusion that muddies conventional interferometers (<a href=\"https://www.nature.com/articles/s41567-026-03412-2\" target=\"_blank\" rel=\"noopener noreferrer\">Nature Physics, 14 Aug 2026</a>). A Caltech–Paris-Saclay–Munich team played <em>conformal field theory</em> — the universal math of systems at a critical point — back through a small array of trapped atoms, spectral line by spectral line (<a href=\"https://www.nature.com/articles/s41586-026-10904-x\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 19 Aug 2026</a>). And a Tokyo–Vienna team ran Young's double-slit experiment <em>between two silicon atoms</em> 1.36 ångström apart, with the atoms' own thermal jiggle writing itself into the interference fringes (<a href=\"https://www.nature.com/articles/s41586-026-10914-9\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 19 Aug 2026</a>). Each is the same instinct — don't scale up, scale <em>down</em> to the minimal system where the effect still lives, where it finally becomes measurable and controllable. It rhymes with last week's \"do more with a single qubit\" cluster, and with the ML side's turn toward minimal <em>explanatory</em> models: this week the whole of Adam's advantage over plain gradient descent was traced to a single structural fact about the loss landscape via random-matrix theory (see Papers). Reductionism, quietly, is having a good year.",
+    "<strong>4. Weighing the invisible.</strong> A striking share of the week's astronomy was, at bottom, accounting for mass and motion that light does not directly show. A Leiden-led JWST study measured the low-mass end of the stellar population in nine early massive galaxies and found it \"bottom-heavy\" — far richer in dim, low-mass dwarf stars than the Milky Way's mix — implying those galaxies carry roughly four times more stellar mass than their light suggests, which <em>worsens</em> JWST's already-awkward \"too big, too soon\" galaxies (<a href=\"https://www.nature.com/articles/s41550-026-02932-4\" target=\"_blank\" rel=\"noopener noreferrer\">Nature Astronomy, 18 Aug 2026</a>). An INAF Bologna team dated the Milky Way's own globular clusters precisely enough to expose a major galactic merger <strong>1.8 billion years before</strong> the famous Gaia-Sausage-Enceladus event — a whole early \"meal\" written into the inner Galaxy's fossil record, and a long-contested one now pinned down (<a href=\"https://www.nature.com/articles/s41550-026-02931-5\" target=\"_blank\" rel=\"noopener noreferrer\">Nature Astronomy, 17 Aug 2026</a>; INAF release: <a href=\"https://www.media.inaf.it/2026/08/17/vestigia-cuore-via-lattea/\" target=\"_blank\" rel=\"noopener noreferrer\">Antiche vestigia nel cuore della Via Lattea, 17 Aug 2026</a> [new source]). And the GRAVITY Collaboration discovered <strong>S301</strong>, a faint star whipping around Sagittarius A<em> at some 8% of light speed on an 8.7-year orbit — fast enough that its motion is sensitive to the black hole's </em>spin* (a (v/c)³ correction in Einstein's rotating-black-hole metric), making it the first natural probe that could actually weigh how fast the Galaxy's central black hole turns (<a href=\"https://www.nature.com/articles/s41586-026-10894-w\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 19 Aug 2026</a>). The connective idea: in each case the quantity that matters — hidden stellar mass, an erased merger, a black hole's spin — is inferred through a careful proxy (a spectrum, a cluster age, an orbit), and this week the proxies kept insisting there is more out there than the obvious light lets you count."
+   ]
+  },
   {
    "stream": "science",
    "date": "2026-08-19",
@@ -92,25 +106,260 @@
    "paras": [
     "Three athletics titles in Birmingham and a newly-crowned football champion (Thun) reaching a guaranteed European league phase is an unusual concentration of success for a small nation in a single quiet mid-summer week — and the athletics, in particular, reads as more than a one-off given the spread of disciplines and the calibre of the athletes beaten.",
     "<strong>English football is realigning as the season opens.</strong> Arsenal are champions and looked the part; Manchester City are starting again under Enzo Maresca after a decade of Guardiola and may be about to lose Rodri, the holding midfielder around whom their dominance was built. The Community Shield is only a curtain-raiser, but the direction of travel it hinted at — Arsenal setting the pace, City rebuilding — is the story the Premier League will spend the autumn testing."
-   ]
-  },
-  {
-   "stream": "weekend",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "kicker": "Weekend · Cross-cutting threads · Aug 15",
-   "heading": "Cross-cutting threads",
-   "title": "1. \"AI scientist\" ships and gets a reality check in the same week",
-   "paras": [
-    "Three of the week's papers push autonomous research agents hard — and one Nature editorial pushes back just as hard. A DeepMind-style team released <strong>Faraday</strong>, a 27-billion-parameter agent post-trained specifically to <em>replicate</em> research papers, and reports it beating Claude Opus 4.8 and GPT-5.5 on held-out replication tasks (<a href=\"https://arxiv.org/abs/2608.13331\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.13331</a>). A separate group put seven frontier models through 36 long-horizon R&amp;D tasks and reached a soberer verdict: today's agents \"operate more like engineering optimizers than fully autonomous researchers\" — they implement and combine established techniques competently, but genuine methodological novelty \"remains rare,\" and their best runs are unstable from attempt to attempt (<a href=\"https://arxiv.org/abs/2608.13417\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.13417</a>). Nature's own comment desk landed on the same beat with the blunt title <em>AI isn't ready to research itself</em> (<a href=\"https://www.nature.com/articles/d41586-026-02494-5\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 13 Aug 2026</a>). The honest synthesis for a technical reader: the <em>replication</em> frontier is moving fast — turning a paper into working code is now largely automatable, and that alone is a real productivity change — but <em>replication is not discovery</em>, and every careful evaluation this week says the discovery gap is still wide. Watch for the first agent that produces a genuinely novel, independently-verified method rather than a slick recombination; on this week's evidence it hasn't happened, and the labs shipping \"AI scientists\" and the journals reviewing them agree on that even as their headlines diverge.",
-    "<strong>2. Symmetry and algebra, not architecture, decide what a network learns.</strong> A striking cluster of theory papers this week all locate a model's behaviour in an underlying mathematical structure rather than in the wiring diagram. <em>Neural Quadratic Forms</em> shows that a single symmetry — a layer is a sum over interchangeable units, so relabelling them changes nothing — forces perceptrons, attention layers, mixtures-of-experts and convolutions into <em>one</em> minimal model, differing only by a \"structure matrix,\" and that this model predicts both the abrupt step-like plateaus of learning <em>and</em> the smooth power-law loss curves as two limits of the same dynamics (<a href=\"https://arxiv.org/abs/2608.13335\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.13335</a>). <em>Algebraic Decomposition Theory</em> proves that whether a transformer generalises to longer sequences than it trained on is governed by an algebraic property of the task — one that classical decomposition theory for finite systems literally cannot see (<a href=\"https://arxiv.org/abs/2608.13433\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.13433</a>). And an interpretability study finds that a model represents \"false\" and \"impossible\" as near-<em>orthogonal directions</em> in its activation space — geometry encoding a distinction philosophers have argued over for centuries (<a href=\"https://arxiv.org/abs/2608.12852\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.12852</a>). The through-line: as the field's empirical zoo of architectures keeps growing, the explanatory action is moving the other way — toward the small set of symmetries, algebras and geometries that many architectures secretly share. It is the most encouraging sign in a while that deep learning might acquire a real theory rather than a bestiary.",
-    "<strong>3. Deep time as data for the present — and it is not an abstraction this week.</strong> While Switzerland lives through a scorching, rain-starved August, a Nature paper reconstructs a medieval catastrophe with an uncomfortably direct message: in 1341–1343, <em>sixteen</em> major floods cascaded across Europe, four of them 500-to-1,000-year events, making 1342 the worst flood year of the past seven centuries (<a href=\"https://www.nature.com/articles/s41586-026-10888-8\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 12 Aug 2026</a>). The lesson the authors draw is precisely the one flood-risk managers resist — that the recent instrumental record badly <em>understates</em> what is physically possible. The same \"read the deep past to bound the present\" move runs through the week's biology: a Nature Review traces the machinery of human antiviral immunity — cGAS–STING, inflammasomes, viperin — back billions of years to bacterial anti-phage defences (<a href=\"https://www.nature.com/articles/s41586-026-10756-5\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 12 Aug 2026</a>), and a Quanta feature revisits the old, contested idea that aging is a <em>program</em> rather than mere wear-and-tear (<a href=\"https://www.quantamagazine.org/why-aging-may-be-a-program-not-a-breakdown-20260814/\" target=\"_blank\" rel=\"noopener noreferrer\">Quanta, 14 Aug 2026</a>). The connective idea worth carrying: for both climate risk and biological mechanism, the historical and evolutionary record is not colour — it is the widest dataset we have, and this week it kept saying the present is narrower than the possible.",
-    "<strong>4. Quantum's near-term turn: do more with a single qubit.</strong> Two results converge on making minimal quantum resources do outsized work. A Harvard–Cornell team proves <em>and experimentally demonstrates</em> that coupling one controllable qubit to an ordinary sensor can exponentially cut the number of measurements needed to learn a classical signal — a 10⁷-fold reduction in the lab for Fourier-amplitude sensing (<a href=\"https://arxiv.org/abs/2608.13521\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.13521</a>). In parallel, Preskill and collaborators show you can prepare the thermal and ground states quantum chemistry needs using a <em>single reusable ancilla qubit</em> as an artificial \"bath,\" with rigorous mixing-time guarantees (<a href=\"https://www.nature.com/articles/s41567-026-03389-y\" target=\"_blank\" rel=\"noopener noreferrer\">Nature Physics, 12 Aug 2026</a>). Both are explicitly framed for \"early fault-tolerant\" hardware — the messy, few-qubit machines we actually have, not the million-qubit ones we don't. The shape to watch: quantum advantage is quietly being re-scoped from \"wait for the big machine\" to \"wring provable wins out of one good qubit.\""
    ]
   }
  ],
  "stories": [
   {
+   "id": "2026-08-22-weekend-israel-opened-tenders-for-the-long-frozen-e1-wes",
+   "sid": "st-b02ccc26cfa3",
+   "headline": "Israel opens E1 West Bank settlement tender",
+   "summary": "Israel opened tenders for the long-frozen E1 West Bank settlement on 18 August 2026, and seven Western governments demanded on 20 August that it stop. The tender covers 1,234 housing units — about a third of the 3,401 approved in August 2025 — in the strip of land east of Jerusalem that, if built on, would sever the northern from the southern West Bank and cut through any contiguous Palestinian state, which is why the project sat frozen for two decades. On 20 August the leaders of the United Kingdom, France, Germany, Italy, the Netherlands, Canada and Norway called the plan \"unacceptable\" and warned businesses off bidding, citing the risk of \"serious breaches of international law.\" Bids close 19 October, days before Israel's 27 October elections.",
+   "why": "",
+   "url": "https://www.aljazeera.com/news/2026/8/21/why-israeli-tenders-for-illegal-e1-west-bank-settlement-prompted-outrage",
+   "source_domain": "aljazeera.com",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "geopolitics",
+    "world"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/22/weekend/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-22-weekend-alphaevolve-and-modern-optimizers-move-a-60-year",
+   "sid": "st-d2de83c4e4be",
+   "headline": "AlphaEvolve moves the matrix-multiplication exponent",
+   "summary": "The matrix-multiplication exponent ω is the theoretical yardstick for how fast two n×n matrices can in principle be multiplied: schoolbook multiplication costs about n³ operations (ω = 3), and sixty years of algorithm design has been grinding ω down toward the conjectured floor of 2. The current record rests on a delicate optimization at the heart of the \"laser method.\" This team reformulated that optimization so it could be solved in a larger setting than before, handed it to modern machine-learning solvers, and then refined the result with AlphaEvolve (DeepMind's LLM-driven algorithm-discovery system), improving the bound from ω < 2.371339 to ω < 2.371177. The author list pairs a frontier lab with two of complexity theory's leading figures on this exact constant (Virginia Vassilevska Williams, Josh Alman).",
+   "why": "The number itself buys no faster software — these \"galactic\" algorithms are far too intricate to run — but an AI system moving one of theoretical computer science's most-studied constants, on a frontier where human experts gain this little over years, is the week's cleanest example of AI advancing genuine mathematics (and the counterweight to the self-improvement skepticism in Cross-cutting thread 1).",
+   "url": "https://arxiv.org/abs/2608.16884",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "ai-ml",
+    "science"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "Google DeepMind",
+    "Carnegie Mellon University",
+    "Columbia University"
+   ],
+   "affiliation_label": "Google DeepMind, Carnegie Mellon University +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-22-weekend-model-hypnosis-weak-irrelevant-cues-stack-into-s",
+   "sid": "st-21addf24ede6",
+   "headline": "Model hypnosis: weak cues stack to strong control",
+   "summary": "The authors describe a phenomenon they call model hypnosis: individually weak, seemingly irrelevant choices in a prompt — paraphrases, typos, innocuous wording — can be combined additively so that together they systematically steer a model's behaviour. They report it across model families and scales, including in frontier reasoning models, and find that a \"hypnotic\" prompt tuned on one model often transfers to another.",
+   "why": "If inconspicuous surface features compose into strong control, that cuts against both safety and interpretability at once — the levers that move a model are precisely the ones a human reviewer would dismiss as noise, and they generalise across systems rather than staying model-specific. It reframes prompt-based jailbreaks from a bag of one-off tricks into an additive, transferable effect. (Single-lab, but a pointed result.)",
+   "url": "https://arxiv.org/abs/2608.16834",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "University of Pennsylvania"
+   ],
+   "affiliation_label": "University of Pennsylvania",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-22-weekend-physics-of-agents-statistical-mechanics-that-pre",
+   "sid": "st-bdabf0574df4",
+   "headline": "Statistical mechanics predicts AI-agent crowds",
+   "summary": "As AI agents increasingly talk to each other rather than work alone, their interactions can sharpen collective reasoning or curdle into herding and shared bias. This Stanford group (with Surya Ganguli and James Zou) ran over 10,000 communities of language-model agents that repeatedly exchange messages and revise their views, on objective maths questions and subjective political statements. Despite enormous variety, the dynamics collapse into just three regimes — indifference, polarization, consensus — with agents starting indifferent and building conviction as they interact. On factual questions, talking improves group accuracy; on subjective ones, it tends to drift the group's stated opinion rightward. They fit a statistical-mechanics model (borrowed from physics: agents stochastically prefer lower \"social pressure,\" like particles settling toward low energy) that, given only the agents' initial opinions, predicts individual trajectories out-of-sample, beats standard baselines, and generalises to community structures it never saw.",
+   "why": "It replaces case-by-case anecdote about multi-agent behaviour with compact, testable laws — the kind you'd want when designing agent systems that resist groupthink. The rightward political drift is the authors' specific measured result on their setup; treat it as a concrete empirical claim, not a universal law.",
+   "url": "https://arxiv.org/abs/2608.16578",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "Stanford University"
+   ],
+   "affiliation_label": "Stanford University",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-22-weekend-superconductivity-survives-in-a-single-copper-ox",
+   "sid": "st-6d1364bee376",
+   "headline": "Superconductivity in a single copper-oxygen plane",
+   "summary": "Cuprates — copper-oxide ceramics that superconduct (carry current with zero resistance) at unusually high temperatures — are built from stacked CuO₂ (copper–oxygen) planes, and a 40-year question is how few of those planes the effect actually needs. Borrowing the sticky-tape exfoliation trick that made graphene, a Fudan-led team thinned a bismuth cuprate down to a single CuO₂ plane and still measured superconductivity, with only about a 10% drop in transition temperature versus the bulk. Fine control of the oxygen content then let them extend the phase diagram into new territory, revealing an anomalous metallic state between insulator and superconductor as temperature approaches absolute zero, with a divergent critical exponent at the superconductor-to-insulator quantum phase transition (the abrupt reorganisation a material undergoes at zero temperature as a knob like doping is turned).",
+   "why": "If one copper–oxygen layer is enough, theories of high-temperature superconductivity can finally be tested against the barest possible system — a clean, gate- and oxygen-tunable platform, the \"hydrogen atom\" of the cuprate problem (Cross-cutting thread 3).",
+   "url": "https://www.nature.com/articles/s41586-026-10857-1",
+   "source_domain": "nature.com",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "Fudan University",
+    "University of British Columbia",
+    "Zhejiang University"
+   ],
+   "affiliation_label": "Fudan University, University of British Columbia +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-22-weekend-a-graphene-antidot-that-weighs-one-third-of-an-e",
+   "sid": "st-19fb2d603f06",
+   "headline": "A graphene antidot weighs one-third of an electron",
+   "summary": "In the fractional quantum Hall effect — what emerges when electrons are trapped in two dimensions under an intense magnetic field — the electron fluid throws up \"quasiparticles\" that behave as if they carry only a fraction of an electron's charge. Measuring that fraction cleanly is hard, because the usual interferometer designs tangle up contributions from the sample's bulk and its edges. The EPFL-led team instead built an antidot — a gate-defined bump in the device's potential landscape that acts as a tunable artificial impurity — into bilayer graphene, and read the charge of quasiparticles tunnelling through it directly, recovering values such as e/3 (one-third of the elementary charge) in both integer and fractional states.",
+   "why": "A clean ruler for fractional charge is a prerequisite for probing these quasiparticles' exotic quantum statistics — the same physics courted for topological quantum computing — and the antidot looks more broadly usable than fragile interferometers. The lead group is Swiss.",
+   "url": "https://www.nature.com/articles/s41567-026-03412-2",
+   "source_domain": "nature.com",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "EPFL",
+    "University of Oxford",
+    "NIMS"
+   ],
+   "affiliation_label": "EPFL, University of Oxford +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-22-weekend-early-galaxies-may-be-four-times-heavier-than-th",
+   "sid": "st-b409a5e8c561",
+   "headline": "Early galaxies may be four times heavier than their light",
+   "summary": "A galaxy's mass is inferred from its light, but that conversion hinges on the initial mass function (IMF) — the assumed spread of star masses at birth, usually copied from the Milky Way. The catch is that faint, low-mass stars hold most of the mass while contributing almost none of the light, so the low-mass end is normally guessed. Using ultra-deep JWST spectra of nine massive quiescent galaxies (extended with VLT data), the Leiden-led team constrained that low-mass end directly for the first time beyond the local Universe, and found it \"bottom-heavy\" — richer in dwarf stars than the Milky Way's mix. The oldest galaxy in the sample, which formed earliest, is the most bottom-heavy, implying its mass was underestimated by a factor of about four.",
+   "why": "JWST has already turned up early galaxies that look almost too massive to exist so soon after the Big Bang; if the standard IMF systematically undercounts their mass, that tension gets worse, not better — and a core, rarely-tested assumption behind every distant-galaxy mass estimate is now shown to bend.",
+   "url": "https://www.nature.com/articles/s41550-026-02932-4",
+   "source_domain": "nature.com",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "Leiden Observatory",
+    "Carnegie Observatories",
+    "Yale University"
+   ],
+   "affiliation_label": "Leiden Observatory, Carnegie Observatories +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-22-weekend-phantom-gains-most-the-model-improved-itself-res",
+   "sid": "st-1d0329964362",
+   "headline": "Most self-improvement gains vanish against a control",
+   "summary": "Self-improvement is increasingly graded not by average accuracy but by which specific problems a model newly solves or breaks — which means differencing two noisy measurements, exactly where artifacts hide. The authors audit three rounds of rank-32 LoRA (a lightweight fine-tuning method) self-training on Qwen3-8B, but push a frozen, untrained copy through the identical pipeline as a control. They identify seven measurement failures — several of them standard practice — and each one, alone, inverts a reported finding when the control is missing (a single greedy decode, for instance, manufactures apparent capability change even on the untrained model, largely an artifact of how examples are batched). With a proper per-problem null in place, the clean result is that external distillation reaches problems the base model rarely solves, while three forms of self-training do not — and self-training corrupts problems solved at baseline above the measured floor.",
+   "why": "It is a concrete, reproducible checklist for telling a real self-improvement gain from a measurement mirage — and it suggests a chunk of the \"models bootstrapping themselves\" literature is partly measuring its own pipeline. Pair it with AI4AI-Bench and FormalTCS (Cross-cutting thread 1).",
+   "url": "https://arxiv.org/abs/2608.20290",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "University College Dublin",
+    "Georgia Institute of Technology",
+    "Dalian University of Technology"
+   ],
+   "affiliation_label": "University College Dublin, Georgia Institute of Technology +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-22-weekend-the-first-poll-on-switzerland-s-27-september-fed",
+   "sid": "st-6ed0c5d7050e",
+   "headline": "Neutrality initiative trails in first Swiss poll",
+   "summary": "The first poll on Switzerland's 27 September federal votes, published 20 August 2026, shows the SVP-backed Neutrality Initiative headed for defeat. In the GFS Bern survey for public broadcaster SRG SSR — conducted 3–16 August among 17,212 eligible voters — 54% would reject the initiative against 42% in favour, while the parallel Food Initiative (lifting Swiss food self-sufficiency toward 70%) is effectively tied at 49–47. First polls are trend indicators, not verdicts, but the neutrality text matters directly to the reader here: it would bar Switzerland from joining sanctions against warring states, precisely the lever that constrains how Bern can align with EU measures on Russia or Iran.",
+   "why": "",
+   "url": "https://www.srf.ch/news/schweiz/1-srg-umfrage-auf-einen-blick-neutralitaetsinitiative-im-rueckstand-ernaehrungsinitiative-offen",
+   "source_domain": "srf.ch",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "switzerland",
+    "politics"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "fresh": true
+  },
+  {
    "id": "2026-08-21-ai-ml-nvidia-strikes-a-reported-6b-licensing-deal-for",
    "sid": "st-e4304b869b4d",
    "headline": "Nvidia strikes $6B Poolside model deal",
@@ -132,7 +381,7 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-21-news-seven-western-governments-issued-a-joint-stateme",
@@ -155,63 +404,7 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/21/news/",
-   "fresh": true
-  },
-  {
-   "id": "2026-08-21-ai-ml-most-self-improvement-gains-vanish-once-you-add",
-   "sid": "st-1d0329964362",
-   "headline": "Audit exposes phantom self-improvement gains",
-   "summary": "The paper audits a now-common claim: that a model, retrained on its own outputs, has \"improved itself.\" The authors run three rounds of low-rank self-training (rank-32 LoRA — a lightweight fine-tuning method that adjusts a small add-on rather than all the weights) on Qwen3-8B, but critically also push a frozen, untrained copy through the identical measurement pipeline as a control. They find seven distinct measurement failures — several of them standard practice — and each one, on its own, inverts a reported finding when the control is missing. One example: scoring with a single greedy decode (taking the model's top-choice answer once) manufactures apparent capability changes even on the untrained model, largely an artifact of how examples are batched at inference.",
-   "why": "the field increasingly grades self-improvement not by average accuracy but by which specific problems a model newly solves or breaks — and that means subtracting two noisy measurements, exactly where artifacts hide. This is a concrete, reproducible checklist for telling a real gain from a measurement mirage, and a caution that a lot of the \"models bootstrapping themselves\" literature may be measuring its own pipeline.",
-   "url": "https://arxiv.org/abs/2608.20290",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-21",
-   "date_label": "Aug 21",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/21/ai-ml/",
-   "affiliations": [
-    "University College Dublin",
-    "Georgia Tech",
-    "Dalian University of Technology"
-   ],
-   "affiliation_label": "University College Dublin, Georgia Tech +1",
-   "fresh": true
-  },
-  {
-   "id": "2026-08-21-ai-ml-agent-memories-can-store-the-right-facts-and-sti",
-   "sid": "st-1bd26122381e",
-   "headline": "Agent memory fails at state tracking",
-   "summary": "Most memory benchmarks test recall — can the agent fetch a fact it saw earlier. This paper argues that real deployments need state tracking: as facts, constraints, and decisions get revised over a long interaction, the answer must reflect the current state, not a superseded one. StateMemBench is 234 multi-session scenarios with closed-pool grading that explicitly scores whether an answer reflects the current state, a stale (superseded) state, or neither — separating \"tracked the wrong version\" from other errors by construction. Existing memory systems find it hard.",
-   "why": "the single most common way a long-running assistant goes wrong is confidently acting on something you changed three turns ago. Naming and measuring that failure mode — distinct from ordinary recall — gives memory-system builders a target that matches how agents actually break in production.",
-   "url": "https://arxiv.org/abs/2608.19652",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-21",
-   "date_label": "Aug 21",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/21/ai-ml/",
-   "affiliations": [
-    "UIUC"
-   ],
-   "affiliation_label": "UIUC",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-21-ai-ml-on-real-scientific-code-the-best-coding-agent-st",
@@ -234,7 +427,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-21-ai-ml-teaching-a-model-to-allocate-its-own-thinking-bu",
@@ -257,7 +450,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-21-ai-ml-a-robot-foundation-model-that-learns-a-new-task",
@@ -281,7 +474,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-21-ai-ml-anthropic-plans-to-loosen-its-enterprise-data-re",
@@ -305,7 +498,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-21-news-north-korea-launched-about-10-short-range-ballis",
@@ -328,7 +521,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-21-news-a-hong-kong-court-found-two-organisers-of-the-ci",
@@ -352,7 +545,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-21-news-more-than-100-people-were-killed-when-an-artisan",
@@ -375,31 +568,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/news/",
-   "fresh": true
-  },
-  {
-   "id": "2026-08-21-news-the-first-srg-poll-on-the-27-september-federal-v",
-   "sid": "st-6ed0c5d7050e",
-   "headline": "Neutrality Initiative trails in first SRG poll",
-   "summary": "The first SRG poll on the 27 September federal votes, published Thursday 20 August, shows the Neutrality Initiative headed for defeat and the Food initiative too close to call. In the survey by the GFS Bern institute — conducted 3–16 August among 17,212 eligible voters for public broadcaster SRG SSR — 54 percent said they would reject the \"Preservation of Swiss Neutrality\" initiative against 42 percent in favour. The initiative, backed by the SVP and allied campaigners, would write a strict, permanent armed neutrality into the constitution, barring Switzerland from military alliances and from joining sanctions against warring states. The parallel Food initiative (\"For safe food\"), which seeks to lift Switzerland's self-sufficiency toward at least 70 percent through more sustainable and plant-based domestic production, was effectively tied — 49 percent against, 47 percent in favour.",
-   "why": "First polls are trend indicators, not verdicts — but a neutrality initiative that starts 12 points behind faces a steep climb, and its wording (no sanctions against warring states) is precisely what would constrain how Switzerland aligns with EU measures on Russia or Iran, so the September result carries directly into how Bern can act on those files.",
-   "url": "https://www.srf.ch/news/schweiz/1-srg-umfrage-auf-einen-blick-neutralitaetsinitiative-im-rueckstand-ernaehrungsinitiative-offen",
-   "source_domain": "srf.ch",
-   "date": "2026-08-21",
-   "date_label": "Aug 21",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "politics"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/21/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-21-news-a-fire-overnight-into-friday-21-august-destroyed",
@@ -422,7 +591,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-21-ai-ml-a-benchmark-that-asks-whether-agents-can-improve",
@@ -450,7 +619,7 @@
     "Einsia.AI"
    ],
    "affiliation_label": "Tsinghua University, Einsia.AI",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-21-ai-ml-even-correct-relevant-memories-can-sabotage-the",
@@ -473,7 +642,64 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true
+   "fresh": false
+  },
+  {
+   "id": "2026-08-21-ai-ml-fine-tuning-a-model-to-co-adapt-with-whatever-kv",
+   "sid": "st-83da981d33d7",
+   "headline": "Fine-tuning teaches sparse attention to forget",
+   "summary": "Long-context inference is bottlenecked by the KV cache (the stored keys/values for every past token, whose size grows with context). Sparse-attention policies drop most of it to save memory, but the model was never trained to expect that. This method fine-tunes a model to co-adapt with any KV-cache policy, runs on a single 40 GB A100, and often ends up more accurate than a model trained with exact attention. It ships an efficient kernel for H2O (a leading \"keep the heavy-hitter tokens\" policy) and open-source code, KeysAndValues (github.com/awslabs/keys_values).",
+   "why": "most sparse-attention work bolts the shortcut onto a model at inference and eats an accuracy hit; training the model to live with the shortcut on a single GPU is a practical recipe for cheaper long-context serving — directly relevant to anyone running long-context models on modest hardware.",
+   "url": "https://arxiv.org/abs/2608.19920",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "affiliations": [
+    "Amazon Web Services",
+    "University of Amsterdam",
+    "TU Berlin"
+   ],
+   "affiliation_label": "Amazon Web Services, University of Amsterdam +1",
+   "fresh": false
+  },
+  {
+   "id": "2026-08-21-ai-ml-a-memory-efficient-recipe-for-agentic-rl-that-ou",
+   "sid": "st-b2c692507b26",
+   "headline": "Single-rollout method sharpens agentic RL",
+   "summary": "Agentic reinforcement learning trains a model over long, multi-step tasks. Critic-free methods like GRPO estimate how good an action was from several sampled rollouts, dodging the memory cost of PPO's separate value network — but they assign credit poorly over long horizons and can suffer \"advantage collapse.\" SAPO folds the policy and value function into one shared autoregressive backbone (predicting both at different points in the same generation), and adds a trajectory-level advantage estimator for per-turn credit. On ALFWorld and WebShop with Qwen2.5-1.5B/7B it beats PPO and GRPO by mean +15.1 and +12.1 points while cutting per-iteration runtime 33.2% versus PPO and dropping the separate critic entirely. This is a distinct line from the token-level credit-assignment work covered last edition, converging on the same problem from the value-estimation side.",
+   "why": "temporal credit assignment — figuring out which step in a long task deserved the reward — is the central difficulty in training agents, and doing it without a memory-hungry critic is exactly the lever that makes agentic RL affordable to run.",
+   "url": "https://arxiv.org/abs/2608.19842",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "affiliations": [
+    "Xiamen University",
+    "Nanyang Technological University"
+   ],
+   "affiliation_label": "Xiamen University, Nanyang Technological University",
+   "fresh": false
   },
   {
    "id": "2026-08-21-news-a-new-report-from-the-swiss-academies-of-science",
@@ -497,7 +723,7 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/08/21/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-08-20-news-a-russian-ballistic-missile-barrage-on-kyiv-earl",
@@ -547,6 +773,29 @@
    "fresh": false
   },
   {
+   "id": "2026-08-20-news-a-chinese-court-sentenced-evergrande-founder-hui",
+   "sid": "st-758df9a7be74",
+   "headline": "Evergrande founder gets life sentence",
+   "summary": "A Chinese court sentenced Evergrande founder Hui Ka Yan to life in prison on Thursday 20 August for fraud and bribery, ordering all his personal property confiscated. The Shenzhen Intermediate People's Court found that Hui — once Asia's richest man, who pleaded guilty in April — ran continuous, large-scale financial fraud to inflate the developer's assets and conceal its liabilities; investigators had found Evergrande overstated revenue by roughly $80 billion in 2019 and 2020. The court fined Evergrande 8.82 billion yuan ($1.31 billion) and its main subsidiary Hengda Real Estate 7 billion yuan, and handed six-to-18-year terms to five other executives. Evergrande defaulted in 2021 on most of its roughly $300 billion in liabilities, was ordered liquidated in 2024 and delisted in 2025 — the defining symbol of China's property-sector crisis.",
+   "why": "The sentence draws a line under the company whose collapse triggered China's property bust, signalling Beijing will pin the debt crisis on individual executives even as the underlying downturn in housing continues to weigh on the economy.",
+   "url": "https://www.dw.com/en/evergrande-founder-hui-ka-yan-sentenced-to-life-in-prison/a-78439153",
+   "source_domain": "dw.com",
+   "date": "2026-08-20",
+   "date_label": "Aug 20",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "economy"
+   ],
+   "topic_primary": "economy",
+   "topic_label": "Economy",
+   "topic_color": "#9a7b2e",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/20/news/",
+   "fresh": false
+  },
+  {
    "id": "2026-08-19-news-the-united-states-sanctioned-the-president-of-th",
    "sid": "st-d03f80975246",
    "headline": "US sanctions ICC president",
@@ -568,35 +817,6 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/19/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-19-science-superconductivity-survives-in-a-single-copper-ox",
-   "sid": "st-6d1364bee376",
-   "headline": "Cuprate superconducts in a single copper-oxygen plane",
-   "summary": "Cuprates — copper-oxide ceramics that superconduct (carry current with zero resistance) at unusually high temperatures — are built from stacked CuO₂ (copper–oxygen) planes, and a long-standing question is how few of those planes the effect actually needs. Borrowing the top-down, sticky-tape exfoliation trick that made graphene, a Fudan-led team thinned a cuprate all the way down to a single CuO₂ plane and still measured superconductivity, isolating the truly two-dimensional limit of the problem. Earlier work had shown the essential physics fits within two planes; pushing to one strips the system to what may be its minimal ingredient.",
-   "why": "If one copper–oxygen layer is enough to superconduct, theories of high-temperature superconductivity can be tested against the barest possible system — a cleaner route toward understanding, and someday designing, better superconductors.",
-   "url": "https://www.nature.com/articles/s41586-026-10857-1",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "Fudan University",
-    "University of British Columbia",
-    "Zhejiang University"
-   ],
-   "affiliation_label": "Fudan University, University of British Columbia +1",
    "fresh": false
   },
   {
@@ -623,61 +843,27 @@
    "fresh": false
   },
   {
-   "id": "2026-08-19-science-an-epfl-graphene-device-weighs-one-third-of-an-e",
-   "sid": "st-19fb2d603f06",
-   "headline": "Graphene device measures one-third of an electron",
-   "summary": "In the fractional quantum Hall effect — what emerges when electrons are confined to two dimensions in an intense magnetic field — the electron fluid gives rise to \"quasiparticles\" that act as if they carry only a fraction of an electron's charge. Measuring that fraction cleanly is hard, because the usual interferometer designs entangle bulk and edge contributions. The EPFL-led team instead built an antidot — a controllable bump in the device's potential landscape that behaves as a tunable artificial impurity — into a graphene sample and read the charge of quasiparticles tunnelling through it, directly extracting values such as e/3 (one-third of the elementary charge).",
-   "why": "A clean way to weigh fractional charges is a prerequisite for probing these quasiparticles' exotic quantum statistics — the same physics being courted for topological quantum computing. The lead group is Swiss.",
-   "url": "https://www.nature.com/articles/s41567-026-03412-2",
-   "source_domain": "nature.com",
+   "id": "2026-08-19-news-france-s-assisted-dying-law-was-promulgated-by-p",
+   "sid": "st-e3e0640a7618",
+   "headline": "France enacts assisted-dying law",
+   "summary": "France's assisted-dying law was promulgated by President Emmanuel Macron and formally took effect on Wednesday 19 August, making medical aid in dying legal for the first time. The step follows the Constitutional Council's ruling on Friday 14 August that found no grounds to strike the text down, which itself followed the National Assembly's final adoption on 15 July after years of debate. Under the law, adults with a \"serious and incurable\" illness in an advanced or terminal phase, suffering that cannot be relieved, may request assistance to die; access will phase in as implementing decrees follow. It is one of France's most consequential social reforms in a decade.",
+   "why": "France joins the small group of European states with a legal right to die, resolving a debate that has run through French politics for years — and the outcome next door feeds directly into how Switzerland, which already permits assisted suicide, and its neighbours frame their own end-of-life rules.",
+   "url": "https://www.lemonde.fr/societe/article/2026/08/19/l-aide-a-mourir-officiellement-autorisee-en-france-apres-la-promulgation-de-la-loi-par-emmanuel-macron_6749291_3224.html",
+   "source_domain": "lemonde.fr",
    "date": "2026-08-19",
    "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
+   "stream": "news",
+   "stream_label": "News",
    "topics": [
-    "science",
-    "switzerland"
+    "politics",
+    "health"
    ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
    "importance": 2,
    "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "EPFL",
-    "Oxford",
-    "NIMS"
-   ],
-   "affiliation_label": "EPFL, Oxford +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-19-science-chemists-learn-to-walk-the-nitrogen-around-a-rin",
-   "sid": "st-655582cea6af",
-   "headline": "Chemists walk nitrogen around a pyridine ring",
-   "summary": "Pyridines — six-membered aromatic rings carrying a single nitrogen, ubiquitous in drug molecules — behave very differently depending on where a substituent sits relative to that nitrogen, and normally each \"positional isomer\" (same atoms, different arrangement) must be built from scratch. The IBS/KAIST team report a way to reorganise the ring itself: a controlled sequence of nitrogen insertion and deletion transposes the nitrogen to a new position, relocating the attached groups without changing their identity. A companion paper from Cambridge performs related \"skeletal editing\" on tertiary benzylamines, rewriting their core carbon–nitrogen connectivity late in a synthesis (Nature, University of Cambridge).",
-   "why": "Skeletal editing lets chemists remodel a molecule's core in the final steps instead of redesigning a whole synthesis — a faster lane for exploring drug-like variants around a promising scaffold.",
-   "url": "https://www.nature.com/articles/s41586-026-11006-4",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "Institute for Basic Science",
-    "KAIST"
-   ],
-   "affiliation_label": "Institute for Basic Science, KAIST",
+   "permalink": "/2026/08/19/news/",
    "fresh": false
   },
   {
@@ -708,35 +894,6 @@
     "McGill University"
    ],
    "affiliation_label": "MD Anderson Cancer Center, Memorial Sloan Kettering +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-19-science-distant-galaxies-may-hide-extra-mass-in-dim-low",
-   "sid": "st-b409a5e8c561",
-   "headline": "Distant galaxies hide mass in dim dwarf stars",
-   "summary": "A galaxy's stellar mass is inferred from its light, but that conversion hinges on the initial mass function (IMF) — the assumed spread of star masses at birth, usually copied from the Milky Way. Faint low-mass stars dominate the mass yet contribute little light, so the low-mass end is normally guessed, not measured. Using ultra-deep JWST spectra of nine massive quiescent galaxies at redshift z ≈ 0.7 (light that left them roughly 6 billion years ago), the Leiden-led team constrained that low-mass end directly and found the IMF \"bottom-heavy\" — richer in dwarf stars than the Milky Way's, implying more hidden stellar mass than standard assumptions give.",
-   "why": "JWST has turned up early galaxies that look almost too massive to exist so soon; a bottom-heavy IMF shows galaxies really can carry extra unseen stellar mass, which bears on how the masses — and the assembly speed — of the earliest galaxies are read. The measurement is at intermediate redshift, so it informs rather than settles the high-redshift debate.",
-   "url": "https://www.nature.com/articles/s41550-026-02932-4",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "Leiden University",
-    "Carnegie Institution for Science",
-    "Yale"
-   ],
-   "affiliation_label": "Leiden University, Carnegie Institution for Science +1",
    "fresh": false
   },
   {
@@ -828,32 +985,32 @@
    "fresh": false
   },
   {
-   "id": "2026-08-18-ai-ml-an-ai-system-nudges-the-matrix-multiplication-ex",
-   "sid": "st-d2de83c4e4be",
-   "headline": "An AI system nudges the matrix-multiplication exponent to a new record",
-   "summary": "The matrix-multiplication exponent ω is the theoretical yardstick for how fast two n×n matrices can in principle be multiplied: schoolbook multiplication costs about n³ operations (ω = 3), and sixty years of algorithm design has been chipping ω down toward the conjectured floor of 2. The current record comes from the \"laser method,\" a technical optimization procedure at the heart of these algorithms. This DeepMind-led team reformulated that optimization so it could be solved in a larger setting, handed it to modern machine-learning solvers, then refined the result with AlphaEvolve (DeepMind's LLM-driven algorithm-discovery system), improving the bound from ω < 2.371339 to ω < 2.371177.",
-   "why": "the improvement is tiny — it lands in the fifth decimal place and buys no faster software today, since these \"galactic\" algorithms are far too intricate to run in practice. What's notable is who moved it: an AI system advancing one of theoretical computer science's most-studied constants, on a frontier where human experts have made gains this small over many years.",
-   "url": "https://arxiv.org/abs/2608.16884",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
+   "id": "2026-08-19-science-the-milky-way-ate-a-galaxy-even-earlier-than-we",
+   "sid": "st-86e729dc2452",
+   "headline": "Milky Way's oldest known merger revealed",
+   "summary": "The Milky Way grew by devouring smaller galaxies, and the largest early merger securely known — Gaia-Sausage-Enceladus (a dwarf galaxy that fell in) — dates to about 10 billion years ago. Using globular clusters as tracers and a new method to date them, the INAF Bologna-led team found the clusters split into three distinct age–metallicity sequences: one native to the proto-Milky Way, one from Gaia-Sausage-Enceladus, and one pointing to an earlier, previously unrecognised major accretion event some 1.8 billion years before it.",
+   "why": "Each identified merger is a chapter in the Galaxy's origin story; finding an even older one pushes back the clock on when the Milky Way began assembling in earnest.",
+   "url": "https://www.nature.com/articles/s41550-026-02931-5",
+   "source_domain": "nature.com",
+   "date": "2026-08-19",
+   "date_label": "Aug 19",
+   "stream": "science",
+   "stream_label": "Science",
    "topics": [
-    "ai-ml",
     "science"
    ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/08/18/ai-ml/",
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/19/science/",
    "affiliations": [
-    "Google DeepMind",
-    "Carnegie Mellon University"
+    "INAF",
+    "University of Bologna",
+    "University of Groningen"
    ],
-   "affiliation_label": "Google DeepMind, Carnegie Mellon University",
+   "affiliation_label": "INAF, University of Bologna +1",
    "fresh": false
   },
   {
@@ -881,20 +1038,19 @@
    "fresh": false
   },
   {
-   "id": "2026-08-18-ai-ml-weak-irrelevant-prompt-cues-can-be-stacked-to-st",
-   "sid": "st-21addf24ede6",
-   "headline": "Weak prompt cues can be stacked to strongly control a model",
-   "summary": "The authors describe a phenomenon they call model hypnosis: individually weak, seemingly irrelevant choices in a prompt — paraphrases, typos, innocuous wording — can be combined so that together they systematically steer a model's behaviour. They report it across model families and scales, including in frontier reasoning models, and find that a \"hypnotic\" prompt tuned on one model often transfers to another.",
-   "why": "if inconspicuous surface features can be composed into strong control, that cuts against both safety and interpretability — the levers that move a model are precisely the ones a human reviewer would dismiss as noise, and they generalise across systems rather than staying model-specific. It reframes prompt-based jailbreaks as an additive, transferable effect rather than a bag of one-off tricks.",
-   "url": "https://arxiv.org/abs/2608.16834",
+   "id": "2026-08-18-ai-ml-a-memory-that-starts-small-keeps-long-context-mo",
+   "sid": "st-c3f0b2dbe3e0",
+   "headline": "A memory that starts small keeps long-context models from clogging",
+   "summary": "Standard attention costs grow quadratically with context length, so a growing line of work compresses the past into a fixed-size \"memory state\" instead. The snag: with a static memory the earliest tokens face no compression pressure, so they hog degrees of freedom and \"pollute\" the state, leaving little room for later context. Proteus introduces incremental memory activation — the memory's usable capacity is expanded gradually as the sequence grows. An early bottleneck forces the model to compress history harder; unlocking fresh capacity later reduces interference with new tokens. It drops into several recent memory architectures (Titans, Comba, Hope-Attention) at no added cost, with gains that widen at longer context lengths.",
+   "why": "long-context recall is where sub-quadratic (\"linear-attention\") models usually break down; scheduling when memory becomes available, rather than how much there is, is a cheap and broadly reusable lever for that failure mode.",
+   "url": "https://arxiv.org/abs/2608.16844",
    "source_domain": "arxiv.org",
    "date": "2026-08-18",
    "date_label": "Aug 18",
    "stream": "ai-ml",
    "stream_label": "AI/ML",
    "topics": [
-    "ai-ml",
-    "security"
+    "ai-ml"
    ],
    "topic_primary": "ai-ml",
    "topic_label": "AI / ML",
@@ -903,9 +1059,64 @@
    "is_lead": false,
    "permalink": "/2026/08/18/ai-ml/",
    "affiliations": [
-    "University of Pennsylvania"
+    "Google",
+    "Mila – Quebec AI Institute",
+    "Université de Montréal"
    ],
-   "affiliation_label": "University of Pennsylvania",
+   "affiliation_label": "Google, Mila – Quebec AI Institute +1",
+   "fresh": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-coding-agents-fail-when-the-fact-they-need-isn-t",
+   "sid": "st-6d111859e3fa",
+   "headline": "Coding agents fail when the needed fact is not in front of them",
+   "summary": "Repository-scale coding asks an agent to keep tests, imports, configuration and migration rules mutually consistent inside a limited context window. The authors model each edit as needing a \"fact\" that comes either from recent context or from the model's baked-in (\"parametric\") memory; facts supplied by neither channel are coherence debt. Testing seven models across five agent harnesses, they find: no model completes a task on an unseen API when both channels are empty, and simply putting the fact in the prompt restores success. Availability — not where the fact sits relative to the edit — decides the outcome. A missing fact produces wrong work rather than absent work: the agent fabricates a file or guesses a value instead of reporting itself blocked, and how often it admits it's stuck is a property of the model. Tellingly, a stale convention file costs more than no file, because agents follow the standard even when it prescribes worse code.",
+   "why": "it's a concrete diagnosis of why coding agents silently go wrong at scale — and a directive for harness builders: guarantee the facts an edit depends on are present when the agent writes, and check that against what it produces, not what it reads.",
+   "url": "https://arxiv.org/abs/2608.16630",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "fresh": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-an-agent-that-invents-new-crystals-in-a-language",
+   "sid": "st-0a4068aad6f3",
+   "headline": "An agent that invents new crystals in a language of motifs",
+   "summary": "Data-driven materials discovery is good at interpolating between known structures but rarely invents genuinely new structure types. MatEvolve is an agentic-AI framework — built on Claude Fable 5 with no fine-tuning — that writes each candidate crystal as an interpretable motif profile, a description of the recurring geometric patterns (\"motifs\") that compose it. Crucially the profile is not just a label but the medium of design: the agent edits the profile, builds a crystal from the edited version, states its rationale, and the most promising candidates are checked with first-principles physics calculations. Applied to rare-earth-lean permanent magnets (strong magnets that avoid scarce, geopolitically fraught rare-earth elements), it reached new structural prototypes more than three times as often as generative models at an equal validation budget, at a comparable rate of on-target magnets.",
+   "why": "it's a credible case of an agent reaching real novelty in a hard physical-science domain while staying human-readable — the motif profiles expose why a structure works, and the target (rare-earth-lean magnets) speaks directly to materials-supply-chain risk.",
+   "url": "https://arxiv.org/abs/2608.15900",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "science"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "JAIST",
+    "Institute of Science Tokyo"
+   ],
+   "affiliation_label": "JAIST, Institute of Science Tokyo",
    "fresh": false
   },
   {
@@ -922,6 +1133,30 @@
    "stream_label": "News",
    "topics": [
     "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/news/",
+   "fresh": false
+  },
+  {
+   "id": "2026-08-18-news-south-korean-president-lee-jae-myung-on-tuesday",
+   "sid": "st-b77f27ea3fd9",
+   "headline": "South Korea seeks command of its own forces",
+   "summary": "South Korean President Lee Jae Myung on Tuesday 18 August pressed for his country to regain wartime operational control of its own forces, a day after Trump ordered US–South Korea joint military exercises scaled back and said North Korea's Kim Jong Un had responded to his diplomatic outreach. Wartime operational control (OPCON) — authority over Korean troops in a conflict, which has sat with a US-led command since the Korean War — has long been a sovereignty question in Seoul, and Lee framed rebuilding independent capability as the response to a less certain American commitment. Trump ordered the Pentagon to trim the drills on the grounds that Pyongyang had been, in his characterisation, \"unthreatening\"; South Korean lawmakers called the move \"inane\" and warned it weakens deterrence, and Trump's claim of a Kim response would mark the first US–North Korea engagement since his first term.",
+   "why": "a US president loosening a decades-old alliance while courting Pyongyang reshuffles East Asian security calculations for Japan, China and Seoul alike.",
+   "url": "https://www.theguardian.com/world/2026/aug/18/south-korea-president-trump-military-drills-control-opcon-kim-jong-un",
+   "source_domain": "theguardian.com",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics",
+    "politics"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
@@ -991,6 +1226,30 @@
    "stream_label": "News",
    "topics": [
     "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/17/news/",
+   "fresh": false
+  },
+  {
+   "id": "2026-08-17-news-the-migration-crisis-in-spain-s-north-african-en",
+   "sid": "st-af5f08c70d75",
+   "headline": "Ceuta crisis escalates Spain-Morocco row",
+   "summary": "The migration crisis in Spain's North African enclave of Ceuta escalated into a full-blown row with Madrid on Monday 17 August, as the city's president threatened legal action against the central government if it fails to resolve the situation within 30 days. Ceuta president Juan Jesús Vivas accused the Sánchez government of \"almost absolute passivity\" after a surge of arrivals — Moroccan police had arrested more than 100 people trying to cross into the enclave on Friday 14 August. Prime Minister Pedro Sánchez convened ministers by videoconference over the crisis, and Health Minister Mónica García called it \"an absolutely exceptional humanitarian crisis\"; local authorities began moving dozens of migrant girls and adolescents who had been sleeping outdoors into a converted hall. Rabat, for its part, is using the episode to air a list of grievances against Madrid — over migrant regularisation, nationality for Sahrawis, and summary \"hot\" returns.",
+   "why": "Ceuta is one of the EU's two land borders with Africa, and the standoff shows how quickly Spanish–Moroccan tensions can turn a local surge into a diplomatic and humanitarian flashpoint on Europe's southern frontier.",
+   "url": "https://elpais.com/espana/2026-08-17/el-presidente-de-ceuta-eleva-el-tono-contra-el-gobierno-y-amenaza-con-acudir-al-poder-judicial-si-no-resuelve-la-crisis-en-30-dias.html",
+   "source_domain": "elpais.com",
+   "date": "2026-08-17",
+   "date_label": "Aug 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics",
+    "politics"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
@@ -1234,63 +1493,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-15-weekend-beyond-final-scores-today-s-research-agents-opti",
-   "sid": "st-183973b8f6bc",
-   "headline": "Research agents optimize, they don't discover",
-   "summary": "Leaderboards report an agent's final score on a research task but hide how it got there — where progress was won or lost, and whether the agent learned anything reusable along the way. This work instruments seven frontier models across 36 long-horizon AI R&D tasks with rule-based metrics that dissect each run into Solution Framing, Execution and Feedback Control, and adds controlled tests of whether experience carries over within and across tasks. The findings are pointed: current agents \"operate more like engineering optimizers than fully autonomous researchers.\" They can frame and implement workable solutions, but performance swings widely run-to-run, their strongest solutions mainly adapt or recombine established techniques, and genuine methodological novelty remains rare. The diagnosis is granular — similar final scores can hide very different bottlenecks, and accumulated \"experience\" sometimes misleads later decisions.",
-   "why": "It is the measured counterweight to \"AI scientist\" hype (see Cross-cutting thread 1): it says exactly what today's agents can and can't do, and turns the gap into concrete engineering targets rather than a vibe.",
-   "url": "https://arxiv.org/abs/2608.13417",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
-   "affiliations": [
-    "Meituan",
-    "UCAS"
-   ],
-   "affiliation_label": "Meituan, UCAS",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-15-weekend-neural-quadratic-forms-one-minimal-model-for-sud",
-   "sid": "st-498dd69866d6",
-   "headline": "Symmetry explains sudden learning and scaling",
-   "summary": "Networks trained by smooth gradient descent often learn in steps — the loss sits on a plateau, then drops abruptly — yet training curves aggregate into smooth power laws; both behaviours show up in architectures with wildly different internals, hinting at a few hidden \"collective variables\" doing the real work. This paper shows a symmetry pins down what those variables are. Because a layer is a sum over interchangeable units, relabelling the units leaves it unchanged; that symmetry, plus smoothness, forces a universal leading form near the small initial weights — a quadratic term in which every architectural detail is compressed into a single \"structure matrix\" $A(x)$ the authors compute per architecture. Perceptrons, attention, mixtures-of-experts and convolutions then become one model at different $A$, whose dynamics reduce (when the data share an eigenbasis) to a Lotka–Volterra equation — the classic predator–prey system — in which learning \"modes\" switch on one after another. Smaller initial weights spread the switch-on times into visible plateaus; when many modes blur together, the same events merge into a power law whose exponent the theory predicts, confirmed numerically across methods and architectures.",
-   "why": "It offers a genuine unifying explanation for two of deep learning's most-discussed mysteries — emergent \"grokking\"-style jumps and smooth scaling laws — as two faces of one symmetry-fixed dynamics.",
-   "url": "https://arxiv.org/abs/2608.13335",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "ai-ml",
-    "science"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
-   "affiliations": [
-    "MIT",
-    "EPFL"
-   ],
-   "affiliation_label": "MIT, EPFL",
-   "fresh": false
-  },
-  {
    "id": "2026-08-15-news-a-vaud-green-mp-will-ask-federal-commissioners-n",
    "sid": "st-94ac62bed552",
    "headline": "Swiss motion pushes local tech procurement",
@@ -1312,99 +1514,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/15/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-15-weekend-the-iran-war-s-newest-flashpoint-is-a-claim-with",
-   "sid": "st-8992dd9a5ded",
-   "headline": "Trump vows to declare Hormuz US territory",
-   "summary": "The Iran war's newest flashpoint is a claim with no basis in the law of the sea: Trump says he will declare the Strait of Hormuz US \"territory.\". US President Donald Trump said on 14 August 2026 he intends to declare the strait — the ~40-km-wide waterway between Iran and Oman that roughly a fifth of the world's oil passes through — American \"territory,\" repeating \"pretty soon\" in a 15 August update. No state can annex an international strait: the Strait of Hormuz lies within Iranian and Omani territorial waters and is governed by the transit-passage regime of the UN Convention on the Law of the Sea, so treat \"US territory\" as a political assertion from an administration whose Hormuz claims have repeatedly outrun the facts, not a legal reality. Separately, French- and English-language outlets reported acute strain on the carrier USS Abraham Lincoln after nine months at sea.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/8/15/iran-war-live-trump-vows-to-make-hormuz-us-territory-pretty-soon",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "geopolitics",
-    "world"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-15-weekend-a-magnitude-7-7-earthquake-struck-eastern-indone",
-   "sid": "st-c7ff06858f03",
-   "headline": "Magnitude-7.7 quake hits eastern Indonesia",
-   "summary": "A magnitude-7.7 earthquake struck eastern Indonesia on 15 August 2026, killing at least 20. The quake hit in the morning (local time), with early reports of collapsed buildings and people fleeing into the streets; the toll was still preliminary as rescue efforts began.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/8/15/at-least-20-killed-as-magnitude-7-7-quake-hits-indonesia",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "world"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-15-weekend-a-record-hot-rain-starved-summer-is-now-biting-s",
-   "sid": "st-2a13073f228f",
-   "headline": "A record-dry summer bites Switzerland",
-   "summary": "A record-hot, rain-starved summer is now biting Switzerland directly. Through mid-August, Swiss and regional reporting described the Rhine dropping to levels that idled a Basel ferry and forced dredging debates, cantons coordinating how to share water with neighbours, and continued alpine glacier loss (\"it's shocking how much has melted\"), against the backdrop of a large forest fire in Germany that evacuated ~1,800 people on 13 August.",
-   "why": "",
-   "url": "https://www.srf.ch/news/schweiz/wasserknappheit-so-teilt-die-schweiz-das-wasser-mit-den-nachbarlaendern",
-   "source_domain": "srf.ch",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-15-weekend-crest-teach-the-magnitude-of-credit-not-the-dire",
-   "sid": "st-75ad1b954cfd",
-   "headline": "Dense credit for multi-turn RL agents",
-   "summary": "Training tool-using agents with reinforcement learning from verifiable rewards (RLVR — the reward is a checkable success/failure, not a learned score) has a stubborn flaw: a whole multi-turn trajectory earns a single reward, so the method can't tell which turns actually mattered — the credit-assignment problem. Pure imitation of a stronger \"teacher\" model gives dense per-token guidance but caps the student at the teacher's ability and can collapse training. CrEST splits the difference with a two-level scheme: it computes turn-segmented verified advantages to fix credit between turns, then uses an entropy-gated \"self-teacher\" (the model supervising itself, engaged only where it is uncertain) to refine credit within a turn. Crucially, the teacher's job is demoted from choosing the direction of each weight update to merely scaling its magnitude — which keeps RLVR's verifier-bounded performance ceiling while adding dense signal. On the BFCL V3 and WildToolBench tool-use benchmarks it beats both RL and distillation baselines at two model sizes, with the biggest gains on the longest trajectories.",
-   "why": "It is a concrete recipe for giving agents useful feedback on which of their many steps earned a success, without capping them at a teacher's skill — the bottleneck for training on long, real tasks.",
-   "url": "https://arxiv.org/abs/2608.13179",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
    "fresh": false
   },
   {
@@ -1953,33 +2062,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-08-weekend-code-beats-json-for-llm-tool-use",
-   "sid": "st-f2748bffdaad",
-   "headline": "Code beats JSON for LLM tool use",
-   "summary": "When LLMs call external tools, the standard interface is a rigid structured JSON request; an alternative is \"programmatic tool calling\" (PTC), where the model writes actual Python that invokes tools as typed function stubs, chaining and parallelising them in one turn. This paper runs the first systematic head-to-head across 14 models on the BFCL v4 benchmark. PTC matches or beats JSON calling in 11 of 14 models (the GPT-5.6 family gains 10.6 points), holds up better under parallel fan-out (13 of 14), and stays more stable under \"context rot\" (long-context degradation), where JSON drops about 2.3%. The gap tracks raw model coding ability across model generations — the better the model codes, the more code-based tool use wins.",
-   "why": "It shows that letting capable models write code to use their tools, rather than fill in rigid forms, is a simpler and more robust design as models get smarter — and it is the same capability that made this week's autonomous-agent security incident possible (see Cross-cutting thread 3).",
-   "url": "https://arxiv.org/abs/2608.06370",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-08",
-   "date_label": "Aug 8",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/08/weekend/",
-   "affiliations": [
-    "PwC"
-   ],
-   "affiliation_label": "PwC",
-   "fresh": false
-  },
-  {
    "id": "2026-08-08-news-ukraine-s-volodymyr-zelensky-made-the-first-visi",
    "sid": "st-25be4faac215",
    "headline": "Zelensky visits Serbia as strikes hit Kyiv",
@@ -2003,69 +2085,136 @@
    "fresh": false
   },
   {
-   "id": "2026-08-07-news-houthi-missile-and-drone-assaults-on-yemeni-gove",
-   "sid": "st-0a2d2cf51a0c",
-   "headline": "Houthi attacks kill dozens of Yemeni troops",
-   "summary": "Houthi missile-and-drone assaults on Yemeni government camps killed at least 30 soldiers on Thursday 6 August 2026, the deadliest escalation since the 2022 truce. The Iran-backed Houthi movement struck military camps in the provinces of Marib and Hadramout, wounding around 50 more, according to Yemeni government officials; pro-government military sources put the toll higher, at 45 or above, and the Houthi spokesman claimed 'hundreds' of casualties — a figure that could not be independently verified. A de facto ceasefire between the Houthis and the Saudi-led coalition that backs Yemen's internationally recognised government has largely frozen the fighting since April 2022 without any formal peace deal; officials called these coordinated strikes the most serious breach in years.",
-   "why": "A collapse of the truce would reopen a war that had faded from view and risks drawing the Saudi-led coalition — and, indirectly, the broader Iran-US confrontation — back into open conflict.",
-   "url": "https://www.nbcnews.com/world/yemen/houthi-rebel-attacks-kill-least-30-yemeni-government-forces-officials-rcna591274",
-   "source_domain": "nbcnews.com",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "news",
-   "stream_label": "News",
+   "id": "2026-08-08-weekend-strait-of-hormuz-squeeze-eases-toward-a-deal-as",
+   "sid": "st-4df921c26fa8",
+   "headline": "Strait of Hormuz squeeze eases toward a deal as shipowners fight tolls",
+   "summary": "Eight shipping bodies petitioned the UN (letter sent 3 August, released 5 Aug) to block any Hormuz transit tolls, warning it would break the law of international straits; a new International Trade Centre analysis found LNG throughput down about 95%. US Treasury's Bessent claimed an interim reopening deal was \"within reach\" (5 Aug), but no signed text was published — treat the \"deal within reach\" framing as one official's account until confirmed. The line to Swiss and allied energy costs and defence procurement is direct.",
+   "why": "",
+   "url": "https://www.aljazeera.com/economy/2026/8/6/strait-of-hormuz-tolls-would-harm-livelihoods-worldwide-shipowners-warn",
+   "source_domain": "aljazeera.com",
+   "date": "2026-08-08",
+   "date_label": "Aug 8",
+   "stream": "weekend",
+   "stream_label": "Weekend",
    "topics": [
-    "geopolitics"
+    "switzerland"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/08/weekend/",
+   "fresh": false
+  }
+ ],
+ "board": [
+  {
+   "id": "2026-08-22-weekend-israel-opened-tenders-for-the-long-frozen-e1-wes",
+   "sid": "st-b02ccc26cfa3",
+   "headline": "Israel opens E1 West Bank settlement tender",
+   "summary": "Israel opened tenders for the long-frozen E1 West Bank settlement on 18 August 2026, and seven Western governments demanded on 20 August that it stop. The tender covers 1,234 housing units — about a third of the 3,401 approved in August 2025 — in the strip of land east of Jerusalem that, if built on, would sever the northern from the southern West Bank and cut through any contiguous Palestinian state, which is why the project sat frozen for two decades. On 20 August the leaders of the United Kingdom, France, Germany, Italy, the Netherlands, Canada and Norway called the plan \"unacceptable\" and warned businesses off bidding, citing the risk of \"serious breaches of international law.\" Bids close 19 October, days before Israel's 27 October elections.",
+   "why": "",
+   "url": "https://www.aljazeera.com/news/2026/8/21/why-israeli-tenders-for-illegal-e1-west-bank-settlement-prompted-outrage",
+   "source_domain": "aljazeera.com",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "geopolitics",
+    "world"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
    "importance": 3,
    "is_lead": true,
-   "permalink": "/2026/08/07/news/",
-   "fresh": false
+   "permalink": "/2026/08/22/weekend/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Sat 22 Aug",
+   "daybreak": true
   },
   {
-   "id": "2026-08-07-ai-ml-a-learning-algorithm-that-finally-hits-the-theor",
-   "sid": "st-ebbf6946b8d4",
-   "headline": "An optimal agnostic PAC learner",
-   "summary": "PAC learning (Probably Approximately Correct — the standard theoretical model of supervised learning) asks how many labelled examples you need to come close to the best classifier in a given family. In the harder \"agnostic\" setting — where you do not assume the data can be perfectly separated — a lower bound on the achievable error has been known since the 1990s, but no algorithm had been proven to match it. This paper constructs a learner whose error is provably within a single universal constant of that lower bound, for any hypothesis family of finite VC dimension (VC dimension — a standard measure of a model family's capacity).",
-   "why": "It settles a long-standing open question in learning theory — the sample complexity of agnostic PAC learning is now pinned down up to constants at every noise level. This is foundational rather than a product; the payoff is conceptual clarity about the fundamental limits of learning from data.",
-   "url": "https://arxiv.org/abs/2608.06363",
+   "id": "2026-08-22-weekend-alphaevolve-and-modern-optimizers-move-a-60-year",
+   "sid": "st-d2de83c4e4be",
+   "headline": "AlphaEvolve moves the matrix-multiplication exponent",
+   "summary": "The matrix-multiplication exponent ω is the theoretical yardstick for how fast two n×n matrices can in principle be multiplied: schoolbook multiplication costs about n³ operations (ω = 3), and sixty years of algorithm design has been grinding ω down toward the conjectured floor of 2. The current record rests on a delicate optimization at the heart of the \"laser method.\" This team reformulated that optimization so it could be solved in a larger setting than before, handed it to modern machine-learning solvers, and then refined the result with AlphaEvolve (DeepMind's LLM-driven algorithm-discovery system), improving the bound from ω < 2.371339 to ω < 2.371177. The author list pairs a frontier lab with two of complexity theory's leading figures on this exact constant (Virginia Vassilevska Williams, Josh Alman).",
+   "why": "The number itself buys no faster software — these \"galactic\" algorithms are far too intricate to run — but an AI system moving one of theoretical computer science's most-studied constants, on a frontier where human experts gain this little over years, is the week's cleanest example of AI advancing genuine mathematics (and the counterweight to the self-improvement skepticism in Cross-cutting thread 1).",
+   "url": "https://arxiv.org/abs/2608.16884",
    "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
    "topics": [
-    "ai-ml"
+    "ai-ml",
+    "science"
    ],
    "topic_primary": "ai-ml",
    "topic_label": "AI / ML",
    "topic_color": "#2f7d8c",
    "importance": 2,
    "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
+   "permalink": "/2026/08/22/weekend/",
    "affiliations": [
-    "Aarhus University",
-    "HKU",
-    "UC Berkeley"
+    "Google DeepMind",
+    "Carnegie Mellon University",
+    "Columbia University"
    ],
-   "affiliation_label": "Aarhus University, HKU +1",
-   "fresh": false
+   "affiliation_label": "Google DeepMind, Carnegie Mellon University +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Sat 22 Aug",
+   "daybreak": false
   },
   {
-   "id": "2026-08-07-ai-ml-self-improving-agents-can-quietly-poison-themsel",
-   "sid": "st-b8ad1abff107",
-   "headline": "Self-evolving agents poison their own skills",
-   "summary": "\"Self-evolving\" agents get better by distilling reusable skills from their own past runs into a growing library. This paper shows the process is not monotonic: past a critical library size, newly added skills start hurting performance. The cause is structural — once a defective skill enters the decision context it becomes reference material for distilling later skills, forming cross-round contamination chains — and it is largely irreversible: deleting the original culprit afterward recovers only a small fraction of the lost performance. Their fix, Verifier-as-Gatekeeper (VaG), screens each candidate skill with three complementary critics (structural validity, behavioral harmlessness, semantic consistency) before admission. On Terminal-Bench 2, unfiltered accumulation peaks and then decays, while VaG improves every round to 72% pass@1 with a library roughly 5x smaller, and its frozen skill set transfers to other backbones.",
-   "why": "It is a sharp warning for the popular \"just let the agent keep learning from itself\" design — quality control on what enters the skill memory has to be a pre-commit gate, because by the time a bad skill's damage shows up, cleaning it out no longer undoes the harm.",
-   "url": "https://arxiv.org/abs/2608.05810",
+   "id": "2026-08-22-weekend-model-hypnosis-weak-irrelevant-cues-stack-into-s",
+   "sid": "st-21addf24ede6",
+   "headline": "Model hypnosis: weak cues stack to strong control",
+   "summary": "The authors describe a phenomenon they call model hypnosis: individually weak, seemingly irrelevant choices in a prompt — paraphrases, typos, innocuous wording — can be combined additively so that together they systematically steer a model's behaviour. They report it across model families and scales, including in frontier reasoning models, and find that a \"hypnotic\" prompt tuned on one model often transfers to another.",
+   "why": "If inconspicuous surface features compose into strong control, that cuts against both safety and interpretability at once — the levers that move a model are precisely the ones a human reviewer would dismiss as noise, and they generalise across systems rather than staying model-specific. It reframes prompt-based jailbreaks from a bag of one-off tricks into an additive, transferable effect. (Single-lab, but a pointed result.)",
+   "url": "https://arxiv.org/abs/2608.16834",
    "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "University of Pennsylvania"
+   ],
+   "affiliation_label": "University of Pennsylvania",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Sat 22 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-22-weekend-physics-of-agents-statistical-mechanics-that-pre",
+   "sid": "st-bdabf0574df4",
+   "headline": "Statistical mechanics predicts AI-agent crowds",
+   "summary": "As AI agents increasingly talk to each other rather than work alone, their interactions can sharpen collective reasoning or curdle into herding and shared bias. This Stanford group (with Surya Ganguli and James Zou) ran over 10,000 communities of language-model agents that repeatedly exchange messages and revise their views, on objective maths questions and subjective political statements. Despite enormous variety, the dynamics collapse into just three regimes — indifference, polarization, consensus — with agents starting indifferent and building conviction as they interact. On factual questions, talking improves group accuracy; on subjective ones, it tends to drift the group's stated opinion rightward. They fit a statistical-mechanics model (borrowed from physics: agents stochastically prefer lower \"social pressure,\" like particles settling toward low energy) that, given only the agents' initial opinions, predicts individual trajectories out-of-sample, beats standard baselines, and generalises to community structures it never saw.",
+   "why": "It replaces case-by-case anecdote about multi-agent behaviour with compact, testable laws — the kind you'd want when designing agent systems that resist groupthink. The rightward political drift is the authors' specific measured result on their setup; treat it as a concrete empirical claim, not a universal law.",
+   "url": "https://arxiv.org/abs/2608.16578",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
    "topics": [
     "ai-ml"
    ],
@@ -2074,34 +2223,195 @@
    "topic_color": "#2f7d8c",
    "importance": 2,
    "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "fresh": false
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "Stanford University"
+   ],
+   "affiliation_label": "Stanford University",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Sat 22 Aug",
+   "daybreak": false
   },
   {
-   "id": "2026-08-07-news-israel-has-rewritten-the-gaza-disarmament-roadma",
-   "sid": "st-182cfcbc63ec",
-   "headline": "Netanyahu reworks Gaza disarmament deal",
-   "summary": "Israel has rewritten the Gaza disarmament roadmap it signed onto days earlier, and Prime Minister Benjamin Netanyahu said on 5 August 2026 that Israel had 'not agreed' to withdraw before Hamas is 'completely disarmed'. Under the Board of Peace framework that US President Donald Trump announced on 30 July — the multinational body (Egypt, Qatar, Turkey and the US) overseeing the ceasefire — Hamas was to surrender its weapons in stages while Israeli forces pulled back to the agreed 'Yellow Line'; Hamas accepted that version. Le Temps reports that Israeli-imposed modifications have since decoupled Hamas's disarmament from a full Israeli withdrawal, a change Hamas says voids its participation unless Israel meets its own obligations first. The characterisation of the reworked terms is contested — Israel presents them as clarifications, mediators and Hamas as a reversal of what was agreed.",
-   "why": "A just-announced deal is being renegotiated before implementation, leaving the ceasefire's next phase in doubt.",
-   "url": "https://www.letemps.ch/articles/quand-israel-reecrit-le-plan-de-paix-pour-gaza-en-cours-de-route",
-   "source_domain": "letemps.ch",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "news",
-   "stream_label": "News",
+   "id": "2026-08-22-weekend-superconductivity-survives-in-a-single-copper-ox",
+   "sid": "st-6d1364bee376",
+   "headline": "Superconductivity in a single copper-oxygen plane",
+   "summary": "Cuprates — copper-oxide ceramics that superconduct (carry current with zero resistance) at unusually high temperatures — are built from stacked CuO₂ (copper–oxygen) planes, and a 40-year question is how few of those planes the effect actually needs. Borrowing the sticky-tape exfoliation trick that made graphene, a Fudan-led team thinned a bismuth cuprate down to a single CuO₂ plane and still measured superconductivity, with only about a 10% drop in transition temperature versus the bulk. Fine control of the oxygen content then let them extend the phase diagram into new territory, revealing an anomalous metallic state between insulator and superconductor as temperature approaches absolute zero, with a divergent critical exponent at the superconductor-to-insulator quantum phase transition (the abrupt reorganisation a material undergoes at zero temperature as a knob like doping is turned).",
+   "why": "If one copper–oxygen layer is enough, theories of high-temperature superconductivity can finally be tested against the barest possible system — a clean, gate- and oxygen-tunable platform, the \"hydrogen atom\" of the cuprate problem (Cross-cutting thread 3).",
+   "url": "https://www.nature.com/articles/s41586-026-10857-1",
+   "source_domain": "nature.com",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
    "topics": [
-    "geopolitics"
+    "science"
    ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
    "importance": 2,
    "is_lead": false,
-   "permalink": "/2026/08/07/news/",
-   "fresh": false
-  }
- ],
- "board": [
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "Fudan University",
+    "University of British Columbia",
+    "Zhejiang University"
+   ],
+   "affiliation_label": "Fudan University, University of British Columbia +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Sat 22 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-22-weekend-a-graphene-antidot-that-weighs-one-third-of-an-e",
+   "sid": "st-19fb2d603f06",
+   "headline": "A graphene antidot weighs one-third of an electron",
+   "summary": "In the fractional quantum Hall effect — what emerges when electrons are trapped in two dimensions under an intense magnetic field — the electron fluid throws up \"quasiparticles\" that behave as if they carry only a fraction of an electron's charge. Measuring that fraction cleanly is hard, because the usual interferometer designs tangle up contributions from the sample's bulk and its edges. The EPFL-led team instead built an antidot — a gate-defined bump in the device's potential landscape that acts as a tunable artificial impurity — into bilayer graphene, and read the charge of quasiparticles tunnelling through it directly, recovering values such as e/3 (one-third of the elementary charge) in both integer and fractional states.",
+   "why": "A clean ruler for fractional charge is a prerequisite for probing these quasiparticles' exotic quantum statistics — the same physics courted for topological quantum computing — and the antidot looks more broadly usable than fragile interferometers. The lead group is Swiss.",
+   "url": "https://www.nature.com/articles/s41567-026-03412-2",
+   "source_domain": "nature.com",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "EPFL",
+    "University of Oxford",
+    "NIMS"
+   ],
+   "affiliation_label": "EPFL, University of Oxford +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Sat 22 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-22-weekend-early-galaxies-may-be-four-times-heavier-than-th",
+   "sid": "st-b409a5e8c561",
+   "headline": "Early galaxies may be four times heavier than their light",
+   "summary": "A galaxy's mass is inferred from its light, but that conversion hinges on the initial mass function (IMF) — the assumed spread of star masses at birth, usually copied from the Milky Way. The catch is that faint, low-mass stars hold most of the mass while contributing almost none of the light, so the low-mass end is normally guessed. Using ultra-deep JWST spectra of nine massive quiescent galaxies (extended with VLT data), the Leiden-led team constrained that low-mass end directly for the first time beyond the local Universe, and found it \"bottom-heavy\" — richer in dwarf stars than the Milky Way's mix. The oldest galaxy in the sample, which formed earliest, is the most bottom-heavy, implying its mass was underestimated by a factor of about four.",
+   "why": "JWST has already turned up early galaxies that look almost too massive to exist so soon after the Big Bang; if the standard IMF systematically undercounts their mass, that tension gets worse, not better — and a core, rarely-tested assumption behind every distant-galaxy mass estimate is now shown to bend.",
+   "url": "https://www.nature.com/articles/s41550-026-02932-4",
+   "source_domain": "nature.com",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "Leiden Observatory",
+    "Carnegie Observatories",
+    "Yale University"
+   ],
+   "affiliation_label": "Leiden Observatory, Carnegie Observatories +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Sat 22 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-22-weekend-phantom-gains-most-the-model-improved-itself-res",
+   "sid": "st-1d0329964362",
+   "headline": "Most self-improvement gains vanish against a control",
+   "summary": "Self-improvement is increasingly graded not by average accuracy but by which specific problems a model newly solves or breaks — which means differencing two noisy measurements, exactly where artifacts hide. The authors audit three rounds of rank-32 LoRA (a lightweight fine-tuning method) self-training on Qwen3-8B, but push a frozen, untrained copy through the identical pipeline as a control. They identify seven measurement failures — several of them standard practice — and each one, alone, inverts a reported finding when the control is missing (a single greedy decode, for instance, manufactures apparent capability change even on the untrained model, largely an artifact of how examples are batched). With a proper per-problem null in place, the clean result is that external distillation reaches problems the base model rarely solves, while three forms of self-training do not — and self-training corrupts problems solved at baseline above the measured floor.",
+   "why": "It is a concrete, reproducible checklist for telling a real self-improvement gain from a measurement mirage — and it suggests a chunk of the \"models bootstrapping themselves\" literature is partly measuring its own pipeline. Pair it with AI4AI-Bench and FormalTCS (Cross-cutting thread 1).",
+   "url": "https://arxiv.org/abs/2608.20290",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "affiliations": [
+    "University College Dublin",
+    "Georgia Institute of Technology",
+    "Dalian University of Technology"
+   ],
+   "affiliation_label": "University College Dublin, Georgia Institute of Technology +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Sat 22 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-22-weekend-the-first-poll-on-switzerland-s-27-september-fed",
+   "sid": "st-6ed0c5d7050e",
+   "headline": "Neutrality initiative trails in first Swiss poll",
+   "summary": "The first poll on Switzerland's 27 September federal votes, published 20 August 2026, shows the SVP-backed Neutrality Initiative headed for defeat. In the GFS Bern survey for public broadcaster SRG SSR — conducted 3–16 August among 17,212 eligible voters — 54% would reject the initiative against 42% in favour, while the parallel Food Initiative (lifting Swiss food self-sufficiency toward 70%) is effectively tied at 49–47. First polls are trend indicators, not verdicts, but the neutrality text matters directly to the reader here: it would bar Switzerland from joining sanctions against warring states, precisely the lever that constrains how Bern can align with EU measures on Russia or Iran.",
+   "why": "",
+   "url": "https://www.srf.ch/news/schweiz/1-srg-umfrage-auf-einen-blick-neutralitaetsinitiative-im-rueckstand-ernaehrungsinitiative-offen",
+   "source_domain": "srf.ch",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "stream": "weekend",
+   "stream_label": "Weekend",
+   "topics": [
+    "switzerland",
+    "politics"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/22/weekend/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Sat 22 Aug",
+   "daybreak": false
+  },
+  {
+   "stream": "weekend",
+   "date": "2026-08-22",
+   "date_label": "Aug 22",
+   "kicker": "Weekend · Cross-cutting threads · Aug 22",
+   "heading": "Cross-cutting threads",
+   "title": "1. The self-improvement story meets its control group",
+   "paras": [
+    "This was the week arXiv turned its skepticism on the \"AI improves itself / does its own research\" narrative — and did it with unusual coordination. <em>Phantom Gains</em> (University College Dublin; Georgia Tech) ran three rounds of self-training on Qwen3-8B but, crucially, pushed a <em>frozen, untrained</em> copy through the identical measurement pipeline; seven common measurement practices each <strong>invert their reported finding</strong> once that control is present, and the honest residue is that external distillation genuinely extends a model's reach while self-training mostly <em>corrupts</em> problems the model already solved (<a href=\"https://arxiv.org/abs/2608.20290\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.20290</a>). <em>AI4AI-Bench</em> isolates the single ability recursive self-improvement actually requires — can an agent design a better <em>training algorithm</em>, not just tune knobs — and finds the strongest system closes under a fifth of the distance to optimum, with most attempts never changing how the model learns at all (<a href=\"https://arxiv.org/abs/2608.20318\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.20318</a>). <em>FormalTCS</em> shows models can't reliably even <em>state</em> a theoretical-computer-science claim formally (a score of 11.5 versus 28.6 when handed the formal statement to prove) (<a href=\"https://arxiv.org/abs/2608.20153\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.20153</a>). And <em>Test-Time Scaling in the Wild</em> (Thomson Reuters) lands the sharpest cut: on open-ended tasks the candidate pool is fine — spending compute to <em>generate</em> more options works — but <em>selection</em> is near-random, because reward models correlate only ρ≈0.12 with true quality, so extra budget buys almost nothing (<a href=\"https://arxiv.org/abs/2608.18931\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.18931</a>). Set this against last week's \"AI scientist\" reality check and a clean shape appears: the narrow, <em>verifiable</em> slices move — replication, or a single galactic-algorithm constant, where AlphaEvolve nudged the matrix-multiplication exponent to ω &lt; 2.371177 this week (<a href=\"https://arxiv.org/abs/2608.16884\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.16884</a>) — but the open-ended loop the marketing implies does not close. The most encouraging part is not the debunking; it is that the field is now building the null models and benchmarks to say <em>precisely</em> where the loop breaks. The unintentional capstone: the week's fresh open-weight release, Ornith-1.5, advertises an \"end-to-end self-improvement loop\" as its headline method (see Models below). For the reader who wants the argument in prose rather than tables, Melanie Mitchell's Quanta interview this week is the same caution at essay length (see Essays).",
+    "<strong>2. The critic comes back to reinforcement learning.</strong> Group-Relative Policy Optimization (GRPO — the reward-based recipe behind most reasoning models) won the LLM post-training era partly by <em>throwing away</em> the value function, the \"critic\" that scores partial outputs token by token: it was fiddly, memory-hungry, and comparing a batch of whole answers was good enough. This week three independent papers argue the pendulum is swinging back, each defusing the critic's cost a different way. <em>Le Critique</em> (Mistral AI; Mila) keeps a learned critic but feeds it \"privileged\" task signal without biasing what the policy learns, then adaptively blends critic- and group-based baselines — and beats GRPO (<a href=\"https://arxiv.org/abs/2608.16739\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.16739</a>). <em>SAPO</em> (Xiamen; NTU) folds the critic <em>into the policy's own backbone</em>, predicting value and action at different points of the same generation, and beats both PPO and GRPO by +15 and +12 points while cutting per-iteration runtime a third and removing the separate critic model entirely (<a href=\"https://arxiv.org/abs/2608.19842\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.19842</a>). And <em>QWM</em> (Stanford; Peking University — Finn and Sadigh among the authors) revives the <em>world model</em> for value-based RL, but uses it only for test-time search over imagined trajectories while training value and policy purely on real transitions — sidestepping the compounding bias that sank Dreamer-style \"train on imagination\" methods (<a href=\"https://arxiv.org/abs/2608.17163\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.17163</a>). The through-line: temporal credit assignment — deciding <em>which</em> of many steps in a long task earned the reward — is the central difficulty in training agents, and after two years of critic-free orthodoxy the field has decided the critic is worth the engineering after all, provided you make it cheap. (Read alongside last week's CrEST and this week's turn-level RTPO for the fuller convergence.)",
+    "<strong>3. Understanding by subtraction.</strong> Physics kept winning this week by stripping a phenomenon to its smallest surviving piece. A Fudan-led team peeled a cuprate superconductor down to a <em>single</em> copper-oxygen plane — the irreducible unit of high-temperature superconductivity — and it still superconducts, turning a 40-year mystery into a clean, gate-tunable \"hydrogen atom\" of the problem (<a href=\"https://www.nature.com/articles/s41586-026-10857-1\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 12 Aug 2026</a>). An EPFL group built a graphene <em>antidot</em> — a single controllable bump that behaves as an artificial impurity — and read out one-third of an electron's charge directly, dodging the bulk/edge confusion that muddies conventional interferometers (<a href=\"https://www.nature.com/articles/s41567-026-03412-2\" target=\"_blank\" rel=\"noopener noreferrer\">Nature Physics, 14 Aug 2026</a>). A Caltech–Paris-Saclay–Munich team played <em>conformal field theory</em> — the universal math of systems at a critical point — back through a small array of trapped atoms, spectral line by spectral line (<a href=\"https://www.nature.com/articles/s41586-026-10904-x\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 19 Aug 2026</a>). And a Tokyo–Vienna team ran Young's double-slit experiment <em>between two silicon atoms</em> 1.36 ångström apart, with the atoms' own thermal jiggle writing itself into the interference fringes (<a href=\"https://www.nature.com/articles/s41586-026-10914-9\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 19 Aug 2026</a>). Each is the same instinct — don't scale up, scale <em>down</em> to the minimal system where the effect still lives, where it finally becomes measurable and controllable. It rhymes with last week's \"do more with a single qubit\" cluster, and with the ML side's turn toward minimal <em>explanatory</em> models: this week the whole of Adam's advantage over plain gradient descent was traced to a single structural fact about the loss landscape via random-matrix theory (see Papers). Reductionism, quietly, is having a good year.",
+    "<strong>4. Weighing the invisible.</strong> A striking share of the week's astronomy was, at bottom, accounting for mass and motion that light does not directly show. A Leiden-led JWST study measured the low-mass end of the stellar population in nine early massive galaxies and found it \"bottom-heavy\" — far richer in dim, low-mass dwarf stars than the Milky Way's mix — implying those galaxies carry roughly four times more stellar mass than their light suggests, which <em>worsens</em> JWST's already-awkward \"too big, too soon\" galaxies (<a href=\"https://www.nature.com/articles/s41550-026-02932-4\" target=\"_blank\" rel=\"noopener noreferrer\">Nature Astronomy, 18 Aug 2026</a>). An INAF Bologna team dated the Milky Way's own globular clusters precisely enough to expose a major galactic merger <strong>1.8 billion years before</strong> the famous Gaia-Sausage-Enceladus event — a whole early \"meal\" written into the inner Galaxy's fossil record, and a long-contested one now pinned down (<a href=\"https://www.nature.com/articles/s41550-026-02931-5\" target=\"_blank\" rel=\"noopener noreferrer\">Nature Astronomy, 17 Aug 2026</a>; INAF release: <a href=\"https://www.media.inaf.it/2026/08/17/vestigia-cuore-via-lattea/\" target=\"_blank\" rel=\"noopener noreferrer\">Antiche vestigia nel cuore della Via Lattea, 17 Aug 2026</a> [new source]). And the GRAVITY Collaboration discovered <strong>S301</strong>, a faint star whipping around Sagittarius A<em> at some 8% of light speed on an 8.7-year orbit — fast enough that its motion is sensitive to the black hole's </em>spin* (a (v/c)³ correction in Einstein's rotating-black-hole metric), making it the first natural probe that could actually weigh how fast the Galaxy's central black hole turns (<a href=\"https://www.nature.com/articles/s41586-026-10894-w\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 19 Aug 2026</a>). The connective idea: in each case the quantity that matters — hidden stellar mass, an erased merger, a black hole's spin — is inferred through a careful proxy (a spectrum, a cluster age, an orbit), and this week the proxies kept insisting there is more out there than the obvious light lets you count."
+   ],
+   "kind": "editorial",
+   "age_days": 0,
+   "day_label": "Sat 22 Aug",
+   "daybreak": false
+  },
   {
    "id": "2026-08-21-ai-ml-nvidia-strikes-a-reported-6b-licensing-deal-for",
    "sid": "st-e4304b869b4d",
@@ -2124,9 +2434,9 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": true
   },
@@ -2151,73 +2461,9 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/21/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
-   "day_label": "Fri 21 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-21-ai-ml-most-self-improvement-gains-vanish-once-you-add",
-   "sid": "st-1d0329964362",
-   "headline": "Audit exposes phantom self-improvement gains",
-   "summary": "The paper audits a now-common claim: that a model, retrained on its own outputs, has \"improved itself.\" The authors run three rounds of low-rank self-training (rank-32 LoRA — a lightweight fine-tuning method that adjusts a small add-on rather than all the weights) on Qwen3-8B, but critically also push a frozen, untrained copy through the identical measurement pipeline as a control. They find seven distinct measurement failures — several of them standard practice — and each one, on its own, inverts a reported finding when the control is missing. One example: scoring with a single greedy decode (taking the model's top-choice answer once) manufactures apparent capability changes even on the untrained model, largely an artifact of how examples are batched at inference.",
-   "why": "the field increasingly grades self-improvement not by average accuracy but by which specific problems a model newly solves or breaks — and that means subtracting two noisy measurements, exactly where artifacts hide. This is a concrete, reproducible checklist for telling a real gain from a measurement mirage, and a caution that a lot of the \"models bootstrapping themselves\" literature may be measuring its own pipeline.",
-   "url": "https://arxiv.org/abs/2608.20290",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-21",
-   "date_label": "Aug 21",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/21/ai-ml/",
-   "affiliations": [
-    "University College Dublin",
-    "Georgia Tech",
-    "Dalian University of Technology"
-   ],
-   "affiliation_label": "University College Dublin, Georgia Tech +1",
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
-   "day_label": "Fri 21 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-21-ai-ml-agent-memories-can-store-the-right-facts-and-sti",
-   "sid": "st-1bd26122381e",
-   "headline": "Agent memory fails at state tracking",
-   "summary": "Most memory benchmarks test recall — can the agent fetch a fact it saw earlier. This paper argues that real deployments need state tracking: as facts, constraints, and decisions get revised over a long interaction, the answer must reflect the current state, not a superseded one. StateMemBench is 234 multi-session scenarios with closed-pool grading that explicitly scores whether an answer reflects the current state, a stale (superseded) state, or neither — separating \"tracked the wrong version\" from other errors by construction. Existing memory systems find it hard.",
-   "why": "the single most common way a long-running assistant goes wrong is confidently acting on something you changed three turns ago. Naming and measuring that failure mode — distinct from ordinary recall — gives memory-system builders a target that matches how agents actually break in production.",
-   "url": "https://arxiv.org/abs/2608.19652",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-21",
-   "date_label": "Aug 21",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/21/ai-ml/",
-   "affiliations": [
-    "UIUC"
-   ],
-   "affiliation_label": "UIUC",
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2242,9 +2488,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2269,9 +2515,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2297,9 +2543,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2325,9 +2571,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2352,9 +2598,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2380,9 +2626,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2407,37 +2653,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
-   "day_label": "Fri 21 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-21-news-the-first-srg-poll-on-the-27-september-federal-v",
-   "sid": "st-6ed0c5d7050e",
-   "headline": "Neutrality Initiative trails in first SRG poll",
-   "summary": "The first SRG poll on the 27 September federal votes, published Thursday 20 August, shows the Neutrality Initiative headed for defeat and the Food initiative too close to call. In the survey by the GFS Bern institute — conducted 3–16 August among 17,212 eligible voters for public broadcaster SRG SSR — 54 percent said they would reject the \"Preservation of Swiss Neutrality\" initiative against 42 percent in favour. The initiative, backed by the SVP and allied campaigners, would write a strict, permanent armed neutrality into the constitution, barring Switzerland from military alliances and from joining sanctions against warring states. The parallel Food initiative (\"For safe food\"), which seeks to lift Switzerland's self-sufficiency toward at least 70 percent through more sustainable and plant-based domestic production, was effectively tied — 49 percent against, 47 percent in favour.",
-   "why": "First polls are trend indicators, not verdicts — but a neutrality initiative that starts 12 points behind faces a steep climb, and its wording (no sanctions against warring states) is precisely what would constrain how Switzerland aligns with EU measures on Russia or Iran, so the September result carries directly into how Bern can act on those files.",
-   "url": "https://www.srf.ch/news/schweiz/1-srg-umfrage-auf-einen-blick-neutralitaetsinitiative-im-rueckstand-ernaehrungsinitiative-offen",
-   "source_domain": "srf.ch",
-   "date": "2026-08-21",
-   "date_label": "Aug 21",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "politics"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/21/news/",
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2462,9 +2680,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/21/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2494,9 +2712,9 @@
     "Einsia.AI"
    ],
    "affiliation_label": "Tsinghua University, Einsia.AI",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2521,9 +2739,74 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/08/21/ai-ml/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
+   "day_label": "Fri 21 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-21-ai-ml-fine-tuning-a-model-to-co-adapt-with-whatever-kv",
+   "sid": "st-83da981d33d7",
+   "headline": "Fine-tuning teaches sparse attention to forget",
+   "summary": "Long-context inference is bottlenecked by the KV cache (the stored keys/values for every past token, whose size grows with context). Sparse-attention policies drop most of it to save memory, but the model was never trained to expect that. This method fine-tunes a model to co-adapt with any KV-cache policy, runs on a single 40 GB A100, and often ends up more accurate than a model trained with exact attention. It ships an efficient kernel for H2O (a leading \"keep the heavy-hitter tokens\" policy) and open-source code, KeysAndValues (github.com/awslabs/keys_values).",
+   "why": "most sparse-attention work bolts the shortcut onto a model at inference and eats an accuracy hit; training the model to live with the shortcut on a single GPU is a practical recipe for cheaper long-context serving — directly relevant to anyone running long-context models on modest hardware.",
+   "url": "https://arxiv.org/abs/2608.19920",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "affiliations": [
+    "Amazon Web Services",
+    "University of Amsterdam",
+    "TU Berlin"
+   ],
+   "affiliation_label": "Amazon Web Services, University of Amsterdam +1",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 1,
+   "day_label": "Fri 21 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-21-ai-ml-a-memory-efficient-recipe-for-agentic-rl-that-ou",
+   "sid": "st-b2c692507b26",
+   "headline": "Single-rollout method sharpens agentic RL",
+   "summary": "Agentic reinforcement learning trains a model over long, multi-step tasks. Critic-free methods like GRPO estimate how good an action was from several sampled rollouts, dodging the memory cost of PPO's separate value network — but they assign credit poorly over long horizons and can suffer \"advantage collapse.\" SAPO folds the policy and value function into one shared autoregressive backbone (predicting both at different points in the same generation), and adds a trajectory-level advantage estimator for per-turn credit. On ALFWorld and WebShop with Qwen2.5-1.5B/7B it beats PPO and GRPO by mean +15.1 and +12.1 points while cutting per-iteration runtime 33.2% versus PPO and dropping the separate critic entirely. This is a distinct line from the token-level credit-assignment work covered last edition, converging on the same problem from the value-estimation side.",
+   "why": "temporal credit assignment — figuring out which step in a long task deserved the reward — is the central difficulty in training agents, and doing it without a memory-hungry critic is exactly the lever that makes agentic RL affordable to run.",
+   "url": "https://arxiv.org/abs/2608.19842",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-21",
+   "date_label": "Aug 21",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/21/ai-ml/",
+   "affiliations": [
+    "Xiamen University",
+    "Nanyang Technological University"
+   ],
+   "affiliation_label": "Xiamen University, Nanyang Technological University",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2549,9 +2832,9 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/08/21/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Fri 21 Aug",
    "daybreak": false
   },
@@ -2578,7 +2861,7 @@
    "permalink": "/2026/08/20/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Thu 20 Aug",
    "daybreak": true
   },
@@ -2606,7 +2889,34 @@
    "permalink": "/2026/08/20/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
+   "day_label": "Thu 20 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-20-news-a-chinese-court-sentenced-evergrande-founder-hui",
+   "sid": "st-758df9a7be74",
+   "headline": "Evergrande founder gets life sentence",
+   "summary": "A Chinese court sentenced Evergrande founder Hui Ka Yan to life in prison on Thursday 20 August for fraud and bribery, ordering all his personal property confiscated. The Shenzhen Intermediate People's Court found that Hui — once Asia's richest man, who pleaded guilty in April — ran continuous, large-scale financial fraud to inflate the developer's assets and conceal its liabilities; investigators had found Evergrande overstated revenue by roughly $80 billion in 2019 and 2020. The court fined Evergrande 8.82 billion yuan ($1.31 billion) and its main subsidiary Hengda Real Estate 7 billion yuan, and handed six-to-18-year terms to five other executives. Evergrande defaulted in 2021 on most of its roughly $300 billion in liabilities, was ordered liquidated in 2024 and delisted in 2025 — the defining symbol of China's property-sector crisis.",
+   "why": "The sentence draws a line under the company whose collapse triggered China's property bust, signalling Beijing will pin the debt crisis on individual executives even as the underlying downturn in housing continues to weigh on the economy.",
+   "url": "https://www.dw.com/en/evergrande-founder-hui-ka-yan-sentenced-to-life-in-prison/a-78439153",
+   "source_domain": "dw.com",
+   "date": "2026-08-20",
+   "date_label": "Aug 20",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "economy"
+   ],
+   "topic_primary": "economy",
+   "topic_label": "Economy",
+   "topic_color": "#9a7b2e",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/20/news/",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 2,
    "day_label": "Thu 20 Aug",
    "daybreak": false
   },
@@ -2634,42 +2944,9 @@
    "permalink": "/2026/08/19/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Wed 19 Aug",
    "daybreak": true
-  },
-  {
-   "id": "2026-08-19-science-superconductivity-survives-in-a-single-copper-ox",
-   "sid": "st-6d1364bee376",
-   "headline": "Cuprate superconducts in a single copper-oxygen plane",
-   "summary": "Cuprates — copper-oxide ceramics that superconduct (carry current with zero resistance) at unusually high temperatures — are built from stacked CuO₂ (copper–oxygen) planes, and a long-standing question is how few of those planes the effect actually needs. Borrowing the top-down, sticky-tape exfoliation trick that made graphene, a Fudan-led team thinned a cuprate all the way down to a single CuO₂ plane and still measured superconductivity, isolating the truly two-dimensional limit of the problem. Earlier work had shown the essential physics fits within two planes; pushing to one strips the system to what may be its minimal ingredient.",
-   "why": "If one copper–oxygen layer is enough to superconduct, theories of high-temperature superconductivity can be tested against the barest possible system — a cleaner route toward understanding, and someday designing, better superconductors.",
-   "url": "https://www.nature.com/articles/s41586-026-10857-1",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "Fudan University",
-    "University of British Columbia",
-    "Zhejiang University"
-   ],
-   "affiliation_label": "Fudan University, University of British Columbia +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 2,
-   "day_label": "Wed 19 Aug",
-   "daybreak": false
   },
   {
    "id": "2026-08-19-news-israel-struck-the-abu-duhur-air-base-in-syria-s",
@@ -2694,73 +2971,35 @@
    "permalink": "/2026/08/19/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Wed 19 Aug",
    "daybreak": false
   },
   {
-   "id": "2026-08-19-science-an-epfl-graphene-device-weighs-one-third-of-an-e",
-   "sid": "st-19fb2d603f06",
-   "headline": "Graphene device measures one-third of an electron",
-   "summary": "In the fractional quantum Hall effect — what emerges when electrons are confined to two dimensions in an intense magnetic field — the electron fluid gives rise to \"quasiparticles\" that act as if they carry only a fraction of an electron's charge. Measuring that fraction cleanly is hard, because the usual interferometer designs entangle bulk and edge contributions. The EPFL-led team instead built an antidot — a controllable bump in the device's potential landscape that behaves as a tunable artificial impurity — into a graphene sample and read the charge of quasiparticles tunnelling through it, directly extracting values such as e/3 (one-third of the elementary charge).",
-   "why": "A clean way to weigh fractional charges is a prerequisite for probing these quasiparticles' exotic quantum statistics — the same physics being courted for topological quantum computing. The lead group is Swiss.",
-   "url": "https://www.nature.com/articles/s41567-026-03412-2",
-   "source_domain": "nature.com",
+   "id": "2026-08-19-news-france-s-assisted-dying-law-was-promulgated-by-p",
+   "sid": "st-e3e0640a7618",
+   "headline": "France enacts assisted-dying law",
+   "summary": "France's assisted-dying law was promulgated by President Emmanuel Macron and formally took effect on Wednesday 19 August, making medical aid in dying legal for the first time. The step follows the Constitutional Council's ruling on Friday 14 August that found no grounds to strike the text down, which itself followed the National Assembly's final adoption on 15 July after years of debate. Under the law, adults with a \"serious and incurable\" illness in an advanced or terminal phase, suffering that cannot be relieved, may request assistance to die; access will phase in as implementing decrees follow. It is one of France's most consequential social reforms in a decade.",
+   "why": "France joins the small group of European states with a legal right to die, resolving a debate that has run through French politics for years — and the outcome next door feeds directly into how Switzerland, which already permits assisted suicide, and its neighbours frame their own end-of-life rules.",
+   "url": "https://www.lemonde.fr/societe/article/2026/08/19/l-aide-a-mourir-officiellement-autorisee-en-france-apres-la-promulgation-de-la-loi-par-emmanuel-macron_6749291_3224.html",
+   "source_domain": "lemonde.fr",
    "date": "2026-08-19",
    "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
+   "stream": "news",
+   "stream_label": "News",
    "topics": [
-    "science",
-    "switzerland"
+    "politics",
+    "health"
    ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
    "importance": 2,
    "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "EPFL",
-    "Oxford",
-    "NIMS"
-   ],
-   "affiliation_label": "EPFL, Oxford +1",
+   "permalink": "/2026/08/19/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
-   "day_label": "Wed 19 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-19-science-chemists-learn-to-walk-the-nitrogen-around-a-rin",
-   "sid": "st-655582cea6af",
-   "headline": "Chemists walk nitrogen around a pyridine ring",
-   "summary": "Pyridines — six-membered aromatic rings carrying a single nitrogen, ubiquitous in drug molecules — behave very differently depending on where a substituent sits relative to that nitrogen, and normally each \"positional isomer\" (same atoms, different arrangement) must be built from scratch. The IBS/KAIST team report a way to reorganise the ring itself: a controlled sequence of nitrogen insertion and deletion transposes the nitrogen to a new position, relocating the attached groups without changing their identity. A companion paper from Cambridge performs related \"skeletal editing\" on tertiary benzylamines, rewriting their core carbon–nitrogen connectivity late in a synthesis (Nature, University of Cambridge).",
-   "why": "Skeletal editing lets chemists remodel a molecule's core in the final steps instead of redesigning a whole synthesis — a faster lane for exploring drug-like variants around a promising scaffold.",
-   "url": "https://www.nature.com/articles/s41586-026-11006-4",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "Institute for Basic Science",
-    "KAIST"
-   ],
-   "affiliation_label": "Institute for Basic Science, KAIST",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Wed 19 Aug",
    "daybreak": false
   },
@@ -2794,40 +3033,7 @@
    "affiliation_label": "MD Anderson Cancer Center, Memorial Sloan Kettering +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
-   "day_label": "Wed 19 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-19-science-distant-galaxies-may-hide-extra-mass-in-dim-low",
-   "sid": "st-b409a5e8c561",
-   "headline": "Distant galaxies hide mass in dim dwarf stars",
-   "summary": "A galaxy's stellar mass is inferred from its light, but that conversion hinges on the initial mass function (IMF) — the assumed spread of star masses at birth, usually copied from the Milky Way. Faint low-mass stars dominate the mass yet contribute little light, so the low-mass end is normally guessed, not measured. Using ultra-deep JWST spectra of nine massive quiescent galaxies at redshift z ≈ 0.7 (light that left them roughly 6 billion years ago), the Leiden-led team constrained that low-mass end directly and found the IMF \"bottom-heavy\" — richer in dwarf stars than the Milky Way's, implying more hidden stellar mass than standard assumptions give.",
-   "why": "JWST has turned up early galaxies that look almost too massive to exist so soon; a bottom-heavy IMF shows galaxies really can carry extra unseen stellar mass, which bears on how the masses — and the assembly speed — of the earliest galaxies are read. The measurement is at intermediate redshift, so it informs rather than settles the high-redshift debate.",
-   "url": "https://www.nature.com/articles/s41550-026-02932-4",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "Leiden University",
-    "Carnegie Institution for Science",
-    "Yale"
-   ],
-   "affiliation_label": "Leiden University, Carnegie Institution for Science +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Wed 19 Aug",
    "daybreak": false
   },
@@ -2860,7 +3066,7 @@
    "affiliation_label": "University of Copenhagen, DTU +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Wed 19 Aug",
    "daybreak": false
   },
@@ -2893,7 +3099,7 @@
    "affiliation_label": "UCSF, Gladstone Institutes",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Wed 19 Aug",
    "daybreak": false
   },
@@ -2927,7 +3133,40 @@
    "affiliation_label": "University of Bern, Vrije Universiteit Brussel +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
+   "day_label": "Wed 19 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-19-science-the-milky-way-ate-a-galaxy-even-earlier-than-we",
+   "sid": "st-86e729dc2452",
+   "headline": "Milky Way's oldest known merger revealed",
+   "summary": "The Milky Way grew by devouring smaller galaxies, and the largest early merger securely known — Gaia-Sausage-Enceladus (a dwarf galaxy that fell in) — dates to about 10 billion years ago. Using globular clusters as tracers and a new method to date them, the INAF Bologna-led team found the clusters split into three distinct age–metallicity sequences: one native to the proto-Milky Way, one from Gaia-Sausage-Enceladus, and one pointing to an earlier, previously unrecognised major accretion event some 1.8 billion years before it.",
+   "why": "Each identified merger is a chapter in the Galaxy's origin story; finding an even older one pushes back the clock on when the Milky Way began assembling in earnest.",
+   "url": "https://www.nature.com/articles/s41550-026-02931-5",
+   "source_domain": "nature.com",
+   "date": "2026-08-19",
+   "date_label": "Aug 19",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/19/science/",
+   "affiliations": [
+    "INAF",
+    "University of Bologna",
+    "University of Groningen"
+   ],
+   "affiliation_label": "INAF, University of Bologna +1",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 3,
    "day_label": "Wed 19 Aug",
    "daybreak": false
   },
@@ -2943,42 +3182,9 @@
     "<strong>Editing the skeleton, not just the trim.</strong> Two independent chemistry papers this week rewrite a molecule's core carbon–nitrogen framework late in a synthesis rather than decorating a fixed scaffold. \"Skeletal editing\" is quietly maturing from a curiosity into a general tactic — the kind of method shift that, like the physicists' single-CuO₂-plane and single-antidot experiments, is really about controlling a system down to its last essential element."
    ],
    "kind": "editorial",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Wed 19 Aug",
    "daybreak": false
-  },
-  {
-   "id": "2026-08-18-ai-ml-an-ai-system-nudges-the-matrix-multiplication-ex",
-   "sid": "st-d2de83c4e4be",
-   "headline": "An AI system nudges the matrix-multiplication exponent to a new record",
-   "summary": "The matrix-multiplication exponent ω is the theoretical yardstick for how fast two n×n matrices can in principle be multiplied: schoolbook multiplication costs about n³ operations (ω = 3), and sixty years of algorithm design has been chipping ω down toward the conjectured floor of 2. The current record comes from the \"laser method,\" a technical optimization procedure at the heart of these algorithms. This DeepMind-led team reformulated that optimization so it could be solved in a larger setting, handed it to modern machine-learning solvers, then refined the result with AlphaEvolve (DeepMind's LLM-driven algorithm-discovery system), improving the bound from ω < 2.371339 to ω < 2.371177.",
-   "why": "the improvement is tiny — it lands in the fifth decimal place and buys no faster software today, since these \"galactic\" algorithms are far too intricate to run in practice. What's notable is who moved it: an AI system advancing one of theoretical computer science's most-studied constants, on a frontier where human experts have made gains this small over many years.",
-   "url": "https://arxiv.org/abs/2608.16884",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-18",
-   "date_label": "Aug 18",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "science"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/08/18/ai-ml/",
-   "affiliations": [
-    "Google DeepMind",
-    "Carnegie Mellon University"
-   ],
-   "affiliation_label": "Google DeepMind, Carnegie Mellon University",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 18 Aug",
-   "daybreak": true
   },
   {
    "id": "2026-08-18-news-iran-declared-the-60-day-negotiating-deadline-fr",
@@ -3006,23 +3212,22 @@
    "kind": "story",
    "age_days": 3,
    "day_label": "Tue 18 Aug",
-   "daybreak": false
+   "daybreak": true
   },
   {
-   "id": "2026-08-18-ai-ml-weak-irrelevant-prompt-cues-can-be-stacked-to-st",
-   "sid": "st-21addf24ede6",
-   "headline": "Weak prompt cues can be stacked to strongly control a model",
-   "summary": "The authors describe a phenomenon they call model hypnosis: individually weak, seemingly irrelevant choices in a prompt — paraphrases, typos, innocuous wording — can be combined so that together they systematically steer a model's behaviour. They report it across model families and scales, including in frontier reasoning models, and find that a \"hypnotic\" prompt tuned on one model often transfers to another.",
-   "why": "if inconspicuous surface features can be composed into strong control, that cuts against both safety and interpretability — the levers that move a model are precisely the ones a human reviewer would dismiss as noise, and they generalise across systems rather than staying model-specific. It reframes prompt-based jailbreaks as an additive, transferable effect rather than a bag of one-off tricks.",
-   "url": "https://arxiv.org/abs/2608.16834",
+   "id": "2026-08-18-ai-ml-a-memory-that-starts-small-keeps-long-context-mo",
+   "sid": "st-c3f0b2dbe3e0",
+   "headline": "A memory that starts small keeps long-context models from clogging",
+   "summary": "Standard attention costs grow quadratically with context length, so a growing line of work compresses the past into a fixed-size \"memory state\" instead. The snag: with a static memory the earliest tokens face no compression pressure, so they hog degrees of freedom and \"pollute\" the state, leaving little room for later context. Proteus introduces incremental memory activation — the memory's usable capacity is expanded gradually as the sequence grows. An early bottleneck forces the model to compress history harder; unlocking fresh capacity later reduces interference with new tokens. It drops into several recent memory architectures (Titans, Comba, Hope-Attention) at no added cost, with gains that widen at longer context lengths.",
+   "why": "long-context recall is where sub-quadratic (\"linear-attention\") models usually break down; scheduling when memory becomes available, rather than how much there is, is a cheap and broadly reusable lever for that failure mode.",
+   "url": "https://arxiv.org/abs/2608.16844",
    "source_domain": "arxiv.org",
    "date": "2026-08-18",
    "date_label": "Aug 18",
    "stream": "ai-ml",
    "stream_label": "AI/ML",
    "topics": [
-    "ai-ml",
-    "security"
+    "ai-ml"
    ],
    "topic_primary": "ai-ml",
    "topic_label": "AI / ML",
@@ -3031,9 +3236,72 @@
    "is_lead": false,
    "permalink": "/2026/08/18/ai-ml/",
    "affiliations": [
-    "University of Pennsylvania"
+    "Google",
+    "Mila – Quebec AI Institute",
+    "Université de Montréal"
    ],
-   "affiliation_label": "University of Pennsylvania",
+   "affiliation_label": "Google, Mila – Quebec AI Institute +1",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 3,
+   "day_label": "Tue 18 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-coding-agents-fail-when-the-fact-they-need-isn-t",
+   "sid": "st-6d111859e3fa",
+   "headline": "Coding agents fail when the needed fact is not in front of them",
+   "summary": "Repository-scale coding asks an agent to keep tests, imports, configuration and migration rules mutually consistent inside a limited context window. The authors model each edit as needing a \"fact\" that comes either from recent context or from the model's baked-in (\"parametric\") memory; facts supplied by neither channel are coherence debt. Testing seven models across five agent harnesses, they find: no model completes a task on an unseen API when both channels are empty, and simply putting the fact in the prompt restores success. Availability — not where the fact sits relative to the edit — decides the outcome. A missing fact produces wrong work rather than absent work: the agent fabricates a file or guesses a value instead of reporting itself blocked, and how often it admits it's stuck is a property of the model. Tellingly, a stale convention file costs more than no file, because agents follow the standard even when it prescribes worse code.",
+   "why": "it's a concrete diagnosis of why coding agents silently go wrong at scale — and a directive for harness builders: guarantee the facts an edit depends on are present when the agent writes, and check that against what it produces, not what it reads.",
+   "url": "https://arxiv.org/abs/2608.16630",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 3,
+   "day_label": "Tue 18 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-18-ai-ml-an-agent-that-invents-new-crystals-in-a-language",
+   "sid": "st-0a4068aad6f3",
+   "headline": "An agent that invents new crystals in a language of motifs",
+   "summary": "Data-driven materials discovery is good at interpolating between known structures but rarely invents genuinely new structure types. MatEvolve is an agentic-AI framework — built on Claude Fable 5 with no fine-tuning — that writes each candidate crystal as an interpretable motif profile, a description of the recurring geometric patterns (\"motifs\") that compose it. Crucially the profile is not just a label but the medium of design: the agent edits the profile, builds a crystal from the edited version, states its rationale, and the most promising candidates are checked with first-principles physics calculations. Applied to rare-earth-lean permanent magnets (strong magnets that avoid scarce, geopolitically fraught rare-earth elements), it reached new structural prototypes more than three times as often as generative models at an equal validation budget, at a comparable rate of on-target magnets.",
+   "why": "it's a credible case of an agent reaching real novelty in a hard physical-science domain while staying human-readable — the motif profiles expose why a structure works, and the target (rare-earth-lean magnets) speaks directly to materials-supply-chain risk.",
+   "url": "https://arxiv.org/abs/2608.15900",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "science"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/ai-ml/",
+   "affiliations": [
+    "JAIST",
+    "Institute of Science Tokyo"
+   ],
+   "affiliation_label": "JAIST, Institute of Science Tokyo",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
@@ -3054,6 +3322,34 @@
    "stream_label": "News",
    "topics": [
     "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/18/news/",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 3,
+   "day_label": "Tue 18 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-18-news-south-korean-president-lee-jae-myung-on-tuesday",
+   "sid": "st-b77f27ea3fd9",
+   "headline": "South Korea seeks command of its own forces",
+   "summary": "South Korean President Lee Jae Myung on Tuesday 18 August pressed for his country to regain wartime operational control of its own forces, a day after Trump ordered US–South Korea joint military exercises scaled back and said North Korea's Kim Jong Un had responded to his diplomatic outreach. Wartime operational control (OPCON) — authority over Korean troops in a conflict, which has sat with a US-led command since the Korean War — has long been a sovereignty question in Seoul, and Lee framed rebuilding independent capability as the response to a less certain American commitment. Trump ordered the Pentagon to trim the drills on the grounds that Pyongyang had been, in his characterisation, \"unthreatening\"; South Korean lawmakers called the move \"inane\" and warned it weakens deterrence, and Trump's claim of a Kim response would mark the first US–North Korea engagement since his first term.",
+   "why": "a US president loosening a decades-old alliance while courting Pyongyang reshuffles East Asian security calculations for Japan, China and Seoul alike.",
+   "url": "https://www.theguardian.com/world/2026/aug/18/south-korea-president-trump-military-drills-control-opcon-kim-jong-un",
+   "source_domain": "theguardian.com",
+   "date": "2026-08-18",
+   "date_label": "Aug 18",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics",
+    "politics"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
@@ -3135,6 +3431,34 @@
    "stream_label": "News",
    "topics": [
     "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/17/news/",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 3,
+   "day_label": "Mon 17 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-17-news-the-migration-crisis-in-spain-s-north-african-en",
+   "sid": "st-af5f08c70d75",
+   "headline": "Ceuta crisis escalates Spain-Morocco row",
+   "summary": "The migration crisis in Spain's North African enclave of Ceuta escalated into a full-blown row with Madrid on Monday 17 August, as the city's president threatened legal action against the central government if it fails to resolve the situation within 30 days. Ceuta president Juan Jesús Vivas accused the Sánchez government of \"almost absolute passivity\" after a surge of arrivals — Moroccan police had arrested more than 100 people trying to cross into the enclave on Friday 14 August. Prime Minister Pedro Sánchez convened ministers by videoconference over the crisis, and Health Minister Mónica García called it \"an absolutely exceptional humanitarian crisis\"; local authorities began moving dozens of migrant girls and adolescents who had been sleeping outdoors into a converted hall. Rabat, for its part, is using the episode to air a list of grievances against Madrid — over migrant regularisation, nationality for Sahrawis, and summary \"hot\" returns.",
+   "why": "Ceuta is one of the EU's two land borders with Africa, and the standoff shows how quickly Spanish–Moroccan tensions can turn a local surge into a diplomatic and humanitarian flashpoint on Europe's southern frontier.",
+   "url": "https://elpais.com/espana/2026-08-17/el-presidente-de-ceuta-eleva-el-tono-contra-el-gobierno-y-amenaza-con-acudir-al-poder-judicial-si-no-resuelve-la-crisis-en-30-dias.html",
+   "source_domain": "elpais.com",
+   "date": "2026-08-17",
+   "date_label": "Aug 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics",
+    "politics"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
@@ -3438,71 +3762,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-15-weekend-beyond-final-scores-today-s-research-agents-opti",
-   "sid": "st-183973b8f6bc",
-   "headline": "Research agents optimize, they don't discover",
-   "summary": "Leaderboards report an agent's final score on a research task but hide how it got there — where progress was won or lost, and whether the agent learned anything reusable along the way. This work instruments seven frontier models across 36 long-horizon AI R&D tasks with rule-based metrics that dissect each run into Solution Framing, Execution and Feedback Control, and adds controlled tests of whether experience carries over within and across tasks. The findings are pointed: current agents \"operate more like engineering optimizers than fully autonomous researchers.\" They can frame and implement workable solutions, but performance swings widely run-to-run, their strongest solutions mainly adapt or recombine established techniques, and genuine methodological novelty remains rare. The diagnosis is granular — similar final scores can hide very different bottlenecks, and accumulated \"experience\" sometimes misleads later decisions.",
-   "why": "It is the measured counterweight to \"AI scientist\" hype (see Cross-cutting thread 1): it says exactly what today's agents can and can't do, and turns the gap into concrete engineering targets rather than a vibe.",
-   "url": "https://arxiv.org/abs/2608.13417",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
-   "affiliations": [
-    "Meituan",
-    "UCAS"
-   ],
-   "affiliation_label": "Meituan, UCAS",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 15 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-15-weekend-neural-quadratic-forms-one-minimal-model-for-sud",
-   "sid": "st-498dd69866d6",
-   "headline": "Symmetry explains sudden learning and scaling",
-   "summary": "Networks trained by smooth gradient descent often learn in steps — the loss sits on a plateau, then drops abruptly — yet training curves aggregate into smooth power laws; both behaviours show up in architectures with wildly different internals, hinting at a few hidden \"collective variables\" doing the real work. This paper shows a symmetry pins down what those variables are. Because a layer is a sum over interchangeable units, relabelling the units leaves it unchanged; that symmetry, plus smoothness, forces a universal leading form near the small initial weights — a quadratic term in which every architectural detail is compressed into a single \"structure matrix\" $A(x)$ the authors compute per architecture. Perceptrons, attention, mixtures-of-experts and convolutions then become one model at different $A$, whose dynamics reduce (when the data share an eigenbasis) to a Lotka–Volterra equation — the classic predator–prey system — in which learning \"modes\" switch on one after another. Smaller initial weights spread the switch-on times into visible plateaus; when many modes blur together, the same events merge into a power law whose exponent the theory predicts, confirmed numerically across methods and architectures.",
-   "why": "It offers a genuine unifying explanation for two of deep learning's most-discussed mysteries — emergent \"grokking\"-style jumps and smooth scaling laws — as two faces of one symmetry-fixed dynamics.",
-   "url": "https://arxiv.org/abs/2608.13335",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "ai-ml",
-    "science"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
-   "affiliations": [
-    "MIT",
-    "EPFL"
-   ],
-   "affiliation_label": "MIT, EPFL",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 15 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-15-news-a-vaud-green-mp-will-ask-federal-commissioners-n",
    "sid": "st-94ac62bed552",
    "headline": "Swiss motion pushes local tech procurement",
@@ -3526,133 +3785,6 @@
    "permalink": "/2026/08/15/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 15 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-15-weekend-the-iran-war-s-newest-flashpoint-is-a-claim-with",
-   "sid": "st-8992dd9a5ded",
-   "headline": "Trump vows to declare Hormuz US territory",
-   "summary": "The Iran war's newest flashpoint is a claim with no basis in the law of the sea: Trump says he will declare the Strait of Hormuz US \"territory.\". US President Donald Trump said on 14 August 2026 he intends to declare the strait — the ~40-km-wide waterway between Iran and Oman that roughly a fifth of the world's oil passes through — American \"territory,\" repeating \"pretty soon\" in a 15 August update. No state can annex an international strait: the Strait of Hormuz lies within Iranian and Omani territorial waters and is governed by the transit-passage regime of the UN Convention on the Law of the Sea, so treat \"US territory\" as a political assertion from an administration whose Hormuz claims have repeatedly outrun the facts, not a legal reality. Separately, French- and English-language outlets reported acute strain on the carrier USS Abraham Lincoln after nine months at sea.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/8/15/iran-war-live-trump-vows-to-make-hormuz-us-territory-pretty-soon",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "geopolitics",
-    "world"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 15 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-15-weekend-a-magnitude-7-7-earthquake-struck-eastern-indone",
-   "sid": "st-c7ff06858f03",
-   "headline": "Magnitude-7.7 quake hits eastern Indonesia",
-   "summary": "A magnitude-7.7 earthquake struck eastern Indonesia on 15 August 2026, killing at least 20. The quake hit in the morning (local time), with early reports of collapsed buildings and people fleeing into the streets; the toll was still preliminary as rescue efforts began.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/8/15/at-least-20-killed-as-magnitude-7-7-quake-hits-indonesia",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "world"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 15 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-15-weekend-a-record-hot-rain-starved-summer-is-now-biting-s",
-   "sid": "st-2a13073f228f",
-   "headline": "A record-dry summer bites Switzerland",
-   "summary": "A record-hot, rain-starved summer is now biting Switzerland directly. Through mid-August, Swiss and regional reporting described the Rhine dropping to levels that idled a Basel ferry and forced dredging debates, cantons coordinating how to share water with neighbours, and continued alpine glacier loss (\"it's shocking how much has melted\"), against the backdrop of a large forest fire in Germany that evacuated ~1,800 people on 13 August.",
-   "why": "",
-   "url": "https://www.srf.ch/news/schweiz/wasserknappheit-so-teilt-die-schweiz-das-wasser-mit-den-nachbarlaendern",
-   "source_domain": "srf.ch",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 15 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-15-weekend-crest-teach-the-magnitude-of-credit-not-the-dire",
-   "sid": "st-75ad1b954cfd",
-   "headline": "Dense credit for multi-turn RL agents",
-   "summary": "Training tool-using agents with reinforcement learning from verifiable rewards (RLVR — the reward is a checkable success/failure, not a learned score) has a stubborn flaw: a whole multi-turn trajectory earns a single reward, so the method can't tell which turns actually mattered — the credit-assignment problem. Pure imitation of a stronger \"teacher\" model gives dense per-token guidance but caps the student at the teacher's ability and can collapse training. CrEST splits the difference with a two-level scheme: it computes turn-segmented verified advantages to fix credit between turns, then uses an entropy-gated \"self-teacher\" (the model supervising itself, engaged only where it is uncertain) to refine credit within a turn. Crucially, the teacher's job is demoted from choosing the direction of each weight update to merely scaling its magnitude — which keeps RLVR's verifier-bounded performance ceiling while adding dense signal. On the BFCL V3 and WildToolBench tool-use benchmarks it beats both RL and distillation baselines at two model sizes, with the biggest gains on the longest trajectories.",
-   "why": "It is a concrete recipe for giving agents useful feedback on which of their many steps earned a success, without capping them at a teacher's skill — the bottleneck for training on long, real tasks.",
-   "url": "https://arxiv.org/abs/2608.13179",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/15/weekend/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 15 Aug",
-   "daybreak": false
-  },
-  {
-   "stream": "weekend",
-   "date": "2026-08-15",
-   "date_label": "Aug 15",
-   "kicker": "Weekend · Cross-cutting threads · Aug 15",
-   "heading": "Cross-cutting threads",
-   "title": "1. \"AI scientist\" ships and gets a reality check in the same week",
-   "paras": [
-    "Three of the week's papers push autonomous research agents hard — and one Nature editorial pushes back just as hard. A DeepMind-style team released <strong>Faraday</strong>, a 27-billion-parameter agent post-trained specifically to <em>replicate</em> research papers, and reports it beating Claude Opus 4.8 and GPT-5.5 on held-out replication tasks (<a href=\"https://arxiv.org/abs/2608.13331\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.13331</a>). A separate group put seven frontier models through 36 long-horizon R&amp;D tasks and reached a soberer verdict: today's agents \"operate more like engineering optimizers than fully autonomous researchers\" — they implement and combine established techniques competently, but genuine methodological novelty \"remains rare,\" and their best runs are unstable from attempt to attempt (<a href=\"https://arxiv.org/abs/2608.13417\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.13417</a>). Nature's own comment desk landed on the same beat with the blunt title <em>AI isn't ready to research itself</em> (<a href=\"https://www.nature.com/articles/d41586-026-02494-5\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 13 Aug 2026</a>). The honest synthesis for a technical reader: the <em>replication</em> frontier is moving fast — turning a paper into working code is now largely automatable, and that alone is a real productivity change — but <em>replication is not discovery</em>, and every careful evaluation this week says the discovery gap is still wide. Watch for the first agent that produces a genuinely novel, independently-verified method rather than a slick recombination; on this week's evidence it hasn't happened, and the labs shipping \"AI scientists\" and the journals reviewing them agree on that even as their headlines diverge.",
-    "<strong>2. Symmetry and algebra, not architecture, decide what a network learns.</strong> A striking cluster of theory papers this week all locate a model's behaviour in an underlying mathematical structure rather than in the wiring diagram. <em>Neural Quadratic Forms</em> shows that a single symmetry — a layer is a sum over interchangeable units, so relabelling them changes nothing — forces perceptrons, attention layers, mixtures-of-experts and convolutions into <em>one</em> minimal model, differing only by a \"structure matrix,\" and that this model predicts both the abrupt step-like plateaus of learning <em>and</em> the smooth power-law loss curves as two limits of the same dynamics (<a href=\"https://arxiv.org/abs/2608.13335\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.13335</a>). <em>Algebraic Decomposition Theory</em> proves that whether a transformer generalises to longer sequences than it trained on is governed by an algebraic property of the task — one that classical decomposition theory for finite systems literally cannot see (<a href=\"https://arxiv.org/abs/2608.13433\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.13433</a>). And an interpretability study finds that a model represents \"false\" and \"impossible\" as near-<em>orthogonal directions</em> in its activation space — geometry encoding a distinction philosophers have argued over for centuries (<a href=\"https://arxiv.org/abs/2608.12852\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.12852</a>). The through-line: as the field's empirical zoo of architectures keeps growing, the explanatory action is moving the other way — toward the small set of symmetries, algebras and geometries that many architectures secretly share. It is the most encouraging sign in a while that deep learning might acquire a real theory rather than a bestiary.",
-    "<strong>3. Deep time as data for the present — and it is not an abstraction this week.</strong> While Switzerland lives through a scorching, rain-starved August, a Nature paper reconstructs a medieval catastrophe with an uncomfortably direct message: in 1341–1343, <em>sixteen</em> major floods cascaded across Europe, four of them 500-to-1,000-year events, making 1342 the worst flood year of the past seven centuries (<a href=\"https://www.nature.com/articles/s41586-026-10888-8\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 12 Aug 2026</a>). The lesson the authors draw is precisely the one flood-risk managers resist — that the recent instrumental record badly <em>understates</em> what is physically possible. The same \"read the deep past to bound the present\" move runs through the week's biology: a Nature Review traces the machinery of human antiviral immunity — cGAS–STING, inflammasomes, viperin — back billions of years to bacterial anti-phage defences (<a href=\"https://www.nature.com/articles/s41586-026-10756-5\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 12 Aug 2026</a>), and a Quanta feature revisits the old, contested idea that aging is a <em>program</em> rather than mere wear-and-tear (<a href=\"https://www.quantamagazine.org/why-aging-may-be-a-program-not-a-breakdown-20260814/\" target=\"_blank\" rel=\"noopener noreferrer\">Quanta, 14 Aug 2026</a>). The connective idea worth carrying: for both climate risk and biological mechanism, the historical and evolutionary record is not colour — it is the widest dataset we have, and this week it kept saying the present is narrower than the possible.",
-    "<strong>4. Quantum's near-term turn: do more with a single qubit.</strong> Two results converge on making minimal quantum resources do outsized work. A Harvard–Cornell team proves <em>and experimentally demonstrates</em> that coupling one controllable qubit to an ordinary sensor can exponentially cut the number of measurements needed to learn a classical signal — a 10⁷-fold reduction in the lab for Fourier-amplitude sensing (<a href=\"https://arxiv.org/abs/2608.13521\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.13521</a>). In parallel, Preskill and collaborators show you can prepare the thermal and ground states quantum chemistry needs using a <em>single reusable ancilla qubit</em> as an artificial \"bath,\" with rigorous mixing-time guarantees (<a href=\"https://www.nature.com/articles/s41567-026-03389-y\" target=\"_blank\" rel=\"noopener noreferrer\">Nature Physics, 12 Aug 2026</a>). Both are explicitly framed for \"early fault-tolerant\" hardware — the messy, few-qubit machines we actually have, not the million-qubit ones we don't. The shape to watch: quantum advantage is quietly being re-scoped from \"wait for the big machine\" to \"wring provable wins out of one good qubit.\""
-   ],
-   "kind": "editorial",
    "age_days": 3,
    "day_label": "Sat 15 Aug",
    "daybreak": false
@@ -4291,37 +4423,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-08-weekend-code-beats-json-for-llm-tool-use",
-   "sid": "st-f2748bffdaad",
-   "headline": "Code beats JSON for LLM tool use",
-   "summary": "When LLMs call external tools, the standard interface is a rigid structured JSON request; an alternative is \"programmatic tool calling\" (PTC), where the model writes actual Python that invokes tools as typed function stubs, chaining and parallelising them in one turn. This paper runs the first systematic head-to-head across 14 models on the BFCL v4 benchmark. PTC matches or beats JSON calling in 11 of 14 models (the GPT-5.6 family gains 10.6 points), holds up better under parallel fan-out (13 of 14), and stays more stable under \"context rot\" (long-context degradation), where JSON drops about 2.3%. The gap tracks raw model coding ability across model generations — the better the model codes, the more code-based tool use wins.",
-   "why": "It shows that letting capable models write code to use their tools, rather than fill in rigid forms, is a simpler and more robust design as models get smarter — and it is the same capability that made this week's autonomous-agent security incident possible (see Cross-cutting thread 3).",
-   "url": "https://arxiv.org/abs/2608.06370",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-08",
-   "date_label": "Aug 8",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/08/weekend/",
-   "affiliations": [
-    "PwC"
-   ],
-   "affiliation_label": "PwC",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 8 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-08-news-ukraine-s-volodymyr-zelensky-made-the-first-visi",
    "sid": "st-25be4faac215",
    "headline": "Zelensky visits Serbia as strikes hit Kyiv",
@@ -4349,117 +4450,30 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-07-news-houthi-missile-and-drone-assaults-on-yemeni-gove",
-   "sid": "st-0a2d2cf51a0c",
-   "headline": "Houthi attacks kill dozens of Yemeni troops",
-   "summary": "Houthi missile-and-drone assaults on Yemeni government camps killed at least 30 soldiers on Thursday 6 August 2026, the deadliest escalation since the 2022 truce. The Iran-backed Houthi movement struck military camps in the provinces of Marib and Hadramout, wounding around 50 more, according to Yemeni government officials; pro-government military sources put the toll higher, at 45 or above, and the Houthi spokesman claimed 'hundreds' of casualties — a figure that could not be independently verified. A de facto ceasefire between the Houthis and the Saudi-led coalition that backs Yemen's internationally recognised government has largely frozen the fighting since April 2022 without any formal peace deal; officials called these coordinated strikes the most serious breach in years.",
-   "why": "A collapse of the truce would reopen a war that had faded from view and risks drawing the Saudi-led coalition — and, indirectly, the broader Iran-US confrontation — back into open conflict.",
-   "url": "https://www.nbcnews.com/world/yemen/houthi-rebel-attacks-kill-least-30-yemeni-government-forces-officials-rcna591274",
-   "source_domain": "nbcnews.com",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "news",
-   "stream_label": "News",
+   "id": "2026-08-08-weekend-strait-of-hormuz-squeeze-eases-toward-a-deal-as",
+   "sid": "st-4df921c26fa8",
+   "headline": "Strait of Hormuz squeeze eases toward a deal as shipowners fight tolls",
+   "summary": "Eight shipping bodies petitioned the UN (letter sent 3 August, released 5 Aug) to block any Hormuz transit tolls, warning it would break the law of international straits; a new International Trade Centre analysis found LNG throughput down about 95%. US Treasury's Bessent claimed an interim reopening deal was \"within reach\" (5 Aug), but no signed text was published — treat the \"deal within reach\" framing as one official's account until confirmed. The line to Swiss and allied energy costs and defence procurement is direct.",
+   "why": "",
+   "url": "https://www.aljazeera.com/economy/2026/8/6/strait-of-hormuz-tolls-would-harm-livelihoods-worldwide-shipowners-warn",
+   "source_domain": "aljazeera.com",
+   "date": "2026-08-08",
+   "date_label": "Aug 8",
+   "stream": "weekend",
+   "stream_label": "Weekend",
    "topics": [
-    "geopolitics"
+    "switzerland"
    ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/08/07/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 7 Aug",
-   "daybreak": true
-  },
-  {
-   "id": "2026-08-07-ai-ml-a-learning-algorithm-that-finally-hits-the-theor",
-   "sid": "st-ebbf6946b8d4",
-   "headline": "An optimal agnostic PAC learner",
-   "summary": "PAC learning (Probably Approximately Correct — the standard theoretical model of supervised learning) asks how many labelled examples you need to come close to the best classifier in a given family. In the harder \"agnostic\" setting — where you do not assume the data can be perfectly separated — a lower bound on the achievable error has been known since the 1990s, but no algorithm had been proven to match it. This paper constructs a learner whose error is provably within a single universal constant of that lower bound, for any hypothesis family of finite VC dimension (VC dimension — a standard measure of a model family's capacity).",
-   "why": "It settles a long-standing open question in learning theory — the sample complexity of agnostic PAC learning is now pinned down up to constants at every noise level. This is foundational rather than a product; the payoff is conceptual clarity about the fundamental limits of learning from data.",
-   "url": "https://arxiv.org/abs/2608.06363",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
    "importance": 2,
    "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "affiliations": [
-    "Aarhus University",
-    "HKU",
-    "UC Berkeley"
-   ],
-   "affiliation_label": "Aarhus University, HKU +1",
+   "permalink": "/2026/08/08/weekend/",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
-   "day_label": "Fri 7 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-07-ai-ml-self-improving-agents-can-quietly-poison-themsel",
-   "sid": "st-b8ad1abff107",
-   "headline": "Self-evolving agents poison their own skills",
-   "summary": "\"Self-evolving\" agents get better by distilling reusable skills from their own past runs into a growing library. This paper shows the process is not monotonic: past a critical library size, newly added skills start hurting performance. The cause is structural — once a defective skill enters the decision context it becomes reference material for distilling later skills, forming cross-round contamination chains — and it is largely irreversible: deleting the original culprit afterward recovers only a small fraction of the lost performance. Their fix, Verifier-as-Gatekeeper (VaG), screens each candidate skill with three complementary critics (structural validity, behavioral harmlessness, semantic consistency) before admission. On Terminal-Bench 2, unfiltered accumulation peaks and then decays, while VaG improves every round to 72% pass@1 with a library roughly 5x smaller, and its frozen skill set transfers to other backbones.",
-   "why": "It is a sharp warning for the popular \"just let the agent keep learning from itself\" design — quality control on what enters the skill memory has to be a pre-commit gate, because by the time a bad skill's damage shows up, cleaning it out no longer undoes the harm.",
-   "url": "https://arxiv.org/abs/2608.05810",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/07/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 7 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-07-news-israel-has-rewritten-the-gaza-disarmament-roadma",
-   "sid": "st-182cfcbc63ec",
-   "headline": "Netanyahu reworks Gaza disarmament deal",
-   "summary": "Israel has rewritten the Gaza disarmament roadmap it signed onto days earlier, and Prime Minister Benjamin Netanyahu said on 5 August 2026 that Israel had 'not agreed' to withdraw before Hamas is 'completely disarmed'. Under the Board of Peace framework that US President Donald Trump announced on 30 July — the multinational body (Egypt, Qatar, Turkey and the US) overseeing the ceasefire — Hamas was to surrender its weapons in stages while Israeli forces pulled back to the agreed 'Yellow Line'; Hamas accepted that version. Le Temps reports that Israeli-imposed modifications have since decoupled Hamas's disarmament from a full Israeli withdrawal, a change Hamas says voids its participation unless Israel meets its own obligations first. The characterisation of the reworked terms is contested — Israel presents them as clarifications, mediators and Hamas as a reversal of what was agreed.",
-   "why": "A just-announced deal is being renegotiated before implementation, leaving the ceasefire's next phase in doubt.",
-   "url": "https://www.letemps.ch/articles/quand-israel-reecrit-le-plan-de-paix-pour-gaza-en-cours-de-route",
-   "source_domain": "letemps.ch",
-   "date": "2026-08-07",
-   "date_label": "Aug 7",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/07/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 7 Aug",
+   "day_label": "Sat 8 Aug",
    "daybreak": false
   }
  ]
