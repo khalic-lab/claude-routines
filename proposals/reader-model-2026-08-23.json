@@ -1,0 +1,27 @@
+{
+ "date": "2026-08-23",
+ "proposals": [
+  {
+   "id": "rm-1",
+   "target": "routines/src/weekend.md",
+   "action": "Port the science stream's 'Dormant-source activation — do this BEFORE waiving discovery' block (science.md line ~35) into weekend.md's sourcing section: before emitting 'Discovery: waived', probe at least two registered weekend-affinity domains that are dormant (last_cited=None / long stale) from the preflight plan — institutional newsrooms, lab/engineering blogs, journal primaries — and name which were tried in the waiver reason; a new anchor resolving to a hub (hf.co, github.com, arxiv.org, nature.com) does not count as a new primary.",
+   "evidence": "CARRIED from 2026-08-16 / 2026-08-09 rm-1, still unapplied. weekend.md carries only the generic shared discovery-quota partial ('candidates_to_try ... dormant domains worth a probe'), NOT the science.md before-waiving probe block (grep of routines/src/weekend.md finds no 'dormant-source activation' / 'before waiving' language; science.md line 35 has it). Weekend waiver_rate improved 1.00 -> 0.80 this window (source-health) but remains the portfolio's worst and above the 0.50 bar; 2026-08-22-weekend footer waived nothing this run only because two [new source] EPFL/INAF releases surfaced, i.e. discovery was met by luck of the week's reading, not by an active dormant-probe pass. The identical block landed for science on 2026-08-02 (commit 7f8e440) and demonstrably reactivated dormant domains. Human-gated prompt patch.",
+   "applied": false
+  },
+  {
+   "id": "rm-2",
+   "target": "reader-profile/source-weights.yml",
+   "action": "Add france24.com to the `reduce:` list (soft penalty: keep only when the story is clearly significant and no stronger source exists; never as a news lead or sole source).",
+   "evidence": "Reasoned reader downvote this window (ledger ev:feedback st-d03f80975246, 2026-08-19-news, vote=-1, reason verbatim: 'france 24 as source is brutally out of touch, you should have found more reliable sources'). The downvoted item led with [France 24] ahead of Jerusalem Post and Le Monde; the SAME 2026-08-19 edition also single-sourced the France-Iran diplomat-expulsion item (st-a54c31f0b12f) solely to France 24 when Le Monde/AFP/Reuters carried the story. Corroborated mechanically: france24.com failed ~81% of fetch attempts this window (health.json feeds: 26 fail / 6 ok via proxy). `reduce:` not `never:` — France 24 is a legitimate state-funded international broadcaster, so demote-when-better-exists, not hard-drop. Human-gated (source-weights.yml).",
+   "applied": false
+  },
+  {
+   "id": "rm-3",
+   "target": "reader-profile.md",
+   "action": "Append dated Learned-preference line: prefer stronger wires/primaries over France 24; do not lead a news item with it or leave a story single-sourced to it when a better source exists.",
+   "evidence": "Same signal as rm-2 (reasoned 👎 st-d03f80975246 with written reason, from this window). Auto-applied under the 2026-07-10 bounded grant (a vote with a written reason qualifies): dated line appended at the END of reader-profile.md 'Learned preferences', append-only, no other section touched.",
+   "applied": true,
+   "applied_by": "evaluator"
+  }
+ ]
+}

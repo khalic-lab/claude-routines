@@ -54,3 +54,9 @@
   administration"; news 2026-07-21 Swiss forced-labour tariff — "no legal basis for these new
   tariffs… context… lying administration"). Extends the 2026-07-19 impartiality line from attribution
   to actively adding the skeptical context, since the "final"-class framing recurred.
+- 2026-08-23: prefer stronger wires and primaries over France 24 (france24.com) — do not lead a news
+  item with it, and do not leave a story single-sourced to it when a better source exists (1× 👎 on
+  news 2026-08-19 ICC-sanctions lead, "france 24 as source is brutally out of touch, you should have
+  found more reliable sources"; corroborated by france24.com failing ~81% of fetch attempts this
+  window, and by the same edition single-sourcing the France–Iran diplomat-expulsion item to it while
+  Le Monde/AFP/Reuters carried the same news). See the source-weights `reduce:` proposal.

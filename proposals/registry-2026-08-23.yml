@@ -1,0 +1,30 @@
+date: 2026-08-23
+applied: false
+patches:
+  # No fresh reach flips this run: the evaluator sandbox holds no fetch-proxy bearer and its direct
+  # egress is fully walled this window (linkcheck 4/20 resolve; all three Sunday-scout probes —
+  # mpe.mpg.de, home.cern, leibniz-gemeinschaft.de — returned ERR:56). Reach truth stays with the
+  # writers' bearer + the deterministic probes.
+  #
+  # CARRIED, still unapplied from registry-2026-08-16 / -08-09 / -08-02: both remain status:
+  # candidate in sources/registry.yml (verified lines 3080, 3092). They fill the Sports primary-source
+  # gap (sports waiver_rate=0.25, unique_domains=10, top5_share=0.722). No fresh evaluator probe
+  # evidence (egress walled); carried on record.
+  - domain: esv.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED from 2026-08-16 / 2026-08-09 / 2026-08-02 / 2026-07-26 scout. Still status: candidate. Eidgenoessischer Schwingerverband, official Swiss wrestling federation; genuine primary for Schwingen / Swiss-personalization sports coverage. reach: proxy-needed."
+  - domain: uci.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED from 2026-08-16 / 2026-08-09 / 2026-08-02 / 2026-07-26 scout. Still status: candidate. Union Cycliste Internationale, official world cycling federation; primary for Tour de France / cycling coverage where letour.fr is sandbox-walled. reach: proxy-needed."
+  # New scout candidates appended to sources/candidates.jsonl this run (Science = worst-deficit stream
+  # by new_domains=7). Both are genuine primary astronomy/astrophysics bodies absent from the registry,
+  # relevant to this week's heavy astronomy slate (S301/Sgr A*, IMF, Milky-Way-merger, Deimos). They
+  # need a probation cycle before promotion, so no from/to transition proposed yet. Both reach:
+  # proxy-needed (evaluator egress walled — writers vet at first citation).
+  # - skao.int  (SKA Observatory; radio-astronomy primary / official newsroom)
+  # - aip.de    (Leibniz Institute for Astrophysics Potsdam; genuine primary astrophysics body)
+  #
+  # NOTE: last week's three scout candidates (slf.ch, unil.ch, scnat.ch) verifiably LANDED in
+  # sources/registry.yml (lines 3686/3698/3710) — the candidate->registry scout path is working.
