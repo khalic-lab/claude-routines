@@ -6,19 +6,19 @@
    "key": "geopolitics",
    "label": "Geopolitics",
    "color": "#c0563b",
-   "count": 25
+   "count": 22
   },
   {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 20
+   "count": 19
   },
   {
    "key": "science",
    "label": "Science",
    "color": "#4c6b3c",
-   "count": 12
+   "count": 16
   },
   {
    "key": "economy",
@@ -27,49 +27,61 @@
    "count": 11
   },
   {
-   "key": "world",
-   "label": "World",
-   "color": "#6b6f76",
-   "count": 10
-  },
-  {
-   "key": "politics",
-   "label": "Politics",
-   "color": "#9a6a34",
-   "count": 9
-  },
-  {
-   "key": "security",
-   "label": "Security",
-   "color": "#6a4b8a",
-   "count": 9
-  },
-  {
    "key": "sports",
    "label": "Sports",
    "color": "#c26b2e",
    "count": 9
   },
   {
+   "key": "world",
+   "label": "World",
+   "color": "#6b6f76",
+   "count": 9
+  },
+  {
+   "key": "security",
+   "label": "Security",
+   "color": "#6a4b8a",
+   "count": 8
+  },
+  {
+   "key": "politics",
+   "label": "Politics",
+   "color": "#9a6a34",
+   "count": 7
+  },
+  {
    "key": "switzerland",
    "label": "Switzerland",
    "color": "#c2454a",
-   "count": 9
+   "count": 7
   },
   {
    "key": "health",
    "label": "Health",
    "color": "#a44a72",
-   "count": 4
+   "count": 6
   },
   {
    "key": "tech",
    "label": "Tech",
    "color": "#3b6ea5",
-   "count": 3
+   "count": 2
   }
  ],
  "editorials": [
+  {
+   "stream": "science",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "kicker": "Science · Why it matters · Aug 26",
+   "heading": "Why it matters",
+   "title": "Two halves of artificial photosynthesis, in one week",
+   "paras": [
+    "The Bordeaux ammonia work uses light to <em>build</em> a fuel-relevant molecule while splitting water; the femtosecond experiment watches the reverse — a water molecule coming <em>apart</em> into hydrogen. Together they underline how much of the energy transition is really a chemistry problem: getting light to make and break small molecules cleanly and controllably.",
+    "<strong>Where planetary water comes from.</strong> Two independent astronomy results circle the same question of volatile delivery — PDS 70's \"exocomets\" appear to be watering a disc that is still forming planets, while 2I/Borisov lets us sample the volatile chemistry of a world assembled around another star entirely."
+   ]
+  },
   {
    "stream": "sports",
    "date": "2026-08-24",
@@ -94,18 +106,6 @@
     "<strong>2. The critic comes back to reinforcement learning.</strong> Group-Relative Policy Optimization (GRPO — the reward-based recipe behind most reasoning models) won the LLM post-training era partly by <em>throwing away</em> the value function, the \"critic\" that scores partial outputs token by token: it was fiddly, memory-hungry, and comparing a batch of whole answers was good enough. This week three independent papers argue the pendulum is swinging back, each defusing the critic's cost a different way. <em>Le Critique</em> (Mistral AI; Mila) keeps a learned critic but feeds it \"privileged\" task signal without biasing what the policy learns, then adaptively blends critic- and group-based baselines — and beats GRPO (<a href=\"https://arxiv.org/abs/2608.16739\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.16739</a>). <em>SAPO</em> (Xiamen; NTU) folds the critic <em>into the policy's own backbone</em>, predicting value and action at different points of the same generation, and beats both PPO and GRPO by +15 and +12 points while cutting per-iteration runtime a third and removing the separate critic model entirely (<a href=\"https://arxiv.org/abs/2608.19842\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.19842</a>). And <em>QWM</em> (Stanford; Peking University — Finn and Sadigh among the authors) revives the <em>world model</em> for value-based RL, but uses it only for test-time search over imagined trajectories while training value and policy purely on real transitions — sidestepping the compounding bias that sank Dreamer-style \"train on imagination\" methods (<a href=\"https://arxiv.org/abs/2608.17163\" target=\"_blank\" rel=\"noopener noreferrer\">arXiv:2608.17163</a>). The through-line: temporal credit assignment — deciding <em>which</em> of many steps in a long task earned the reward — is the central difficulty in training agents, and after two years of critic-free orthodoxy the field has decided the critic is worth the engineering after all, provided you make it cheap. (Read alongside last week's CrEST and this week's turn-level RTPO for the fuller convergence.)",
     "<strong>3. Understanding by subtraction.</strong> Physics kept winning this week by stripping a phenomenon to its smallest surviving piece. A Fudan-led team peeled a cuprate superconductor down to a <em>single</em> copper-oxygen plane — the irreducible unit of high-temperature superconductivity — and it still superconducts, turning a 40-year mystery into a clean, gate-tunable \"hydrogen atom\" of the problem (<a href=\"https://www.nature.com/articles/s41586-026-10857-1\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 12 Aug 2026</a>). An EPFL group built a graphene <em>antidot</em> — a single controllable bump that behaves as an artificial impurity — and read out one-third of an electron's charge directly, dodging the bulk/edge confusion that muddies conventional interferometers (<a href=\"https://www.nature.com/articles/s41567-026-03412-2\" target=\"_blank\" rel=\"noopener noreferrer\">Nature Physics, 14 Aug 2026</a>). A Caltech–Paris-Saclay–Munich team played <em>conformal field theory</em> — the universal math of systems at a critical point — back through a small array of trapped atoms, spectral line by spectral line (<a href=\"https://www.nature.com/articles/s41586-026-10904-x\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 19 Aug 2026</a>). And a Tokyo–Vienna team ran Young's double-slit experiment <em>between two silicon atoms</em> 1.36 ångström apart, with the atoms' own thermal jiggle writing itself into the interference fringes (<a href=\"https://www.nature.com/articles/s41586-026-10914-9\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 19 Aug 2026</a>). Each is the same instinct — don't scale up, scale <em>down</em> to the minimal system where the effect still lives, where it finally becomes measurable and controllable. It rhymes with last week's \"do more with a single qubit\" cluster, and with the ML side's turn toward minimal <em>explanatory</em> models: this week the whole of Adam's advantage over plain gradient descent was traced to a single structural fact about the loss landscape via random-matrix theory (see Papers). Reductionism, quietly, is having a good year.",
     "<strong>4. Weighing the invisible.</strong> A striking share of the week's astronomy was, at bottom, accounting for mass and motion that light does not directly show. A Leiden-led JWST study measured the low-mass end of the stellar population in nine early massive galaxies and found it \"bottom-heavy\" — far richer in dim, low-mass dwarf stars than the Milky Way's mix — implying those galaxies carry roughly four times more stellar mass than their light suggests, which <em>worsens</em> JWST's already-awkward \"too big, too soon\" galaxies (<a href=\"https://www.nature.com/articles/s41550-026-02932-4\" target=\"_blank\" rel=\"noopener noreferrer\">Nature Astronomy, 18 Aug 2026</a>). An INAF Bologna team dated the Milky Way's own globular clusters precisely enough to expose a major galactic merger <strong>1.8 billion years before</strong> the famous Gaia-Sausage-Enceladus event — a whole early \"meal\" written into the inner Galaxy's fossil record, and a long-contested one now pinned down (<a href=\"https://www.nature.com/articles/s41550-026-02931-5\" target=\"_blank\" rel=\"noopener noreferrer\">Nature Astronomy, 17 Aug 2026</a>; INAF release: <a href=\"https://www.media.inaf.it/2026/08/17/vestigia-cuore-via-lattea/\" target=\"_blank\" rel=\"noopener noreferrer\">Antiche vestigia nel cuore della Via Lattea, 17 Aug 2026</a> [new source]). And the GRAVITY Collaboration discovered <strong>S301</strong>, a faint star whipping around Sagittarius A<em> at some 8% of light speed on an 8.7-year orbit — fast enough that its motion is sensitive to the black hole's </em>spin* (a (v/c)³ correction in Einstein's rotating-black-hole metric), making it the first natural probe that could actually weigh how fast the Galaxy's central black hole turns (<a href=\"https://www.nature.com/articles/s41586-026-10894-w\" target=\"_blank\" rel=\"noopener noreferrer\">Nature, 19 Aug 2026</a>). The connective idea: in each case the quantity that matters — hidden stellar mass, an erased merger, a black hole's spin — is inferred through a careful proxy (a spectrum, a cluster age, an orbit), and this week the proxies kept insisting there is more out there than the obvious light lets you count."
-   ]
-  },
-  {
-   "stream": "science",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "kicker": "Science · Why it matters · Aug 19",
-   "heading": "Why it matters",
-   "title": "Weighing what we cannot see",
-   "paras": [
-    "Three of this week's astronomy results are, at heart, about accounting for unseen mass — a bottom-heavy stellar mix hiding extra mass in distant galaxies, a tidal stream weighing dark matter around another galaxy, and dated star clusters reconstructing a merger written into the Milky Way's halo. Different tools (spectra, streams, cluster ages), one theme: the visible light is only a proxy, and the interesting mass is usually the part you have to infer.",
-    "<strong>Editing the skeleton, not just the trim.</strong> Two independent chemistry papers this week rewrite a molecule's core carbon–nitrogen framework late in a synthesis rather than decorating a fixed scaffold. \"Skeletal editing\" is quietly maturing from a curiosity into a general tactic — the kind of method shift that, like the physicists' single-CuO₂-plane and single-antidot experiments, is really about controlling a system down to its last essential element."
    ]
   }
  ],
@@ -132,6 +132,30 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/26/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-26-science-the-fda-approves-the-first-ras-targeted-drug-for",
+   "sid": "st-0ffd3a98b7f8",
+   "headline": "First RAS drug approved for pancreatic cancer",
+   "summary": "On 26 August the US Food and Drug Administration approved daraxonrasib (brand name Rasonque), the first drug to target RAS — the mutated gene that drives roughly 90% of pancreatic tumours — for adults with previously treated metastatic pancreatic ductal adenocarcinoma (PDAC, the most common and lethal form). It is a \"RAS(ON) multi-selective\" inhibitor: rather than blocking a single mutant, it binds the active, switched-on state of several RAS variants at once. In the pivotal Phase 3 RASolute 302 trial (NCT06625320, 500 patients), median overall survival was 13.2 months on the drug versus 6.7 months on standard chemotherapy — close to a doubling. The FDA granted Breakthrough Therapy and Orphan Drug designations and cleared the drug 6.5 months ahead of its review deadline; the most common side effects were rash, diarrhoea, mouth inflammation and nausea.",
+   "why": "RAS was called \"undruggable\" for four decades, and pancreatic cancer is among the deadliest common cancers, so the first RAS drug to reach it is a genuine milestone — even as absolute median survival stays around 13 months. European relevance: Revolution Medicines says the European Medicines Agency is running an expedited assessment, so a filing here may follow.",
+   "url": "https://www.fda.gov/news-events/press-announcements/fda-approves-first-class-targeted-therapy-metastatic-pancreatic-cancer",
+   "source_domain": "fda.gov",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "health",
+    "science"
+   ],
+   "topic_primary": "health",
+   "topic_label": "Health",
+   "topic_color": "#a44a72",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/26/science/",
    "fresh": true
   },
   {
@@ -231,6 +255,114 @@
    "fresh": true
   },
   {
+   "id": "2026-08-26-science-sunlight-turns-seawater-and-air-into-ammonia",
+   "sid": "st-0fe28f952d34",
+   "headline": "Sunlight makes ammonia from seawater and air",
+   "summary": "Making ammonia (NH₃, the basis of nitrogen fertiliser) normally means the Haber–Bosch process — high heat, high pressure, and a large slice of the world's industrial energy. A Bordeaux team instead drives the reaction with light. Cheap iron(II) salts, hit with ultraviolet light, release solvated electrons (free electrons dissolved in the liquid) that reduce a molybdenum catalyst, which grabs N₂ from the air and turns it into ammonia; the spent iron(III) then absorbs more UV, oxidises water and regenerates the iron(II) — closing a self-sustaining loop. They report a 5.0% quantum yield (the fraction of absorbed photons doing useful chemistry) at room temperature and pressure, rising to 10.8% under higher N₂ pressure, and — the notable part — it still runs in unpurified seawater and in ambient air. The whole cycle is genuinely uphill energetically (+329 kJ/mol), light-driven like natural photosynthesis.",
+   "why": "A proof of concept that fertiliser chemistry might one day be powered by sunlight and seawater instead of fossil-fired furnaces — though the modest, UV-limited yields are a long way from a practical process.",
+   "url": "https://www.nature.com/articles/s41557-026-02218-2",
+   "source_domain": "nature.com",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "affiliations": [
+    "Univ. Bordeaux",
+    "CNRS"
+   ],
+   "affiliation_label": "Univ. Bordeaux, CNRS",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-26-science-physicists-film-a-water-molecule-splitting-into",
+   "sid": "st-eb0a928b1626",
+   "headline": "Physicists film water splitting into hydrogen",
+   "summary": "When a water molecule is ionised (an electron knocked out), its two hydrogen atoms can pair up and leave together as molecular hydrogen (H₂) — one of the simplest chemical reactions there is, yet no one had watched the electrons and nuclei move together as it happens. Using correlated electron–ion imaging with few-femtosecond (10⁻¹⁵ s) laser pulses on heavy water (D₂O), backed by simulations, the team reconstructed the full pathway. They find the reaction is indirect, running through three channels with formation times around 34 and 72 femtoseconds, and — the striking result — the molecule must first spontaneously break its own symmetry: only a random, lopsided wobble lets it hop between electronic states at a \"conical intersection\" (a point where two energy surfaces touch and a molecule can switch states) and fuse the two hydrogens before the oxygen–hydrogen bond finishes breaking.",
+   "why": "A frame-by-frame look at the elementary step behind both radiation damage in water and hydrogen production — showing that even the simplest reactions can hinge on fleeting, spontaneous asymmetry.",
+   "url": "https://arxiv.org/abs/2608.23292",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-26-science-a-recombinant-shingles-vaccine-is-linked-to-fewe",
+   "sid": "st-beef2803af35",
+   "headline": "Shingles vaccine tied to fewer heart events",
+   "summary": "When the US abruptly switched from the older live shingles vaccine to the newer recombinant one (marketed as Shingrix), it created a natural experiment: people vaccinated just before and just after the switch were otherwise similar, which sidesteps the \"healthy-vaccinee\" bias — healthier people tend to get vaccinated, muddying earlier studies — that has dogged this question. Comparing cardiovascular outcomes in adults aged 60 and over, the Oxford–Birmingham team found the recombinant vaccine was associated with a 9% lower cardiovascular burden over seven years (a \"restricted-mean-time-lost\" ratio of 0.91, 95% CI 0.88–0.95), with significant reductions in ischaemic heart disease and heart failure in both sexes. The authors are careful: this is observational, the effect is modest and fades over time, and they explicitly call for randomised trials to test whether it is truly causal.",
+   "why": "Shingles vaccination is already recommended for older adults; a real cardiovascular benefit would strengthen that case — but this is an association, not proof, and shouldn't be oversold.",
+   "url": "https://www.nature.com/articles/s41591-026-04606-0",
+   "source_domain": "nature.com",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "health"
+   ],
+   "topic_primary": "health",
+   "topic_label": "Health",
+   "topic_color": "#a44a72",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "affiliations": [
+    "University of Oxford",
+    "University of Birmingham"
+   ],
+   "affiliation_label": "University of Oxford, University of Birmingham",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-26-science-interstellar-comet-2i-borisov-looks-like-no-come",
+   "sid": "st-4613de4b4194",
+   "headline": "Interstellar comet Borisov unlike any on record",
+   "summary": "2I/Borisov, discovered in 2019, was the first clearly active comet known to arrive from another star system. A full reduction of Lowell Observatory imaging, spectroscopy and narrowband photometry taken over September–December 2019 finds that its carbon-chain molecules (C₂ and C₃) surged about fourfold relative to cyanide (CN) as it neared the Sun — a trend with distance from the Sun unmatched anywhere in Lowell's 50-year database of 230 comets. Water production peaked at 4.5×10²⁶ molecules per second, with unusually high nitrogen- and hydrogen-bearing ratios, and an almost symmetric gas cloud implying the entire sunlit surface was venting. Set against other groups' data, its chemistry looks unlike any comet born in our own Solar System.",
+   "why": "Comets are frozen leftovers of the systems that made them, so an interstellar one with genuinely alien chemistry is a direct sample of how planet-building differs around other stars. (This is a late, thorough analysis of 2019 data, not a new detection.)",
+   "url": "https://arxiv.org/abs/2608.23701",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "affiliations": [
+    "Lowell Observatory",
+    "University of Maryland",
+    "Villanova University"
+   ],
+   "affiliation_label": "Lowell Observatory, University of Maryland +1",
+   "fresh": true
+  },
+  {
    "id": "2026-08-26-news-the-un-confirmed-on-tuesday-25-august-that-at-le",
    "sid": "st-b9c9f22f742e",
    "headline": "Haiti attack toll rises to 47",
@@ -275,6 +407,86 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/08/26/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-26-science-a-recipe-for-weaving-knotted-magnets-out-of-mono",
+   "sid": "st-15ad1723172b",
+   "headline": "A recipe to weave magnetic hopfions",
+   "summary": "The stakes: magnetic hopfions are three-dimensional, knotted textures in a material's spins — a step up in complexity from the flat, whirlpool-like skyrmions already studied as candidate memory bits — and they are predicted to have unusual dynamics, but there is no reliable way to create them on demand. A concrete picture: imagine the atomic spins as tiny compass needles; a hopfion twists their directions into a closed knot that cannot be smoothly undone. This simulation study proposes a clean route: start from a \"toron\" (a simpler 3D texture that hosts an emergent monopole–antimonopole pair — point-like sources of magnetic field), then run an electric current that annihilates the pair, converting the toron into a hopfion. The starting toron's length sets how many hopfions form, and the current's direction sets the knot's handedness. Honest scope: this is micromagnetic theory only, with no experiment yet — but it hands experimenters concrete control knobs to try.",
+   "why": "If it works on the bench, controllable knotted spin textures could become a new kind of stable, information-carrying object for spintronics.",
+   "url": "https://arxiv.org/abs/2608.24116",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "affiliations": [
+    "University of Tokyo",
+    "RIKEN",
+    "Hiroshima University"
+   ],
+   "affiliation_label": "University of Tokyo, RIKEN +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-26-science-an-effective-handle-on-a-hard-conjecture-in-numb",
+   "sid": "st-f865a009afee",
+   "headline": "Effective bound for the Zilber-Pink conjecture",
+   "summary": "The stakes: the Zilber–Pink conjecture is one of the big open problems in arithmetic geometry. It predicts that \"unlikely intersections\" — rare coincidences where a curve meets special subgroups of a higher-dimensional space more often than plain dimension-counting allows — are finite and controllable, and it would unify and vastly extend classical finiteness theorems (of Manin–Mumford / André–Oort type) about where rational and torsion points can sit. A concrete anchor: picture a winding curve drawn through a grid of \"special\" points; the conjecture says it can pass through only finitely many of the improbable ones. This work gives an explicit, effective bound on the size of that \"Zilber–Pink locus\" for curves in abelian varieties after reduction modulo a large prime, plus a fresh proof that the locus is finite. Honest scope: it makes an existing finiteness result effective — you can actually compute the bound — for curves; a concrete advance, not a proof of the full conjecture.",
+   "why": "\"Effective\" results are the ones that can eventually become algorithms and explicit checks, so pinning down real bounds is how abstract finiteness theorems turn usable.",
+   "url": "https://arxiv.org/abs/2608.24474",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-26-science-a-driver-agnostic-map-of-the-mutations-that-mark",
+   "sid": "st-029e88739403",
+   "headline": "791K genomes map ageing-blood mutations",
+   "summary": "Clonal haematopoiesis (CH) — the age-related expansion of blood stem-cell clones — raises the risk of leukaemia, heart disease and death, but most clones carry no known \"driver\" mutation, so studies that define CH by drivers miss much of it. This team instead counts \"passenger\" mutations: harmless hitchhiker mutations whose sheer number marks how far a clone has expanded, giving a continuous, more statistically powerful measure. Across 791,067 blood whole-genome sequences from the UK Biobank and the US All of Us program, a multi-ancestry genome-wide association study (GWAS — a scan linking DNA variants to a trait) found 81 genetic loci tied to passenger-mutation burden, 42 of them new, and flagged rare-variant regulators including MBD2, PRKACB and PUF60. Passenger burden itself tracked strongly with later blood cancers and mortality.",
+   "why": "A powerful, driver-free way to study why some people's blood ages faster than others — though as an unreviewed preprint of statistical associations, it needs replication and peer review before any clinical use.",
+   "url": "https://doi.org/10.64898/2026.08.21.26361040",
+   "source_domain": "doi.org",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "health",
+    "science"
+   ],
+   "topic_primary": "health",
+   "topic_label": "Health",
+   "topic_color": "#a44a72",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "affiliations": [
+    "Emory University"
+   ],
+   "affiliation_label": "Emory University",
    "fresh": true
   },
   {
@@ -509,30 +721,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-25-ai-ml-alibaba-s-wan3-0-pushes-generated-video-to-30-se",
-   "sid": "st-f52b4befa36a",
-   "headline": "Alibaba Wan3.0 makes 30-second AI video",
-   "summary": "Alibaba's Wan3.0 pushes generated video to 30 seconds and takes documents as input. Alibaba opened a beta of Wan3.0, its latest video-generation model, which produces clips up to 30 seconds — double the length of Wan2.5 — and accepts text, images, PDFs, web pages, and PowerPoint files as prompts (up to ten images, five videos, and five audio clips in one request). It processes text, image, video, and audio jointly, recommends a length for a given prompt, and includes a tool to extend existing clips. Alibaba says it reduces the \"visual drift\" (faces and interfaces warping over a shot) that plagues long AI video by holding reference characters, props, and spatial layout more consistent. It is available via wan.video, Alibaba Cloud Model Studio, and API, in a discounted Standard tier and a faster Prime tier. This is a hosted commercial beta — not an open-weights drop — so treat the consistency claims as vendor framing until independent tests land.",
-   "why": "",
-   "url": "https://the-decoder.com/alibabas-wan3-0-generates-ai-videos-up-to-30-seconds-long-from-text-images-and-documents/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "fresh": false
-  },
-  {
    "id": "2026-08-25-news-canada-is-due-to-unveil-retaliatory-tariffs-on-t",
    "sid": "st-78262d41bb1d",
    "headline": "Canada readies retaliation as US tariffs bite",
@@ -551,30 +739,6 @@
    "topic_primary": "economy",
    "topic_label": "Economy",
    "topic_color": "#9a7b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-25-news-a-third-drone-and-suspected-explosives-were-foun",
-   "sid": "st-6984f08a0fe5",
-   "headline": "Third drone found at Leipzig airport",
-   "summary": "A third drone and suspected explosives were found near Leipzig/Halle Airport, German media reported on Tuesday 25 August, widening an investigation that security sources link to Russian intelligence. The find follows an explosives-laden drone discovered earlier this month beside a Ukrainian cargo aircraft used to move military supplies through the eastern German hub — the incident that opened the probe. German investigators are treating the case as possible sabotage; security sources cited by German outlets suspect Russian intelligence involvement, which Moscow denies.",
-   "why": "the airport is a logistics node for Western aid to Ukraine, and repeated drone incursions on NATO soil sharpen European fears that the war's sabotage front is reaching inside the alliance.",
-   "url": "https://www.srf.ch/news/international/flughafen-leipzig-halle-weitere-drohne-und-moeglicher-sprengstoff-bei-leipzig-gefunden",
-   "source_domain": "srf.ch",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "security",
-    "geopolitics"
-   ],
-   "topic_primary": "security",
-   "topic_label": "Security",
-   "topic_color": "#6a4b8a",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/25/news/",
@@ -641,30 +805,6 @@
    "topics": [
     "geopolitics",
     "economy"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/24/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-24-news-kazakhstan-s-newly-created-pro-government-adilet",
-   "sid": "st-96c4a02f67fd",
-   "headline": "Tokayev party sweeps Kazakhstan election",
-   "summary": "Kazakhstan's newly created, pro-government Adilet party won more than 71% in Sunday's parliamentary election, official results announced Monday 24 August showed, cementing President Kassym-Jomart Tokayev's control. The electoral commission said four other blocs — all seen as broadly loyal to Tokayev — also entered the 145-seat single-chamber parliament (the Kurultai), on a reported turnout of 74%. Adilet, founded only this year and led by Tokayev's close aides, had already absorbed the previous ruling party, Amanat. The vote followed a new constitution that merged parliament's two chambers into one; last month the Supreme Court ruled the charter lets Tokayev, 73, stand for a fresh seven-year term, though he told reporters it was too early to say whether he would. He said he would name a vice-president — a newly created post — within seven to ten days.",
-   "why": "with no genuine opposition on the ballot, the result registers a leadership consolidation rather than a contest, and the reform's real effect is to extend Tokayev's runway.",
-   "url": "https://www.aljazeera.com/news/2026/8/24/kazakhstans-newly-formed-pro-government-party-wins-parliamentary-election",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-24",
-   "date_label": "Aug 24",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
@@ -855,30 +995,6 @@
    "topic_primary": "politics",
    "topic_label": "Politics",
    "topic_color": "#9a6a34",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/23/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-23-news-a-myanmar-military-airstrike-killed-at-least-14",
-   "sid": "st-cc18d5bd24b8",
-   "headline": "Myanmar airstrike kills 14 at monastery",
-   "summary": "A Myanmar military airstrike killed at least 14 people at a Buddhist monastery in the central Sagaing region on Friday 21 August, opposition and witness accounts say. The strike hit Swel Le Oh village in Myaung township, about 75 km west of Mandalay, at around 9am local time while more than 100 mostly elderly people were gathered for a week-long meditation retreat marking Buddhist Lent (Vassa, the monastic rains retreat); the site was reportedly struck twice. Those killed — 11 men and three women, aged roughly 50 to 70 — were civilians, and about 20 were wounded, according to the opposition National Unity Government and local witnesses. Sagaing is a stronghold of armed resistance to the military junta that seized power in 2021, and the army, which has not commented, has repeatedly used air power against populated areas there. This account rests on opposition and witness sources; the military has issued no statement.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/8/21/myanmar-military-bombing-kills-14-at-buddhist-monastery-opposition-reports",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-23",
-   "date_label": "Aug 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "world"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/23/news/",
@@ -1131,30 +1247,6 @@
     "Dalian University of Technology"
    ],
    "affiliation_label": "University College Dublin, Georgia Institute of Technology +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-22-weekend-the-first-poll-on-switzerland-s-27-september-fed",
-   "sid": "st-6ed0c5d7050e",
-   "headline": "Neutrality initiative trails in first Swiss poll",
-   "summary": "The first poll on Switzerland's 27 September federal votes, published 20 August 2026, shows the SVP-backed Neutrality Initiative headed for defeat. In the GFS Bern survey for public broadcaster SRG SSR — conducted 3–16 August among 17,212 eligible voters — 54% would reject the initiative against 42% in favour, while the parallel Food Initiative (lifting Swiss food self-sufficiency toward 70%) is effectively tied at 49–47. First polls are trend indicators, not verdicts, but the neutrality text matters directly to the reader here: it would bar Switzerland from joining sanctions against warring states, precisely the lever that constrains how Bern can align with EU measures on Russia or Iran.",
-   "why": "",
-   "url": "https://www.srf.ch/news/schweiz/1-srg-umfrage-auf-einen-blick-neutralitaetsinitiative-im-rueckstand-ernaehrungsinitiative-offen",
-   "source_domain": "srf.ch",
-   "date": "2026-08-22",
-   "date_label": "Aug 22",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "switzerland",
-    "politics"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/22/weekend/",
    "fresh": false
   },
   {
@@ -1425,94 +1517,6 @@
     "Princeton"
    ],
    "affiliation_label": "University of Copenhagen, DTU +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-19-science-an-in-vivo-crispr-screen-reads-immune-cells-insi",
-   "sid": "st-c398db606c41",
-   "headline": "In-vivo CRISPR screen reads T cells inside tumours",
-   "summary": "Finding genetic tweaks that help immune cells attack solid tumours is a central goal of cell therapy, but the genes that matter inside a living tumour often stay hidden in lab-dish (in-vitro) screens. The UCSF/Gladstone team built a mouse model that efficiently recovers human T cells from solid tumours, making genome-wide CRISPR screens — systematically switching off each gene to see which alter T-cell behaviour — feasible with only a handful of animals. The tumour-infiltrating cells showed the classic signs of \"exhaustion,\" the dysfunctional state that blunts immunotherapy, giving the screen a realistic setting to map its drivers.",
-   "why": "A screen that mirrors the hostile tumour environment can surface engineering targets that dish experiments miss — grist for the next generation of CAR-T and tumour-infiltrating-lymphocyte therapies.",
-   "url": "https://www.nature.com/articles/s41586-026-10906-9",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science",
-    "health"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "UCSF",
-    "Gladstone Institutes"
-   ],
-   "affiliation_label": "UCSF, Gladstone Institutes",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-19-science-mars-s-moon-deimos-was-shaped-by-one-glancing-bl",
-   "sid": "st-705a3ea31b01",
-   "headline": "Deimos shaped by one glancing impact",
-   "summary": "Deimos, the smaller, 12-km Martian moon, is oddly smooth and coated in fine regolith (loose surface dust), unlike its heavily cratered sibling Phobos, and its shape is dominated by one large south-polar depression. Simulations by the Bern-led team show a single oblique impact from a roughly 320-metre projectile can quantitatively reproduce that depression, the global dust blanket, and finer features such as bright streaks and infilled craters — a \"subcatastrophic\" hit that remodelled the moon without breaking it apart.",
-   "why": "Tying Deimos's odd surface to a single impact sharpens the science targets for JAXA's planned Martian Moons eXploration (MMX) mission to the two moons. The lead group is Swiss.",
-   "url": "https://www.nature.com/articles/s41550-026-02956-w",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science",
-    "switzerland"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "University of Bern",
-    "Vrije Universiteit Brussel",
-    "Royal Observatory of Belgium"
-   ],
-   "affiliation_label": "University of Bern, Vrije Universiteit Brussel +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-19-science-the-milky-way-ate-a-galaxy-even-earlier-than-we",
-   "sid": "st-86e729dc2452",
-   "headline": "Milky Way's oldest known merger revealed",
-   "summary": "The Milky Way grew by devouring smaller galaxies, and the largest early merger securely known — Gaia-Sausage-Enceladus (a dwarf galaxy that fell in) — dates to about 10 billion years ago. Using globular clusters as tracers and a new method to date them, the INAF Bologna-led team found the clusters split into three distinct age–metallicity sequences: one native to the proto-Milky Way, one from Gaia-Sausage-Enceladus, and one pointing to an earlier, previously unrecognised major accretion event some 1.8 billion years before it.",
-   "why": "Each identified merger is a chapter in the Galaxy's origin story; finding an even older one pushes back the clock on when the Milky Way began assembling in earnest.",
-   "url": "https://www.nature.com/articles/s41550-026-02931-5",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "INAF",
-    "University of Bologna",
-    "University of Groningen"
-   ],
-   "affiliation_label": "INAF, University of Bologna +1",
    "fresh": false
   },
   {
@@ -2134,6 +2138,34 @@
    "daybreak": true
   },
   {
+   "id": "2026-08-26-science-the-fda-approves-the-first-ras-targeted-drug-for",
+   "sid": "st-0ffd3a98b7f8",
+   "headline": "First RAS drug approved for pancreatic cancer",
+   "summary": "On 26 August the US Food and Drug Administration approved daraxonrasib (brand name Rasonque), the first drug to target RAS — the mutated gene that drives roughly 90% of pancreatic tumours — for adults with previously treated metastatic pancreatic ductal adenocarcinoma (PDAC, the most common and lethal form). It is a \"RAS(ON) multi-selective\" inhibitor: rather than blocking a single mutant, it binds the active, switched-on state of several RAS variants at once. In the pivotal Phase 3 RASolute 302 trial (NCT06625320, 500 patients), median overall survival was 13.2 months on the drug versus 6.7 months on standard chemotherapy — close to a doubling. The FDA granted Breakthrough Therapy and Orphan Drug designations and cleared the drug 6.5 months ahead of its review deadline; the most common side effects were rash, diarrhoea, mouth inflammation and nausea.",
+   "why": "RAS was called \"undruggable\" for four decades, and pancreatic cancer is among the deadliest common cancers, so the first RAS drug to reach it is a genuine milestone — even as absolute median survival stays around 13 months. European relevance: Revolution Medicines says the European Medicines Agency is running an expedited assessment, so a filing here may follow.",
+   "url": "https://www.fda.gov/news-events/press-announcements/fda-approves-first-class-targeted-therapy-metastatic-pancreatic-cancer",
+   "source_domain": "fda.gov",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "health",
+    "science"
+   ],
+   "topic_primary": "health",
+   "topic_label": "Health",
+   "topic_color": "#a44a72",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/26/science/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Wed 26 Aug",
+   "daybreak": false
+  },
+  {
    "id": "2026-08-26-news-a-new-eu-packaging-regulation-in-force-since-12",
    "sid": "st-2a7fec8db33b",
    "headline": "EU packaging rules squeeze Swiss exporters",
@@ -2246,6 +2278,130 @@
    "daybreak": false
   },
   {
+   "id": "2026-08-26-science-sunlight-turns-seawater-and-air-into-ammonia",
+   "sid": "st-0fe28f952d34",
+   "headline": "Sunlight makes ammonia from seawater and air",
+   "summary": "Making ammonia (NH₃, the basis of nitrogen fertiliser) normally means the Haber–Bosch process — high heat, high pressure, and a large slice of the world's industrial energy. A Bordeaux team instead drives the reaction with light. Cheap iron(II) salts, hit with ultraviolet light, release solvated electrons (free electrons dissolved in the liquid) that reduce a molybdenum catalyst, which grabs N₂ from the air and turns it into ammonia; the spent iron(III) then absorbs more UV, oxidises water and regenerates the iron(II) — closing a self-sustaining loop. They report a 5.0% quantum yield (the fraction of absorbed photons doing useful chemistry) at room temperature and pressure, rising to 10.8% under higher N₂ pressure, and — the notable part — it still runs in unpurified seawater and in ambient air. The whole cycle is genuinely uphill energetically (+329 kJ/mol), light-driven like natural photosynthesis.",
+   "why": "A proof of concept that fertiliser chemistry might one day be powered by sunlight and seawater instead of fossil-fired furnaces — though the modest, UV-limited yields are a long way from a practical process.",
+   "url": "https://www.nature.com/articles/s41557-026-02218-2",
+   "source_domain": "nature.com",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "affiliations": [
+    "Univ. Bordeaux",
+    "CNRS"
+   ],
+   "affiliation_label": "Univ. Bordeaux, CNRS",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Wed 26 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-26-science-physicists-film-a-water-molecule-splitting-into",
+   "sid": "st-eb0a928b1626",
+   "headline": "Physicists film water splitting into hydrogen",
+   "summary": "When a water molecule is ionised (an electron knocked out), its two hydrogen atoms can pair up and leave together as molecular hydrogen (H₂) — one of the simplest chemical reactions there is, yet no one had watched the electrons and nuclei move together as it happens. Using correlated electron–ion imaging with few-femtosecond (10⁻¹⁵ s) laser pulses on heavy water (D₂O), backed by simulations, the team reconstructed the full pathway. They find the reaction is indirect, running through three channels with formation times around 34 and 72 femtoseconds, and — the striking result — the molecule must first spontaneously break its own symmetry: only a random, lopsided wobble lets it hop between electronic states at a \"conical intersection\" (a point where two energy surfaces touch and a molecule can switch states) and fuse the two hydrogens before the oxygen–hydrogen bond finishes breaking.",
+   "why": "A frame-by-frame look at the elementary step behind both radiation damage in water and hydrogen production — showing that even the simplest reactions can hinge on fleeting, spontaneous asymmetry.",
+   "url": "https://arxiv.org/abs/2608.23292",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Wed 26 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-26-science-a-recombinant-shingles-vaccine-is-linked-to-fewe",
+   "sid": "st-beef2803af35",
+   "headline": "Shingles vaccine tied to fewer heart events",
+   "summary": "When the US abruptly switched from the older live shingles vaccine to the newer recombinant one (marketed as Shingrix), it created a natural experiment: people vaccinated just before and just after the switch were otherwise similar, which sidesteps the \"healthy-vaccinee\" bias — healthier people tend to get vaccinated, muddying earlier studies — that has dogged this question. Comparing cardiovascular outcomes in adults aged 60 and over, the Oxford–Birmingham team found the recombinant vaccine was associated with a 9% lower cardiovascular burden over seven years (a \"restricted-mean-time-lost\" ratio of 0.91, 95% CI 0.88–0.95), with significant reductions in ischaemic heart disease and heart failure in both sexes. The authors are careful: this is observational, the effect is modest and fades over time, and they explicitly call for randomised trials to test whether it is truly causal.",
+   "why": "Shingles vaccination is already recommended for older adults; a real cardiovascular benefit would strengthen that case — but this is an association, not proof, and shouldn't be oversold.",
+   "url": "https://www.nature.com/articles/s41591-026-04606-0",
+   "source_domain": "nature.com",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "health"
+   ],
+   "topic_primary": "health",
+   "topic_label": "Health",
+   "topic_color": "#a44a72",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "affiliations": [
+    "University of Oxford",
+    "University of Birmingham"
+   ],
+   "affiliation_label": "University of Oxford, University of Birmingham",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Wed 26 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-26-science-interstellar-comet-2i-borisov-looks-like-no-come",
+   "sid": "st-4613de4b4194",
+   "headline": "Interstellar comet Borisov unlike any on record",
+   "summary": "2I/Borisov, discovered in 2019, was the first clearly active comet known to arrive from another star system. A full reduction of Lowell Observatory imaging, spectroscopy and narrowband photometry taken over September–December 2019 finds that its carbon-chain molecules (C₂ and C₃) surged about fourfold relative to cyanide (CN) as it neared the Sun — a trend with distance from the Sun unmatched anywhere in Lowell's 50-year database of 230 comets. Water production peaked at 4.5×10²⁶ molecules per second, with unusually high nitrogen- and hydrogen-bearing ratios, and an almost symmetric gas cloud implying the entire sunlit surface was venting. Set against other groups' data, its chemistry looks unlike any comet born in our own Solar System.",
+   "why": "Comets are frozen leftovers of the systems that made them, so an interstellar one with genuinely alien chemistry is a direct sample of how planet-building differs around other stars. (This is a late, thorough analysis of 2019 data, not a new detection.)",
+   "url": "https://arxiv.org/abs/2608.23701",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "affiliations": [
+    "Lowell Observatory",
+    "University of Maryland",
+    "Villanova University"
+   ],
+   "affiliation_label": "Lowell Observatory, University of Maryland +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Wed 26 Aug",
+   "daybreak": false
+  },
+  {
    "id": "2026-08-26-news-the-un-confirmed-on-tuesday-25-august-that-at-le",
    "sid": "st-b9c9f22f742e",
    "headline": "Haiti attack toll rises to 47",
@@ -2296,6 +2452,114 @@
    "permalink": "/2026/08/26/news/",
    "fresh": true,
    "kind": "story",
+   "age_days": 0,
+   "day_label": "Wed 26 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-26-science-a-recipe-for-weaving-knotted-magnets-out-of-mono",
+   "sid": "st-15ad1723172b",
+   "headline": "A recipe to weave magnetic hopfions",
+   "summary": "The stakes: magnetic hopfions are three-dimensional, knotted textures in a material's spins — a step up in complexity from the flat, whirlpool-like skyrmions already studied as candidate memory bits — and they are predicted to have unusual dynamics, but there is no reliable way to create them on demand. A concrete picture: imagine the atomic spins as tiny compass needles; a hopfion twists their directions into a closed knot that cannot be smoothly undone. This simulation study proposes a clean route: start from a \"toron\" (a simpler 3D texture that hosts an emergent monopole–antimonopole pair — point-like sources of magnetic field), then run an electric current that annihilates the pair, converting the toron into a hopfion. The starting toron's length sets how many hopfions form, and the current's direction sets the knot's handedness. Honest scope: this is micromagnetic theory only, with no experiment yet — but it hands experimenters concrete control knobs to try.",
+   "why": "If it works on the bench, controllable knotted spin textures could become a new kind of stable, information-carrying object for spintronics.",
+   "url": "https://arxiv.org/abs/2608.24116",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "affiliations": [
+    "University of Tokyo",
+    "RIKEN",
+    "Hiroshima University"
+   ],
+   "affiliation_label": "University of Tokyo, RIKEN +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Wed 26 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-26-science-an-effective-handle-on-a-hard-conjecture-in-numb",
+   "sid": "st-f865a009afee",
+   "headline": "Effective bound for the Zilber-Pink conjecture",
+   "summary": "The stakes: the Zilber–Pink conjecture is one of the big open problems in arithmetic geometry. It predicts that \"unlikely intersections\" — rare coincidences where a curve meets special subgroups of a higher-dimensional space more often than plain dimension-counting allows — are finite and controllable, and it would unify and vastly extend classical finiteness theorems (of Manin–Mumford / André–Oort type) about where rational and torsion points can sit. A concrete anchor: picture a winding curve drawn through a grid of \"special\" points; the conjecture says it can pass through only finitely many of the improbable ones. This work gives an explicit, effective bound on the size of that \"Zilber–Pink locus\" for curves in abelian varieties after reduction modulo a large prime, plus a fresh proof that the locus is finite. Honest scope: it makes an existing finiteness result effective — you can actually compute the bound — for curves; a concrete advance, not a proof of the full conjecture.",
+   "why": "\"Effective\" results are the ones that can eventually become algorithms and explicit checks, so pinning down real bounds is how abstract finiteness theorems turn usable.",
+   "url": "https://arxiv.org/abs/2608.24474",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Wed 26 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-26-science-a-driver-agnostic-map-of-the-mutations-that-mark",
+   "sid": "st-029e88739403",
+   "headline": "791K genomes map ageing-blood mutations",
+   "summary": "Clonal haematopoiesis (CH) — the age-related expansion of blood stem-cell clones — raises the risk of leukaemia, heart disease and death, but most clones carry no known \"driver\" mutation, so studies that define CH by drivers miss much of it. This team instead counts \"passenger\" mutations: harmless hitchhiker mutations whose sheer number marks how far a clone has expanded, giving a continuous, more statistically powerful measure. Across 791,067 blood whole-genome sequences from the UK Biobank and the US All of Us program, a multi-ancestry genome-wide association study (GWAS — a scan linking DNA variants to a trait) found 81 genetic loci tied to passenger-mutation burden, 42 of them new, and flagged rare-variant regulators including MBD2, PRKACB and PUF60. Passenger burden itself tracked strongly with later blood cancers and mortality.",
+   "why": "A powerful, driver-free way to study why some people's blood ages faster than others — though as an unreviewed preprint of statistical associations, it needs replication and peer review before any clinical use.",
+   "url": "https://doi.org/10.64898/2026.08.21.26361040",
+   "source_domain": "doi.org",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "health",
+    "science"
+   ],
+   "topic_primary": "health",
+   "topic_label": "Health",
+   "topic_color": "#a44a72",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/08/26/science/",
+   "affiliations": [
+    "Emory University"
+   ],
+   "affiliation_label": "Emory University",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Wed 26 Aug",
+   "daybreak": false
+  },
+  {
+   "stream": "science",
+   "date": "2026-08-26",
+   "date_label": "Aug 26",
+   "kicker": "Science · Why it matters · Aug 26",
+   "heading": "Why it matters",
+   "title": "Two halves of artificial photosynthesis, in one week",
+   "paras": [
+    "The Bordeaux ammonia work uses light to <em>build</em> a fuel-relevant molecule while splitting water; the femtosecond experiment watches the reverse — a water molecule coming <em>apart</em> into hydrogen. Together they underline how much of the energy transition is really a chemistry problem: getting light to make and break small molecules cleanly and controllably.",
+    "<strong>Where planetary water comes from.</strong> Two independent astronomy results circle the same question of volatile delivery — PDS 70's \"exocomets\" appear to be watering a disc that is still forming planets, while 2I/Borisov lets us sample the volatile chemistry of a world assembled around another star entirely."
+   ],
+   "kind": "editorial",
    "age_days": 0,
    "day_label": "Wed 26 Aug",
    "daybreak": false
@@ -2568,34 +2832,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-25-ai-ml-alibaba-s-wan3-0-pushes-generated-video-to-30-se",
-   "sid": "st-f52b4befa36a",
-   "headline": "Alibaba Wan3.0 makes 30-second AI video",
-   "summary": "Alibaba's Wan3.0 pushes generated video to 30 seconds and takes documents as input. Alibaba opened a beta of Wan3.0, its latest video-generation model, which produces clips up to 30 seconds — double the length of Wan2.5 — and accepts text, images, PDFs, web pages, and PowerPoint files as prompts (up to ten images, five videos, and five audio clips in one request). It processes text, image, video, and audio jointly, recommends a length for a given prompt, and includes a tool to extend existing clips. Alibaba says it reduces the \"visual drift\" (faces and interfaces warping over a shot) that plagues long AI video by holding reference characters, props, and spatial layout more consistent. It is available via wan.video, Alibaba Cloud Model Studio, and API, in a discounted Standard tier and a faster Prime tier. This is a hosted commercial beta — not an open-weights drop — so treat the consistency claims as vendor framing until independent tests land.",
-   "why": "",
-   "url": "https://the-decoder.com/alibabas-wan3-0-generates-ai-videos-up-to-30-seconds-long-from-text-images-and-documents/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 1,
-   "day_label": "Tue 25 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-25-news-canada-is-due-to-unveil-retaliatory-tariffs-on-t",
    "sid": "st-78262d41bb1d",
    "headline": "Canada readies retaliation as US tariffs bite",
@@ -2614,34 +2850,6 @@
    "topic_primary": "economy",
    "topic_label": "Economy",
    "topic_color": "#9a7b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 1,
-   "day_label": "Tue 25 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-25-news-a-third-drone-and-suspected-explosives-were-foun",
-   "sid": "st-6984f08a0fe5",
-   "headline": "Third drone found at Leipzig airport",
-   "summary": "A third drone and suspected explosives were found near Leipzig/Halle Airport, German media reported on Tuesday 25 August, widening an investigation that security sources link to Russian intelligence. The find follows an explosives-laden drone discovered earlier this month beside a Ukrainian cargo aircraft used to move military supplies through the eastern German hub — the incident that opened the probe. German investigators are treating the case as possible sabotage; security sources cited by German outlets suspect Russian intelligence involvement, which Moscow denies.",
-   "why": "the airport is a logistics node for Western aid to Ukraine, and repeated drone incursions on NATO soil sharpen European fears that the war's sabotage front is reaching inside the alliance.",
-   "url": "https://www.srf.ch/news/international/flughafen-leipzig-halle-weitere-drohne-und-moeglicher-sprengstoff-bei-leipzig-gefunden",
-   "source_domain": "srf.ch",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "security",
-    "geopolitics"
-   ],
-   "topic_primary": "security",
-   "topic_label": "Security",
-   "topic_color": "#6a4b8a",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/25/news/",
@@ -2720,34 +2928,6 @@
    "topics": [
     "geopolitics",
     "economy"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/24/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 2,
-   "day_label": "Mon 24 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-24-news-kazakhstan-s-newly-created-pro-government-adilet",
-   "sid": "st-96c4a02f67fd",
-   "headline": "Tokayev party sweeps Kazakhstan election",
-   "summary": "Kazakhstan's newly created, pro-government Adilet party won more than 71% in Sunday's parliamentary election, official results announced Monday 24 August showed, cementing President Kassym-Jomart Tokayev's control. The electoral commission said four other blocs — all seen as broadly loyal to Tokayev — also entered the 145-seat single-chamber parliament (the Kurultai), on a reported turnout of 74%. Adilet, founded only this year and led by Tokayev's close aides, had already absorbed the previous ruling party, Amanat. The vote followed a new constitution that merged parliament's two chambers into one; last month the Supreme Court ruled the charter lets Tokayev, 73, stand for a fresh seven-year term, though he told reporters it was too early to say whether he would. He said he would name a vice-president — a newly created post — within seven to ten days.",
-   "why": "with no genuine opposition on the ballot, the result registers a leadership consolidation rather than a contest, and the reform's real effect is to extend Tokayev's runway.",
-   "url": "https://www.aljazeera.com/news/2026/8/24/kazakhstans-newly-formed-pro-government-party-wins-parliamentary-election",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-24",
-   "date_label": "Aug 24",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
@@ -2986,34 +3166,6 @@
    "topic_primary": "politics",
    "topic_label": "Politics",
    "topic_color": "#9a6a34",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/23/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sun 23 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-23-news-a-myanmar-military-airstrike-killed-at-least-14",
-   "sid": "st-cc18d5bd24b8",
-   "headline": "Myanmar airstrike kills 14 at monastery",
-   "summary": "A Myanmar military airstrike killed at least 14 people at a Buddhist monastery in the central Sagaing region on Friday 21 August, opposition and witness accounts say. The strike hit Swel Le Oh village in Myaung township, about 75 km west of Mandalay, at around 9am local time while more than 100 mostly elderly people were gathered for a week-long meditation retreat marking Buddhist Lent (Vassa, the monastic rains retreat); the site was reportedly struck twice. Those killed — 11 men and three women, aged roughly 50 to 70 — were civilians, and about 20 were wounded, according to the opposition National Unity Government and local witnesses. Sagaing is a stronghold of armed resistance to the military junta that seized power in 2021, and the army, which has not commented, has repeatedly used air power against populated areas there. This account rests on opposition and witness sources; the military has issued no statement.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/8/21/myanmar-military-bombing-kills-14-at-buddhist-monastery-opposition-reports",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-23",
-   "date_label": "Aug 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "world"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/23/news/",
@@ -3302,34 +3454,6 @@
     "Dalian University of Technology"
    ],
    "affiliation_label": "University College Dublin, Georgia Institute of Technology +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 22 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-22-weekend-the-first-poll-on-switzerland-s-27-september-fed",
-   "sid": "st-6ed0c5d7050e",
-   "headline": "Neutrality initiative trails in first Swiss poll",
-   "summary": "The first poll on Switzerland's 27 September federal votes, published 20 August 2026, shows the SVP-backed Neutrality Initiative headed for defeat. In the GFS Bern survey for public broadcaster SRG SSR — conducted 3–16 August among 17,212 eligible voters — 54% would reject the initiative against 42% in favour, while the parallel Food Initiative (lifting Swiss food self-sufficiency toward 70%) is effectively tied at 49–47. First polls are trend indicators, not verdicts, but the neutrality text matters directly to the reader here: it would bar Switzerland from joining sanctions against warring states, precisely the lever that constrains how Bern can align with EU measures on Russia or Iran.",
-   "why": "",
-   "url": "https://www.srf.ch/news/schweiz/1-srg-umfrage-auf-einen-blick-neutralitaetsinitiative-im-rueckstand-ernaehrungsinitiative-offen",
-   "source_domain": "srf.ch",
-   "date": "2026-08-22",
-   "date_label": "Aug 22",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "switzerland",
-    "politics"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/22/weekend/",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
@@ -3664,122 +3788,6 @@
    "affiliation_label": "University of Copenhagen, DTU +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 3,
-   "day_label": "Wed 19 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-19-science-an-in-vivo-crispr-screen-reads-immune-cells-insi",
-   "sid": "st-c398db606c41",
-   "headline": "In-vivo CRISPR screen reads T cells inside tumours",
-   "summary": "Finding genetic tweaks that help immune cells attack solid tumours is a central goal of cell therapy, but the genes that matter inside a living tumour often stay hidden in lab-dish (in-vitro) screens. The UCSF/Gladstone team built a mouse model that efficiently recovers human T cells from solid tumours, making genome-wide CRISPR screens — systematically switching off each gene to see which alter T-cell behaviour — feasible with only a handful of animals. The tumour-infiltrating cells showed the classic signs of \"exhaustion,\" the dysfunctional state that blunts immunotherapy, giving the screen a realistic setting to map its drivers.",
-   "why": "A screen that mirrors the hostile tumour environment can surface engineering targets that dish experiments miss — grist for the next generation of CAR-T and tumour-infiltrating-lymphocyte therapies.",
-   "url": "https://www.nature.com/articles/s41586-026-10906-9",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science",
-    "health"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "UCSF",
-    "Gladstone Institutes"
-   ],
-   "affiliation_label": "UCSF, Gladstone Institutes",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Wed 19 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-19-science-mars-s-moon-deimos-was-shaped-by-one-glancing-bl",
-   "sid": "st-705a3ea31b01",
-   "headline": "Deimos shaped by one glancing impact",
-   "summary": "Deimos, the smaller, 12-km Martian moon, is oddly smooth and coated in fine regolith (loose surface dust), unlike its heavily cratered sibling Phobos, and its shape is dominated by one large south-polar depression. Simulations by the Bern-led team show a single oblique impact from a roughly 320-metre projectile can quantitatively reproduce that depression, the global dust blanket, and finer features such as bright streaks and infilled craters — a \"subcatastrophic\" hit that remodelled the moon without breaking it apart.",
-   "why": "Tying Deimos's odd surface to a single impact sharpens the science targets for JAXA's planned Martian Moons eXploration (MMX) mission to the two moons. The lead group is Swiss.",
-   "url": "https://www.nature.com/articles/s41550-026-02956-w",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science",
-    "switzerland"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "University of Bern",
-    "Vrije Universiteit Brussel",
-    "Royal Observatory of Belgium"
-   ],
-   "affiliation_label": "University of Bern, Vrije Universiteit Brussel +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Wed 19 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-19-science-the-milky-way-ate-a-galaxy-even-earlier-than-we",
-   "sid": "st-86e729dc2452",
-   "headline": "Milky Way's oldest known merger revealed",
-   "summary": "The Milky Way grew by devouring smaller galaxies, and the largest early merger securely known — Gaia-Sausage-Enceladus (a dwarf galaxy that fell in) — dates to about 10 billion years ago. Using globular clusters as tracers and a new method to date them, the INAF Bologna-led team found the clusters split into three distinct age–metallicity sequences: one native to the proto-Milky Way, one from Gaia-Sausage-Enceladus, and one pointing to an earlier, previously unrecognised major accretion event some 1.8 billion years before it.",
-   "why": "Each identified merger is a chapter in the Galaxy's origin story; finding an even older one pushes back the clock on when the Milky Way began assembling in earnest.",
-   "url": "https://www.nature.com/articles/s41550-026-02931-5",
-   "source_domain": "nature.com",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "stream": "science",
-   "stream_label": "Science",
-   "topics": [
-    "science"
-   ],
-   "topic_primary": "science",
-   "topic_label": "Science",
-   "topic_color": "#4c6b3c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/19/science/",
-   "affiliations": [
-    "INAF",
-    "University of Bologna",
-    "University of Groningen"
-   ],
-   "affiliation_label": "INAF, University of Bologna +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Wed 19 Aug",
-   "daybreak": false
-  },
-  {
-   "stream": "science",
-   "date": "2026-08-19",
-   "date_label": "Aug 19",
-   "kicker": "Science · Why it matters · Aug 19",
-   "heading": "Why it matters",
-   "title": "Weighing what we cannot see",
-   "paras": [
-    "Three of this week's astronomy results are, at heart, about accounting for unseen mass — a bottom-heavy stellar mix hiding extra mass in distant galaxies, a tidal stream weighing dark matter around another galaxy, and dated star clusters reconstructing a merger written into the Milky Way's halo. Different tools (spectra, streams, cluster ages), one theme: the visible light is only a proxy, and the interesting mass is usually the part you have to infer.",
-    "<strong>Editing the skeleton, not just the trim.</strong> Two independent chemistry papers this week rewrite a molecule's core carbon–nitrogen framework late in a synthesis rather than decorating a fixed scaffold. \"Skeletal editing\" is quietly maturing from a curiosity into a general tactic — the kind of method shift that, like the physicists' single-CuO₂-plane and single-antidot experiments, is really about controlling a system down to its last essential element."
-   ],
-   "kind": "editorial",
    "age_days": 3,
    "day_label": "Wed 19 Aug",
    "daybreak": false
