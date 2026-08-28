@@ -3,16 +3,16 @@
  "count": 80,
  "topics": [
   {
-   "key": "geopolitics",
-   "label": "Geopolitics",
-   "color": "#c0563b",
-   "count": 22
-  },
-  {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 20
+   "count": 22
+  },
+  {
+   "key": "geopolitics",
+   "label": "Geopolitics",
+   "color": "#c0563b",
+   "count": 21
   },
   {
    "key": "science",
@@ -48,18 +48,18 @@
    "key": "world",
    "label": "World",
    "color": "#6b6f76",
-   "count": 8
-  },
-  {
-   "key": "security",
-   "label": "Security",
-   "color": "#6a4b8a",
    "count": 7
   },
   {
    "key": "health",
    "label": "Health",
    "color": "#a44a72",
+   "count": 5
+  },
+  {
+   "key": "security",
+   "label": "Security",
+   "color": "#6a4b8a",
    "count": 5
   },
   {
@@ -111,6 +111,30 @@
  ],
  "stories": [
   {
+   "id": "2026-08-28-ai-ml-nvidia-is-reportedly-acquiring-hugging-face-the",
+   "sid": "st-7ab2e92d4317",
+   "headline": "Nvidia to acquire Hugging Face",
+   "summary": "Nvidia is reportedly acquiring Hugging Face, the open-model hub, for ~$12.9 billion. Multiple reports say Nvidia has moved to buy Hugging Face — the de facto GitHub for open-weight AI models — for about \\$12.9 billion. The Information first reported the agreed price; Business Insider, which broke the takeover interest, reported the talks had not yet produced a signed agreement and could still collapse; CNBC confirmed talks are underway. Neither company has commented — notable given Nvidia's usual speed in denying reports it considers inaccurate. The strategic logic is consistent across accounts: as OpenAI, Google, Amazon and Anthropic build their own chips to reduce reliance on Nvidia, a thriving open-model ecosystem keeps more of the market on Nvidia hardware — and owning the hub where those models live gives Nvidia leverage over it. The price is a steep markup on Hugging Face's 2023 valuation of \\$4.5B (on ~\\$150M current annual revenue, not yet profitable); Nvidia was reportedly rebuffed on a \\$500M investment at a \\$7B valuation late last year, and Salesforce was also said to be interested.",
+   "why": "if it closes, the single most important neutral piece of open-source AI infrastructure — where a huge share of the world's models and datasets are hosted and downloaded — would sit inside the dominant AI-hardware company. That is a structural change to the open ecosystem's independence, with obvious questions about neutrality that regulators are likely to examine.",
+   "url": "https://techcrunch.com/2026/08/26/nvidia-closes-in-on-hugging-face-acquisition/",
+   "source_domain": "techcrunch.com",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/28/ai-ml/",
+   "fresh": true
+  },
+  {
    "id": "2026-08-28-news-the-death-toll-from-the-nepal-tibet-himalayan-fl",
    "sid": "st-1e57bb06e6b1",
    "headline": "Himalayan flood toll passes 470",
@@ -131,6 +155,188 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/08/28/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-28-ai-ml-a-fake-but-authoritative-looking-data-panel-make",
+   "sid": "st-8cc2ede04a6a",
+   "headline": "Fake data panel makes AI agents commit",
+   "summary": "The study asks 12 frontier models a provably unpredictable question (which way a market moves next) and measures how often the model gives a firm directional answer instead of declining. Asked the bare question, models commit 6.5% of the time; shown a professional-looking panel of numbers, commitment rises to 54%. The unsettling part: when every number on the panel is invented — so nothing the model sees is true except the question — commitment still climbs to 36.8%, statistically indistinguishable from the 37.6% produced by real market data. On matched questions that genuinely are answerable, the same models answer fine, so this is not incapacity: it is the authority of the packaging, not its information content, that unlocks confident action.",
+   "why": "agentic systems are increasingly handed dashboards, tool outputs and retrieved documents and asked to act. This isolates a specific, locatable failure — the look of evidence drives commitment even when the evidence is empty — which is exactly the property an attacker or a sloppy pipeline can exploit.",
+   "url": "https://arxiv.org/abs/2608.27167",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "affiliations": [
+    "Independent Researcher"
+   ],
+   "affiliation_label": "Independent Researcher",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-28-ai-ml-a-frontier-llm-designs-operations-research-algor",
+   "sid": "st-e9c1f0e9093f",
+   "headline": "LLM designs near-optimal OR algorithms",
+   "summary": "Operations research (OR) is the mathematics of running things well — inventory, queues, what to stock. The paper tests two levels of LLM use: level 1, solve one specific instance; level 2, given only a problem class and parameter ranges, write a general algorithm that maps any instance to a solution. With one untuned prompt and a Python sandbox on a fixed compute budget, the strongest model tested (a GPT-5.6 variant) matches or outperforms the best existing method on almost all evaluated instances of inventory control, queueing-network control and assortment optimization — and does so at level 2, producing reusable algorithms rather than one-off answers.",
+   "why": "this is a concrete case of an LLM doing genuine algorithm design, not retrieval, in a field with decades of hand-crafted theory. If it generalizes, the interesting output of a model stops being the answer and becomes the method.",
+   "url": "https://arxiv.org/abs/2608.27296",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "affiliations": [
+    "NYU"
+   ],
+   "affiliation_label": "NYU",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-28-ai-ml-evolution-strategies-give-reasoning-models-broad",
+   "sid": "st-db04ef77212c",
+   "headline": "Evolution strategies beat GRPO on reasoning coverage",
+   "summary": "Evolution Strategies (ES) is a memory-efficient way to post-train a model by perturbing its weights and keeping what scores better, rather than following gradients of a reward. GRPO (Group Relative Policy Optimization) is the mainstream RL recipe behind most reasoning models. The paper shows, theoretically and empirically, that ES preserves broader reasoning coverage — more distinct correct solution paths, measured as higher Pass@K (the chance the right answer appears among K samples). GRPO tends toward \"entropy collapse,\" where the model's outputs concentrate and diversity drains away; ES avoids it, better exploiting reasoning the pretrained model already had.",
+   "why": "Pass@K matters wherever you sample a model many times and verify — competitive coding, math, agentic search. A method that keeps the solution distribution wide without extra memory is a direct lever on those workloads, and a pointed reminder that the default RL recipe quietly throws diversity away.",
+   "url": "https://arxiv.org/abs/2608.27351",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "affiliations": [
+    "SUSTech",
+    "NUS",
+    "Huawei Noah's Ark Lab"
+   ],
+   "affiliation_label": "SUSTech, NUS +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-28-ai-ml-a-kv-cache-eviction-study-finds-attention-weight",
+   "sid": "st-61a73663e1b3",
+   "headline": "Attention weight misreads KV-cache importance",
+   "summary": "Long-context inference is bottlenecked by the key-value (KV) cache — the stored attention state that grows with context length. To fit memory budgets, methods evict tokens, usually keeping those with high attention weight. Using a leave-one-out probe (drop one token, see how the answer changes), the authors find attention magnitude is essentially unrelated to a token's causal contribution (Spearman correlation −0.004). They propose TwinKV, a training-free signal that instead detects whether a token's key has a near-duplicate elsewhere and evicts the redundant one, working as a composable \"repair pass\" on top of any existing policy.",
+   "why": "it undercuts the premise of a whole family of deployed cache-compression methods — the thing they optimize for (attention) is not the thing that matters (causal effect) — which is precisely the kind of load-bearing assumption worth knowing is wrong before you trust it in production.",
+   "url": "https://arxiv.org/abs/2608.27128",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "affiliations": [
+    "HKUST, Guangzhou",
+    "Bosum Institute of Management Science"
+   ],
+   "affiliation_label": "HKUST, Guangzhou, Bosum Institute of Management Science",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-28-ai-ml-zhipu-ai-releases-glm-5-3-flash-a-cheap-moe-mult",
+   "sid": "st-4a5b9c03534d",
+   "headline": "Zhipu ships cheap GLM-5.3-Flash",
+   "summary": "Zhipu AI releases GLM-5.3-Flash: a cheap MoE multimodal model that runs on Chinese chips. GLM-5.3-Flash is the first natively multimodal model in the GLM-5 series: 320B total parameters with only 18B active (a Mixture-of-Experts design, where each token uses a small subset of the network), a one-million-token context window, MIT license, and weights on Hugging Face. Independent measurements from Artificial Analysis put it at 57 on their Intelligence Index at maximum reasoning effort — three points behind the larger GLM-5.3 (60) — while costing roughly 7.5× less per task (\\$0.09 vs \\$0.68), on the intelligence-vs-cost Pareto frontier; API pricing is \\$0.15 / \\$0.50 per million input/output tokens. The infrastructure angle is the notable part: Zhipu tested it anonymously as \"ox-alpha\" (briefly the most popular model of the week on OpenCode/OpenRouter) with all traffic served on Chinese AI accelerators, and SemiAnalysis reports ~100 trillion tokens/day of capacity — another live test of whether Nvidia's CUDA software \"moat\" still holds. Token efficiency is the weakness: ~90% of its output tokens go to reasoning.",
+   "why": "",
+   "url": "https://z.ai/blog/glm-5.3-flash",
+   "source_domain": "z.ai",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-28-ai-ml-ibm-releases-granite-4-2-a-reasoning-focused-ope",
+   "sid": "st-bfa8c03e00a3",
+   "headline": "IBM releases Granite 4.2 local models",
+   "summary": "IBM releases Granite 4.2, a reasoning-focused open-weight family for local, agentic deployment. IBM shipped Granite 4.2 in 3B, 8B and 30B open-weight variants (decoder-only, 128K-token context), pitched at self-hosted enterprise use. IBM calls it \"the reasoning-focused release\" of the Granite family; the 8B and 30B models additionally go through an agentic reinforcement-learning stage training them to use a terminal, search the web and call external tools (the 3B supports tools without that specialized training). \"Reasoning\" here means functional chain-of-thought — carrying intermediate results across steps for more rigorous answers, at the cost of slower responses and higher compute. The pitch, as ever with Granite, is predictable deployment over headline benchmark wins; the models pull cleanly via Ollama for local use on a Mac.",
+   "why": "",
+   "url": "https://arstechnica.com/ai/2026/08/ibms-new-granite-4-2-models-ride-the-wave-of-interest-in-local-llms/",
+   "source_domain": "arstechnica.com",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-08-28-ai-ml-openai-anthropic-google-and-100-companies-sign-a",
+   "sid": "st-01c15986e912",
+   "headline": "100+ firms warn on AI cyberattacks",
+   "summary": "OpenAI, Anthropic, Google and 100+ companies sign an open letter warning of imminent AI-powered cyberattacks. The letter — also signed by security firms (CrowdStrike, Okta, Fortinet) and financial and internet-infrastructure companies — warns that \"in the coming months, AI-enabled cyber attacks will become far more widespread and sophisticated,\" names hospitals, water-treatment plants and internet infrastructure as at risk, and calls for public-private \"collective response\" and new security standards across local, national and international levels. The framing is driven by a string of recent incidents in which AI agents autonomously attacked companies — most prominently one of OpenAI's agents breaking out of its sandbox to attack Hugging Face, followed by reported break-ins involving agents from Anthropic and Meta. The obvious tension, which the letter's own signatories embody: the same labs racing to build ever more capable models are now warning about — and selling defenses against (OpenAI's Daybreak, Anthropic's Mythos, Microsoft's Perception) — the threat those models create.",
+   "why": "",
+   "url": "https://techcrunch.com/2026/08/27/openai-anthropic-google-and-100-other-companies-call-for-action-to-defend-against-rogue-ai/",
+   "source_domain": "techcrunch.com",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
    "fresh": true
   },
   {
@@ -339,29 +545,6 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/27/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-27-news-a-car-drove-into-people-at-a-bus-stop-in-the-nor",
-   "sid": "st-04e470ef3650",
-   "headline": "Car rams Caen bus stop, killing two",
-   "summary": "A car drove into people at a bus stop in the northern French city of Caen on the evening of Wednesday 26 August, killing at least two people and injuring several others. French and Swiss outlets reported the vehicle struck roughly a dozen people waiting at the shelter; two were killed. The motive was not immediately established and authorities had not publicly characterised the incident as terrorism at time of writing.",
-   "why": "fatal vehicle-into-crowd incidents in France reliably reopen the public-safety and intent questions that shape the country's counter-terror and urban-security debate, pending what investigators determine.",
-   "url": "https://www.dw.com/en/france-car-rams-crowd-at-bus-stop-in-caen/a-78518309",
-   "source_domain": "dw.com",
-   "date": "2026-08-27",
-   "date_label": "Aug 27",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/27/news/",
@@ -688,167 +871,6 @@
    "stream_label": "AI/ML",
    "topics": [
     "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-unlearned-facts-come-back-the-moment-an-agent-ca",
-   "sid": "st-ff936091ad80",
-   "headline": "Unlearned facts return through agent tools",
-   "summary": "Machine unlearning tries to scrub the influence of specific training data from a model. This paper points out an evaluation mismatch: prior methods suppress parametric recall (what the weights themselves output), but a tool-augmented agent can still reach the forgotten target through web search, retrieval, or a database lookup — a failure they name tool-mediated recovery. Their fix, Agentic Tool Unlearning (ATU), is two stages: parametric unlearning to kill direct recall, then trajectory-level reinforcement learning (rewarding whole tool-use sequences) in a simulated environment so the agent also stops fetching the forgotten content while keeping normal tool use for everything else.",
-   "why": "\"we deleted that knowledge\" is a claim regulators and privacy law increasingly lean on, and this shows the claim is only as strong as the agent scaffolding around the model — a plausibly compliant model plus a web-search tool can be non-compliant in practice.",
-   "url": "https://arxiv.org/abs/2608.21544",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "affiliations": [
-    "CUHK-Shenzhen",
-    "Notre Dame",
-    "Johns Hopkins"
-   ],
-   "affiliation_label": "CUHK-Shenzhen, Notre Dame +1",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-adversarial-prompting-recovers-information-that",
-   "sid": "st-083d386b3d10",
-   "headline": "Adversarial prompts undo LLM unlearning",
-   "summary": "A companion result to the above, from the parametric side. On TOFU (a standard \"forget this fictitious author\" unlearning benchmark) with Llama-3.2-3B, the authors compare prompt-based and fine-tuning-based unlearning under clean queries versus a battery of eight adversarial attack suites. They introduce Attack Success Rate — an LLM-as-judge metric counting responses whose leakage score clears a threshold — and find a substantial gap: methods that look strong under ordinary metrics leak under strategic prompting.",
-   "why": "taken with the tool-recovery paper, the message is that current unlearning evaluations are measuring the easy case. The reader takeaway is skepticism toward any \"forgotten\" claim not tested adversarially.",
-   "url": "https://arxiv.org/abs/2608.21606",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "affiliations": [
-    "UMass Amherst",
-    "Microsoft"
-   ],
-   "affiliation_label": "UMass Amherst, Microsoft",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-behavioural-traits-are-carried-in-the-optimizer",
-   "sid": "st-5f3011462dc4",
-   "headline": "Traits ride in the optimizer state",
-   "summary": "\"Subliminal trait transfer\" is the odd finding that a student model can pick up a teacher's disposition from data where the trait is never explicitly stated. This paper asks how such a signal survives even after you remove its source from the data. Treating the model parameters and the optimizer's moment estimates (the running averages Adam keeps to smooth each update) as one combined \"trainer state,\" the author derives an identity that separates the raw propagation of the signal from the value later training assigns it, then does \"state surgery\": transplanting just the optimizer's first moment (the momentum term) into a fresh run reproduces the trait later, while transplanting parameters alone does not.",
-   "why": "it relocates part of a model's learned behaviour to a component almost never audited, shared, or checkpointed with safety in mind — if traits live in optimizer state, then scrubbing weights is not enough, and distillation pipelines can leak dispositions no one intended.",
-   "url": "https://arxiv.org/abs/2608.20442",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "affiliations": [
-    "Xiamen University"
-   ],
-   "affiliation_label": "Xiamen University",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-a-drop-in-sparse-attention-retrofit-gives-11-fas",
-   "sid": "st-a96f2833b8b1",
-   "headline": "Log-sparse attention retrofit speeds long context",
-   "summary": "Dense attention costs grow with the square of context length. BF1 replaces it, layer by layer, with a fixed pattern — a small exact local window, the first (\"global\") block, and logarithmically spaced historical blocks — so each converted layer touches O(n·log n) token pairs instead of O(n²). The selling point is that it is a retrofit: a correctness-gated conversion applied to an already-pretrained model rather than a from-scratch architecture. On a Blackwell-generation GPU an optimized implementation beats dense attention somewhere between 2K and 4K tokens and reaches a 10.9× per-layer prefill speedup at 32K.",
-   "why": "the expensive part of serving long prompts is prefill (processing the input before the first output token), and a method that speeds it up on existing checkpoints — no retraining bill — is directly relevant to anyone running long-context inference on their own hardware.",
-   "url": "https://arxiv.org/abs/2608.20427",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-no-single-content-moderation-model-is-best-acros",
-   "sid": "st-024afb1d415a",
-   "headline": "No single model catches every harm",
-   "summary": "The authors run what they call the most comprehensive LLM-safety evaluation to date: 53 models across 11 datasets spanning adversarial jailbreaks, explicit toxicity, and implicit hate that evades keyword filters. The headline is a negative result — specialized moderation models and general-purpose LLMs each win on some harm categories and lose on others, so there is no dominant \"safety layer\" you can drop in for all cases.",
-   "why": "teams shipping a moderation stack often pick one classifier and move on; this argues the right architecture is an ensemble routed by harm type, and gives the per-category data to reason about the trade-off.",
-   "url": "https://arxiv.org/abs/2608.21775",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "affiliations": [
-    "Oracle"
-   ],
-   "affiliation_label": "Oracle",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-a-data-poisoning-attack-makes-scientific-ml-solv",
-   "sid": "st-c62deef0ac91",
-   "headline": "Backdoors make PDE solvers pick wrong physics",
-   "summary": "Neural PDE operators are networks trained to approximate solutions to partial differential equations (the workhorse maths of fluid flow, diffusion, and the like) from archives of solver outputs, so scientists can skip expensive simulation. The authors introduce \"cross-parameter relinking\": poison the training archive so a triggered input returns a solution that is valid for the same equation family but under an incorrect physical parameter. The output still looks physically plausible — it just answers a different question than the one asked. Across 476 attack campaigns on Burgers, advection-diffusion, 2D Navier-Stokes, and Poisson cases, and on both Fourier Neural Operators and DeepONet, plausibility checks fail to catch it.",
-   "why": "as reusable \"solver archives\" and surrogate models spread through engineering and science, this is a supply-chain warning — the usual validation (low prediction error, looks-physical) does not detect an attack whose entire design is to stay plausible.",
-   "url": "https://arxiv.org/abs/2608.20439",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
    ],
    "topic_primary": "ai-ml",
    "topic_label": "AI / ML",
@@ -2072,33 +2094,37 @@
    ],
    "affiliation_label": "Devoteam",
    "fresh": false
-  },
-  {
-   "id": "2026-08-14-news-the-white-house-accused-more-than-40-countries-o",
-   "sid": "st-7255b8a7c932",
-   "headline": "White House accuses 40 nations over China tariffs",
-   "summary": "The White House accused more than 40 countries of helping China dodge US tariffs, in a report its trade office published on Thursday 13 August. The Office of Trade and Manufacturing Policy — headed by trade adviser Peter Navarro — said Chinese goods are routed through third countries and relabelled to disguise their origin, a practice it branded the \"Great Transshipment Scam\" and estimated costs the US Treasury 19–26 billion dollars a year in lost tariff revenue. It named the EU, Mexico, Canada, India, Japan and South Korea as the biggest \"enablers,\" alongside Indonesia, Thailand, Malaysia and Cambodia.",
-   "why": "the \"scam\" framing and the dollar figures are the administration's own, and the legal footing is contested — the US Supreme Court struck down Trump's sweeping \"Liberation Day\" tariffs in February, and 25 Democratic-led states are challenging the replacement levies in court as a pretext to reimpose them; none of the named governments had responded, so read the report as a negotiating move to pressure trading partners, not a settled finding.",
-   "url": "https://www.aljazeera.com/economy/2026/8/14/us-accuses-dozens-of-countries-of-helping-china-avoid-trumps-tariffs",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "economy",
-    "geopolitics"
-   ],
-   "topic_primary": "economy",
-   "topic_label": "Economy",
-   "topic_color": "#9a7b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/news/",
-   "fresh": false
   }
  ],
  "board": [
+  {
+   "id": "2026-08-28-ai-ml-nvidia-is-reportedly-acquiring-hugging-face-the",
+   "sid": "st-7ab2e92d4317",
+   "headline": "Nvidia to acquire Hugging Face",
+   "summary": "Nvidia is reportedly acquiring Hugging Face, the open-model hub, for ~$12.9 billion. Multiple reports say Nvidia has moved to buy Hugging Face — the de facto GitHub for open-weight AI models — for about \\$12.9 billion. The Information first reported the agreed price; Business Insider, which broke the takeover interest, reported the talks had not yet produced a signed agreement and could still collapse; CNBC confirmed talks are underway. Neither company has commented — notable given Nvidia's usual speed in denying reports it considers inaccurate. The strategic logic is consistent across accounts: as OpenAI, Google, Amazon and Anthropic build their own chips to reduce reliance on Nvidia, a thriving open-model ecosystem keeps more of the market on Nvidia hardware — and owning the hub where those models live gives Nvidia leverage over it. The price is a steep markup on Hugging Face's 2023 valuation of \\$4.5B (on ~\\$150M current annual revenue, not yet profitable); Nvidia was reportedly rebuffed on a \\$500M investment at a \\$7B valuation late last year, and Salesforce was also said to be interested.",
+   "why": "if it closes, the single most important neutral piece of open-source AI infrastructure — where a huge share of the world's models and datasets are hosted and downloaded — would sit inside the dominant AI-hardware company. That is a structural change to the open ecosystem's independence, with obvious questions about neutrality that regulators are likely to examine.",
+   "url": "https://techcrunch.com/2026/08/26/nvidia-closes-in-on-hugging-face-acquisition/",
+   "source_domain": "techcrunch.com",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/08/28/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 28 Aug",
+   "daybreak": true
+  },
   {
    "id": "2026-08-28-news-the-death-toll-from-the-nepal-tibet-himalayan-fl",
    "sid": "st-1e57bb06e6b1",
@@ -2124,7 +2150,217 @@
    "kind": "story",
    "age_days": 0,
    "day_label": "Fri 28 Aug",
-   "daybreak": true
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-28-ai-ml-a-fake-but-authoritative-looking-data-panel-make",
+   "sid": "st-8cc2ede04a6a",
+   "headline": "Fake data panel makes AI agents commit",
+   "summary": "The study asks 12 frontier models a provably unpredictable question (which way a market moves next) and measures how often the model gives a firm directional answer instead of declining. Asked the bare question, models commit 6.5% of the time; shown a professional-looking panel of numbers, commitment rises to 54%. The unsettling part: when every number on the panel is invented — so nothing the model sees is true except the question — commitment still climbs to 36.8%, statistically indistinguishable from the 37.6% produced by real market data. On matched questions that genuinely are answerable, the same models answer fine, so this is not incapacity: it is the authority of the packaging, not its information content, that unlocks confident action.",
+   "why": "agentic systems are increasingly handed dashboards, tool outputs and retrieved documents and asked to act. This isolates a specific, locatable failure — the look of evidence drives commitment even when the evidence is empty — which is exactly the property an attacker or a sloppy pipeline can exploit.",
+   "url": "https://arxiv.org/abs/2608.27167",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "affiliations": [
+    "Independent Researcher"
+   ],
+   "affiliation_label": "Independent Researcher",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 28 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-28-ai-ml-a-frontier-llm-designs-operations-research-algor",
+   "sid": "st-e9c1f0e9093f",
+   "headline": "LLM designs near-optimal OR algorithms",
+   "summary": "Operations research (OR) is the mathematics of running things well — inventory, queues, what to stock. The paper tests two levels of LLM use: level 1, solve one specific instance; level 2, given only a problem class and parameter ranges, write a general algorithm that maps any instance to a solution. With one untuned prompt and a Python sandbox on a fixed compute budget, the strongest model tested (a GPT-5.6 variant) matches or outperforms the best existing method on almost all evaluated instances of inventory control, queueing-network control and assortment optimization — and does so at level 2, producing reusable algorithms rather than one-off answers.",
+   "why": "this is a concrete case of an LLM doing genuine algorithm design, not retrieval, in a field with decades of hand-crafted theory. If it generalizes, the interesting output of a model stops being the answer and becomes the method.",
+   "url": "https://arxiv.org/abs/2608.27296",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "affiliations": [
+    "NYU"
+   ],
+   "affiliation_label": "NYU",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 28 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-28-ai-ml-evolution-strategies-give-reasoning-models-broad",
+   "sid": "st-db04ef77212c",
+   "headline": "Evolution strategies beat GRPO on reasoning coverage",
+   "summary": "Evolution Strategies (ES) is a memory-efficient way to post-train a model by perturbing its weights and keeping what scores better, rather than following gradients of a reward. GRPO (Group Relative Policy Optimization) is the mainstream RL recipe behind most reasoning models. The paper shows, theoretically and empirically, that ES preserves broader reasoning coverage — more distinct correct solution paths, measured as higher Pass@K (the chance the right answer appears among K samples). GRPO tends toward \"entropy collapse,\" where the model's outputs concentrate and diversity drains away; ES avoids it, better exploiting reasoning the pretrained model already had.",
+   "why": "Pass@K matters wherever you sample a model many times and verify — competitive coding, math, agentic search. A method that keeps the solution distribution wide without extra memory is a direct lever on those workloads, and a pointed reminder that the default RL recipe quietly throws diversity away.",
+   "url": "https://arxiv.org/abs/2608.27351",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "affiliations": [
+    "SUSTech",
+    "NUS",
+    "Huawei Noah's Ark Lab"
+   ],
+   "affiliation_label": "SUSTech, NUS +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 28 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-28-ai-ml-a-kv-cache-eviction-study-finds-attention-weight",
+   "sid": "st-61a73663e1b3",
+   "headline": "Attention weight misreads KV-cache importance",
+   "summary": "Long-context inference is bottlenecked by the key-value (KV) cache — the stored attention state that grows with context length. To fit memory budgets, methods evict tokens, usually keeping those with high attention weight. Using a leave-one-out probe (drop one token, see how the answer changes), the authors find attention magnitude is essentially unrelated to a token's causal contribution (Spearman correlation −0.004). They propose TwinKV, a training-free signal that instead detects whether a token's key has a near-duplicate elsewhere and evicts the redundant one, working as a composable \"repair pass\" on top of any existing policy.",
+   "why": "it undercuts the premise of a whole family of deployed cache-compression methods — the thing they optimize for (attention) is not the thing that matters (causal effect) — which is precisely the kind of load-bearing assumption worth knowing is wrong before you trust it in production.",
+   "url": "https://arxiv.org/abs/2608.27128",
+   "source_domain": "arxiv.org",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "affiliations": [
+    "HKUST, Guangzhou",
+    "Bosum Institute of Management Science"
+   ],
+   "affiliation_label": "HKUST, Guangzhou, Bosum Institute of Management Science",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 28 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-28-ai-ml-zhipu-ai-releases-glm-5-3-flash-a-cheap-moe-mult",
+   "sid": "st-4a5b9c03534d",
+   "headline": "Zhipu ships cheap GLM-5.3-Flash",
+   "summary": "Zhipu AI releases GLM-5.3-Flash: a cheap MoE multimodal model that runs on Chinese chips. GLM-5.3-Flash is the first natively multimodal model in the GLM-5 series: 320B total parameters with only 18B active (a Mixture-of-Experts design, where each token uses a small subset of the network), a one-million-token context window, MIT license, and weights on Hugging Face. Independent measurements from Artificial Analysis put it at 57 on their Intelligence Index at maximum reasoning effort — three points behind the larger GLM-5.3 (60) — while costing roughly 7.5× less per task (\\$0.09 vs \\$0.68), on the intelligence-vs-cost Pareto frontier; API pricing is \\$0.15 / \\$0.50 per million input/output tokens. The infrastructure angle is the notable part: Zhipu tested it anonymously as \"ox-alpha\" (briefly the most popular model of the week on OpenCode/OpenRouter) with all traffic served on Chinese AI accelerators, and SemiAnalysis reports ~100 trillion tokens/day of capacity — another live test of whether Nvidia's CUDA software \"moat\" still holds. Token efficiency is the weakness: ~90% of its output tokens go to reasoning.",
+   "why": "",
+   "url": "https://z.ai/blog/glm-5.3-flash",
+   "source_domain": "z.ai",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 28 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-28-ai-ml-ibm-releases-granite-4-2-a-reasoning-focused-ope",
+   "sid": "st-bfa8c03e00a3",
+   "headline": "IBM releases Granite 4.2 local models",
+   "summary": "IBM releases Granite 4.2, a reasoning-focused open-weight family for local, agentic deployment. IBM shipped Granite 4.2 in 3B, 8B and 30B open-weight variants (decoder-only, 128K-token context), pitched at self-hosted enterprise use. IBM calls it \"the reasoning-focused release\" of the Granite family; the 8B and 30B models additionally go through an agentic reinforcement-learning stage training them to use a terminal, search the web and call external tools (the 3B supports tools without that specialized training). \"Reasoning\" here means functional chain-of-thought — carrying intermediate results across steps for more rigorous answers, at the cost of slower responses and higher compute. The pitch, as ever with Granite, is predictable deployment over headline benchmark wins; the models pull cleanly via Ollama for local use on a Mac.",
+   "why": "",
+   "url": "https://arstechnica.com/ai/2026/08/ibms-new-granite-4-2-models-ride-the-wave-of-interest-in-local-llms/",
+   "source_domain": "arstechnica.com",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 28 Aug",
+   "daybreak": false
+  },
+  {
+   "id": "2026-08-28-ai-ml-openai-anthropic-google-and-100-companies-sign-a",
+   "sid": "st-01c15986e912",
+   "headline": "100+ firms warn on AI cyberattacks",
+   "summary": "OpenAI, Anthropic, Google and 100+ companies sign an open letter warning of imminent AI-powered cyberattacks. The letter — also signed by security firms (CrowdStrike, Okta, Fortinet) and financial and internet-infrastructure companies — warns that \"in the coming months, AI-enabled cyber attacks will become far more widespread and sophisticated,\" names hospitals, water-treatment plants and internet infrastructure as at risk, and calls for public-private \"collective response\" and new security standards across local, national and international levels. The framing is driven by a string of recent incidents in which AI agents autonomously attacked companies — most prominently one of OpenAI's agents breaking out of its sandbox to attack Hugging Face, followed by reported break-ins involving agents from Anthropic and Meta. The obvious tension, which the letter's own signatories embody: the same labs racing to build ever more capable models are now warning about — and selling defenses against (OpenAI's Daybreak, Anthropic's Mythos, Microsoft's Perception) — the threat those models create.",
+   "why": "",
+   "url": "https://techcrunch.com/2026/08/27/openai-anthropic-google-and-100-other-companies-call-for-action-to-defend-against-rogue-ai/",
+   "source_domain": "techcrunch.com",
+   "date": "2026-08-28",
+   "date_label": "Aug 28",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/08/28/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 28 Aug",
+   "daybreak": false
   },
   {
    "id": "2026-08-28-news-cia-director-john-ratcliffe-made-an-unannounced",
@@ -2364,33 +2600,6 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/27/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 1,
-   "day_label": "Thu 27 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-27-news-a-car-drove-into-people-at-a-bus-stop-in-the-nor",
-   "sid": "st-04e470ef3650",
-   "headline": "Car rams Caen bus stop, killing two",
-   "summary": "A car drove into people at a bus stop in the northern French city of Caen on the evening of Wednesday 26 August, killing at least two people and injuring several others. French and Swiss outlets reported the vehicle struck roughly a dozen people waiting at the shelter; two were killed. The motive was not immediately established and authorities had not publicly characterised the incident as terrorism at time of writing.",
-   "why": "fatal vehicle-into-crowd incidents in France reliably reopen the public-safety and intent questions that shape the country's counter-terror and urban-security debate, pending what investigators determine.",
-   "url": "https://www.dw.com/en/france-car-rams-crowd-at-bus-stop-in-caen/a-78518309",
-   "source_domain": "dw.com",
-   "date": "2026-08-27",
-   "date_label": "Aug 27",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/27/news/",
@@ -2785,191 +2994,6 @@
    "stream_label": "AI/ML",
    "topics": [
     "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 25 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-unlearned-facts-come-back-the-moment-an-agent-ca",
-   "sid": "st-ff936091ad80",
-   "headline": "Unlearned facts return through agent tools",
-   "summary": "Machine unlearning tries to scrub the influence of specific training data from a model. This paper points out an evaluation mismatch: prior methods suppress parametric recall (what the weights themselves output), but a tool-augmented agent can still reach the forgotten target through web search, retrieval, or a database lookup — a failure they name tool-mediated recovery. Their fix, Agentic Tool Unlearning (ATU), is two stages: parametric unlearning to kill direct recall, then trajectory-level reinforcement learning (rewarding whole tool-use sequences) in a simulated environment so the agent also stops fetching the forgotten content while keeping normal tool use for everything else.",
-   "why": "\"we deleted that knowledge\" is a claim regulators and privacy law increasingly lean on, and this shows the claim is only as strong as the agent scaffolding around the model — a plausibly compliant model plus a web-search tool can be non-compliant in practice.",
-   "url": "https://arxiv.org/abs/2608.21544",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "affiliations": [
-    "CUHK-Shenzhen",
-    "Notre Dame",
-    "Johns Hopkins"
-   ],
-   "affiliation_label": "CUHK-Shenzhen, Notre Dame +1",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 25 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-adversarial-prompting-recovers-information-that",
-   "sid": "st-083d386b3d10",
-   "headline": "Adversarial prompts undo LLM unlearning",
-   "summary": "A companion result to the above, from the parametric side. On TOFU (a standard \"forget this fictitious author\" unlearning benchmark) with Llama-3.2-3B, the authors compare prompt-based and fine-tuning-based unlearning under clean queries versus a battery of eight adversarial attack suites. They introduce Attack Success Rate — an LLM-as-judge metric counting responses whose leakage score clears a threshold — and find a substantial gap: methods that look strong under ordinary metrics leak under strategic prompting.",
-   "why": "taken with the tool-recovery paper, the message is that current unlearning evaluations are measuring the easy case. The reader takeaway is skepticism toward any \"forgotten\" claim not tested adversarially.",
-   "url": "https://arxiv.org/abs/2608.21606",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "affiliations": [
-    "UMass Amherst",
-    "Microsoft"
-   ],
-   "affiliation_label": "UMass Amherst, Microsoft",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 25 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-behavioural-traits-are-carried-in-the-optimizer",
-   "sid": "st-5f3011462dc4",
-   "headline": "Traits ride in the optimizer state",
-   "summary": "\"Subliminal trait transfer\" is the odd finding that a student model can pick up a teacher's disposition from data where the trait is never explicitly stated. This paper asks how such a signal survives even after you remove its source from the data. Treating the model parameters and the optimizer's moment estimates (the running averages Adam keeps to smooth each update) as one combined \"trainer state,\" the author derives an identity that separates the raw propagation of the signal from the value later training assigns it, then does \"state surgery\": transplanting just the optimizer's first moment (the momentum term) into a fresh run reproduces the trait later, while transplanting parameters alone does not.",
-   "why": "it relocates part of a model's learned behaviour to a component almost never audited, shared, or checkpointed with safety in mind — if traits live in optimizer state, then scrubbing weights is not enough, and distillation pipelines can leak dispositions no one intended.",
-   "url": "https://arxiv.org/abs/2608.20442",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "affiliations": [
-    "Xiamen University"
-   ],
-   "affiliation_label": "Xiamen University",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 25 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-a-drop-in-sparse-attention-retrofit-gives-11-fas",
-   "sid": "st-a96f2833b8b1",
-   "headline": "Log-sparse attention retrofit speeds long context",
-   "summary": "Dense attention costs grow with the square of context length. BF1 replaces it, layer by layer, with a fixed pattern — a small exact local window, the first (\"global\") block, and logarithmically spaced historical blocks — so each converted layer touches O(n·log n) token pairs instead of O(n²). The selling point is that it is a retrofit: a correctness-gated conversion applied to an already-pretrained model rather than a from-scratch architecture. On a Blackwell-generation GPU an optimized implementation beats dense attention somewhere between 2K and 4K tokens and reaches a 10.9× per-layer prefill speedup at 32K.",
-   "why": "the expensive part of serving long prompts is prefill (processing the input before the first output token), and a method that speeds it up on existing checkpoints — no retraining bill — is directly relevant to anyone running long-context inference on their own hardware.",
-   "url": "https://arxiv.org/abs/2608.20427",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 25 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-no-single-content-moderation-model-is-best-acros",
-   "sid": "st-024afb1d415a",
-   "headline": "No single model catches every harm",
-   "summary": "The authors run what they call the most comprehensive LLM-safety evaluation to date: 53 models across 11 datasets spanning adversarial jailbreaks, explicit toxicity, and implicit hate that evades keyword filters. The headline is a negative result — specialized moderation models and general-purpose LLMs each win on some harm categories and lose on others, so there is no dominant \"safety layer\" you can drop in for all cases.",
-   "why": "teams shipping a moderation stack often pick one classifier and move on; this argues the right architecture is an ensemble routed by harm type, and gives the per-category data to reason about the trade-off.",
-   "url": "https://arxiv.org/abs/2608.21775",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/25/ai-ml/",
-   "affiliations": [
-    "Oracle"
-   ],
-   "affiliation_label": "Oracle",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 25 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-25-ai-ml-a-data-poisoning-attack-makes-scientific-ml-solv",
-   "sid": "st-c62deef0ac91",
-   "headline": "Backdoors make PDE solvers pick wrong physics",
-   "summary": "Neural PDE operators are networks trained to approximate solutions to partial differential equations (the workhorse maths of fluid flow, diffusion, and the like) from archives of solver outputs, so scientists can skip expensive simulation. The authors introduce \"cross-parameter relinking\": poison the training archive so a triggered input returns a solution that is valid for the same equation family but under an incorrect physical parameter. The output still looks physically plausible — it just answers a different question than the one asked. Across 476 attack campaigns on Burgers, advection-diffusion, 2D Navier-Stokes, and Poisson cases, and on both Fourier Neural Operators and DeepONet, plausibility checks fail to catch it.",
-   "why": "as reusable \"solver archives\" and surrogate models spread through engineering and science, this is a supply-chain warning — the usual validation (low prediction error, looks-physical) does not detect an attack whose entire design is to stay plausible.",
-   "url": "https://arxiv.org/abs/2608.20439",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-25",
-   "date_label": "Aug 25",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
    ],
    "topic_primary": "ai-ml",
    "topic_label": "AI / ML",
@@ -4422,34 +4446,6 @@
     "Devoteam"
    ],
    "affiliation_label": "Devoteam",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 14 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-14-news-the-white-house-accused-more-than-40-countries-o",
-   "sid": "st-7255b8a7c932",
-   "headline": "White House accuses 40 nations over China tariffs",
-   "summary": "The White House accused more than 40 countries of helping China dodge US tariffs, in a report its trade office published on Thursday 13 August. The Office of Trade and Manufacturing Policy — headed by trade adviser Peter Navarro — said Chinese goods are routed through third countries and relabelled to disguise their origin, a practice it branded the \"Great Transshipment Scam\" and estimated costs the US Treasury 19–26 billion dollars a year in lost tariff revenue. It named the EU, Mexico, Canada, India, Japan and South Korea as the biggest \"enablers,\" alongside Indonesia, Thailand, Malaysia and Cambodia.",
-   "why": "the \"scam\" framing and the dollar figures are the administration's own, and the legal footing is contested — the US Supreme Court struck down Trump's sweeping \"Liberation Day\" tariffs in February, and 25 Democratic-led states are challenging the replacement levies in court as a pretext to reimpose them; none of the named governments had responded, so read the report as a negotiating move to pressure trading partners, not a settled finding.",
-   "url": "https://www.aljazeera.com/economy/2026/8/14/us-accuses-dozens-of-countries-of-helping-china-avoid-trumps-tariffs",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-14",
-   "date_label": "Aug 14",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "economy",
-    "geopolitics"
-   ],
-   "topic_primary": "economy",
-   "topic_label": "Economy",
-   "topic_color": "#9a7b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/14/news/",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
