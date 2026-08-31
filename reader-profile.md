@@ -60,3 +60,12 @@
   found more reliable sources"; corroborated by france24.com failing ~81% of fetch attempts this
   window, and by the same edition single-sourcing the France–Iran diplomat-expulsion item to it while
   Le Monde/AFP/Reuters carried the same news). See the source-weights `reduce:` proposal.
+- 2026-08-31: on fiscal and regulatory announcements, supply the countervailing context rather than
+  relaying the announcement's or the aggrieved party's framing flat — for a spending figure, say what
+  it restores versus an earlier cut and who it actually goes to; for a new rule, weigh how marginal
+  the burden really is before amplifying the grievance (2× 👎 on distinct 2026-08 news stories: news
+  2026-08-27 Federal Council 70M forest/farm heat package, "you should have made the connection with
+  the 17 million cut from a few weeks ago… nothing new for the climate, just money for farmers"; news
+  2026-08-26 EU packaging-regulation burden item, "non issue peddled by anti-oversight crowd").
+  Generalises the 2026-07-26 unreliable-narrator/add-the-missing-context line from US-administration
+  self-characterisations to domestic and EU fiscal/regulatory framing.

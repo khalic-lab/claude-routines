@@ -1,0 +1,45 @@
+date: 2026-08-31
+applied: false
+patches:
+  # One evidence-backed reach flip this run, from WRITER-side footer data (not an evaluator probe --
+  # the evaluator sandbox's egress is allowlist-walled at the proxy this window: every non-allowlisted
+  # host returned "CONNECT tunnel failed, response 403", only the allowlisted quantamagazine.org
+  # resolved, and linkcheck resolved 6/20 for the same reason. So Sunday re-probes carry no domain
+  # evidence and none are proposed from them.)
+  - domain: france24.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: >-
+      Recorded reach: direct is contradicted by writer-side data. This window france24.com had 0
+      successes on any path (health.json feeds: 4 fail / 0 ok_curl / 0 ok_proxy); the 08-27-news
+      footer logged it as {2 fail ERR:56, 2 fail HTTP 403} -- a 403 in the writer sandbox (which
+      holds the bearer), not the evaluator's walled egress. Last window it was 26 fail / 6 ok-via-proxy,
+      i.e. proxy carried it and direct did not. "direct" is the wrong reach; "proxy" matches two weeks
+      of writer telemetry. Writers confirm at next citation with the bearer. (Distinct from rm-2, the
+      editorial-quality demotion; this is purely the mechanical reach field.)
+
+  # CARRIED, still status: candidate in sources/registry.yml (verified lines 3080 esv.ch, 3092 uci.ch).
+  # Fill the sports primary-source gap. No fresh evaluator probe evidence (egress allowlist-walled);
+  # carried on record from the 2026-08-23 / -16 / -09 / -02 / 07-26 scouts.
+  - domain: esv.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED (5th run). Still status: candidate. Eidgenoessischer Schwingerverband, official Swiss wrestling federation; genuine primary for Schwingen / Swiss-personalization sports coverage. reach: proxy-needed."
+  - domain: uci.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED (5th run). Still status: candidate. Union Cycliste Internationale, official world cycling federation; primary for cycling coverage. reach: proxy-needed."
+
+  # New scout candidates appended to sources/candidates.jsonl this run (Science = worst-deficit stream:
+  # new_domains=5, top5_share=1.00, unique_domains=8). Both are genuine primary science publishers
+  # absent from the registry, relevant to this week's chemistry- and biomedicine-heavy science/weekend
+  # slate (sunlight->ammonia, water-splitting, RAS drug, shingles CV outcomes, clonal haematopoiesis).
+  # They need a probation cycle before promotion, so no from/to transition proposed yet. Both
+  # reach: proxy-needed (evaluator egress allowlist-walled -- writers vet at first citation).
+  # - chemrxiv.org  (Cambridge Open Engage chemistry preprint server; primary, non-aggregating)
+  # - cell.com      (Cell Press; genuine primary biomedical journal family)
+  #
+  # POSITIVE VERIFICATION: last run's two scout candidates (skao.int, aip.de) verifiably LANDED in
+  # sources/registry.yml (lines 3770, 3782); candidates.jsonl was cleared to 0 lines before this run's
+  # appends. The candidate -> registry scout path is working end-to-end.

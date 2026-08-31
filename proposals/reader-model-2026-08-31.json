@@ -1,0 +1,27 @@
+{
+ "date": "2026-08-31",
+ "proposals": [
+  {
+   "id": "rm-1",
+   "target": "routines/src/weekend.md",
+   "action": "Port the science stream's 'Dormant-source activation — do this BEFORE waiving discovery' block (science.md line 35) into weekend.md's sourcing section: before emitting 'Discovery: waived', probe at least two registered weekend-affinity domains that are dormant (last_cited=None / long stale) from the preflight plan, and name which were tried in the waiver reason; a new anchor resolving to a hub (hf.co, github.com, arxiv.org, nature.com) does not count as a new primary.",
+   "evidence": "CARRIED from 2026-08-23 / 2026-08-16 / 2026-08-09 rm-1, still unapplied (4th consecutive week). Verified this run: grep of routines/src/weekend.md finds no 'dormant'/'before waiving' language; science.md line 35 has the exact block. Weekend waiver_rate is 0.60 this window (source-health) — improved from 0.80 but still the portfolio's worst and above the 0.50 bar. The 2026-08-29 weekend footer waived nothing only because two [new source] first-party primaries (anil.recoil.org, ir.revmed.com) happened to surface in the week's reading, i.e. discovery met by luck, not by an active dormant-probe pass. Human-gated prompt patch.",
+   "applied": false
+  },
+  {
+   "id": "rm-2",
+   "target": "reader-profile/source-weights.yml",
+   "action": "Add france24.com to the `reduce:` list (soft penalty: keep only when the story is clearly significant and no stronger source exists; never as a news lead or sole source).",
+   "evidence": "CARRIED from 2026-08-23 rm-2, still unapplied (source-weights.yml `reduce:` verified empty this run). Original signal: reasoned reader downvote 2026-08-19 (st-d03f80975246, 'france 24 as source is brutally out of touch'). Re-corroborated mechanically THIS window: france24.com failed 100% of fetch attempts (health.json feeds: 4 fail / 0 ok on any path; 08-27-news footer shows 2x ERR:56 + 2x HTTP 403), and the 08-27 Algeria-wildfires item rested on a France 24 [via snippet] with no stronger corroboration. `reduce:` not `never:` — legitimate broadcaster, demote-when-better-exists. Human-gated.",
+   "applied": false
+  },
+  {
+   "id": "rm-3",
+   "target": "reader-profile.md",
+   "action": "Append dated Learned-preference line: on fiscal and regulatory announcements, supply the countervailing context (what a spending figure restores vs. an earlier cut and who it goes to; how marginal a new rule's burden really is) rather than relaying the announcement's or the aggrieved party's framing flat. Generalises the 2026-07-26 unreliable-narrator/add-context line from US-administration self-characterisations to domestic and EU fiscal/regulatory framing.",
+   "evidence": "Two reasoned downvotes on distinct 2026-08 news stories, same section, same theme (relaying announcement/grievance framing without the countervailing fiscal context), from this window: (1) 2026-08-27-news, vote=-1, 'You should have made the connection with the 17 million cut from a few weeks ago. Nothing new for the climate I'm afraid, just money for farmers' -> the Federal Council 70M forest/farm heat package (st-f0d68f223570), which mixes 17.5M/yr climate-adaptation restoration with ~54M in farmer credits; (2) 2026-08-26-news, vote=-1, 'Non issue peddled by anti-oversight crowd' -> the EU packaging-regulation burden item (st-2a7fec8db33b), led with the 'aberrant et disproportionne' anti-regulation grievance over a ~260 EUR/yr cost. Crosses the >=2-distinct-stories noise bar. Auto-applied under the 2026-07-10 bounded grant (repeated reasoned feedback): dated line appended at the END of reader-profile.md 'Learned preferences', append-only, no other section touched.",
+   "applied": true,
+   "applied_by": "evaluator"
+  }
+ ]
+}
