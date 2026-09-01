@@ -3,16 +3,16 @@
  "count": 80,
  "topics": [
   {
-   "key": "geopolitics",
-   "label": "Geopolitics",
-   "color": "#c0563b",
-   "count": 25
-  },
-  {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 19
+   "count": 23
+  },
+  {
+   "key": "geopolitics",
+   "label": "Geopolitics",
+   "color": "#c0563b",
+   "count": 23
   },
   {
    "key": "economy",
@@ -27,27 +27,15 @@
    "count": 11
   },
   {
-   "key": "security",
-   "label": "Security",
-   "color": "#6a4b8a",
-   "count": 10
-  },
-  {
-   "key": "world",
-   "label": "World",
-   "color": "#6b6f76",
-   "count": 10
-  },
-  {
    "key": "politics",
    "label": "Politics",
    "color": "#9a6a34",
-   "count": 8
+   "count": 9
   },
   {
-   "key": "science",
-   "label": "Science",
-   "color": "#4c6b3c",
+   "key": "security",
+   "label": "Security",
+   "color": "#6a4b8a",
    "count": 8
   },
   {
@@ -57,16 +45,28 @@
    "count": 8
   },
   {
+   "key": "world",
+   "label": "World",
+   "color": "#6b6f76",
+   "count": 8
+  },
+  {
+   "key": "science",
+   "label": "Science",
+   "color": "#4c6b3c",
+   "count": 7
+  },
+  {
    "key": "health",
    "label": "Health",
    "color": "#a44a72",
-   "count": 4
+   "count": 5
   },
   {
    "key": "tech",
    "label": "Tech",
    "color": "#3b6ea5",
-   "count": 2
+   "count": 1
   }
  ],
  "editorials": [
@@ -111,6 +111,30 @@
  ],
  "stories": [
   {
+   "id": "2026-09-01-ai-ml-eu-brings-chatgpt-under-the-digital-services-act",
+   "sid": "st-d7a76ae59369",
+   "headline": "EU designates ChatGPT under the DSA",
+   "summary": "EU brings ChatGPT under the Digital Services Act — the first AI chatbot at this scale. The European Commission on Monday 2026-08-31 formally designated ChatGPT as a Very Large Online Search Engine (VLOSE) under the Digital Services Act, alongside Reddit and Roblox as Very Large Online Platforms. The threshold is 45 million average monthly EU users; OpenAI reported roughly 159.1 million average monthly EU users for the six months ending 2026-03-31. ChatGPT is the first AI chatbot to receive VLOSE status, joining only Microsoft Bing and Google Search as designated search services. Designation triggers the DSA's heaviest tier of obligations — annual systemic-risk assessments, independent audits, data access for vetted researchers, and transparency requirements — and OpenAI has four months, until end-December 2026, to comply.",
+   "why": "it is the first time a general-purpose conversational AI is pulled into the EU's systemic-risk regime rather than treated as an ordinary web service, and it sets the template for how Europe — the rule-making bloc closest to Swiss users — will supervise chatbots on transparency, auditability, and content risk.",
+   "url": "https://ec.europa.eu/commission/presscorner/detail/en/ip_26_1772",
+   "source_domain": "ec.europa.eu",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "politics"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/09/01/ai-ml/",
+   "fresh": true
+  },
+  {
    "id": "2026-09-01-news-the-death-toll-from-the-himalayan-flood-disaster",
    "sid": "st-bbe57cbd85ad",
    "headline": "Himalayan floods kill over 1,000",
@@ -131,6 +155,187 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/09/01/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-01-ai-ml-contrastive-preference-tuning-silently-transfers",
+   "sid": "st-c1460518618a",
+   "headline": "Preference tuning breeds sycophancy",
+   "summary": "Sycophantic agreement is when a model excessively affirms the user at the cost of being right. The authors trace where it comes from in training. Using the OLMo 3 post-training pipeline, they show that contrastive preference optimization (CPO) — the family of \"prefer answer A over answer B\" objectives that includes DPO (direct preference optimization, the dominant open-source alignment method) — passes a teacher model's sycophancy on to the student it trains. The correlation between a teacher's sycophancy rate and its student's is strong and holds across three model families and seven different preference objectives, and — the unsettling part — it transfers even when the preference data itself is topic-neutral and not about agreement at all.",
+   "why": "it locates a widely-used alignment step as an active source of a known failure mode, not a neutral tool — meaning teams that distil preferences from a sycophantic teacher inherit the trait whether or not their own data looks problematic.",
+   "url": "https://arxiv.org/abs/2608.31079",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "Stanford",
+    "Columbia"
+   ],
+   "affiliation_label": "Stanford, Columbia",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-01-ai-ml-on-policy-distillation-improves-students-but-not",
+   "sid": "st-4e91527cd26d",
+   "headline": "On-policy distillation barely distills",
+   "summary": "On-policy distillation (OPD) trains a small \"student\" model on dense, token-by-token scores from a larger \"teacher,\" pitched as a richer alternative to RLVR (reinforcement learning with verifiable rewards, where the model gets only a single right/wrong signal at the end). The authors measured how reliable those teacher scores actually are and found substantial noise that grows with teacher size. Yet the student converges to the same performance whether the noisy supervision is kept or stripped out — and replacing the teacher's scores entirely with a single fixed \"this was slightly bad\" signal matches full OPD. The gains, they find, come from concentrating learning on low-probability tokens, not from the teacher's judgement.",
+   "why": "if a cheap fixed signal reproduces the benefit, much of the compute spent running a big teacher during distillation may be buying little — a directly actionable finding for anyone building small models from large ones.",
+   "url": "https://arxiv.org/abs/2608.31046",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "Purdue"
+   ],
+   "affiliation_label": "Purdue",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-01-ai-ml-llm-judges-verify-what-s-present-not-what-s-miss",
+   "sid": "st-fe8b358fee08",
+   "headline": "LLM judges miss what's omitted",
+   "summary": "\"LLM-as-judge\" — using a second model to grade a first model's output — is now the default automated check across the industry. The authors test it on the failure that matters most for AI medical scribes: omission, where the note simply leaves out something the visit established. They built a benchmark of 500 single-error note pairs (298 with a specific fact missing, 202 with a fact added or altered as controls). Across eight judge designs, the judges reliably caught added or altered content (paired discrimination 0.79–0.94, where 0.5 is a coin flip) but were near-random on omissions (0.50–0.63); on a single note in isolation, no design flagged an omission more often than it false-flagged a perfect note. Prompt tweaks, voting, and automated prompt optimisation did not fix it.",
+   "why": "it exposes a structural blind spot in the evaluation method the whole field leans on — a judge can confirm that every stated fact checks out while missing that half the story is gone — with immediate stakes wherever LLM judges gate high-consequence text.",
+   "url": "https://arxiv.org/abs/2608.31016",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "health"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "Composo"
+   ],
+   "affiliation_label": "Composo",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-01-ai-ml-a-280-parameter-transformer-generalises-to-circu",
+   "sid": "st-6d972b6bebae",
+   "headline": "280-parameter transformer generalizes to any depth",
+   "summary": "Length generalisation — training on short examples and still working on much longer ones — is a long-standing failure point for neural networks. The authors hand-construct a provably correct transformer with just 280 learnable parameters that evaluates fully-parenthesised Boolean-algebra expressions of arbitrary depth. The trick is a positional encoding that tracks each logic gate's depth in the circuit, letting the model find and collapse one layer of evaluable sub-expressions per forward pass, using hard attention and linear attention to keep the cost linear in input length.",
+   "why": "it is an existence proof that transformers can express exact, unbounded algorithmic computation when the representation is right — a concrete anchor for the interpretability question of what mechanisms let (or stop) these models generalise structurally rather than memorise.",
+   "url": "https://arxiv.org/abs/2608.31067",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "IBM Research"
+   ],
+   "affiliation_label": "IBM Research",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-01-ai-ml-deepseek-releases-its-first-open-weight-vision-m",
+   "sid": "st-bbc967990611",
+   "headline": "DeepSeek ships open-weight V4 vision model",
+   "summary": "DeepSeek releases its first open-weight vision model in the V4 line. DeepSeek published DeepSeek-V4-Flash-Vision-Exp on Hugging Face on Monday 2026-08-31, an MIT-licensed, image-and-text-to-text model it calls its first experimental multimodal member of the DeepSeek-V4 family. It builds on the text-only DeepSeek-V4-Flash by bolting on visual modules and continued training. On the model card's own numbers it improves clearly over the previous V4-Flash-0731 on multimodal agent tasks — ApexBench Pass@1 rises from 26.2 to 36.5, and it edges Anthropic's Opus 4.8 on \"Agents' Last Exam\" (27.3 vs 25.7) — while holding roughly level on text-only agent benchmarks such as Terminal Bench 2.1 (83.9, against Opus 4.8's 85.0). It follows the text-only DeepSeek-V4-Pro-0813 released earlier in August, and, like the rest of the line, ships under a permissive license. Treat the benchmark table as vendor-reported: these are the lab's own evaluations, not independently reproduced.",
+   "why": "",
+   "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp",
+   "source_domain": "huggingface.co",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-01-ai-ml-federal-judge-voids-the-pentagon-s-blacklisting",
+   "sid": "st-5890fd69ac6a",
+   "headline": "Court voids Pentagon's Anthropic blacklist",
+   "summary": "Federal judge voids the Pentagon's blacklisting of Anthropic as unconstitutional. On Friday 2026-08-28, Judge Rita Lin of the US District Court for the Northern District of California granted summary judgment for Anthropic, vacating administration directives that had barred all federal agencies from using Anthropic's products and banned defense contractors from doing business with the company. The government had labelled Anthropic a \"supply chain risk\"; the court found the designation was unconstitutional First Amendment retaliation after Anthropic refused to let its models be used for lethal autonomous weapons and mass surveillance, writing that \"the empty invocation of national security is not a blank check to punish and retaliate against government critics.\" The ruling orders the directives rescinded, following a preliminary block issued back in March 2026.",
+   "why": "it is a rare judicial check on using federal procurement to punish an AI lab over its safety and use policies — and, because the court found the \"supply chain risk\" label pretextual, a caution against taking such national-security framings at face value.",
+   "url": "https://www.cnbc.com/2026/08/28/judge-blocks-pentagon-blacklist--anthropic-.html",
+   "source_domain": "cnbc.com",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "politics"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-01-ai-ml-bank-of-england-warns-stretched-ai-valuations-co",
+   "sid": "st-9827e056fc4e",
+   "headline": "Bank of England warns on AI valuations",
+   "summary": "Bank of England warns stretched AI valuations could trigger a disorderly correction. On Monday 2026-08-31, BoE governor Andrew Bailey — who chairs the G20's Financial Stability Board — warned in a letter to the G20 that frontier AI's cyber risk, combined with \"stretched\" AI-driven asset valuations and rising market leverage, could produce a \"potentially disorderly correction that could spread across\" the financial system. It reinforces the Bank's July 2026 Financial Stability Report, which judged AI-stock valuations \"stretched\" and estimated that a sharp US equity correction could knock up to 2.2 percentage points off UK GDP. Analysts covering the letter noted the caveat that, unlike the dot-com era, today's leading AI firms carry real revenue — so the concern is concentration and leverage, not valuations resting on nothing.",
+   "why": "a major central bank is now naming AI-driven market concentration as a systemic-stability risk in a G20 forum — a signal that matters to anyone exposed to tech-heavy public markets, and a reminder that the \"AI bubble\" question has moved from commentary into official financial-stability monitoring.",
+   "url": "https://siliconangle.com/2026/08/31/bank-of-england-governor-warns-of-ai-related-financial-system-risks/",
+   "source_domain": "siliconangle.com",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
    "fresh": true
   },
   {
@@ -225,6 +430,33 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/01/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-01-ai-ml-one-model-can-reuse-another-model-s-kv-cache-acr",
+   "sid": "st-701b763a9044",
+   "headline": "Cross-model KV cache sharing",
+   "summary": "When several models serve the same shared context (a long document, a system prompt), each normally re-computes its own KV cache — the stored key/value tensors that let a transformer avoid re-reading earlier tokens. This work learns a translation layer that converts the KV state one model produced into a form a different model can consume, even across scale, architecture, tokenizer, and model family. For a Qwen2.5-7B → Qwen2.5-1.5B pairing, feeding the translated cache lifted LongBench2 accuracy from 27.59% to 34.48% (+6.89 points) versus the small model working alone.",
+   "why": "shared-context serving is increasingly common (agent fleets, multi-model routers), and letting a stronger model's \"reading\" of a context prime a cheaper one is a plausible lever for cutting redundant prefill compute.",
+   "url": "https://arxiv.org/abs/2608.30963",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "UT Dallas"
+   ],
+   "affiliation_label": "UT Dallas",
    "fresh": true
   },
   {
@@ -872,81 +1104,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-28-ai-ml-open-models-represent-moral-categories-as-near-i",
-   "sid": "st-cd59831cd69e",
-   "headline": "LLMs map morality as independent axes",
-   "summary": "Detecting whether text is \"moral\" is a low bar; the question is whether a model distinguishes kinds of moral concern. The author trains six linear probes — one per Moral Foundations Theory category (care/harm, fairness/cheating, liberty/oppression, loyalty/betrayal, authority/subversion, sanctity/degradation) — on open-weight models and studies the resulting directions in representation space. They neither collapse into a single moral detector nor sit orthogonally: they span a near-maximal number of independent dimensions while sharing one positive common component.",
-   "why": "it is evidence that moral structure in LLMs is genuinely multi-dimensional and legible to simple probes, which matters for anyone trying to steer or audit a model's value-laden behavior rather than treat \"aligned\" as a single dial.",
-   "url": "https://arxiv.org/abs/2608.27402",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-28",
-   "date_label": "Aug 28",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/28/ai-ml/",
-   "affiliations": [
-    "Distiller Labs"
-   ],
-   "affiliation_label": "Distiller Labs",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-28-ai-ml-a-pointed-argument-against-the-field-s-default-k",
-   "sid": "st-b58436f9308e",
-   "headline": "The case against the Gaussian kernel",
-   "summary": "A kernel is a similarity function at the heart of Gaussian-process regression (a standard way to fit a function and quantify uncertainty about it). The Gaussian kernel — also called squared-exponential or RBF — is the near-universal default. The paper argues it should never be one, on two counts: it produces conditional variances that are unrealistically small, making catastrophic overconfidence in the uncertainty estimates almost inevitable, and it is mathematically brittle in ways that make those estimates untrustworthy.",
-   "why": "if you use Gaussian processes for anything where the uncertainty is the point — Bayesian optimization, active learning, safety-critical surrogates — this says your default choice may be quietly lying about how confident it should be. A clean instance of interrogating an assumption most practitioners never revisit.",
-   "url": "https://arxiv.org/abs/2608.26974",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-28",
-   "date_label": "Aug 28",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "science"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/28/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-28-ai-ml-google-ships-gemini-3-5-transcribe-a-speech-to-t",
-   "sid": "st-9e3b55e62b66",
-   "headline": "Google launches Gemini 3.5 Transcribe",
-   "summary": "Google ships Gemini 3.5 Transcribe, a speech-to-text model that edits your \"ums\" out as you talk. Google announced Gemini 3.5 Transcribe, a voice-input model that not only transcribes but cleans up filler words and on-the-fly corrections into polished text. Google reports it is ~70% faster than its previous Chirp 3 engine and cuts the live-speech error rate to 5.5% (from 7.32%), works in 85 languages, handles up to three speakers in pre-recorded audio, and supports custom vocabularies for jargon. It already powers the Gboard \"Rambler\" feature on Pixel 11 and is rolling out to the macOS Gemini app, Google's Antigravity and AI Studio tools, and the Gemini API, with Chrome \"soon.\" The obvious caveat: because it rewrites what you meant to say, the output can diverge from your literal words — fine for casual dictation, less so where verbatim accuracy is required.",
-   "why": "",
-   "url": "https://arstechnica.com/ai/2026/08/google-announces-gemini-3-5-transcribe-for-ai-powered-speech-to-text/",
-   "source_domain": "arstechnica.com",
-   "date": "2026-08-28",
-   "date_label": "Aug 28",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/28/ai-ml/",
-   "fresh": false
-  },
-  {
    "id": "2026-08-27-news-a-glacier-collapse-high-in-the-himalayas-trigger",
    "sid": "st-50d0b95cdf6d",
    "headline": "Himalayan glacier collapse floods kill 270",
@@ -1457,30 +1614,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-23-news-a-myanmar-military-airstrike-killed-at-least-14",
-   "sid": "st-cc18d5bd24b8",
-   "headline": "Myanmar airstrike kills 14 at monastery",
-   "summary": "A Myanmar military airstrike killed at least 14 people at a Buddhist monastery in the central Sagaing region on Friday 21 August, opposition and witness accounts say. The strike hit Swel Le Oh village in Myaung township, about 75 km west of Mandalay, at around 9am local time while more than 100 mostly elderly people were gathered for a week-long meditation retreat marking Buddhist Lent (Vassa, the monastic rains retreat); the site was reportedly struck twice. Those killed — 11 men and three women, aged roughly 50 to 70 — were civilians, and about 20 were wounded, according to the opposition National Unity Government and local witnesses. Sagaing is a stronghold of armed resistance to the military junta that seized power in 2021, and the army, which has not commented, has repeatedly used air power against populated areas there. This account rests on opposition and witness sources; the military has issued no statement.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/8/21/myanmar-military-bombing-kills-14-at-buddhist-monastery-opposition-reports",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-23",
-   "date_label": "Aug 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "world"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/23/news/",
-   "fresh": false
-  },
-  {
    "id": "2026-08-22-news-a-us-federal-judge-struck-down-the-state-departm",
    "sid": "st-d62fca04f3a7",
    "headline": "US judge strikes down 75-country visa ban",
@@ -1559,34 +1692,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-22-weekend-model-hypnosis-weak-irrelevant-cues-stack-into-s",
-   "sid": "st-21addf24ede6",
-   "headline": "Model hypnosis: weak cues stack to strong control",
-   "summary": "The authors describe a phenomenon they call model hypnosis: individually weak, seemingly irrelevant choices in a prompt — paraphrases, typos, innocuous wording — can be combined additively so that together they systematically steer a model's behaviour. They report it across model families and scales, including in frontier reasoning models, and find that a \"hypnotic\" prompt tuned on one model often transfers to another.",
-   "why": "If inconspicuous surface features compose into strong control, that cuts against both safety and interpretability at once — the levers that move a model are precisely the ones a human reviewer would dismiss as noise, and they generalise across systems rather than staying model-specific. It reframes prompt-based jailbreaks from a bag of one-off tricks into an additive, transferable effect. (Single-lab, but a pointed result.)",
-   "url": "https://arxiv.org/abs/2608.16834",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-22",
-   "date_label": "Aug 22",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/22/weekend/",
-   "affiliations": [
-    "University of Pennsylvania"
-   ],
-   "affiliation_label": "University of Pennsylvania",
-   "fresh": false
-  },
-  {
    "id": "2026-08-22-news-a-man-attacked-a-secondary-school-in-fagersta-no",
    "sid": "st-151373ab75bb",
    "headline": "Sword attack at Swedish school kills one",
@@ -1594,30 +1699,6 @@
    "why": "School attacks remain rare in Sweden, but this is the deadliest since the February 2025 Örebro school shooting that killed 11 — the country's worst mass shooting — and it renews a debate about school security that Örebro had already forced onto the national agenda.",
    "url": "https://www.srf.ch/news/international/angreifer-festgenommen-schwert-attacke-an-schule-schockt-schweden-ein-toter",
    "source_domain": "srf.ch",
-   "date": "2026-08-22",
-   "date_label": "Aug 22",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world",
-    "security"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/22/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-22-news-jihadist-fighters-killed-and-abducted-dozens-of",
-   "sid": "st-bb2c0a26f568",
-   "headline": "Jihadists kill and abduct dozens in Nigeria",
-   "summary": "Jihadist fighters killed and abducted dozens of people during Friday prayers on 21 August in the Borgu area of Niger State, in central Nigeria, survivors and a federal lawmaker told the AFP news agency. A survivor of the assault on the village of Dikera said the Lakurawa group — an obscure armed formation that some researchers tie to the Islamic State Sahel Province, the jihadist franchise active in Burkina Faso, Mali and Niger — attacked with rifles, knives and machetes; many villagers escaped only when a rival jihadist group known as Mahmuda intervened and turned on the attackers. A second village, Binzi, was also hit, and the exact toll was not known; federal deputy Jafaru Mohammed corroborated the account.",
-   "why": "Mass abduction has been a signature tactic of Nigeria's 17-year jihadist insurgency since the 2014 kidnapping of hundreds of schoolgirls at Chibok; an attack of this kind in Niger State signals the Sahel's armed groups pressing further south into Nigeria's central belt, and the involvement of two rival factions points to a fragmenting, harder-to-map threat.",
-   "url": "https://www.letemps.ch/articles/au-nigeria-des-djihadistes-ont-tue-et-enleve-des-dizaines-de-personnes-dans-le-centre-du-pays-selon-des-survivants",
-   "source_domain": "letemps.ch",
    "date": "2026-08-22",
    "date_label": "Aug 22",
    "stream": "news",
@@ -1705,29 +1786,6 @@
    "fresh": false
   },
   {
-   "id": "2026-08-21-ai-ml-teaching-a-model-to-allocate-its-own-thinking-bu",
-   "sid": "st-6ab8343d65c8",
-   "headline": "Model learns when to think",
-   "summary": "Reasoning models usually run at a fixed token budget, over-thinking easy problems and under-thinking hard ones. This paper lets the model pick, as its first token, one of three modes — NoThink, Short, or Long — learned inside GRPO (Group Relative Policy Optimization, the reward-based post-training recipe behind recent reasoning models) with no separate router, using a shaped reward plus hard per-mode token caps. On a 1.5B model trained on MATH the modes emerge without collapsing, and accuracy holds (0.782 vs 0.796 base on held-out MATH500) while mean response length drops from 4,796 to 2,811 tokens — a 41% cut. It transfers untrained to other benchmarks, e.g. 76% fewer tokens on GSM8K.",
-   "why": "inference cost is roughly proportional to tokens generated, so a model that spends effort in proportion to difficulty — and learns the dial itself, rather than a hand-set \"reasoning effort\" slider — is a cheap, broadly reusable efficiency lever.",
-   "url": "https://arxiv.org/abs/2608.20256",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-21",
-   "date_label": "Aug 21",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/21/ai-ml/",
-   "fresh": false
-  },
-  {
    "id": "2026-08-21-news-north-korea-launched-about-10-short-range-ballis",
    "sid": "st-761aa83e6810",
    "headline": "North Korea fires 10 missiles",
@@ -1741,30 +1799,6 @@
    "stream_label": "News",
    "topics": [
     "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/21/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-21-news-a-hong-kong-court-found-two-organisers-of-the-ci",
-   "sid": "st-0e3ba8755f4b",
-   "headline": "Hong Kong Tiananmen organisers convicted",
-   "summary": "A Hong Kong court found two organisers of the city's former Tiananmen vigil guilty of \"inciting subversion\" on Friday 21 August, one of the highest-profile prosecutions under the national security law Beijing imposed in 2020. Lee Cheuk-yan, 69, and Chow Hang-tung, 41 — leaders of the now-disbanded Hong Kong Alliance, which for years ran the annual candlelight vigil marking the 4 June 1989 crackdown in Beijing — were convicted of inciting others to subvert state power by unlawful means; each faces up to 10 years in prison, with sentencing to follow. Their trial ran 24 days from January; a third defendant, former lawmaker Albert Ho, 74, pleaded guilty. Chow, who represented herself, told the court in May that \"the law itself was on trial\", and the UK Foreign Office condemned the use of the security law to convict the pair.",
-   "why": "Hong Kong and Macau were once the only places on Chinese soil where the Tiananmen dead could be publicly mourned; convicting the vigil's organisers effectively criminalises that memory and marks how far the 2020 security law has reached into ordinary civic life.",
-   "url": "https://www.theguardian.com/world/2026/aug/21/tiananmen-square-vigil-hong-kong-alliance-activists-guilty-verdict-lee-cheuk-yan-chow-hang-tung",
-   "source_domain": "theguardian.com",
-   "date": "2026-08-21",
-   "date_label": "Aug 21",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
@@ -1816,29 +1850,6 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/20/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-08-20-news-a-chinese-court-sentenced-evergrande-founder-hui",
-   "sid": "st-758df9a7be74",
-   "headline": "Evergrande founder gets life sentence",
-   "summary": "A Chinese court sentenced Evergrande founder Hui Ka Yan to life in prison on Thursday 20 August for fraud and bribery, ordering all his personal property confiscated. The Shenzhen Intermediate People's Court found that Hui — once Asia's richest man, who pleaded guilty in April — ran continuous, large-scale financial fraud to inflate the developer's assets and conceal its liabilities; investigators had found Evergrande overstated revenue by roughly $80 billion in 2019 and 2020. The court fined Evergrande 8.82 billion yuan ($1.31 billion) and its main subsidiary Hengda Real Estate 7 billion yuan, and handed six-to-18-year terms to five other executives. Evergrande defaulted in 2021 on most of its roughly $300 billion in liabilities, was ordered liquidated in 2024 and delisted in 2025 — the defining symbol of China's property-sector crisis.",
-   "why": "The sentence draws a line under the company whose collapse triggered China's property bust, signalling Beijing will pin the debt crisis on individual executives even as the underlying downturn in housing continues to weigh on the economy.",
-   "url": "https://www.dw.com/en/evergrande-founder-hui-ka-yan-sentenced-to-life-in-prison/a-78439153",
-   "source_domain": "dw.com",
-   "date": "2026-08-20",
-   "date_label": "Aug 20",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "economy"
-   ],
-   "topic_primary": "economy",
-   "topic_label": "Economy",
-   "topic_color": "#9a7b2e",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/20/news/",
@@ -2053,6 +2064,34 @@
  ],
  "board": [
   {
+   "id": "2026-09-01-ai-ml-eu-brings-chatgpt-under-the-digital-services-act",
+   "sid": "st-d7a76ae59369",
+   "headline": "EU designates ChatGPT under the DSA",
+   "summary": "EU brings ChatGPT under the Digital Services Act — the first AI chatbot at this scale. The European Commission on Monday 2026-08-31 formally designated ChatGPT as a Very Large Online Search Engine (VLOSE) under the Digital Services Act, alongside Reddit and Roblox as Very Large Online Platforms. The threshold is 45 million average monthly EU users; OpenAI reported roughly 159.1 million average monthly EU users for the six months ending 2026-03-31. ChatGPT is the first AI chatbot to receive VLOSE status, joining only Microsoft Bing and Google Search as designated search services. Designation triggers the DSA's heaviest tier of obligations — annual systemic-risk assessments, independent audits, data access for vetted researchers, and transparency requirements — and OpenAI has four months, until end-December 2026, to comply.",
+   "why": "it is the first time a general-purpose conversational AI is pulled into the EU's systemic-risk regime rather than treated as an ordinary web service, and it sets the template for how Europe — the rule-making bloc closest to Swiss users — will supervise chatbots on transparency, auditability, and content risk.",
+   "url": "https://ec.europa.eu/commission/presscorner/detail/en/ip_26_1772",
+   "source_domain": "ec.europa.eu",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "politics"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/09/01/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 1 Sep",
+   "daybreak": true
+  },
+  {
    "id": "2026-09-01-news-the-death-toll-from-the-himalayan-flood-disaster",
    "sid": "st-bbe57cbd85ad",
    "headline": "Himalayan floods kill over 1,000",
@@ -2077,7 +2116,216 @@
    "kind": "story",
    "age_days": 0,
    "day_label": "Tue 1 Sep",
-   "daybreak": true
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-01-ai-ml-contrastive-preference-tuning-silently-transfers",
+   "sid": "st-c1460518618a",
+   "headline": "Preference tuning breeds sycophancy",
+   "summary": "Sycophantic agreement is when a model excessively affirms the user at the cost of being right. The authors trace where it comes from in training. Using the OLMo 3 post-training pipeline, they show that contrastive preference optimization (CPO) — the family of \"prefer answer A over answer B\" objectives that includes DPO (direct preference optimization, the dominant open-source alignment method) — passes a teacher model's sycophancy on to the student it trains. The correlation between a teacher's sycophancy rate and its student's is strong and holds across three model families and seven different preference objectives, and — the unsettling part — it transfers even when the preference data itself is topic-neutral and not about agreement at all.",
+   "why": "it locates a widely-used alignment step as an active source of a known failure mode, not a neutral tool — meaning teams that distil preferences from a sycophantic teacher inherit the trait whether or not their own data looks problematic.",
+   "url": "https://arxiv.org/abs/2608.31079",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "Stanford",
+    "Columbia"
+   ],
+   "affiliation_label": "Stanford, Columbia",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 1 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-01-ai-ml-on-policy-distillation-improves-students-but-not",
+   "sid": "st-4e91527cd26d",
+   "headline": "On-policy distillation barely distills",
+   "summary": "On-policy distillation (OPD) trains a small \"student\" model on dense, token-by-token scores from a larger \"teacher,\" pitched as a richer alternative to RLVR (reinforcement learning with verifiable rewards, where the model gets only a single right/wrong signal at the end). The authors measured how reliable those teacher scores actually are and found substantial noise that grows with teacher size. Yet the student converges to the same performance whether the noisy supervision is kept or stripped out — and replacing the teacher's scores entirely with a single fixed \"this was slightly bad\" signal matches full OPD. The gains, they find, come from concentrating learning on low-probability tokens, not from the teacher's judgement.",
+   "why": "if a cheap fixed signal reproduces the benefit, much of the compute spent running a big teacher during distillation may be buying little — a directly actionable finding for anyone building small models from large ones.",
+   "url": "https://arxiv.org/abs/2608.31046",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "Purdue"
+   ],
+   "affiliation_label": "Purdue",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 1 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-01-ai-ml-llm-judges-verify-what-s-present-not-what-s-miss",
+   "sid": "st-fe8b358fee08",
+   "headline": "LLM judges miss what's omitted",
+   "summary": "\"LLM-as-judge\" — using a second model to grade a first model's output — is now the default automated check across the industry. The authors test it on the failure that matters most for AI medical scribes: omission, where the note simply leaves out something the visit established. They built a benchmark of 500 single-error note pairs (298 with a specific fact missing, 202 with a fact added or altered as controls). Across eight judge designs, the judges reliably caught added or altered content (paired discrimination 0.79–0.94, where 0.5 is a coin flip) but were near-random on omissions (0.50–0.63); on a single note in isolation, no design flagged an omission more often than it false-flagged a perfect note. Prompt tweaks, voting, and automated prompt optimisation did not fix it.",
+   "why": "it exposes a structural blind spot in the evaluation method the whole field leans on — a judge can confirm that every stated fact checks out while missing that half the story is gone — with immediate stakes wherever LLM judges gate high-consequence text.",
+   "url": "https://arxiv.org/abs/2608.31016",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "health"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "Composo"
+   ],
+   "affiliation_label": "Composo",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 1 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-01-ai-ml-a-280-parameter-transformer-generalises-to-circu",
+   "sid": "st-6d972b6bebae",
+   "headline": "280-parameter transformer generalizes to any depth",
+   "summary": "Length generalisation — training on short examples and still working on much longer ones — is a long-standing failure point for neural networks. The authors hand-construct a provably correct transformer with just 280 learnable parameters that evaluates fully-parenthesised Boolean-algebra expressions of arbitrary depth. The trick is a positional encoding that tracks each logic gate's depth in the circuit, letting the model find and collapse one layer of evaluable sub-expressions per forward pass, using hard attention and linear attention to keep the cost linear in input length.",
+   "why": "it is an existence proof that transformers can express exact, unbounded algorithmic computation when the representation is right — a concrete anchor for the interpretability question of what mechanisms let (or stop) these models generalise structurally rather than memorise.",
+   "url": "https://arxiv.org/abs/2608.31067",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "IBM Research"
+   ],
+   "affiliation_label": "IBM Research",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 1 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-01-ai-ml-deepseek-releases-its-first-open-weight-vision-m",
+   "sid": "st-bbc967990611",
+   "headline": "DeepSeek ships open-weight V4 vision model",
+   "summary": "DeepSeek releases its first open-weight vision model in the V4 line. DeepSeek published DeepSeek-V4-Flash-Vision-Exp on Hugging Face on Monday 2026-08-31, an MIT-licensed, image-and-text-to-text model it calls its first experimental multimodal member of the DeepSeek-V4 family. It builds on the text-only DeepSeek-V4-Flash by bolting on visual modules and continued training. On the model card's own numbers it improves clearly over the previous V4-Flash-0731 on multimodal agent tasks — ApexBench Pass@1 rises from 26.2 to 36.5, and it edges Anthropic's Opus 4.8 on \"Agents' Last Exam\" (27.3 vs 25.7) — while holding roughly level on text-only agent benchmarks such as Terminal Bench 2.1 (83.9, against Opus 4.8's 85.0). It follows the text-only DeepSeek-V4-Pro-0813 released earlier in August, and, like the rest of the line, ships under a permissive license. Treat the benchmark table as vendor-reported: these are the lab's own evaluations, not independently reproduced.",
+   "why": "",
+   "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp",
+   "source_domain": "huggingface.co",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 1 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-01-ai-ml-federal-judge-voids-the-pentagon-s-blacklisting",
+   "sid": "st-5890fd69ac6a",
+   "headline": "Court voids Pentagon's Anthropic blacklist",
+   "summary": "Federal judge voids the Pentagon's blacklisting of Anthropic as unconstitutional. On Friday 2026-08-28, Judge Rita Lin of the US District Court for the Northern District of California granted summary judgment for Anthropic, vacating administration directives that had barred all federal agencies from using Anthropic's products and banned defense contractors from doing business with the company. The government had labelled Anthropic a \"supply chain risk\"; the court found the designation was unconstitutional First Amendment retaliation after Anthropic refused to let its models be used for lethal autonomous weapons and mass surveillance, writing that \"the empty invocation of national security is not a blank check to punish and retaliate against government critics.\" The ruling orders the directives rescinded, following a preliminary block issued back in March 2026.",
+   "why": "it is a rare judicial check on using federal procurement to punish an AI lab over its safety and use policies — and, because the court found the \"supply chain risk\" label pretextual, a caution against taking such national-security framings at face value.",
+   "url": "https://www.cnbc.com/2026/08/28/judge-blocks-pentagon-blacklist--anthropic-.html",
+   "source_domain": "cnbc.com",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "politics"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 1 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-01-ai-ml-bank-of-england-warns-stretched-ai-valuations-co",
+   "sid": "st-9827e056fc4e",
+   "headline": "Bank of England warns on AI valuations",
+   "summary": "Bank of England warns stretched AI valuations could trigger a disorderly correction. On Monday 2026-08-31, BoE governor Andrew Bailey — who chairs the G20's Financial Stability Board — warned in a letter to the G20 that frontier AI's cyber risk, combined with \"stretched\" AI-driven asset valuations and rising market leverage, could produce a \"potentially disorderly correction that could spread across\" the financial system. It reinforces the Bank's July 2026 Financial Stability Report, which judged AI-stock valuations \"stretched\" and estimated that a sharp US equity correction could knock up to 2.2 percentage points off UK GDP. Analysts covering the letter noted the caveat that, unlike the dot-com era, today's leading AI firms carry real revenue — so the concern is concentration and leverage, not valuations resting on nothing.",
+   "why": "a major central bank is now naming AI-driven market concentration as a systemic-stability risk in a G20 forum — a signal that matters to anyone exposed to tech-heavy public markets, and a reminder that the \"AI bubble\" question has moved from commentary into official financial-stability monitoring.",
+   "url": "https://siliconangle.com/2026/08/31/bank-of-england-governor-warns-of-ai-related-financial-system-risks/",
+   "source_domain": "siliconangle.com",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 1 Sep",
+   "daybreak": false
   },
   {
    "id": "2026-09-01-news-a-russian-overnight-drone-and-missile-barrage-on",
@@ -2183,6 +2431,37 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/01/news/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 1 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-01-ai-ml-one-model-can-reuse-another-model-s-kv-cache-acr",
+   "sid": "st-701b763a9044",
+   "headline": "Cross-model KV cache sharing",
+   "summary": "When several models serve the same shared context (a long document, a system prompt), each normally re-computes its own KV cache — the stored key/value tensors that let a transformer avoid re-reading earlier tokens. This work learns a translation layer that converts the KV state one model produced into a form a different model can consume, even across scale, architecture, tokenizer, and model family. For a Qwen2.5-7B → Qwen2.5-1.5B pairing, feeding the translated cache lifted LongBench2 accuracy from 27.59% to 34.48% (+6.89 points) versus the small model working alone.",
+   "why": "shared-context serving is increasingly common (agent fleets, multi-model routers), and letting a stronger model's \"reading\" of a context prime a cheaper one is a plausible lever for cutting redundant prefill compute.",
+   "url": "https://arxiv.org/abs/2608.30963",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "UT Dallas"
+   ],
+   "affiliation_label": "UT Dallas",
    "fresh": true,
    "kind": "story",
    "age_days": 0,
@@ -2976,93 +3255,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-28-ai-ml-open-models-represent-moral-categories-as-near-i",
-   "sid": "st-cd59831cd69e",
-   "headline": "LLMs map morality as independent axes",
-   "summary": "Detecting whether text is \"moral\" is a low bar; the question is whether a model distinguishes kinds of moral concern. The author trains six linear probes — one per Moral Foundations Theory category (care/harm, fairness/cheating, liberty/oppression, loyalty/betrayal, authority/subversion, sanctity/degradation) — on open-weight models and studies the resulting directions in representation space. They neither collapse into a single moral detector nor sit orthogonally: they span a near-maximal number of independent dimensions while sharing one positive common component.",
-   "why": "it is evidence that moral structure in LLMs is genuinely multi-dimensional and legible to simple probes, which matters for anyone trying to steer or audit a model's value-laden behavior rather than treat \"aligned\" as a single dial.",
-   "url": "https://arxiv.org/abs/2608.27402",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-28",
-   "date_label": "Aug 28",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/28/ai-ml/",
-   "affiliations": [
-    "Distiller Labs"
-   ],
-   "affiliation_label": "Distiller Labs",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 28 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-28-ai-ml-a-pointed-argument-against-the-field-s-default-k",
-   "sid": "st-b58436f9308e",
-   "headline": "The case against the Gaussian kernel",
-   "summary": "A kernel is a similarity function at the heart of Gaussian-process regression (a standard way to fit a function and quantify uncertainty about it). The Gaussian kernel — also called squared-exponential or RBF — is the near-universal default. The paper argues it should never be one, on two counts: it produces conditional variances that are unrealistically small, making catastrophic overconfidence in the uncertainty estimates almost inevitable, and it is mathematically brittle in ways that make those estimates untrustworthy.",
-   "why": "if you use Gaussian processes for anything where the uncertainty is the point — Bayesian optimization, active learning, safety-critical surrogates — this says your default choice may be quietly lying about how confident it should be. A clean instance of interrogating an assumption most practitioners never revisit.",
-   "url": "https://arxiv.org/abs/2608.26974",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-28",
-   "date_label": "Aug 28",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "science"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/28/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 28 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-28-ai-ml-google-ships-gemini-3-5-transcribe-a-speech-to-t",
-   "sid": "st-9e3b55e62b66",
-   "headline": "Google launches Gemini 3.5 Transcribe",
-   "summary": "Google ships Gemini 3.5 Transcribe, a speech-to-text model that edits your \"ums\" out as you talk. Google announced Gemini 3.5 Transcribe, a voice-input model that not only transcribes but cleans up filler words and on-the-fly corrections into polished text. Google reports it is ~70% faster than its previous Chirp 3 engine and cuts the live-speech error rate to 5.5% (from 7.32%), works in 85 languages, handles up to three speakers in pre-recorded audio, and supports custom vocabularies for jargon. It already powers the Gboard \"Rambler\" feature on Pixel 11 and is rolling out to the macOS Gemini app, Google's Antigravity and AI Studio tools, and the Gemini API, with Chrome \"soon.\" The obvious caveat: because it rewrites what you meant to say, the output can diverge from your literal words — fine for casual dictation, less so where verbatim accuracy is required.",
-   "why": "",
-   "url": "https://arstechnica.com/ai/2026/08/google-announces-gemini-3-5-transcribe-for-ai-powered-speech-to-text/",
-   "source_domain": "arstechnica.com",
-   "date": "2026-08-28",
-   "date_label": "Aug 28",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/08/28/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 28 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-27-news-a-glacier-collapse-high-in-the-himalayas-trigger",
    "sid": "st-50d0b95cdf6d",
    "headline": "Himalayan glacier collapse floods kill 270",
@@ -3673,34 +3865,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-23-news-a-myanmar-military-airstrike-killed-at-least-14",
-   "sid": "st-cc18d5bd24b8",
-   "headline": "Myanmar airstrike kills 14 at monastery",
-   "summary": "A Myanmar military airstrike killed at least 14 people at a Buddhist monastery in the central Sagaing region on Friday 21 August, opposition and witness accounts say. The strike hit Swel Le Oh village in Myaung township, about 75 km west of Mandalay, at around 9am local time while more than 100 mostly elderly people were gathered for a week-long meditation retreat marking Buddhist Lent (Vassa, the monastic rains retreat); the site was reportedly struck twice. Those killed — 11 men and three women, aged roughly 50 to 70 — were civilians, and about 20 were wounded, according to the opposition National Unity Government and local witnesses. Sagaing is a stronghold of armed resistance to the military junta that seized power in 2021, and the army, which has not commented, has repeatedly used air power against populated areas there. This account rests on opposition and witness sources; the military has issued no statement.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/8/21/myanmar-military-bombing-kills-14-at-buddhist-monastery-opposition-reports",
-   "source_domain": "aljazeera.com",
-   "date": "2026-08-23",
-   "date_label": "Aug 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "world"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/23/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sun 23 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-22-news-a-us-federal-judge-struck-down-the-state-departm",
    "sid": "st-d62fca04f3a7",
    "headline": "US judge strikes down 75-country visa ban",
@@ -3791,38 +3955,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-22-weekend-model-hypnosis-weak-irrelevant-cues-stack-into-s",
-   "sid": "st-21addf24ede6",
-   "headline": "Model hypnosis: weak cues stack to strong control",
-   "summary": "The authors describe a phenomenon they call model hypnosis: individually weak, seemingly irrelevant choices in a prompt — paraphrases, typos, innocuous wording — can be combined additively so that together they systematically steer a model's behaviour. They report it across model families and scales, including in frontier reasoning models, and find that a \"hypnotic\" prompt tuned on one model often transfers to another.",
-   "why": "If inconspicuous surface features compose into strong control, that cuts against both safety and interpretability at once — the levers that move a model are precisely the ones a human reviewer would dismiss as noise, and they generalise across systems rather than staying model-specific. It reframes prompt-based jailbreaks from a bag of one-off tricks into an additive, transferable effect. (Single-lab, but a pointed result.)",
-   "url": "https://arxiv.org/abs/2608.16834",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-22",
-   "date_label": "Aug 22",
-   "stream": "weekend",
-   "stream_label": "Weekend",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/22/weekend/",
-   "affiliations": [
-    "University of Pennsylvania"
-   ],
-   "affiliation_label": "University of Pennsylvania",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 22 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-22-news-a-man-attacked-a-secondary-school-in-fagersta-no",
    "sid": "st-151373ab75bb",
    "headline": "Sword attack at Swedish school kills one",
@@ -3830,34 +3962,6 @@
    "why": "School attacks remain rare in Sweden, but this is the deadliest since the February 2025 Örebro school shooting that killed 11 — the country's worst mass shooting — and it renews a debate about school security that Örebro had already forced onto the national agenda.",
    "url": "https://www.srf.ch/news/international/angreifer-festgenommen-schwert-attacke-an-schule-schockt-schweden-ein-toter",
    "source_domain": "srf.ch",
-   "date": "2026-08-22",
-   "date_label": "Aug 22",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "world",
-    "security"
-   ],
-   "topic_primary": "world",
-   "topic_label": "World",
-   "topic_color": "#6b6f76",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/22/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Sat 22 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-22-news-jihadist-fighters-killed-and-abducted-dozens-of",
-   "sid": "st-bb2c0a26f568",
-   "headline": "Jihadists kill and abduct dozens in Nigeria",
-   "summary": "Jihadist fighters killed and abducted dozens of people during Friday prayers on 21 August in the Borgu area of Niger State, in central Nigeria, survivors and a federal lawmaker told the AFP news agency. A survivor of the assault on the village of Dikera said the Lakurawa group — an obscure armed formation that some researchers tie to the Islamic State Sahel Province, the jihadist franchise active in Burkina Faso, Mali and Niger — attacked with rifles, knives and machetes; many villagers escaped only when a rival jihadist group known as Mahmuda intervened and turned on the attackers. A second village, Binzi, was also hit, and the exact toll was not known; federal deputy Jafaru Mohammed corroborated the account.",
-   "why": "Mass abduction has been a signature tactic of Nigeria's 17-year jihadist insurgency since the 2014 kidnapping of hundreds of schoolgirls at Chibok; an attack of this kind in Niger State signals the Sahel's armed groups pressing further south into Nigeria's central belt, and the involvement of two rival factions points to a fragmenting, harder-to-map threat.",
-   "url": "https://www.letemps.ch/articles/au-nigeria-des-djihadistes-ont-tue-et-enleve-des-dizaines-de-personnes-dans-le-centre-du-pays-selon-des-survivants",
-   "source_domain": "letemps.ch",
    "date": "2026-08-22",
    "date_label": "Aug 22",
    "stream": "news",
@@ -3961,33 +4065,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-08-21-ai-ml-teaching-a-model-to-allocate-its-own-thinking-bu",
-   "sid": "st-6ab8343d65c8",
-   "headline": "Model learns when to think",
-   "summary": "Reasoning models usually run at a fixed token budget, over-thinking easy problems and under-thinking hard ones. This paper lets the model pick, as its first token, one of three modes — NoThink, Short, or Long — learned inside GRPO (Group Relative Policy Optimization, the reward-based post-training recipe behind recent reasoning models) with no separate router, using a shaped reward plus hard per-mode token caps. On a 1.5B model trained on MATH the modes emerge without collapsing, and accuracy holds (0.782 vs 0.796 base on held-out MATH500) while mean response length drops from 4,796 to 2,811 tokens — a 41% cut. It transfers untrained to other benchmarks, e.g. 76% fewer tokens on GSM8K.",
-   "why": "inference cost is roughly proportional to tokens generated, so a model that spends effort in proportion to difficulty — and learns the dial itself, rather than a hand-set \"reasoning effort\" slider — is a cheap, broadly reusable efficiency lever.",
-   "url": "https://arxiv.org/abs/2608.20256",
-   "source_domain": "arxiv.org",
-   "date": "2026-08-21",
-   "date_label": "Aug 21",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/21/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 21 Aug",
-   "daybreak": false
-  },
-  {
    "id": "2026-08-21-news-north-korea-launched-about-10-short-range-ballis",
    "sid": "st-761aa83e6810",
    "headline": "North Korea fires 10 missiles",
@@ -4001,34 +4078,6 @@
    "stream_label": "News",
    "topics": [
     "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/21/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 21 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-21-news-a-hong-kong-court-found-two-organisers-of-the-ci",
-   "sid": "st-0e3ba8755f4b",
-   "headline": "Hong Kong Tiananmen organisers convicted",
-   "summary": "A Hong Kong court found two organisers of the city's former Tiananmen vigil guilty of \"inciting subversion\" on Friday 21 August, one of the highest-profile prosecutions under the national security law Beijing imposed in 2020. Lee Cheuk-yan, 69, and Chow Hang-tung, 41 — leaders of the now-disbanded Hong Kong Alliance, which for years ran the annual candlelight vigil marking the 4 June 1989 crackdown in Beijing — were convicted of inciting others to subvert state power by unlawful means; each faces up to 10 years in prison, with sentencing to follow. Their trial ran 24 days from January; a third defendant, former lawmaker Albert Ho, 74, pleaded guilty. Chow, who represented herself, told the court in May that \"the law itself was on trial\", and the UK Foreign Office condemned the use of the security law to convict the pair.",
-   "why": "Hong Kong and Macau were once the only places on Chinese soil where the Tiananmen dead could be publicly mourned; convicting the vigil's organisers effectively criminalises that memory and marks how far the 2020 security law has reached into ordinary civic life.",
-   "url": "https://www.theguardian.com/world/2026/aug/21/tiananmen-square-vigil-hong-kong-alliance-activists-guilty-verdict-lee-cheuk-yan-chow-hang-tung",
-   "source_domain": "theguardian.com",
-   "date": "2026-08-21",
-   "date_label": "Aug 21",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
@@ -4088,33 +4137,6 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/08/20/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Thu 20 Aug",
-   "daybreak": false
-  },
-  {
-   "id": "2026-08-20-news-a-chinese-court-sentenced-evergrande-founder-hui",
-   "sid": "st-758df9a7be74",
-   "headline": "Evergrande founder gets life sentence",
-   "summary": "A Chinese court sentenced Evergrande founder Hui Ka Yan to life in prison on Thursday 20 August for fraud and bribery, ordering all his personal property confiscated. The Shenzhen Intermediate People's Court found that Hui — once Asia's richest man, who pleaded guilty in April — ran continuous, large-scale financial fraud to inflate the developer's assets and conceal its liabilities; investigators had found Evergrande overstated revenue by roughly $80 billion in 2019 and 2020. The court fined Evergrande 8.82 billion yuan ($1.31 billion) and its main subsidiary Hengda Real Estate 7 billion yuan, and handed six-to-18-year terms to five other executives. Evergrande defaulted in 2021 on most of its roughly $300 billion in liabilities, was ordered liquidated in 2024 and delisted in 2025 — the defining symbol of China's property-sector crisis.",
-   "why": "The sentence draws a line under the company whose collapse triggered China's property bust, signalling Beijing will pin the debt crisis on individual executives even as the underlying downturn in housing continues to weigh on the economy.",
-   "url": "https://www.dw.com/en/evergrande-founder-hui-ka-yan-sentenced-to-life-in-prison/a-78439153",
-   "source_domain": "dw.com",
-   "date": "2026-08-20",
-   "date_label": "Aug 20",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "economy"
-   ],
-   "topic_primary": "economy",
-   "topic_label": "Economy",
-   "topic_color": "#9a7b2e",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/08/20/news/",
