@@ -1,0 +1,44 @@
+date: 2026-09-06
+applied: false
+patches:
+  # CARRIED reach flip from writer-side telemetry (no evaluator probe evidence — the evaluator
+  # sandbox egress is allowlist-walled this window: every non-allowlisted host returned code 000
+  # / CONNECT tunnel-block, only nature.com resolved, and linkcheck resolved 6/20 for the same
+  # reason. So Sunday re-probes carry no domain evidence and none are proposed from them.)
+  - domain: france24.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: >-
+      CARRIED from 2026-08-31. Still recorded reach: direct (registry line 1997), contradicted by
+      writer-side data: this window france24.com was 12 fail / 2 ok-via-proxy / 0 ok-curl
+      (health.json feeds) — proxy carried it, direct did not. "direct" is the wrong reach.
+      Writers confirm at next citation with the bearer. Distinct from rm-2 (editorial demotion);
+      this is purely the mechanical reach field. Pairs with rm-2 — worth applying together.
+
+  # CARRIED, still status: candidate in sources/registry.yml (verified lines 3080 esv.ch,
+  # 3092 uci.ch). Fill the sports primary-source gap. No fresh evaluator probe evidence
+  # (egress allowlist-walled); carried on record from prior scouts.
+  - domain: esv.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED (6th run). Still status: candidate. Eidgenoessischer Schwingerverband, official Swiss wrestling federation; genuine primary for Schwingen / Swiss-personalization sports coverage. reach: proxy-needed."
+  - domain: uci.ch
+    from: candidate
+    to: probation
+    evidence: "CARRIED (6th run). Still status: candidate. Union Cycliste Internationale, official world cycling federation; primary for cycling coverage. reach: proxy-needed."
+
+  # New scout candidates appended to sources/candidates.jsonl this run (Science = worst-deficit
+  # stream: new_domains=5, top5_share=1.00, unique_domains=9, nature.com saturated). Both are
+  # genuine primary science publishers absent from the registry, directly relevant to this week's
+  # physics- and biomedicine-heavy science/weekend slate (LZ dark-matter -> Physical Review
+  # Letters, altermagnets, RAS drug, clonal haematopoiesis). They need a probation cycle before
+  # promotion, so no from/to transition proposed yet. Both reach: proxy-needed (evaluator egress
+  # allowlist-walled -- writers vet at first citation).
+  # - journals.aps.org  (American Physical Society / Physical Review family; primary physics journal)
+  # - pnas.org          (Proceedings of the National Academy of Sciences; primary multidisciplinary journal)
+  #
+  # POSITIVE VERIFICATION: last run's two scout candidates (chemrxiv.org, cell.com) verifiably
+  # LANDED in sources/registry.yml (chemrxiv line 3468 status:candidate; cell.com line 378
+  # status:probation); candidates.jsonl was cleared to 0 lines before this run's appends.
+  # The candidate -> registry scout path is working end-to-end.
