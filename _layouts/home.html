@@ -235,7 +235,19 @@
     <p class="rail-note"><strong>Newest first, then what the desk thinks matters most — position is the ranking, and nothing you do moves it.</strong> Everything else is size: a story you've read, or one that has aged past its edition, shrinks where it stands; opening one makes it longer down its own column, never wider.</p>
     </details>
   </aside>
-  <div class="folio-grid" id="folioGrid" tabindex="-1">
+  {%- comment -%}
+    AN ORDERED LIST, BECAUSE THAT IS WHAT THE DATA IS (2026-09-12). `feed.board` arrives sorted
+    (date, tier, position) and DOM order IS that ranking — the sheet was a <div> of <article>s,
+    which threw the ranking away for anyone not looking at it. As an <ol> a screen reader says
+    "list, 80 items" and "item 5 of 80", which is the front page's whole organising idea spoken
+    aloud. `role="list"` is not redundant: WebKit drops list semantics from any list given
+    `display:grid` or `flex`, which is exactly what this element is.
+    Each item is `<li class="fcard">` carrying the card's data attributes (the JS reaches every
+    card through `.fcard`, never through a tag name) and the bordered panel inside it is the
+    `<article>` — one story, one article element, where before the article WAS the grid item and
+    the panel was a div.
+  {%- endcomment -%}
+  <ol class="folio-grid" id="folioGrid" tabindex="-1" role="list">
     {%- comment -%}
       ONE RANKED BOARD, ONE LOOP (2026-07-26). `feed.board` is a single ordered sequence over
       stories AND editorials, built server-side by build_stories_feed.py::build_board and sorted
@@ -262,8 +274,8 @@
     {% assign board = feed.board | default: feed.stories %}
     {% for it in board %}
     {% if it.kind == 'editorial' %}
-    <article class="fcard fcard--ed" data-topics="" data-imp="2" data-age="{{ it.age_days }}"{% if it.daybreak %} data-daybreak=""{% endif %} data-story="ed-{{ it.stream }}-{{ it.date }}">
-      <div class="fcard__in">
+    <li class="fcard fcard--ed" data-topics="" data-imp="2" data-age="{{ it.age_days }}"{% if it.daybreak %} data-daybreak=""{% endif %} data-story="ed-{{ it.stream }}-{{ it.date }}">
+      <article class="fcard__in">
         <div class="fcard__top">
           {% if it.daybreak %}<span class="fcard__day">{{ it.day_label }}</span>{% endif %}
           <span class="fcard__beat"><span class="ff-dot"></span>{{ it.kicker }}</span>
@@ -287,12 +299,12 @@
           <button class="ffb-t ffb-down" type="button" data-v="-1" aria-label="Not useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
           <span class="ffb-note" aria-live="polite"></span>
         </div>
-      </div>
-    </article>
+      </article>
+    </li>
     {% else %}
     {%- assign s = it -%}
-    <article class="fcard imp{{ s.importance }}{% if s.is_lead %} lead{% endif %}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}" data-age="{{ s.age_days }}"{% if s.daybreak %} data-daybreak=""{% endif %}{% if s.deck %} data-deck=""{% endif %}{% if s.url and s.importance > 1 %} data-ogurl="{{ s.url }}"{% endif %}>
-      <div class="fcard__in" style="--tc:{{ s.topic_color }}">
+    <li class="fcard imp{{ s.importance }}{% if s.is_lead %} lead{% endif %}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}" data-age="{{ s.age_days }}"{% if s.daybreak %} data-daybreak=""{% endif %}{% if s.deck %} data-deck=""{% endif %}{% if s.url and s.importance > 1 %} data-ogurl="{{ s.url }}"{% endif %}>
+      <article class="fcard__in" style="--tc:{{ s.topic_color }}">
         <div class="fcard__top">
           {%- comment -%} DAYBREAK IS TYPOGRAPHIC, not a rule line. The board is column-packed, so
             columns stack independently and there is no shared row line to thicken — a heavy top
@@ -354,8 +366,8 @@
           <button class="ffb-t ffb-down" type="button" data-v="-1" aria-label="Not useful"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></button>
           <span class="ffb-note" aria-live="polite"></span>
         </div>
-      </div>
-    </article>
+      </article>
+    </li>
     {% endif %}
     {% endfor %}
     {%- comment -%} THE EMPTY STATE IS THE LAST GRID CHILD, NOT A SIBLING OF THE BOARD (2026-07-25).
@@ -370,8 +382,8 @@
       counts every child, so a div anywhere before the modules would shift the composition by one.
       `role="status"` + `aria-live` stay on the element itself — it is announced when it appears,
       wherever it sits in the DOM. {%- endcomment -%}
-    <div class="folio-empty" id="folioEmpty" role="status" aria-live="polite" hidden>No stories on this beat right now.</div>
-  </div>
+    <li class="folio-empty" id="folioEmpty" role="status" aria-live="polite" hidden>No stories on this beat right now.</li>
+  </ol>
 </div>
 {% else %}
 <p style="text-align:center; font-family:var(--sans); color:var(--muted);">No stories yet — check back after the next brief.</p>
@@ -834,6 +846,10 @@
      is the dominant-module work, not this property. */
   .folio-grid{
     display:grid; gap:0; grid-template-columns:1fr;   /* align-items: stretch (default) */
+    /* an <ol> since 2026-09-12, so the list chrome has to go: the UA's 40px inline padding would
+       inset the whole sheet, and minimal-mistakes' `ul li,ol li{margin-bottom:0.5em}` (0,0,2)
+       would open a half-em gap in a rule system built on zero gap and shared 1px edges. */
+    list-style:none; margin:0; padding:0;
     /* THE RULE SYSTEM (2026-07-25). Zero gap; every module paints ONLY its block-start and
        inline-start edges and the container closes the other two. Each shared edge therefore gets
        exactly one line however modules span — measured: every item computes border-top 1px,
@@ -846,6 +862,7 @@
        boundary. */
     border-block-end:1px solid var(--rule); border-inline-end:1px solid var(--rule);
   }
+  .folio-grid > li{ margin-bottom:0; }   /* beats `ul li,ol li` at (0,1,1) */
   /* 700px, not ~676: the old engine's threshold came out of `grid.clientWidth`, which is the
      viewport minus the board's 24px inset. Measured 1->2 columns between 690 and 700. */
   @media (min-width:700px){  .folio-grid{ grid-template-columns:repeat(2,1fr); } }
