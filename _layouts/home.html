@@ -1,25 +1,52 @@
 ---
-layout: archive
 ---
-
-{{ content }}
-
+{%- comment -%}
+  THIS PAGE OWNS ITS WHOLE DOCUMENT (2026-09-12), where it used to be `layout: archive`, and the
+  reason is structural rather than stylistic. Under the theme's layouts everything a page emits is
+  trapped inside `.initial-content`, while `#footer.page__footer` is emitted OUTSIDE it. So the
+  control bar could never be anything but `position:fixed`, and clearing a fixed bar is always a
+  number that one box has to carry on behalf of another box it cannot see. That is exactly how the
+  bar came to cover the last 40px of the footer with a `padding-bottom` on `#main` that could not
+  reach it (git log, 2026-09-12).
+  Owning <body> makes the bar a TRACK instead of an overlay, and two tracks of one grid cannot
+  overlap: there is nothing left to reserve and no number to keep in sync. The theme still does
+  what it is good at -- `head.html` (SEO, meta, the compiled main.css), `footer.html` and
+  `scripts.html` are its includes, called here by name. What we no longer inherit is the BOX,
+  which was the only part we were fighting.
+  WHAT `archive` GAVE US AND WHERE IT WENT: its `<h1 class="page__title">` is emitted below, same
+  element and same rules. `masthead.html` is not called at all -- site nav is empty and the front
+  page was already hiding it with `.layout--home .masthead{display:none}`. `skip-links.html` is
+  not called because two of its three targets stop existing here (`#site-nav`, and a `#footer`
+  nobody can act on); `.ff-skip` is the real one. `sidebar.html`, the hero branches and
+  `breadcrumbs.html` were already no-ops on this page (author_profile:false, no page.header,
+  url == "/").
+  NOTHING ELSE ON THE SITE MOVES: `prompts.html` and the evaluator reviews are `layout: single`,
+  which still goes through the theme's `default.html`, and they keep reading the same
+  `_includes/head/custom.html` this page does.
+{%- endcomment -%}
+<!doctype html>
+{% include copyright.html %}
+<html lang="{{ site.locale | replace: '_', '-' | default: 'en' }}" class="no-js">
+  <head>
+    {% include head.html %}
+    {% include head/custom.html %}
+  </head>
+<body class="layout--home">
 {% assign feed = site.data.homefeed %}
 {%- comment -%}
-  First focusable element on the page, on purpose. The beat/read/sync controls stay ahead of the
-  stories in the DOM because the bar is sticky-top at >=700px and a sticky box after a ~26,000px
-  board never sticks (see the .folio-filters comment). This is the compensation for that.
+  First focusable element on the page, on purpose, and now the only skip link. The bar still comes
+  before the stories in the DOM so that at >=700px, where it is the page's top track, a keyboard
+  reader meets the controls where the eye does. Below 700 it is the bottom track and the two
+  disagree -- the same divergence the fixed bar always had, and the reason this link exists.
 {%- endcomment -%}
 {% if feed and feed.stories and feed.stories.size > 0 %}<a class="ff-skip" href="#folioGrid">Skip to the stories</a>{% endif %}
-<p class="home-tagline">The day's stories, sized by how much they matter.</p>
-<button class="hiw-open" id="hiwOpen" type="button" aria-haspopup="dialog"
-        aria-controls="hiwModal" aria-expanded="false">
-  <svg viewBox="0 0 30 8" aria-hidden="true"><circle cx="4" cy="4" r="2.2"/><path d="M8 4h4.8"/><circle cx="15" cy="4" r="2.2"/><path d="M19 4h4.8"/><circle cx="26" cy="4" r="2.2"/></svg>
-  How this works
-</button>
 
 {% if feed and feed.stories and feed.stories.size > 0 %}
-<div class="folio-filters" id="folioFilters">
+{%- comment -%} A <nav>, not a div: thirteen beat chips, a read filter and the sync control are a
+  navigation region over this page's own content, and the one region a reader returns to. It is a
+  track of the body grid (see `.folio-filters` in the stylesheet) -- not fixed, not sticky.
+{%- endcomment -%}
+<nav class="folio-filters" id="folioFilters" aria-label="Filter the stories">
   <span class="ff-lbl">Beat</span>
   <button class="ff-chip ff-all" type="button" data-topic="" aria-pressed="true">All <span class="ff-ct">{{ feed.count }}</span></button>
   {% for t in feed.topics %}
@@ -56,8 +83,38 @@ layout: archive
     <span class="ff-li" data-imp="2"><i class="tier-key"></i>Feature</span>
     <span class="ff-li" data-imp="1"><i class="tier-key"></i>Brief</span>
   </span>
-</div>
+</nav>
+{% endif %}
 
+{%- comment -%}
+  THE SCROLLPORT, and the one element here that is not a landmark. It exists because the page is a
+  viewport-height shell: <body> is two grid tracks, the bar and this, so the bar cannot be covered
+  and cannot cover anything. Everything that scrolls has to live in ONE box for that to hold, and
+  masthead + stories + page foot are three landmarks, so the box that holds them is a div and says
+  so. `<header>`, `<main>` and `<footer>` inside it stay real landmarks: none of them is nested in
+  sectioning content, only in a plain div.
+{%- endcomment -%}
+<div class="shell__view" id="shellView">
+  {%- comment -%}
+    THE MASTHEAD SCROLLS AWAY, which is why it is inside the scrollport and not a third track. It
+    is branding, read once; the bar is the control a reader returns to, and only controls earn
+    permanent screen. At >=1280 the nameplate is repeated in the rail and this <h1> is visually
+    hidden but never deleted, so the page keeps exactly one accessible title either way (see
+    `.rail-nameplate`). The theme's own masthead is not emitted at all: site nav is empty.
+  {%- endcomment -%}
+  <header class="shell__head">
+    <h1 id="page-title" class="page__title">{{ page.title }}</h1>
+    <p class="home-tagline">The day's stories, sized by how much they matter.</p>
+    <button class="hiw-open" id="hiwOpen" type="button" aria-haspopup="dialog"
+            aria-controls="hiwModal" aria-expanded="false">
+      <svg viewBox="0 0 30 8" aria-hidden="true"><circle cx="4" cy="4" r="2.2"/><path d="M8 4h4.8"/><circle cx="15" cy="4" r="2.2"/><path d="M19 4h4.8"/><circle cx="26" cy="4" r="2.2"/></svg>
+      How this works
+    </button>
+  </header>
+
+  <main id="main" class="shell__main">
+{{ content }}
+{% if feed and feed.stories and feed.stories.size > 0 %}
 <div class="folio-board">
   <span class="ff-crop tl"></span><span class="ff-crop tr"></span><span class="ff-crop bl"></span><span class="ff-crop br"></span>
   {%- comment -%}
@@ -341,6 +398,22 @@ layout: archive
     </form>
   </details>
 </section>
+  </main>
+
+  {%- comment -%}
+    THE FOOTER IS CONTENT, NOT A TRACK, and that placement is the argument of this rewrite in one
+    element. As the theme emitted it, it sat outside `#main` as a sibling of everything we could
+    style, and a viewport-anchored bar had no way to know it was there. Here it is the last thing
+    inside the scrollport: it cannot be covered, because the bar is a different track of the grid,
+    and it cannot cost a phone 95px of permanent screen, because it scrolls like the stories do.
+    `footer.html` is the theme's own -- the feed link and the copyright line, still the theme's to
+    change -- inside our <footer>, which is a contentinfo landmark here because its only ancestors
+    are a <div> and <body>.
+  {%- endcomment -%}
+  <footer id="footer" class="page__footer">
+    {% include footer.html %}
+  </footer>
+</div>
 
 <!-- "How this works" modal — a public, product-level architecture map. Generated SVGs carry the
      visual hierarchy; the hidden semantic transcript supplies the accessible reading order. -->
@@ -507,18 +580,65 @@ layout: archive
      fits the hole a lead leaves in the shorter column, so 300px+ voids appeared. Progressive:
      without JS the grid stays normal block flow (single column, everything readable). ===== */
 
-  /* reclaim full width: minimal-mistakes reserves the right-sidebar gutter on .archive even when
-     no sidebar renders here (author_profile:false) — it does so with padding-right:300px (x-large)
-     / 200px (large), NOT width, so we must zero the padding too or the grid sits 300px short and
-     reads as a narrow left-aligned column. #main's own max-width (1280) is lifted a step so wide
-     monitors get a 4th column instead of dead margin. */
-  .layout--home .archive{ width:100%; float:none; margin:0; padding-left:0; padding-right:0; }
-  .layout--home #main{ max-width:1680px; }
-  /* no top bar on the front page (2026-07-11): the masthead is pure branding here (site nav is
-     empty), so the page opens straight on the "News" nameplate; brief pages keep the masthead
-     as their way back home. */
-  .layout--home .masthead{ display:none; }
-  .layout--home #main{ padding-top:1.6em; }
+  /* ===== THE PAGE SHELL: TWO TRACKS THAT CANNOT OVERLAP (2026-09-12) =====
+     <body> is the shell and it is exactly the viewport: a two-row grid, one row for the control
+     bar and one for everything that scrolls. That is the whole of the fix, and it is a structural
+     one rather than a careful one. An overlay has to be cleared by a number some OTHER box
+     carries, and both halves of that were wrong here — 58px reserved for a bar measuring 40, on
+     `#main`, which sat inside the flex item that grows while the footer sat outside it entirely,
+     so the reservation could never reach the thing it was for. Two tracks of one grid have no
+     such failure mode: each owns its row, neither can reach into the other, and there is nothing
+     to reserve because nothing is floating.
+     WHAT THIS REPLACED, so it is not rediscovered and put back: `.folio-filters` was
+     `position:fixed` below 700px and `position:sticky; top:0` above it; `#main` carried a
+     `padding-bottom` to clear the fixed one; `.layout--home .archive` existed only to undo the
+     theme's sidebar gutter; `.layout--home .masthead{display:none}` hid a masthead this layout no
+     longer emits. All four are gone. The bar needs no stickiness, because a track above a
+     scrollport is permanently visible by construction, and no z-index, because it is painted over
+     nothing.
+     100dvh, NOT 100vh: with a bottom track the shell has to be the viewport the reader can
+     actually see, and vh is the LARGE one — sized to that, the bar sits under the browser's own
+     toolbar for as long as the toolbar is showing.
+     `overflow:hidden` here is the other half of "cannot overlap": it is also cannot escape. Only
+     `.shell__view` scrolls, so the document never does.
+     THE COST, stated rather than discovered later: a document that does not scroll is one whose
+     URL bar mobile browsers will not auto-hide, and browsers restore document scroll rather than
+     container scroll, so a reload opens at the top. Both are the price of a bar that is an object
+     in the layout instead of a sheet of glass over it. */
+  body.layout--home{ display:grid; grid-template-rows:1fr auto; block-size:100dvh;
+    overflow:hidden; margin:0; }
+  .shell__view{ grid-row:1; overflow-y:auto; overscroll-behavior-block:contain;
+    display:flex; flex-direction:column; }
+  .folio-filters{ grid-row:2; }
+  @media (min-width:700px){
+    /* the bar changes TRACK, not position — one object, read first where the screen is wide */
+    body.layout--home{ grid-template-rows:auto 1fr; }
+    .folio-filters{ grid-row:1; }
+    .shell__view{ grid-row:2; }
+  }
+  /* the modal locks the scrollport rather than the document, which has no scroll to take away.
+     `hiw-lock` still lands on <html>, so the modal script is unchanged. */
+  .hiw-lock .shell__view{ overflow:hidden; }
+
+  /* THE COLUMN IS DECLARED ONCE, and as a definite width rather than a max-width, which is not a
+     style choice: `#main` keeps the theme's `margin-inline:auto`, and per Flexbox 9.4 a flex item
+     with auto cross-axis margins is NOT stretched — it is sized to fit-content. Measured the
+     first time that was tried: the whole page collapsed to ~305px inside a 500px viewport, the
+     same trap `home_harness.py` documents around `.harness-doc`. A definite inline-size is what
+     makes `margin-inline:auto` mean "centre" again, so the width and the centring stop fighting.
+     `max-inline-size:none` is required with it — the theme's `#main{max-width:1280px}` is (1,0,0)
+     and would otherwise clamp the column a step below what a wide monitor can show. 1680 is the
+     old number: a fourth column of stories instead of dead margin. */
+  .shell__head, #main.shell__main{ inline-size:min(1680px, 100%);
+    max-inline-size:none; margin-inline:auto; padding-inline:1em; }
+  .shell__head{ padding-block-start:1.6em; }
+  /* the sheet takes the LEFTOVER height, which is what `flex-grow` means — the free space after
+     every item is laid out at its natural size, never the whole track. So a full board is
+     untouched (there is no free space at 27,000px) and an emptied one stops collapsing to a
+     caption with 385px of bare paper under it: the board absorbs the slack, and the propose
+     disclosure and the footer stay at the end of the page instead of halfway up the screen. */
+  #main.shell__main{ display:flex; flex-direction:column; flex:1 0 auto; }
+  .folio-board{ flex:1 0 auto; }
 
   /* CONTROLS IN THE THUMB ZONE (2026-07-25). Measured at a true 390px viewport (iframe technique —
      headless clamps --window-size to a 500px floor): the bar was ~186px of chrome ABOVE the first
@@ -528,16 +648,21 @@ layout: archive
      `order` below is on the CONTROL BAR, not the grid. The grid's no-reorder prohibition is about
      ranked CONTENT; moving the most-used controls (read filter, sync) nearest the thumb is the
      whole point here.
-     DOM ORDER IS DELIBERATELY UNCHANGED. Putting `.folio-filters` after `.folio-board` would hand
-     AT and no-CSS readers the stories first, but the bar is `position:sticky; top:0` at >=700px and
-     a sticky box placed after a ~26,000px board only sticks once scrolled TO — it would land at the
-     page bottom on desktop. Making desktop `fixed` instead covers the nameplate from first paint.
-     The skip link buys the same reading-order win at none of that cost. */
-  .folio-filters{ display:flex; align-items:center; gap:8px 6px; z-index:20; background:var(--paper);
-    position:fixed; inset-inline:0; inset-block-end:0; margin:0;
+     DOM ORDER IS DELIBERATELY UNCHANGED, and the reason is now the reader rather than the CSS.
+     It used to be that a sticky box placed after a ~26,000px board never sticks; the bar is a grid
+     track now, so its row is independent of its DOM position and either order would RENDER right.
+     What is not free is focus order, which follows the DOM: at >=700px the bar is the top track,
+     so a keyboard reader meets the controls where the eye meets them. Below 700 the bar is the
+     bottom track and DOM and eye disagree — the same divergence the fixed bar always had, and
+     `.ff-skip` is the compensation for it.
+     THE BAR IS FULL-BLEED BELOW 700 AND A COLUMN ABOVE IT, which is a change of box, not of look:
+     as a body track it spans the viewport, where it used to inherit `#main`'s column. The >=700
+     rule below hands it the same 1680/1em box the sheet has, so the chips still start on the same
+     vertical as the headlines; below 700 the 12px inline padding is its own, edge to edge. */
+  .folio-filters{ display:flex; align-items:center; gap:8px 6px; background:var(--paper);
+    margin:0; padding:8px 12px max(8px, env(safe-area-inset-bottom));
     flex-wrap:nowrap; overflow-x:auto; overscroll-behavior-inline:contain; scrollbar-width:none;
-    border-block-start:1px solid var(--rule);
-    padding:8px 12px max(8px, env(safe-area-inset-bottom)); }
+    border-block-start:1px solid var(--rule); }
   .folio-filters::-webkit-scrollbar{ display:none; }
   .folio-filters > *{ flex:0 0 auto; }   /* nowrap: nothing may shrink a chip into an ellipsis */
   @media (max-width:699px){
@@ -546,46 +671,40 @@ layout: archive
     .ff-sync{ order:-1; margin-left:0; }
     /* the panel has to open UPWARD off a bottom bar, or it renders off-screen */
     .ff-spanel{ top:auto; bottom:calc(100% + 9px); right:auto; left:0; }
-    /* THE BOTTOM BAND IS ONE NUMBER AND THE PAGE SHELL RESERVES IT (2026-09-12). What was here:
-       `.layout--home #main{ padding-bottom:calc(58px + env(safe-area-inset-bottom)) }`. The
-       arithmetic was never the bug — the BOX was. minimal-mistakes already makes <body> the page
-       shell: `body{display:flex; flex-direction:column; min-height:100vh}` with
-       `.initial-content{flex:1 0 auto}` and `#footer.page__footer` as the shell's last track. So
-       `#main` is a descendant of the track that GROWS, and the footer is not a descendant of it at
-       all: on a short page .initial-content simply grows past whatever `#main` reserves, and the
-       footer lands flush on the viewport bottom, under the bar. Measured at 500x900 with the Read
-       filter emptying the board: footer 718..813, bar 773..813 — 40px of a 95px footer covered,
-       with `body.scrollHeight === innerHeight`, so the covered strip could not be scrolled to.
-       The same 40px at scroll-end with the full board; the board's height was never the variable.
-       The reservation therefore belongs to the shell. The shell is border-box (the theme's
-       `html{box-sizing:border-box}`), so `padding-block-end` shrinks the 100dvh content box, the
-       footer rides up with it, and no scrollbar is invented. --ff-bar is the band, declared once
-       and handed to the bar as a floor so the two cannot drift apart. The reservation is never
-       short of the bar it clears: the bar measures max(--ff-bar, 8 + chips + max(8px, safe-inset))
-       and the shell reserves --ff-bar + safe-inset. The chip row measures 23.2px, so the band has
-       ~13px of headroom before that sum could outgrow it — raise --ff-bar if a chip ever does.
-       THE 100dvh IS REASONED, NOT MEASURED, and it is not what fixes the overlap: the padding
-       alone was verified to fix it with the theme's `min-height:100vh` left in place. What vh
-       costs is coherence — it is the LARGE viewport, so with the browser's toolbars showing the
-       shell is sized to a screen taller than the one the bar is anchored to, and a page that fits
-       gains a scroll it does not need. Headless has no dynamic toolbar, so this line is the only
-       thing in this block a browser here cannot show you. */
-    body.layout--home{ --ff-bar:44px; min-block-size:100dvh;
-      padding-block-end:calc(var(--ff-bar) + env(safe-area-inset-bottom)); }
-    .folio-filters{ min-block-size:var(--ff-bar); }
+    /* THE BOTTOM BAND USED TO BE A NUMBER HERE (retired 2026-09-12), and the history is the
+       argument for the shell above, so it is recorded rather than deleted. While the bar was
+       `position:fixed`, something else had to know how tall it was, and for months that was
+       `.layout--home #main{ padding-bottom:calc(58px + env(safe-area-inset-bottom)) }` — 58px
+       reserved for a bar measuring 40, on a box that could not reach the footer, which sits
+       outside `#main` in the theme's shell. Measured at 500x900 with the board filtered empty:
+       footer 718..813, bar 773..813, and `body.scrollHeight === innerHeight`, so the covered 40px
+       could not even be scrolled to. Moving the same reservation onto <body> fixed it and was
+       verified; it was still a number one zone carried on behalf of another, and the next person
+       to change the bar's padding would have owned a bug nobody could see.
+       What died with it: `--ff-bar`, the shell's `padding-block-end`, the bar's `min-block-size`
+       floor, and a ResizeObserver publishing the bar's measured height (written, then dropped —
+       the bar is `flex-wrap:nowrap` with `overflow-x:auto`, so its height is one chip row by
+       construction and cannot drift; and the callback never fires under headless's
+       --virtual-time-budget, so it could not have been verified here either way). */
   }
   @media (min-width:700px){
-    .folio-filters{ position:sticky; inset-block-end:auto; top:0; inset-inline:auto;
-      flex-wrap:wrap; overflow:visible; margin:1.4em 0 0; padding:12px 0 8px;
+    /* Wide screens get the wrapping bar back — there is room for thirteen chips on two rows and
+       no thumb to keep them near. Still a track, so no position, no inset, no margin: the row is
+       as tall as the chips make it and the scrollport starts below it. */
+    .folio-filters{ inline-size:min(1680px, 100%); margin-inline:auto;
+      flex-wrap:wrap; overflow:visible; padding:12px 1em 8px;
       border-block-start:0; border-bottom:1px solid var(--hair); }
   }
-  /* Skip link — the reading-order fix that does not cost desktop stickiness. Visible only on
-     keyboard focus; it is the first focusable thing on the page. */
-  .ff-skip{ position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0,0,0,0);
-    white-space:nowrap; border:0; }
-  .ff-skip:focus{ position:static; width:auto; height:auto; margin:0 0 .8em; clip:auto;
+  /* Skip link — the first focusable thing on the page, and the only element besides the modal
+     that is allowed out of flow. `position:fixed`, not `static`-on-focus, and that is structural
+     rather than cosmetic now: a statically positioned child of the shell IS a grid item, so a
+     link nobody sees would add a third row to the page's two-track model and push the bar off the
+     bottom of the viewport. Out of flow in every state; only the offset changes. */
+  .ff-skip{ position:fixed; z-index:40; inset-block-start:0; inset-inline-start:0;
+    transform:translateY(-150%); background:var(--paper);
     display:inline-block; padding:6px 11px; border:1px solid var(--accent); color:var(--accent);
     font-family:var(--sans); font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; }
+  .ff-skip:focus{ transform:none; }
   .ff-lbl{ font-family:var(--sans); text-transform:uppercase; letter-spacing:.14em; font-size:.6rem; color:var(--muted); margin-right:2px; }
   .ff-chip{ font-family:var(--sans); font-size:.72rem; letter-spacing:.02em; cursor:pointer; background:transparent;
     color:var(--ink); border:1px solid var(--hair); padding:.42em .72em; display:inline-flex; align-items:center;
@@ -670,14 +789,21 @@ layout: archive
        nameplate is in the rail now. The bar's top margin separated it from the tagline and the
        How-this-works button, both retired above. Nothing is being tightened for its own sake —
        these were spacing FOR elements, and the elements are gone.
-       The bar is `position:sticky; top:0`, so this only changes where the page opens; scrolled,
-       it pins flush regardless. Below 1280 the centered header still exists and keeps its air. */
-    .layout--home #main{ padding-top:8px; }
-    .folio-filters{ margin-top:0; }
+       The bar is a track now, so it has no margin left to remove and the sheet opens directly
+       under it. What is left is `.shell__head`, whose three children are all hidden at this
+       width — an empty masthead has to be a zero-height one, or it is the same dead band wearing
+       a different element. Below 1280 the centered header still exists and keeps its air. */
+    .shell__head{ padding-block:0; }
+    #main.shell__main{ padding-block-start:8px; }
     .folio-board{ padding-top:14px; }
   }
 
-  .folio-board{ position:relative; padding:22px 0 10px; }
+  /* the board is a column below 1280 so the sheet can take the height the board was given (the
+     `flex:1 0 auto` up in the shell); at >=1280 the board is the rail|sheet grid and its items
+     stretch to the row on their own. `.ff-crop` corners are absolutely positioned, so they are
+     items of neither and the flex switch cannot move them. */
+  .folio-board{ position:relative; padding:22px 0 10px; display:flex; flex-direction:column; }
+  .folio-grid{ flex:1 0 auto; }
   .ff-crop{ position:absolute; width:14px; height:14px; pointer-events:none; }
   .ff-crop::before,.ff-crop::after{ content:""; position:absolute; background:var(--rule); }
   .ff-crop::before{ width:100%; height:1px; top:0; } .ff-crop::after{ height:100%; width:1px; left:0; }
@@ -871,9 +997,20 @@ layout: archive
        trigger could not be reached at all without scrolling the whole sheet past them.
        `max-height` + `overflow-y:auto` gives it a scroll container of its own, so it stays
        visible while the sheet scrolls and scrolls internally only when it does not fit.
-       `top:55px` clears the sticky control bar exactly — that bar is `top:0` and 47px tall here,
-       so 55 leaves 8px of air rather than the old 64px guess. The max-height subtracts the same
-       offset plus a bottom gap, which is what keeps the last rail item on screen.
+       THE OFFSETS ARE MEASURED AGAINST THE SCROLLPORT NOW (2026-09-12), not the viewport. The
+       bar used to be `position:sticky; top:0` inside this same scroller, so the rail had to step
+       around it: `top:55px` was 47px of bar plus 8px of air, and the max-height subtracted that
+       plus a bottom gap. The bar is a track above the scrollport now, so the scroller already
+       starts below it and the rail only owes the 8px of air. The height bound still has to name
+       the bar, because the scrollport's height is `100dvh` minus that track and no percentage
+       inside reaches it. Measured at 1400: bar 47px, and UNSCROLLED the rail starts 30px into the
+       scrollport (`#main`'s 8px and the board's 22px), which is the worst case the bound has to
+       survive — 47 + 30 + 8 of bottom air = 85. Bound at 63 instead, the rail measured 77..827
+       against a scrollport ending at 813 and its last 14px were clipped until the reader scrolled.
+       THIS IS THE LAST VIEWPORT-RELATIVE NUMBER ON THE PAGE, and the way to delete it is to make
+       the rail a track of the shell too — body columns `180px minmax(0,1fr)` at >=1280, bar
+       spanning both — at which point the rail is viewport-height by construction and needs
+       neither `position:sticky` nor a calc. That is the next piece of this rewrite, not this one.
        `overscroll-behavior` IS DELIBERATELY LEFT AT `auto`, and it used to be `contain` — that is
        the owner's "double scroll issue right at the top", removed 2026-07-26. `contain` was there to
        stop a flick inside the rail from scrolling the sheet out from under the reader; what it
@@ -887,8 +1024,8 @@ layout: archive
        list (418px) and the nameplate (247px) are 69% of that budget and both are controls or the
        masthead. So this scrollport stays — as the safety valve it was introduced to be, for viewports
        genuinely shorter than the rail's collapsed furniture, and no longer as the page's front door. */
-    .folio-rail{ display:block; grid-column:1; align-self:start; position:sticky; top:55px;
-      max-height:calc(100vh - 71px); overflow-y:auto;
+    .folio-rail{ display:block; grid-column:1; align-self:start; position:sticky; top:8px;
+      max-block-size:calc(100dvh - 85px); overflow-y:auto;
       scrollbar-width:thin;
       padding:0 20px 24px 0; border-inline-end:1px solid var(--rule); }
     .folio-grid{ grid-column:2; }
@@ -1484,30 +1621,19 @@ layout: archive
   .folio-empty{ grid-column:1 / -1; align-self:start;
     font-family:var(--serif); font-size:.95rem; line-height:1.5; color:var(--muted);
     padding:18px 18px 22px; border-block-start:1px solid var(--rule); }
-  /* AN EMPTY BOARD IS STILL A BOARD (2026-09-12). Filtered to nothing, the sheet collapsed to the
-     97px this one line occupies and the page ended a third of the way down the screen. The theme's
-     shell was doing its job — `body{display:flex; min-height:100vh}` with the footer as the last
-     track pins the footer to the bottom of a short page, which is what a shell is for — but the
-     gap it leaves is the reader's whole screen: measured at 500x900, 385px of bare paper between
-     the propose disclosure and the footer, against a 97px board.
-     A MIN-HEIGHT, NOT A FLEX SHELL, and that is measured rather than preferred. Growing the board
-     out of the shell means making `.initial-content`, `#main` and `.archive` flex columns; `#main`
-     carries `margin-left/right:auto`, and per Flexbox 9.4 an item with auto cross-axis margins is
-     not stretched but sized to fit-content. Tried: the whole page narrowed to ~305px inside a
-     500px viewport — the same trap `home_harness.py` documents around `.harness-doc`. A min-height
-     cannot touch a width.
-     BELOW 700 ONLY, and 40dvh, both measured at 500x900: void 385 -> 80, board 97 -> 357, with
-     scrollHeight still exactly the 813px viewport — the emptied page stays one screen. Neither
-     survives above 700, where the control bar is in flow at the top and spends ~110px of the same
-     budget: there the same rule takes a page that fit one screen (813) to 915, i.e. it buys a
-     scrollbar to hide a gap that is 242px rather than 385. 52dvh does that at 500 too (907).
-     dvh, not vh, for the same reason as the bar's band.
-     Scoped by `:has()` to the state where the message is actually showing, so the full board and
-     the no-JS page — where nothing ever filters and `hidden` never comes off — match neither the
-     selector nor this rule. */
-  @media (max-width:699px){
-    .folio-grid:has(> .folio-empty:not([hidden])){ min-block-size:40dvh; }
-  }
+  /* AN EMPTY BOARD IS STILL A BOARD (2026-09-12). Filtered to nothing, the sheet used to collapse
+     to the 97px this one line occupies and the page ended a third of the way down the screen —
+     385px of bare paper between the propose disclosure and the footer, measured at 500x900. The
+     first answer to that was `min-block-size:40dvh` on the emptied grid, a proportion picked to
+     land the short page on exactly one screen. It is gone and nothing replaced it, because the
+     shell answers the question instead: `.shell__main` is a flex column and `.folio-board` grows
+     into the leftover, so an emptied board takes whatever the masthead, the disclosure and the
+     footer do not — one screen exactly, at any viewport, with no proportion to tune.
+     THE FLEX COLUMN IS AVAILABLE ONLY BECAUSE THE SHELL IS OURS. It was tried first under the
+     theme's layout and could not work there: `#main` carries `margin-inline:auto`, and per
+     Flexbox 9.4 an item with auto cross-axis margins is sized to fit-content, which narrowed the
+     page to ~305px inside a 500px viewport. The column rule up in the shell is what removed that,
+     by giving the item a definite inline-size instead of a max-width. */
   @media (prefers-reduced-motion:reduce){ .fcard__in, .fcard__fb{ transition:none; } }
 
   /* (.propose margin lives with the rest of its rules in custom.html — was split across files) */
@@ -1789,7 +1915,10 @@ layout: archive
     packRowSpans();
     if (!el) return;
     var after = el.getBoundingClientRect().top;
-    if (after !== before) window.scrollBy(0, after - before);
+    /* the scrollport, not the window: since 2026-09-12 <body> is a viewport-height grid and the
+       document itself never scrolls, so `window.scrollBy` would move nothing. Falls back to the
+       window so this keeps working if the shell is ever unwound. */
+    if (after !== before) (document.getElementById('shellView') || window).scrollBy(0, after - before);
   }
   function topCard(){
     /* the anchor for a mutation nobody clicked: the topmost card still intersecting the viewport.
@@ -2568,3 +2697,9 @@ layout: archive
 <style>
   .folio-grid.fb-off .fcard__fb{ display:none; }   /* feedback kill switch (window.__FB.enabled) */
 </style>
+{%- comment -%} The theme's script tail, called by name rather than inherited. It still pulls
+  main.min.js, which this page uses for nothing -- dropping it is the next decoupling step, not
+  this one, and it is why `head/custom.html` carries the `.page__content` stub. {%- endcomment -%}
+{% include scripts.html %}
+</body>
+</html>
