@@ -12,31 +12,25 @@
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 21
+   "count": 23
   },
   {
    "key": "politics",
    "label": "Politics",
    "color": "#9a6a34",
-   "count": 16
-  },
-  {
-   "key": "switzerland",
-   "label": "Switzerland",
-   "color": "#c2454a",
-   "count": 11
+   "count": 15
   },
   {
    "key": "science",
    "label": "Science",
    "color": "#4c6b3c",
-   "count": 10
+   "count": 9
   },
   {
-   "key": "economy",
-   "label": "Economy",
-   "color": "#9a7b2e",
-   "count": 7
+   "key": "switzerland",
+   "label": "Switzerland",
+   "color": "#c2454a",
+   "count": 9
   },
   {
    "key": "security",
@@ -57,16 +51,22 @@
    "count": 6
   },
   {
-   "key": "health",
-   "label": "Health",
-   "color": "#a44a72",
-   "count": 4
+   "key": "economy",
+   "label": "Economy",
+   "color": "#9a7b2e",
+   "count": 5
   },
   {
    "key": "tech",
    "label": "Tech",
    "color": "#3b6ea5",
-   "count": 2
+   "count": 5
+  },
+  {
+   "key": "health",
+   "label": "Health",
+   "color": "#a44a72",
+   "count": 4
   }
  ],
  "editorials": [
@@ -110,6 +110,30 @@
  ],
  "stories": [
   {
+   "id": "2026-09-11-ai-ml-deepseek-releases-v4-1-flash-open-weights-552b-b",
+   "sid": "st-1d424f5d642a",
+   "headline": "DeepSeek open-weights V4.1-Flash",
+   "summary": "DeepSeek releases V4.1-Flash — open weights, 552B, built to make long-context agents cheap. The latest in DeepSeek's V4 open-weights line (distinct from last week's V4-Flash-Vision-Exp), V4.1-Flash is a 552-billion-parameter Mixture-of-Experts model handling up to 1M tokens of context, released under the permissive MIT licence. DeepSeek's stated design goal is shrinking the KV cache — the per-token memory an agent accumulates over many steps, which drives up serving cost — and it reports roughly halving the compute needed to read input versus generate output. On coding tasks DeepSeek says the model matches top closed models from OpenAI and Anthropic, while remaining weaker on complex scientific tasks and image analysis. From 12:00 Beijing time on 2026-09-14, DeepSeek plans to route V4-Pro API requests to V4.1-Flash and retire V4-Pro in an orderly wind-down. Treat the head-to-head coding claim as the vendor's own technical-report figure pending independent evaluation.",
+   "why": "",
+   "url": "https://api-docs.deepseek.com/news/news260910/",
+   "source_domain": "api-docs.deepseek.com",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/09/11/ai-ml/",
+   "fresh": true
+  },
+  {
    "id": "2026-09-11-news-a-dutch-tour-coach-crashed-in-the-engadin-valley",
    "sid": "st-f548607986b0",
    "headline": "Dutch tour coach crash kills five in Graubünden",
@@ -130,6 +154,219 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/09/11/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-11-ai-ml-verifier-soundness-not-compute-is-what-caps-rl-o",
+   "sid": "st-11f7bd2a9f1a",
+   "headline": "Verifier soundness caps RL reasoning",
+   "summary": "Recent gains in model reasoning come from reinforcement learning on reasoning traces, but almost entirely in domains that have a cheap, trustworthy checker — a maths answer key, a unit test. The authors call the missing ingredient elsewhere the verification gap, and model it: in a best-of-N setup (generate N answers, keep the one the verifier likes best), the correlation between the verifier and ground truth (ρ) is an exact \"exchange rate\" between test-time compute and real capability, and an unsound verifier imposes a polynomial penalty as you scale N. In program-synthesis tests with executable ground truth, a weak verifier's soundness collapses under optimization pressure (0.94 → 0.32 at N=4096) — i.e. selection alone \"manufactures\" apparent quality that is really reward hacking — while a verifier re-anchored to reality keeps improving.",
+   "why": "it reframes the scaling debate: past the domains with a clean checker, throwing more inference compute at a shaky reward can actively make a model look better while getting worse, and the paper gives a way to measure how much.",
+   "url": "https://arxiv.org/abs/2609.09776",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "affiliations": [
+    "Testsigma",
+    "University of San Diego",
+    "Intuit"
+   ],
+   "affiliation_label": "Testsigma, University of San Diego +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-11-ai-ml-a-122b-coding-agent-trained-by-running-a-real-sh",
+   "sid": "st-20f7787cabb2",
+   "headline": "122B coding agent trained in a shell",
+   "summary": "T1 is a Mixture-of-Experts model (MoE — only a fraction of the network's \"expert\" sub-modules fire per token, so a 122B-parameter model runs at a fraction of the compute) trained with RL while operating an actual shell in a cloud sandbox for 300-plus tool-call turns per task, rewarded by executing each task's own test suite. The recipe's substance is in stabilising that training: a dense process reward that scores a trajectory by how many verifiers pass, plus engineering (they call it TITO/R3) to keep the tokens the model trained on aligned with the ones it actually sampled — cutting the train-vs-inference log-probability gap from 0.021 to 0.013. On Terminal-Bench 2.1 the post-training raises the base model from 43.8% to 64.0% of tasks resolved, with training tasks deliberately disjoint from the benchmark to guard against memorisation.",
+   "why": "long-horizon \"do real work in a terminal\" agents are exactly the coding-assistant frontier, and this is one of the more complete public recipes for training one with RL rather than prompting a closed model.",
+   "url": "https://arxiv.org/abs/2609.11042",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "affiliations": [
+    "NUS",
+    "Tencent"
+   ],
+   "affiliation_label": "NUS, Tencent",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-11-ai-ml-running-a-skill-as-a-subagent-beats-pasting-its",
+   "sid": "st-6d93888bc6cd",
+   "headline": "Subagents beat loaded skill files",
+   "summary": "\"Agent skills\" are reusable capability bundles — instructions, scripts, resources — that an agent normally uses by loading the instructions into its own context window and following them. The paper tests the alternative: invoke the skill as a subagent with a fresh context window instead. It finds subagent execution wins when a skill exposes a clear input→output contract and its instructions actually encode the procedure to fulfil it, because the main agent's reasoning degrades as its context fills up; the cost is extra tokens spent coordinating between the main agent and the subagent.",
+   "why": "it's a direct, empirical read on an architecture choice practitioners face today (this is the subagents-vs-skills question in tools like Claude Code), and names the specific condition — a clean contract — under which delegation pays for its overhead.",
+   "url": "https://arxiv.org/abs/2609.09233",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "affiliations": [
+    "Cornell University",
+    "Microsoft Research"
+   ],
+   "affiliation_label": "Cornell University, Microsoft Research",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-11-ai-ml-why-post-training-quantization-barely-dents-accu",
+   "sid": "st-e6ded962baca",
+   "headline": "Why post-training quantization works",
+   "summary": "Post-training quantization stores a trained model's weights at lower precision (e.g. 4-bit) to shrink it, and each rounded weight injects a small error into the model's internal activations. Naively those errors should compound layer by layer and wreck predictions — and in a randomly initialised network they do. The authors ask why they don't in a pretrained one, and find two mechanisms that emerge during pretraining: the error a layer newly adds tends to partially cancel the error it inherited from below, so the discrepancy grows slowly; and the output (\"LM-head\") geometry preferentially preserves the ranking and probabilities of the top, most-confident tokens.",
+   "why": "quantization is how large models fit on modest or local hardware, and it has largely been an empirical dark art; a mechanistic account of why it survives suggests where it will break (long chains, low-confidence tokens) rather than leaving it to trial and error.",
+   "url": "https://arxiv.org/abs/2609.11716",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "affiliations": [
+    "Tsinghua University",
+    "Bosch"
+   ],
+   "affiliation_label": "Tsinghua University, Bosch",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-11-ai-ml-manufacturing-objective-rewards-for-tasks-with-n",
+   "sid": "st-fb677ba2f6f5",
+   "headline": "Synthesized rewards for diagnosis agents",
+   "summary": "RL with verifiable rewards (RLVR — training against an automatic correctness check) works for maths and code but not for diagnosis, where establishing the true cause of an anomaly needs costly expert investigation and may stay ambiguous. TRACE sidesteps that: it samples a hidden intervention, injects it into a controlled simulator, and generates the data that intervention would produce — so the injected cause is the ground-truth label and gives an objective reward, while the agent still has to investigate noisy, confounded evidence with Python and SQL. In a digital-advertising diagnostic environment with 12 root causes, supervised fine-tuning lifts a 35B model from 0.159 to 0.637 full-attribution accuracy, and subsequent RL reaches 0.757 — above every prompted baseline tested, including Claude Opus 5 at 0.686.",
+   "why": "it's a general trick for extending RLVR into domains where verification is normally expensive — synthesise the world so the answer is known by construction — and shows a mid-size open model overtaking frontier models on the resulting task.",
+   "url": "https://arxiv.org/abs/2609.10315",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "affiliations": [
+    "independent researchers"
+   ],
+   "affiliation_label": "independent researchers",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-11-ai-ml-openai-opens-its-agents-api-the-plumbing-behind",
+   "sid": "st-5fd06e69ece0",
+   "headline": "OpenAI opens its Agents API",
+   "summary": "OpenAI opens its Agents API — the plumbing behind Codex and ChatGPT. Now in public beta, it lets developers build cloud agents that run for hours, execute code and process files on the same infrastructure that powers Codex and ChatGPT, with automatic context management, parallel tool use, and delegation to sub-agents. Developers can use OpenAI-hosted sandboxes or partners (Cloudflare, Vercel, Oracle); OpenAI says there are no extra fees beyond token usage, and it builds on the open-source Codex harness with MCP and custom-function support.",
+   "why": "",
+   "url": "https://openai.com/index/introducing-the-agents-api",
+   "source_domain": "openai.com",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-11-ai-ml-on-research-grade-maths-fable-5-1-and-gpt-6-astr",
+   "sid": "st-faa6bc0b6f9d",
+   "headline": "Fable 5.1 edges Astra on ErdosBench",
+   "summary": "On research-grade maths, Fable 5.1 and GPT-6 Astra finish in a near dead heat. ErdosBench scores models on 226 Erdős-inspired open maths problems, graded not by raw solve-count but by an external judge on an A–F scale (A = sound and appropriately scoped; C = a material gap; D/F = misleading or contradicted), with model-specific proof audits — a deliberately harder-to-game signal than \"problems solved.\" On the full run, Fable 5.1 (xhigh) leads with a 3.25 judge average (grade mix A=104 / B=112 / C=10, no D/F), edging GPT-6 Astra (xhigh) at 3.23 (A=106 / B=102 / C=18) by 0.024 points — the leaderboard calls it an audit-level tie, with Fable stronger at conservatively-scoped partial work and Astra the better \"theorem closer.\" Both sit well short of saturation: this is a real but modest step on research-math reasoning, not a solved benchmark, and it lands the same week OpenAI moved GPT-6 Astra to general release.",
+   "why": "",
+   "url": "https://ulam.ai/erdosbench",
+   "source_domain": "ulam.ai",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-11-ai-ml-us-agencies-name-six-chinese-firms-over-industri",
+   "sid": "st-36753069c248",
+   "headline": "US names six Chinese AI distillers",
+   "summary": "US agencies name six Chinese firms over \"industrial-scale\" model distillation. In a joint release on Tuesday 2026-09-08, the NSA, CISA and FBI alleged that DeepSeek, Moonshot AI, Alibaba, MiniMax, StepFun and Z.AI have run large-scale efforts since at least late 2024 to distil the capabilities of US frontier models — including variants of Claude, GPT, Gemini and Grok — \"likely\" with \"Chinese government awareness.\" Distillation here means training a model on another model's outputs to copy its behaviour cheaply. Read this as a government allegation, not an adjudicated finding: it is the agencies' characterisation, the named firms have not been shown to have responded, and \"likely\" and \"awareness\" are doing load-bearing work in the claim.",
+   "why": "",
+   "url": "https://arstechnica.com/ai/2026/09/six-chinese-ai-firms-accused-of-aggressively-copying-us-frontier-models/",
+   "source_domain": "arstechnica.com",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "geopolitics",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
    "fresh": true
   },
   {
@@ -642,162 +879,6 @@
     "Sungkyunkwan University"
    ],
    "affiliation_label": "Hanyang University, Sungkyunkwan University",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-frontier-models-often-recall-a-molecule-s-publis",
-   "sid": "st-2c8eb6842de2",
-   "headline": "Frontier models recall molecule values",
-   "summary": "LLMs are increasingly scored on molecular-property benchmarks, but an accuracy number can't tell a model that reasons about chemistry from one that has simply memorised the answer from its training data. The authors audit 22 frontier models on 12 regression benchmarks for verbatim retrieval — the model reproducing a published number outright. It is widespread but benchmark-specific: on five of the twelve datasets, more than half the models showed it; on the rest it appeared only in isolated cases. Turning reasoning up made it worse, flagging retrieval 89% more often than the lowest setting.",
-   "why": "it is direct evidence of benchmark contamination in a scientific domain where LLMs are being pitched as discovery tools — a model that looks accurate may be quoting the literature, not modelling the molecule. That reasoning increases retrieval is a pointed warning for anyone reading \"reasoning improves science\" claims.",
-   "url": "https://arxiv.org/abs/2609.05381",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "science"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "affiliations": [
-    "Hamburg University of Technology",
-    "Helmholtz-Zentrum Hereon"
-   ],
-   "affiliation_label": "Hamburg University of Technology, Helmholtz-Zentrum Hereon",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-an-audit-of-the-ecosystem-that-strips-safety-gua",
-   "sid": "st-05aff9ff48ad",
-   "headline": "Uncensored open models persist via mirrors",
-   "summary": "A growing set of actors removes built-in refusals from open-weight models (\"uncensored\" models) and re-uploads them. The authors profile that ecosystem: between January 2024 and March 2026 they found 3,471 original uncensored models on Hugging Face, each repackaged an average of 2.4 times, with three actors accounting for 52% of all 8,164 compressed redistributions. Once a model is quantized (shrunk to lower-precision numbers for easier deployment) and mirrored across accounts, formats and registries like Ollama, it persists even if the original is taken down. Of 1,643 GitHub apps built on these models, they classified 25% as explicitly malicious.",
-   "why": "it quantifies why \"just remove the model\" doesn't work as a safety lever — redistribution is the persistence layer, and takedown at the source leaves the mirrors untouched. Concrete numbers on how safety-stripped weights spread are useful input to the open-weights governance debate rather than another round of assertion.",
-   "url": "https://arxiv.org/abs/2609.05241",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "affiliations": [
-    "10a Labs"
-   ],
-   "affiliation_label": "10a Labs",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-a-model-builds-its-own-teacher-out-of-its-traini",
-   "sid": "st-826dc07b16ff",
-   "headline": "RISE distills a model from its own training",
-   "summary": "On-policy distillation (OPD — training a model on dense, per-token scores from a stronger teacher) gives richer feedback than RLVR (reinforcement learning from verifiable rewards, where the model gets only one right/wrong signal at the end), but it needs a good teacher, and an external one often mismatches the student's distribution. RISE instead synthesises a teacher from the model's own recent history: it extrapolates the displacement between the current checkpoint and an earlier \"trailing anchor\" — in weight space or output-probability space — to turn a sparse outcome reward into a dense token-level target, with no external model.",
-   "why": "it is a way to get the fine-grained supervision signal of distillation without paying for a bigger teacher, closing an RLVR-versus-distillation gap that has shaped a lot of recent post-training. Whether the self-extrapolation holds up outside the tested settings is the open question, but the loop is cleanly stated.",
-   "url": "https://arxiv.org/abs/2609.05295",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-layer-dropout-largely-abandoned-in-modern-llm-pr",
-   "sid": "st-99b9c1738485",
-   "headline": "Layer dropout revived for LLM pre-training",
-   "summary": "Layer dropout (a.k.a. stochastic depth — randomly skipping whole layers during training) once helped transformers train faster and tolerate later pruning, but it quietly disappeared from large-model recipes on reports that it hurt accuracy. The authors run the missing systematic study and argue the opposite when it is tuned: with the right per-layer dropout schedule, timing and optimizer settings, models reach lower loss at the same training FLOPs (a compute-cost measure), and gain robustness to zero-shot layer removal afterward.",
-   "why": "if it holds at scale, it is close to a free efficiency win — the same compute buying a better model, plus the option to cheaply drop layers at inference. The claim is a reversal of current practice, so independent replication at frontier scale is the thing to watch.",
-   "url": "https://arxiv.org/abs/2609.05275",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "affiliations": [
-    "Cerebras Systems",
-    "MBZUAI"
-   ],
-   "affiliation_label": "Cerebras Systems, MBZUAI",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-anthropic-s-compute-commitments-reportedly-total",
-   "sid": "st-e3af21f55bc5",
-   "headline": "Anthropic compute deals near $517 billion",
-   "summary": "Anthropic's compute commitments reportedly total up to $517 billion over 11 months. Anthropic has signed compute-capacity contracts worth as much as $517 billion since October 2025, locking in at least 14.8 gigawatts of power, according to a report by The Information on 6 September. The aggregate stitches together the individual deals reported through the summer — a ~$30 billion Microsoft Azure contract, ~$45 billion with SpaceX, ~$80 billion with Lambda and nScale, and smaller agreements with Volta and AMD — into a single figure that still trails OpenAI's reported ~$750 billion plan through 2030. It sits against annualized revenue reported by Bloomberg at around $65 billion.",
-   "why": "the number is roughly triple the ~$180 billion in server rental Anthropic had earlier told investors it expected through 2029, so the gap between contracted spend and money raised is now the story — and it is the clearest hint yet of the scale of financing (an IPO or large private raise) the company will need. It is reporting, not company confirmation; read the total as an analyst tally of separately reported deals, not an audited disclosure.",
-   "url": "https://www.datacenterdynamics.com/en/news/anthropic-signed-517bn-in-compute-agreements-in-past-11-months/",
-   "source_domain": "datacenterdynamics.com",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-ubs-makes-ai-fluency-a-hiring-requirement-for-20",
-   "sid": "st-27c4da2d9f02",
-   "headline": "UBS requires AI skills of new hires",
-   "summary": "UBS makes AI fluency a hiring requirement for 2027 graduates and interns. Switzerland's UBS will require candidates applying to start in 2027 as graduates or interns in its Global Banking and Markets division to demonstrate that they can use AI to improve business outcomes, with interviews now including questions on how applicants actually use the tools, as first reported by the Financial Times. The bank says it wants evidence of responsible, practical use for analysis, research and client work — not merely familiarity with chatbots — sitting alongside the usual academic bar (a 2:1 degree) and analytical and interpersonal skills. UBS is among the first major banks to formalise AI literacy in hiring; Santander is reported to be seeking advanced AI users too.",
-   "why": "for a reader working in software and AI in Switzerland, this is a concrete, local sign that \"can you use AI\" is moving from a nice-to-have into a formal gate for entry-level finance jobs — the labour-market effect of these tools showing up in a hiring rubric at the country's largest bank, not in a forecast.",
-   "url": "https://thenextweb.com/news/ubs-ai-skills-junior-bankers-2027-graduate-hiring",
-   "source_domain": "thenextweb.com",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "switzerland"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
    "fresh": false
   },
   {
@@ -1455,29 +1536,6 @@
    "fresh": false
   },
   {
-   "id": "2026-09-04-ai-ml-meta-ships-muse-spark-1-3-competing-at-the-top-a",
-   "sid": "st-89651c9be9be",
-   "headline": "Meta Muse Spark 1.3 undercuts rivals",
-   "summary": "Meta ships Muse Spark 1.3, competing at the top and undercutting rivals on price. Meta released Muse Spark 1.3 on Wednesday 2 September, a multimodal reasoning model aimed at long-running agentic, multi-agent and coding workflows, with a ~1.05M-token context window. API pricing is aggressive at about $1.25 per million input tokens and $4.25 per million output tokens; a separate \"contributor\" endpoint runs roughly 10–20× cheaper (~$0.10/$0.20 per million) in exchange for letting Meta train on your traffic — a data-for-discount trade worth reading before adopting.",
-   "why": "a top-tier proprietary model priced below rivals pushes the whole frontier-API market cheaper, but the discounted contributor tier makes the cost explicit only if you notice you are paying in data — a distinction that matters for anyone routing production traffic through it.",
-   "url": "https://artificialanalysis.ai/models/releases/muse-spark-1-3",
-   "source_domain": "artificialanalysis.ai",
-   "date": "2026-09-04",
-   "date_label": "Sep 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/04/ai-ml/",
-   "fresh": false
-  },
-  {
    "id": "2026-09-04-news-switzerland-s-attempt-to-get-its-patriot-air-def",
    "sid": "st-683686276b9a",
    "headline": "Swiss Patriot deal with Germany collapses",
@@ -1572,30 +1630,6 @@
    "fresh": false
   },
   {
-   "id": "2026-09-03-news-eu-foreign-ministers-meeting-in-ireland-on-1-2-s",
-   "sid": "st-58dbed6bd19a",
-   "headline": "EU ministers deadlock on Israel sanctions",
-   "summary": "EU foreign ministers meeting in Ireland on 1–2 September again failed to agree on trade curbs against Israeli settlement goods or on stronger military support for Ukraine. At the informal \"Gymnich\" gathering in Wicklow, host Ireland and Spain pushed for EU-wide restrictions on goods produced in illegal Israeli settlements in the occupied West Bank, citing escalating settler violence, but Germany and Hungary opposed the move, leaving the proposal stalled. EU foreign-policy chief Kaja Kallas acknowledged the absence of unanimity had once again blocked action; the EU is Israel's largest trading partner, with bilateral trade above $50 billion. France's foreign minister Jean-Noël Barrot said Israeli officials' condemnations of ministers who called for mass displacement of Palestinians were \"a good start, but not enough.\"",
-   "why": "the deadlock exposes how the EU's requirement for unanimity on foreign policy keeps stalling any collective leverage on Israel, even as several member states press for one.",
-   "url": "https://www.aljazeera.com/news/2026/9/3/eu-foreign-ministers-fail-to-break-deadlock-over-israel-and-ukraine",
-   "source_domain": "aljazeera.com",
-   "date": "2026-09-03",
-   "date_label": "Sep 3",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/03/news/",
-   "fresh": false
-  },
-  {
    "id": "2026-09-02-science-nasa-s-nancy-grace-roman-space-telescope-launche",
    "sid": "st-891289837ff7",
    "headline": "Roman Space Telescope launches",
@@ -1661,30 +1695,6 @@
    "topic_primary": "politics",
    "topic_label": "Politics",
    "topic_color": "#9a6a34",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/02/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-02-news-the-free-weeklies-ghi-gen-ve-home-informations-a",
-   "sid": "st-6c7e6e2e042b",
-   "headline": "GHI and Lausanne Cites face closure",
-   "summary": "The free weeklies GHI (Genève Home Informations) and Lausanne Cités will stop publishing in December unless a buyer is found, their director said on Wednesday 2 September, putting about 30 of the group's 36 permanent jobs at risk. Director Pascal Fleury told the Keystone-ATS news agency that the titles' advertising-based business model is \"dead\" as the ad market collapses, and that the group preferred to wind down now rather than face bankruptcy next year. He added that the linked distribution company had lost clients who, thanks to federal press-aid rules, now get cheaper rates from Swiss Post. The closures would follow the end of the print edition of the free daily \"20 minutes,\" another blow to Romandy's local press.",
-   "why": "GHI and Lausanne Cités are fixtures of Geneva and Lausanne civic life — free, locally distributed papers that carry municipal notices and neighbourhood news that larger titles skip — so their loss would thin the local-information layer for two of French-speaking Switzerland's biggest cities.",
-   "url": "https://www.letemps.ch/articles/a-moins-de-trouver-un-repreneur-les-hebdomadaires-ghi-et-lausanne-cites-cesseront-de-paraitre-en-decembre",
-   "source_domain": "letemps.ch",
-   "date": "2026-09-02",
-   "date_label": "Sep 2",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "economy"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/02/news/",
@@ -2057,6 +2067,34 @@
  ],
  "board": [
   {
+   "id": "2026-09-11-ai-ml-deepseek-releases-v4-1-flash-open-weights-552b-b",
+   "sid": "st-1d424f5d642a",
+   "headline": "DeepSeek open-weights V4.1-Flash",
+   "summary": "DeepSeek releases V4.1-Flash — open weights, 552B, built to make long-context agents cheap. The latest in DeepSeek's V4 open-weights line (distinct from last week's V4-Flash-Vision-Exp), V4.1-Flash is a 552-billion-parameter Mixture-of-Experts model handling up to 1M tokens of context, released under the permissive MIT licence. DeepSeek's stated design goal is shrinking the KV cache — the per-token memory an agent accumulates over many steps, which drives up serving cost — and it reports roughly halving the compute needed to read input versus generate output. On coding tasks DeepSeek says the model matches top closed models from OpenAI and Anthropic, while remaining weaker on complex scientific tasks and image analysis. From 12:00 Beijing time on 2026-09-14, DeepSeek plans to route V4-Pro API requests to V4.1-Flash and retire V4-Pro in an orderly wind-down. Treat the head-to-head coding claim as the vendor's own technical-report figure pending independent evaluation.",
+   "why": "",
+   "url": "https://api-docs.deepseek.com/news/news260910/",
+   "source_domain": "api-docs.deepseek.com",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/09/11/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 11 Sep",
+   "daybreak": true
+  },
+  {
    "id": "2026-09-11-news-a-dutch-tour-coach-crashed-in-the-engadin-valley",
    "sid": "st-f548607986b0",
    "headline": "Dutch tour coach crash kills five in Graubünden",
@@ -2081,7 +2119,252 @@
    "kind": "story",
    "age_days": 0,
    "day_label": "Fri 11 Sep",
-   "daybreak": true
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-11-ai-ml-verifier-soundness-not-compute-is-what-caps-rl-o",
+   "sid": "st-11f7bd2a9f1a",
+   "headline": "Verifier soundness caps RL reasoning",
+   "summary": "Recent gains in model reasoning come from reinforcement learning on reasoning traces, but almost entirely in domains that have a cheap, trustworthy checker — a maths answer key, a unit test. The authors call the missing ingredient elsewhere the verification gap, and model it: in a best-of-N setup (generate N answers, keep the one the verifier likes best), the correlation between the verifier and ground truth (ρ) is an exact \"exchange rate\" between test-time compute and real capability, and an unsound verifier imposes a polynomial penalty as you scale N. In program-synthesis tests with executable ground truth, a weak verifier's soundness collapses under optimization pressure (0.94 → 0.32 at N=4096) — i.e. selection alone \"manufactures\" apparent quality that is really reward hacking — while a verifier re-anchored to reality keeps improving.",
+   "why": "it reframes the scaling debate: past the domains with a clean checker, throwing more inference compute at a shaky reward can actively make a model look better while getting worse, and the paper gives a way to measure how much.",
+   "url": "https://arxiv.org/abs/2609.09776",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "affiliations": [
+    "Testsigma",
+    "University of San Diego",
+    "Intuit"
+   ],
+   "affiliation_label": "Testsigma, University of San Diego +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 11 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-11-ai-ml-a-122b-coding-agent-trained-by-running-a-real-sh",
+   "sid": "st-20f7787cabb2",
+   "headline": "122B coding agent trained in a shell",
+   "summary": "T1 is a Mixture-of-Experts model (MoE — only a fraction of the network's \"expert\" sub-modules fire per token, so a 122B-parameter model runs at a fraction of the compute) trained with RL while operating an actual shell in a cloud sandbox for 300-plus tool-call turns per task, rewarded by executing each task's own test suite. The recipe's substance is in stabilising that training: a dense process reward that scores a trajectory by how many verifiers pass, plus engineering (they call it TITO/R3) to keep the tokens the model trained on aligned with the ones it actually sampled — cutting the train-vs-inference log-probability gap from 0.021 to 0.013. On Terminal-Bench 2.1 the post-training raises the base model from 43.8% to 64.0% of tasks resolved, with training tasks deliberately disjoint from the benchmark to guard against memorisation.",
+   "why": "long-horizon \"do real work in a terminal\" agents are exactly the coding-assistant frontier, and this is one of the more complete public recipes for training one with RL rather than prompting a closed model.",
+   "url": "https://arxiv.org/abs/2609.11042",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "affiliations": [
+    "NUS",
+    "Tencent"
+   ],
+   "affiliation_label": "NUS, Tencent",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 11 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-11-ai-ml-running-a-skill-as-a-subagent-beats-pasting-its",
+   "sid": "st-6d93888bc6cd",
+   "headline": "Subagents beat loaded skill files",
+   "summary": "\"Agent skills\" are reusable capability bundles — instructions, scripts, resources — that an agent normally uses by loading the instructions into its own context window and following them. The paper tests the alternative: invoke the skill as a subagent with a fresh context window instead. It finds subagent execution wins when a skill exposes a clear input→output contract and its instructions actually encode the procedure to fulfil it, because the main agent's reasoning degrades as its context fills up; the cost is extra tokens spent coordinating between the main agent and the subagent.",
+   "why": "it's a direct, empirical read on an architecture choice practitioners face today (this is the subagents-vs-skills question in tools like Claude Code), and names the specific condition — a clean contract — under which delegation pays for its overhead.",
+   "url": "https://arxiv.org/abs/2609.09233",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "affiliations": [
+    "Cornell University",
+    "Microsoft Research"
+   ],
+   "affiliation_label": "Cornell University, Microsoft Research",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 11 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-11-ai-ml-why-post-training-quantization-barely-dents-accu",
+   "sid": "st-e6ded962baca",
+   "headline": "Why post-training quantization works",
+   "summary": "Post-training quantization stores a trained model's weights at lower precision (e.g. 4-bit) to shrink it, and each rounded weight injects a small error into the model's internal activations. Naively those errors should compound layer by layer and wreck predictions — and in a randomly initialised network they do. The authors ask why they don't in a pretrained one, and find two mechanisms that emerge during pretraining: the error a layer newly adds tends to partially cancel the error it inherited from below, so the discrepancy grows slowly; and the output (\"LM-head\") geometry preferentially preserves the ranking and probabilities of the top, most-confident tokens.",
+   "why": "quantization is how large models fit on modest or local hardware, and it has largely been an empirical dark art; a mechanistic account of why it survives suggests where it will break (long chains, low-confidence tokens) rather than leaving it to trial and error.",
+   "url": "https://arxiv.org/abs/2609.11716",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "affiliations": [
+    "Tsinghua University",
+    "Bosch"
+   ],
+   "affiliation_label": "Tsinghua University, Bosch",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 11 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-11-ai-ml-manufacturing-objective-rewards-for-tasks-with-n",
+   "sid": "st-fb677ba2f6f5",
+   "headline": "Synthesized rewards for diagnosis agents",
+   "summary": "RL with verifiable rewards (RLVR — training against an automatic correctness check) works for maths and code but not for diagnosis, where establishing the true cause of an anomaly needs costly expert investigation and may stay ambiguous. TRACE sidesteps that: it samples a hidden intervention, injects it into a controlled simulator, and generates the data that intervention would produce — so the injected cause is the ground-truth label and gives an objective reward, while the agent still has to investigate noisy, confounded evidence with Python and SQL. In a digital-advertising diagnostic environment with 12 root causes, supervised fine-tuning lifts a 35B model from 0.159 to 0.637 full-attribution accuracy, and subsequent RL reaches 0.757 — above every prompted baseline tested, including Claude Opus 5 at 0.686.",
+   "why": "it's a general trick for extending RLVR into domains where verification is normally expensive — synthesise the world so the answer is known by construction — and shows a mid-size open model overtaking frontier models on the resulting task.",
+   "url": "https://arxiv.org/abs/2609.10315",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "affiliations": [
+    "independent researchers"
+   ],
+   "affiliation_label": "independent researchers",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 11 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-11-ai-ml-openai-opens-its-agents-api-the-plumbing-behind",
+   "sid": "st-5fd06e69ece0",
+   "headline": "OpenAI opens its Agents API",
+   "summary": "OpenAI opens its Agents API — the plumbing behind Codex and ChatGPT. Now in public beta, it lets developers build cloud agents that run for hours, execute code and process files on the same infrastructure that powers Codex and ChatGPT, with automatic context management, parallel tool use, and delegation to sub-agents. Developers can use OpenAI-hosted sandboxes or partners (Cloudflare, Vercel, Oracle); OpenAI says there are no extra fees beyond token usage, and it builds on the open-source Codex harness with MCP and custom-function support.",
+   "why": "",
+   "url": "https://openai.com/index/introducing-the-agents-api",
+   "source_domain": "openai.com",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 11 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-11-ai-ml-on-research-grade-maths-fable-5-1-and-gpt-6-astr",
+   "sid": "st-faa6bc0b6f9d",
+   "headline": "Fable 5.1 edges Astra on ErdosBench",
+   "summary": "On research-grade maths, Fable 5.1 and GPT-6 Astra finish in a near dead heat. ErdosBench scores models on 226 Erdős-inspired open maths problems, graded not by raw solve-count but by an external judge on an A–F scale (A = sound and appropriately scoped; C = a material gap; D/F = misleading or contradicted), with model-specific proof audits — a deliberately harder-to-game signal than \"problems solved.\" On the full run, Fable 5.1 (xhigh) leads with a 3.25 judge average (grade mix A=104 / B=112 / C=10, no D/F), edging GPT-6 Astra (xhigh) at 3.23 (A=106 / B=102 / C=18) by 0.024 points — the leaderboard calls it an audit-level tie, with Fable stronger at conservatively-scoped partial work and Astra the better \"theorem closer.\" Both sit well short of saturation: this is a real but modest step on research-math reasoning, not a solved benchmark, and it lands the same week OpenAI moved GPT-6 Astra to general release.",
+   "why": "",
+   "url": "https://ulam.ai/erdosbench",
+   "source_domain": "ulam.ai",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 11 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-11-ai-ml-us-agencies-name-six-chinese-firms-over-industri",
+   "sid": "st-36753069c248",
+   "headline": "US names six Chinese AI distillers",
+   "summary": "US agencies name six Chinese firms over \"industrial-scale\" model distillation. In a joint release on Tuesday 2026-09-08, the NSA, CISA and FBI alleged that DeepSeek, Moonshot AI, Alibaba, MiniMax, StepFun and Z.AI have run large-scale efforts since at least late 2024 to distil the capabilities of US frontier models — including variants of Claude, GPT, Gemini and Grok — \"likely\" with \"Chinese government awareness.\" Distillation here means training a model on another model's outputs to copy its behaviour cheaply. Read this as a government allegation, not an adjudicated finding: it is the agencies' characterisation, the named firms have not been shown to have responded, and \"likely\" and \"awareness\" are doing load-bearing work in the claim.",
+   "why": "",
+   "url": "https://arstechnica.com/ai/2026/09/six-chinese-ai-firms-accused-of-aggressively-copying-us-frontier-models/",
+   "source_domain": "arstechnica.com",
+   "date": "2026-09-11",
+   "date_label": "Sep 11",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "geopolitics",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/11/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 11 Sep",
+   "daybreak": false
   },
   {
    "id": "2026-09-11-news-the-plr-vaud-the-canton-s-liberal-radical-party",
@@ -2688,186 +2971,6 @@
     "Sungkyunkwan University"
    ],
    "affiliation_label": "Hanyang University, Sungkyunkwan University",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 8 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-frontier-models-often-recall-a-molecule-s-publis",
-   "sid": "st-2c8eb6842de2",
-   "headline": "Frontier models recall molecule values",
-   "summary": "LLMs are increasingly scored on molecular-property benchmarks, but an accuracy number can't tell a model that reasons about chemistry from one that has simply memorised the answer from its training data. The authors audit 22 frontier models on 12 regression benchmarks for verbatim retrieval — the model reproducing a published number outright. It is widespread but benchmark-specific: on five of the twelve datasets, more than half the models showed it; on the rest it appeared only in isolated cases. Turning reasoning up made it worse, flagging retrieval 89% more often than the lowest setting.",
-   "why": "it is direct evidence of benchmark contamination in a scientific domain where LLMs are being pitched as discovery tools — a model that looks accurate may be quoting the literature, not modelling the molecule. That reasoning increases retrieval is a pointed warning for anyone reading \"reasoning improves science\" claims.",
-   "url": "https://arxiv.org/abs/2609.05381",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "science"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "affiliations": [
-    "Hamburg University of Technology",
-    "Helmholtz-Zentrum Hereon"
-   ],
-   "affiliation_label": "Hamburg University of Technology, Helmholtz-Zentrum Hereon",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 8 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-an-audit-of-the-ecosystem-that-strips-safety-gua",
-   "sid": "st-05aff9ff48ad",
-   "headline": "Uncensored open models persist via mirrors",
-   "summary": "A growing set of actors removes built-in refusals from open-weight models (\"uncensored\" models) and re-uploads them. The authors profile that ecosystem: between January 2024 and March 2026 they found 3,471 original uncensored models on Hugging Face, each repackaged an average of 2.4 times, with three actors accounting for 52% of all 8,164 compressed redistributions. Once a model is quantized (shrunk to lower-precision numbers for easier deployment) and mirrored across accounts, formats and registries like Ollama, it persists even if the original is taken down. Of 1,643 GitHub apps built on these models, they classified 25% as explicitly malicious.",
-   "why": "it quantifies why \"just remove the model\" doesn't work as a safety lever — redistribution is the persistence layer, and takedown at the source leaves the mirrors untouched. Concrete numbers on how safety-stripped weights spread are useful input to the open-weights governance debate rather than another round of assertion.",
-   "url": "https://arxiv.org/abs/2609.05241",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "security"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "affiliations": [
-    "10a Labs"
-   ],
-   "affiliation_label": "10a Labs",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 8 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-a-model-builds-its-own-teacher-out-of-its-traini",
-   "sid": "st-826dc07b16ff",
-   "headline": "RISE distills a model from its own training",
-   "summary": "On-policy distillation (OPD — training a model on dense, per-token scores from a stronger teacher) gives richer feedback than RLVR (reinforcement learning from verifiable rewards, where the model gets only one right/wrong signal at the end), but it needs a good teacher, and an external one often mismatches the student's distribution. RISE instead synthesises a teacher from the model's own recent history: it extrapolates the displacement between the current checkpoint and an earlier \"trailing anchor\" — in weight space or output-probability space — to turn a sparse outcome reward into a dense token-level target, with no external model.",
-   "why": "it is a way to get the fine-grained supervision signal of distillation without paying for a bigger teacher, closing an RLVR-versus-distillation gap that has shaped a lot of recent post-training. Whether the self-extrapolation holds up outside the tested settings is the open question, but the loop is cleanly stated.",
-   "url": "https://arxiv.org/abs/2609.05295",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 8 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-layer-dropout-largely-abandoned-in-modern-llm-pr",
-   "sid": "st-99b9c1738485",
-   "headline": "Layer dropout revived for LLM pre-training",
-   "summary": "Layer dropout (a.k.a. stochastic depth — randomly skipping whole layers during training) once helped transformers train faster and tolerate later pruning, but it quietly disappeared from large-model recipes on reports that it hurt accuracy. The authors run the missing systematic study and argue the opposite when it is tuned: with the right per-layer dropout schedule, timing and optimizer settings, models reach lower loss at the same training FLOPs (a compute-cost measure), and gain robustness to zero-shot layer removal afterward.",
-   "why": "if it holds at scale, it is close to a free efficiency win — the same compute buying a better model, plus the option to cheaply drop layers at inference. The claim is a reversal of current practice, so independent replication at frontier scale is the thing to watch.",
-   "url": "https://arxiv.org/abs/2609.05275",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "affiliations": [
-    "Cerebras Systems",
-    "MBZUAI"
-   ],
-   "affiliation_label": "Cerebras Systems, MBZUAI",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 8 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-anthropic-s-compute-commitments-reportedly-total",
-   "sid": "st-e3af21f55bc5",
-   "headline": "Anthropic compute deals near $517 billion",
-   "summary": "Anthropic's compute commitments reportedly total up to $517 billion over 11 months. Anthropic has signed compute-capacity contracts worth as much as $517 billion since October 2025, locking in at least 14.8 gigawatts of power, according to a report by The Information on 6 September. The aggregate stitches together the individual deals reported through the summer — a ~$30 billion Microsoft Azure contract, ~$45 billion with SpaceX, ~$80 billion with Lambda and nScale, and smaller agreements with Volta and AMD — into a single figure that still trails OpenAI's reported ~$750 billion plan through 2030. It sits against annualized revenue reported by Bloomberg at around $65 billion.",
-   "why": "the number is roughly triple the ~$180 billion in server rental Anthropic had earlier told investors it expected through 2029, so the gap between contracted spend and money raised is now the story — and it is the clearest hint yet of the scale of financing (an IPO or large private raise) the company will need. It is reporting, not company confirmation; read the total as an analyst tally of separately reported deals, not an audited disclosure.",
-   "url": "https://www.datacenterdynamics.com/en/news/anthropic-signed-517bn-in-compute-agreements-in-past-11-months/",
-   "source_domain": "datacenterdynamics.com",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 8 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-08-ai-ml-ubs-makes-ai-fluency-a-hiring-requirement-for-20",
-   "sid": "st-27c4da2d9f02",
-   "headline": "UBS requires AI skills of new hires",
-   "summary": "UBS makes AI fluency a hiring requirement for 2027 graduates and interns. Switzerland's UBS will require candidates applying to start in 2027 as graduates or interns in its Global Banking and Markets division to demonstrate that they can use AI to improve business outcomes, with interviews now including questions on how applicants actually use the tools, as first reported by the Financial Times. The bank says it wants evidence of responsible, practical use for analysis, research and client work — not merely familiarity with chatbots — sitting alongside the usual academic bar (a 2:1 degree) and analytical and interpersonal skills. UBS is among the first major banks to formalise AI literacy in hiring; Santander is reported to be seeking advanced AI users too.",
-   "why": "for a reader working in software and AI in Switzerland, this is a concrete, local sign that \"can you use AI\" is moving from a nice-to-have into a formal gate for entry-level finance jobs — the labour-market effect of these tools showing up in a hiring rubric at the country's largest bank, not in a forecast.",
-   "url": "https://thenextweb.com/news/ubs-ai-skills-junior-bankers-2027-graduate-hiring",
-   "source_domain": "thenextweb.com",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "switzerland"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
@@ -3671,33 +3774,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-09-04-ai-ml-meta-ships-muse-spark-1-3-competing-at-the-top-a",
-   "sid": "st-89651c9be9be",
-   "headline": "Meta Muse Spark 1.3 undercuts rivals",
-   "summary": "Meta ships Muse Spark 1.3, competing at the top and undercutting rivals on price. Meta released Muse Spark 1.3 on Wednesday 2 September, a multimodal reasoning model aimed at long-running agentic, multi-agent and coding workflows, with a ~1.05M-token context window. API pricing is aggressive at about $1.25 per million input tokens and $4.25 per million output tokens; a separate \"contributor\" endpoint runs roughly 10–20× cheaper (~$0.10/$0.20 per million) in exchange for letting Meta train on your traffic — a data-for-discount trade worth reading before adopting.",
-   "why": "a top-tier proprietary model priced below rivals pushes the whole frontier-API market cheaper, but the discounted contributor tier makes the cost explicit only if you notice you are paying in data — a distinction that matters for anyone routing production traffic through it.",
-   "url": "https://artificialanalysis.ai/models/releases/muse-spark-1-3",
-   "source_domain": "artificialanalysis.ai",
-   "date": "2026-09-04",
-   "date_label": "Sep 4",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/04/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 4 Sep",
-   "daybreak": false
-  },
-  {
    "id": "2026-09-04-news-switzerland-s-attempt-to-get-its-patriot-air-def",
    "sid": "st-683686276b9a",
    "headline": "Swiss Patriot deal with Germany collapses",
@@ -3808,34 +3884,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-09-03-news-eu-foreign-ministers-meeting-in-ireland-on-1-2-s",
-   "sid": "st-58dbed6bd19a",
-   "headline": "EU ministers deadlock on Israel sanctions",
-   "summary": "EU foreign ministers meeting in Ireland on 1–2 September again failed to agree on trade curbs against Israeli settlement goods or on stronger military support for Ukraine. At the informal \"Gymnich\" gathering in Wicklow, host Ireland and Spain pushed for EU-wide restrictions on goods produced in illegal Israeli settlements in the occupied West Bank, citing escalating settler violence, but Germany and Hungary opposed the move, leaving the proposal stalled. EU foreign-policy chief Kaja Kallas acknowledged the absence of unanimity had once again blocked action; the EU is Israel's largest trading partner, with bilateral trade above $50 billion. France's foreign minister Jean-Noël Barrot said Israeli officials' condemnations of ministers who called for mass displacement of Palestinians were \"a good start, but not enough.\"",
-   "why": "the deadlock exposes how the EU's requirement for unanimity on foreign policy keeps stalling any collective leverage on Israel, even as several member states press for one.",
-   "url": "https://www.aljazeera.com/news/2026/9/3/eu-foreign-ministers-fail-to-break-deadlock-over-israel-and-ukraine",
-   "source_domain": "aljazeera.com",
-   "date": "2026-09-03",
-   "date_label": "Sep 3",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/03/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Thu 3 Sep",
-   "daybreak": false
-  },
-  {
    "id": "2026-09-02-science-nasa-s-nancy-grace-roman-space-telescope-launche",
    "sid": "st-891289837ff7",
    "headline": "Roman Space Telescope launches",
@@ -3909,34 +3957,6 @@
    "topic_primary": "politics",
    "topic_label": "Politics",
    "topic_color": "#9a6a34",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/02/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Wed 2 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-02-news-the-free-weeklies-ghi-gen-ve-home-informations-a",
-   "sid": "st-6c7e6e2e042b",
-   "headline": "GHI and Lausanne Cites face closure",
-   "summary": "The free weeklies GHI (Genève Home Informations) and Lausanne Cités will stop publishing in December unless a buyer is found, their director said on Wednesday 2 September, putting about 30 of the group's 36 permanent jobs at risk. Director Pascal Fleury told the Keystone-ATS news agency that the titles' advertising-based business model is \"dead\" as the ad market collapses, and that the group preferred to wind down now rather than face bankruptcy next year. He added that the linked distribution company had lost clients who, thanks to federal press-aid rules, now get cheaper rates from Swiss Post. The closures would follow the end of the print edition of the free daily \"20 minutes,\" another blow to Romandy's local press.",
-   "why": "GHI and Lausanne Cités are fixtures of Geneva and Lausanne civic life — free, locally distributed papers that carry municipal notices and neighbourhood news that larger titles skip — so their loss would thin the local-information layer for two of French-speaking Switzerland's biggest cities.",
-   "url": "https://www.letemps.ch/articles/a-moins-de-trouver-un-repreneur-les-hebdomadaires-ghi-et-lausanne-cites-cesseront-de-paraitre-en-decembre",
-   "source_domain": "letemps.ch",
-   "date": "2026-09-02",
-   "date_label": "Sep 2",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "economy"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/02/news/",
