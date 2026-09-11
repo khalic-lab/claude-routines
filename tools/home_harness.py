@@ -3098,10 +3098,16 @@ def _assert_shell_modelled(styles):
          same lie in a different direction.
       3. Retarget the probes that assume the document scrolls: the scroll census, `railTraps`, and
          anything reading `window.scrollY` or `document.body.scrollHeight`.
-    Delete this function when the template emits `.shell__view`; the check clears itself.
+    This runs BEFORE the markup extractors on purpose. They have already started failing on the
+    same migration — one at a time, each naming an element that moved — and an operator following
+    that trail fixes four regexes before discovering that the shell, not the selectors, is the
+    job. The guard reads THIS MODULE'S OWN SOURCE for the old wrapper rather than a mirrored copy
+    of the template string, so it cannot be cleared by editing anything except the markup it is
+    about, and it clears itself the moment `.harness-doc` stops being emitted.
     """
+    own = open(os.path.abspath(__file__)).read()
     shell = "body.layout--home{ display:grid" in styles
-    if shell and 'class="shell__view"' not in PAGE_TEMPLATE_MARKER:
+    if shell and '<div class="harness-doc">' in own:
         raise SystemExit(
             "home_harness: _layouts/home.html now owns the page shell (body is a 100dvh two-track "
             "grid, only .shell__view scrolls) but this harness still emits the pre-2026-09-12 "
@@ -3109,10 +3115,6 @@ def _assert_shell_modelled(styles):
             "and every number printed would be measured off a page production does not have. "
             "See _assert_shell_modelled() for what the migration needs.")
 
-
-# The template emitted by _build_page, named so the guard above can inspect it without running
-# the build. Keep it in sync if the page string moves.
-PAGE_TEMPLATE_MARKER = '<div class="harness-doc"><div class="wrap" id="main">'
 
 
 def _build_page(feed, matrix=False, refresh_theme=False):
@@ -3178,7 +3180,9 @@ def _build_page(feed, matrix=False, refresh_theme=False):
     # instead of landing in the board grid's second row under a rail-height void. Spliced inside
     # `#folioGrid` for that reason; putting it back outside would silently reproduce the bug this
     # harness now measures.
-    empty_state = _extract_block(r'<div class="folio-empty".*?</div>', "empty state")
+    # `<li>` since 2026-09-12: the sheet is an <ol> of stories and the empty state is its last
+    # item. Extracted, never mirrored, so the element it renders is the one under test.
+    empty_state = _extract_block(r'<li class="folio-empty".*?</li>', "empty state")
 
     page = """<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>home harness</title>%s%s
