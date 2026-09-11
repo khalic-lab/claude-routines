@@ -48,18 +48,22 @@ Light news/politics — just a brief "what mattered this week" section at the to
 - Science.org — use its RSS feeds (e.g. `https://www.science.org/rss/news_current.xml`, journal feeds); the article HTML is unreachable, so cite the DOI / landing URL.
 
 **Dormant-source activation — do this BEFORE waiving discovery.** The registry carries a stack of
-weekend-affinity domains that are dormant: stuck at `candidate`/`probation` in the plan's
-`candidates_to_try`, never cited, or cited once and quiet since. Lab and institute newsrooms
-(`allenai.org`, `deepmind.google`, `research.google`, `ai.meta.com`, `hai.stanford.edu`,
-`mlcommons.org`, `epoch.ai`), open-access journals and proceedings (`elifesciences.org`,
-`journals.plos.org`, `pnas.org`, `aclanthology.org`), and the long-form essay outlets
-(`noemamag.com`, `republik.ch`, `reportagen.com`) that feed the essays section. Pick at least
-**two** of them each week and actually attempt their newsroom/feed/archive for the window. A domain
-in `candidates_to_try` is ALREADY in the registry, so it can be neither tagged `[new source]` nor
-counted toward `met` — probing it strengthens the edition and makes the waiver honest, it does not
+weekend-affinity domains that are dormant — never cited, or cited once and quiet since. Look for
+them in BOTH halves of the plan: the `candidates_to_try` list AND the Fetch list, which is where a
+never-cited `probation` domain sits (preflight's dormancy test only fires on a domain that has a
+`last_cited` date, so the most dormant entries of all are absent from `candidates_to_try`). Worth
+probing: lab and institute newsrooms (`allenai.org`, `deepmind.google`, `research.google`,
+`ai.meta.com` — all Fetch-list-only; `hai.stanford.edu`, `mlcommons.org`, `epoch.ai`), open-access
+journals and proceedings (`elifesciences.org`, `journals.plos.org`, `pnas.org`, `aclanthology.org`),
+and the long-form essay outlets (`noemamag.com`, `republik.ch`, `reportagen.com`) that feed the
+essays section. Pick at least **two** of them each week and actually attempt their
+newsroom/feed/archive for the window. A domain anywhere in the plan is ALREADY in the registry, so
+it can be neither tagged `[new source]` nor counted toward `met` — probing it strengthens the edition and makes the waiver honest, it does not
 satisfy the quota. The one path from a dormant probe to a real discovery is landing on a host that
-is not in the registry: a lab's or journal's subdomain is its own domain (`ai.ethz.ch` is
-registered separately from `ethz.ch`), so tag and count that. **A new anchor that resolves to a hub
+is not in the registry: a lab's or journal's newsroom subdomain is a separate registry entry
+from its parent (`ai.ethz.ch` and `ethz.ch` are two records, not one), so tag and count it —
+but grep `sources/registry.yml` for that exact host first, because many such subdomains are
+already registered and tagging a registered domain `[new source]` is itself a violation. **A new anchor that resolves to a hub
 — `hf.co`/`huggingface.co`, `github.com`, `arxiv.org`, `nature.com` — is not a new primary and does
 not count.** If both probes come back empty or unreachable, name the two you probed in the waiver
 reason — the whole footer line, prefix included:

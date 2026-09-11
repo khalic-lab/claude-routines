@@ -33,16 +33,23 @@ Three desks, deep over broad: pick the week's genuinely-new findings, read the p
 - APS journals (`journals.aps.org` — PRL / PRX / PRX Quantum): the recent-articles RSS. Cite the article DOI / landing URL.
 
 **Dormant-source activation — do this BEFORE waiving discovery.** The registry carries a stack of
-science domains stuck at `candidate` status in the plan's `candidates_to_try` — Swiss and European
-research institutions (ETH Zürich, EPFL, PSI, Empa, WSL, the cantonal universities), national labs,
-agency newsrooms, society journals — never cited, or cited once and quiet since. Pick at least **two**
-of them each week and actually attempt their newsroom/feed for the window. A domain in
-`candidates_to_try` is ALREADY in the registry, so it can be neither tagged `[new source]` nor counted
-toward `met` — probing it strengthens the edition and makes the waiver honest, it does not satisfy the
-quota. The one path from a dormant-institution probe to a real discovery is landing on a host that is
-not in the registry: an institution's newsroom subdomain is its own domain (`ai.ethz.ch` is registered
-separately from `ethz.ch`), so tag and count that. If both probes come back empty or unreachable, name
-the two you probed in the waiver reason.
+science domains that are dormant — never cited, or cited once and quiet since: Swiss and European
+research institutions (ETH Zürich, EPFL, PSI, Empa, WSL, Unige, Unibe and the other cantonal
+universities), national labs, agency newsrooms, society journals. Look for them in BOTH halves of the
+plan: the `candidates_to_try` list AND the Fetch list, which is where a never-cited `probation`
+domain sits (preflight's dormancy test only fires on a domain that has a `last_cited` date, so the
+most dormant entries of all are absent from `candidates_to_try`). Status is `candidate` or
+`probation` — do not filter on it. Pick at least **two** each week and actually attempt their
+newsroom/feed for the window. A domain anywhere in the plan is ALREADY in the registry, so it can be
+neither tagged `[new source]` nor counted toward `met` — probing it strengthens the edition and makes
+the waiver honest, it does not satisfy the quota. The one path from a dormant-institution probe to a
+real discovery is landing on a host that is not in the registry: an institution's newsroom subdomain
+is a separate registry entry from its parent (`ai.ethz.ch` and `ethz.ch` are two records, not one),
+so tag and count it — but grep `sources/registry.yml` for that exact host first, because many such
+subdomains are already registered and tagging a registered domain `[new source]` is itself a
+violation. If both probes come back empty or unreachable, name the two you probed in the waiver
+reason — the whole footer line, prefix included:
+`- Discovery: waived — probed <a> and <b>, both <outcome>`.
 
 **Nature-abstract fallback (Patch-4):** when a Nature primary research item (`s41586-…`) has no fetchable abstract from the sandbox, locate the matching arXiv cross-list preprint (search the title via the arXiv API / Semantic Scholar) and summarise *that*, tagged `[preprint]` — do NOT emit a title-only stub.
 
