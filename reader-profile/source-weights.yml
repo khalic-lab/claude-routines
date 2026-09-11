@@ -15,7 +15,19 @@ never: []
 # never:
 #   - example-fabricates-news.com   # 2026-06-20: fabricated a quote (see feedback)
 
-reduce: []
+reduce:
+  - france24.com                  # 2026-09-12: applied from Evaluator rm-2 (2026-08-23, carried
+                                  #   3 weeks). Reasoned 👎 2026-08-19 (st-d03f80975246, "france 24
+                                  #   as source is brutally out of touch"), plus an 86% fetch-fail
+                                  #   rate (12 fail / 2 ok-via-proxy). Never a news lead or sole
+                                  #   source; keep only when clearly significant and nothing
+                                  #   stronger exists.
+  - siliconangle.com              # 2026-09-12: applied from Evaluator sw-1 (2026-09-06). Reasoned
+                                  #   👍-with-critique on 2026-09-01-ai-ml ("is silicon angle really
+                                  #   a good source? ... The link should have been to the bank of
+                                  #   england official press release"). Demote when a primary
+                                  #   exists; never a lead-anchor where the primary was reachable
+                                  #   and not fetched.
 # Example:
 # reduce:
 #   - prnewswire.com                # vendor PR wire — never a lead
