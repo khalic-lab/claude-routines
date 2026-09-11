@@ -218,7 +218,8 @@ is not in the registry: a lab's or journal's subdomain is its own domain (`ai.et
 registered separately from `ethz.ch`), so tag and count that. **A new anchor that resolves to a hub
 — `hf.co`/`huggingface.co`, `github.com`, `arxiv.org`, `nature.com` — is not a new primary and does
 not count.** If both probes come back empty or unreachable, name the two you probed in the waiver
-reason: `waived — probed <a> and <b>, both <outcome>`.
+reason — the whole footer line, prefix included:
+`- Discovery: waived — probed <a> and <b>, both <outcome>`.
 
 # Research methodology
 
