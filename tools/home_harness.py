@@ -3070,6 +3070,51 @@ failed an assertion; the failure is printed under the caption.</p>
     return path
 
 
+def _assert_shell_modelled(styles):
+    """Refuse to render while this harness models a page shell production no longer has.
+
+    2026-09-12: the homepage stopped inheriting `layout: archive` and now owns its document.
+    <body> is a two-row grid at `block-size:100dvh` with `overflow:hidden` — one row for
+    `.folio-filters`, one for `.shell__view`, the only element that scrolls. The template below
+    still emits the OLD shell (`body > .harness-doc > .wrap#main`, everything in document flow),
+    and that combination does not merely differ from production, it measures a LIE: the layout's
+    `body.layout--home{ block-size:100dvh; overflow:hidden }` applies to this page too, so a
+    27,000px board renders clipped to one viewport, `.folio-filters` gets a `grid-row` in a body
+    that has no such item, and every height, extent and screenshot this tool prints comes off a
+    page nobody will ever see. A harness that reports numbers from the wrong box is worse than no
+    harness — that is the `home_harness rubber-stamped for a week` lesson, and this guard is here
+    so it cannot repeat silently.
+
+    WHAT MIGRATING LOOKS LIKE, so whoever picks it up has the shape of it:
+      1. Emit the real shell in `_build_page`: `.folio-filters` and `#shellView` as the two body
+         children, `.shell__head` / `#main.shell__main` / `.page__footer` inside the scrollport.
+         `.harness-doc` and the `#main.wrap` sizing rule both go — `.shell__main` now carries the
+         column (definite `inline-size`, not `max-width`), which is what the `.harness-doc` note
+         about auto cross-axis margins was working around.
+      2. Decide what a screenshot means. Every shot this tool takes today is a full-page render of
+         a tall window; under the shell the page IS the viewport and the board scrolls inside
+         `#shellView`. Either drive `#shellView.scrollTop` per shot and stitch, or photograph one
+         screen and say so. Do not "fix" it by unwinding the shell for the render — that is the
+         same lie in a different direction.
+      3. Retarget the probes that assume the document scrolls: the scroll census, `railTraps`, and
+         anything reading `window.scrollY` or `document.body.scrollHeight`.
+    Delete this function when the template emits `.shell__view`; the check clears itself.
+    """
+    shell = "body.layout--home{ display:grid" in styles
+    if shell and 'class="shell__view"' not in PAGE_TEMPLATE_MARKER:
+        raise SystemExit(
+            "home_harness: _layouts/home.html now owns the page shell (body is a 100dvh two-track "
+            "grid, only .shell__view scrolls) but this harness still emits the pre-2026-09-12 "
+            "`.harness-doc > .wrap#main` document. Rendering would clip the board to one viewport "
+            "and every number printed would be measured off a page production does not have. "
+            "See _assert_shell_modelled() for what the migration needs.")
+
+
+# The template emitted by _build_page, named so the guard above can inspect it without running
+# the build. Keep it in sync if the page string moves.
+PAGE_TEMPLATE_MARKER = '<div class="harness-doc"><div class="wrap" id="main">'
+
+
 def _build_page(feed, matrix=False, refresh_theme=False):
     """The artifact, built from the LAYOUT ITSELF — styles, scripts and markup extracted, never
     mirrored. `matrix` swaps the nine-probe bundle for the single state-matrix probe (see
@@ -3082,6 +3127,7 @@ def _build_page(feed, matrix=False, refresh_theme=False):
     src = open(os.path.join(ROOT, "_layouts", "home.html")).read()
     styles = "\n".join(re.findall(r"<style>.*?</style>", src, re.S))
     _css_sanity("_layouts/home.html", styles)
+    _assert_shell_modelled(styles)
     # ALL script blocks, in document order — re.search took only the FIRST block, which
     # since 2026-07-11 was the modal script, so the 600+-line folio engine went untested.
     script = "\n".join(re.findall(r"<script>.*?</script>", src, re.S))
