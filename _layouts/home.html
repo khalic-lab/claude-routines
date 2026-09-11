@@ -546,8 +546,33 @@ layout: archive
     .ff-sync{ order:-1; margin-left:0; }
     /* the panel has to open UPWARD off a bottom bar, or it renders off-screen */
     .ff-spanel{ top:auto; bottom:calc(100% + 9px); right:auto; left:0; }
-    /* clear the fixed bar: the board, the propose form and the footer all sit under it */
-    .layout--home #main{ padding-bottom:calc(58px + env(safe-area-inset-bottom)); }
+    /* THE BOTTOM BAND IS ONE NUMBER AND THE PAGE SHELL RESERVES IT (2026-09-12). What was here:
+       `.layout--home #main{ padding-bottom:calc(58px + env(safe-area-inset-bottom)) }`. The
+       arithmetic was never the bug — the BOX was. minimal-mistakes already makes <body> the page
+       shell: `body{display:flex; flex-direction:column; min-height:100vh}` with
+       `.initial-content{flex:1 0 auto}` and `#footer.page__footer` as the shell's last track. So
+       `#main` is a descendant of the track that GROWS, and the footer is not a descendant of it at
+       all: on a short page .initial-content simply grows past whatever `#main` reserves, and the
+       footer lands flush on the viewport bottom, under the bar. Measured at 500x900 with the Read
+       filter emptying the board: footer 718..813, bar 773..813 — 40px of a 95px footer covered,
+       with `body.scrollHeight === innerHeight`, so the covered strip could not be scrolled to.
+       The same 40px at scroll-end with the full board; the board's height was never the variable.
+       The reservation therefore belongs to the shell. The shell is border-box (the theme's
+       `html{box-sizing:border-box}`), so `padding-block-end` shrinks the 100dvh content box, the
+       footer rides up with it, and no scrollbar is invented. --ff-bar is the band, declared once
+       and handed to the bar as a floor so the two cannot drift apart. The reservation is never
+       short of the bar it clears: the bar measures max(--ff-bar, 8 + chips + max(8px, safe-inset))
+       and the shell reserves --ff-bar + safe-inset. The chip row measures 23.2px, so the band has
+       ~13px of headroom before that sum could outgrow it — raise --ff-bar if a chip ever does.
+       THE 100dvh IS REASONED, NOT MEASURED, and it is not what fixes the overlap: the padding
+       alone was verified to fix it with the theme's `min-height:100vh` left in place. What vh
+       costs is coherence — it is the LARGE viewport, so with the browser's toolbars showing the
+       shell is sized to a screen taller than the one the bar is anchored to, and a page that fits
+       gains a scroll it does not need. Headless has no dynamic toolbar, so this line is the only
+       thing in this block a browser here cannot show you. */
+    body.layout--home{ --ff-bar:44px; min-block-size:100dvh;
+      padding-block-end:calc(var(--ff-bar) + env(safe-area-inset-bottom)); }
+    .folio-filters{ min-block-size:var(--ff-bar); }
   }
   @media (min-width:700px){
     .folio-filters{ position:sticky; inset-block-end:auto; top:0; inset-inline:auto;
@@ -1459,6 +1484,30 @@ layout: archive
   .folio-empty{ grid-column:1 / -1; align-self:start;
     font-family:var(--serif); font-size:.95rem; line-height:1.5; color:var(--muted);
     padding:18px 18px 22px; border-block-start:1px solid var(--rule); }
+  /* AN EMPTY BOARD IS STILL A BOARD (2026-09-12). Filtered to nothing, the sheet collapsed to the
+     97px this one line occupies and the page ended a third of the way down the screen. The theme's
+     shell was doing its job — `body{display:flex; min-height:100vh}` with the footer as the last
+     track pins the footer to the bottom of a short page, which is what a shell is for — but the
+     gap it leaves is the reader's whole screen: measured at 500x900, 385px of bare paper between
+     the propose disclosure and the footer, against a 97px board.
+     A MIN-HEIGHT, NOT A FLEX SHELL, and that is measured rather than preferred. Growing the board
+     out of the shell means making `.initial-content`, `#main` and `.archive` flex columns; `#main`
+     carries `margin-left/right:auto`, and per Flexbox 9.4 an item with auto cross-axis margins is
+     not stretched but sized to fit-content. Tried: the whole page narrowed to ~305px inside a
+     500px viewport — the same trap `home_harness.py` documents around `.harness-doc`. A min-height
+     cannot touch a width.
+     BELOW 700 ONLY, and 40dvh, both measured at 500x900: void 385 -> 80, board 97 -> 357, with
+     scrollHeight still exactly the 813px viewport — the emptied page stays one screen. Neither
+     survives above 700, where the control bar is in flow at the top and spends ~110px of the same
+     budget: there the same rule takes a page that fit one screen (813) to 915, i.e. it buys a
+     scrollbar to hide a gap that is 242px rather than 385. 52dvh does that at 500 too (907).
+     dvh, not vh, for the same reason as the bar's band.
+     Scoped by `:has()` to the state where the message is actually showing, so the full board and
+     the no-JS page — where nothing ever filters and `hidden` never comes off — match neither the
+     selector nor this rule. */
+  @media (max-width:699px){
+    .folio-grid:has(> .folio-empty:not([hidden])){ min-block-size:40dvh; }
+  }
   @media (prefers-reduced-motion:reduce){ .fcard__in, .fcard__fb{ transition:none; } }
 
   /* (.propose margin lives with the rest of its rules in custom.html — was split across files) */
