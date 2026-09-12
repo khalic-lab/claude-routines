@@ -3085,12 +3085,26 @@ def _assert_shell_modelled(styles):
     harness — that is the `home_harness rubber-stamped for a week` lesson, and this guard is here
     so it cannot repeat silently.
 
+    AND THE CHEAP INVARIANTS CANNOT CATCH IT — they pass BECAUSE of the clip. `scrollW ==
+    innerW` is this tool's standing width check (line 1607, and the 2026-07-25 post-mortem at
+    3154 lists it among the invariants that "still PASSED" through that collapse). Under
+    `body{overflow:hidden}` the equality is guaranteed by the CSS: there is no overflow left to
+    report, so the check is satisfied by the breakage rather than by the page being right.
+    `inversions 0` and `rank2 >= tail` are ratios over whatever cards survived the clip and
+    degrade the same way. A green run here is not weak evidence, it is evidence of the wrong
+    thing — which is why this guard raises instead of warning.
+
     WHAT MIGRATING LOOKS LIKE, so whoever picks it up has the shape of it:
       1. Emit the real shell in `_build_page`: `.folio-filters` and `#shellView` as the two body
          children, `.shell__head` / `#main.shell__main` / `.page__footer` inside the scrollport.
          `.harness-doc` and the `#main.wrap` sizing rule both go — `.shell__main` now carries the
          column (definite `inline-size`, not `max-width`), which is what the `.harness-doc` note
          about auto cross-axis margins was working around.
+         The note itself is now false rather than merely superseded: it argues from minimal-
+         mistakes' `body{display:flex; flex-direction:column}` (3143), but the page template
+         injects `styles` AFTER `_theme_css + TOKENS` (3199), so the layout's
+         `body.layout--home{display:grid}` wins the cascade — body has not been a flex
+         container in this harness since ff48375.
       2. Decide what a screenshot means. Every shot this tool takes today is a full-page render of
          a tall window; under the shell the page IS the viewport and the board scrolls inside
          `#shellView`. Either drive `#shellView.scrollTop` per shot and stitch, or photograph one
