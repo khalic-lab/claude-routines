@@ -336,7 +336,13 @@ class FoldBasicScenarioTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, f"fold.py failed: {proc.stderr}")
 
         store = _load_module(STORE_PATH, f"store_{id(self)}")
-        snap = store.materialize(days=60, root=self.root)
+        # ALL-TIME, NOT 60 DAYS (2026-09-12). This fixture's ledger is dated 2026-06-20..07-07,
+        # so a 60-day window stopped covering it in mid-July and `stories` came back empty --
+        # KeyError on the first lookup, a failure on the calendar rather than on the behaviour.
+        # The subject here is last-write-wins tallying, not retention, so ask for the whole
+        # history exactly as fold.py itself does (_ALL_TIME_DAYS, "fold must resolve against the
+        # FULL ledger history, not materialize()'s 60-day default"). The window has its own tests.
+        snap = store.materialize(days=36500, root=self.root)
         stories = snap["stories"]
 
         lww = stories["st-792f49ec94fd"]["feedback"]

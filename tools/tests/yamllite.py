@@ -113,12 +113,34 @@ def _loads_fallback(text):
     return parse_map(0)
 
 
+def _isoify(node):
+    """PyYAML resolves an unquoted `2026-07-01` to `datetime.date`; the fallback parser below
+    leaves it a string, and so does registry.py, which is stdlib-only and never sees a date type
+    at all. Normalising here is what makes the two paths agree.
+
+    Without it this module reported a different registry to its callers depending on whether
+    PyYAML happened to be importable: five test_sources_registry cases compared
+    `datetime.date(2026, 7, 1)` against `'2026-07-01'` and failed on any machine that had it
+    installed, while passing in the routine sandbox, which has no third-party packages by design.
+    A test suite whose result depends on the environment rather than the code is not a baseline --
+    it is ten failures locally and five in CI, and nobody can tell which four are new.
+    """
+    import datetime
+    if isinstance(node, dict):
+        return {k: _isoify(v) for k, v in node.items()}
+    if isinstance(node, list):
+        return [_isoify(v) for v in node]
+    if isinstance(node, (datetime.date, datetime.datetime)):
+        return node.isoformat()
+    return node
+
+
 def load(text):
     try:
         import yaml  # type: ignore
     except ImportError:
         return _loads_fallback(text)
-    return yaml.safe_load(text)
+    return _isoify(yaml.safe_load(text))
 
 
 def _dump_scalar(v):

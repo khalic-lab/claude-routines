@@ -560,8 +560,33 @@ class ReconcileRealRepoTests(unittest.TestCase):
         proc = _run_reconcile(REPO_ROOT)
         self.assertEqual(proc.returncode, 0, proc.stderr)
 
+    # THIS GUARD IS PERISHABLE BY CONSTRUCTION, AND SAYS SO (2026-09-12). It pins one real,
+    # immutable story -- st-51f44833a0eb, the 2026-07-07 Cuba defect -- against live repo data
+    # that the pipeline is designed to delete. Two separate clocks ran it out:
+    #   1. reconcile's rolling --days window (default 14) stopped containing the 2026-07-07
+    #      edition in late July. That part is repairable, and is repaired below by asking for
+    #      the whole history -- how far back reconcile looks is not what this test is about,
+    #      and the window has its own fixtures above.
+    #   2. dedup prunes index/stories/ at KEEP_DAYS(40), so index/stories/2026-07-07-news.jsonl
+    #      no longer exists. That part is NOT repairable. Reconcile decides flagged-vs-resolved
+    #      per sid by reading that edition file; with the file gone it emits one "edition file
+    #      missing" finding for the edition and never reaches the sid, so the assertion below
+    #      cannot hold no matter how wide the window is. The ledger still carries the events
+    #      (index/ledger/2026-07-07 and -07-10), but the ledger alone is not enough.
+    # So the test skips, loudly, instead of failing on the calendar or being deleted: while the
+    # real data survives it is a genuine end-to-end check, and once it is pruned it explains
+    # itself to whoever is reading a skip. The behaviour it guards is not left uncovered --
+    # ReconcileResolvedByMergeTests above pins resolved-by-merge on synthetic fixtures, and
+    # test_runs_clean_against_the_real_repo still exercises the real repo.
     def test_real_cuba_story_is_resolved_by_merge_not_flagged(self):
-        proc = _run_reconcile(REPO_ROOT)
+        edition_file = os.path.join(REPO_ROOT, "index", "stories", "2026-07-07-news.jsonl")
+        if not os.path.exists(edition_file):
+            self.skipTest(
+                "index/stories/2026-07-07-news.jsonl has been pruned (dedup KEEP_DAYS=40), so "
+                "reconcile reports 'edition file missing' for the edition and never evaluates "
+                "st-51f44833a0eb. Real-data check retired by retention, not by regression; "
+                "resolved-by-merge is covered synthetically by ReconcileResolvedByMergeTests.")
+        proc = _run_reconcile(REPO_ROOT, ["--days", "36500"])
         self.assertEqual(proc.returncode, 0, proc.stderr)
         sid = "st-51f44833a0eb"
         hit = _lines_with(proc.stdout, sid)
