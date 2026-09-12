@@ -675,7 +675,11 @@ _ED_HEAD_RE = re.compile(r"^##\s+(.*)$")
 _ED_HR_RE = re.compile(r"^[-*_]{3,}$")   # markdown rule (---/***/___): separator, never prose
 _ED_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
 _ED_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
-_ED_EM_RE = re.compile(r"(?<!\*)\*([^*\n]+)\*(?!\*)")
+# BOTH italic spellings. `*em*` only was the rule until 2026-09-12, and the Weekend editorial
+# of 09-05 opened `_This is the part aggregation can't do._` -- so the card shipped a literal
+# leading underscore to the front page and sat there for a week. `_` is bounded by word
+# characters rather than `*` so intra_word_underscores in identifiers and URLs survive.
+_ED_EM_RE = re.compile(r"(?<!\*)\*([^*\n]+)\*(?!\*)|(?<![\w_])_([^_\n]+)_(?![\w_])")
 _ED_TAG_RE = re.compile(r"<[^>]+>")
 
 
@@ -702,7 +706,7 @@ def _ed_inline_html(text):
         lambda m: '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>'
         % (m.group(2).replace('"', "&quot;"), m.group(1)), s)
     s = _ED_BOLD_RE.sub(r"<strong>\1</strong>", s)
-    s = _ED_EM_RE.sub(r"<em>\1</em>", s)
+    s = _ED_EM_RE.sub(lambda m: "<em>%s</em>" % (m.group(1) or m.group(2)), s)
     return s.strip()
 
 
@@ -788,7 +792,17 @@ def _ed_title(lines):
     return "", lines
 
 
-ED_MAX_AGE_DAYS = 7      # one full weekly cycle: past this an editorial is dropped outright
+ED_MAX_AGE_DAYS = 5      # SHORTER than the weekly cadence, deliberately -- see below
+# WHY 5 AND NOT 7 (2026-09-12). 7 was "one full weekly cycle", which reads right and is the
+# bug: Science, Sports and Weekend all fire on a 7-day period, so the successor editorial
+# landed the day before the incumbent expired and the slot was NEVER empty. Across 40 builds
+# of _data/homefeed.json there were exactly 3 editorials on every single build for 24 straight
+# days -- never 2, never 4 -- and each one rode 7-8 consecutive daily rebuilds. The rule could
+# only ever perform a handover, never an expiry, which is precisely "they keep reappearing"
+# (owner report, 2026-09-12). A lifetime STRICTLY SHORTER than the cadence is what buys a gap:
+# at 5 a weekly desk's editorial runs Sat-Wed and the slot is genuinely empty Thu-Fri. The
+# daily desks are unaffected -- they have no editorial sections. Keep this < 7 if the weekly
+# cadence stands; a value >= the shortest editorial-bearing desk's period is the same bug back.
 
 
 def load_editorials(days, max_date, live_editions):
@@ -809,6 +823,19 @@ def load_editorials(days, max_date, live_editions):
       live_editions -- the editorial's own `(date, stream)` edition must still have at least one
         story on the capped board. An editorial is commentary ON that edition; outliving the
         reporting it comments on is what made it read as a zombie.
+
+    THAT SECOND GUARD IS NARROWER THAN IT LOOKS, and the narrowing is worth writing down because
+    it was nearly deleted as dead code on 2026-09-12. It cannot fire for the reason it is written
+    for -- an editorial outliving a DRAINED edition -- because `by_stream` below keeps only a
+    stream's NEWEST edition's editorial and apply_cap floors that same edition at
+    MIN_LATEST_EDITION, so the commented-on edition is always on the board. Re-running this
+    function with the real set and with every window edition returns identical output on current
+    data, which is what makes it look dead.
+    The case it DOES still cover: an edition that contributed NO stories to the board at all --
+    a post carrying an editorial section whose story records all failed to parse, or a brief thin
+    enough to yield none. Such an edition never enters `live_editions` (built from parsed
+    stories), the floor has nothing to floor, and this gate is the only thing standing between a
+    commentary card and an edition the reader cannot reach. Keep it; do not tune it.
     """
     posts = []
     for path in glob.glob(os.path.join(POSTS_DIR, "*.md")):
@@ -984,7 +1011,15 @@ def load_recent(days):
 
 
 ED_MIN_BOARD_INDEX = 3   # no editorial may sit in the composed top band (nth-child 1..3)
-AGE_MAX = 3              # data-age is a clamped bucket, not a duration
+AGE_MAX = 3              # data-age is a clamped bucket, not a duration -- see below
+# DELIBERATELY STILL 3, AND DELIBERATELY NOT THE STALENESS CUE (2026-09-12). `data-age` feeds
+# the type scale only, and _layouts/home.html keys on the literal `[data-age="3"]` (:1431-1432)
+# as "the oldest bucket" -- raising this would silently stop those rules matching anything and
+# cost the page its age-vs-tier typography, which is not what the sports complaint was about.
+# The complaint was that a 12-day-old scoreline reported age_days 3, indistinguishable from
+# Monday's. That is now fixed upstream by STORY_MAX_AGE_DAYS: nothing old enough for the clamp
+# to mislead reaches the board at all. If a real duration is ever wanted on the card, emit a
+# SECOND field next to this one -- do not widen this one.
 
 
 def build_board(stories, editorials, max_date):
@@ -1125,6 +1160,57 @@ def edition_parity(date):
 
 MIN_LATEST_EDITION = 6   # each stream's NEWEST edition keeps at least this many stories
 
+# NOTHING IN THIS FILE USED TO EXPIRE A STORY, AND FOUR THINGS LOOKED LIKE IT (2026-09-12).
+# `--days` is a SCAN bound, apply_cap is a fairness quota, AGE_MAX is a display bucket, and
+# ED_MAX_AGE_DAYS covers editorials only. So results from a fortnight ago sat beside today's
+# news: on 2026-09-12 the board carried "Djokovic exits US Open in first round" and a 3-3
+# scoreline, both from 08-31 (owner report: "some weird stuff with some sports articles").
+# Three mechanisms put them there and none is a bug on its own:
+#   - a 14-day window spans TWO editions of any weekly desk, so 08-31 and 09-07 are both resident;
+#   - apply_cap equalizes rather than expires -- it drains the fat daily editions first and leaves
+#     a ~2-story residue in every old edition (measured: 227 parsed -> 80 kept, weekend 08-29
+#     35->2, sports 08-31 8->2). The 08-31 stories survive at --days 21, 30 and 60, so the window
+#     was never what kept them;
+#   - the drop order is (importance, -position) and pops the lowest first, so what SURVIVES a
+#     stale edition is its lead items -- in a sports brief, exactly the match results.
+# Hence an explicit ceiling, applied BEFORE the quota so the quota never has to reason about age.
+# Per-stream because the honest lifetime differs by desk: a scoreline is worthless in a week, an
+# essay or a paper is not. 0 means no ceiling.
+STORY_MAX_AGE_DAYS = {
+    "sports": 7,     # results: a finished match is not news once the next round is played
+    "news": 10,
+    "ai-ml": 14,
+    "science": 14,   # weekly desks: one full cycle plus slack, so a desk is never blank
+    "weekend": 14,
+}
+STORY_MAX_AGE_DEFAULT = 14
+
+
+def drop_aged_out(stories, newest):
+    """Remove stories older than their stream's STORY_MAX_AGE_DAYS. Runs before apply_cap.
+
+    NEVER EMPTIES A STREAM: a desk whose every story has aged out keeps its newest edition, so a
+    silent or slow desk degrades to one stale edition rather than vanishing from the page -- the
+    same intent as apply_cap's MIN_LATEST_EDITION floor, which cannot help here because it runs
+    after this and only counts stories it is given.
+    """
+    if not newest:
+        return stories
+    nd = _dt.date.fromisoformat(newest)
+    latest = {}
+    for s in stories:
+        latest[s["stream"]] = max(latest.get(s["stream"], ""), s["date"])
+
+    def keep(s):
+        limit = STORY_MAX_AGE_DAYS.get(s["stream"], STORY_MAX_AGE_DEFAULT)
+        if not limit:
+            return True
+        if s["date"] == latest.get(s["stream"]):
+            return True                       # a stream's newest edition is never aged out
+        return (nd - _dt.date.fromisoformat(s["date"])).days <= limit
+
+    return [s for s in stories if keep(s)]
+
 
 def apply_cap(stories, cap):
     """Global newest-first truncation let one dense Weekend brief erase whole streams from the
@@ -1175,6 +1261,9 @@ def main():
     stories, max_date, joined = load_recent(args.days)
     n_parsed = len(stories)
     stories.sort(key=lambda s: (s["date"], s["importance"]), reverse=True)   # newest + lead first
+    n_aged = len(stories)
+    stories = drop_aged_out(stories, max_date)
+    n_aged -= len(stories)
     stories = apply_cap(stories, args.cap)
     for s in stories:
         s["fresh"] = s["date"] == max_date

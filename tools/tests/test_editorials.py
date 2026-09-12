@@ -158,14 +158,54 @@ class LoadEditorialsTest(unittest.TestCase):
         self._post("2026-07-18-science.md", "## Why it matters\n\n---\n")
         self.assertEqual(self._load("2026-07-18", {("2026-07-18", "science")}), [])
 
-    def test_an_editorial_older_than_one_weekly_cycle_is_dropped(self):
+    def test_an_editorial_older_than_ed_max_age_days_is_dropped(self):
         """ED_MAX_AGE_DAYS is the belt for a desk that stops firing: apply_cap's
         MIN_LATEST_EDITION keeps a stream's newest edition on the board indefinitely, so
-        "its edition is still there" cannot be the only expiry."""
+        "its edition is still there" cannot be the only expiry.
+
+        The boundary is derived from the constant, not written out. This test used to hardcode
+        7-in / 8-out; when ED_MAX_AGE_DAYS moved to 5 it failed as a bare number mismatch and
+        said nothing about whether the RULE was still right.
+        """
+        import datetime as _d
+        post = _d.date(2026, 7, 18)
         self._post("2026-07-18-sports.md", "## Why it matters\n\n**A.** Old synthesis.\n")
         live = {("2026-07-18", "sports")}
-        self.assertEqual(len(self._load("2026-07-25", live)), 1)     # 7 days: the last day in
-        self.assertEqual(self._load("2026-07-26", live), [])        # 8 days: gone
+        last_in = (post + _d.timedelta(days=bsf.ED_MAX_AGE_DAYS)).isoformat()
+        first_out = (post + _d.timedelta(days=bsf.ED_MAX_AGE_DAYS + 1)).isoformat()
+        self.assertEqual(len(self._load(last_in, live)), 1, "ED_MAX_AGE_DAYS days old: still in")
+        self.assertEqual(self._load(first_out, live), [], "one day past it: gone")
+
+    def test_editorial_lifetime_is_shorter_than_the_weekly_cadence(self):
+        """THE REGRESSION GUARD FOR "the editorials keep reappearing" (owner report 2026-09-12).
+
+        Science, Sports and Weekend all fire on a 7-day period. While ED_MAX_AGE_DAYS was 7, the
+        successor editorial landed the day BEFORE the incumbent expired, so a weekly desk's
+        editorial slot was never once empty -- 3 editorials on every build for 24 straight days.
+        The rule could only ever hand over, never expire.
+
+        A lifetime strictly shorter than the shortest editorial-bearing desk's period is what
+        buys a gap. This asserts the relationship rather than the number, so raising
+        ED_MAX_AGE_DAYS back to 7 -- or adding a desk that fires more often than the lifetime --
+        fails here with the reason attached.
+        """
+        WEEKLY_CADENCE_DAYS = 7          # sports (Mon), science (Wed), weekend (Sat)
+        self.assertLess(
+            bsf.ED_MAX_AGE_DAYS, WEEKLY_CADENCE_DAYS,
+            "ED_MAX_AGE_DAYS (%d) must be < the %d-day desk cadence, or a weekly desk's editorial "
+            "slot is never empty and every editorial rides ~%d consecutive daily rebuilds"
+            % (bsf.ED_MAX_AGE_DAYS, WEEKLY_CADENCE_DAYS, WEEKLY_CADENCE_DAYS))
+
+        # and demonstrate the gap concretely: a weekly desk publishes, and there is at least one
+        # day before its successor lands on which no editorial for that desk is on the board.
+        import datetime as _d
+        post = _d.date(2026, 7, 18)
+        self._post("2026-07-18-sports.md", "## Why it matters\n\n**A.** Old synthesis.\n")
+        live = {("2026-07-18", "sports")}
+        gap = [d for d in range(1, WEEKLY_CADENCE_DAYS)
+               if not self._load((post + _d.timedelta(days=d)).isoformat(), live)]
+        self.assertTrue(gap, "no day between one sports edition and the next has an empty "
+                             "editorial slot -- this is the 'keeps reappearing' bug")
 
     def test_an_editorial_whose_edition_left_the_board_is_dropped(self):
         self._post("2026-07-25-weekend.md", "## Why it matters\n\n**A.** This week.\n")
