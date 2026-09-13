@@ -1,0 +1,147 @@
+---
+layout: admin
+permalink: /admin/
+title: Admin
+sitemap: false
+---
+<!-- The admin console. Section skeleton only — every dynamic value is filled by the layout's
+     script from the Worker snapshot after passkey sign-in, so nothing private ships in this HTML.
+     Six sections in the order plan §2.6 fixes: status, usage, sources, add, pending, proposals. -->
+<main class="adm" id="adm">
+  <header class="adm__top">
+    <div>
+      <p class="adm__kicker">claude-routines</p>
+      <h1 class="adm__title">Admin</h1>
+    </div>
+    <div class="adm__auth" id="auth">
+      <span class="adm__who" id="who" hidden></span>
+      <button class="adm__btn adm__btn--sm" id="signin-btn" type="button">Sign in</button>
+      <button class="adm__btn adm__btn--sm" id="signout-btn" type="button" hidden>Sign out</button>
+    </div>
+  </header>
+
+  <section class="adm__sec" id="sec-status">
+    <h2 class="adm__h2">Status</h2>
+    <div class="adm__statusline" id="status-body">
+      <span class="adm__dot" id="reach-dot" aria-hidden="true"></span>
+      <span id="status-text">Checking…</span>
+    </div>
+  </section>
+
+  <!-- Signed-out gate: the whole console below stays hidden until a session exists. -->
+  <div class="adm__gate" id="signed-out" hidden>
+    <p>This page is passkey-gated. Sign in to see usage and manage the source registry.</p>
+    <button class="adm__btn" id="gate-signin" type="button">Sign in with passkey</button>
+    <p class="adm__msg" id="gate-msg" role="status"></p>
+  </div>
+
+  <div id="signed-in" hidden>
+    <section class="adm__sec" id="sec-usage">
+      <h2 class="adm__h2">Usage <span class="adm__note">measured, list price</span></h2>
+      <div id="usage-body"><p class="adm__empty">Loading…</p></div>
+    </section>
+
+    <section class="adm__sec" id="sec-sources">
+      <h2 class="adm__h2">Sources <span class="adm__count" id="src-count"></span></h2>
+      <div class="adm__filters">
+        <input class="adm__field" id="src-q" type="search" placeholder="filter by domain…"
+               autocomplete="off" aria-label="Filter sources by domain">
+        <select class="adm__field" id="src-status" aria-label="Filter by status">
+          <option value="">any status</option>
+          <option value="candidate">candidate</option>
+          <option value="probation">probation</option>
+          <option value="established">established</option>
+          <option value="demoted">demoted</option>
+          <option value="retired">retired</option>
+        </select>
+        <select class="adm__field" id="src-stream" aria-label="Filter by stream">
+          <option value="">any stream</option>
+          <option value="news">news</option>
+          <option value="ai-ml">ai-ml</option>
+          <option value="science">science</option>
+          <option value="weekend">weekend</option>
+          <option value="sports">sports</option>
+        </select>
+        <select class="adm__field" id="src-tier" aria-label="Filter by tier">
+          <option value="">any tier</option>
+          <option value="T1">T1</option>
+          <option value="T2">T2</option>
+        </select>
+      </div>
+      <div id="sources-body"><p class="adm__empty">Loading…</p></div>
+    </section>
+
+    <section class="adm__sec" id="sec-add">
+      <h2 class="adm__h2">Add a source</h2>
+      <form class="adm__form" id="add-form" novalidate>
+        <label class="adm__lbl">Domain
+          <input class="adm__field" id="af-domain" type="text" inputmode="url"
+                 autocapitalize="off" autocomplete="off" placeholder="example.org">
+        </label>
+        <div class="adm__row2">
+          <label class="adm__lbl">Tier
+            <select class="adm__field" id="af-tier">
+              <option value="T2" selected>T2</option>
+              <option value="T1">T1</option>
+            </select>
+          </label>
+          <label class="adm__lbl">Status
+            <select class="adm__field" id="af-status">
+              <option value="probation" selected>probation</option>
+              <option value="candidate">candidate</option>
+              <option value="established">established</option>
+            </select>
+          </label>
+        </div>
+        <label class="adm__lbl">Reach
+          <select class="adm__field" id="af-reach">
+            <option value="direct" selected>direct</option>
+            <option value="proxy">proxy</option>
+            <option value="search-only">search-only</option>
+            <option value="blocked">blocked</option>
+            <option value="blocked-paywall">blocked-paywall</option>
+          </select>
+        </label>
+        <fieldset class="adm__streams">
+          <legend class="adm__lbl">Streams</legend>
+          <label class="adm__chk"><input type="checkbox" name="stream" value="news"> news</label>
+          <label class="adm__chk"><input type="checkbox" name="stream" value="ai-ml"> ai-ml</label>
+          <label class="adm__chk"><input type="checkbox" name="stream" value="science"> science</label>
+          <label class="adm__chk"><input type="checkbox" name="stream" value="weekend"> weekend</label>
+          <label class="adm__chk"><input type="checkbox" name="stream" value="sports"> sports</label>
+        </fieldset>
+        <div class="adm__row2">
+          <label class="adm__lbl">Probe URL <span class="adm__opt">optional</span>
+            <input class="adm__field" id="af-probe" type="url" autocomplete="off"
+                   placeholder="https://example.org/feed">
+          </label>
+          <label class="adm__lbl">Probe method
+            <select class="adm__field" id="af-method">
+              <option value="curl" selected>curl</option>
+              <option value="proxy">proxy</option>
+            </select>
+          </label>
+        </div>
+        <label class="adm__lbl">Note <span class="adm__opt">optional</span>
+          <input class="adm__field" id="af-note" type="text" maxlength="500" autocomplete="off">
+        </label>
+        <button class="adm__btn" id="af-submit" type="submit">Add source</button>
+        <p class="adm__msg" id="af-msg" role="status"></p>
+      </form>
+    </section>
+
+    <section class="adm__sec" id="sec-pending">
+      <h2 class="adm__h2">Pending actions</h2>
+      <p class="adm__note">Queued actions apply at the next bridge tick (every 10 min, 07–22 Zurich)
+        and take effect at each writer's next fire.</p>
+      <div id="pending-body"><p class="adm__empty">Loading…</p></div>
+      <h3 class="adm__h3">Recently applied</h3>
+      <div id="recent-body"></div>
+    </section>
+
+    <section class="adm__sec" id="sec-proposals">
+      <h2 class="adm__h2">Evaluator proposals pending</h2>
+      <div id="proposals-body"></div>
+    </section>
+  </div>
+</main>

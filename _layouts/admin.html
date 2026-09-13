@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- viewport-fit=cover so the safe-area insets below actually have room on a notched phone. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Admin — claude-routines</title>
+  <!-- The ONLY theme include: Folio palette tokens, the self-hosted display face, and window.__FB
+       (the Worker origin). No minimal-mistakes CSS/JS — this page owns its whole document. -->
+  {% include head/custom.html %}
+  <style>
+    /* Theme-free admin console. Both colour schemes come free from the light-dark() tokens in
+       head/custom.html; this sheet only lays out. Document scroll only: nothing pinned, no
+       full-height viewport units, no inner vertical scroll. Tables scroll sideways at wide widths and
+       stack into labelled rows below 700px. Utilitarian, phone-first, 44px controls. */
+    *{ box-sizing:border-box; }
+    body{ background:var(--paper); color:var(--ink); font-family:var(--sans);
+      margin:0; line-height:1.45; -webkit-text-size-adjust:100%; }
+    .adm{ max-width:60rem; margin:0 auto;
+      padding:1.1rem 1rem calc(2.4rem + env(safe-area-inset-bottom));
+      padding-left:calc(1rem + env(safe-area-inset-left));
+      padding-right:calc(1rem + env(safe-area-inset-right)); }
+
+    .adm__top{ display:flex; align-items:flex-end; justify-content:space-between; gap:1rem;
+      flex-wrap:wrap; border-bottom:1px solid var(--rule); padding-bottom:.9rem; }
+    .adm__kicker{ font-size:.6rem; font-weight:700; text-transform:uppercase; letter-spacing:.16em;
+      color:var(--muted); margin:0 0 .15rem; }
+    .adm__title{ font-family:var(--display); font-weight:700; font-size:2rem; letter-spacing:-.01em;
+      margin:0; line-height:1; }
+    .adm__auth{ display:flex; align-items:center; gap:.6rem; }
+    .adm__who{ font-size:.82rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+    .adm__sec{ margin:1.8rem 0 0; }
+    .adm__h2{ font-family:var(--sans); font-weight:700; text-transform:uppercase; letter-spacing:.13em;
+      font-size:.74rem; color:var(--muted-ui); margin:0 0 .8rem; padding-top:.9rem;
+      border-top:1px solid var(--hair); display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap; }
+    .adm__h3{ font-family:var(--sans); font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+      font-size:.66rem; color:var(--muted); margin:1.5rem 0 .6rem; }
+    .adm__note{ font-family:var(--sans); font-size:.72rem; font-weight:500; text-transform:none;
+      letter-spacing:.01em; color:var(--muted); }
+    .adm__count{ font-family:var(--sans); font-size:.72rem; font-weight:600; color:var(--muted);
+      text-transform:none; letter-spacing:0; font-variant-numeric:tabular-nums; }
+    .adm__opt{ font-size:.7rem; font-weight:400; color:var(--muted); text-transform:none;
+      letter-spacing:0; }
+    .adm__empty{ color:var(--muted); font-size:.86rem; font-style:italic; margin:.4rem 0; }
+
+    /* status line */
+    .adm__statusline{ display:flex; align-items:center; gap:.5rem; font-size:.86rem;
+      color:var(--ink); font-variant-numeric:tabular-nums; }
+    .adm__dot{ width:.6rem; height:.6rem; border-radius:50%; background:var(--muted);
+      flex:0 0 auto; }
+    .adm__dot.is-ok{ background:var(--accent); }
+    .adm__dot.is-bad{ background:var(--red); }
+
+    /* controls — all >=44px tall, >=3:1 border */
+    .adm__btn{ font-family:var(--sans); font-size:.78rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.09em; cursor:pointer; min-height:44px; padding:.6rem 1.1rem; border-radius:3px;
+      background:var(--field); color:var(--ink); border:1px solid var(--muted-ui);
+      display:inline-flex; align-items:center; justify-content:center; gap:.4rem; }
+    .adm__btn:hover{ background:var(--hair); }
+    .adm__btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+    .adm__btn--sm{ min-height:38px; padding:.35rem .8rem; font-size:.66rem; }
+    .adm__btn--danger{ color:var(--red); border-color:var(--red); }
+    .adm__btn[disabled]{ opacity:.5; cursor:default; }
+
+    .adm__gate{ margin:1.8rem 0 0; padding:1.4rem; border:1px solid var(--rule); border-radius:4px;
+      background:var(--panel); max-width:32rem; }
+    .adm__gate p{ margin:0 0 1rem; font-size:.92rem; color:var(--ink); }
+    .adm__msg{ font-size:.8rem; color:var(--muted); margin:.7rem 0 0; min-height:1.1em; }
+    .adm__msg.is-err{ color:var(--red); }
+    .adm__msg.is-ok{ color:var(--accent); }
+
+    /* usage tiles */
+    .adm__tiles{ display:grid; grid-template-columns:repeat(2,1fr); gap:.7rem; margin:0 0 1.2rem; }
+    .adm__tile{ border:1px solid var(--hair); border-radius:4px; background:var(--card);
+      padding:.8rem .9rem; }
+    .adm__tile-k{ font-size:.6rem; font-weight:700; text-transform:uppercase; letter-spacing:.11em;
+      color:var(--muted); margin:0 0 .35rem; }
+    .adm__tile-v{ font-family:var(--display); font-size:1.5rem; line-height:1; color:var(--ink);
+      font-variant-numeric:tabular-nums; }
+    .adm__tile-s{ font-size:.66rem; color:var(--muted); margin:.3rem 0 0;
+      font-variant-numeric:tabular-nums; }
+
+    /* tables — wrapper scrolls sideways at wide widths; rows stack below 700px */
+    .adm__tw{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .adm__table{ width:100%; border-collapse:collapse; font-size:.8rem;
+      font-variant-numeric:tabular-nums; }
+    .adm__table th,.adm__table td{ text-align:left; padding:.5rem .6rem;
+      border-bottom:1px solid var(--hair); vertical-align:top; }
+    .adm__table th{ font-size:.6rem; font-weight:700; text-transform:uppercase; letter-spacing:.09em;
+      color:var(--muted); white-space:nowrap; border-bottom:1px solid var(--rule); }
+    .adm__table td.num,.adm__table th.num{ text-align:right; white-space:nowrap; }
+    .adm__table tr.is-retired td,.adm__table tr.is-demoted td{ color:var(--muted); }
+    .adm__pill{ display:inline-block; font-size:.6rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.05em; padding:.1rem .5rem; border-radius:999px; border:1px solid var(--hair);
+      color:var(--muted); white-space:nowrap; }
+    .adm__pill.is-established{ color:var(--accent); border-color:var(--accent); }
+    .adm__pill.is-retired,.adm__pill.is-demoted{ color:var(--red); border-color:var(--red); }
+    .adm__pill.is-rejected{ color:var(--red); border-color:var(--red); }
+    .adm__pill.is-applied{ color:var(--accent); border-color:var(--accent); }
+    .adm__mono{ font-family:var(--sans); }
+    .adm__rowbtns{ display:flex; gap:.4rem; flex-wrap:wrap; }
+
+    @media (max-width:699px){
+      .adm__table thead{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+      .adm__table,.adm__table tbody,.adm__table tr,.adm__table td{ display:block; width:100%; }
+      .adm__table tr{ border:1px solid var(--hair); border-radius:4px; margin:0 0 .7rem;
+        padding:.3rem .1rem; background:var(--card); }
+      .adm__table td{ border:0; border-bottom:1px solid var(--hair); display:flex;
+        justify-content:space-between; gap:1rem; text-align:right; padding:.45rem .8rem; }
+      .adm__table td:last-child{ border-bottom:0; }
+      .adm__table td.num{ text-align:right; }
+      .adm__table td::before{ content:attr(data-label); font-size:.58rem; font-weight:700;
+        text-transform:uppercase; letter-spacing:.08em; color:var(--muted); text-align:left;
+        flex:0 0 auto; align-self:center; }
+      .adm__table td:empty{ display:none; }
+    }
+
+    /* filters + forms */
+    .adm__filters{ display:flex; gap:.5rem; flex-wrap:wrap; margin:0 0 1rem; }
+    .adm__field{ font-family:var(--sans); font-size:.86rem; min-height:44px; padding:.45rem .6rem;
+      background:var(--field); color:var(--ink); border:1px solid var(--frame); border-radius:3px;
+      width:100%; box-sizing:border-box; }
+    .adm__field:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+    .adm__filters .adm__field{ width:auto; flex:1 1 8rem; min-width:0; }
+    .adm__form{ display:flex; flex-direction:column; gap:.9rem; max-width:34rem; }
+    .adm__lbl{ display:flex; flex-direction:column; gap:.3rem; font-size:.7rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.08em; color:var(--muted-ui); }
+    .adm__row2{ display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
+    .adm__streams{ border:1px solid var(--hair); border-radius:3px; padding:.7rem .8rem;
+      display:flex; flex-wrap:wrap; gap:.5rem 1.1rem; margin:0; }
+    .adm__streams legend{ padding:0 .3rem; }
+    .adm__chk{ display:flex; align-items:center; gap:.4rem; font-size:.84rem; font-weight:500;
+      text-transform:none; letter-spacing:0; color:var(--ink); min-height:34px; }
+    .adm__chk input{ width:1.1rem; height:1.1rem; }
+
+    .adm__srcmeta{ font-size:.7rem; color:var(--muted); }
+    .adm__streamtags{ font-size:.7rem; color:var(--muted); }
+  </style>
+</head>
+<body>
+{{ content }}
+<script>
+/* Admin console behaviour. Self-contained: no dependency on _layouts/home.html's script — the
+   passkey login sequence and syncSession:v1 shape are COPIED (faithfully) from there, not imported.
+   All data comes from the feedback-sink Worker (window.__FB.url) after sign-in; signed out we make
+   zero requests, matching the homepage's "signed out = no traffic" contract. */
+(function(){
+  "use strict";
+  var SS_KEY = "syncSession:v1";
+  function base(){ return (window.__FB && window.__FB.url) ? window.__FB.url : ""; }
+
+  // --- session (shape identical to _layouts/home.html: {token, reader, at}) ---
+  function session(){
+    try {
+      var s = JSON.parse(localStorage.getItem(SS_KEY) || "null");
+      return (s && typeof s.token === "string" && s.token && s.reader) ? s : null;
+    } catch (e) { return null; }
+  }
+  function dropSession(){ try { localStorage.removeItem(SS_KEY); } catch (e) {} }
+
+  // --- WebAuthn login, copied verbatim in shape from home.html (b64url <-> ArrayBuffer, the
+  //     login-options -> credentials.get -> login payload serialisation). No registration here. ---
+  function b64uToBuf(s){
+    s = String(s).replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    var bin = atob(s), b = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b.buffer;
+  }
+  function bufToB64u(buf){
+    var b = new Uint8Array(buf), s = "";
+    for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function authFetch(path, body){
+    return fetch(base() + path, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {})
+    }).then(function(r){
+      return r.json().catch(function(){ return {}; })
+        .then(function(j){ return { ok: r.ok, status: r.status, j: j }; });
+    });
+  }
+  function adoptSession(j){
+    // `at` feeds the KV-lag grace window (a just-issued token can 401 off an eventually-consistent
+    // edge read); the homepage keeps it and so must we, or the first snapshot fetch races the token.
+    try { localStorage.setItem(SS_KEY, JSON.stringify({ token: j.session, reader: j.reader, at: Date.now() })); } catch (e) {}
+  }
+  function doLogin(say){
+    say("waiting for your passkey…", "");
+    return authFetch("/auth/login-options", {}).then(function(res){
+      if (!res.ok) throw new Error("server error (" + res.status + ")");
+      var o = res.j;
+      o.challenge = b64uToBuf(o.challenge);
+      (o.allowCredentials || []).forEach(function(c){ c.id = b64uToBuf(c.id); });
+      return navigator.credentials.get({ publicKey: o });
+    }).then(function(cred){
+      if (!cred) throw new Error("no credential");
+      var r = cred.response;
+      var payload = {
+        id: cred.id, rawId: bufToB64u(cred.rawId), type: cred.type,
+        clientExtensionResults: cred.getClientExtensionResults ? cred.getClientExtensionResults() : {},
+        response: {
+          clientDataJSON: bufToB64u(r.clientDataJSON),
+          authenticatorData: bufToB64u(r.authenticatorData),
+          signature: bufToB64u(r.signature)
+        }
+      };
+      if (r.userHandle) payload.response.userHandle = bufToB64u(r.userHandle);
+      return authFetch("/auth/login", { response: payload });
+    }).then(function(res){
+      if (!res.ok || !res.j || !res.j.ok)
+        throw new Error(res.status === 403 ? "passkey not recognized" : "sign-in failed (" + res.status + ")");
+      adoptSession(res.j);
+      boot();
+    }).catch(function(err){
+      say(err && err.name === "NotAllowedError" ? "cancelled or timed out"
+          : (err && err.message) ? err.message : "sign-in failed", "err");
+    });
+  }
+
+  // --- authed calls to /admin/* — every request gated on a live session ---
+  function apiGet(path){
+    var s = session();
+    if (!s) return Promise.reject(new Error("signed out"));
+    return fetch(base() + path, { headers: { "Authorization": "Bearer " + s.token } })
+      .then(function(r){
+        if (r.status === 401){ dropSession(); throw new Error("session expired"); }
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      });
+  }
+  function apiPost(path, body){
+    var s = session();
+    if (!s) return Promise.reject(new Error("signed out"));
+    return fetch(base() + path, {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + s.token, "Content-Type": "application/json" },
+      body: JSON.stringify(body || {})
+    }).then(function(r){
+      return r.json().catch(function(){ return {}; })
+        .then(function(j){ if (r.status === 401){ dropSession(); }
+                           return { ok: r.ok, status: r.status, j: j }; });
+    });
+  }
+
+  // --- number formatting: thousands separators, tabular, cost to cents ---
+  function nInt(n){ return (n == null ? 0 : Math.round(n)).toLocaleString("en-US"); }
+  function nCost(n){ return "$" + (n == null ? 0 : n).toLocaleString("en-US",
+    { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function tokTotal(t){ if (!t) return 0; return (t.input||0)+(t.cache_write||0)+(t.cache_read||0)+(t.output||0); }
+  function esc(s){ var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+  function $(id){ return document.getElementById(id); }
+
+  var VALID = {
+    domain: /^(?=.{4,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/,
+    tier: { T1:1, T2:1 },
+    reach: { direct:1, proxy:1, "search-only":1, blocked:1, "blocked-paywall":1 },
+    addStatus: { candidate:1, probation:1, established:1 },
+    streams: { news:1, "ai-ml":1, science:1, weekend:1, sports:1 }
+  };
+
+  // ---------------- state + boot ----------------
+  var snap = null, refreshTimer = null;
+
+  function say(el, msg, kind){
+    el.textContent = msg || "";
+    el.className = "adm__msg" + (kind === "err" ? " is-err" : kind === "ok" ? " is-ok" : "");
+  }
+
+  function renderAuth(){
+    var s = session();
+    $("who").hidden = !s;
+    if (s) $("who").textContent = "Signed in as " + s.reader;
+    $("signin-btn").hidden = !!s;
+    $("signout-btn").hidden = !s;
+    var webauthn = !!window.PublicKeyCredential;
+    if (!webauthn){ $("signin-btn").disabled = true; $("gate-signin").disabled = true; }
+  }
+
+  function boot(){
+    renderAuth();
+    var s = session();
+    if (!s){
+      $("signed-out").hidden = false;
+      $("signed-in").hidden = true;
+      setStatus("bad", "Not signed in — passkey required.");
+      if (refreshTimer){ clearInterval(refreshTimer); refreshTimer = null; }
+      return;
+    }
+    $("signed-out").hidden = true;
+    $("signed-in").hidden = false;
+    load();
+    if (!refreshTimer) refreshTimer = setInterval(refreshPending, 60000);
+  }
+
+  function setStatus(kind, text){
+    var dot = $("reach-dot");
+    dot.className = "adm__dot" + (kind === "ok" ? " is-ok" : kind === "bad" ? " is-bad" : "");
+    $("status-text").textContent = text;
+  }
+
+  function load(){
+    Promise.all([
+      apiGet("/admin/snapshot").catch(function(e){ throw e; }),
+      apiGet("/admin/actions").catch(function(){ return { count: 0, actions: [] }; })
+    ]).then(function(r){
+      snap = r[0];
+      renderStatus(snap);
+      if (!snap){ renderEmptyAll(); return; }
+      renderUsage(snap.usage);
+      renderSources(snap.sources || []);
+      renderProposals(snap.proposals_pending || []);
+      renderRecent(snap.actions_recent || []);
+      renderPending(r[1] && r[1].actions ? r[1].actions : []);
+    }).catch(function(err){
+      setStatus("bad", "Worker unreachable — " + (err && err.message ? err.message : "error"));
+    });
+  }
+
+  function refreshPending(){
+    if (!session()) return;
+    apiGet("/admin/actions").then(function(r){
+      renderPending(r && r.actions ? r.actions : []);
+    }).catch(function(){});
+  }
+
+  function renderEmptyAll(){
+    $("usage-body").innerHTML = "<p class='adm__empty'>No snapshot yet — the bridge pushes one at its next tick.</p>";
+    $("sources-body").innerHTML = "<p class='adm__empty'>No snapshot yet.</p>";
+    $("proposals-body").innerHTML = "<p class='adm__empty'>No snapshot yet.</p>";
+    $("recent-body").innerHTML = "";
+  }
+
+  // ---------------- status line ----------------
+  function renderStatus(s){
+    if (!s){ setStatus("ok", "Signed in. No snapshot pushed yet."); return; }
+    var age = "";
+    try {
+      var g = new Date(s.generated);
+      var hh = g.getUTCHours(), mm = g.getUTCMinutes();
+      age = "data as of " + (hh<10?"0":"")+hh + ":" + (mm<10?"0":"")+mm + " UTC";
+    } catch (e) { age = "data as of " + (s.generated || "?"); }
+    setStatus("ok", age + " · next bridge tick ≤ 10 min (07–22 Zurich) · head " +
+      String(s.head || "").slice(0, 7));
+  }
+
+  // ---------------- usage ----------------
+  function renderUsage(u){
+    var body = $("usage-body");
+    if (!u || !u.records){
+      body.innerHTML = "<p class='adm__empty'>No measured runs yet — the first record lands at the next routine fire.</p>";
+      return;
+    }
+    var w7 = u.windows && u.windows["7d"] ? u.windows["7d"] : { tokens:{}, cost_usd_list:0, runs:0 };
+    var w30 = u.windows && u.windows["30d"] ? u.windows["30d"] : { tokens:{}, cost_usd_list:0, runs:0 };
+    var html = "<div class='adm__tiles'>";
+    html += tile("7-day tokens", nInt(tokTotal(w7.tokens)), w7.runs + " run" + (w7.runs===1?"":"s"));
+    html += tile("7-day cost", nCost(w7.cost_usd_list), "list price");
+    html += tile("30-day tokens", nInt(tokTotal(w30.tokens)), w30.runs + " run" + (w30.runs===1?"":"s"));
+    html += tile("30-day cost", nCost(w30.cost_usd_list), "list price");
+    html += "</div>";
+
+    // by-routine
+    html += "<h3 class='adm__h3'>By routine</h3><div class='adm__tw'><table class='adm__table'><thead><tr>" +
+      "<th>Routine</th><th class='num'>Runs</th><th class='num'>Input</th><th class='num'>Cache write</th>" +
+      "<th class='num'>Cache read</th><th class='num'>Output</th><th class='num'>Cost</th>" +
+      "<th class='num'>Avg tok/run</th><th class='num'>Avg dur</th></tr></thead><tbody>";
+    var rts = Object.keys(u.by_routine || {}).sort();
+    rts.forEach(function(rt){
+      var b = u.by_routine[rt], t = b.tokens || {}, a = b.avg || {};
+      html += "<tr><td data-label='Routine'>" + esc(rt) + "</td>" +
+        cell("Runs", nInt(b.runs)) + cell("Input", nInt(t.input)) + cell("Cache write", nInt(t.cache_write)) +
+        cell("Cache read", nInt(t.cache_read)) + cell("Output", nInt(t.output)) +
+        cell("Cost", nCost(b.cost_usd_list)) + cell("Avg tok/run", nInt(a.tokens_per_run)) +
+        cell("Avg dur", dur(a.duration_s)) + "</tr>";
+    });
+    html += "</tbody></table></div>";
+
+    // recent runs
+    html += "<h3 class='adm__h3'>Recent runs</h3><div class='adm__tw'><table class='adm__table'><thead><tr>" +
+      "<th>Started</th><th>Routine</th><th>Edition</th><th>Models</th><th class='num'>Tokens</th>" +
+      "<th class='num'>Cost</th><th class='num'>Dur</th><th>Stage</th></tr></thead><tbody>";
+    (u.recent || []).forEach(function(r){
+      html += "<tr>" +
+        cell("Started", esc(shortTs(r.started)), true) +
+        cell("Routine", esc(r.routine), true) +
+        cell("Edition", r.edition ? esc(r.edition) : "—", true) +
+        cell("Models", esc((r.models || []).join(", ")), true) +
+        cell("Tokens", nInt(tokTotal(r.tokens))) +
+        cell("Cost", nCost(r.cost_usd_list)) +
+        cell("Dur", dur(r.duration_s)) +
+        cell("Stage", esc(r.stage), true) + "</tr>";
+    });
+    html += "</tbody></table></div>";
+    body.innerHTML = html;
+  }
+  function tile(k, v, sub){
+    return "<div class='adm__tile'><p class='adm__tile-k'>" + esc(k) + "</p>" +
+      "<div class='adm__tile-v'>" + v + "</div><p class='adm__tile-s'>" + esc(sub) + "</p></div>";
+  }
+  function cell(label, val, textLeft){
+    var cls = textLeft ? "" : " class='num'";
+    return "<td data-label='" + esc(label) + "'" + cls + ">" + val + "</td>";
+  }
+  function dur(s){
+    if (s == null) return "—";
+    var m = Math.floor(s / 60), r = s % 60;
+    return m + "m" + (r < 10 ? "0" : "") + r + "s";
+  }
+  function shortTs(ts){
+    if (!ts) return "—";
+    return String(ts).replace("T", " ").replace(/:\d\dZ?$/, "").replace("Z", "");
+  }
+
+  // ---------------- sources ----------------
+  function renderSources(sources){
+    var q = $("src-q").value.trim().toLowerCase();
+    var fs = $("src-status").value, fst = $("src-stream").value, ft = $("src-tier").value;
+    var rows = sources.filter(function(s){
+      if (q && s.domain.indexOf(q) < 0) return false;
+      if (fs && s.status !== fs) return false;
+      if (ft && s.tier !== ft) return false;
+      if (fst && (s.streams || []).indexOf(fst) < 0) return false;
+      return true;
+    });
+    $("src-count").textContent = rows.length + " of " + sources.length;
+    if (!rows.length){ $("sources-body").innerHTML = "<p class='adm__empty'>No sources match.</p>"; return; }
+    var html = "<div class='adm__tw'><table class='adm__table'><thead><tr>" +
+      "<th>Domain</th><th>Tier</th><th>Status</th><th>Streams</th><th>Last cited</th>" +
+      "<th>Last event</th><th></th></tr></thead><tbody>";
+    rows.forEach(function(s){
+      var dim = (s.status === "retired") ? " is-retired" : (s.status === "demoted") ? " is-demoted" : "";
+      var ev = s.last_event ? (esc(s.last_event.date) + " " + esc(s.last_event.event)) : "—";
+      var canRestore = (s.status === "retired" || s.status === "demoted");
+      var btn = canRestore
+        ? "<button class='adm__btn adm__btn--sm' data-act='restore' data-domain='" + esc(s.domain) + "'>Restore</button>"
+        : "<button class='adm__btn adm__btn--sm adm__btn--danger' data-act='retire' data-domain='" + esc(s.domain) + "'>Retire</button>";
+      html += "<tr class='" + dim.trim() + "'>" +
+        "<td data-label='Domain' class='adm__mono'>" + esc(s.domain) + "</td>" +
+        cell("Tier", esc(s.tier), true) +
+        "<td data-label='Status'><span class='adm__pill is-" + esc(s.status) + "'>" + esc(s.status) + "</span></td>" +
+        "<td data-label='Streams'><span class='adm__streamtags'>" + esc((s.streams || []).join(", ")) + "</span></td>" +
+        cell("Last cited", s.last_cited ? esc(s.last_cited) : "—", true) +
+        "<td data-label='Last event' class='adm__srcmeta'>" + ev + "</td>" +
+        "<td data-label=''><div class='adm__rowbtns'>" + btn + "</div></td></tr>";
+    });
+    html += "</tbody></table></div>";
+    var body = $("sources-body");
+    body.innerHTML = html;
+    body.querySelectorAll("button[data-act]").forEach(function(b){
+      b.addEventListener("click", function(){ sourceAction(b.getAttribute("data-act"), b.getAttribute("data-domain")); });
+    });
+  }
+
+  function sourceAction(act, domain){
+    var note = "";
+    if (act === "retire"){
+      note = window.prompt("Retire " + domain + "?\nOptional note:", "");
+      if (note === null) return;  // cancelled
+    } else {
+      if (!window.confirm("Restore " + domain + " to probation?")) return;
+    }
+    var action = { type: act, domain: domain };
+    if (note) action.note = note.slice(0, 500);
+    apiPost("/admin/actions", action).then(function(res){
+      if (res.ok && res.j && res.j.ok){
+        say($("gate-msg"), "", "");
+        flash(domain + " " + (act === "retire" ? "queued for retire" : "queued for restore"), "ok");
+        refreshPending();
+      } else {
+        flash("action rejected: " + (res.j && res.j.error ? res.j.error : "HTTP " + res.status), "err");
+      }
+    }).catch(function(e){ flash("action failed: " + e.message, "err"); });
+  }
+  // a transient line under Pending actions, so a queued retire/restore is acknowledged on-page
+  function flash(msg, kind){
+    var el = $("pending-flash");
+    if (!el){
+      el = document.createElement("p");
+      el.id = "pending-flash";
+      el.className = "adm__msg";
+      $("sec-pending").insertBefore(el, $("pending-body"));
+    }
+    say(el, msg, kind);
+  }
+
+  // ---------------- add form ----------------
+  function bindAdd(){
+    $("add-form").addEventListener("submit", function(e){
+      e.preventDefault();
+      var msg = $("af-msg");
+      var domain = $("af-domain").value.trim().toLowerCase();
+      if (!VALID.domain.test(domain)){ say(msg, "domain must be a valid lowercase hostname", "err"); return; }
+      var tier = $("af-tier").value;
+      if (!VALID.tier[tier]){ say(msg, "tier must be T1 or T2", "err"); return; }
+      var status = $("af-status").value;
+      if (!VALID.addStatus[status]){ say(msg, "bad status", "err"); return; }
+      var reach = $("af-reach").value;
+      if (!VALID.reach[reach]){ say(msg, "bad reach", "err"); return; }
+      var streams = [];
+      $("add-form").querySelectorAll("input[name=stream]:checked").forEach(function(c){ streams.push(c.value); });
+      if (!streams.length){ say(msg, "pick at least one stream", "err"); return; }
+      var bad = streams.filter(function(s){ return !VALID.streams[s]; });
+      if (bad.length){ say(msg, "bad stream: " + bad.join(","), "err"); return; }
+      var note = $("af-note").value.trim();
+      if (note.length > 500){ say(msg, "note is over 500 chars", "err"); return; }
+      var probeUrl = $("af-probe").value.trim();
+      var method = $("af-method").value;
+      var action = { type: "add", domain: domain, tier: tier, status: status, reach: reach, streams: streams };
+      if (note) action.note = note;
+      if (probeUrl){
+        if (!/^https?:\/\//i.test(probeUrl)){ say(msg, "probe URL must be http(s)", "err"); return; }
+        // reach:proxy implies a proxy probe (apply.py pins REACH_METHOD); keep the two consistent here.
+        if (reach === "proxy") method = "proxy";
+        action.probe = { url: probeUrl, method: method };
+      }
+      say(msg, "adding…", "");
+      apiPost("/admin/actions", action).then(function(res){
+        if (res.ok && res.j && res.j.ok){
+          say(msg, domain + " queued — applies at the next bridge tick", "ok");
+          $("add-form").reset();
+          refreshPending();
+        } else {
+          say(msg, "rejected: " + (res.j && res.j.error ? res.j.error : "HTTP " + res.status), "err");
+        }
+      }).catch(function(e){ say(msg, "failed: " + e.message, "err"); });
+    });
+  }
+
+  // ---------------- pending / recent / proposals ----------------
+  function renderPending(actions){
+    var body = $("pending-body");
+    if (!actions || !actions.length){
+      body.innerHTML = "<p class='adm__empty'>Nothing queued.</p>";
+      return;
+    }
+    var html = "<div class='adm__tw'><table class='adm__table'><thead><tr>" +
+      "<th>Queued</th><th>Type</th><th>Domain</th><th>Detail</th></tr></thead><tbody>";
+    actions.forEach(function(a){
+      html += "<tr>" +
+        cell("Queued", esc(shortTs(a.ts)), true) +
+        cell("Type", esc(a.type), true) +
+        "<td data-label='Domain' class='adm__mono'>" + esc(a.domain) + "</td>" +
+        cell("Detail", esc(actionDetail(a)), true) + "</tr>";
+    });
+    html += "</tbody></table></div>";
+    body.innerHTML = html;
+  }
+
+  function renderRecent(recent){
+    var body = $("recent-body");
+    if (!recent || !recent.length){ body.innerHTML = "<p class='adm__empty'>None yet.</p>"; return; }
+    var html = "<div class='adm__tw'><table class='adm__table'><thead><tr>" +
+      "<th>When</th><th>Type</th><th>Domain</th><th>Result</th><th>Note / error</th></tr></thead><tbody>";
+    recent.forEach(function(a){
+      var pill = "<span class='adm__pill is-" + esc(a.result) + "'>" + esc(a.result) + "</span>";
+      var detail = a.result === "rejected" ? (a.error || "") : (a.note || actionDetail(a));
+      html += "<tr>" +
+        cell("When", esc(shortTs(a.applied_at || a.ts)), true) +
+        cell("Type", esc(a.type), true) +
+        "<td data-label='Domain' class='adm__mono'>" + esc(a.domain) + "</td>" +
+        "<td data-label='Result'>" + pill + "</td>" +
+        cell("Note / error", esc(detail), true) + "</tr>";
+    });
+    html += "</tbody></table></div>";
+    body.innerHTML = html;
+  }
+  function actionDetail(a){
+    if (a.type === "add") return (a.tier || "") + " " + (a.reach || "") + " [" + (a.streams || []).join(",") + "]";
+    if (a.type === "set") return a.field + " -> " + a.value;
+    if (a.note) return a.note;
+    return "";
+  }
+
+  function renderProposals(props){
+    var body = $("proposals-body");
+    if (!props || !props.length){
+      body.innerHTML = "<p class='adm__empty'>No evaluator proposals pending.</p>";
+      return;
+    }
+    var html = "<p class='adm__note'>These are applied by hand at the human gate for now.</p><ul>";
+    props.forEach(function(p){ html += "<li class='adm__mono'>" + esc(p.file) + " <span class='adm__srcmeta'>(" + esc(p.date) + ")</span></li>"; });
+    html += "</ul>";
+    body.innerHTML = html;
+  }
+
+  // ---------------- wire up ----------------
+  function bind(){
+    $("signin-btn").addEventListener("click", function(){ doLogin(function(m,k){ renderAuth(); }); });
+    $("gate-signin").addEventListener("click", function(){ doLogin(function(m,k){ say($("gate-msg"), m, k); }); });
+    var out = function(){ dropSession(); boot(); };
+    $("signout-btn").addEventListener("click", out);
+    ["src-q","src-status","src-stream","src-tier"].forEach(function(id){
+      $(id).addEventListener("input", function(){ if (snap) renderSources(snap.sources || []); });
+    });
+    bindAdd();
+  }
+
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", function(){ bind(); boot(); });
+  else { bind(); boot(); }
+})();
+</script>
+</body>
+</html>
