@@ -259,6 +259,121 @@ def days_since(date_str, today=None):
     return (today - d).days
 
 
+# --- schema validation + lifecycle append (admin apply path, PLAN 2026-09-13 §2.3/§3 S3) ----
+# validate() and lifecycle_append() are used ONLY by the admin apply path (tools/admin/apply.py);
+# bootstrap/sync do not call them, so the CLI is unchanged. The enumerations below mirror
+# tools/tests/test_registry_schema.py exactly -- that suite pins the same invariants over the
+# live file, so a batch that validate() clears cannot leave a registry the schema test would fail.
+
+_VALID_CLASSES = {"outlet", "hub", "institutional"}
+_VALID_TIERS = {"T1", "T2"}
+_VALID_STATUSES = {"candidate", "probation", "established", "demoted", "retired"}
+_VALID_REACH = {"direct", "proxy", "search-only", "blocked", "blocked-paywall"}
+_VALID_STREAMS = {"news", "ai-ml", "science", "weekend", "sports"}
+# reach and the probe's method say the same thing two ways; a contradiction sends every fetch of
+# the domain down the wrong path (test_probe_method_agrees_with_reach). Only direct/proxy map.
+REACH_METHOD = {"direct": "curl", "proxy": "proxy"}
+# The one domain whose feed genuinely lives on another registrable domain (BBC's feed host).
+_PROBE_HOST_EXCEPTIONS = {"bbc.com": "feeds.bbci.co.uk"}
+# A stream whose every source is retired/blocked would ship empty briefs while every tool still
+# reports success (test_every_stream_has_reachable_sources): keep a floor of usable sources.
+_STREAM_MIN_USABLE = 5
+
+
+def _registrable(host):
+    """The registrable (last-two-label) form of a host, www-stripped -- for the probe-belongs-to-
+    domain check. Mirrors the helper of the same name in test_registry_schema.py."""
+    host = host.lower().lstrip(".")
+    if host.startswith("www."):
+        host = host[4:]
+    parts = host.split(".")
+    return ".".join(parts[-2:]) if len(parts) >= 2 else host
+
+
+def validate(reg):
+    """Return a list of human-readable violation strings for a registry mapping; empty means the
+    registry satisfies every invariant tools/tests/test_registry_schema.py pins over the live file.
+    The admin apply path calls this AFTER a batch and, on any violation, discards the batch rather
+    than write a registry the spec suite would then reject on main (PLAN §2.3)."""
+    import re
+    from urllib.parse import urlparse
+    violations = []
+    if not isinstance(reg, dict) or not reg:
+        return ["registry is empty or not a mapping"]
+    for domain, rec in reg.items():
+        if not isinstance(rec, dict):
+            violations.append("%s: entry is not a mapping" % domain)
+            continue
+        for key in ("class", "tier", "status", "reach", "streams", "lifecycle"):
+            if key not in rec:
+                violations.append("%s: missing required key %s" % (domain, key))
+        if "class" in rec and rec["class"] not in _VALID_CLASSES:
+            violations.append("%s: class %r not in %s" % (domain, rec["class"], sorted(_VALID_CLASSES)))
+        if "tier" in rec and rec["tier"] not in _VALID_TIERS:
+            violations.append("%s: tier %r not in %s" % (domain, rec["tier"], sorted(_VALID_TIERS)))
+        if "status" in rec and rec["status"] not in _VALID_STATUSES:
+            violations.append("%s: status %r not in %s" % (domain, rec["status"], sorted(_VALID_STATUSES)))
+        if "reach" in rec and rec["reach"] not in _VALID_REACH:
+            violations.append("%s: reach %r not in %s" % (domain, rec["reach"], sorted(_VALID_REACH)))
+        streams = rec.get("streams") or []
+        if not streams:
+            violations.append("%s: belongs to no stream" % domain)
+        for s in streams:
+            if s not in _VALID_STREAMS:
+                violations.append("%s: unknown stream %r" % (domain, s))
+        # Domain keys must be bare, lowercase hosts (test_domain_keys_are_bare_lowercase_hosts).
+        if domain != domain.lower() or "/" in domain or "://" in domain \
+                or domain.startswith("www.") or "." not in domain:
+            violations.append("%s: not a bare lowercase host" % domain)
+        probe = rec.get("probe") or {}
+        url = probe.get("url")
+        if url:
+            if not re.match(r"^https?://", url):
+                violations.append("%s: probe url is not absolute http(s): %r" % (domain, url))
+            else:
+                host = urlparse(url).netloc.lower()
+                if _PROBE_HOST_EXCEPTIONS.get(domain) != host \
+                        and _registrable(host) != _registrable(domain):
+                    violations.append("%s: probe on an unrelated host: %s" % (domain, host))
+        method = probe.get("method")
+        if method:
+            if method not in ("curl", "proxy"):
+                violations.append("%s: probe method %r not curl/proxy" % (domain, method))
+            else:
+                expected = REACH_METHOD.get(rec.get("reach"))
+                if expected and method != expected:
+                    violations.append("%s: reach=%s but probe method=%s"
+                                      % (domain, rec.get("reach"), method))
+        for item in rec.get("lifecycle") or []:
+            if not re.match(r"^\d{4}-\d{2}-\d{2}$", str(item.get("date", ""))):
+                violations.append("%s: undated lifecycle entry %r" % (domain, item))
+            if not item.get("event"):
+                violations.append("%s: lifecycle entry has no event" % domain)
+    # Aggregate floor: every live stream must keep enough reachable sources to fill a brief.
+    for stream in sorted(_VALID_STREAMS):
+        usable = [d for d, r in reg.items()
+                  if isinstance(r, dict) and stream in (r.get("streams") or [])
+                  and r.get("status") not in ("retired", "demoted")
+                  and r.get("reach") in ("direct", "proxy")]
+        if len(usable) < _STREAM_MIN_USABLE:
+            violations.append("stream %s has only %d usable source(s) (min %d)"
+                              % (stream, len(usable), _STREAM_MIN_USABLE))
+    return violations
+
+
+def lifecycle_append(entry, date, event, status=None, note=None):
+    """Append one dated lifecycle audit entry to `entry` in place (creating the list if absent),
+    and return it. Key order (date, event, status, note) matches the bootstrap/seed rows so the
+    dumper's output stays in canonical form; status/note are omitted when None."""
+    item = {"date": date, "event": event}
+    if status is not None:
+        item["status"] = status
+    if note is not None:
+        item["note"] = note
+    entry.setdefault("lifecycle", []).append(item)
+    return item
+
+
 # --- bootstrap ------------------------------------------------------------------------------
 
 def cmd_bootstrap(args):
