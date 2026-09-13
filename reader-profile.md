@@ -69,3 +69,11 @@
   2026-08-26 EU packaging-regulation burden item, "non issue peddled by anti-oversight crowd").
   Generalises the 2026-07-26 unreliable-narrator/add-the-missing-context line from US-administration
   self-characterisations to domestic and EU fiscal/regulatory framing.
+- 2026-09-13: for institutional / government / parliamentary stories, anchor on the official
+  primary — the vote record, the ministry / Federal-Council communiqué, the press release — not
+  press coverage of it (2× reasoned 👎 on distinct 2026-09-10 news stories: Bilaterals III AFET
+  committee vote, "You should have used the main source, the vote, a press release, a primary
+  source"; Lex On Federal Council recommendation, "Again, press instead of official communication").
+  Where the official source is unreachable this run (admin.ch 403 this window), say so in Gaps rather
+  than leading on the secondary. Sharpens the standing primary-over-aggregator line for the specific
+  vote/recommendation case.

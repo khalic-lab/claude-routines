@@ -1,0 +1,33 @@
+date: 2026-09-13
+applied: false
+# No evaluator-side probe evidence this run: the evaluator sandbox egress is allowlist-walled
+# (direct GET of pnas.org / journals.aps.org / europarl.europa.eu etc. all returned code 000 /
+# CONNECT tunnel-block; linkcheck resolved 8/20 for the same reason). The reach flip below rests
+# on WRITER-side fetch telemetry (health.json feeds). Writers confirm with the bearer at next use.
+patches:
+  - domain: admin.ch
+    field: reach
+    from: direct
+    to: proxy
+    evidence: >-
+      admin.ch failed 13/13 fetch attempts this window (health.json feeds: 13 fail, 0 ok-curl,
+      0 ok-proxy, all HTTP 403) — plus news.admin.ch 1/1 fail and bfs.admin.ch 1/1 fail. Whatever
+      reach it is currently recorded as, direct is not working and neither is the proxy this run.
+      This is the mechanical cause of the 2026-09-10 Lex On reader downvote (writer fell back to
+      Le Temps because the Federal Council communiqué was unreachable). If the 403 is a permanent
+      block rather than a transient WAF/egress issue, this may need reach: blocked and a different
+      Swiss-federal primary path (parlament.ch / curia vote pages). Writers re-probe with the bearer.
+
+  # New EU-institution primary absent from the registry. Needed for the Bilaterals III AFET
+  # committee-vote story (2026-09-10), which had no registered European Parliament primary path and
+  # led on Le Temps instead — one of the two reasoned reader downvotes this week. Pairs with p1
+  # (news primary-document rule extension). reach: proxy-needed (evaluator egress allowlist-walled;
+  # europarl.europa.eu returned code 000 from the sandbox). Needs a probation cycle before promotion.
+  - domain: europarl.europa.eu
+    action: add
+    proposed_status: candidate
+    reach: proxy-needed
+    evidence: >-
+      European Parliament — primary for EU legislative votes, committee reports and press releases.
+      Genuine institutional primary, directly relevant to CH-personalized EU-relations coverage
+      (Bilaterals III and beyond). Absent from sources/registry.yml. Writers vet at first citation.

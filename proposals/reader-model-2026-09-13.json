@@ -1,0 +1,35 @@
+{
+ "date": "2026-09-13",
+ "proposals": [
+  {
+   "id": "rm-1",
+   "target": "reader-profile.md",
+   "action": "Append to 'Learned preferences': for institutional/government/parliamentary stories, anchor on the official primary (vote record, ministry/Federal-Council communiqué, press release), not press coverage of it; where the official source is unreachable, say so in Gaps rather than leading on the secondary.",
+   "evidence": "Two reasoned 👎 on distinct 2026-09-10 news stories, same theme. st-80b1b8331f25 (Bilaterals III AFET committee vote): 'You should have used the main source, the vote, a press release, a primary source' — item led on Le Temps, not the European Parliament vote record/press release. st-fa5a401a3aa7 (Lex On Federal Council recommendation): 'Again, press instead of official communication' — led on Le Temps, not the Federal Council communiqué. Meets the >=2-distinct-stories bar. Corroborated by §M (2 aggregator-shape failures), news T1 share 9.8% this week, and the mechanical blocker (admin.ch 13/13 fail 403).",
+   "applied": true,
+   "applied_by": "evaluator",
+   "applied_note": "auto-applied 2026-09-13 to reader-profile.md Learned preferences (append-only) under the bounded grant."
+  },
+  {
+   "id": "p1",
+   "target": "routines/src/news.md",
+   "action": "Extend §9 'Primary document rule' to explicitly cover a parliamentary/committee VOTE (cite the roll-call/result page or the body's press release) and a government's stated position/recommendation/motion (cite the ministry's or Federal Council's own communiqué), and add: if the official primary is unreachable this run, say so in Gaps rather than letting the press recap stand as the anchor.",
+   "evidence": "Same two reasoned 👎 as rm-1. The existing rule enumerates court ruling/bill/law/regulator decision/report/legal opinion but NOT a committee vote or a government recommendation — the exact two story-shapes the reader flagged. News T1 = 4/41 (9.8%) this week; heavy T2 (Le Temps/Le Monde/SRF) reliance.",
+   "applied": false
+  },
+  {
+   "id": "p3",
+   "target": "routines/src/science.md",
+   "action": "Add a sourcing steer: when Nature already carries a story, check whether the underlying result also has a primary home at another registered publisher (journals.aps.org, iop.org, pubs.aip.org, cell.com, pnas.org, royalsocietypublishing.org, science.org) and anchor there — nature.com is saturated.",
+   "evidence": "science top5_share 1.00, nature.com saturated (source-health, 30d); new_domains 7 (lowest). All named alternative primaries are already in the registry, so this is over-reliance on the default anchor, not a registry gap.",
+   "applied": false
+  },
+  {
+   "id": "p4",
+   "target": "routines/src/weekend.md",
+   "action": "Make the 50/50 ML-vs-(fundamental science+biology) target (±15 pts, set 2026-07-10) explicit in the paper-selection step: when the ML pool is deep, widen the fundamental-science/biology net before adding a 4th/5th ML paper; if the split still lands outside 35-65%, say so and why in the intro.",
+   "evidence": "weekend_balance ml_share 0.714 this window, outside [0.35,0.65]. Honest this week (writer flagged the RL/agents surge in the intro), but the target is not stated in the prompt, so nothing self-corrects the imbalance.",
+   "applied": false
+  }
+ ]
+}
