@@ -154,6 +154,15 @@ class AdminHarness(unittest.TestCase):
         self.assertIn('streams: { news:1, "ai-ml":1, science:1, weekend:1, sports:1 }', script)
 
     # ---- a 401 / dropped session on any /admin/* call re-renders the signed-out gate ----
+    def test_403_keeps_session_and_names_the_admin_gate(self):
+        # a signed-in but non-admin passkey is told so and NOT signed out: the session still serves
+        # the front page, and dropping it would send the reader in circles
+        src = self.layout
+        self.assertIn('r.status === 403', src)
+        self.assertIn('this passkey is not the admin', src)
+        get_branch = src[src.index('function apiGet'):src.index('function apiPost')]
+        self.assertNotIn('403){ dropSession', get_branch)
+
     def test_401_reboots_gate(self):
         # apiGet/apiPost already drop the session on a 401 (that branch pre-dated the fix, so it
         # proves nothing on its own). What the fix adds is the RECOVERY: every /admin/* caller

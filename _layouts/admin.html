@@ -228,6 +228,9 @@
     return fetch(base() + path, { headers: { "Authorization": "Bearer " + s.token } })
       .then(function(r){
         if (r.status === 401){ dropSession(); throw new Error("session expired"); }
+        /* 403 = signed in, but not with the admin passkey: keep the session (it is still good
+           for reading and voting on the front page), say so, and show nothing here */
+        if (r.status === 403){ throw new Error("this passkey is not the admin"); }
         if (r.status === 404) return null;
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
@@ -243,6 +246,7 @@
     }).then(function(r){
       return r.json().catch(function(){ return {}; })
         .then(function(j){ if (r.status === 401){ dropSession(); }
+                           if (r.status === 403){ j = { error: "this passkey is not the admin" }; }
                            return { ok: r.ok, status: r.status, j: j }; });
     });
   }

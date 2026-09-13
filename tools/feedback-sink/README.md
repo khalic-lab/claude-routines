@@ -65,7 +65,10 @@ POST /prefs                  (session)   body: {topics:[...], ts} -> {ok, applie
                                          (413), 50 topics, keys ^[a-z0-9][a-z0-9-]{0,39}$;
                                          bad/dup keys drop themselves. Same session as /readstate.
 
-POST /admin/actions          (session)   body: an action (see below) -> {ok, id, action}
+POST /admin/actions          (admin)     body: an action (see below) -> {ok, id, action}
+                                         (admin = a session minted by a credential id listed in
+                                         ADMIN_CRED_IDS, wrangler.toml [vars]; any other passkey
+                                         session gets 403 "not the admin"; unset = fail closed)
                                          queues one source-registry mutation under KV `adm:`.
                                          reader is pinned from the session; the Worker assigns
                                          id + ts and drops unknown keys. 400 on shape error,

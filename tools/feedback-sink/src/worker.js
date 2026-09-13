@@ -185,17 +185,18 @@ function newSessionToken() {
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function issueSession(env, reader) {
+async function issueSession(env, reader, cred) {
   const token = newSessionToken();
   await env.FEEDBACK_KV.put(
     `session:${token}`,
-    JSON.stringify({ reader, created: Date.now() }),
+    JSON.stringify({ reader, created: Date.now(), cred: typeof cred === "string" ? cred : null }),
     { expirationTtl: SESSION_TTL_S },
   );
   return token;
 }
 
-// Resolve the session Bearer, if any. Returns {token, reader, created} or null.
+// Resolve the session Bearer, if any. Returns {token, reader, created, cred} or null. `cred` is
+// the WebAuthn credential id that minted the session (null for sessions minted before 2026-09-13).
 async function getSession(request, env) {
   const m = (request.headers.get("Authorization") || "").match(/^Bearer\s+([0-9a-f]{64})$/i);
   if (!m) return null;
@@ -209,7 +210,23 @@ async function getSession(request, env) {
     return null;
   }
   if (!sess || typeof sess.reader !== "string") return null;
-  return { token, reader: sess.reader, created: typeof sess.created === "number" ? sess.created : 0 };
+  return {
+    token,
+    reader: sess.reader,
+    created: typeof sess.created === "number" ? sess.created : 0,
+    cred: typeof sess.cred === "string" ? sess.cred : null,
+  };
+}
+
+// THE ADMIN IS ONE PASSKEY, NOT ONE READER. Every credential on this single-reader site maps to
+// the same reader identity, so "a valid session" would let any passkey registered with the invite
+// token retire sources. ADMIN_CRED_IDS (a comma-separated list of WebAuthn credential ids, set in
+// wrangler.toml [vars]) names the only credential(s) whose sessions may touch /admin/*. A session
+// minted before the id was recorded on it carries no `cred` and is refused until the reader signs
+// in again. Fails closed when the var is unset.
+function adminOk(sess, env) {
+  const allowed = String(env.ADMIN_CRED_IDS || "").split(",").map((v) => v.trim()).filter(Boolean);
+  return !!(sess && typeof sess.cred === "string" && sess.cred && allowed.includes(sess.cred));
 }
 
 // Rolling renewal: any authed use more than SESSION_ROLL_MS after the last roll
@@ -218,7 +235,7 @@ async function rollSession(env, sess) {
   if (Date.now() - sess.created <= SESSION_ROLL_MS) return;
   await env.FEEDBACK_KV.put(
     `session:${sess.token}`,
-    JSON.stringify({ reader: sess.reader, created: Date.now() }),
+    JSON.stringify({ reader: sess.reader, created: Date.now(), cred: sess.cred || null }),
     { expirationTtl: SESSION_TTL_S },
   );
 }
@@ -423,7 +440,7 @@ async function handleRegister(request, env, cors) {
       transports: cred.transports || [],
     }),
   );
-  const session = await issueSession(env, READER);
+  const session = await issueSession(env, READER, cred.id);
   return json({ ok: true, session, reader: READER }, 200, {}, cors);
 }
 
@@ -483,7 +500,7 @@ async function handleLogin(request, env, cors) {
   if (!verification.verified) return json({ error: "verification failed" }, 403, {}, cors);
   stored.counter = verification.authenticationInfo.newCounter;
   await env.FEEDBACK_KV.put(`cred:${response.id}`, JSON.stringify(stored));
-  const session = await issueSession(env, stored.reader);
+  const session = await issueSession(env, stored.reader, response.id);
   return json({ ok: true, session, reader: stored.reader }, 200, {}, cors);
 }
 
@@ -728,6 +745,7 @@ function validateAction(p, reader) {
 async function handleAdminActionsPost(request, env, cors) {
   const sess = await getSession(request, env);
   if (!sess) return json({ error: "no session" }, 401, {}, cors);
+  if (!adminOk(sess, env)) return json({ error: "not the admin" }, 403, {}, cors);
   const body = await request.arrayBuffer();
   if (body.byteLength > ADMIN_MAX_ACTION_BYTES) {
     return json({ error: `body too large (max ${ADMIN_MAX_ACTION_BYTES} bytes)` }, 413, {}, cors);
@@ -752,6 +770,7 @@ async function handleAdminActionsPost(request, env, cors) {
 async function handleAdminActionsGet(request, env, cors) {
   const sess = await getSession(request, env);
   if (!sess) return json({ error: "no session" }, 401, {}, cors);
+  if (!adminOk(sess, env)) return json({ error: "not the admin" }, 403, {}, cors);
   const listed = await env.FEEDBACK_KV.list({ prefix: ADMIN_KEY_PREFIX, limit: DRAIN_LIMIT });
   const actions = [];
   for (const k of listed.keys) {
@@ -772,6 +791,7 @@ async function handleAdminActionsGet(request, env, cors) {
 async function handleAdminSnapshotGet(request, env, cors) {
   const sess = await getSession(request, env);
   if (!sess) return json({ error: "no session" }, 401, {}, cors);
+  if (!adminOk(sess, env)) return json({ error: "not the admin" }, 403, {}, cors);
   const raw = await env.FEEDBACK_KV.get(ADMIN_SNAPSHOT_KEY);
   await rollSession(env, sess);
   if (raw == null) return json({ error: "no snapshot yet" }, 404, {}, cors);

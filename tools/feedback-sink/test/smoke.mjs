@@ -41,6 +41,7 @@ const env = {
   FEEDBACK_KV: kv,
   FEEDBACK_TOKEN: "bridge-bearer-secret",
   INVITE_TOKEN: "the-invite-secret",
+  ADMIN_CRED_IDS: "admin-cred, spare-cred",
 };
 
 const worker = (await import("../src/worker.js")).default;
@@ -579,13 +580,44 @@ const ADMTOK = "c".repeat(64);
 const ADM = { Authorization: `Bearer ${ADMTOK}` };
 const BEARER = { Authorization: `Bearer ${env.FEEDBACK_TOKEN}` };
 const ADMIN_PREFIX = "adm:";
-await kv.put(`session:${ADMTOK}`, JSON.stringify({ reader: "rafael", created: Date.now() }));
+await kv.put(`session:${ADMTOK}`, JSON.stringify({ reader: "rafael", created: Date.now(), cred: "admin-cred" }));
 
 // -- POST /admin/actions: auth gate --
 {
   const res = await worker.fetch(req("/admin/actions", { method: "POST", body: { type: "retire", domain: "spammy.example" } }), env);
   const body = await res.json();
   check("POST /admin/actions without session -> 401 no session", res.status === 401 && body.error === "no session", JSON.stringify([res.status, body]));
+}
+// -- the admin is one passkey: a session from another credential, or one minted before the
+// credential id was recorded on it, or any session while ADMIN_CRED_IDS is unset, is refused --
+{
+  const otherTok = "d".repeat(64), legacyTok = "e".repeat(64);
+  await kv.put(`session:${otherTok}`, JSON.stringify({ reader: "rafael", created: Date.now(), cred: "other-cred" }));
+  await kv.put(`session:${legacyTok}`, JSON.stringify({ reader: "rafael", created: Date.now() }));
+  const OTHER = { Authorization: `Bearer ${otherTok}` }, LEGACY = { Authorization: `Bearer ${legacyTok}` };
+  const r1 = await worker.fetch(req("/admin/actions", { method: "POST", headers: OTHER, body: { type: "retire", domain: "spammy.example" } }), env);
+  const r2 = await worker.fetch(req("/admin/actions", { headers: OTHER }), env);
+  const r3 = await worker.fetch(req("/admin/snapshot", { headers: OTHER }), env);
+  const r4 = await worker.fetch(req("/admin/snapshot", { headers: LEGACY }), env);
+  const b1 = await r1.json();
+  check("admin routes refuse a session from another passkey -> 403 not the admin",
+    r1.status === 403 && b1.error === "not the admin" && r2.status === 403 && r3.status === 403, JSON.stringify([r1.status, r2.status, r3.status, b1]));
+  check("admin routes refuse a pre-2026-09-13 session with no cred -> 403", r4.status === 403, String(r4.status));
+  const queuedBefore = [...kv.map.keys()].filter((k) => k.startsWith(ADMIN_PREFIX)).length;
+  check("a refused POST queues nothing", queuedBefore === 0, String(queuedBefore));
+  const closedEnv = { ...env, ADMIN_CRED_IDS: undefined };
+  const r5 = await worker.fetch(req("/admin/snapshot", { headers: ADM }), closedEnv);
+  check("ADMIN_CRED_IDS unset -> even the admin session is refused (fail closed)", r5.status === 403, String(r5.status));
+  const r6 = await worker.fetch(req("/prefs", { headers: OTHER }), env);
+  check("the passkey gate is admin-only: /prefs still answers another credential's session", r6.status === 200, String(r6.status));
+}
+// -- rolling a session keeps the credential id on it --
+{
+  const oldTok = "f".repeat(64);
+  await kv.put(`session:${oldTok}`, JSON.stringify({ reader: "rafael", created: Date.now() - 2 * DAY, cred: "admin-cred" }));
+  const r = await worker.fetch(req("/admin/snapshot", { headers: { Authorization: `Bearer ${oldTok}` } }), env);
+  const rolled = JSON.parse(await kv.get(`session:${oldTok}`));
+  check("rollSession keeps cred", r.status !== 403 && rolled.cred === "admin-cred" && Date.now() - rolled.created < DAY, JSON.stringify([r.status, rolled]));
 }
 // -- POST /admin/actions: valid retire, reader pinned from session, stored under adm: --
 {

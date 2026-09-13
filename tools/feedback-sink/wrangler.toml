@@ -11,3 +11,9 @@ id = "005fab1cb5f842cb91a6dce43c973bfd"
 
 [observability]
 enabled = true
+
+# /admin/* is ONE passkey: the WebAuthn credential id(s) whose sessions may read the snapshot and
+# queue source actions (comma-separated). A credential id is a public handle -- the private key
+# never leaves the device -- so it can live here. Unset = every admin route refuses (fail closed).
+[vars]
+ADMIN_CRED_IDS = "0j4qYzqrXu5gxThszOr0enwYnA8"
