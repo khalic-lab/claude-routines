@@ -8,8 +8,9 @@
   number that one box has to carry on behalf of another box it cannot see. That is exactly how the
   bar came to cover the last 40px of the footer with a `padding-bottom` on `#main` that could not
   reach it (git log, 2026-09-12).
-  Owning <body> makes the bar a TRACK instead of an overlay, and two tracks of one grid cannot
-  overlap: there is nothing left to reserve and no number to keep in sync. The theme still does
+  Owning <body> lets the bar be a STICKY box in the document's own flow (a two-track grid was
+  tried on 2026-09-12 and sized itself to the wrong viewport on iOS; see the shell CSS). The
+  theme still does
   what it is good at -- `head.html` (SEO, meta, the compiled main.css), `footer.html` and
   `scripts.html` are its includes, called here by name. What we no longer inherit is the BOX,
   which was the only part we were fighting.
@@ -43,8 +44,8 @@
 
 {% if feed and feed.stories and feed.stories.size > 0 %}
 {%- comment -%} A <nav>, not a div: thirteen beat chips, a read filter and the sync control are a
-  navigation region over this page's own content, and the one region a reader returns to. It is a
-  track of the body grid (see `.folio-filters` in the stylesheet) -- not fixed, not sticky.
+  navigation region over this page's own content, and the one region a reader returns to. It is
+  first in the DOM and sticky: pinned to the bottom edge below 700px, to the top edge above.
 {%- endcomment -%}
 <nav class="folio-filters" id="folioFilters" aria-label="Filter the stories">
   <span class="ff-lbl">Beat</span>
@@ -87,14 +88,10 @@
 {% endif %}
 
 {%- comment -%}
-  THE SCROLLPORT, and the one element here that is not a landmark. It exists because the page is a
-  viewport-height shell: <body> is two grid tracks, the bar and this, so the bar cannot be covered
-  and cannot cover anything. Everything that scrolls has to live in ONE box for that to hold, and
-  masthead + stories + page foot are three landmarks, so the box that holds them is a div and says
-  so. `<header>`, `<main>` and `<footer>` inside it stay real landmarks: none of them is nested in
-  sectioning content, only in a plain div.
+  No scrollport element: the document is the scrollport again (2026-09-13). `.shell__head`, `#main`
+  and the page foot are direct children of <body>, which is the flex column. The `#shellView` id
+  went with it; `anchored()` scrolls the window.
 {%- endcomment -%}
-<div class="shell__view" id="shellView">
   {%- comment -%}
     THE MASTHEAD SCROLLS AWAY, which is why it is inside the scrollport and not a third track. It
     is branding, read once; the bar is the control a reader returns to, and only controls earn
@@ -416,8 +413,9 @@
     THE FOOTER IS CONTENT, NOT A TRACK, and that placement is the argument of this rewrite in one
     element. As the theme emitted it, it sat outside `#main` as a sibling of everything we could
     style, and a viewport-anchored bar had no way to know it was there. Here it is the last thing
-    inside the scrollport: it cannot be covered, because the bar is a different track of the grid,
-    and it cannot cost a phone 95px of permanent screen, because it scrolls like the stories do.
+    in the document flow: the sticky bar comes to rest above it at the end of the page, so it
+    cannot be covered, and it cannot cost a phone 95px of permanent screen, because it scrolls
+    like the stories do.
     `footer.html` is the theme's own -- the feed link and the copyright line, still the theme's to
     change -- inside our <footer>, which is a contentinfo landmark here because its only ancestors
     are a <div> and <body>.
@@ -425,7 +423,6 @@
   <footer id="footer" class="page__footer">
     {% include footer.html %}
   </footer>
-</div>
 
 <!-- "How this works" modal — a public, product-level architecture map. Generated SVGs carry the
      visual hierarchy; the hidden semantic transcript supplies the accessible reading order. -->
@@ -592,47 +589,45 @@
      fits the hole a lead leaves in the shorter column, so 300px+ voids appeared. Progressive:
      without JS the grid stays normal block flow (single column, everything readable). ===== */
 
-  /* ===== THE PAGE SHELL: TWO TRACKS THAT CANNOT OVERLAP (2026-09-12) =====
-     <body> is the shell and it is exactly the viewport: a two-row grid, one row for the control
-     bar and one for everything that scrolls. That is the whole of the fix, and it is a structural
-     one rather than a careful one. An overlay has to be cleared by a number some OTHER box
-     carries, and both halves of that were wrong here — 58px reserved for a bar measuring 40, on
-     `#main`, which sat inside the flex item that grows while the footer sat outside it entirely,
-     so the reservation could never reach the thing it was for. Two tracks of one grid have no
-     such failure mode: each owns its row, neither can reach into the other, and there is nothing
-     to reserve because nothing is floating.
-     WHAT THIS REPLACED, so it is not rediscovered and put back: `.folio-filters` was
-     `position:fixed` below 700px and `position:sticky; top:0` above it; `#main` carried a
-     `padding-bottom` to clear the fixed one; `.layout--home .archive` existed only to undo the
-     theme's sidebar gutter; `.layout--home .masthead{display:none}` hid a masthead this layout no
-     longer emits. All four are gone. The bar needs no stickiness, because a track above a
-     scrollport is permanently visible by construction, and no z-index, because it is painted over
-     nothing.
-     100dvh, NOT 100vh: with a bottom track the shell has to be the viewport the reader can
-     actually see, and vh is the LARGE one — sized to that, the bar sits under the browser's own
-     toolbar for as long as the toolbar is showing.
-     `overflow:hidden` here is the other half of "cannot overlap": it is also cannot escape. Only
-     `.shell__view` scrolls, so the document never does.
-     THE COST, stated rather than discovered later: a document that does not scroll is one whose
-     URL bar mobile browsers will not auto-hide, and browsers restore document scroll rather than
-     container scroll, so a reload opens at the top. Both are the price of a bar that is an object
-     in the layout instead of a sheet of glass over it. */
-  body.layout--home{ display:grid; grid-template-rows:1fr auto; block-size:100dvh;
-    /* min-block-size beats the theme's `body{min-height:100vh}`, which block-size alone never
-       contested: without it body was 100lvh on iOS and the bar sat under Safari's toolbar. */
-    min-block-size:100dvh; overflow:hidden; margin:0; }
-  .shell__view{ grid-row:1; overflow-y:auto; overscroll-behavior-block:contain;
-    display:flex; flex-direction:column; }
-  .folio-filters{ grid-row:2; }
-  @media (min-width:700px){
-    /* the bar changes TRACK, not position — one object, read first where the screen is wide */
-    body.layout--home{ grid-template-rows:auto 1fr; }
-    .folio-filters{ grid-row:1; }
-    .shell__view{ grid-row:2; }
+  /* ===== THE PAGE SHELL: THE DOCUMENT SCROLLS, THE BAR RIDES IT (2026-09-13) =====
+     <body> is a flex column in ordinary flow. No viewport unit sizes it, nothing is clipped, and
+     the only scrollport on this page is the one the browser owns.
+     WHY THIS REPLACED THE TWO-TRACK GRID OF 2026-09-12: a grid track is placed at a COMPUTED
+     height, and on iOS that height was wrong. minimal-mistakes declares, unconditionally,
+     `body{ display:flex; min-height:100vh; flex-direction:column }`; the grid rule overrode
+     `display` and never mentioned `min-height`, so body's used height was max(100vh, 100dvh) =
+     100lvh while the reader could only see 100dvh, and the bar was laid out in the band Safari's
+     toolbar occupies. And a document that cannot scroll never lets that toolbar collapse.
+     A STICKY BOX IS NOT PLACED AT A HEIGHT, it is placed against the scrollport, the area the
+     reader can actually see; measured on an iPhone 17 / iOS 26 simulator, a sticky bottom bar
+     sits fully above the toolbar at first paint and tracks it as it collapses. Its flow position
+     is the end of the document, so at the foot of the page it rests above the footer: nothing
+     carries a number on behalf of another box.
+     THE COST: mid-scroll the bar overlays the card at the bottom edge, which a track never did.
+     One flick moves it, but `background` and `z-index` are load-bearing, and
+     `scroll-padding-block-end` keeps a focused field from landing under it. */
+  body.layout--home{
+    display:flex; flex-direction:column; margin:0;
+    /* beats the theme's `body{min-height:100vh}`: min-height and min-block-size are one logical
+       property, so this is a real cascade contest and (0,1,1) wins. dvh, not vh: the bound only
+       binds on a short (filtered-empty) sheet, which must fill the screen the reader sees. */
+    min-block-size:100dvh;
   }
-  /* the modal locks the scrollport rather than the document, which has no scroll to take away.
-     `hiw-lock` still lands on <html>, so the modal script is unchanged. */
-  .hiw-lock .shell__view{ overflow:hidden; }
+  /* the theme fades #main in at 150ms and the footer at 450ms (`animation:intro`); its clearfix
+     ::after would be a stray flex item at the end of #main's column. Both neutralised here. */
+  #main.shell__main, .page__footer{ animation:none; }
+  #main.shell__main::after{ display:none; }
+  /* THE BAR IS FIRST IN THE DOM AND LAST IN THE FLOW BELOW 700px. DOM order is focus order and is
+     unchanged; `order` moves the box under the thumb and `.ff-skip` remains the compensation. */
+  .folio-filters{ order:1; position:sticky; inset-block-end:0; z-index:20; }
+  /* a scroll HINT, not a reservation: too large lands a focused field a little high, too small
+     costs one extra scroll; neither can hide 40px of footer the way a padding number did. */
+  html{ scroll-padding-block-end:4.5rem; }
+  @media (min-width:700px){
+    /* the bar changes EDGE, not nature: one object, read first where the screen is wide */
+    .folio-filters{ order:0; inset-block-end:auto; inset-block-start:0; }
+    html{ scroll-padding-block-end:0; scroll-padding-block-start:6rem; }
+  }
 
   /* THE COLUMN IS DECLARED ONCE, and as a definite width rather than a max-width, which is not a
      style choice: `#main` keeps the theme's `margin-inline:auto`, and per Flexbox 9.4 a flex item
@@ -674,7 +669,13 @@
      rule below hands it the same 1680/1em box the sheet has, so the chips still start on the same
      vertical as the headlines; below 700 the 12px inline padding is its own, edge to edge. */
   .folio-filters{ display:flex; align-items:center; gap:8px 6px; background:var(--paper);
-    margin:0; padding:8px 12px max(8px, env(safe-area-inset-bottom));
+    /* THE BOTTOM PADDING GROWS BY EXACTLY THE BROWSER CHROME THAT COLLAPSED. Measured on iOS 26
+       (iPhone 17 simulator): 100svh is the viewport with Safari's toolbar showing, 100dvh the
+       current one, so the difference is 0 while the toolbar is up and 40px once it has shrunk to
+       the floating pill -- which then sits in this strip instead of over the chips. Desktop: 0.
+       env(safe-area-inset-bottom) is gone from here: it reads 0 on this page with or without
+       viewport-fit=cover (measured), so it was never doing anything. */
+    margin:0; padding:8px 12px max(8px, calc(8px + 100dvh - 100svh));
     flex-wrap:nowrap; overflow-x:auto; overscroll-behavior-inline:contain; scrollbar-width:none;
     border-block-start:1px solid var(--rule); }
   .folio-filters::-webkit-scrollbar{ display:none; }
@@ -1043,8 +1044,10 @@
        list (418px) and the nameplate (247px) are 69% of that budget and both are controls or the
        masthead. So this scrollport stays — as the safety valve it was introduced to be, for viewports
        genuinely shorter than the rail's collapsed furniture, and no longer as the page's front door. */
-    .folio-rail{ display:block; grid-column:1; align-self:start; position:sticky; top:8px;
-      max-block-size:calc(100dvh - 85px); overflow-y:auto;
+    .folio-rail{ display:block; grid-column:1; align-self:start; position:sticky; top:55px;
+      /* 55 = the sticky top bar (47px) + 8px of air; 71 = 55 + a 16px bottom gap -- the numbers
+         this rail shipped with before 2026-09-12, now against the document scrollport again */
+      max-block-size:calc(100dvh - 71px); overflow-y:auto;
       scrollbar-width:thin;
       padding:0 20px 24px 0; border-inline-end:1px solid var(--rule); }
     .folio-grid{ grid-column:2; }
@@ -1681,7 +1684,7 @@
 
   .hiw-lock{ overflow:hidden; }
   .hiw{ position:fixed; inset:0; display:none; align-items:flex-start; justify-content:center;
-    overflow-y:auto; scrollbar-gutter:stable; padding:4vh 16px; box-sizing:border-box;
+    overflow-y:auto; scrollbar-gutter:stable; padding:4dvh 16px; box-sizing:border-box;
     background:rgba(0,0,0,.45); z-index:9999; }
   .hiw.on{ display:flex; }
   .hiw__box{ position:relative; width:100%; max-width:76rem; box-sizing:border-box;
@@ -1934,18 +1937,19 @@
     packRowSpans();
     if (!el) return;
     var after = el.getBoundingClientRect().top;
-    /* the scrollport, not the window: since 2026-09-12 <body> is a viewport-height grid and the
-       document itself never scrolls, so `window.scrollBy` would move nothing. Falls back to the
-       window so this keeps working if the shell is ever unwound. */
-    if (after !== before) (document.getElementById('shellView') || window).scrollBy(0, after - before);
+    /* the document is the scrollport again (2026-09-13); nothing else on the page scrolls */
+    if (after !== before) window.scrollBy(0, after - before);
   }
   function topCard(){
     /* the anchor for a mutation nobody clicked: the topmost card still intersecting the viewport.
        A roam that collapses six cards ABOVE the fold would otherwise throw the reader down the
        page four seconds after they started reading. */
+    /* at >=700px the bar is stuck to the top edge, so "visible" starts at its bottom, not at 0 */
+    var bar = document.getElementById('folioFilters'), top = 0;
+    if (bar && window.matchMedia('(min-width:700px)').matches) top = bar.getBoundingClientRect().bottom;
     for (var i = 0; i < cards.length; i++){
       if (cards[i].style.display === 'none') continue;
-      if (cards[i].getBoundingClientRect().bottom > 0) return cards[i];
+      if (cards[i].getBoundingClientRect().bottom > top) return cards[i];
     }
     return null;
   }
