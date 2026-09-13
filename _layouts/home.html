@@ -31,6 +31,12 @@
   <head>
     {% include head.html %}
     {% include head/custom.html %}
+    {%- comment -%} The theme's head.html emits `width=device-width, initial-scale=1.0` with no
+      viewport-fit. env(safe-area-inset-*) resolves to 0 without `viewport-fit=cover`, and the
+      bottom bar's padding relies on it (Safari's documented handling of its floating tab bar).
+      A later viewport meta replaces the earlier one; this page owns its document, so it is set
+      here rather than by forking the theme's include. {%- endcomment -%}
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   </head>
 <body class="layout--home">
 {% assign feed = site.data.homefeed %}
@@ -608,6 +614,8 @@
      `scroll-padding-block-end` keeps a focused field from landing under it. */
   body.layout--home{
     display:flex; flex-direction:column; margin:0;
+    /* viewport-fit=cover hands the side insets back to the page (landscape notch) */
+    padding-inline:env(safe-area-inset-left) env(safe-area-inset-right);
     /* beats the theme's `body{min-height:100vh}`: min-height and min-block-size are one logical
        property, so this is a real cascade contest and (0,1,1) wins. dvh, not vh: the bound only
        binds on a short (filtered-empty) sheet, which must fill the screen the reader sees. */
@@ -669,13 +677,12 @@
      rule below hands it the same 1680/1em box the sheet has, so the chips still start on the same
      vertical as the headlines; below 700 the 12px inline padding is its own, edge to edge. */
   .folio-filters{ display:flex; align-items:center; gap:8px 6px; background:var(--paper);
-    /* THE BOTTOM PADDING GROWS BY EXACTLY THE BROWSER CHROME THAT COLLAPSED. Measured on iOS 26
-       (iPhone 17 simulator): 100svh is the viewport with Safari's toolbar showing, 100dvh the
-       current one, so the difference is 0 while the toolbar is up and 40px once it has shrunk to
-       the floating pill -- which then sits in this strip instead of over the chips. Desktop: 0.
-       env(safe-area-inset-bottom) is gone from here: it reads 0 on this page with or without
-       viewport-fit=cover (measured), so it was never doing anything. */
-    margin:0; padding:8px 12px max(8px, calc(8px + 100dvh - 100svh));
+    /* the documented iOS handling for a bottom bar: viewport-fit=cover on the viewport meta (set
+       in this layout's <head>) and env(safe-area-inset-bottom) as the bar's floor. Safari reports
+       the inset as 0 while its own toolbar covers the home-indicator area and, in tabbed browsing,
+       also once the toolbar has minimised to its pill (Apple forums 716552; measured on the iOS 26
+       simulator), so the pill then overlays the bar's middle exactly as it does on every site. */
+    margin:0; padding:8px 12px max(8px, env(safe-area-inset-bottom));
     flex-wrap:nowrap; overflow-x:auto; overscroll-behavior-inline:contain; scrollbar-width:none;
     border-block-start:1px solid var(--rule); }
   .folio-filters::-webkit-scrollbar{ display:none; }
