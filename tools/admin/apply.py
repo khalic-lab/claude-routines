@@ -251,7 +251,10 @@ def _write_registry(root, reg):
 
 def _append_actions_log(root, results):
     """Append each result to index/admin/actions.jsonl (the KV key is transient, so it is dropped
-    from the on-disk record, exactly as feedback.py drops it)."""
+    from the on-disk record, exactly as feedback.py drops it). A no-op batch writes nothing -- it
+    must not create an empty ledger file the bridge would then stage."""
+    if not results:
+        return
     path = os.path.join(root, "index", "admin", "actions.jsonl")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a") as f:
