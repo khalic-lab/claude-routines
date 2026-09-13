@@ -149,8 +149,9 @@ class AdminHarness(unittest.TestCase):
         self.assertIn('tier: { T1:1, T2:1 }', script)
         self.assertIn('"search-only":1', script)
         self.assertIn('"blocked-paywall":1', script)
-        for st in ("news", "ai-ml", "science", "weekend", "sports"):
-            self.assertIn(st, script)
+        # pin the validator literal, not a bare mention of each stream (which appears in the filter
+        # options too) — this fails if a stream is dropped from the add-form validation.
+        self.assertIn('streams: { news:1, "ai-ml":1, science:1, weekend:1, sports:1 }', script)
 
     # ---- signed-out mode shows only sign-in, seeds no session, makes no calls ----
     def test_signed_out_no_session_seed(self):
