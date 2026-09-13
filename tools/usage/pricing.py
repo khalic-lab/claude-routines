@@ -10,9 +10,9 @@ Anthropic pricing page on 2026-09-13:
   https://platform.claude.com/docs/en/about-claude/pricing  (Model pricing + Prompt caching)
 
 Cache columns follow the published multipliers relative to base input: 5m write = 1.25x,
-1h write = 2x, cache read = 0.1x -- EXCEPT Fable 5 / 5.1, whose cache read is 0.025x
-(that is why Fable's read is $0.25 and $1.00, not the naive 0.1x). Each row below is the
-page's own figure, not the multiplier applied, so the exception is exact rather than derived.
+1h write = 2x, cache read = 0.1x -- EXCEPT where the page names a lower cache-read rate.
+Claude Fable 5.1's cache read is 0.025x base ($0.25/MTok, an addition over Fable 5); Claude
+Fable 5 keeps the 0.1x default ($1.00/MTok). That is the only per-model deviation below.
 
 An unknown model id costs null and lands in `missing_models`; known models still sum, so a
 new model never zeroes a run's whole cost -- only its own slice.
@@ -34,8 +34,8 @@ PRICING = {
     # same model at the same price, so both keys resolve rather than one falling to null.
     "claude-haiku-4-5-20251001": {"input": 1.0, "output": 5.0, "cache_write_5m": 1.25, "cache_write_1h": 2.0, "cache_read": 0.10},
     "claude-haiku-4-5":          {"input": 1.0, "output": 5.0, "cache_write_5m": 1.25, "cache_write_1h": 2.0, "cache_read": 0.10},
-    # Fable tier -- for local Mac transcripts measured through this same parser. Cache read
-    # is 0.025x base input (page footnote), not the 0.1x every other model uses.
+    # Fable tier -- for local Mac transcripts measured through this same parser. Fable 5.1's
+    # cache read is 0.025x base input ($0.25/MTok); Fable 5 keeps the 0.1x default ($1.00).
     "claude-fable-5-1": {"input": 10.0, "output": 50.0, "cache_write_5m": 12.50, "cache_write_1h": 20.0, "cache_read": 0.25},
     "claude-fable-5":   {"input": 10.0, "output": 50.0, "cache_write_5m": 12.50, "cache_write_1h": 20.0, "cache_read": 1.00},
 }

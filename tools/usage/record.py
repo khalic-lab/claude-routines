@@ -112,6 +112,31 @@ def already_recorded(path, session_id, stage):
     return False
 
 
+_HOOK_STAGES = ("stop", "session-end")
+
+
+def hook_blocking_stage(path, session_id):
+    """The stage of an existing hook record ('stop' or 'session-end') for this session, or
+    None. A --hook run is a no-op when EITHER hook stage is already on file: a run that fires
+    both Stop and SessionEnd must land ONE record, not two commits and two pushes. A
+    publish-stage record never blocks -- the hook measurement supersedes it (fold prefers
+    session-end > stop > publish, so the hook record still wins the fold)."""
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if rec.get("session_id") == session_id and rec.get("stage") in _HOOK_STAGES:
+                return rec.get("stage")
+    return None
+
+
 def append_record(path, record):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "a", encoding="utf-8") as fh:
@@ -244,8 +269,10 @@ def cmd_hook(args):
     measurement["session_id"] = session_id
     record = build_record(measurement, stage, hook_event=hook_event)
     path = usage_path(root, record["routine"], record["started"], record["recorded_at"])
-    if already_recorded(path, session_id, stage):
-        sys.stderr.write("usage: already recorded (%s / %s)\n" % (session_id, stage))
+    blocking = hook_blocking_stage(path, session_id)
+    if blocking is not None:
+        sys.stderr.write("usage: already recorded (%s / %s); this %s hook is a no-op\n"
+                         % (session_id, blocking, stage))
         return 0
     append_record(path, record)
     summary = commit_and_push(root, record["routine"], record["started"], stage)

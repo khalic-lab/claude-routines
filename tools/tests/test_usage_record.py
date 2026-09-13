@@ -166,6 +166,38 @@ class HookGitProtocolTest(unittest.TestCase):
         out = os.path.join(self.root, "index", "usage", "2026-09-news.jsonl")
         self.assertEqual(len(_lines(out)), 1)
 
+    def test_session_end_after_stop_does_no_git(self):
+        # A run that fires Stop THEN SessionEnd must land ONE record and do git exactly once:
+        # the SessionEnd hook is a no-op because a stop record for the session is already on
+        # file (idempotency spans stop OR session-end, not the exact stage).
+        self._write_git(_GIT_SUCCESS)
+        self._run_hook(self._payload(event="Stop"))
+        os.remove(self.gitlog)  # forget the Stop run's git calls
+        proc = self._run_hook(self._payload(event="SessionEnd"))
+        self.assertEqual(proc.returncode, 0)
+        self.assertEqual(_parse_log(self.gitlog), [],
+                         "SessionEnd after Stop must skip git entirely")
+        out = os.path.join(self.root, "index", "usage", "2026-09-news.jsonl")
+        lines = _lines(out)
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(json.loads(lines[0])["stage"], "stop")  # the first hook's record wins
+
+    def test_publish_record_does_not_block_hook(self):
+        # A publish-stage record for the session must NOT stop the hook from recording: the
+        # hook measurement supersedes the publish one (fold prefers stop > publish).
+        self._write_git(_GIT_SUCCESS)
+        out = os.path.join(self.root, "index", "usage", "2026-09-news.jsonl")
+        os.makedirs(os.path.dirname(out))
+        with open(out, "w") as fh:
+            fh.write(json.dumps({"session_id": "sess-news-abc", "stage": "publish",
+                                 "routine": "news", "started": "2026-09-14T10:00:00Z"}) + "\n")
+        proc = self._run_hook(self._payload(event="Stop"))
+        self.assertEqual(proc.returncode, 0)
+        firsts = [_op(b)[0] for b in _parse_log(self.gitlog)]
+        self.assertEqual(firsts[:3], ["add", "commit", "push"],
+                         "the hook must commit past a publish-stage record")
+        self.assertEqual(len(_lines(out)), 2)  # publish record kept, stop record appended
+
     def test_macos_gate_blocks_without_optin(self):
         # This test host is macOS; without USAGE_RECORD_LOCAL the hook must be a silent no-op.
         if record.platform.system() != "Darwin":
@@ -290,6 +322,35 @@ class PublishStepTest(unittest.TestCase):
         self.assertIn("tools/usage/record.py --find --stage publish "
                       "--slug evaluator --date 2026-09-14", out)
         self.assertLess(out.index("DRY-RUN usage"), out.index("DRY-RUN stub"))
+
+
+class FlatCacheCreationRecordTest(unittest.TestCase):
+    """A transcript in the FLAT cache_creation_input_tokens shape (the shape older lines use)
+    must land cache_write_1h = 0 and cache_write_5m = the flat value in the RECORD -- not only
+    inside the parser -- so nothing is ever billed at the 1h write rate. `models` is what
+    pricing.cost() consumes, so it is pinned alongside `totals`."""
+
+    def test_flat_cache_creation_zeroes_1h_in_record(self):
+        tmp = tempfile.mkdtemp(prefix="usage-flat-")
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        path = os.path.join(tmp, "flat.jsonl")
+        user = {"type": "user", "timestamp": "2026-09-14T10:00:00Z", "cwd": "/repo",
+                "sessionId": "sess-flat",
+                "message": {"role": "user", "content": "routines/news.md"}}
+        asst = {"type": "assistant", "timestamp": "2026-09-14T10:01:00Z", "cwd": "/repo",
+                "sessionId": "sess-flat", "version": "2.1.141",
+                "message": {"id": "m1", "model": "claude-opus-4-8",
+                            "content": [{"type": "text", "text": "hi"}],
+                            "usage": {"input_tokens": 10, "cache_creation_input_tokens": 4200,
+                                      "cache_read_input_tokens": 0, "output_tokens": 5}}}
+        with open(path, "w") as fh:
+            fh.write(json.dumps(user) + "\n" + json.dumps(asst) + "\n")
+        rec = record.build_record(record.transcript_mod.parse(path), "stop")
+        self.assertEqual(rec["totals"]["cache_write_1h"], 0)
+        self.assertEqual(rec["totals"]["cache_write_5m"], 4200)
+        model = rec["models"]["claude-opus-4-8"]
+        self.assertEqual(model["cache_write_1h"], 0)
+        self.assertEqual(model["cache_write_5m"], 4200)
 
 
 class BuildRecordTest(unittest.TestCase):

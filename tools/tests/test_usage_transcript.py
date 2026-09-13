@@ -157,6 +157,21 @@ class PricingTest(unittest.TestCase):
         # Fable 5.1's cache read is 0.025x base ($0.25/MTok), not 0.1x.
         self.assertEqual(pricing.PRICING["claude-fable-5-1"]["cache_read"], 0.25)
 
+    def test_fable_5_cache_read_stays_at_default_multiplier(self):
+        # Fable 5 (unlike 5.1) has NO 0.025x exception: its cache read is the 0.1x default,
+        # $1.00/MTok on $10 base input. Pins the row so it can't silently diverge from the
+        # comment again (the comment once wrongly claimed the exception covered both).
+        self.assertEqual(pricing.PRICING["claude-fable-5"]["cache_read"], 1.00)
+
+    def test_opus_4_8_all_five_prices_pinned(self):
+        # The model the routines run heaviest on -- pin every column so a stale table shows.
+        p = pricing.PRICING["claude-opus-4-8"]
+        self.assertEqual(p["input"], 5.0)
+        self.assertEqual(p["output"], 25.0)
+        self.assertEqual(p["cache_write_5m"], 6.25)
+        self.assertEqual(p["cache_write_1h"], 10.0)
+        self.assertEqual(p["cache_read"], 0.50)
+
     def test_unknown_model_is_null_and_listed(self):
         c = pricing.cost({"claude-opus-4-8": {"input": 1_000_000, "output": 0,
                                               "cache_write_5m": 0, "cache_write_1h": 0, "cache_read": 0},
