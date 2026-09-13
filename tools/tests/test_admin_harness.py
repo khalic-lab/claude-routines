@@ -153,6 +153,24 @@ class AdminHarness(unittest.TestCase):
         # options too) — this fails if a stream is dropped from the add-form validation.
         self.assertIn('streams: { news:1, "ai-ml":1, science:1, weekend:1, sports:1 }', script)
 
+    # ---- a 401 / dropped session on any /admin/* call re-renders the signed-out gate ----
+    def test_401_reboots_gate(self):
+        # apiGet/apiPost already drop the session on a 401 (that branch pre-dated the fix, so it
+        # proves nothing on its own). What the fix adds is the RECOVERY: every /admin/* caller
+        # detects the now-null session and re-runs boot() to render the gate. Pin that literal and
+        # its count — one per patched call site (load, refreshPending, retire/restore, add). A
+        # pre-fix layout has zero of these and fails here.
+        script = _scripts(self.layout)[0]
+        self.assertIn("if (r.status === 401){ dropSession();", script,
+                      "the 401 branch must still clear the stored session")
+        self.assertEqual(script.count("if (!session()){ boot(); return; }"), 4,
+                         "every /admin/* caller must re-render the gate when the session is gone")
+
+    # ---- proposals heading carries a count element (mirrors the sources count) ----
+    def test_proposals_count_element(self):
+        self.assertIn('id="prop-count"', self.html,
+                      "the proposals heading must show a count like the sources heading")
+
     # ---- signed-out mode shows only sign-in, seeds no session, makes no calls ----
     def test_signed_out_no_session_seed(self):
         self.assertNotIn("localStorage.setItem('syncSession:v1', JSON.stringify", self.out_html)

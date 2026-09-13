@@ -305,7 +305,7 @@
 
   function load(){
     Promise.all([
-      apiGet("/admin/snapshot").catch(function(e){ throw e; }),
+      apiGet("/admin/snapshot"),
       apiGet("/admin/actions").catch(function(){ return { count: 0, actions: [] }; })
     ]).then(function(r){
       snap = r[0];
@@ -317,6 +317,7 @@
       renderRecent(snap.actions_recent || []);
       renderPending(r[1] && r[1].actions ? r[1].actions : []);
     }).catch(function(err){
+      if (!session()){ boot(); return; }
       setStatus("bad", "Worker unreachable — " + (err && err.message ? err.message : "error"));
     });
   }
@@ -325,13 +326,14 @@
     if (!session()) return;
     apiGet("/admin/actions").then(function(r){
       renderPending(r && r.actions ? r.actions : []);
-    }).catch(function(){});
+    }).catch(function(){ if (!session()){ boot(); return; } });
   }
 
   function renderEmptyAll(){
     $("usage-body").innerHTML = "<p class='adm__empty'>No snapshot yet — the bridge pushes one at its next tick.</p>";
     $("sources-body").innerHTML = "<p class='adm__empty'>No snapshot yet.</p>";
     $("proposals-body").innerHTML = "<p class='adm__empty'>No snapshot yet.</p>";
+    $("prop-count").textContent = "";
     $("recent-body").innerHTML = "";
   }
 
@@ -467,6 +469,7 @@
     var action = { type: act, domain: domain };
     if (note) action.note = note.slice(0, 500);
     apiPost("/admin/actions", action).then(function(res){
+      if (!session()){ boot(); return; }
       if (res.ok && res.j && res.j.ok){
         say($("gate-msg"), "", "");
         flash(domain + " " + (act === "retire" ? "queued for retire" : "queued for restore"), "ok");
@@ -520,6 +523,7 @@
       }
       say(msg, "adding…", "");
       apiPost("/admin/actions", action).then(function(res){
+        if (!session()){ boot(); return; }
         if (res.ok && res.j && res.j.ok){
           say(msg, domain + " queued — applies at the next bridge tick", "ok");
           $("add-form").reset();
@@ -578,7 +582,9 @@
 
   function renderProposals(props){
     var body = $("proposals-body");
-    if (!props || !props.length){
+    var n = props ? props.length : 0;
+    $("prop-count").textContent = String(n);
+    if (!n){
       body.innerHTML = "<p class='adm__empty'>No evaluator proposals pending.</p>";
       return;
     }
@@ -590,7 +596,7 @@
 
   // ---------------- wire up ----------------
   function bind(){
-    $("signin-btn").addEventListener("click", function(){ doLogin(function(m,k){ renderAuth(); }); });
+    $("signin-btn").addEventListener("click", function(){ doLogin(function(m,k){ say($("gate-msg"), m, k); }); });
     $("gate-signin").addEventListener("click", function(){ doLogin(function(m,k){ say($("gate-msg"), m, k); }); });
     var out = function(){ dropSession(); boot(); };
     $("signout-btn").addEventListener("click", out);
