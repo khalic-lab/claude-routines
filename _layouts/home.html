@@ -2719,6 +2719,38 @@
 {%- comment -%} The theme's script tail, called by name rather than inherited. It still pulls
   main.min.js, which this page uses for nothing -- dropping it is the next decoupling step, not
   this one, and it is why `head/custom.html` carries the `.page__content` stub. {%- endcomment -%}
+<script>
+/* ON-DEVICE READOUT (?probe=1). Mobile Safari hands no terminal its numbers, and headless
+   Chrome/WebKit have no browser chrome to measure against, so the page prints its own
+   measurements into a fixed layer and the screenshot IS the measurement. Inert otherwise. */
+if (location.search.indexOf('probe') > -1) (function(){
+  var p = document.createElement('div');
+  p.style.cssText = 'position:fixed;inset-block-start:0;inset-inline:0;z-index:99999;'
+    + 'font:12px/1.35 ui-monospace,monospace;background:#000;color:#0f0;padding:4px 6px;white-space:pre';
+  function unit(u){
+    var d = document.createElement('div');
+    d.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:100' + u + ';visibility:hidden';
+    document.body.appendChild(d);
+    var h = d.getBoundingClientRect().height; d.parentNode.removeChild(d); return Math.round(h);
+  }
+  function paint(){
+    var bar = document.querySelector('.folio-filters');
+    var r = bar ? bar.getBoundingClientRect() : { top:-1, bottom:-1, height:-1 };
+    var vv = window.visualViewport || { height:-1 };
+    p.textContent = [
+      'inner ' + window.innerHeight + '  visual ' + Math.round(vv.height)
+        + '  lvh ' + unit('lvh') + ' svh ' + unit('svh') + ' dvh ' + unit('dvh'),
+      'bar top ' + Math.round(r.top) + ' bottom ' + Math.round(r.bottom) + ' h ' + Math.round(r.height)
+        + '  gap ' + Math.round(window.innerHeight - r.bottom),
+      'scrollY ' + Math.round(window.scrollY) + '  docH ' + document.documentElement.scrollHeight
+    ].join('\n');
+  }
+  document.body.appendChild(p); paint();
+  addEventListener('scroll', paint, { passive:true });
+  addEventListener('resize', paint);
+  if (window.visualViewport) visualViewport.addEventListener('resize', paint);
+})();
+</script>
 {% include scripts.html %}
 </body>
 </html>

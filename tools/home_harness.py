@@ -3071,64 +3071,21 @@ failed an assertion; the failure is printed under the caption.</p>
 
 
 def _assert_shell_modelled(styles):
-    """Refuse to render while this harness models a page shell production no longer has.
+    """Refuse to render: this harness has not modelled production since 2026-09-12.
 
-    2026-09-12: the homepage stopped inheriting `layout: archive` and now owns its document.
-    <body> is a two-row grid at `block-size:100dvh` with `overflow:hidden` — one row for
-    `.folio-filters`, one for `.shell__view`, the only element that scrolls. The template below
-    still emits the OLD shell (`body > .harness-doc > .wrap#main`, everything in document flow),
-    and that combination does not merely differ from production, it measures a LIE: the layout's
-    `body.layout--home{ block-size:100dvh; overflow:hidden }` applies to this page too, so a
-    27,000px board renders clipped to one viewport, `.folio-filters` gets a `grid-row` in a body
-    that has no such item, and every height, extent and screenshot this tool prints comes off a
-    page nobody will ever see. A harness that reports numbers from the wrong box is worse than no
-    harness — that is the `home_harness rubber-stamped for a week` lesson, and this guard is here
-    so it cannot repeat silently.
-
-    AND THE CHEAP INVARIANTS CANNOT CATCH IT — they pass BECAUSE of the clip. `scrollW ==
-    innerW` is this tool's standing width check (line 1607, and the 2026-07-25 post-mortem at
-    3154 lists it among the invariants that "still PASSED" through that collapse). Under
-    `body{overflow:hidden}` the equality is guaranteed by the CSS: there is no overflow left to
-    report, so the check is satisfied by the breakage rather than by the page being right.
-    `inversions 0` and `rank2 >= tail` are ratios over whatever cards survived the clip and
-    degrade the same way. A green run here is not weak evidence, it is evidence of the wrong
-    thing — which is why this guard raises instead of warning.
-
-    WHAT MIGRATING LOOKS LIKE, so whoever picks it up has the shape of it:
-      1. Emit the real shell in `_build_page`: `.folio-filters` and `#shellView` as the two body
-         children, `.shell__head` / `#main.shell__main` / `.page__footer` inside the scrollport.
-         `.harness-doc` and the `#main.wrap` sizing rule both go — `.shell__main` now carries the
-         column (definite `inline-size`, not `max-width`), which is what the `.harness-doc` note
-         about auto cross-axis margins was working around.
-         The note itself is now false rather than merely superseded: it argues from minimal-
-         mistakes' `body{display:flex; flex-direction:column}` (3143), but the page template
-         injects `styles` AFTER `_theme_css + TOKENS` (3199), so the layout's
-         `body.layout--home{display:grid}` wins the cascade — body has not been a flex
-         container in this harness since ff48375.
-      2. Decide what a screenshot means. Every shot this tool takes today is a full-page render of
-         a tall window; under the shell the page IS the viewport and the board scrolls inside
-         `#shellView`. Either drive `#shellView.scrollTop` per shot and stitch, or photograph one
-         screen and say so. Do not "fix" it by unwinding the shell for the render — that is the
-         same lie in a different direction.
-      3. Retarget the probes that assume the document scrolls: the scroll census, `railTraps`, and
-         anything reading `window.scrollY` or `document.body.scrollHeight`.
-    This runs BEFORE the markup extractors on purpose. They have already started failing on the
-    same migration — one at a time, each naming an element that moved — and an operator following
-    that trail fixes four regexes before discovering that the shell, not the selectors, is the
-    job. The guard reads THIS MODULE'S OWN SOURCE for the old wrapper rather than a mirrored copy
-    of the template string, so it cannot be cleared by editing anything except the markup it is
-    about, and it clears itself the moment `.harness-doc` stops being emitted.
+    The guard used to latch on the literal `body.layout--home{ display:grid`. That literal was
+    itself the bug: the 2026-09-13 unwind returns <body> to `display:flex`, which would have
+    cleared the latch and resumed rendering `.harness-doc > .wrap#main` -- a shape production has
+    not emitted since ff48375, with `.folio-filters` nested inside `#main` (so a sticky bar would
+    stick to the wrong box) and no footer at all (so bar-over-footer, the one defect this page
+    has actually shipped, cannot be measured here). Unconditional until the replacement -- a
+    script that drives the real DOM -- lands; delete this module with it.
     """
-    own = open(os.path.abspath(__file__)).read()
-    shell = "body.layout--home{ display:grid" in styles
-    if shell and '<div class="harness-doc">' in own:
-        raise SystemExit(
-            "home_harness: _layouts/home.html now owns the page shell (body is a 100dvh two-track "
-            "grid, only .shell__view scrolls) but this harness still emits the pre-2026-09-12 "
-            "`.harness-doc > .wrap#main` document. Rendering would clip the board to one viewport "
-            "and every number printed would be measured off a page production does not have. "
-            "See _assert_shell_modelled() for what the migration needs.")
-
+    raise SystemExit(
+        "home_harness: disabled 2026-09-13. It re-assembles a page instead of loading one, and the "
+        "shape it assembles is two rewrites out of date. Verify against a real DOM instead: "
+        "Playwright WebKit for layout, the ?probe=1 readout on the iOS simulator for browser-chrome "
+        "clearance (see docs/PLAN-2026-09-13 shell notes in _layouts/home.html).")
 
 
 def _build_page(feed, matrix=False, refresh_theme=False):
