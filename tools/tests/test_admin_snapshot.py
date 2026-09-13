@@ -79,9 +79,12 @@ class UsageTest(SnapshotBase):
     def test_usage_folded_when_present_with_sibling_import(self):
         # fold.py follows the repo's `import pricing` sibling convention; the snapshot must put
         # tools/usage on sys.path before exec'ing it, or the import fails and usage wrongly nulls.
-        self.write("tools/usage/pricing.py", "RATE = 3\n")
+        # A unique sibling name: the real tools/usage tests import `pricing` by its bare name
+        # earlier in the same process, and a cached sys.modules['pricing'] would satisfy a fake
+        # `import pricing` here with the real module -- a test-order failure, not a snapshot bug.
+        self.write("tools/usage/snapfake_pricing.py", "RATE = 3\n")
         self.write("tools/usage/fold.py",
-                   "import pricing\n"
+                   "import snapfake_pricing as pricing\n"
                    "def fold(root, as_of=None):\n"
                    "    return {'runs': 2, 'rate': pricing.RATE}\n")
         before = list(sys.path)

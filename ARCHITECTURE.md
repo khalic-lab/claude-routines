@@ -144,6 +144,33 @@
 > route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
 > `hklaw.com`, `macrumors.com`, `wtvbam.com`.
 >
+> **Changed 2026-09-13: measured token usage, an admin page, and the front page back on a
+> scrolling document.** (1) **Usage is measured, not estimated.** `.claude/settings.json` (checked
+> in) registers `Stop` + `SessionEnd` hooks that run `tools/usage/record.py --hook` inside the
+> routine sandbox: the run's own Claude Code transcript is parsed (dedupe by `message.id`, max per
+> usage field; sub-agent files folded), per-model input / cache-write 5m+1h / cache-read / output
+> tokens, tool-call counts and cost at list price (`tools/usage/pricing.py`, cited) are appended
+> as one record to `index/usage/<YYYY-MM>-<routine>.jsonl` (one file per routine per month so
+> concurrent runs never rebase-conflict) and committed + pushed. `publish.py` also appends a
+> `stage: "publish"` record inside the edition commit as the belt-and-braces path; `tools/usage/
+> fold.py` keeps the most complete record per session. The hook is a no-op on macOS. (2) **Admin
+> page `/admin/`** (`admin.html` + `_layouts/admin.html`, theme-free, passkey-gated, phone-first):
+> usage tiles and tables, the source registry with Retire / Restore / Add / Set, pending and
+> applied actions, pending evaluator proposals. Data flows through the feedback-sink Worker's new
+> `/admin/*` routes: the bridge pushes a snapshot (`tools/admin/snapshot.py` → `PUT
+> /admin/snapshot`) every tick and drains queued actions (`adm:` KV prefix) into
+> `tools/admin/apply.py`, which edits `sources/registry.yml` through `registry.py`'s own
+> loader/dumper, validates (`registry.validate()`), logs to `index/admin/actions.jsonl`, commits,
+> pushes, then acks. Bridge wiring per `tools/admin/BRIDGE.md`. Plan and contracts:
+> `docs/PLAN-2026-09-13-usage-measurement-and-admin.md`. (3) **Front page:** the 09-12 two-track
+> grid shell sized itself to 100lvh on iOS (the theme's `body{min-height:100vh}` survived
+> `block-size:100dvh`) and put the bottom bar under Safari's toolbar; `_layouts/home.html` is back
+> on a scrolling document with the bar `position:sticky` (bottom edge below 700px, top edge above),
+> the documented `viewport-fit=cover` + `env(safe-area-inset-bottom)` handling for Safari's tab
+> bar, and a `?probe=1` on-device readout. `tools/home_harness.py` is disarmed for good (it never
+> rendered a footer); verification is the iPhone simulator (real Mobile Safari) plus headless
+> Chrome for desktop widths. Audit, designs and plan: `docs/archive/REVIEW-2026-09-13-front-page-ios.md`.
+>
 > **Changed 2026-08-07: the prompt layer — the discovery quota now means PRIMARY discovery.** Any
 > unregistered domain satisfied it, so a first-time mainstream outlet counted as a discovery. Only a
 > new **primary/institutional publisher** does now — a lab, university, research institute, journal,

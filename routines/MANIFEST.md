@@ -131,3 +131,14 @@ rather than "brief".
 > **`outcomes` + `autofix_on_pr_create` REMOVED 2026-07-03** (same stranding defect as the
 > Evaluator — a 2026-06-17 `Watch fired: meteoswiss-inca` commit sat only on
 > `claude/serene-mayer-25muf9`; its notification never reached the phone).
+
+## Hooks ride the checkout (2026-09-13)
+
+`.claude/settings.json` in the repo registers a `Stop` and a `SessionEnd` hook that run
+`tools/usage/record.py --hook`. Inside a routine sandbox the hook reads the run's own transcript
+(handed over on stdin as `transcript_path`), sums real token usage per model, appends one record to
+`index/usage/<YYYY-MM>-<routine>.jsonl` and commits + pushes it; `publish.py` also appends a partial
+`stage: "publish"` record inside the edition commit. On the Mac the hook exits at once
+(`platform.system() == "Darwin"` gate) so interactive sessions never pollute the ledger. Nothing in
+the triggers changed -- the hook is picked up because the sandbox's working directory is the clone.
+Plan and contracts: `docs/PLAN-2026-09-13-usage-measurement-and-admin.md`.
