@@ -195,6 +195,18 @@ class SetTest(ApplyBase):
         self.assertEqual(res[0]["result"], "rejected")
         self.assertEqual(res[0]["error"], "unknown domain")
 
+    def test_set_reach_proxy_against_a_curl_probe_is_a_batch_reject(self):
+        # Known dead end (documented limitation): `set reach` cannot touch the probe, so flipping an
+        # entry with a curl probe to reach=proxy makes reach and probe.method disagree, which
+        # registry.validate() rejects -- and the whole batch with it. hub.example is exactly this
+        # shape. Pinned so the architect finds it in the suite, not live. Fixing it needs a probe
+        # field on `set`, which is out of contract.
+        res = self.apply([{"type": "set", "domain": "hub.example", "field": "reach",
+                           "value": "proxy"}])
+        self.assertEqual(res[0]["result"], "rejected")
+        self.assertTrue(res[0]["error"].startswith("batch validation failed"))
+        self.assertEqual(_read(self.reg_path), self.original)
+
 
 class ShapeAndBatchTest(ApplyBase):
     def test_bad_domain_rejected(self):

@@ -231,10 +231,14 @@ def _load_registry(root):
 
 
 def _write_registry(root, reg):
-    """Atomic replace so a crash mid-write never leaves a truncated registry."""
+    """Atomic replace so a crash mid-write never leaves a truncated registry. The temp file is
+    written in `root`, NOT in sources/: a crash between mkstemp and os.replace would leave a stray
+    .registry-*.tmp, and the bridge stages sources/ wholesale (`git add sources/`) -- root itself is
+    never staged, so a stray temp there is never committed. root is the same filesystem as sources/,
+    so os.replace stays atomic."""
     path = registry.registry_path(root)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".registry-", suffix=".tmp")
+    fd, tmp = tempfile.mkstemp(dir=root, prefix=".registry-", suffix=".tmp")
     try:
         with os.fdopen(fd, "w") as f:
             f.write(registry.yaml_dump(reg))
