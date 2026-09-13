@@ -64,9 +64,52 @@ POST /prefs                  (session)   body: {topics:[...], ts} -> {ok, applie
                                          merges — dropping a beat propagates). Caps: 64KB body
                                          (413), 50 topics, keys ^[a-z0-9][a-z0-9-]{0,39}$;
                                          bad/dup keys drop themselves. Same session as /readstate.
+
+POST /admin/actions          (session)   body: an action (see below) -> {ok, id, action}
+                                         queues one source-registry mutation under KV `adm:`.
+                                         reader is pinned from the session; the Worker assigns
+                                         id + ts and drops unknown keys. 400 on shape error,
+                                         413 over 8KB.
+GET  /admin/actions          (session)   -> {count, actions:[{key, ...action}]}  the queued,
+                                         not-yet-applied actions.
+GET  /admin/snapshot         (session)   -> the bridge-pushed registry+usage snapshot, served
+                                         as the stored JSON string verbatim (application/json,
+                                         Cache-Control: no-store). 404 {error:"no snapshot yet"}
+                                         before the first push.
+PUT  /admin/snapshot         (Bearer)    body: JSON <= 4MB -> {ok, bytes}  stores `admin:snapshot`
+                                         (the string as received, after a JSON.parse round-trip
+                                         proves it valid) + `admin:snapshot_meta` {ts, bytes}.
+                                         413 over 4MB, 400 on invalid JSON.
+GET  /admin/drain            (Bearer)    -> {count, truncated, records:[{key, ...action}]}
+                                         lists queued `adm:` actions (limit 200); does NOT delete.
+POST /admin/ack              (Bearer)    body: {keys:[...]} -> {ok, deleted}
+                                         deletes only `adm:` keys (an `fb:` key is a no-op).
 ```
 
 Two-phase drain/ack so a missed bridge tick neither loses nor double-commits records.
+
+**Source-registry admin (2026-09-13).** The `/admin/` page reads a snapshot the Mac bridge pushes
+each tick (`PUT /admin/snapshot`) and queues mutations (`POST /admin/actions`); the bridge drains
+(`GET /admin/drain`), applies them to `sources/registry.yml`, commits + pushes, then acks
+(`POST /admin/ack`) — the same two-phase pattern as feedback, with the `adm:` / `admin:` KV prefixes
+kept disjoint from `fb:` so neither drain sees the other's keys. Session routes (`/admin/actions`,
+`/admin/snapshot` GET) answer CORS only for the site origin and roll the session like `/prefs`; the
+bridge routes (`/admin/drain`, `/admin/ack`) keep `*`. Action shape validated by the Worker
+(re-validated by `tools/admin/apply.py` on the Mac):
+
+```
+{ "type": "retire" | "restore" | "add" | "set",
+  "domain": "<registrable domain, lowercased>",
+  "note": "<= 500 chars, optional",
+  "tier": "T1" | "T2",                                        // add (required)
+  "streams": ["news","ai-ml","science","weekend","sports"],   // add: non-empty subset (deduped)
+  "reach": "direct|proxy|search-only|blocked|blocked-paywall",// add, default direct
+  "status": "candidate|probation|established",                // add, default probation
+  "class": "outlet|hub|institutional",                        // add, optional
+  "probe": { "url": "https://…", "method": "curl|proxy" },    // add, optional
+  "field": "tier|reach|streams|status|class", "value": … }    // set (status also accepts demoted;
+                                                              //  streams value is an array)
+```
 
 ## Passkey accounts (2026-07-10)
 
