@@ -618,7 +618,9 @@
      container scroll, so a reload opens at the top. Both are the price of a bar that is an object
      in the layout instead of a sheet of glass over it. */
   body.layout--home{ display:grid; grid-template-rows:1fr auto; block-size:100dvh;
-    overflow:hidden; margin:0; }
+    /* min-block-size beats the theme's `body{min-height:100vh}`, which block-size alone never
+       contested: without it body was 100lvh on iOS and the bar sat under Safari's toolbar. */
+    min-block-size:100dvh; overflow:hidden; margin:0; }
   .shell__view{ grid-row:1; overflow-y:auto; overscroll-behavior-block:contain;
     display:flex; flex-direction:column; }
   .folio-filters{ grid-row:2; }
