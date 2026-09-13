@@ -16,6 +16,12 @@
 //   POST /readstate              (session)   -- LWW-merge a read-state delta into KV.
 //   GET  /prefs                  (session)   -- the reader's UI prefs {topics:[...], ts}.
 //   POST /prefs                  (session)   -- whole-object LWW-by-ts of the topic selection.
+//   POST /admin/actions          (session)   -- queue a source-registry action (retire/restore/add/set).
+//   GET  /admin/actions          (session)   -- the queued (not-yet-applied) admin actions.
+//   GET  /admin/snapshot         (session)   -- the bridge-pushed registry+usage snapshot the page reads.
+//   PUT  /admin/snapshot         (bearer)    -- store the snapshot (the bridge pushes it every tick).
+//   GET  /admin/drain            (bearer)    -- list queued admin actions (does NOT delete). Bridge reads.
+//   POST /admin/ack              (bearer)    -- delete the given admin KV keys. Bridge calls AFTER apply+push.
 //
 // Writes (/submit, /propose) require a passkey session Bearer — the shared X-Widget-Key
 // site password was retired 2026-07-25 (passkeys-only; the session also pins the reader
@@ -26,8 +32,9 @@
 //
 // Passkeys: registration is gated by the Worker secret INVITE_TOKEN (fail closed if
 // unset). Credentials (`cred:`), sessions (`session:`), single-use challenges (`chal:`),
-// read state (`readstate:`) and UI prefs (`prefs:`) all live in the same FEEDBACK_KV —
-// none of those prefixes collide with `fb:` so drain/ack never sees them. Every
+// read state (`readstate:`), UI prefs (`prefs:`) and the source-admin queue + snapshot
+// (`adm:`, `admin:`) all live in the same FEEDBACK_KV — none of those prefixes collide
+// with `fb:` so the feedback drain/ack never sees them (and vice versa). Every
 // session-carrying route (/auth/*, /submit, /propose, /readstate, /prefs) answers CORS
 // only for the published site origin; the bridge routes (/drain, /ack) keep `*`.
 //
@@ -73,6 +80,28 @@ const STORY_ID_RE = /^(st-[0-9a-f]{12}|ed-[a-z0-9-]{1,40}-\d{4}-\d{2}-\d{2})$/;
 const PREFS_MAX_TOPICS = 50; // topic keys a reader can select (the vocab is ~a dozen)
 const TOPIC_KEY_RE = /^[a-z0-9][a-z0-9-]{0,39}$/; // beat/topic filter keys (build_stories_feed TOPICS)
 
+// Source-registry admin (2026-09-13). Queued mutations live under `adm:` (drained + applied by
+// the Mac bridge, mirroring the feedback path); the registry+usage snapshot the /admin/ page reads
+// lives under `admin:`. Both prefixes are disjoint from `fb:`, so neither drain sees the other's keys.
+const ADMIN_KEY_PREFIX = "adm:";
+const ADMIN_SNAPSHOT_KEY = "admin:snapshot";
+const ADMIN_SNAPSHOT_META_KEY = "admin:snapshot_meta";
+const ADMIN_MAX_ACTION_BYTES = 8192; // one queued action POST body cap (413 above)
+const ADMIN_MAX_SNAPSHOT_BYTES = 4 * 1024 * 1024; // pushed snapshot cap, 4 MB (413 above)
+const ADMIN_MAX_NOTE = 500; // chars of the optional per-action note
+// Registrable-domain shape; the schema deliberately matches lowercase only, so the handler
+// lowercases the input before testing (a typo'd `Example.org` normalizes, never 400s).
+const DOMAIN_RE = /^(?=.{4,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/;
+const ADMIN_TYPES = new Set(["retire", "restore", "add", "set"]);
+const ADMIN_TIERS = new Set(["T1", "T2"]);
+const ADMIN_STREAMS = new Set(["news", "ai-ml", "science", "weekend", "sports"]);
+const ADMIN_REACH = new Set(["direct", "proxy", "search-only", "blocked", "blocked-paywall"]);
+const ADMIN_STATUS_ADD = new Set(["candidate", "probation", "established"]);
+const ADMIN_STATUS_SET = new Set(["candidate", "probation", "established", "demoted"]); // set: retire goes through `retire`
+const ADMIN_CLASS = new Set(["outlet", "hub", "institutional"]);
+const ADMIN_PROBE_METHODS = new Set(["curl", "proxy"]);
+const ADMIN_SET_FIELDS = new Set(["tier", "reach", "streams", "status", "class"]);
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
@@ -80,14 +109,19 @@ const CORS = {
   "Access-Control-Max-Age": "86400",
 };
 
-// Every session-carrying route (/auth/*, /submit, /propose, /readstate, /prefs) answers
-// CORS only for the published site: the site origin gets echoed back, any other origin
-// gets NO Access-Control-Allow-Origin at all (the preflight still returns 204).
+// Every session-carrying route (/auth/*, /submit, /propose, /readstate, /prefs, /admin/actions,
+// /admin/snapshot) answers CORS only for the published site: the site origin gets echoed back,
+// any other origin gets NO Access-Control-Allow-Origin at all (the preflight still returns 204).
+// The bridge routes (/drain, /ack, /admin/drain, /admin/ack) keep `*` — they are server-to-server.
+// PUT /admin/snapshot is site-origin-conditional here too (the bridge is not a browser, so its
+// CORS is moot), which makes it the one bearer route that does not carry `*`.
 function corsFor(request, path) {
   if (path !== "/readstate" && path !== "/prefs" && path !== "/submit" && path !== "/propose" &&
+      path !== "/admin/actions" && path !== "/admin/snapshot" &&
       !path.startsWith("/auth/")) return CORS;
   const headers = {
-    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    // /admin/snapshot is GET (session) + PUT (bearer); every other site-origin route is GET/POST.
+    "Access-Control-Allow-Methods": path === "/admin/snapshot" ? "GET, PUT, OPTIONS" : "POST, GET, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
@@ -619,6 +653,192 @@ async function handlePrefsPost(request, env, cors) {
   return json({ ok: true, applied, prefs: current }, 200, {}, cors);
 }
 
+// ---------------------------------------------------------------------------
+// Source-registry admin (2026-09-13). The page reads a bridge-pushed snapshot and queues
+// mutations; the bridge drains, applies them to sources/registry.yml, commits/pushes, then
+// acks — the same two-phase pattern as feedback. The Worker only validates shape (§2.2 of the
+// plan) and assigns id/ts/reader; apply.py on the Mac re-validates and enforces registry rules.
+
+// Validate one queued action against §2.2. Returns { action } (a clean object with only known
+// keys, reader pinned from the session) or { error } (a 400 message). Unknown keys are dropped.
+function validateAction(p, reader) {
+  if (!p || typeof p !== "object" || Array.isArray(p)) return { error: "body must be an action object" };
+  if (!ADMIN_TYPES.has(p.type)) return { error: "type must be retire, restore, add or set" };
+  if (typeof p.domain !== "string") return { error: "domain required" };
+  const domain = p.domain.toLowerCase(); // schema is lowercase-only; normalize a typo'd case rather than 400
+  if (!DOMAIN_RE.test(domain)) return { error: "malformed domain" };
+  const action = { type: p.type, domain, reader };
+  if (p.note !== undefined) {
+    if (typeof p.note !== "string") return { error: "note must be a string" };
+    if (p.note.length > ADMIN_MAX_NOTE) return { error: `note too long (max ${ADMIN_MAX_NOTE})` };
+    action.note = p.note;
+  }
+  if (p.type === "add") {
+    if (!ADMIN_TIERS.has(p.tier)) return { error: "add requires tier T1 or T2" };
+    action.tier = p.tier;
+    if (!Array.isArray(p.streams) || p.streams.length === 0) return { error: "add requires a non-empty streams array" };
+    const streams = [];
+    for (const s of p.streams) {
+      if (!ADMIN_STREAMS.has(s)) return { error: `unknown stream: ${s}` };
+      if (!streams.includes(s)) streams.push(s);
+    }
+    action.streams = streams;
+    const reach = p.reach === undefined ? "direct" : p.reach; // default direct
+    if (!ADMIN_REACH.has(reach)) return { error: "invalid reach" };
+    action.reach = reach;
+    const status = p.status === undefined ? "probation" : p.status; // default probation
+    if (!ADMIN_STATUS_ADD.has(status)) return { error: "invalid status for add (candidate|probation|established)" };
+    action.status = status;
+    if (p.class !== undefined) {
+      if (!ADMIN_CLASS.has(p.class)) return { error: "invalid class" };
+      action.class = p.class;
+    }
+    if (p.probe !== undefined) {
+      const probe = p.probe;
+      if (!probe || typeof probe !== "object" || Array.isArray(probe)) return { error: "probe must be an object" };
+      // Plan §2.2 shows probe.url as an https URL; require https (the reach->method coupling is apply.py's REACH_METHOD).
+      if (typeof probe.url !== "string" || !/^https:\/\//.test(probe.url)) return { error: "probe.url must be an https URL" };
+      if (!ADMIN_PROBE_METHODS.has(probe.method)) return { error: "probe.method must be curl or proxy" };
+      action.probe = { url: probe.url, method: probe.method };
+    }
+  } else if (p.type === "set") {
+    if (!ADMIN_SET_FIELDS.has(p.field)) return { error: "set field must be tier, reach, streams, status or class" };
+    action.field = p.field;
+    if (p.field === "streams") {
+      if (!Array.isArray(p.value) || p.value.length === 0) return { error: "streams value must be a non-empty array" };
+      const streams = [];
+      for (const s of p.value) {
+        if (!ADMIN_STREAMS.has(s)) return { error: `unknown stream: ${s}` };
+        if (!streams.includes(s)) streams.push(s);
+      }
+      action.value = streams;
+    } else {
+      const allowed = p.field === "tier" ? ADMIN_TIERS
+        : p.field === "reach" ? ADMIN_REACH
+        : p.field === "status" ? ADMIN_STATUS_SET
+        : ADMIN_CLASS;
+      if (typeof p.value !== "string" || !allowed.has(p.value)) return { error: `invalid value for field ${p.field}` };
+      action.value = p.value;
+    }
+  }
+  // retire / restore need only { type, domain, note? } — already captured above.
+  return { action };
+}
+
+async function handleAdminActionsPost(request, env, cors) {
+  const sess = await getSession(request, env);
+  if (!sess) return json({ error: "no session" }, 401, {}, cors);
+  const body = await request.arrayBuffer();
+  if (body.byteLength > ADMIN_MAX_ACTION_BYTES) {
+    return json({ error: `body too large (max ${ADMIN_MAX_ACTION_BYTES} bytes)` }, 413, {}, cors);
+  }
+  let p;
+  try {
+    p = JSON.parse(new TextDecoder().decode(body));
+  } catch {
+    return json({ error: "invalid JSON body" }, 400, {}, cors);
+  }
+  const v = validateAction(p, sess.reader);
+  if (v.error) return json({ error: v.error }, 400, {}, cors);
+  const id = crypto.randomUUID();
+  const ts = new Date().toISOString();
+  const action = { id, ts, ...v.action };
+  // Key sorts by time so drain/GET return roughly chronological order.
+  await env.FEEDBACK_KV.put(`${ADMIN_KEY_PREFIX}${ts}:${id}`, JSON.stringify(action));
+  await rollSession(env, sess);
+  return json({ ok: true, id, action }, 200, {}, cors);
+}
+
+async function handleAdminActionsGet(request, env, cors) {
+  const sess = await getSession(request, env);
+  if (!sess) return json({ error: "no session" }, 401, {}, cors);
+  const listed = await env.FEEDBACK_KV.list({ prefix: ADMIN_KEY_PREFIX, limit: DRAIN_LIMIT });
+  const actions = [];
+  for (const k of listed.keys) {
+    const val = await env.FEEDBACK_KV.get(k.name);
+    if (val == null) continue;
+    let rec;
+    try {
+      rec = JSON.parse(val);
+    } catch {
+      rec = { raw: val };
+    }
+    actions.push({ key: k.name, ...rec });
+  }
+  await rollSession(env, sess);
+  return json({ count: actions.length, actions }, 200, {}, cors);
+}
+
+async function handleAdminSnapshotGet(request, env, cors) {
+  const sess = await getSession(request, env);
+  if (!sess) return json({ error: "no session" }, 401, {}, cors);
+  const raw = await env.FEEDBACK_KV.get(ADMIN_SNAPSHOT_KEY);
+  await rollSession(env, sess);
+  if (raw == null) return json({ error: "no snapshot yet" }, 404, {}, cors);
+  // Serve the stored string verbatim (it was stored after a JSON.parse round-trip proved it valid).
+  return new Response(raw, {
+    status: 200,
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...cors },
+  });
+}
+
+async function handleAdminSnapshotPut(request, env) {
+  const body = await request.arrayBuffer();
+  if (body.byteLength > ADMIN_MAX_SNAPSHOT_BYTES) {
+    return json({ error: `snapshot too large (max ${ADMIN_MAX_SNAPSHOT_BYTES} bytes)` }, 413);
+  }
+  const str = new TextDecoder().decode(body);
+  try {
+    JSON.parse(str); // round-trip only proves validity; we store the string exactly as received
+  } catch {
+    return json({ error: "invalid JSON body" }, 400);
+  }
+  const bytes = body.byteLength;
+  await env.FEEDBACK_KV.put(ADMIN_SNAPSHOT_KEY, str);
+  await env.FEEDBACK_KV.put(ADMIN_SNAPSHOT_META_KEY, JSON.stringify({ ts: new Date().toISOString(), bytes }));
+  return json({ ok: true, bytes });
+}
+
+async function handleAdminDrain(env) {
+  const listed = await env.FEEDBACK_KV.list({ prefix: ADMIN_KEY_PREFIX, limit: DRAIN_LIMIT });
+  const records = [];
+  for (const k of listed.keys) {
+    const v = await env.FEEDBACK_KV.get(k.name);
+    if (v == null) continue;
+    let rec;
+    try {
+      rec = JSON.parse(v);
+    } catch {
+      rec = { id: null, raw: v };
+    }
+    records.push({ key: k.name, ...rec });
+  }
+  return json({ count: records.length, truncated: listed.list_complete === false, records });
+}
+
+async function handleAdminAck(request, env) {
+  let p;
+  try {
+    p = await request.json();
+  } catch {
+    return json({ error: "invalid JSON body" }, 400);
+  }
+  const keys = p && p.keys;
+  if (!Array.isArray(keys)) {
+    return json({ error: "body must be { keys: [string, ...] }" }, 400);
+  }
+  // Only `adm:` keys are deletable here — an `fb:` key handed to this route is a no-op, so a
+  // confused caller can never delete feedback records through the admin ack (and vice versa).
+  let deleted = 0;
+  for (const k of keys) {
+    if (typeof k === "string" && k.startsWith(ADMIN_KEY_PREFIX)) {
+      await env.FEEDBACK_KV.delete(k);
+      deleted++;
+    }
+  }
+  return json({ ok: true, deleted });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -671,6 +891,31 @@ export default {
       if (request.method === "GET") return handlePrefsGet(request, env, cors);
       if (request.method === "POST") return handlePrefsPost(request, env, cors);
       return json({ error: "method not allowed" }, 405, {}, cors);
+    }
+    // Source-registry admin: session-gated actions/snapshot for the /admin/ page, bearer-gated
+    // drain/ack/snapshot-push for the Mac bridge.
+    if (path === "/admin/actions") {
+      if (request.method === "GET") return handleAdminActionsGet(request, env, cors);
+      if (request.method === "POST") return handleAdminActionsPost(request, env, cors);
+      return json({ error: "method not allowed" }, 405, {}, cors);
+    }
+    if (path === "/admin/snapshot") {
+      if (request.method === "GET") return handleAdminSnapshotGet(request, env, cors);
+      if (request.method === "PUT") {
+        if (!bearerOk(request, env)) return text("unauthorized", 401);
+        return handleAdminSnapshotPut(request, env);
+      }
+      return json({ error: "method not allowed" }, 405, {}, cors);
+    }
+    if (path === "/admin/drain") {
+      if (request.method !== "GET") return text("method not allowed", 405);
+      if (!bearerOk(request, env)) return text("unauthorized", 401);
+      return handleAdminDrain(env);
+    }
+    if (path === "/admin/ack") {
+      if (request.method !== "POST") return text("method not allowed", 405);
+      if (!bearerOk(request, env)) return text("unauthorized", 401);
+      return handleAdminAck(request, env);
     }
     return text("not found", 404);
   },

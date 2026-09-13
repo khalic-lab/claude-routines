@@ -572,6 +572,237 @@ const T = Date.now() - 10000;
   check("OPTIONS /prefs from foreign origin -> 204, NO ACAO", res.status === 204 && res.headers.get("Access-Control-Allow-Origin") === null, String(res.status));
 }
 
+// --- /admin/*: source-registry actions + snapshot (2026-09-13) -----------------------------
+// Fresh session token so these checks don't depend on where the earlier sections left TOKEN's
+// clock. FEEDBACK_TOKEN bearer (the bridge/drain credential) is "bridge-bearer-secret" above.
+const ADMTOK = "c".repeat(64);
+const ADM = { Authorization: `Bearer ${ADMTOK}` };
+const BEARER = { Authorization: `Bearer ${env.FEEDBACK_TOKEN}` };
+const ADMIN_PREFIX = "adm:";
+await kv.put(`session:${ADMTOK}`, JSON.stringify({ reader: "rafael", created: Date.now() }));
+
+// -- POST /admin/actions: auth gate --
+{
+  const res = await worker.fetch(req("/admin/actions", { method: "POST", body: { type: "retire", domain: "spammy.example" } }), env);
+  const body = await res.json();
+  check("POST /admin/actions without session -> 401 no session", res.status === 401 && body.error === "no session", JSON.stringify([res.status, body]));
+}
+// -- POST /admin/actions: valid retire, reader pinned from session, stored under adm: --
+{
+  const res = await worker.fetch(
+    req("/admin/actions", { method: "POST", headers: ADM, body: { type: "retire", domain: "spammy.example", note: "low signal", reader: "mallory" } }),
+    env,
+  );
+  const body = await res.json();
+  const latestKey = [...kv.map.keys()].filter((k) => k.startsWith(ADMIN_PREFIX)).sort().pop();
+  const stored = JSON.parse(await kv.get(latestKey));
+  check(
+    "POST /admin/actions retire -> 200 {ok,id,action}, reader pinned, adm: key",
+    res.status === 200 && body.ok === true && typeof body.id === "string" &&
+      body.action.type === "retire" && body.action.domain === "spammy.example" &&
+      body.action.reader === "rafael" && stored.reader === "rafael" && stored.note === "low signal",
+    JSON.stringify([res.status, body, stored]),
+  );
+}
+// -- validation branches --
+{
+  const res = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "nuke", domain: "a.example" } }), env);
+  check("POST /admin/actions bad type -> 400", res.status === 400, String(res.status));
+}
+{
+  const res = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "retire", domain: "not a domain" } }), env);
+  check("POST /admin/actions malformed domain -> 400", res.status === 400, String(res.status));
+}
+{
+  // uppercase normalizes to lowercase rather than 400 (schema is lowercase-only).
+  const res = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "restore", domain: "Example.ORG" } }), env);
+  const body = await res.json();
+  check("POST /admin/actions uppercase domain -> 200, stored lowercase", res.status === 200 && body.action.domain === "example.org", JSON.stringify(body));
+}
+{
+  const res = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "add", domain: "a.example", streams: ["news"] } }), env);
+  check("POST /admin/actions add without tier -> 400", res.status === 400, String(res.status));
+}
+{
+  const res = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "add", domain: "a.example", tier: "T2", streams: [] } }), env);
+  const bad = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "add", domain: "a.example", tier: "T2", streams: ["bogus"] } }), env);
+  check("POST /admin/actions add empty/unknown streams -> 400", res.status === 400 && bad.status === 400, JSON.stringify([res.status, bad.status]));
+}
+{
+  // full add: reach/status default when omitted, streams dedupe, probe kept.
+  const res = await worker.fetch(
+    req("/admin/actions", { method: "POST", headers: ADM, body: { type: "add", domain: "newsy.example", tier: "T1", streams: ["news", "news", "science"], probe: { url: "https://newsy.example/x", method: "proxy" }, junk: "dropped" } }),
+    env,
+  );
+  const body = await res.json();
+  check(
+    "POST /admin/actions add applies reach/status defaults, dedupes streams, drops unknown keys",
+    res.status === 200 && body.action.reach === "direct" && body.action.status === "probation" &&
+      JSON.stringify(body.action.streams) === JSON.stringify(["news", "science"]) &&
+      body.action.probe.method === "proxy" && body.action.junk === undefined,
+    JSON.stringify(body),
+  );
+}
+{
+  // add with a non-https probe.url is rejected.
+  const res = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "add", domain: "b.example", tier: "T2", streams: ["news"], probe: { url: "ftp://b.example", method: "curl" } } }), env);
+  check("POST /admin/actions add non-https probe.url -> 400", res.status === 400, String(res.status));
+}
+{
+  // set: bad field 400; status accepts demoted (retire is separate); streams takes an array.
+  const badField = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "set", domain: "c.example", field: "banana", value: "x" } }), env);
+  const badVal = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "set", domain: "c.example", field: "tier", value: "T9" } }), env);
+  const demoted = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "set", domain: "c.example", field: "status", value: "demoted" } }), env);
+  const streamsSet = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "set", domain: "c.example", field: "streams", value: ["news", "sports"] } }), env);
+  const streamsBody = await streamsSet.json();
+  check(
+    "POST /admin/actions set: bad field/value 400, status:demoted ok, streams:[...] ok",
+    badField.status === 400 && badVal.status === 400 && demoted.status === 200 &&
+      streamsSet.status === 200 && JSON.stringify(streamsBody.action.value) === JSON.stringify(["news", "sports"]),
+    JSON.stringify([badField.status, badVal.status, demoted.status, streamsSet.status]),
+  );
+}
+{
+  const res = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: { type: "retire", domain: "a.example", note: "x".repeat(501) } }), env);
+  check("POST /admin/actions note >500 chars -> 400", res.status === 400, String(res.status));
+}
+{
+  const res = await worker.fetch(req("/admin/actions", { method: "POST", headers: ADM, body: `{"type":"retire","domain":"a.example","note":"${"x".repeat(9000)}"}` }), env);
+  check("POST /admin/actions oversize body -> 413", res.status === 413, String(res.status));
+}
+// -- GET /admin/actions: the queue --
+{
+  const noSess = await worker.fetch(req("/admin/actions"), env);
+  const res = await worker.fetch(req("/admin/actions", { headers: ADM }), env);
+  const body = await res.json();
+  check(
+    "GET /admin/actions -> 401 without session; with session {count, actions:[{key,...}]}",
+    noSess.status === 401 && res.status === 200 && typeof body.count === "number" && body.count > 0 &&
+      body.actions.every((a) => typeof a.key === "string" && a.key.startsWith(ADMIN_PREFIX) && typeof a.type === "string"),
+    JSON.stringify([noSess.status, res.status, body.count]),
+  );
+}
+// -- GET /admin/snapshot before any push --
+{
+  const noSess = await worker.fetch(req("/admin/snapshot"), env);
+  const res = await worker.fetch(req("/admin/snapshot", { headers: ADM }), env);
+  const body = await res.json();
+  check(
+    "GET /admin/snapshot -> 401 without session; 404 {error:'no snapshot yet'} before first push",
+    noSess.status === 401 && res.status === 404 && body.error === "no snapshot yet",
+    JSON.stringify([noSess.status, res.status, body]),
+  );
+}
+// -- PUT /admin/snapshot: bearer gate, store verbatim + meta --
+{
+  const snap = { generated: "2026-09-13T10:00:00Z", head: "abc123", sources: [{ domain: "z.example" }] };
+  const raw = JSON.stringify(snap);
+  const unauth = await worker.fetch(req("/admin/snapshot", { method: "PUT", body: raw }), env);
+  const res = await worker.fetch(req("/admin/snapshot", { method: "PUT", headers: BEARER, body: raw }), env);
+  const body = await res.json();
+  const stored = await kv.get("admin:snapshot");
+  const meta = JSON.parse(await kv.get("admin:snapshot_meta"));
+  check(
+    "PUT /admin/snapshot -> 401 without bearer; with bearer {ok,bytes}, stored verbatim + meta{ts,bytes}",
+    unauth.status === 401 && res.status === 200 && body.ok === true &&
+      body.bytes === Buffer.byteLength(raw) && stored === raw &&
+      meta.bytes === Buffer.byteLength(raw) && typeof meta.ts === "string",
+    JSON.stringify([unauth.status, res.status, body, meta]),
+  );
+}
+// -- GET /admin/snapshot after push: raw JSON string + headers --
+{
+  const res = await worker.fetch(req("/admin/snapshot", { headers: ADM }), env);
+  const textBody = await res.text();
+  check(
+    "GET /admin/snapshot after push -> 200 raw string, application/json, no-store",
+    res.status === 200 && textBody === JSON.stringify({ generated: "2026-09-13T10:00:00Z", head: "abc123", sources: [{ domain: "z.example" }] }) &&
+      (res.headers.get("Content-Type") || "").includes("application/json") && res.headers.get("Cache-Control") === "no-store",
+    JSON.stringify([res.status, res.headers.get("Content-Type"), res.headers.get("Cache-Control")]),
+  );
+}
+{
+  const res = await worker.fetch(req("/admin/snapshot", { method: "PUT", headers: BEARER, body: "{not json" }), env);
+  check("PUT /admin/snapshot invalid JSON -> 400", res.status === 400, String(res.status));
+}
+{
+  const res = await worker.fetch(req("/admin/snapshot", { method: "PUT", headers: BEARER, body: "x".repeat(4 * 1024 * 1024 + 1) }), env);
+  check("PUT /admin/snapshot >4MB -> 413", res.status === 413, String(res.status));
+}
+// -- /admin/drain + /admin/ack: bearer gate + prefix isolation BOTH ways --
+{
+  const unauth = await worker.fetch(req("/admin/drain"), env);
+  const res = await worker.fetch(req("/admin/drain", { headers: BEARER }), env);
+  const body = await res.json();
+  check(
+    "GET /admin/drain -> 401 without bearer; with bearer lists only adm: records",
+    unauth.status === 401 && res.status === 200 && body.count > 0 &&
+      body.records.every((r) => r.key.startsWith(ADMIN_PREFIX)) &&
+      !body.records.some((r) => r.key.startsWith("fb:")),
+    JSON.stringify([unauth.status, res.status, body.count]),
+  );
+}
+{
+  // Prefix isolation: the FEEDBACK /drain must never surface adm: keys, and /admin/drain must
+  // never surface fb: keys. Both stores are non-empty at this point (earlier /submit + /propose
+  // left fb: records; the actions above left adm: records).
+  const fbDrain = await (await worker.fetch(req("/drain", { headers: BEARER }), env)).json();
+  const admDrain = await (await worker.fetch(req("/admin/drain", { headers: BEARER }), env)).json();
+  const fbHasAdm = fbDrain.records.some((r) => r.key.startsWith(ADMIN_PREFIX));
+  const admHasFb = admDrain.records.some((r) => r.key.startsWith("fb:"));
+  check(
+    "prefix isolation: /drain has no adm: keys AND /admin/drain has no fb: keys",
+    fbDrain.records.some((r) => r.key.startsWith("fb:")) && !fbHasAdm && admDrain.records.length > 0 && !admHasFb,
+    JSON.stringify([fbDrain.count, admDrain.count, fbHasAdm, admHasFb]),
+  );
+}
+{
+  // /admin/ack deletes only adm: keys; an fb: key handed to it is a no-op (and vice versa).
+  const anAdmKey = [...kv.map.keys()].filter((k) => k.startsWith(ADMIN_PREFIX)).sort()[0];
+  const anFbKey = [...kv.map.keys()].filter((k) => k.startsWith("fb:")).sort()[0];
+  const wrongWay = await (await worker.fetch(req("/admin/ack", { method: "POST", headers: BEARER, body: { keys: [anFbKey] } }), env)).json();
+  const fbStillThere = (await kv.get(anFbKey)) != null;
+  const rightWay = await (await worker.fetch(req("/admin/ack", { method: "POST", headers: BEARER, body: { keys: [anAdmKey] } }), env)).json();
+  const admGone = (await kv.get(anAdmKey)) == null;
+  // and the feedback /ack refuses an adm: key
+  const otherAdm = [...kv.map.keys()].filter((k) => k.startsWith(ADMIN_PREFIX)).sort()[0];
+  const fbAck = await (await worker.fetch(req("/ack", { method: "POST", headers: BEARER, body: { keys: [otherAdm] } }), env)).json();
+  const admStillThere = (await kv.get(otherAdm)) != null;
+  check(
+    "ack isolation: /admin/ack ignores fb: (deleted 0), deletes adm: (deleted 1); /ack ignores adm:",
+    wrongWay.deleted === 0 && fbStillThere && rightWay.deleted === 1 && admGone && fbAck.deleted === 0 && admStillThere,
+    JSON.stringify([wrongWay, rightWay, fbAck]),
+  );
+}
+{
+  const unauth = await worker.fetch(req("/admin/ack", { method: "POST", body: { keys: [] } }), env);
+  check("POST /admin/ack without bearer -> 401", unauth.status === 401, String(unauth.status));
+}
+// -- CORS: /admin/actions + /admin/snapshot are site-origin; /admin/drain + /admin/ack keep '*' --
+{
+  const site = await worker.fetch(req("/admin/actions", { method: "OPTIONS", headers: { Origin: SITE } }), env);
+  const foreign = await worker.fetch(req("/admin/actions", { method: "OPTIONS", headers: { Origin: "https://evil.example" } }), env);
+  check(
+    "OPTIONS /admin/actions: site origin echoed, foreign origin no ACAO",
+    site.status === 204 && site.headers.get("Access-Control-Allow-Origin") === SITE &&
+      foreign.status === 204 && foreign.headers.get("Access-Control-Allow-Origin") === null,
+    JSON.stringify([site.headers.get("Access-Control-Allow-Origin"), foreign.headers.get("Access-Control-Allow-Origin")]),
+  );
+}
+{
+  const site = await worker.fetch(req("/admin/snapshot", { method: "OPTIONS", headers: { Origin: SITE } }), env);
+  check(
+    "OPTIONS /admin/snapshot: site-origin ACAO + Allow-Methods advertises PUT",
+    site.status === 204 && site.headers.get("Access-Control-Allow-Origin") === SITE &&
+      (site.headers.get("Access-Control-Allow-Methods") || "").includes("PUT"),
+    JSON.stringify([site.headers.get("Access-Control-Allow-Origin"), site.headers.get("Access-Control-Allow-Methods")]),
+  );
+}
+{
+  const res = await worker.fetch(req("/admin/drain", { method: "OPTIONS", headers: { Origin: "https://evil.example" } }), env);
+  check("admin bridge routes keep ACAO '*'", res.status === 204 && res.headers.get("Access-Control-Allow-Origin") === "*", String(res.headers.get("Access-Control-Allow-Origin")));
+}
+
 // -----------------------------------------------------------------------------------------
 console.log(failures === 0 ? `PASS: all ${n} checks passed` : `FAIL: ${failures}/${n} checks failed`);
 process.exit(failures === 0 ? 0 : 1);
