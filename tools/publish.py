@@ -467,6 +467,14 @@ def main(argv=None):
         # record step just extended — non-fatal like everything else; analytics never cost an edition
         run_step("plane-push", [py, "tools/plane/bake.py", "--push"], root, args.dry_run)
 
+    # Measure this run's token spend from its live transcript and drop a stage:"publish"
+    # record into index/usage/ (git-add of index/ above carries it into the edition commit).
+    # Runs for EVERY slug, evaluator included -- it is the guarantee that a publishing run is
+    # measured even if the Stop hook never fires in the sandbox. Non-fatal like footer: a miss
+    # (no transcript found) prints and returns 0, it never costs an edition.
+    run_step("usage", [py, "tools/usage/record.py", "--find", "--stage", "publish",
+                       "--slug", args.slug, "--date", args.date], root, args.dry_run)
+
     if args.notify_body:
         write_stub(root, args.slug, stub_date,
                    args.notify_title or edition_title(args.slug, args.date),
