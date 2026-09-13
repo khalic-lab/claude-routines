@@ -70,6 +70,7 @@ def cmd_drain_apply(args):
     worker, token = _creds(args)
     resp = _request("GET", worker + "/admin/drain", token)
     actions = resp.get("records") or resp.get("actions") or []
+    actions.sort(key=lambda a: a.get("key") or "")  # §2.3: apply in key order
     keys = [a["key"] for a in actions if a.get("key")]
     results = apply_mod.apply_actions(REPO, actions)
     with open(_ACK_STASH, "w") as f:

@@ -197,6 +197,16 @@ def _apply_one(reg, action, today):
         field, value = action["field"], action["value"]
         old = entry.get(field)
         entry[field] = list(value) if field == "streams" else value
+        if field == "reach":
+            # A reach flip must carry its probe method with it, exactly as `add` derives it, or
+            # reach and probe.method disagree and registry.validate() rejects the whole batch
+            # (test_probe_method_agrees_with_reach). REACH_METHOD maps only direct->curl and
+            # proxy->proxy; search-only/blocked/blocked-paywall have no mapping, so a flip to one of
+            # them leaves the probe untouched (validate does not pin them either).
+            m = registry.REACH_METHOD.get(value)
+            probe = entry.get("probe")
+            if m and isinstance(probe, dict) and probe.get("method"):
+                probe["method"] = m
         change = "%s -> %s" % (_fmt(old), _fmt(entry[field]))
         n = (note or "").strip()
         if n:
@@ -207,15 +217,52 @@ def _apply_one(reg, action, today):
     return False, "unhandled type"  # unreachable
 
 
+def _identity(action):
+    """A stable id for one action, for idempotent re-apply. The bridge drains actions keyed by their
+    KV key (`adm:<ts>:<id>`); that key is the identity. `id` is a fallback for actions that carry
+    their own. None when neither is present (unit-test actions without keys never collide)."""
+    return action.get("key") or action.get("id")
+
+
 def _result(action, result, error, applied_at):
     """Build the log/return record for one action: the action's own fields (minus the transient KV
-    key) plus result/error/applied_at, and a separate `key` the bridge acks with."""
+    key) plus result/error/applied_at, an `id` (the stable identity, persisted so a re-drain can
+    dedup against actions.jsonl -- the KV `key` itself must stay off disk, feedback.py-style), and a
+    separate `key` the bridge acks with."""
     rec = {k: v for k, v in action.items() if k != "key"}
+    ident = _identity(action)
+    if ident:
+        rec["id"] = ident
     rec["result"] = result
     rec["error"] = error
     rec["applied_at"] = applied_at
     rec["key"] = action.get("key")
     return rec
+
+
+def _seen_identities(root):
+    """Identities already recorded in index/admin/actions.jsonl, for idempotent re-apply. The
+    bridge commits registry+actions.jsonl, then pushes, then acks; if the push fails the KV keys are
+    never acked and the next tick re-drains the same actions. Applying them a second time against a
+    registry that already reflects them would re-reject them ('already retired'/'exists') and append
+    duplicate log lines. Skipping an action whose identity is already on disk avoids both."""
+    path = os.path.join(root, "index", "admin", "actions.jsonl")
+    seen = set()
+    if not os.path.exists(path):
+        return seen
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except ValueError:
+                continue
+            ident = rec.get("id")
+            if ident:
+                seen.add(ident)
+    return seen
 
 
 def _load_registry(root):
@@ -276,9 +323,15 @@ def apply_actions(root, actions, today=None):
     applied_at = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
     reg = _load_registry(root)
+    seen = _seen_identities(root)  # idempotent re-apply: skip actions already on disk
     results = []
     changed = False
     for action in actions:
+        ident = _identity(action)
+        if ident is not None and ident in seen:
+            continue  # a re-drained action (push failed, key not acked): never re-apply or re-log
+        if ident is not None:
+            seen.add(ident)
         err = _validate_action(action)
         if err is not None:
             results.append(_result(action, "rejected", err, applied_at))
@@ -296,8 +349,12 @@ def apply_actions(root, actions, today=None):
             vtext = "batch validation failed: " + "; ".join(violations)
             changed = False  # discard -- never write a registry the schema suite would fail
             for res in results:
-                res["result"] = "rejected"
-                res["error"] = vtext
+                # Only the actions that actually mutated the registry are rejected for the batch
+                # violation; an action already rejected for its own shape/precondition keeps its
+                # own error text (a mixed batch stays diagnosable on the admin page).
+                if res["result"] == "applied":
+                    res["result"] = "rejected"
+                    res["error"] = vtext
 
     if changed:
         _write_registry(root, reg)

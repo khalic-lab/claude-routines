@@ -32,7 +32,8 @@ def _now_iso():
 
 
 def _git_head(root):
-    """origin/main HEAD SHA for the snapshot's provenance line, or None when git is unavailable."""
+    """The local HEAD sha for the snapshot's provenance line (== origin/main after the bridge's
+    push, which runs before snapshot-push), or None when git is unavailable."""
     try:
         proc = subprocess.run(["git", "rev-parse", "HEAD"], cwd=root,
                               capture_output=True, text=True, timeout=30)
@@ -88,16 +89,26 @@ def _usage(root):
     fold_path = os.path.join(root, "tools", "usage", "fold.py")
     if not os.path.exists(fold_path):
         return None
+    usage_dir = os.path.dirname(fold_path)
+    inserted = False
     try:
-        usage_dir = os.path.dirname(fold_path)
         if usage_dir not in sys.path:
             sys.path.insert(0, usage_dir)
+            inserted = True
         spec = importlib.util.spec_from_file_location("_admin_usage_fold", fold_path)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         return mod.fold(root)
     except Exception:
         return None
+    finally:
+        # Restore sys.path so a usage sibling (`pricing`) can't shadow a top-level module for the
+        # rest of the process -- harmless in the one-shot snapshot-push, a footgun if imported.
+        if inserted:
+            try:
+                sys.path.remove(usage_dir)
+            except ValueError:
+                pass
 
 
 def _actions_recent(root):

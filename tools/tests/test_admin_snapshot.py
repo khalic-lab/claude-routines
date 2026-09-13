@@ -84,8 +84,12 @@ class UsageTest(SnapshotBase):
                    "import pricing\n"
                    "def fold(root, as_of=None):\n"
                    "    return {'runs': 2, 'rate': pricing.RATE}\n")
+        before = list(sys.path)
         snap = snapshot.build_snapshot(self.root, as_of=AS_OF)
         self.assertEqual(snap["usage"], {"runs": 2, "rate": 3})
+        # _usage restores sys.path (try/finally): the tools/usage dir it inserted to satisfy the
+        # sibling import must not leak and shadow top-level modules afterwards.
+        self.assertEqual(sys.path, before)
 
     def test_usage_null_when_fold_raises(self):
         self.write("tools/usage/fold.py",

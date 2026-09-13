@@ -195,17 +195,37 @@ class SetTest(ApplyBase):
         self.assertEqual(res[0]["result"], "rejected")
         self.assertEqual(res[0]["error"], "unknown domain")
 
-    def test_set_reach_proxy_against_a_curl_probe_is_a_batch_reject(self):
-        # Known dead end (documented limitation): `set reach` cannot touch the probe, so flipping an
-        # entry with a curl probe to reach=proxy makes reach and probe.method disagree, which
-        # registry.validate() rejects -- and the whole batch with it. hub.example is exactly this
-        # shape. Pinned so the architect finds it in the suite, not live. Fixing it needs a probe
-        # field on `set`, which is out of contract.
+    def test_set_reach_proxy_rewrites_a_curl_probe_method(self):
+        # A reach flip carries its probe method with it (registry.REACH_METHOD), exactly as `add`
+        # derives it. hub.example has a curl probe and reach=direct; flipping it to reach=proxy must
+        # apply, set BOTH reach and probe.method to proxy so they agree, and write the registry.
         res = self.apply([{"type": "set", "domain": "hub.example", "field": "reach",
                            "value": "proxy"}])
-        self.assertEqual(res[0]["result"], "rejected")
-        self.assertTrue(res[0]["error"].startswith("batch validation failed"))
-        self.assertEqual(_read(self.reg_path), self.original)
+        self.assertEqual(res[0]["result"], "applied", res[0].get("error"))
+        entry = self.reg()["hub.example"]
+        self.assertEqual(entry["reach"], "proxy")
+        self.assertEqual(entry["probe"]["method"], "proxy")
+        self.assertNotEqual(_read(self.reg_path), self.original)  # registry actually written
+
+    def test_set_reach_to_a_no_mapping_reach_leaves_probe_method_alone(self):
+        # search-only/blocked/blocked-paywall have no REACH_METHOD mapping, so the fix must NOT
+        # rewrite probe.method for them (registry.validate() does not pin those either). Dropping
+        # hub.example to search-only still leaves science above the floor (src01-06 remain usable).
+        res = self.apply([{"type": "set", "domain": "hub.example", "field": "reach",
+                           "value": "search-only"}])
+        self.assertEqual(res[0]["result"], "applied", res[0].get("error"))
+        entry = self.reg()["hub.example"]
+        self.assertEqual(entry["reach"], "search-only")
+        self.assertEqual(entry["probe"]["method"], "curl")  # untouched -- no mapping to derive from
+
+    def test_set_reach_on_a_probeless_entry_synthesizes_no_probe(self):
+        # A probe-less entry flips reach cleanly and no probe is invented for it.
+        res = self.apply([{"type": "set", "domain": "src01.example", "field": "reach",
+                           "value": "proxy"}])
+        self.assertEqual(res[0]["result"], "applied", res[0].get("error"))
+        entry = self.reg()["src01.example"]
+        self.assertEqual(entry["reach"], "proxy")
+        self.assertNotIn("probe", entry)
 
 
 class ShapeAndBatchTest(ApplyBase):
@@ -251,6 +271,38 @@ class ShapeAndBatchTest(ApplyBase):
     def test_no_write_when_nothing_applied(self):
         # A batch that only rejects must not create sources/registry.yml churn.
         self.apply([{"type": "retire", "domain": "nope.example"}])
+        self.assertEqual(_read(self.reg_path), self.original)
+
+    def test_re_apply_of_the_same_batch_is_idempotent(self):
+        # The bridge commits registry+actions.jsonl, pushes, then acks. If the push fails the KV
+        # keys are never acked and the next tick re-drains the same actions. Applying them again
+        # must NOT re-apply, re-reject ('already retired'), or append a duplicate log line.
+        batch = [{"type": "retire", "domain": "src01.example", "key": "adm:1:a", "note": "dup"}]
+        r1 = self.apply(batch)
+        self.assertEqual(r1[0]["result"], "applied")
+        log1, reg1 = self.log(), _read(self.reg_path)
+        self.assertEqual(log1[0]["id"], "adm:1:a")  # identity persisted (drives the dedup)
+        self.assertNotIn("key", log1[0])            # but the raw KV key stays off disk
+        r2 = self.apply(batch)                       # same keys drained again
+        self.assertEqual(r2, [])                      # skipped entirely
+        self.assertEqual(self.log(), log1)            # no new log line
+        self.assertEqual(_read(self.reg_path), reg1)  # registry unchanged
+
+    def test_batch_reject_keeps_pre_rejected_actions_own_error(self):
+        # A batch mixing a shape-rejected action with a floor-breaking pair: the floor break sinks
+        # the whole batch, but the shape-rejected action keeps its own error text (not the batch
+        # violation), so the admin page stays diagnosable. Retiring two of the six all-stream
+        # sources drops every stream to 4 usable (< 5 floor).
+        res = self.apply([
+            {"type": "retire", "domain": "NOT A DOMAIN"},   # shape-rejected: bad host
+            {"type": "retire", "domain": "src01.example"},  # would-apply, then batch-rejected
+            {"type": "retire", "domain": "src02.example"},  # would-apply, then batch-rejected
+        ])
+        self.assertTrue(all(r["result"] == "rejected" for r in res))
+        self.assertIn("not a valid host", res[0]["error"])
+        self.assertFalse(res[0]["error"].startswith("batch validation failed"))
+        self.assertTrue(res[1]["error"].startswith("batch validation failed"))
+        self.assertTrue(res[2]["error"].startswith("batch validation failed"))
         self.assertEqual(_read(self.reg_path), self.original)
 
 
