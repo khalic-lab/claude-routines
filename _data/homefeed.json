@@ -1,7 +1,13 @@
 {
- "generated": "2026-09-14",
+ "generated": "2026-09-15",
  "count": 80,
  "topics": [
+  {
+   "key": "ai-ml",
+   "label": "AI / ML",
+   "color": "#2f7d8c",
+   "count": 28
+  },
   {
    "key": "geopolitics",
    "label": "Geopolitics",
@@ -9,16 +15,10 @@
    "count": 26
   },
   {
-   "key": "ai-ml",
-   "label": "AI / ML",
-   "color": "#2f7d8c",
-   "count": 23
-  },
-  {
    "key": "politics",
    "label": "Politics",
    "color": "#9a6a34",
-   "count": 12
+   "count": 11
   },
   {
    "key": "science",
@@ -30,19 +30,19 @@
    "key": "security",
    "label": "Security",
    "color": "#6a4b8a",
-   "count": 11
+   "count": 10
   },
   {
    "key": "switzerland",
    "label": "Switzerland",
    "color": "#c2454a",
-   "count": 10
+   "count": 7
   },
   {
    "key": "sports",
    "label": "Sports",
    "color": "#c26b2e",
-   "count": 9
+   "count": 6
   },
   {
    "key": "world",
@@ -51,21 +51,21 @@
    "count": 6
   },
   {
-   "key": "tech",
-   "label": "Tech",
-   "color": "#3b6ea5",
-   "count": 4
-  },
-  {
    "key": "economy",
    "label": "Economy",
    "color": "#9a7b2e",
-   "count": 3
+   "count": 4
   },
   {
    "key": "health",
    "label": "Health",
    "color": "#a44a72",
+   "count": 3
+  },
+  {
+   "key": "tech",
+   "label": "Tech",
+   "color": "#3b6ea5",
    "count": 3
   }
  ],
@@ -94,20 +94,245 @@
     "<strong>2. AI became a genuine mathematical instrument this week — and the same week reminded us what mathematics is actually for.</strong> The loudest science story of the week is a claimed finite-time singularity in fluid equations, produced with heavy AI assistance and checked in the Lean proof assistant (see below). But read alongside two quieter Quanta pieces — a rare <em>new</em> human proof of the four-color theorem, and a panel at the International Congress of Mathematicians asking \"what is math for in the age of AI?\" — a more honest picture emerges than \"AI solved a Millennium problem.\" The decisive strategy behind the fluid results came from two human mathematicians (Diego Córdoba and Luis Martínez-Zoroa) working by hand; the machines executed and formalised it. Terence Tao, who has watched this closely, put the counterweight plainly: \"the actual solving of these problems is only a proxy goal for the primary goal of developing mathematical understanding and insight.\" The four-color theorem — solved by computer in the 1970s, yet still drawing mathematicians back for a proof that <em>explains</em> — is the same lesson from the other direction. What machines are getting good at (producing and verifying answers) and what mathematicians actually want (insight) are pulling apart, and this week you could watch both happen at once.",
     "<strong>3. The efficiency frontier is finally getting a \"why,\" not just a \"how.\"</strong> For two years, making large models cheaper to run has been a bag of empirical tricks that happen to work. This week three papers replaced folklore with mechanism. \"Why Does Post-Training Quantization Work?\" explains why squashing weights to 4-bit barely dents accuracy — layer-to-layer errors partly cancel, and the output geometry protects the model's most confident predictions. \"Don't Drop Dropout\" resurrects a training technique the field abandoned on hearsay and shows, across 2,400 experiments, that it lowers loss when tuned. FlexComp turns context-compression ratio from a fixed deployment decision into a per-request knob. The common thread — and the reason it matters to a reader who runs models locally or pays a serving bill — is that the pressure driving all of it is the cost of long-context reasoning agents: the KV cache (the per-token memory a model accumulates as it thinks) is the bottleneck, and it is the explicit design target of the week's headline open-weight release, DeepSeek V4.1-Flash, too. Understanding <em>why</em> the cheap tricks work is what tells you where they will break."
    ]
-  },
-  {
-   "stream": "science",
-   "date": "2026-09-09",
-   "date_label": "Sep 9",
-   "kicker": "Science · Why it matters · Sep 9",
-   "heading": "Why it matters",
-   "title": "AI as a mathematical instrument — and the credit problem it creates",
-   "paras": [
-    "This week's Navier–Stokes claims are the clearest sign yet that large models can do real work at the research frontier of mathematics, not just reproduce known results. But they arrive entangled: the pivotal strategy was human (Córdoba and Martínez-Zoroa), two labs and two companies are disputing priority, and even a machine-checked proof still needs human mathematicians to say what it <em>means</em>. The lesson isn't \"AI solved a Millennium problem\" — it's that verification (here, Lean) and attribution are becoming the hard parts, and a science desk should resist the tidy headline in favour of the messier, more accurate one."
-   ]
   }
  ],
  "stories": [
+  {
+   "id": "2026-09-15-ai-ml-rl-for-llms-wastes-compute-on-easy-problems-a-ne",
+   "sid": "st-80679e5bf061",
+   "headline": "RL for LLMs wastes compute on easy problems",
+   "summary": "Reinforcement learning (RL — training a model by rewarding correct answers) improves an LLM far more on problems it can already usually solve than on genuinely hard ones — a pattern the authors name the \"Matthew effect\" (the rich get richer). They argue standard RL squanders compute re-solving easy problems, and introduce Never Give Up (NGU): keep sampling a problem until a correct answer appears, then, using asynchronous RL, spend fewer samples on the easy problems and pour the freed budget into the hard ones.",
+   "why": "Frontier RL runs are enormously expensive, and this reframes part of that spend as misallocated rather than merely insufficient — a scheduling change, not more GPUs, closes some of the hard-problem gap.",
+   "url": "https://arxiv.org/abs/2609.13443",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "Mila – Université de Montréal",
+    "Allen Institute for AI",
+    "University of Washington"
+   ],
+   "affiliation_label": "Mila – Université de Montréal, Allen Institute for AI +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-15-ai-ml-a-fully-open-7b-model-built-to-lean-on-tools-ins",
+   "sid": "st-65c76df0baff",
+   "headline": "Fully open 7B model leans on tools not memorization",
+   "summary": "ZGCM-1 is a 7-billion-parameter dense model trained from scratch with a fully open recipe, on the premise that a small model cannot memorize the open web but can compensate by pairing internal reasoning with external tool use (search, code) over a 256K-token context. The recipe combines an interleaved sliding-window/full-attention design, an FP8 Muon optimizer, and a staged curriculum that scales context from 16K to 256K and recasts tool-interaction traces as Markov decision processes (a formalism for sequential decisions) during mid-training.",
+   "why": "Open, reproducible recipes for capable small models are scarce — most frontier work is closed — so a from-scratch, documented 7B aimed at math and agentic search lowers the barrier to study and build on. The paper is bylined to an unnamed \"ZGCM Team\" and the efficiency claims are the authors' own; treat them as unverified until independently reproduced.",
+   "url": "https://arxiv.org/abs/2609.13356",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-15-ai-ml-reasoning-models-solve-a-task-then-fail-its-logi",
+   "sid": "st-b0b4e37f2999",
+   "headline": "Reasoning models fail logical twins of solved tasks",
+   "summary": "\"Systematicity\" is the principle that understanding a concept implies understanding close variations of it. The authors take rule-induction tasks from cognitive science and build structurally equivalent variants — the same underlying rule, recombined or with symbols substituted — then check whether a model that solves one variant also solves its isomorphs. Often it does not: models fail variants that are logically identical to problems they just got right.",
+   "why": "It is direct evidence that apparent reasoning can be brittle and non-compositional — getting a benchmark item right does not mean the model has grasped the rule behind it, which bears on any use that assumes it will generalize.",
+   "url": "https://arxiv.org/abs/2609.13948",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "Princeton University"
+   ],
+   "affiliation_label": "Princeton University",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-15-ai-ml-cheaper-answers-to-which-training-example-caused",
+   "sid": "st-e25485f75f46",
+   "headline": "Cheaper training-data attribution at model scale",
+   "summary": "Data attribution measures how much each training example shaped a given prediction — the basis for data valuation, machine unlearning (removing a datapoint's influence after the fact), and interpretability. Exact \"metagradient\" methods such as MAGIC differentiate through the whole training run but need a separate run per prediction, which is prohibitive. This work recasts budgeted attribution as estimating a large \"influence matrix\" from a small number of measurements, and shows which measurements best recover it.",
+   "why": "If influence can be approximated from a few measurements instead of one run per query, attribution becomes tractable at model scale — practical for unlearning requests, copyright and data-valuation disputes, and debugging which data drove a behavior. (MAGIC co-author Andrew Ilyas is on the paper.)",
+   "url": "https://arxiv.org/abs/2609.15044",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "Columbia University",
+    "Carnegie Mellon University"
+   ],
+   "affiliation_label": "Columbia University, Carnegie Mellon University",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-15-ai-ml-microsoft-publishes-a-humanist-ai-code-of-conduc",
+   "sid": "st-c92e4fc39e42",
+   "headline": "Microsoft publishes Humanist AI Code of Conduct",
+   "summary": "Microsoft publishes a \"Humanist AI Code of Conduct\". Microsoft AI released a code of conduct staking out an explicit position in the AI-welfare debate: per the document and secondary coverage, it calls for models whose \"thinking\" is legible to people, states that AI systems have no inner life, and rules out AI rights. It is a values statement rather than a product or policy change, but a notable public stance from a frontier lab as questions of model \"welfare\" gain attention.",
+   "why": "",
+   "url": "https://microsoft.ai/code-of-conduct/",
+   "source_domain": "microsoft.ai",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-15-ai-ml-the-ft-reports-anthropic-is-weighing-a-nasdaq-li",
+   "sid": "st-ca248c36febf",
+   "headline": "Anthropic reportedly eyes a Nasdaq listing",
+   "summary": "The FT reports Anthropic is weighing a Nasdaq listing. The Financial Times reported that Anthropic is eyeing a Nasdaq listing and, per the report, is pointing to a claimed second profitable quarter to court investors ahead of a possible large IPO. This is reporting, not an Anthropic announcement, and the underlying financials are attributed to sources rather than confirmed filings — treat it as a signal of intent, not a done deal.",
+   "why": "",
+   "url": "https://www.ft.com/content/4564e6a5-69e9-40a6-bf0f-a888f2f4f002",
+   "source_domain": "ft.com",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-15-ai-ml-diagnosing-agent-failures-by-searching-the-trace",
+   "sid": "st-2d13da620105",
+   "headline": "Diagnosing agent failures as a search problem",
+   "summary": "Long-horizon AI agents produce huge execution logs, and the true cause of a failure is often a single early action far from where things visibly broke. Existing root-cause methods hand an LLM the whole trace and ask for a one-shot verdict, which degrades as traces grow and relevant clues become sparse and scattered. The authors reframe diagnosis as a search problem — continually searching the trace for the responsible step rather than committing to an early guess.",
+   "why": "Reliable agents need to turn \"it failed\" into \"it failed here, because of this\", and one-shot judging does not scale to long traces; treating attribution as search is a route to debugging that holds up as agents run longer.",
+   "url": "https://arxiv.org/abs/2609.13463",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "Scale AI"
+   ],
+   "affiliation_label": "Scale AI",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-15-ai-ml-when-an-interrupted-agent-can-safely-resume-and",
+   "sid": "st-8047832e989b",
+   "headline": "When an interrupted agent can safely resume",
+   "summary": "Agents get interrupted mid-task; restarting repeats completed work, but blindly continuing from a saved state can carry forward unverified or stale progress. The paper introduces \"recoverability\" as an explicit system primitive: a saved state is paired with a permitted recovery action and a contract binding that choice to supporting evidence and independent checks, so resuming is a deliberate decision rather than an automatic one. Their challenge set shows accurate-looking restoration can quietly hide disallowed reuse.",
+   "why": "As agents run longer and touch real files and tools, \"resume from checkpoint\" becomes a correctness question, not just a convenience — this frames the safeguards a runtime needs before it trusts its own saved state.",
+   "url": "https://arxiv.org/abs/2609.13672",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "Beijing Information Science and Technology University"
+   ],
+   "affiliation_label": "Beijing Information Science and Technology University",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-15-ai-ml-a-small-language-for-compiling-new-attention-var",
+   "sid": "st-0b3d2e48987d",
+   "headline": "A DSL compiling attention variants to fused GPU kernels",
+   "summary": "Attention dominates transformer compute, and every new attention variant normally needs hand-written GPU code to run at usable speed. PyTorch's flex_attention lets researchers describe custom attention in Python but only handles changes applied after the core matrix multiply — which excludes RoPE (rotary position embedding, the positional scheme used by every major LLM), because RoPE acts before it. AttnFuse is a domain-specific language that makes such pre-multiplication transforms first-class, composing ten high-level building blocks into fused kernels.",
+   "why": "Lowering the cost of turning a new attention idea into production-speed code shortens the loop between architecture research and usable models — and it targets exactly the gap (RoPE) that existing tooling left open.",
+   "url": "https://arxiv.org/abs/2609.13612",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "University of Wisconsin–Milwaukee"
+   ],
+   "affiliation_label": "University of Wisconsin–Milwaukee",
+   "fresh": true
+  },
   {
    "id": "2026-09-14-news-switzerland-s-autumn-parliamentary-session-opene",
    "sid": "st-b28e05feed83",
@@ -130,7 +355,7 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/09/14/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-14-sports-werro-wins-the-first-ultimate-title-and-confirms",
@@ -153,7 +378,7 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-14-news-sweden-s-centre-left-opposition-edged-ahead-in-a",
@@ -177,7 +402,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-14-news-a-russian-strike-hit-a-warsaw-bound-passenger-tr",
@@ -201,7 +426,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-14-news-finland-said-on-monday-14-september-that-it-will",
@@ -225,7 +450,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-14-sports-pro-ref-admits-the-goal-that-decided-the-manches",
@@ -248,7 +473,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-14-sports-basel-win-under-a-new-coach-as-the-swiss-title-r",
@@ -271,7 +496,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-14-sports-antonelli-wins-in-madrid-and-turns-2026-into-a-p",
@@ -294,7 +519,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-14-sports-zverev-lands-a-second-major-rybakina-climbs-to-w",
@@ -317,7 +542,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-14-sports-mas-wins-his-first-grand-tour-as-poga-ar-crashes",
@@ -340,7 +565,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-14-news-a-us-activist-has-filed-a-criminal-complaint-wit",
@@ -363,7 +588,7 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-14-news-a-candidate-backed-by-japan-s-ruling-liberal-dem",
@@ -387,7 +612,7 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-13-news-yemen-s-iran-aligned-houthi-rebels-claimed-a-dro",
@@ -836,30 +1061,6 @@
    "fresh": false
   },
   {
-   "id": "2026-09-11-ai-ml-class-action-says-claude-s-usage-multipliers-ove",
-   "sid": "st-3469ae39ad2f",
-   "headline": "Class action targets Claude usage limits",
-   "summary": "Class action says Claude's usage \"multipliers\" oversell what subscribers actually get. Plaintiffs allege Anthropic misrepresents its Claude plans — Max at $100/month advertised as 5× Pro usage, $200 as 20× — because the multipliers apply only within rolling five-hour windows and are further capped weekly, so real usage lands well below what buyers expect (per The Verge). Anthropic does document this structure on its help pages and has filed a motion to dismiss, arguing the details were available via hyperlinks at purchase; the plaintiffs counter that customers cannot independently verify what an AI service delivers. For a reader paying for these plans, the concrete takeaway is that the headline multiplier is a within-window figure, not a monthly one.",
-   "why": "",
-   "url": "https://the-decoder.com/class-action-lawsuit-accuses-anthropic-of-overselling-claude-subscriptions-with-deceptive-usage-multipliers/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
-   "fresh": false
-  },
-  {
    "id": "2026-09-11-news-the-plr-vaud-the-canton-s-liberal-radical-party",
    "sid": "st-b62f5089597c",
    "headline": "Vaud PLR renews its three ministers",
@@ -904,128 +1105,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/11/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-11-ai-ml-planning-with-a-peek-at-future-states-hard-in-th",
-   "sid": "st-0db67c569421",
-   "headline": "Efficient RL with transition lookahead",
-   "summary": "This is a theory result on RL with \"transition look-ahead\" — the agent may see which states a sequence of ℓ actions would visit before committing. Look-ahead can help a lot, but exact optimal planning with it was known to be NP-hard (computationally intractable at scale) only for discount factors pushed arbitrarily close to 1; it was open whether the hardness was real for ordinary settings. The paper resolves both ends: exact planning stays NP-hard for every fixed discount factor, yet a randomized polynomial-time scheme gets near-optimal for any fixed look-ahead depth, with regret matching classical tabular RL up to log factors even when transitions are unknown.",
-   "why": "\"look before you leap\" is a natural upgrade for planning agents; this says you shouldn't chase the exact optimum (it's genuinely hard) but can get essentially all the benefit efficiently.",
-   "url": "https://arxiv.org/abs/2609.11807",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
-   "affiliations": [
-    "ENSAE",
-    "Criteo AI Lab"
-   ],
-   "affiliation_label": "ENSAE, Criteo AI Lab",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-11-ai-ml-a-dataset-of-how-ai-scientists-reason-not-just-w",
-   "sid": "st-128470e2b248",
-   "headline": "Dataset of AI-scientist reasoning traces",
-   "summary": "Benchmarks for autonomous \"AI scientist\" agents usually grade only the final artefact — code, a hypothesis, a paper — discarding the reasoning that produced it. OpenDiscoveryTrace releases 558 complete agent trajectories across 124 scientific tasks (drug discovery, materials, genomics, literature analysis), each step recording thoughts, tool calls, observations, errors and self-reported confidence. A striking early finding: three frontier models reach comparable success rates (84–89%), yet the process differs sharply — one model produced roughly 30× more errors than another despite similar final scores.",
-   "why": "if agents that score the same reason very differently, output-only leaderboards are hiding the failure modes that matter for trusting an agent's work — and a public trace dataset is what lets anyone audit them.",
-   "url": "https://arxiv.org/abs/2609.09203",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-11-ai-ml-gpt-live-1-brings-full-duplex-voice-to-the-api",
-   "sid": "st-e1e6a88ff666",
-   "headline": "GPT-Live-1 adds full-duplex voice",
-   "summary": "GPT-Live-1 brings full-duplex voice to the API. OpenAI's new speech API lets an app listen and talk at the same time, rather than the strict turn-taking of earlier voice modes — the substantive change is simultaneous input and output for more natural interruption and back-channel.",
-   "why": "",
-   "url": "https://openai.com/index/introducing-gpt-live-1-in-the-api",
-   "source_domain": "openai.com",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-11-ai-ml-a-fields-medalist-launches-an-institute-chasing",
-   "sid": "st-8cdec9dfd811",
-   "headline": "Fields medalist launches AI-safety institute",
-   "summary": "A Fields medalist launches an institute chasing provable AI safety. Jacob Tsimerman, a 2026 Fields Medal recipient, announced the Mathematical AI Safety Institute (MAISI), an independent research body in the San Francisco Bay Area starting in January 2027 with 10–30 mathematicians; Tsimerman is also joining OpenAI's safety team. The stated ambition — safety you can prove the way cryptographers argue a cipher is unbreakable — is aspirational: as the founders concede, there is not yet even an agreed formal definition of what \"safe\" means for a model, so treat this as a research agenda, not a delivered method.",
-   "why": "",
-   "url": "https://the-decoder.com/the-mathematical-ai-safety-institute-wants-to-prove-ai-is-safe-the-way-cryptographers-prove-codes-are-unbreakable/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "science"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-11-ai-ml-anthropic-s-1-5bn-authors-settlement-bogs-down-o",
-   "sid": "st-1aee925a47b3",
-   "headline": "Anthropic book settlement in disarray",
-   "summary": "Anthropic's $1.5bn authors settlement bogs down over who gets paid. The proposed settlement resolving authors' copyright claims against Anthropic has run into disputes among authors and publishers over allocation of the money — a reminder that even a headline settlement figure is not the end of the litigation.",
-   "why": "",
-   "url": "https://the-decoder.com/anthropics-1-5-billion-book-settlement-descends-into-chaos-as-authors-and-publishers-fight-over-who-gets-paid/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
    "fresh": false
   },
   {
@@ -1494,29 +1573,6 @@
    "fresh": false
   },
   {
-   "id": "2026-09-07-sports-antonelli-wins-from-19th-at-his-home-race-and-al",
-   "sid": "st-db3b2be81634",
-   "headline": "Antonelli wins Monza from 19th",
-   "summary": "Kimi Antonelli, the 20-year-old Italian in his second Mercedes season, produced one of the drives of the year at his home Grand Prix: starting 19th after a difficult qualifying, he carved through the field and reeled in his own team-mate George Russell in the closing laps to win at Monza. Max Verstappen (Red Bull) took third ahead of the McLaren pair of Lando Norris and Oscar Piastri, with Lewis Hamilton sixth for Ferrari. The win stretches Antonelli's lead in the drivers' championship (the season-long points title for individual drivers) to 66 points over Russell, with Hamilton a distant third, 76 points back, after the season's 13th round.",
-   "why": "A 66-point cushion is not yet mathematically decided, but it is commanding — and the manner of it (winning from 19th, at home, against his nearest rival) is the kind of statement that tends to break a title race open rather than tighten it. A young driver is on the verge of a first world championship.",
-   "url": "https://www.autosport.com/f1/news/f1-italian-gp-antonelli-stuns-from-19th-on-the-grid-to-win-home-race/10853010/",
-   "source_domain": "autosport.com",
-   "date": "2026-09-07",
-   "date_label": "Sep 7",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/09/07/sports/",
-   "fresh": false
-  },
-  {
    "id": "2026-09-07-news-israeli-air-strikes-on-the-town-of-kfar-reman-in",
    "sid": "st-7720e5700141",
    "headline": "Israeli strikes kill 11 in south Lebanon",
@@ -1562,52 +1618,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/07/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-07-sports-lugano-make-it-six-from-six-as-basel-wobble-at-h",
-   "sid": "st-009bfd644854",
-   "headline": "Lugano make it six from six",
-   "summary": "Two wins in four days took FC Lugano to a perfect six victories from six games and back to the top of the Swiss Super League. On Thursday (3 Sep) new signing Albian Ajeti struck in the 94th minute for a 1-0 home win over Servette; on Sunday (6 Sep) Lugano fell behind at Basel, then turned it around to win 3-1, helped by a bad error from Basel goalkeeper Mirko Salvi. Lugano now sit on 18 points with a goal difference of +13, three clear of Young Boys — and, because Bern have already played seven games to Lugano's six, the leaders also hold a game in hand (a fixture not yet played that a rival has). The rest of the round underlined the shift: St. Gallen won 2-0 at Servette to leave the Geneva club bottom, while Sion beat Thun 2-1 with a late goal. For context, Lugano are one of the league's smaller, lower-budget clubs; Basel, by contrast, are among Swiss football's traditional heavyweights and have now lost twice at home already this season, sitting only fifth.",
-   "why": "The Swiss title race is being led from an unfamiliar place. Lugano's start is the best in the division, and a modest side setting the pace over the wealthier names is exactly the kind of early-season story that decides where the pressure lands come winter.",
-   "url": "https://www.srf.ch/sport/fussball/super-league/aus-0-1-mach-3-1-wende-innert-zwei-minuten-lugano-auch-von-basel-nicht-zu-stoppen",
-   "source_domain": "srf.ch",
-   "date": "2026-09-07",
-   "date_label": "Sep 7",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/07/sports/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-07-sports-arsenal-come-from-behind-to-beat-chelsea-and-sta",
-   "sid": "st-ad70d1f8138e",
-   "headline": "Arsenal edge Chelsea to stay top",
-   "summary": "The reigning English champions passed their first big test of the new season. Chelsea, who spent roughly £349m in the summer transfer window, led inside two minutes through Morgan Rogers, but Arsenal replied through Kai Havertz (25th minute) and a Martin Ødegaard winner just after half-time (50th) to win 2-1 at the Emirates. It is three wins from three for Arsenal, who reach nine points and stay top — level on maximum points with Manchester City, whose own perfect start continued at the weekend. Chelsea have now lost one of their opening three despite the outlay.",
-   "why": "Two of the pre-season favourites are already pulling clear at the top, and the result is a small early marker that Arsenal's title-winning group has not gone soft — while it raises the familiar question of whether spending big buys an instant team at Chelsea.",
-   "url": "https://www.skysports.com/football/arsenal-vs-chelsea/report/559464",
-   "source_domain": "skysports.com",
-   "date": "2026-09-07",
-   "date_label": "Sep 7",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/07/sports/",
    "fresh": false
   },
   {
@@ -1852,30 +1862,6 @@
    "fresh": false
   },
   {
-   "id": "2026-09-04-news-on-friday-4-september-the-council-of-states-prep",
-   "sid": "st-be3fdf9fb052",
-   "headline": "Committee backs EU treaty, keeps double majority",
-   "summary": "On Friday 4 September the Council of States' preparatory committees advanced the \"Bilaterals III\" treaty package with the EU — but reaffirmed that it should have to clear a double hurdle to pass. The relevant committee recommended the government's package — 18 treaties meant to stabilise and extend Switzerland's relations with the EU — for adoption by 9 votes to 3 with one abstention. Separately, the chamber's state-policy committee (SPK-S — the Council of States body that handles domestic implementation) reaffirmed, on the casting vote of its president Heidi Z'graggen (Mitte), that the package must require a double majority (Volks- und Ständemehr — approval by both a majority of voters and a majority of the 26 cantons), and would write a transitional clause into the constitution to that end; the National Council's counterpart committee has backed the same demand. A cantonal majority is a markedly higher bar than the simple popular vote the Federal Council originally envisaged, because it over-weights small rural cantons; opponents led by the SVP have pushed for it precisely because it makes the deal easier to defeat at the ballot box. The full Council of States takes up the package in the autumn session, with a first vote expected by the end of September.",
-   "why": "whether the EU package needs one majority or two could decide the fate of a deal that would shape free movement, market access and Swiss–EU relations for a generation. (moneycab, 04.09.2026; cash, 04.09.2026)",
-   "url": "https://www.moneycab.com/schweiz/staenderatskommission-sagt-deutlich-ja-zum-eu-vertragspaket/",
-   "source_domain": "moneycab.com",
-   "date": "2026-09-04",
-   "date_label": "Sep 4",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "politics"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/09/04/news/",
-   "fresh": false
-  },
-  {
    "id": "2026-09-04-ai-ml-openai-launches-gpt-6-astra-as-a-limited-preview",
    "sid": "st-e47a60eacee6",
    "headline": "OpenAI launches GPT-6 Astra",
@@ -1899,50 +1885,26 @@
    "fresh": false
   },
   {
-   "id": "2026-09-04-news-switzerland-s-attempt-to-get-its-patriot-air-def",
-   "sid": "st-683686276b9a",
-   "headline": "Swiss Patriot deal with Germany collapses",
-   "summary": "Switzerland's attempt to get its Patriot air-defence systems sooner via Germany has collapsed, the federal arms office confirmed on Thursday 3 September, delaying the first unit to 2032 and pushing costs sharply higher. The US had earlier diverted Patriot (a US-made surface-to-air missile system) deliveries away from Switzerland to backfill Germany, which had passed its own batteries to Ukraine; Bern had hoped Berlin would hand over part of its allocation to close the gap. Armaments chief Urs Loher said the options with Germany \"cannot be implemented as such\". The first Swiss fire unit is now expected in 2032 rather than 2026, and reporting puts the additional cost at between 1.7 and 4.3 billion francs.",
-   "why": "it leaves Switzerland without a modern ground-based air defence for the better part of a decade and adds a multi-billion-franc bill to an already contested procurement. (20 Minuten, 04.09.2026; SRF, 04.09.2026)",
-   "url": "https://www.20min.ch/story/flugabwehr-patriot-deal-mit-deutschland-geplatzt-es-drohen-hohe-mehrkosten-103627303",
-   "source_domain": "20min.ch",
+   "id": "2026-09-04-ai-ml-meta-ships-muse-spark-1-3-competing-at-the-top-a",
+   "sid": "st-89651c9be9be",
+   "headline": "Meta Muse Spark 1.3 undercuts rivals",
+   "summary": "Meta ships Muse Spark 1.3, competing at the top and undercutting rivals on price. Meta released Muse Spark 1.3 on Wednesday 2 September, a multimodal reasoning model aimed at long-running agentic, multi-agent and coding workflows, with a ~1.05M-token context window. API pricing is aggressive at about $1.25 per million input tokens and $4.25 per million output tokens; a separate \"contributor\" endpoint runs roughly 10–20× cheaper (~$0.10/$0.20 per million) in exchange for letting Meta train on your traffic — a data-for-discount trade worth reading before adopting.",
+   "why": "a top-tier proprietary model priced below rivals pushes the whole frontier-API market cheaper, but the discounted contributor tier makes the cost explicit only if you notice you are paying in data — a distinction that matters for anyone routing production traffic through it.",
+   "url": "https://artificialanalysis.ai/models/releases/muse-spark-1-3",
+   "source_domain": "artificialanalysis.ai",
    "date": "2026-09-04",
    "date_label": "Sep 4",
-   "stream": "news",
-   "stream_label": "News",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
    "topics": [
-    "switzerland",
-    "security"
+    "ai-ml"
    ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
    "importance": 2,
    "is_lead": false,
-   "permalink": "/2026/09/04/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-04-news-a-graub-nden-regional-court-acquitted-all-five-d",
-   "sid": "st-86d25a920dde",
-   "headline": "All five acquitted in Bondo rockslide trial",
-   "summary": "A Graubünden regional court acquitted all five defendants on Friday 4 September in the trial over the 2017 Bondo rockslide, which killed eight hikers. The Regionalgericht Maloja, sitting in Pontresina, cleared the former mayor of Bregaglia and FDP national councillor Anna Giacometti, a municipal forester, two cantonal officials (a geologist and a forestry engineer) and an external geologist, all charged in connection with negligent homicide. The court found no proof of a specific breach of duty of care: in the weeks before the 23 August 2017 collapse at Piz Cengalo there were no clear signs of a foreseeable major event, and — invoking \"in dubio pro reo\" (when in doubt, for the accused) — it held the calculations and warnings in place at the time were defensible. It nonetheless criticised the absence of an emergency plan that would have included closing the trails. Lead prosecutor Bruno Ulmi Stuppani said an appeal was still open and would be discussed internally.",
-   "why": "the verdict draws a hard line on when officials can be held criminally liable for failing to foresee a natural-hazard disaster, and reopens the question of who is responsible for danger assessment between cantons and municipalities. (20 Minuten liveticker, 04.09.2026)",
-   "url": "https://www.20min.ch/story/bergsturz-bondo-gr-prozess-gericht-live-103619674",
-   "source_domain": "20min.ch",
-   "date": "2026-09-04",
-   "date_label": "Sep 4",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/04/news/",
+   "permalink": "/2026/09/04/ai-ml/",
    "fresh": false
   },
   {
@@ -1996,6 +1958,29 @@
    "fresh": false
   },
   {
+   "id": "2026-09-02-science-bepicolombo-begins-its-mercury-arrival-phase-wit",
+   "sid": "st-5b27b6efbfce",
+   "headline": "BepiColombo begins its Mercury arrival",
+   "summary": "After eight years in flight, the joint ESA/JAXA BepiColombo mission begins the trickiest stretch of its journey. On 3 September 2026 the Mercury Transfer Module (MTM) — the solar-electric propulsion unit that has ferried the stacked spacecraft through the inner Solar System — separates from the two science orbiters, the first major step of the Mercury Arrival Phase. ESA plans to livestream the separation from mission control near Darmstadt. Under the current timeline, ESA's Mercury Planetary Orbiter and JAXA's Mio magnetospheric orbiter enter orbit around Mercury together in November 2026, separate in December, and begin science operations in April 2027.",
+   "why": "Mercury is one of the least-explored planets — only two prior missions have visited it — and arriving there is unusually hard because the Sun's gravity pulls spacecraft inward, so BepiColombo needs finely-controlled braking. Success would give Europe and Japan a two-orbiter platform to study Mercury's oversized iron core, its magnetic field, and why the innermost planet is so dense.",
+   "url": "https://www.esa.int/Enabling_Support/Operations/Watch_live_BepiColombo_begins_its_arrival_at_Mercury",
+   "source_domain": "esa.int",
+   "date": "2026-09-02",
+   "date_label": "Sep 2",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/02/science/",
+   "fresh": false
+  },
+  {
    "id": "2026-09-01-ai-ml-eu-brings-chatgpt-under-the-digital-services-act",
    "sid": "st-d7a76ae59369",
    "headline": "EU designates ChatGPT under the DSA",
@@ -2046,9 +2031,308 @@
    ],
    "affiliation_label": "Stanford, Columbia",
    "fresh": false
+  },
+  {
+   "id": "2026-09-01-ai-ml-on-policy-distillation-improves-students-but-not",
+   "sid": "st-4e91527cd26d",
+   "headline": "On-policy distillation barely distills",
+   "summary": "On-policy distillation (OPD) trains a small \"student\" model on dense, token-by-token scores from a larger \"teacher,\" pitched as a richer alternative to RLVR (reinforcement learning with verifiable rewards, where the model gets only a single right/wrong signal at the end). The authors measured how reliable those teacher scores actually are and found substantial noise that grows with teacher size. Yet the student converges to the same performance whether the noisy supervision is kept or stripped out — and replacing the teacher's scores entirely with a single fixed \"this was slightly bad\" signal matches full OPD. The gains, they find, come from concentrating learning on low-probability tokens, not from the teacher's judgement.",
+   "why": "if a cheap fixed signal reproduces the benefit, much of the compute spent running a big teacher during distillation may be buying little — a directly actionable finding for anyone building small models from large ones.",
+   "url": "https://arxiv.org/abs/2608.31046",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "Purdue"
+   ],
+   "affiliation_label": "Purdue",
+   "fresh": false
   }
  ],
  "board": [
+  {
+   "id": "2026-09-15-ai-ml-rl-for-llms-wastes-compute-on-easy-problems-a-ne",
+   "sid": "st-80679e5bf061",
+   "headline": "RL for LLMs wastes compute on easy problems",
+   "summary": "Reinforcement learning (RL — training a model by rewarding correct answers) improves an LLM far more on problems it can already usually solve than on genuinely hard ones — a pattern the authors name the \"Matthew effect\" (the rich get richer). They argue standard RL squanders compute re-solving easy problems, and introduce Never Give Up (NGU): keep sampling a problem until a correct answer appears, then, using asynchronous RL, spend fewer samples on the easy problems and pour the freed budget into the hard ones.",
+   "why": "Frontier RL runs are enormously expensive, and this reframes part of that spend as misallocated rather than merely insufficient — a scheduling change, not more GPUs, closes some of the hard-problem gap.",
+   "url": "https://arxiv.org/abs/2609.13443",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "Mila – Université de Montréal",
+    "Allen Institute for AI",
+    "University of Washington"
+   ],
+   "affiliation_label": "Mila – Université de Montréal, Allen Institute for AI +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 15 Sep",
+   "daybreak": true
+  },
+  {
+   "id": "2026-09-15-ai-ml-a-fully-open-7b-model-built-to-lean-on-tools-ins",
+   "sid": "st-65c76df0baff",
+   "headline": "Fully open 7B model leans on tools not memorization",
+   "summary": "ZGCM-1 is a 7-billion-parameter dense model trained from scratch with a fully open recipe, on the premise that a small model cannot memorize the open web but can compensate by pairing internal reasoning with external tool use (search, code) over a 256K-token context. The recipe combines an interleaved sliding-window/full-attention design, an FP8 Muon optimizer, and a staged curriculum that scales context from 16K to 256K and recasts tool-interaction traces as Markov decision processes (a formalism for sequential decisions) during mid-training.",
+   "why": "Open, reproducible recipes for capable small models are scarce — most frontier work is closed — so a from-scratch, documented 7B aimed at math and agentic search lowers the barrier to study and build on. The paper is bylined to an unnamed \"ZGCM Team\" and the efficiency claims are the authors' own; treat them as unverified until independently reproduced.",
+   "url": "https://arxiv.org/abs/2609.13356",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 15 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-15-ai-ml-reasoning-models-solve-a-task-then-fail-its-logi",
+   "sid": "st-b0b4e37f2999",
+   "headline": "Reasoning models fail logical twins of solved tasks",
+   "summary": "\"Systematicity\" is the principle that understanding a concept implies understanding close variations of it. The authors take rule-induction tasks from cognitive science and build structurally equivalent variants — the same underlying rule, recombined or with symbols substituted — then check whether a model that solves one variant also solves its isomorphs. Often it does not: models fail variants that are logically identical to problems they just got right.",
+   "why": "It is direct evidence that apparent reasoning can be brittle and non-compositional — getting a benchmark item right does not mean the model has grasped the rule behind it, which bears on any use that assumes it will generalize.",
+   "url": "https://arxiv.org/abs/2609.13948",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "Princeton University"
+   ],
+   "affiliation_label": "Princeton University",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 15 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-15-ai-ml-cheaper-answers-to-which-training-example-caused",
+   "sid": "st-e25485f75f46",
+   "headline": "Cheaper training-data attribution at model scale",
+   "summary": "Data attribution measures how much each training example shaped a given prediction — the basis for data valuation, machine unlearning (removing a datapoint's influence after the fact), and interpretability. Exact \"metagradient\" methods such as MAGIC differentiate through the whole training run but need a separate run per prediction, which is prohibitive. This work recasts budgeted attribution as estimating a large \"influence matrix\" from a small number of measurements, and shows which measurements best recover it.",
+   "why": "If influence can be approximated from a few measurements instead of one run per query, attribution becomes tractable at model scale — practical for unlearning requests, copyright and data-valuation disputes, and debugging which data drove a behavior. (MAGIC co-author Andrew Ilyas is on the paper.)",
+   "url": "https://arxiv.org/abs/2609.15044",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "Columbia University",
+    "Carnegie Mellon University"
+   ],
+   "affiliation_label": "Columbia University, Carnegie Mellon University",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 15 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-15-ai-ml-microsoft-publishes-a-humanist-ai-code-of-conduc",
+   "sid": "st-c92e4fc39e42",
+   "headline": "Microsoft publishes Humanist AI Code of Conduct",
+   "summary": "Microsoft publishes a \"Humanist AI Code of Conduct\". Microsoft AI released a code of conduct staking out an explicit position in the AI-welfare debate: per the document and secondary coverage, it calls for models whose \"thinking\" is legible to people, states that AI systems have no inner life, and rules out AI rights. It is a values statement rather than a product or policy change, but a notable public stance from a frontier lab as questions of model \"welfare\" gain attention.",
+   "why": "",
+   "url": "https://microsoft.ai/code-of-conduct/",
+   "source_domain": "microsoft.ai",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 15 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-15-ai-ml-the-ft-reports-anthropic-is-weighing-a-nasdaq-li",
+   "sid": "st-ca248c36febf",
+   "headline": "Anthropic reportedly eyes a Nasdaq listing",
+   "summary": "The FT reports Anthropic is weighing a Nasdaq listing. The Financial Times reported that Anthropic is eyeing a Nasdaq listing and, per the report, is pointing to a claimed second profitable quarter to court investors ahead of a possible large IPO. This is reporting, not an Anthropic announcement, and the underlying financials are attributed to sources rather than confirmed filings — treat it as a signal of intent, not a done deal.",
+   "why": "",
+   "url": "https://www.ft.com/content/4564e6a5-69e9-40a6-bf0f-a888f2f4f002",
+   "source_domain": "ft.com",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 15 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-15-ai-ml-diagnosing-agent-failures-by-searching-the-trace",
+   "sid": "st-2d13da620105",
+   "headline": "Diagnosing agent failures as a search problem",
+   "summary": "Long-horizon AI agents produce huge execution logs, and the true cause of a failure is often a single early action far from where things visibly broke. Existing root-cause methods hand an LLM the whole trace and ask for a one-shot verdict, which degrades as traces grow and relevant clues become sparse and scattered. The authors reframe diagnosis as a search problem — continually searching the trace for the responsible step rather than committing to an early guess.",
+   "why": "Reliable agents need to turn \"it failed\" into \"it failed here, because of this\", and one-shot judging does not scale to long traces; treating attribution as search is a route to debugging that holds up as agents run longer.",
+   "url": "https://arxiv.org/abs/2609.13463",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "Scale AI"
+   ],
+   "affiliation_label": "Scale AI",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 15 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-15-ai-ml-when-an-interrupted-agent-can-safely-resume-and",
+   "sid": "st-8047832e989b",
+   "headline": "When an interrupted agent can safely resume",
+   "summary": "Agents get interrupted mid-task; restarting repeats completed work, but blindly continuing from a saved state can carry forward unverified or stale progress. The paper introduces \"recoverability\" as an explicit system primitive: a saved state is paired with a permitted recovery action and a contract binding that choice to supporting evidence and independent checks, so resuming is a deliberate decision rather than an automatic one. Their challenge set shows accurate-looking restoration can quietly hide disallowed reuse.",
+   "why": "As agents run longer and touch real files and tools, \"resume from checkpoint\" becomes a correctness question, not just a convenience — this frames the safeguards a runtime needs before it trusts its own saved state.",
+   "url": "https://arxiv.org/abs/2609.13672",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "Beijing Information Science and Technology University"
+   ],
+   "affiliation_label": "Beijing Information Science and Technology University",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 15 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-15-ai-ml-a-small-language-for-compiling-new-attention-var",
+   "sid": "st-0b3d2e48987d",
+   "headline": "A DSL compiling attention variants to fused GPU kernels",
+   "summary": "Attention dominates transformer compute, and every new attention variant normally needs hand-written GPU code to run at usable speed. PyTorch's flex_attention lets researchers describe custom attention in Python but only handles changes applied after the core matrix multiply — which excludes RoPE (rotary position embedding, the positional scheme used by every major LLM), because RoPE acts before it. AttnFuse is a domain-specific language that makes such pre-multiplication transforms first-class, composing ten high-level building blocks into fused kernels.",
+   "why": "Lowering the cost of turning a new attention idea into production-speed code shortens the loop between architecture research and usable models — and it targets exactly the gap (RoPE) that existing tooling left open.",
+   "url": "https://arxiv.org/abs/2609.13612",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-15",
+   "date_label": "Sep 15",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/15/ai-ml/",
+   "affiliations": [
+    "University of Wisconsin–Milwaukee"
+   ],
+   "affiliation_label": "University of Wisconsin–Milwaukee",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 15 Sep",
+   "daybreak": false
+  },
   {
    "id": "2026-09-14-news-switzerland-s-autumn-parliamentary-session-opene",
    "sid": "st-b28e05feed83",
@@ -2071,9 +2355,9 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/09/14/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": true
   },
@@ -2098,9 +2382,9 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2126,9 +2410,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2154,9 +2438,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2182,9 +2466,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2209,9 +2493,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2236,9 +2520,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2263,9 +2547,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2290,9 +2574,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2317,9 +2601,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/sports/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2344,9 +2628,9 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2372,9 +2656,9 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2390,7 +2674,7 @@
     "<strong>A strong Swiss weekend, on and off the podium.</strong> Werro's world title is the headline, but the domestic game supplied its own story: Xherdan Shaqiri, at the veteran end of his career, single-handedly dragging FC Basel out of a crisis under a coach three days into the job. Different scales, same theme — Swiss sport had a good week."
    ],
    "kind": "editorial",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 14 Sep",
    "daybreak": false
   },
@@ -2418,7 +2702,7 @@
    "permalink": "/2026/09/13/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 13 Sep",
    "daybreak": true
   },
@@ -2446,7 +2730,7 @@
    "permalink": "/2026/09/13/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 13 Sep",
    "daybreak": false
   },
@@ -2473,7 +2757,7 @@
    "permalink": "/2026/09/13/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 13 Sep",
    "daybreak": false
   },
@@ -2500,7 +2784,7 @@
    "permalink": "/2026/09/12/weekend/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": true
   },
@@ -2528,7 +2812,7 @@
    "permalink": "/2026/09/12/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2555,7 +2839,7 @@
    "permalink": "/2026/09/12/weekend/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2587,7 +2871,7 @@
    "affiliation_label": "10a Labs",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2619,7 +2903,7 @@
    "affiliation_label": "Cerebras Systems, MBZUAI",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2646,7 +2930,7 @@
    "permalink": "/2026/09/12/weekend/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2678,7 +2962,7 @@
    "affiliation_label": "NUS, Tencent",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2710,7 +2994,7 @@
    "affiliation_label": "Cornell University, Microsoft Research",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2742,7 +3026,7 @@
    "affiliation_label": "Tsinghua University, Bosch",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2769,7 +3053,7 @@
    "permalink": "/2026/09/12/weekend/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2796,7 +3080,7 @@
    "permalink": "/2026/09/12/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2824,7 +3108,7 @@
    "permalink": "/2026/09/12/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2841,7 +3125,7 @@
     "<strong>3. The efficiency frontier is finally getting a \"why,\" not just a \"how.\"</strong> For two years, making large models cheaper to run has been a bag of empirical tricks that happen to work. This week three papers replaced folklore with mechanism. \"Why Does Post-Training Quantization Work?\" explains why squashing weights to 4-bit barely dents accuracy — layer-to-layer errors partly cancel, and the output geometry protects the model's most confident predictions. \"Don't Drop Dropout\" resurrects a training technique the field abandoned on hearsay and shows, across 2,400 experiments, that it lowers loss when tuned. FlexComp turns context-compression ratio from a fixed deployment decision into a per-request knob. The common thread — and the reason it matters to a reader who runs models locally or pays a serving bill — is that the pressure driving all of it is the cost of long-context reasoning agents: the KV cache (the per-token memory a model accumulates as it thinks) is the bottleneck, and it is the explicit design target of the week's headline open-weight release, DeepSeek V4.1-Flash, too. Understanding <em>why</em> the cheap tricks work is what tells you where they will break."
    ],
    "kind": "editorial",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 12 Sep",
    "daybreak": false
   },
@@ -2930,34 +3214,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-09-11-ai-ml-class-action-says-claude-s-usage-multipliers-ove",
-   "sid": "st-3469ae39ad2f",
-   "headline": "Class action targets Claude usage limits",
-   "summary": "Class action says Claude's usage \"multipliers\" oversell what subscribers actually get. Plaintiffs allege Anthropic misrepresents its Claude plans — Max at $100/month advertised as 5× Pro usage, $200 as 20× — because the multipliers apply only within rolling five-hour windows and are further capped weekly, so real usage lands well below what buyers expect (per The Verge). Anthropic does document this structure on its help pages and has filed a motion to dismiss, arguing the details were available via hyperlinks at purchase; the plaintiffs counter that customers cannot independently verify what an AI service delivers. For a reader paying for these plans, the concrete takeaway is that the headline multiplier is a within-window figure, not a monthly one.",
-   "why": "",
-   "url": "https://the-decoder.com/class-action-lawsuit-accuses-anthropic-of-overselling-claude-subscriptions-with-deceptive-usage-multipliers/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 11 Sep",
-   "daybreak": false
-  },
-  {
    "id": "2026-09-11-news-the-plr-vaud-the-canton-s-liberal-radical-party",
    "sid": "st-b62f5089597c",
    "headline": "Vaud PLR renews its three ministers",
@@ -3006,148 +3262,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/11/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 11 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-11-ai-ml-planning-with-a-peek-at-future-states-hard-in-th",
-   "sid": "st-0db67c569421",
-   "headline": "Efficient RL with transition lookahead",
-   "summary": "This is a theory result on RL with \"transition look-ahead\" — the agent may see which states a sequence of ℓ actions would visit before committing. Look-ahead can help a lot, but exact optimal planning with it was known to be NP-hard (computationally intractable at scale) only for discount factors pushed arbitrarily close to 1; it was open whether the hardness was real for ordinary settings. The paper resolves both ends: exact planning stays NP-hard for every fixed discount factor, yet a randomized polynomial-time scheme gets near-optimal for any fixed look-ahead depth, with regret matching classical tabular RL up to log factors even when transitions are unknown.",
-   "why": "\"look before you leap\" is a natural upgrade for planning agents; this says you shouldn't chase the exact optimum (it's genuinely hard) but can get essentially all the benefit efficiently.",
-   "url": "https://arxiv.org/abs/2609.11807",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
-   "affiliations": [
-    "ENSAE",
-    "Criteo AI Lab"
-   ],
-   "affiliation_label": "ENSAE, Criteo AI Lab",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 11 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-11-ai-ml-a-dataset-of-how-ai-scientists-reason-not-just-w",
-   "sid": "st-128470e2b248",
-   "headline": "Dataset of AI-scientist reasoning traces",
-   "summary": "Benchmarks for autonomous \"AI scientist\" agents usually grade only the final artefact — code, a hypothesis, a paper — discarding the reasoning that produced it. OpenDiscoveryTrace releases 558 complete agent trajectories across 124 scientific tasks (drug discovery, materials, genomics, literature analysis), each step recording thoughts, tool calls, observations, errors and self-reported confidence. A striking early finding: three frontier models reach comparable success rates (84–89%), yet the process differs sharply — one model produced roughly 30× more errors than another despite similar final scores.",
-   "why": "if agents that score the same reason very differently, output-only leaderboards are hiding the failure modes that matter for trusting an agent's work — and a public trace dataset is what lets anyone audit them.",
-   "url": "https://arxiv.org/abs/2609.09203",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 11 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-11-ai-ml-gpt-live-1-brings-full-duplex-voice-to-the-api",
-   "sid": "st-e1e6a88ff666",
-   "headline": "GPT-Live-1 adds full-duplex voice",
-   "summary": "GPT-Live-1 brings full-duplex voice to the API. OpenAI's new speech API lets an app listen and talk at the same time, rather than the strict turn-taking of earlier voice modes — the substantive change is simultaneous input and output for more natural interruption and back-channel.",
-   "why": "",
-   "url": "https://openai.com/index/introducing-gpt-live-1-in-the-api",
-   "source_domain": "openai.com",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 11 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-11-ai-ml-a-fields-medalist-launches-an-institute-chasing",
-   "sid": "st-8cdec9dfd811",
-   "headline": "Fields medalist launches AI-safety institute",
-   "summary": "A Fields medalist launches an institute chasing provable AI safety. Jacob Tsimerman, a 2026 Fields Medal recipient, announced the Mathematical AI Safety Institute (MAISI), an independent research body in the San Francisco Bay Area starting in January 2027 with 10–30 mathematicians; Tsimerman is also joining OpenAI's safety team. The stated ambition — safety you can prove the way cryptographers argue a cipher is unbreakable — is aspirational: as the founders concede, there is not yet even an agreed formal definition of what \"safe\" means for a model, so treat this as a research agenda, not a delivered method.",
-   "why": "",
-   "url": "https://the-decoder.com/the-mathematical-ai-safety-institute-wants-to-prove-ai-is-safe-the-way-cryptographers-prove-codes-are-unbreakable/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "science"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 11 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-11-ai-ml-anthropic-s-1-5bn-authors-settlement-bogs-down-o",
-   "sid": "st-1aee925a47b3",
-   "headline": "Anthropic book settlement in disarray",
-   "summary": "Anthropic's $1.5bn authors settlement bogs down over who gets paid. The proposed settlement resolving authors' copyright claims against Anthropic has run into disputes among authors and publishers over allocation of the money — a reminder that even a headline settlement figure is not the end of the litigation.",
-   "why": "",
-   "url": "https://the-decoder.com/anthropics-1-5-billion-book-settlement-descends-into-chaos-as-authors-and-publishers-fight-over-who-gets-paid/",
-   "source_domain": "the-decoder.com",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/ai-ml/",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
@@ -3498,21 +3612,6 @@
    "daybreak": false
   },
   {
-   "stream": "science",
-   "date": "2026-09-09",
-   "date_label": "Sep 9",
-   "kicker": "Science · Why it matters · Sep 9",
-   "heading": "Why it matters",
-   "title": "AI as a mathematical instrument — and the credit problem it creates",
-   "paras": [
-    "This week's Navier–Stokes claims are the clearest sign yet that large models can do real work at the research frontier of mathematics, not just reproduce known results. But they arrive entangled: the pivotal strategy was human (Córdoba and Martínez-Zoroa), two labs and two companies are disputing priority, and even a machine-checked proof still needs human mathematicians to say what it <em>means</em>. The lesson isn't \"AI solved a Millennium problem\" — it's that verification (here, Lean) and attribution are becoming the hard parts, and a science desk should resist the tidy headline in favour of the messier, more accurate one."
-   ],
-   "kind": "editorial",
-   "age_days": 3,
-   "day_label": "Wed 9 Sep",
-   "daybreak": false
-  },
-  {
    "id": "2026-09-08-ai-ml-mistral-raises-3-billion-in-europe-s-largest-eve",
    "sid": "st-bc03703a7af7",
    "headline": "Mistral raises record €3 billion",
@@ -3711,33 +3810,6 @@
    "daybreak": true
   },
   {
-   "id": "2026-09-07-sports-antonelli-wins-from-19th-at-his-home-race-and-al",
-   "sid": "st-db3b2be81634",
-   "headline": "Antonelli wins Monza from 19th",
-   "summary": "Kimi Antonelli, the 20-year-old Italian in his second Mercedes season, produced one of the drives of the year at his home Grand Prix: starting 19th after a difficult qualifying, he carved through the field and reeled in his own team-mate George Russell in the closing laps to win at Monza. Max Verstappen (Red Bull) took third ahead of the McLaren pair of Lando Norris and Oscar Piastri, with Lewis Hamilton sixth for Ferrari. The win stretches Antonelli's lead in the drivers' championship (the season-long points title for individual drivers) to 66 points over Russell, with Hamilton a distant third, 76 points back, after the season's 13th round.",
-   "why": "A 66-point cushion is not yet mathematically decided, but it is commanding — and the manner of it (winning from 19th, at home, against his nearest rival) is the kind of statement that tends to break a title race open rather than tighten it. A young driver is on the verge of a first world championship.",
-   "url": "https://www.autosport.com/f1/news/f1-italian-gp-antonelli-stuns-from-19th-on-the-grid-to-win-home-race/10853010/",
-   "source_domain": "autosport.com",
-   "date": "2026-09-07",
-   "date_label": "Sep 7",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/09/07/sports/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 7 Sep",
-   "daybreak": false
-  },
-  {
    "id": "2026-09-07-news-israeli-air-strikes-on-the-town-of-kfar-reman-in",
    "sid": "st-7720e5700141",
    "headline": "Israeli strikes kill 11 in south Lebanon",
@@ -3787,60 +3859,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/07/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 7 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-07-sports-lugano-make-it-six-from-six-as-basel-wobble-at-h",
-   "sid": "st-009bfd644854",
-   "headline": "Lugano make it six from six",
-   "summary": "Two wins in four days took FC Lugano to a perfect six victories from six games and back to the top of the Swiss Super League. On Thursday (3 Sep) new signing Albian Ajeti struck in the 94th minute for a 1-0 home win over Servette; on Sunday (6 Sep) Lugano fell behind at Basel, then turned it around to win 3-1, helped by a bad error from Basel goalkeeper Mirko Salvi. Lugano now sit on 18 points with a goal difference of +13, three clear of Young Boys — and, because Bern have already played seven games to Lugano's six, the leaders also hold a game in hand (a fixture not yet played that a rival has). The rest of the round underlined the shift: St. Gallen won 2-0 at Servette to leave the Geneva club bottom, while Sion beat Thun 2-1 with a late goal. For context, Lugano are one of the league's smaller, lower-budget clubs; Basel, by contrast, are among Swiss football's traditional heavyweights and have now lost twice at home already this season, sitting only fifth.",
-   "why": "The Swiss title race is being led from an unfamiliar place. Lugano's start is the best in the division, and a modest side setting the pace over the wealthier names is exactly the kind of early-season story that decides where the pressure lands come winter.",
-   "url": "https://www.srf.ch/sport/fussball/super-league/aus-0-1-mach-3-1-wende-innert-zwei-minuten-lugano-auch-von-basel-nicht-zu-stoppen",
-   "source_domain": "srf.ch",
-   "date": "2026-09-07",
-   "date_label": "Sep 7",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/07/sports/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 7 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-07-sports-arsenal-come-from-behind-to-beat-chelsea-and-sta",
-   "sid": "st-ad70d1f8138e",
-   "headline": "Arsenal edge Chelsea to stay top",
-   "summary": "The reigning English champions passed their first big test of the new season. Chelsea, who spent roughly £349m in the summer transfer window, led inside two minutes through Morgan Rogers, but Arsenal replied through Kai Havertz (25th minute) and a Martin Ødegaard winner just after half-time (50th) to win 2-1 at the Emirates. It is three wins from three for Arsenal, who reach nine points and stay top — level on maximum points with Manchester City, whose own perfect start continued at the weekend. Chelsea have now lost one of their opening three despite the outlay.",
-   "why": "Two of the pre-season favourites are already pulling clear at the top, and the result is a small early marker that Arsenal's title-winning group has not gone soft — while it raises the familiar question of whether spending big buys an instant team at Chelsea.",
-   "url": "https://www.skysports.com/football/arsenal-vs-chelsea/report/559464",
-   "source_domain": "skysports.com",
-   "date": "2026-09-07",
-   "date_label": "Sep 7",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/07/sports/",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
@@ -4129,34 +4147,6 @@
    "daybreak": true
   },
   {
-   "id": "2026-09-04-news-on-friday-4-september-the-council-of-states-prep",
-   "sid": "st-be3fdf9fb052",
-   "headline": "Committee backs EU treaty, keeps double majority",
-   "summary": "On Friday 4 September the Council of States' preparatory committees advanced the \"Bilaterals III\" treaty package with the EU — but reaffirmed that it should have to clear a double hurdle to pass. The relevant committee recommended the government's package — 18 treaties meant to stabilise and extend Switzerland's relations with the EU — for adoption by 9 votes to 3 with one abstention. Separately, the chamber's state-policy committee (SPK-S — the Council of States body that handles domestic implementation) reaffirmed, on the casting vote of its president Heidi Z'graggen (Mitte), that the package must require a double majority (Volks- und Ständemehr — approval by both a majority of voters and a majority of the 26 cantons), and would write a transitional clause into the constitution to that end; the National Council's counterpart committee has backed the same demand. A cantonal majority is a markedly higher bar than the simple popular vote the Federal Council originally envisaged, because it over-weights small rural cantons; opponents led by the SVP have pushed for it precisely because it makes the deal easier to defeat at the ballot box. The full Council of States takes up the package in the autumn session, with a first vote expected by the end of September.",
-   "why": "whether the EU package needs one majority or two could decide the fate of a deal that would shape free movement, market access and Swiss–EU relations for a generation. (moneycab, 04.09.2026; cash, 04.09.2026)",
-   "url": "https://www.moneycab.com/schweiz/staenderatskommission-sagt-deutlich-ja-zum-eu-vertragspaket/",
-   "source_domain": "moneycab.com",
-   "date": "2026-09-04",
-   "date_label": "Sep 4",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "politics"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/09/04/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 4 Sep",
-   "daybreak": false
-  },
-  {
    "id": "2026-09-04-ai-ml-openai-launches-gpt-6-astra-as-a-limited-preview",
    "sid": "st-e47a60eacee6",
    "headline": "OpenAI launches GPT-6 Astra",
@@ -4184,54 +4174,26 @@
    "daybreak": false
   },
   {
-   "id": "2026-09-04-news-switzerland-s-attempt-to-get-its-patriot-air-def",
-   "sid": "st-683686276b9a",
-   "headline": "Swiss Patriot deal with Germany collapses",
-   "summary": "Switzerland's attempt to get its Patriot air-defence systems sooner via Germany has collapsed, the federal arms office confirmed on Thursday 3 September, delaying the first unit to 2032 and pushing costs sharply higher. The US had earlier diverted Patriot (a US-made surface-to-air missile system) deliveries away from Switzerland to backfill Germany, which had passed its own batteries to Ukraine; Bern had hoped Berlin would hand over part of its allocation to close the gap. Armaments chief Urs Loher said the options with Germany \"cannot be implemented as such\". The first Swiss fire unit is now expected in 2032 rather than 2026, and reporting puts the additional cost at between 1.7 and 4.3 billion francs.",
-   "why": "it leaves Switzerland without a modern ground-based air defence for the better part of a decade and adds a multi-billion-franc bill to an already contested procurement. (20 Minuten, 04.09.2026; SRF, 04.09.2026)",
-   "url": "https://www.20min.ch/story/flugabwehr-patriot-deal-mit-deutschland-geplatzt-es-drohen-hohe-mehrkosten-103627303",
-   "source_domain": "20min.ch",
+   "id": "2026-09-04-ai-ml-meta-ships-muse-spark-1-3-competing-at-the-top-a",
+   "sid": "st-89651c9be9be",
+   "headline": "Meta Muse Spark 1.3 undercuts rivals",
+   "summary": "Meta ships Muse Spark 1.3, competing at the top and undercutting rivals on price. Meta released Muse Spark 1.3 on Wednesday 2 September, a multimodal reasoning model aimed at long-running agentic, multi-agent and coding workflows, with a ~1.05M-token context window. API pricing is aggressive at about $1.25 per million input tokens and $4.25 per million output tokens; a separate \"contributor\" endpoint runs roughly 10–20× cheaper (~$0.10/$0.20 per million) in exchange for letting Meta train on your traffic — a data-for-discount trade worth reading before adopting.",
+   "why": "a top-tier proprietary model priced below rivals pushes the whole frontier-API market cheaper, but the discounted contributor tier makes the cost explicit only if you notice you are paying in data — a distinction that matters for anyone routing production traffic through it.",
+   "url": "https://artificialanalysis.ai/models/releases/muse-spark-1-3",
+   "source_domain": "artificialanalysis.ai",
    "date": "2026-09-04",
    "date_label": "Sep 4",
-   "stream": "news",
-   "stream_label": "News",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
    "topics": [
-    "switzerland",
-    "security"
+    "ai-ml"
    ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
    "importance": 2,
    "is_lead": false,
-   "permalink": "/2026/09/04/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 4 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-04-news-a-graub-nden-regional-court-acquitted-all-five-d",
-   "sid": "st-86d25a920dde",
-   "headline": "All five acquitted in Bondo rockslide trial",
-   "summary": "A Graubünden regional court acquitted all five defendants on Friday 4 September in the trial over the 2017 Bondo rockslide, which killed eight hikers. The Regionalgericht Maloja, sitting in Pontresina, cleared the former mayor of Bregaglia and FDP national councillor Anna Giacometti, a municipal forester, two cantonal officials (a geologist and a forestry engineer) and an external geologist, all charged in connection with negligent homicide. The court found no proof of a specific breach of duty of care: in the weeks before the 23 August 2017 collapse at Piz Cengalo there were no clear signs of a foreseeable major event, and — invoking \"in dubio pro reo\" (when in doubt, for the accused) — it held the calculations and warnings in place at the time were defensible. It nonetheless criticised the absence of an emergency plan that would have included closing the trails. Lead prosecutor Bruno Ulmi Stuppani said an appeal was still open and would be discussed internally.",
-   "why": "the verdict draws a hard line on when officials can be held criminally liable for failing to foresee a natural-hazard disaster, and reopens the question of who is responsible for danger assessment between cantons and municipalities. (20 Minuten liveticker, 04.09.2026)",
-   "url": "https://www.20min.ch/story/bergsturz-bondo-gr-prozess-gericht-live-103619674",
-   "source_domain": "20min.ch",
-   "date": "2026-09-04",
-   "date_label": "Sep 4",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/04/news/",
+   "permalink": "/2026/09/04/ai-ml/",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
@@ -4290,6 +4252,33 @@
     "University of Cambridge"
    ],
    "affiliation_label": "University of Cambridge",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 3,
+   "day_label": "Wed 2 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-02-science-bepicolombo-begins-its-mercury-arrival-phase-wit",
+   "sid": "st-5b27b6efbfce",
+   "headline": "BepiColombo begins its Mercury arrival",
+   "summary": "After eight years in flight, the joint ESA/JAXA BepiColombo mission begins the trickiest stretch of its journey. On 3 September 2026 the Mercury Transfer Module (MTM) — the solar-electric propulsion unit that has ferried the stacked spacecraft through the inner Solar System — separates from the two science orbiters, the first major step of the Mercury Arrival Phase. ESA plans to livestream the separation from mission control near Darmstadt. Under the current timeline, ESA's Mercury Planetary Orbiter and JAXA's Mio magnetospheric orbiter enter orbit around Mercury together in November 2026, separate in December, and begin science operations in April 2027.",
+   "why": "Mercury is one of the least-explored planets — only two prior missions have visited it — and arriving there is unusually hard because the Sun's gravity pulls spacecraft inward, so BepiColombo needs finely-controlled braking. Success would give Europe and Japan a two-orbiter platform to study Mercury's oversized iron core, its magnetic field, and why the innermost planet is so dense.",
+   "url": "https://www.esa.int/Enabling_Support/Operations/Watch_live_BepiColombo_begins_its_arrival_at_Mercury",
+   "source_domain": "esa.int",
+   "date": "2026-09-02",
+   "date_label": "Sep 2",
+   "stream": "science",
+   "stream_label": "Science",
+   "topics": [
+    "science"
+   ],
+   "topic_primary": "science",
+   "topic_label": "Science",
+   "topic_color": "#4c6b3c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/02/science/",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
@@ -4350,6 +4339,37 @@
     "Columbia"
    ],
    "affiliation_label": "Stanford, Columbia",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 3,
+   "day_label": "Tue 1 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-01-ai-ml-on-policy-distillation-improves-students-but-not",
+   "sid": "st-4e91527cd26d",
+   "headline": "On-policy distillation barely distills",
+   "summary": "On-policy distillation (OPD) trains a small \"student\" model on dense, token-by-token scores from a larger \"teacher,\" pitched as a richer alternative to RLVR (reinforcement learning with verifiable rewards, where the model gets only a single right/wrong signal at the end). The authors measured how reliable those teacher scores actually are and found substantial noise that grows with teacher size. Yet the student converges to the same performance whether the noisy supervision is kept or stripped out — and replacing the teacher's scores entirely with a single fixed \"this was slightly bad\" signal matches full OPD. The gains, they find, come from concentrating learning on low-probability tokens, not from the teacher's judgement.",
+   "why": "if a cheap fixed signal reproduces the benefit, much of the compute spent running a big teacher during distillation may be buying little — a directly actionable finding for anyone building small models from large ones.",
+   "url": "https://arxiv.org/abs/2608.31046",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-01",
+   "date_label": "Sep 1",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/01/ai-ml/",
+   "affiliations": [
+    "Purdue"
+   ],
+   "affiliation_label": "Purdue",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
