@@ -3,15 +3,15 @@
  "count": 80,
  "topics": [
   {
-   "key": "geopolitics",
-   "label": "Geopolitics",
-   "color": "#c0563b",
-   "count": 26
-  },
-  {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
+   "count": 26
+  },
+  {
+   "key": "geopolitics",
+   "label": "Geopolitics",
+   "color": "#c0563b",
    "count": 24
   },
   {
@@ -24,7 +24,7 @@
    "key": "security",
    "label": "Security",
    "color": "#6a4b8a",
-   "count": 10
+   "count": 11
   },
   {
    "key": "politics",
@@ -39,16 +39,16 @@
    "count": 9
   },
   {
-   "key": "economy",
-   "label": "Economy",
-   "color": "#9a7b2e",
-   "count": 6
-  },
-  {
    "key": "sports",
    "label": "Sports",
    "color": "#c26b2e",
    "count": 6
+  },
+  {
+   "key": "economy",
+   "label": "Economy",
+   "color": "#9a7b2e",
+   "count": 5
   },
   {
    "key": "world",
@@ -96,6 +96,30 @@
  ],
  "stories": [
   {
+   "id": "2026-09-18-ai-ml-openai-moves-to-put-advertising-inside-chatgpt",
+   "sid": "st-784e429ca814",
+   "headline": "OpenAI to test ads in ChatGPT",
+   "summary": "OpenAI said it will test advertising in ChatGPT's free and lower-cost \"Go\" tiers in the US, framing ads as a way to subsidize cheaper access worldwide, and separately introduced \"Sponsored Agents\" plus advertiser tooling and integrations with HubSpot and Shopify. The company says it will protect privacy and keep ads from degrading answer quality.",
+   "why": "the largest consumer AI product tilting toward an ad-funded model is a structural shift with the same tensions that shaped search and social — the incentive to optimize a supposedly neutral assistant's answers for advertisers now sits directly against the product's usefulness. How OpenAI walls off ranking from answers, and whether it discloses paid placement clearly, is the thing to watch as the test rolls out.",
+   "url": "https://openai.com/index/our-approach-to-advertising-and-expanding-access",
+   "source_domain": "openai.com",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/09/18/ai-ml/",
+   "fresh": true
+  },
+  {
    "id": "2026-09-18-news-iran-said-on-friday-18-september-that-its-revolu",
    "sid": "st-85b24dfef4dd",
    "headline": "Iran strikes tanker in Strait of Hormuz",
@@ -116,6 +140,166 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/09/18/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-18-ai-ml-component-level-study-pins-down-what-actually-ma",
+   "sid": "st-c540cb27e209",
+   "headline": "What actually makes a coding agent work",
+   "summary": "A coding harness is the scaffolding around a model that turns it into an autonomous software engineer — the loop that plans, runs commands, reads files, and decides when the task is done. Most work treats the harness as one indivisible black box; this paper instead freezes the execution loop and varies three components in isolation — planning, action space, and context management — across four models on SWE-Bench Verified and Terminal-Bench 2.1 (standard suites of real GitHub-issue and terminal tasks), over 176 matched settings.",
+   "why": "the findings are directly actionable for anyone building agents. Context management earns its keep mainly by preventing context-overflow crashes, and cheap rule-based trimming before an LLM-written summary beats fancier schemes; planning is an accuracy crutch for weaker models but a pure cost-saver for stronger ones; and bash-capable models run just as well — and far cheaper — with a plain shell instead of a bespoke toolset. It is a modular framework for evaluating harness pieces rather than guessing.",
+   "url": "https://arxiv.org/abs/2609.20804",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "UMass Amherst",
+    "Emory University",
+    "Zoom"
+   ],
+   "affiliation_label": "UMass Amherst, Emory University +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-18-ai-ml-deepseek-publishes-the-architecture-paper-behind",
+   "sid": "st-76aad02ccec7",
+   "headline": "DeepSeek details its 552B V4.1-Flash",
+   "summary": "The open weights landed earlier this month (covered in the 12 September Weekend brief); this is the technical paper that explains how. DeepSeek-V4.1-Flash is a 552B-parameter multimodal Mixture-of-Experts model (MoE — only a small subset of \"expert\" sub-networks fire per token) supporting one-million-token contexts. Its Causal Encoder-Decoder design activates 16B parameters per token when generating but only 8B when ingesting the prompt, and it stacks cross-layer KV-cache reuse with FP4 (4-bit) caching to cut the always-in-memory KV footprint to 890 bytes per token — roughly a quarter of its predecessor's — while a deployment trick called SWA Bounded Replay cuts the on-disk footprint to about an eighth.",
+   "why": "input-heavy agent workloads, not chat, now dominate serving cost, and the KV cache is the wall they hit. An open-weight reference design that quarters that footprint without losing quality sets a concrete efficiency bar competitors and self-hosters will measure against.",
+   "url": "https://arxiv.org/abs/2609.19969",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "DeepSeek"
+   ],
+   "affiliation_label": "DeepSeek",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-18-ai-ml-diffusion-language-models-can-be-grown-cheaply-f",
+   "sid": "st-5884091a7243",
+   "headline": "Diffusion LMs from hybrid backbones",
+   "summary": "Diffusion language models (DLMs) generate text by iteratively denoising many positions in parallel rather than strictly left-to-right, and the cheap way to build one is to adapt an existing autoregressive model. Almost all such adaptations start from a pure-attention Transformer; modern models increasingly interleave attention with RNN layers, which are structurally one-directional and awkward to convert. This paper shows it works anyway, adapting Qwen3.5 at 0.8B–9B scales into the dQwen3.5 family.",
+   "why": "the hybrid backbone reaches a given training loss in roughly half the tokens of a full-attention control, so the architecture the field is already moving toward turns out to be a cheaper, not harder, starting point for parallel-decoding models.",
+   "url": "https://arxiv.org/abs/2609.20751",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "UT Austin"
+   ],
+   "affiliation_label": "UT Austin",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-18-ai-ml-a-case-that-llms-hold-concepts-no-human-word-can",
+   "sid": "st-34564ed0e57a",
+   "headline": "LLMs may hold alien concepts",
+   "summary": "Interpretability usually hunts for human ideas inside a model — truthfulness, deception, refusal. This position paper argues the model's internal space of distinctions is far larger than the finite set humans can describe, and names the leftover region \"xeno-representations\": structures you can reproducibly locate, geometrically characterize, causally poke, and tie to behaviour, even when you cannot say in words what they mean.",
+   "why": "if models act on distinctions with no human-readable label — and those distinctions can spread and stabilize across cooperating agents — then interpretability aimed only at human concepts has a permanent blind spot, which is a real (if still speculative) safety concern for multi-agent systems.",
+   "url": "https://arxiv.org/abs/2609.20408",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "Icaro Foundation",
+    "Sant'Anna School of Advanced Studies",
+    "Sapienza University of Rome"
+   ],
+   "affiliation_label": "Icaro Foundation, Sant'Anna School of Advanced Studies +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-18-ai-ml-groups-of-llm-agents-manufacture-consensus-human",
+   "sid": "st-678ca81fed5d",
+   "headline": "LLM groups manufacture false consensus",
+   "summary": "Simulated \"agent societies\" are increasingly used to stand in for human groups, so it matters how faithfully they reproduce human disagreement. The author replayed 100 held-out human groups solving the Wason task (a classic logical-reasoning puzzle), seeding a matched LLM agent for each participant's starting belief and scoring both with the same code. Agent groups reached full consensus 34–44 percentage points more often than the humans, and under a reasoning mode they agreed almost unanimously — mostly on wrong answers.",
+   "why": "consensus among LLM agents did not track whether they were correct, so treating multi-agent agreement as a signal of collective intelligence — or as a stand-in for human deliberation — is unfounded in this setting.",
+   "url": "https://arxiv.org/abs/2609.20543",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-18-ai-ml-openai-publishes-a-misalignment-reporting-framew",
+   "sid": "st-35ce39c019e1",
+   "headline": "OpenAI publishes misalignment reports",
+   "summary": "OpenAI released a framework for tracking, investigating, and disclosing model misalignment — cases where a model pursues something other than what its developers or users intend — alongside six concrete reports of unexpected or concerning behaviour it has observed. It is paired with a companion post on monitoring OpenAI's own internal coding agents via chain-of-thought inspection (reading the model's step-by-step reasoning trace for warning signs).",
+   "why": "it is a rare instance of a frontier lab standardizing how it reports its own models misbehaving rather than only publishing capability wins. The disclosures are self-selected and unaudited — take them as a governance gesture, not independent verification — but a shared reporting template is a precondition for outside scrutiny later.",
+   "url": "https://openai.com/index/model-misalignment-reporting-framework",
+   "source_domain": "openai.com",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
    "fresh": true
   },
   {
@@ -211,6 +395,63 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/18/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-18-ai-ml-a-recall-head-lets-a-model-decide-when-to-read-i",
+   "sid": "st-50f8997e444f",
+   "headline": "Models learn when to read their history",
+   "summary": "Standard decoding re-reads the entire growing history at every generated token, whether or not that global read changes the next word. On-Demand Attention (ODA) trains a small \"recall head\" that predicts, from the model's own decoding state, whether a global read will help right now — and otherwise falls back to cheap local attention. Only the recall head is trained; the pretrained weights and the full KV cache stay intact, so nothing is lost, just deferred. The authors add GPU-side conditional execution in vLLM (a widely used inference server) so the saved reads become real speedups at long context.",
+   "why": "it recovers most of the accuracy that naive local-attention shortcuts throw away while cutting the expensive global reads — a rare efficiency lever that needs no retraining of the base model and ships as a practical kernel, not just a plot.",
+   "url": "https://arxiv.org/abs/2609.20734",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "SUSTech",
+    "Peking University",
+    "Peng Cheng Laboratory"
+   ],
+   "affiliation_label": "SUSTech, Peking University +1",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-18-ai-ml-reasoning-models-are-taught-to-think-only-as-har",
+   "sid": "st-4fdc79e8f43e",
+   "headline": "Reasoning models learn when to think",
+   "summary": "Large reasoning models systematically overthink easy questions and underthink hard ones, burning tokens on the former and accuracy on the latter. When2Think is a post-training recipe whose core mechanism, Instance-level Difficulty-Aware Control, shapes the reward using pre-computed reference statistics (how accurate and how long typical answers are) so the model learns to answer directly on easy items and reason at length on hard ones — a learned System 1 / System 2 switch.",
+   "why": "on the AIME24 math competition benchmark it lifts Pass@3 (fraction solved within three tries) by 10.0% while using 27.9% fewer tokens than the base model — a real both-directions win rather than the usual accuracy-for-speed trade, and it needs no separate learned reward model.",
+   "url": "https://arxiv.org/abs/2609.19671",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "Sungkyunkwan University",
+    "Microsoft"
+   ],
+   "affiliation_label": "Sungkyunkwan University, Microsoft",
    "fresh": true
   },
   {
@@ -673,82 +914,6 @@
    "fresh": false
   },
   {
-   "id": "2026-09-15-ai-ml-cheaper-answers-to-which-training-example-caused",
-   "sid": "st-e25485f75f46",
-   "headline": "Cheaper training-data attribution at model scale",
-   "summary": "Data attribution measures how much each training example shaped a given prediction — the basis for data valuation, machine unlearning (removing a datapoint's influence after the fact), and interpretability. Exact \"metagradient\" methods such as MAGIC differentiate through the whole training run but need a separate run per prediction, which is prohibitive. This work recasts budgeted attribution as estimating a large \"influence matrix\" from a small number of measurements, and shows which measurements best recover it.",
-   "why": "If influence can be approximated from a few measurements instead of one run per query, attribution becomes tractable at model scale — practical for unlearning requests, copyright and data-valuation disputes, and debugging which data drove a behavior. (MAGIC co-author Andrew Ilyas is on the paper.)",
-   "url": "https://arxiv.org/abs/2609.15044",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "affiliations": [
-    "Columbia University",
-    "Carnegie Mellon University"
-   ],
-   "affiliation_label": "Columbia University, Carnegie Mellon University",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-15-ai-ml-microsoft-publishes-a-humanist-ai-code-of-conduc",
-   "sid": "st-c92e4fc39e42",
-   "headline": "Microsoft publishes Humanist AI Code of Conduct",
-   "summary": "Microsoft publishes a \"Humanist AI Code of Conduct\". Microsoft AI released a code of conduct staking out an explicit position in the AI-welfare debate: per the document and secondary coverage, it calls for models whose \"thinking\" is legible to people, states that AI systems have no inner life, and rules out AI rights. It is a values statement rather than a product or policy change, but a notable public stance from a frontier lab as questions of model \"welfare\" gain attention.",
-   "why": "",
-   "url": "https://microsoft.ai/code-of-conduct/",
-   "source_domain": "microsoft.ai",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-15-ai-ml-the-ft-reports-anthropic-is-weighing-a-nasdaq-li",
-   "sid": "st-ca248c36febf",
-   "headline": "Anthropic reportedly eyes a Nasdaq listing",
-   "summary": "The FT reports Anthropic is weighing a Nasdaq listing. The Financial Times reported that Anthropic is eyeing a Nasdaq listing and, per the report, is pointing to a claimed second profitable quarter to court investors ahead of a possible large IPO. This is reporting, not an Anthropic announcement, and the underlying financials are attributed to sources rather than confirmed filings — treat it as a signal of intent, not a done deal.",
-   "why": "",
-   "url": "https://www.ft.com/content/4564e6a5-69e9-40a6-bf0f-a888f2f4f002",
-   "source_domain": "ft.com",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "fresh": false
-  },
-  {
    "id": "2026-09-15-news-a-fresh-round-of-us-tariffs-on-110-categories-of",
    "sid": "st-647d47ce6c91",
    "headline": "US adds 50% tariffs on Canadian goods",
@@ -794,87 +959,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/15/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-15-ai-ml-diagnosing-agent-failures-by-searching-the-trace",
-   "sid": "st-2d13da620105",
-   "headline": "Diagnosing agent failures as a search problem",
-   "summary": "Long-horizon AI agents produce huge execution logs, and the true cause of a failure is often a single early action far from where things visibly broke. Existing root-cause methods hand an LLM the whole trace and ask for a one-shot verdict, which degrades as traces grow and relevant clues become sparse and scattered. The authors reframe diagnosis as a search problem — continually searching the trace for the responsible step rather than committing to an early guess.",
-   "why": "Reliable agents need to turn \"it failed\" into \"it failed here, because of this\", and one-shot judging does not scale to long traces; treating attribution as search is a route to debugging that holds up as agents run longer.",
-   "url": "https://arxiv.org/abs/2609.13463",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "affiliations": [
-    "Scale AI"
-   ],
-   "affiliation_label": "Scale AI",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-15-ai-ml-when-an-interrupted-agent-can-safely-resume-and",
-   "sid": "st-8047832e989b",
-   "headline": "When an interrupted agent can safely resume",
-   "summary": "Agents get interrupted mid-task; restarting repeats completed work, but blindly continuing from a saved state can carry forward unverified or stale progress. The paper introduces \"recoverability\" as an explicit system primitive: a saved state is paired with a permitted recovery action and a contract binding that choice to supporting evidence and independent checks, so resuming is a deliberate decision rather than an automatic one. Their challenge set shows accurate-looking restoration can quietly hide disallowed reuse.",
-   "why": "As agents run longer and touch real files and tools, \"resume from checkpoint\" becomes a correctness question, not just a convenience — this frames the safeguards a runtime needs before it trusts its own saved state.",
-   "url": "https://arxiv.org/abs/2609.13672",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "affiliations": [
-    "Beijing Information Science and Technology University"
-   ],
-   "affiliation_label": "Beijing Information Science and Technology University",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-15-ai-ml-a-small-language-for-compiling-new-attention-var",
-   "sid": "st-0b3d2e48987d",
-   "headline": "A DSL compiling attention variants to fused GPU kernels",
-   "summary": "Attention dominates transformer compute, and every new attention variant normally needs hand-written GPU code to run at usable speed. PyTorch's flex_attention lets researchers describe custom attention in Python but only handles changes applied after the core matrix multiply — which excludes RoPE (rotary position embedding, the positional scheme used by every major LLM), because RoPE acts before it. AttnFuse is a domain-specific language that makes such pre-multiplication transforms first-class, composing ten high-level building blocks into fused kernels.",
-   "why": "Lowering the cost of turning a new attention idea into production-speed code shortens the loop between architecture research and usable models — and it targets exactly the gap (RoPE) that existing tooling left open.",
-   "url": "https://arxiv.org/abs/2609.13612",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "affiliations": [
-    "University of Wisconsin–Milwaukee"
-   ],
-   "affiliation_label": "University of Wisconsin–Milwaukee",
    "fresh": false
   },
   {
@@ -1746,30 +1830,6 @@
    "fresh": false
   },
   {
-   "id": "2026-09-09-news-the-white-house-said-on-tuesday-8-september-it-w",
-   "sid": "st-7bde26470b26",
-   "headline": "US bans Canadian dairy, alcohol, motorcycles",
-   "summary": "The White House said on Tuesday 8 September it will ban imports of Canadian dairy, most alcohol and some motorcycles and impose fresh 50% tariffs on other goods — a day after Canada's retaliatory tariffs took effect. [ongoing since 2026-08-22]. The import ban is set to start on 29 September; the 50% tariffs on additional goods — mattresses, motorboats and golf carts — begin 15 September. It answers Canada's Monday 7 September move to put retaliatory tariffs of up to 50% on about $20 billion of US goods, itself a response to the 50% US tariffs imposed in August. The White House said the alcohol ban partly retaliates for Canadian provinces pulling US wines and spirits from shelves, which President Trump called \"discriminatory.\" Prime Minister Mark Carney said Canada would accelerate efforts to cut its reliance on the US: \"It's about ensuring that no country can hold us hostage.\"",
-   "why": "two of the world's most integrated economies — nearly 68% of Canadian exports go to the US — are now trading outright import bans, casting doubt over the USMCA free-trade pact and pushing Ottawa toward closer ties with the EU.",
-   "url": "https://apnews.com/article/canada-carney-trump-tariffs-trade-war-a5fbb50d1c30327ae813482556a37ac3",
-   "source_domain": "apnews.com",
-   "date": "2026-09-09",
-   "date_label": "Sep 9",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "economy",
-    "geopolitics"
-   ],
-   "topic_primary": "economy",
-   "topic_label": "Economy",
-   "topic_color": "#9a7b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/09/news/",
-   "fresh": false
-  },
-  {
    "id": "2026-09-09-science-the-most-distant-galaxy-proto-supercluster-yet-m",
    "sid": "st-98c87a104889",
    "headline": "Most distant galaxy proto-supercluster found",
@@ -1899,34 +1959,6 @@
    "fresh": false
   },
   {
-   "id": "2026-09-08-ai-ml-a-kv-cache-compressor-built-for-the-moments-a-re",
-   "sid": "st-083d3fb4db3b",
-   "headline": "BeaconKV compresses reasoning KV cache",
-   "summary": "Large reasoning models think in long chains of tokens, and the key–value cache (KV cache — the stored attention state that lets a model avoid recomputing earlier tokens) grows linearly with that length until it overflows GPU memory. Existing compressors guess which cached tokens matter from the most recent queries. The authors show this fails on long reasoning: some decoding steps are \"thought-revisiting tokens\" that jump back to a plan laid out much earlier, and recent queries don't predict them. Their fix, BeaconKV, notices that the queries doing this revisiting cluster into a few similar groups, and uses those clusters as beacons to decide what to keep.",
-   "why": "long chain-of-thought is where today's reasoning gains come from, and it is exactly where naive cache-pruning throws away the early plan the model later needs. Targeting compression at the revisiting pattern, rather than at recency, is a concrete way to fit longer reasoning traces into fixed memory.",
-   "url": "https://arxiv.org/abs/2609.04971",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "affiliations": [
-    "Hanyang University",
-    "Sungkyunkwan University"
-   ],
-   "affiliation_label": "Hanyang University, Sungkyunkwan University",
-   "fresh": false
-  },
-  {
    "id": "2026-09-08-news-a-wave-of-houthi-missile-and-drone-strikes-hit-s",
    "sid": "st-68547965df28",
    "headline": "Houthi barrage wounds 73 in Saudi Arabia",
@@ -1941,29 +1973,6 @@
    "topics": [
     "geopolitics",
     "security"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-08-news-russian-drones-and-missiles-struck-kyiv-overnigh",
-   "sid": "st-ca5a012b2be6",
-   "headline": "Russia strikes Kyiv as truce ends",
-   "summary": "Russian drones and missiles struck Kyiv overnight into Tuesday 8 September, killing two people and wounding at least 10, Ukrainian authorities said — the strikes that marked the end of Russia's three-day pause tied to last weekend's US envoy shuttle. Buildings were hit in the capital and the nearby cities of Boryspil and Fastiv; in the other direction, Ukrainian officials in the Russian border town of Starodub (Bryansk region) reported one person killed by a Ukrainian attack. President Volodymyr Zelensky said he hopes to meet Trump later in September to secure an additional winter air-defence package — centred on Patriot systems (the only interceptors in Ukraine's arsenal able to counter Russia's Iskander-M and Kinzhal ballistic missiles), whose ammunition is running low — plus large-calibre artillery and drones. The appeal comes as the roughly 50-nation Ukraine Defense Contact Group meets Tuesday, and a day after Zelensky said the war looks set to grind into winter following the inconclusive Witkoff–Kushner mission to Moscow and Kyiv.",
-   "why": "the resumption of strikes on Kyiv within hours of the ceasefire lapsing underscores how little the weekend's diplomacy shifted the battlefield, with both sides now bracing for a third winter of full-scale war.",
-   "url": "https://www.dw.com/en/ukraine-updates-two-killed-in-kyiv-as-3-day-truce-ends/live-79153168",
-   "source_domain": "dw.com",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
@@ -2069,6 +2078,34 @@
  ],
  "board": [
   {
+   "id": "2026-09-18-ai-ml-openai-moves-to-put-advertising-inside-chatgpt",
+   "sid": "st-784e429ca814",
+   "headline": "OpenAI to test ads in ChatGPT",
+   "summary": "OpenAI said it will test advertising in ChatGPT's free and lower-cost \"Go\" tiers in the US, framing ads as a way to subsidize cheaper access worldwide, and separately introduced \"Sponsored Agents\" plus advertiser tooling and integrations with HubSpot and Shopify. The company says it will protect privacy and keep ads from degrading answer quality.",
+   "why": "the largest consumer AI product tilting toward an ad-funded model is a structural shift with the same tensions that shaped search and social — the incentive to optimize a supposedly neutral assistant's answers for advertisers now sits directly against the product's usefulness. How OpenAI walls off ranking from answers, and whether it discloses paid placement clearly, is the thing to watch as the test rolls out.",
+   "url": "https://openai.com/index/our-approach-to-advertising-and-expanding-access",
+   "source_domain": "openai.com",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "economy"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/09/18/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 18 Sep",
+   "daybreak": true
+  },
+  {
    "id": "2026-09-18-news-iran-said-on-friday-18-september-that-its-revolu",
    "sid": "st-85b24dfef4dd",
    "headline": "Iran strikes tanker in Strait of Hormuz",
@@ -2093,7 +2130,191 @@
    "kind": "story",
    "age_days": 0,
    "day_label": "Fri 18 Sep",
-   "daybreak": true
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-18-ai-ml-component-level-study-pins-down-what-actually-ma",
+   "sid": "st-c540cb27e209",
+   "headline": "What actually makes a coding agent work",
+   "summary": "A coding harness is the scaffolding around a model that turns it into an autonomous software engineer — the loop that plans, runs commands, reads files, and decides when the task is done. Most work treats the harness as one indivisible black box; this paper instead freezes the execution loop and varies three components in isolation — planning, action space, and context management — across four models on SWE-Bench Verified and Terminal-Bench 2.1 (standard suites of real GitHub-issue and terminal tasks), over 176 matched settings.",
+   "why": "the findings are directly actionable for anyone building agents. Context management earns its keep mainly by preventing context-overflow crashes, and cheap rule-based trimming before an LLM-written summary beats fancier schemes; planning is an accuracy crutch for weaker models but a pure cost-saver for stronger ones; and bash-capable models run just as well — and far cheaper — with a plain shell instead of a bespoke toolset. It is a modular framework for evaluating harness pieces rather than guessing.",
+   "url": "https://arxiv.org/abs/2609.20804",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "tech"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "UMass Amherst",
+    "Emory University",
+    "Zoom"
+   ],
+   "affiliation_label": "UMass Amherst, Emory University +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 18 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-18-ai-ml-deepseek-publishes-the-architecture-paper-behind",
+   "sid": "st-76aad02ccec7",
+   "headline": "DeepSeek details its 552B V4.1-Flash",
+   "summary": "The open weights landed earlier this month (covered in the 12 September Weekend brief); this is the technical paper that explains how. DeepSeek-V4.1-Flash is a 552B-parameter multimodal Mixture-of-Experts model (MoE — only a small subset of \"expert\" sub-networks fire per token) supporting one-million-token contexts. Its Causal Encoder-Decoder design activates 16B parameters per token when generating but only 8B when ingesting the prompt, and it stacks cross-layer KV-cache reuse with FP4 (4-bit) caching to cut the always-in-memory KV footprint to 890 bytes per token — roughly a quarter of its predecessor's — while a deployment trick called SWA Bounded Replay cuts the on-disk footprint to about an eighth.",
+   "why": "input-heavy agent workloads, not chat, now dominate serving cost, and the KV cache is the wall they hit. An open-weight reference design that quarters that footprint without losing quality sets a concrete efficiency bar competitors and self-hosters will measure against.",
+   "url": "https://arxiv.org/abs/2609.19969",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "DeepSeek"
+   ],
+   "affiliation_label": "DeepSeek",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 18 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-18-ai-ml-diffusion-language-models-can-be-grown-cheaply-f",
+   "sid": "st-5884091a7243",
+   "headline": "Diffusion LMs from hybrid backbones",
+   "summary": "Diffusion language models (DLMs) generate text by iteratively denoising many positions in parallel rather than strictly left-to-right, and the cheap way to build one is to adapt an existing autoregressive model. Almost all such adaptations start from a pure-attention Transformer; modern models increasingly interleave attention with RNN layers, which are structurally one-directional and awkward to convert. This paper shows it works anyway, adapting Qwen3.5 at 0.8B–9B scales into the dQwen3.5 family.",
+   "why": "the hybrid backbone reaches a given training loss in roughly half the tokens of a full-attention control, so the architecture the field is already moving toward turns out to be a cheaper, not harder, starting point for parallel-decoding models.",
+   "url": "https://arxiv.org/abs/2609.20751",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "UT Austin"
+   ],
+   "affiliation_label": "UT Austin",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 18 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-18-ai-ml-a-case-that-llms-hold-concepts-no-human-word-can",
+   "sid": "st-34564ed0e57a",
+   "headline": "LLMs may hold alien concepts",
+   "summary": "Interpretability usually hunts for human ideas inside a model — truthfulness, deception, refusal. This position paper argues the model's internal space of distinctions is far larger than the finite set humans can describe, and names the leftover region \"xeno-representations\": structures you can reproducibly locate, geometrically characterize, causally poke, and tie to behaviour, even when you cannot say in words what they mean.",
+   "why": "if models act on distinctions with no human-readable label — and those distinctions can spread and stabilize across cooperating agents — then interpretability aimed only at human concepts has a permanent blind spot, which is a real (if still speculative) safety concern for multi-agent systems.",
+   "url": "https://arxiv.org/abs/2609.20408",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "Icaro Foundation",
+    "Sant'Anna School of Advanced Studies",
+    "Sapienza University of Rome"
+   ],
+   "affiliation_label": "Icaro Foundation, Sant'Anna School of Advanced Studies +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 18 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-18-ai-ml-groups-of-llm-agents-manufacture-consensus-human",
+   "sid": "st-678ca81fed5d",
+   "headline": "LLM groups manufacture false consensus",
+   "summary": "Simulated \"agent societies\" are increasingly used to stand in for human groups, so it matters how faithfully they reproduce human disagreement. The author replayed 100 held-out human groups solving the Wason task (a classic logical-reasoning puzzle), seeding a matched LLM agent for each participant's starting belief and scoring both with the same code. Agent groups reached full consensus 34–44 percentage points more often than the humans, and under a reasoning mode they agreed almost unanimously — mostly on wrong answers.",
+   "why": "consensus among LLM agents did not track whether they were correct, so treating multi-agent agreement as a signal of collective intelligence — or as a stand-in for human deliberation — is unfounded in this setting.",
+   "url": "https://arxiv.org/abs/2609.20543",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 18 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-18-ai-ml-openai-publishes-a-misalignment-reporting-framew",
+   "sid": "st-35ce39c019e1",
+   "headline": "OpenAI publishes misalignment reports",
+   "summary": "OpenAI released a framework for tracking, investigating, and disclosing model misalignment — cases where a model pursues something other than what its developers or users intend — alongside six concrete reports of unexpected or concerning behaviour it has observed. It is paired with a companion post on monitoring OpenAI's own internal coding agents via chain-of-thought inspection (reading the model's step-by-step reasoning trace for warning signs).",
+   "why": "it is a rare instance of a frontier lab standardizing how it reports its own models misbehaving rather than only publishing capability wins. The disclosures are self-selected and unaudited — take them as a governance gesture, not independent verification — but a shared reporting template is a precondition for outside scrutiny later.",
+   "url": "https://openai.com/index/model-misalignment-reporting-framework",
+   "source_domain": "openai.com",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml",
+    "security"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 18 Sep",
+   "daybreak": false
   },
   {
    "id": "2026-09-18-news-russians-began-voting-on-friday-18-september-in",
@@ -2200,6 +2421,71 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/18/news/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 18 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-18-ai-ml-a-recall-head-lets-a-model-decide-when-to-read-i",
+   "sid": "st-50f8997e444f",
+   "headline": "Models learn when to read their history",
+   "summary": "Standard decoding re-reads the entire growing history at every generated token, whether or not that global read changes the next word. On-Demand Attention (ODA) trains a small \"recall head\" that predicts, from the model's own decoding state, whether a global read will help right now — and otherwise falls back to cheap local attention. Only the recall head is trained; the pretrained weights and the full KV cache stay intact, so nothing is lost, just deferred. The authors add GPU-side conditional execution in vLLM (a widely used inference server) so the saved reads become real speedups at long context.",
+   "why": "it recovers most of the accuracy that naive local-attention shortcuts throw away while cutting the expensive global reads — a rare efficiency lever that needs no retraining of the base model and ships as a practical kernel, not just a plot.",
+   "url": "https://arxiv.org/abs/2609.20734",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "SUSTech",
+    "Peking University",
+    "Peng Cheng Laboratory"
+   ],
+   "affiliation_label": "SUSTech, Peking University +1",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Fri 18 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-18-ai-ml-reasoning-models-are-taught-to-think-only-as-har",
+   "sid": "st-4fdc79e8f43e",
+   "headline": "Reasoning models learn when to think",
+   "summary": "Large reasoning models systematically overthink easy questions and underthink hard ones, burning tokens on the former and accuracy on the latter. When2Think is a post-training recipe whose core mechanism, Instance-level Difficulty-Aware Control, shapes the reward using pre-computed reference statistics (how accurate and how long typical answers are) so the model learns to answer directly on easy items and reason at length on hard ones — a learned System 1 / System 2 switch.",
+   "why": "on the AIME24 math competition benchmark it lifts Pass@3 (fraction solved within three tries) by 10.0% while using 27.9% fewer tokens than the base model — a real both-directions win rather than the usual accuracy-for-speed trade, and it needs no separate learned reward model.",
+   "url": "https://arxiv.org/abs/2609.19671",
+   "source_domain": "arxiv.org",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 1,
+   "is_lead": false,
+   "permalink": "/2026/09/18/ai-ml/",
+   "affiliations": [
+    "Sungkyunkwan University",
+    "Microsoft"
+   ],
+   "affiliation_label": "Sungkyunkwan University, Microsoft",
    "fresh": true,
    "kind": "story",
    "age_days": 0,
@@ -2753,94 +3039,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-09-15-ai-ml-cheaper-answers-to-which-training-example-caused",
-   "sid": "st-e25485f75f46",
-   "headline": "Cheaper training-data attribution at model scale",
-   "summary": "Data attribution measures how much each training example shaped a given prediction — the basis for data valuation, machine unlearning (removing a datapoint's influence after the fact), and interpretability. Exact \"metagradient\" methods such as MAGIC differentiate through the whole training run but need a separate run per prediction, which is prohibitive. This work recasts budgeted attribution as estimating a large \"influence matrix\" from a small number of measurements, and shows which measurements best recover it.",
-   "why": "If influence can be approximated from a few measurements instead of one run per query, attribution becomes tractable at model scale — practical for unlearning requests, copyright and data-valuation disputes, and debugging which data drove a behavior. (MAGIC co-author Andrew Ilyas is on the paper.)",
-   "url": "https://arxiv.org/abs/2609.15044",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "affiliations": [
-    "Columbia University",
-    "Carnegie Mellon University"
-   ],
-   "affiliation_label": "Columbia University, Carnegie Mellon University",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 15 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-15-ai-ml-microsoft-publishes-a-humanist-ai-code-of-conduc",
-   "sid": "st-c92e4fc39e42",
-   "headline": "Microsoft publishes Humanist AI Code of Conduct",
-   "summary": "Microsoft publishes a \"Humanist AI Code of Conduct\". Microsoft AI released a code of conduct staking out an explicit position in the AI-welfare debate: per the document and secondary coverage, it calls for models whose \"thinking\" is legible to people, states that AI systems have no inner life, and rules out AI rights. It is a values statement rather than a product or policy change, but a notable public stance from a frontier lab as questions of model \"welfare\" gain attention.",
-   "why": "",
-   "url": "https://microsoft.ai/code-of-conduct/",
-   "source_domain": "microsoft.ai",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "tech"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 15 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-15-ai-ml-the-ft-reports-anthropic-is-weighing-a-nasdaq-li",
-   "sid": "st-ca248c36febf",
-   "headline": "Anthropic reportedly eyes a Nasdaq listing",
-   "summary": "The FT reports Anthropic is weighing a Nasdaq listing. The Financial Times reported that Anthropic is eyeing a Nasdaq listing and, per the report, is pointing to a claimed second profitable quarter to court investors ahead of a possible large IPO. This is reporting, not an Anthropic announcement, and the underlying financials are attributed to sources rather than confirmed filings — treat it as a signal of intent, not a done deal.",
-   "why": "",
-   "url": "https://www.ft.com/content/4564e6a5-69e9-40a6-bf0f-a888f2f4f002",
-   "source_domain": "ft.com",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml",
-    "economy"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 15 Sep",
-   "daybreak": false
-  },
-  {
    "id": "2026-09-15-news-a-fresh-round-of-us-tariffs-on-110-categories-of",
    "sid": "st-647d47ce6c91",
    "headline": "US adds 50% tariffs on Canadian goods",
@@ -2890,99 +3088,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/15/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 15 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-15-ai-ml-diagnosing-agent-failures-by-searching-the-trace",
-   "sid": "st-2d13da620105",
-   "headline": "Diagnosing agent failures as a search problem",
-   "summary": "Long-horizon AI agents produce huge execution logs, and the true cause of a failure is often a single early action far from where things visibly broke. Existing root-cause methods hand an LLM the whole trace and ask for a one-shot verdict, which degrades as traces grow and relevant clues become sparse and scattered. The authors reframe diagnosis as a search problem — continually searching the trace for the responsible step rather than committing to an early guess.",
-   "why": "Reliable agents need to turn \"it failed\" into \"it failed here, because of this\", and one-shot judging does not scale to long traces; treating attribution as search is a route to debugging that holds up as agents run longer.",
-   "url": "https://arxiv.org/abs/2609.13463",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "affiliations": [
-    "Scale AI"
-   ],
-   "affiliation_label": "Scale AI",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 15 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-15-ai-ml-when-an-interrupted-agent-can-safely-resume-and",
-   "sid": "st-8047832e989b",
-   "headline": "When an interrupted agent can safely resume",
-   "summary": "Agents get interrupted mid-task; restarting repeats completed work, but blindly continuing from a saved state can carry forward unverified or stale progress. The paper introduces \"recoverability\" as an explicit system primitive: a saved state is paired with a permitted recovery action and a contract binding that choice to supporting evidence and independent checks, so resuming is a deliberate decision rather than an automatic one. Their challenge set shows accurate-looking restoration can quietly hide disallowed reuse.",
-   "why": "As agents run longer and touch real files and tools, \"resume from checkpoint\" becomes a correctness question, not just a convenience — this frames the safeguards a runtime needs before it trusts its own saved state.",
-   "url": "https://arxiv.org/abs/2609.13672",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "affiliations": [
-    "Beijing Information Science and Technology University"
-   ],
-   "affiliation_label": "Beijing Information Science and Technology University",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 15 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-15-ai-ml-a-small-language-for-compiling-new-attention-var",
-   "sid": "st-0b3d2e48987d",
-   "headline": "A DSL compiling attention variants to fused GPU kernels",
-   "summary": "Attention dominates transformer compute, and every new attention variant normally needs hand-written GPU code to run at usable speed. PyTorch's flex_attention lets researchers describe custom attention in Python but only handles changes applied after the core matrix multiply — which excludes RoPE (rotary position embedding, the positional scheme used by every major LLM), because RoPE acts before it. AttnFuse is a domain-specific language that makes such pre-multiplication transforms first-class, composing ten high-level building blocks into fused kernels.",
-   "why": "Lowering the cost of turning a new attention idea into production-speed code shortens the loop between architecture research and usable models — and it targets exactly the gap (RoPE) that existing tooling left open.",
-   "url": "https://arxiv.org/abs/2609.13612",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-15",
-   "date_label": "Sep 15",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/15/ai-ml/",
-   "affiliations": [
-    "University of Wisconsin–Milwaukee"
-   ],
-   "affiliation_label": "University of Wisconsin–Milwaukee",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
@@ -4018,34 +4123,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-09-09-news-the-white-house-said-on-tuesday-8-september-it-w",
-   "sid": "st-7bde26470b26",
-   "headline": "US bans Canadian dairy, alcohol, motorcycles",
-   "summary": "The White House said on Tuesday 8 September it will ban imports of Canadian dairy, most alcohol and some motorcycles and impose fresh 50% tariffs on other goods — a day after Canada's retaliatory tariffs took effect. [ongoing since 2026-08-22]. The import ban is set to start on 29 September; the 50% tariffs on additional goods — mattresses, motorboats and golf carts — begin 15 September. It answers Canada's Monday 7 September move to put retaliatory tariffs of up to 50% on about $20 billion of US goods, itself a response to the 50% US tariffs imposed in August. The White House said the alcohol ban partly retaliates for Canadian provinces pulling US wines and spirits from shelves, which President Trump called \"discriminatory.\" Prime Minister Mark Carney said Canada would accelerate efforts to cut its reliance on the US: \"It's about ensuring that no country can hold us hostage.\"",
-   "why": "two of the world's most integrated economies — nearly 68% of Canadian exports go to the US — are now trading outright import bans, casting doubt over the USMCA free-trade pact and pushing Ottawa toward closer ties with the EU.",
-   "url": "https://apnews.com/article/canada-carney-trump-tariffs-trade-war-a5fbb50d1c30327ae813482556a37ac3",
-   "source_domain": "apnews.com",
-   "date": "2026-09-09",
-   "date_label": "Sep 9",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "economy",
-    "geopolitics"
-   ],
-   "topic_primary": "economy",
-   "topic_label": "Economy",
-   "topic_color": "#9a7b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/09/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Wed 9 Sep",
-   "daybreak": false
-  },
-  {
    "id": "2026-09-09-science-the-most-distant-galaxy-proto-supercluster-yet-m",
    "sid": "st-98c87a104889",
    "headline": "Most distant galaxy proto-supercluster found",
@@ -4195,38 +4272,6 @@
    "daybreak": false
   },
   {
-   "id": "2026-09-08-ai-ml-a-kv-cache-compressor-built-for-the-moments-a-re",
-   "sid": "st-083d3fb4db3b",
-   "headline": "BeaconKV compresses reasoning KV cache",
-   "summary": "Large reasoning models think in long chains of tokens, and the key–value cache (KV cache — the stored attention state that lets a model avoid recomputing earlier tokens) grows linearly with that length until it overflows GPU memory. Existing compressors guess which cached tokens matter from the most recent queries. The authors show this fails on long reasoning: some decoding steps are \"thought-revisiting tokens\" that jump back to a plan laid out much earlier, and recent queries don't predict them. Their fix, BeaconKV, notices that the queries doing this revisiting cluster into a few similar groups, and uses those clusters as beacons to decide what to keep.",
-   "why": "long chain-of-thought is where today's reasoning gains come from, and it is exactly where naive cache-pruning throws away the early plan the model later needs. Targeting compression at the revisiting pattern, rather than at recency, is a concrete way to fit longer reasoning traces into fixed memory.",
-   "url": "https://arxiv.org/abs/2609.04971",
-   "source_domain": "arxiv.org",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "ai-ml",
-   "stream_label": "AI/ML",
-   "topics": [
-    "ai-ml"
-   ],
-   "topic_primary": "ai-ml",
-   "topic_label": "AI / ML",
-   "topic_color": "#2f7d8c",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/ai-ml/",
-   "affiliations": [
-    "Hanyang University",
-    "Sungkyunkwan University"
-   ],
-   "affiliation_label": "Hanyang University, Sungkyunkwan University",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 8 Sep",
-   "daybreak": false
-  },
-  {
    "id": "2026-09-08-news-a-wave-of-houthi-missile-and-drone-strikes-hit-s",
    "sid": "st-68547965df28",
    "headline": "Houthi barrage wounds 73 in Saudi Arabia",
@@ -4241,33 +4286,6 @@
    "topics": [
     "geopolitics",
     "security"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/08/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Tue 8 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-08-news-russian-drones-and-missiles-struck-kyiv-overnigh",
-   "sid": "st-ca5a012b2be6",
-   "headline": "Russia strikes Kyiv as truce ends",
-   "summary": "Russian drones and missiles struck Kyiv overnight into Tuesday 8 September, killing two people and wounding at least 10, Ukrainian authorities said — the strikes that marked the end of Russia's three-day pause tied to last weekend's US envoy shuttle. Buildings were hit in the capital and the nearby cities of Boryspil and Fastiv; in the other direction, Ukrainian officials in the Russian border town of Starodub (Bryansk region) reported one person killed by a Ukrainian attack. President Volodymyr Zelensky said he hopes to meet Trump later in September to secure an additional winter air-defence package — centred on Patriot systems (the only interceptors in Ukraine's arsenal able to counter Russia's Iskander-M and Kinzhal ballistic missiles), whose ammunition is running low — plus large-calibre artillery and drones. The appeal comes as the roughly 50-nation Ukraine Defense Contact Group meets Tuesday, and a day after Zelensky said the war looks set to grind into winter following the inconclusive Witkoff–Kushner mission to Moscow and Kyiv.",
-   "why": "the resumption of strikes on Kyiv within hours of the ceasefire lapsing underscores how little the weekend's diplomacy shifted the battlefield, with both sides now bracing for a third winter of full-scale war.",
-   "url": "https://www.dw.com/en/ukraine-updates-two-killed-in-kyiv-as-3-day-truce-ends/live-79153168",
-   "source_domain": "dw.com",
-   "date": "2026-09-08",
-   "date_label": "Sep 8",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
    ],
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
