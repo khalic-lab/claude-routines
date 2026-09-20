@@ -1,0 +1,63 @@
+date: 2026-09-20
+applied: false
+# Evaluator sandbox egress is allowlist-walled again this run: direct GET of plos.org /
+# agu.org / anthropic.com / esrf.fr / ohchr.org / congress.gov all returned code 000 with
+# "CONNECT tunnel failed, response 403"; only allowlisted hosts (aljazeera.com) resolved,
+# and linkcheck resolved 7/20 for the same reason. So the reach flips below rest on
+# WRITER-side fetch telemetry (health.json -> briefs.feeds), NOT on evaluator probes.
+# Each is a domain recorded reach: direct whose writer fetches this window were 0 via curl
+# and succeeded only via the proxy. Writers confirm with the bearer at next citation.
+patches:
+  - domain: anthropic.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: >-
+      Recorded reach: direct, but this window's writer fetch log shows anthropic.com at
+      0 ok-curl / 39 ok-proxy / 53 fail (health.json briefs.feeds). Curl never once
+      succeeded; the proxy carried every success. Direct is not the real reach.
+  - domain: the-decoder.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: >-
+      Recorded reach: direct; writer fetch log this window 0 ok-curl / 12 ok-proxy / 12 fail
+      (health.json briefs.feeds). Proxy-only in practice.
+  - domain: news.un.org
+    field: reach
+    from: direct
+    to: proxy
+    evidence: >-
+      Recorded reach: direct; writer fetch log this window 0 ok-curl / 13 ok-proxy / 17 fail
+      (health.json briefs.feeds). Proxy-only in practice; the 57% fail rate also means UN News
+      often did not resolve at all (news 09-19 waived discovery partly on this).
+  - domain: rts.ch
+    field: reach
+    from: direct
+    to: proxy
+    evidence: >-
+      Recorded reach: direct; writer fetch log this window 0 ok-curl / 2 ok-proxy / 7 fail
+      (health.json briefs.feeds). Only 2 of 9 attempts succeeded, all via proxy; reach: direct
+      is wrong and the domain may warrant blocked if the 78% fail rate persists.
+
+  # New primary-science candidates from the Sunday scout (science was the worst-deficit stream:
+  # new_domains 8 = lowest, top5_share 1.00 = highest). Both are genuine primary publishers absent
+  # from the registry; both 403'd the evaluator egress, so reach: proxy-needed and the writers
+  # vet at first citation. Appended to sources/candidates.jsonl this run.
+  - domain: plos.org
+    action: add
+    proposed_status: candidate
+    reach: proxy-needed
+    stream: science
+    evidence: >-
+      Public Library of Science — open-access primary journals (PLOS ONE/Biology/Medicine),
+      Atom feed at journals.plos.org/plosone/feed/atom. Genuine primary; broadens science beyond
+      the nature.com/arXiv anchor pair driving top5_share 1.00. Needs a probation cycle.
+  - domain: agu.org
+    action: add
+    proposed_status: candidate
+    reach: proxy-needed
+    stream: science
+    evidence: >-
+      American Geophysical Union — primary earth/space-science publisher and newsroom. Fills a
+      genuine science-registry gap (geophysics/planetary primaries). Needs a probation cycle.
