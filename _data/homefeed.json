@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-21",
+ "generated": "2026-09-22",
  "count": 80,
  "topics": [
   {
@@ -18,7 +18,7 @@
    "key": "politics",
    "label": "Politics",
    "color": "#9a6a34",
-   "count": 10
+   "count": 11
   },
   {
    "key": "science",
@@ -27,33 +27,33 @@
    "count": 10
   },
   {
-   "key": "security",
-   "label": "Security",
-   "color": "#6a4b8a",
-   "count": 10
-  },
-  {
    "key": "world",
    "label": "World",
    "color": "#6b6f76",
-   "count": 9
+   "count": 10
   },
   {
-   "key": "sports",
-   "label": "Sports",
-   "color": "#c26b2e",
-   "count": 8
+   "key": "security",
+   "label": "Security",
+   "color": "#6a4b8a",
+   "count": 9
   },
   {
    "key": "switzerland",
    "label": "Switzerland",
    "color": "#c2454a",
-   "count": 7
+   "count": 8
   },
   {
    "key": "economy",
    "label": "Economy",
    "color": "#9a7b2e",
+   "count": 7
+  },
+  {
+   "key": "sports",
+   "label": "Sports",
+   "color": "#c26b2e",
    "count": 5
   },
   {
@@ -94,20 +94,125 @@
     "<strong>2. Efficiency's centre of gravity has finished migrating from training to inference — and the KV cache is the ground everyone is fighting over.</strong> For two years \"make models cheaper\" mostly meant training-time tricks; this week it is unambiguously about serving long-context, input-heavy <em>agent</em> workloads, and almost every efficiency paper names the same enemy. The KV cache — the running per-token memory a model must keep so it can attend back over everything it has already read — is the wall that agent inference hits, because agents ingest enormous prompts and think for hundreds of steps. DeepSeek's <em>V4.1-Flash</em> architecture paper is the reference design: it cuts the always-resident KV footprint to 890 bytes per token, about a quarter of its predecessor, and splits its own compute so it burns 8B parameters reading the prompt and 16B generating. <em>On-Demand Attention</em> attacks the same cost from the model side, training a tiny \"recall head\" to decide when a full history read is even worth doing. <em>When2Think</em> and <em>Never Give Up</em> attack it from the compute-allocation side — spend reasoning tokens, or RL samples, only on the problems that actually need them. The coding-harness study finds the unglamorous corollary: cheap rule-based context-trimming beats elaborate LLM-written summaries, and a bash-capable model needs no bespoke toolset. Even the week's headline local-inference release, a 1.72-bit ternary quantization of a 27B model, is the same pressure expressed in bits. For a reader who runs models locally or pays a serving bill, the practical read is that the cost curve is now set by memory and attention over long context, not by the FLOPs of a single forward pass — and that is where the year's gains will come from.",
     "<strong>3. It was a banner week for mathematics — and, pointedly, the machines sat this one out.</strong> Last week's loudest math story was AI-assisted fluid-blowup proofs and a contested \"AI solved a Millennium problem\" narrative. This week the field answered with four conjecture-level results produced the old way, by human ingenuity: <em>Marton's conjecture</em> got a polynomial-time algorithm (turning a celebrated 2025 existence theorem into an efficient procedure, with quantum-learning payoffs); <em>Szpiro's conjecture</em> — a cousin of the famous <em>abc</em> conjecture — got an unconditional bound previously known only under a deep unproven hypothesis; the <em>Pach–Tardos conjecture</em> in extremal combinatorics was proved outright; and new <em>Euclidean chromatic-number</em> bounds refuted a standing conjecture about optimal colourings. A quiet thread connects them and is worth naming: each is fundamentally about <em>structure under a constraint</em> — Marton is literally about additive structure in a set, Pach–Tardos about how much of a matrix you can fill while forbidding a pattern, the chromatic bounds squeezed out of explicit lattices. The same week, the quantum-information side matured in the same direction, from toy to real: LIGO evaded quantum measurement back-action on 40-kg mirrors, and a long-open construction of \"good\" quantum locally-testable codes landed. The honest synthesis is the mirror image of last week's: the machines are formidable at generating and checking answers, but the results that moved mathematics this week came from people finding the <em>idea</em>, and Quanta's own week — a feature on a decades-old graph conjecture finally proved — reads the same way."
    ]
-  },
-  {
-   "stream": "science",
-   "date": "2026-09-16",
-   "date_label": "Sep 16",
-   "kicker": "Science · Why it matters · Sep 16",
-   "heading": "Why it matters",
-   "title": "",
-   "paras": [
-    "Two of this week's astronomy results cut the same way: what a single detection <em>seems</em> to show can mislead until a wider or deeper survey reframes it. The Murchison array found low-frequency FRBs at the rate higher-frequency surveys predicted — killing the idea that the low band was intrinsically empty — while the little-red-dots fight turns on wringing whole formation histories from a few pixels, where each new spectrum or simulation shifts the odds. In both, instruments and statistics, not any one image, are doing the arbitration."
-   ]
   }
  ],
  "stories": [
+  {
+   "id": "2026-09-22-news-the-war-in-yemen-has-flared-back-into-open-confl",
+   "sid": "st-ca3429e95979",
+   "headline": "Yemen war reignites on the Red Sea",
+   "summary": "The war in Yemen has flared back into open conflict, with Iran-aligned Houthi fighters — who seized the Red Sea port of Mocha and the coast this month — battling Saudi-backed government forces on Monday 21 September for the Kahboub heights overlooking the Bab al-Mandeb strait, one of the world's busiest oil and shipping chokepoints. [ongoing since 2026-09-11]. The renewed fighting has killed at least 674 people and displaced more than 158,000, officials cited by Al Jazeera said; the UN's migration agency (IOM) had logged nearly 130,000 displaced by 21 September, most fleeing Ta'iz and Lahj. On Monday the foreign ministers of the G7 (Group of Seven — the US, UK, Canada, France, Germany, Italy and Japan), meeting on the sidelines of the UN General Assembly in New York, condemned \"in the strongest terms\" the Houthis' \"unacceptable continued strikes\" on Saudi Arabia — including a Houthi-claimed attack on Riyadh, the first of this escalation — and urged Iran to stop arming the group. Control of the Kahboub mountains would let the Houthis sever the government-held south from the coast. The New York Times reported that President Donald Trump prepared US airstrikes on the Houthis on Sunday 20 September, after pleas from Saudi Crown Prince Mohammed bin Salman, then called them off at the last minute; Washington has so far refused Riyadh's requests to join the fight, and Houthi leader Abdul-Malik al-Houthi warned the US against direct involvement.",
+   "why": "A Yemeni war that had been largely frozen since a UN-brokered truce in 2022 is now the most dangerous flashpoint of the post-Iran-war Middle East, and Houthi control of Bab al-Mandeb threatens the Red Sea trade route that carries a large share of the oil and containers moving between Asia and Europe.",
+   "url": "https://www.aljazeera.com/news/2026/9/22/houthis-battle-for-strategic-heights-in-yemen-as-thousands-more-flee-homes",
+   "source_domain": "aljazeera.com",
+   "date": "2026-09-22",
+   "date_label": "Sep 22",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/09/22/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-22-news-a-united-nations-human-rights-investigator-concl",
+   "sid": "st-119114f1ba55",
+   "headline": "UN expert calls US boat strikes crimes",
+   "summary": "A United Nations human-rights investigator concluded that there are \"reasonable grounds to believe\" the United States' campaign of strikes on boats it says are trafficking drugs \"constituted crimes against humanity,\" in a briefing note the rapporteur posted on Sunday 21 September. Ben Saul, the UN special rapporteur on human rights and counter-terrorism (an independent expert mandated by the Human Rights Council, not a UN staffer), wrote that 68 attacks in the Pacific and Caribbean since September 2025 had killed 223 people — a tally other monitors put higher, at 234 in 66 strikes — and amounted to \"serial extrajudicial killings\" that no claim of self-defence or international law could justify. The most recent strike, on Saturday 20 September, killed four people in the Caribbean; US Southern Command, which runs the operations, described the dead as \"narco-terrorists\" but, as in previous cases, released no names and no evidence of the intelligence it says confirmed their involvement. Saul explicitly rejected the Trump administration's argument, made to Congress, that the crews were armed combatants from \"designated terrorist organizations.\"",
+   "why": "It is the sharpest legal challenge yet from within the UN system to a US policy of killing suspects at sea without trial, and it reframes what the administration presents as counter-narcotics enforcement as a potential international crime.",
+   "url": "https://www.theguardian.com/world/2026/sep/21/us-boat-strikes-crime-against-humanity",
+   "source_domain": "theguardian.com",
+   "date": "2026-09-22",
+   "date_label": "Sep 22",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/22/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-22-news-three-us-news-organisations-cnn-ms-now-and-polit",
+   "sid": "st-4950026b1222",
+   "headline": "CNN, Politico sue Trump over press ban",
+   "summary": "Three US news organisations — CNN, MS NOW and Politico — said on Monday 21 September they were suing the Trump administration after the White House revoked their reporters' credentials, escalating a press-freedom clash into the courts. [ongoing since 2026-09-18]. The outlets said they had notified the government of a lawsuit \"to protect our First Amendment rights and defend the principle that the government does not decide what the press reports or publishes,\" a day after their journalists' entry badges were disabled \"without notice or process.\" Trump, who last week barred the three from reporting at the White House and accused them of publishing \"fiction,\" wrote on social media that he was not targeting \"the Free Press\" but \"instituting an assault on the FAKE NEWS.\" Separately, SRF reported that several US broadcasters — including Fox News — declined to send crews on a presidential trip in protest at the exclusions.",
+   "why": "The suit turns a rolling dispute between the president and outlets he dislikes into a test of whether a US administration can strip White House access as a punishment for coverage — a First Amendment question with no clear precedent.",
+   "url": "https://www.dw.com/en/us-news-outlets-sue-trump-over-white-house-ban/a-79362618",
+   "source_domain": "dw.com",
+   "date": "2026-09-22",
+   "date_label": "Sep 22",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "politics"
+   ],
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/22/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-22-news-the-leadership-of-the-swiss-armed-forces-flew-to",
+   "sid": "st-e9c7f2dcae62",
+   "headline": "Swiss army signs its first F-35 in Texas",
+   "summary": "The leadership of the Swiss armed forces flew to Lockheed Martin's plant in Fort Worth, Texas, on Monday 21 September to sign the fuselage of Switzerland's first F-35A fighter jet — a ceremonial \"bulkhead signing\" that lands amid the deepest crisis the defence procurement has faced. [ongoing since 2026-09-15]. Army chief Benedikt Roos, air-force commander Christian Oppliger, armaments-agency (Armasuisse) head Urs Loher and Switzerland's ambassador to Washington attended; eight Swiss jets are now in production, each taking about 20 months to build. The visit follows a finding days earlier by the National Council's oversight committee that the \"fixed price\" the Defence Department (VBS) had promised voters never existed — Switzerland, like every buyer, must pay whatever price Washington negotiates with Lockheed for each production lot, because the plant is US-government-owned. As a result, the 6 billion francs approved by voters in 2020 will buy only 30 jets instead of the planned 36, even with a 394-million-franc top-up; Roos told Le Temps the fleet would ultimately need to be larger still.",
+   "why": "The signing is the government trying to project momentum on a purchase that has become, in NZZ's words, one of the worst scandals the VBS has known — and the open questions about operating costs over the jets' 30-year life mean the final bill to Swiss taxpayers is still unknown.",
+   "url": "https://www.nzz.ch/schweiz/fixpreis-skandal-beim-f-35-beim-besuch-in-der-produktionsstaette-in-den-usa-will-die-schweizer-armee-lieber-nach-vorne-schauen-ld.10024848",
+   "source_domain": "nzz.ch",
+   "date": "2026-09-22",
+   "date_label": "Sep 22",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/22/news/",
+   "fresh": true
+  },
+  {
+   "id": "2026-09-22-news-vaud-voters-go-to-the-polls-on-sunday-27-septemb",
+   "sid": "st-73ca9ea4bcb5",
+   "headline": "Vaud votes Sunday on 12% tax cut",
+   "summary": "Vaud voters go to the polls on Sunday 27 September on a popular initiative, \"Baisse d'impôts pour tous,\" that would cut the canton's income and wealth tax on individuals by a flat 12% from the 2027 tax year — and, with five days to go, the outcome looks genuinely open. The cantonal government and the Grand Council recommend rejection: they estimate the cut would drain about 272 million francs a year in revenue on top of tax reductions already in train (worth some 365 million a year from 2027), against a 2026 budget that already runs a 297-million-franc deficit, and warn it could force cuts to public services and squeeze municipalities indirectly. The initiative's backers argue Vaud over-taxed residents through its surplus years and that the cut is a reasonable rebalancing that would restore purchasing power to the middle class. Le Temps reports the left-right battle lines are blurring, with some left-leaning voters open to the cut and some centre-right (PLR) deputies wary of the hit to communal budgets.",
+   "why": "It is a direct, dated decision on the cost of living and the size of the cantonal state for people in Vaud — and a vote that will either lock in a large permanent revenue cut or reaffirm the more gradual relief the authorities prefer.",
+   "url": "https://www.vd.ch/actualites/communiques-de-presse-de-letat-de-vaud/detail/communique/le-peuple-se-prononcera-sur-linitiative-populaire-baisse-dimpots-pour-tous",
+   "source_domain": "vd.ch",
+   "date": "2026-09-22",
+   "date_label": "Sep 22",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/22/news/",
+   "fresh": true
+  },
   {
    "id": "2026-09-21-news-two-german-state-elections-on-sunday-20-septembe",
    "sid": "st-6299f47c2ec9",
@@ -129,7 +234,7 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/09/21/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-21-sports-reusser-retains-her-world-time-trial-title-on-he",
@@ -152,7 +257,7 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/09/21/sports/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-21-news-russia-s-ruling-united-russia-party-won-the-stat",
@@ -176,7 +281,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/21/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-21-news-iran-ordered-the-closure-of-the-french-language",
@@ -199,7 +304,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/21/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-21-news-pakistani-airstrikes-hit-afghanistan-s-eastern-b",
@@ -222,31 +327,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/21/news/",
-   "fresh": true
-  },
-  {
-   "id": "2026-09-21-news-the-federal-department-of-defence-vbs-published",
-   "sid": "st-249c730bb69b",
-   "headline": "VBS report clears spy service cyber unit",
-   "summary": "The Federal Department of Defence (VBS) published on Monday 21 September the final report of an administrative investigation into the former cyber unit of the Federal Intelligence Service (NDB), concluding that the incidents there are \"sufficiently clarified\" and that earlier recommendations have largely been implemented, while questions over dealings with the Russian firm Kaspersky remain open. The inquiry, run by an independent law firm and commissioned in summer 2025 after an SRF investigation revealed the unit had shared sensitive data with private cybersecurity companies including Kaspersky, found no indication of large-scale data deletion or systematic espionage — no sign, in the VBS's framing, of a \"Russia affair.\" It said \"certain uncertainties\" persist around the former cyber unit's cooperation with Kaspersky, which the Office of the Attorney General is still examining in a separate criminal probe. The NDB has introduced changes including new rules for reporting suspected misconduct, and a reorganisation of the cyber unit and the service is due to be completed by the end of 2026.",
-   "why": "The report is the government's attempt to draw a line under a politically damaging affair about whether Switzerland's spy agency leaked material toward Russia — but with the prosecutor's inquiry unfinished, it stops short of fully closing the question.",
-   "url": "https://www.vbs.admin.ch/de/medienmitteilungen",
-   "source_domain": "vbs.admin.ch",
-   "date": "2026-09-21",
-   "date_label": "Sep 21",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "security"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/21/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-21-sports-lugano-drop-their-first-points-but-stay-clear-at",
@@ -269,7 +350,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/21/sports/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-21-sports-atl-tico-beat-10-man-real-madrid-to-blow-the-tit",
@@ -292,31 +373,7 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/21/sports/",
-   "fresh": true
-  },
-  {
-   "id": "2026-09-21-news-switzerland-has-stopped-importing-beef-and-poult",
-   "sid": "st-82f1b7219d83",
-   "headline": "Switzerland halts Brazilian meat imports",
-   "summary": "Switzerland has stopped importing beef and poultry from Brazil since 3 September, aligning with an EU ban imposed because Brazil could not give sufficient guarantees on antibiotic use in livestock, the Federal Food Safety and Veterinary Office (BLV) confirmed. EU rules bar antibiotics for growth promotion and ban so-called reserve antibiotics — those kept in reserve for human medicine — in farm animals entirely, to slow the spread of antibiotic resistance. The effect on Swiss shelves is uneven: nearly 80% of the beef eaten in Switzerland is home-produced and most imports come from Germany and Austria, so the beef impact is minimal, whereas about 40% of poultry is imported and roughly a third of that came from Brazil. The industry body Proviande calls the poultry situation manageable but does not rule out price rises.",
-   "why": "It is a concrete, if modest, cost-of-living and food-safety story — a rule change made in Brussels and mirrored in Bern that could nudge up chicken prices and shows how closely Swiss import standards track the EU's.",
-   "url": "https://www.srf.ch/sendungen/kassensturz-espresso/espresso/rindfleisch-und-gefluegel-schweiz-stoppt-fleisch-aus-brasilien-wegen-antibiotika",
-   "source_domain": "srf.ch",
-   "date": "2026-09-21",
-   "date_label": "Sep 21",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "economy"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/21/news/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-21-sports-manchester-city-edge-back-to-the-top-of-the-prem",
@@ -339,7 +396,7 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/09/21/sports/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-21-sports-f1-confirms-a-24-race-2027-calendar-with-a-first",
@@ -362,7 +419,7 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/09/21/sports/",
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-09-20-news-opponents-of-new-nuclear-power-plants-have-gathe",
@@ -811,6 +868,30 @@
    "fresh": false
   },
   {
+   "id": "2026-09-19-news-voters-in-berlin-and-mecklenburg-western-pomeran",
+   "sid": "st-a89ad60de095",
+   "headline": "Germany votes in Berlin and Mecklenburg polls",
+   "summary": "Voters in Berlin and Mecklenburg–Western Pomerania go to the polls on Sunday 20 September in two German state elections shadowed by far-right momentum. In the northeastern state of Mecklenburg–Western Pomerania, a tight race is expected between the Alternative for Germany (AfD) and the centre-left Social Democrats (SPD) of Premier Manuela Schwesig, with the Greens hovering around the 5% threshold needed to stay in the state parliament; in Berlin, Chancellor Friedrich Merz's Christian Democrats (CDU) are neck-and-neck with the left-wing Die Linke, and the left-populist Sahra Wagenknecht Alliance (BSW) risks slipping below 5%. Public broadcaster ZDF put undecided voters at 21% in Mecklenburg and 23% in Berlin as of Thursday. The votes fall two weeks after the AfD's landslide in Saxony-Anhalt: Charlotte Knobloch, former head of Germany's Central Council of Jews, renewed her call for the party to be banned, and Berlin police searched the home of an aide to the AfD's lead Berlin candidate over suspected weapons- and explosives-law offences.",
+   "why": "two more strong AfD showings would sharpen the strain on Germany's mainstream parties, who still refuse to govern with a party that now tops polls across the east.",
+   "url": "https://www.dw.com/en/germany-news-campaigns-wrap-up-in-two-state-elections/live-79335548",
+   "source_domain": "dw.com",
+   "date": "2026-09-19",
+   "date_label": "Sep 19",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "politics",
+    "world"
+   ],
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/19/news/",
+   "fresh": false
+  },
+  {
    "id": "2026-09-18-ai-ml-openai-moves-to-put-advertising-inside-chatgpt",
    "sid": "st-784e429ca814",
    "headline": "OpenAI to test ads in ChatGPT",
@@ -956,6 +1037,35 @@
    "fresh": false
   },
   {
+   "id": "2026-09-18-news-a-new-working-paper-by-economists-at-the-univers",
+   "sid": "st-6249db85bb4e",
+   "headline": "Study: richest Swiss pay lowest tax rate",
+   "summary": "A new working paper by economists at the University of St. Gallen and ETH Zurich finds that Switzerland's top 1 percent carry the country's lightest effective tax burden, and that income inequality is larger than tax statistics suggest. \"Income, Wealth, and Redistribution in a Tax Haven: Distributional National Accounts for Switzerland,\" by Enea Baselgia, Remo Gurtner, Julian Koller and Isabel Z. Martínez, builds Distributional National Accounts (DINA — a method pioneered by Thomas Piketty, Emmanuel Saez and Gabriel Zucman that starts from the whole economy's income and wealth as measured in the national accounts, rather than from tax returns that miss untaxed corporate profits, pension assets and property value). Covering 2003–2022, it corrects for the profit-shifting that Switzerland's tax-haven status introduces and reweights cantonal tax records to national totals; the effect is to raise the estimated income share of the richest while showing wealth inequality to be somewhat lower than rich-list figures imply.",
+   "why": "the finding cuts against the intuition that a progressive system taxes the wealthiest most, and hands ammunition to a live Swiss debate over whether the very top pays its share. Working paper — Baselgia, Gurtner, Koller & Martínez, 2026",
+   "url": "https://www.eneabaselgia.ch/research",
+   "source_domain": "eneabaselgia.ch",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/news/",
+   "affiliations": [
+    "University of St. Gallen",
+    "ETH Zurich"
+   ],
+   "affiliation_label": "University of St. Gallen, ETH Zurich",
+   "fresh": false
+  },
+  {
    "id": "2026-09-18-ai-ml-entropy-coding-pushes-the-kv-cache-below-its-fix",
    "sid": "st-002c78b9e257",
    "headline": "Entropy coding shrinks the KV cache",
@@ -1042,6 +1152,30 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/17/news/",
+   "fresh": false
+  },
+  {
+   "id": "2026-09-17-news-the-federal-government-s-expert-group-sharply-ra",
+   "sid": "st-e12bc0cb0c6b",
+   "headline": "Bern lifts 2026 growth forecast to 1.7%",
+   "summary": "The federal government's expert group sharply raised its Swiss growth forecast on Thursday 17 September 2026, lifting expected real GDP growth for 2026 — adjusted for the distorting effect of major sporting events — from 0.9% to 1.7%. The State Secretariat for Economic Affairs (SECO) attributed the upgrade to an exceptionally strong second quarter, nearly half of which came from the chemical-pharmaceutical sector; SECO cautioned that the sector's volatile value-added flatters the headline figure and overstates the underlying momentum, so it expects growth to cool over the second half of the year. The group left its 2027 forecast unchanged at 1.6%.",
+   "why": "a stronger 2026 gives Bern a little more fiscal breathing room, but a pharma-driven bump is a shaky foundation for an export economy still facing an uncertain US trade backdrop.",
+   "url": "https://www.srf.ch/news/wirtschaft/bip-prognose-bund-erhoeht-wachstumsprognose-deutlich",
+   "source_domain": "srf.ch",
+   "date": "2026-09-17",
+   "date_label": "Sep 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/17/news/",
@@ -1456,29 +1590,6 @@
    "fresh": false
   },
   {
-   "id": "2026-09-14-sports-werro-wins-the-first-ultimate-title-and-confirms",
-   "sid": "st-bedca5205ad7",
-   "headline": "Werro takes inaugural Ultimate 800m title",
-   "summary": "Switzerland's Audrey Werro won the women's 800m at the inaugural World Athletics Ultimate Championship in Budapest on Saturday 12 September, finishing in 1:55.88 ahead of Britain's Olympic champion Keely Hodgkinson (1:56.26) and the Netherlands' Femke Broeders-Bol. The Ultimate Championship is a new season-ending event — a three-day, invitation-only meet for the year's top-ranked athletes, with a $150,000 first prize in each discipline — and Werro's win confirmed what the whole summer had signalled: she is the world's best 800m runner. She had already beaten Hodgkinson repeatedly this season, winning in Stockholm, Paris and Zurich in under 1 minute 54 seconds, with a personal best of 1:53.70 that sits close to world-record territory. For a reader who does not follow athletics: the 800m — two laps of the track — is one of the sport's marquee middle-distance events, and Hodgkinson, a world indoor record-holder and Olympic champion, had been its dominant figure, so a Swiss athlete now beating her routinely is a genuine changing of the guard.",
-   "why": "Switzerland rarely produces a world-beating middle-distance runner, and Werro has become one inside a single season; this title — the first ever awarded in a brand-new championship — makes her the clear favourite heading into 2027.",
-   "url": "https://worldathletics.org/competitions/world-athletics-ultimate-championship/2026/news/report/report-women-800m-world-ultimate-championship-budapest-26",
-   "source_domain": "worldathletics.org",
-   "date": "2026-09-14",
-   "date_label": "Sep 14",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/09/14/sports/",
-   "fresh": false
-  },
-  {
    "id": "2026-09-14-news-sweden-s-centre-left-opposition-edged-ahead-in-a",
    "sid": "st-ba5c5ed0aef6",
    "headline": "Sweden's left bloc edges ahead",
@@ -1524,52 +1635,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-14-sports-pro-ref-admits-the-goal-that-decided-the-manches",
-   "sid": "st-a045b91f44b5",
-   "headline": "Refs admit error on derby-winning goal",
-   "summary": "Manchester City beat Manchester United 1-0 at Old Trafford on Sunday 13 September, and the only goal — an Erling Haaland finish — has been disowned by the people who allowed it to stand. Pro Ref, the body that runs Premier League refereeing, admitted an \"error of judgement\" in awarding it, an unusually blunt public concession about a call that decided a derby. City won despite having Phil Foden sent off, so they saw out the closing stretch a man down. For a non-follower: the Manchester derby is English football's most-watched club rivalry, and VAR — the video review system meant to catch exactly this kind of mistake — did not overturn the goal, which is why an official mea culpa lands harder than the usual grumble about a referee.",
-   "why": "When the officials' own body concedes that the goal deciding the biggest domestic derby should not have counted, it sharpens the running complaint that video review has dented trust in the big calls rather than settling them.",
-   "url": "https://www.bbc.co.uk/sport/football/articles/c5ym9ky3rzxo",
-   "source_domain": "bbc.co.uk",
-   "date": "2026-09-14",
-   "date_label": "Sep 14",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/14/sports/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-14-sports-basel-win-under-a-new-coach-as-the-swiss-title-r",
-   "sid": "st-84ff339bc9e6",
-   "headline": "Basel win at Luzern after Lichtsteiner exit",
-   "summary": "FC Basel won 4-2 away at Luzern in round 8, three days after sacking coach Stephan Lichtsteiner — the former Switzerland and Juventus full-back — on Wednesday 9 September following a run without a win. Under interim coach Luigi Nocentini, captain Xherdan Shaqiri ran the game with two goals and an assist (including a solo run for the fourth) to turn the match around after a poor start. In the same round, Servette beat Lausanne 1-0 in the Léman derby, played in front of closed supporter sections after crowd-trouble sanctions. Eight rounds in, Lugano lead the table on 19 points (from 7 games), Young Boys are second on 16, and Basel sit fourth on 13; Lausanne are bottom.",
-   "why": "A mid-week coaching change followed at once by an away win is a snapshot of an unsettled Swiss season — Lugano, not the traditional heavyweights, set the pace, and even a club Basel's size runs out of patience fast.",
-   "url": "https://www.srf.ch/sport/fussball/super-league/basel-siegt-nach-horrorstart-nach-lichtsteiners-abgang-wachsen-shaqiri-fluegel",
-   "source_domain": "srf.ch",
-   "date": "2026-09-14",
-   "date_label": "Sep 14",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/14/sports/",
    "fresh": false
   },
   {
@@ -1858,76 +1923,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/11/ai-ml/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-11-news-the-plr-vaud-the-canton-s-liberal-radical-party",
-   "sid": "st-b62f5089597c",
-   "headline": "Vaud PLR renews its three ministers",
-   "summary": "The PLR Vaud (the canton's liberal-radical party) endorsed its three sitting cantonal ministers — Christelle Luisier, Isabelle Moret and Frédéric Borloz — for re-election, at a party congress in Yvonand on Thursday 10 September. The trio, the party's only declared candidates, were confirmed by acclamation and will run for the Conseil d'État (Vaud's seven-member cantonal executive) at the February–March 2027 election as part of the centre-right \"Alliance vaudoise,\" alongside Jean-François Thuillard of the UDC (Union démocratique du centre — the right-wing Swiss People's Party). The move locks in the incumbent centre-right slate roughly six months before the vote.",
-   "why": "",
-   "url": "https://www.letemps.ch/articles/les-delegues-du-plr-vaud-valident-la-candidature-de-christelle-luisier-isabelle-moret-et-frederic-borloz",
-   "source_domain": "letemps.ch",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "politics"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/11/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-11-news-algeria-severed-diplomatic-relations-with-the-un",
-   "sid": "st-8b4678dfa0fa",
-   "headline": "Algeria severs ties with the UAE",
-   "summary": "Algeria severed diplomatic relations with the United Arab Emirates on Thursday 10 September, citing \"provocative and hostile acts,\" and said it would begin closing its airspace to the UAE from Friday. Algiers gave the Emirati ambassador 48 hours and said it acted \"after exhausting all avenues,\" though commercial flights to and from Algiers may continue until the end of 2026. Relations have been strained for years over what Algeria calls the UAE's expanding influence in North and West Africa; Algiers has accused Abu Dhabi of working to destabilise Libya, Mali and Sudan — including backing the Rapid Support Forces (RSF, a Sudanese paramilitary) in that country's civil war, a charge the UAE denies. The UAE said it hoped the decision would prove \"temporary.\"",
-   "why": "",
-   "url": "https://www.dw.com/en/algeria-cuts-diplomatic-ties-with-uae/a-79222141",
-   "source_domain": "dw.com",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/11/news/",
-   "fresh": false
-  },
-  {
-   "id": "2026-09-11-news-russian-president-vladimir-putin-arrived-in-new",
-   "sid": "st-668b25700daa",
-   "headline": "Putin joins BRICS summit in New Delhi",
-   "summary": "Russian President Vladimir Putin arrived in New Delhi on Friday 11 September for a summit of the BRICS bloc (Brazil, Russia, India, China, South Africa and newer members — the group of major emerging economies), with talks alongside Iran's President Masoud Pezeshkian and India's Prime Minister Narendra Modi expected the same day. Le Temps reports the gathering convenes amid strains on the bloc's cohesion, from the conflict in the Middle East to the war in Ukraine.",
-   "why": "",
-   "url": "https://www.letemps.ch/articles/l-inde-accueille-le-sommet-des-brics-en-pleines-turbulences-geopolitiques",
-   "source_domain": "letemps.ch",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/news/",
    "fresh": false
   },
   {
@@ -2089,6 +2084,142 @@
  ],
  "board": [
   {
+   "id": "2026-09-22-news-the-war-in-yemen-has-flared-back-into-open-confl",
+   "sid": "st-ca3429e95979",
+   "headline": "Yemen war reignites on the Red Sea",
+   "summary": "The war in Yemen has flared back into open conflict, with Iran-aligned Houthi fighters — who seized the Red Sea port of Mocha and the coast this month — battling Saudi-backed government forces on Monday 21 September for the Kahboub heights overlooking the Bab al-Mandeb strait, one of the world's busiest oil and shipping chokepoints. [ongoing since 2026-09-11]. The renewed fighting has killed at least 674 people and displaced more than 158,000, officials cited by Al Jazeera said; the UN's migration agency (IOM) had logged nearly 130,000 displaced by 21 September, most fleeing Ta'iz and Lahj. On Monday the foreign ministers of the G7 (Group of Seven — the US, UK, Canada, France, Germany, Italy and Japan), meeting on the sidelines of the UN General Assembly in New York, condemned \"in the strongest terms\" the Houthis' \"unacceptable continued strikes\" on Saudi Arabia — including a Houthi-claimed attack on Riyadh, the first of this escalation — and urged Iran to stop arming the group. Control of the Kahboub mountains would let the Houthis sever the government-held south from the coast. The New York Times reported that President Donald Trump prepared US airstrikes on the Houthis on Sunday 20 September, after pleas from Saudi Crown Prince Mohammed bin Salman, then called them off at the last minute; Washington has so far refused Riyadh's requests to join the fight, and Houthi leader Abdul-Malik al-Houthi warned the US against direct involvement.",
+   "why": "A Yemeni war that had been largely frozen since a UN-brokered truce in 2022 is now the most dangerous flashpoint of the post-Iran-war Middle East, and Houthi control of Bab al-Mandeb threatens the Red Sea trade route that carries a large share of the oil and containers moving between Asia and Europe.",
+   "url": "https://www.aljazeera.com/news/2026/9/22/houthis-battle-for-strategic-heights-in-yemen-as-thousands-more-flee-homes",
+   "source_domain": "aljazeera.com",
+   "date": "2026-09-22",
+   "date_label": "Sep 22",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 3,
+   "is_lead": true,
+   "permalink": "/2026/09/22/news/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 22 Sep",
+   "daybreak": true
+  },
+  {
+   "id": "2026-09-22-news-a-united-nations-human-rights-investigator-concl",
+   "sid": "st-119114f1ba55",
+   "headline": "UN expert calls US boat strikes crimes",
+   "summary": "A United Nations human-rights investigator concluded that there are \"reasonable grounds to believe\" the United States' campaign of strikes on boats it says are trafficking drugs \"constituted crimes against humanity,\" in a briefing note the rapporteur posted on Sunday 21 September. Ben Saul, the UN special rapporteur on human rights and counter-terrorism (an independent expert mandated by the Human Rights Council, not a UN staffer), wrote that 68 attacks in the Pacific and Caribbean since September 2025 had killed 223 people — a tally other monitors put higher, at 234 in 66 strikes — and amounted to \"serial extrajudicial killings\" that no claim of self-defence or international law could justify. The most recent strike, on Saturday 20 September, killed four people in the Caribbean; US Southern Command, which runs the operations, described the dead as \"narco-terrorists\" but, as in previous cases, released no names and no evidence of the intelligence it says confirmed their involvement. Saul explicitly rejected the Trump administration's argument, made to Congress, that the crews were armed combatants from \"designated terrorist organizations.\"",
+   "why": "It is the sharpest legal challenge yet from within the UN system to a US policy of killing suspects at sea without trial, and it reframes what the administration presents as counter-narcotics enforcement as a potential international crime.",
+   "url": "https://www.theguardian.com/world/2026/sep/21/us-boat-strikes-crime-against-humanity",
+   "source_domain": "theguardian.com",
+   "date": "2026-09-22",
+   "date_label": "Sep 22",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/22/news/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 22 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-22-news-three-us-news-organisations-cnn-ms-now-and-polit",
+   "sid": "st-4950026b1222",
+   "headline": "CNN, Politico sue Trump over press ban",
+   "summary": "Three US news organisations — CNN, MS NOW and Politico — said on Monday 21 September they were suing the Trump administration after the White House revoked their reporters' credentials, escalating a press-freedom clash into the courts. [ongoing since 2026-09-18]. The outlets said they had notified the government of a lawsuit \"to protect our First Amendment rights and defend the principle that the government does not decide what the press reports or publishes,\" a day after their journalists' entry badges were disabled \"without notice or process.\" Trump, who last week barred the three from reporting at the White House and accused them of publishing \"fiction,\" wrote on social media that he was not targeting \"the Free Press\" but \"instituting an assault on the FAKE NEWS.\" Separately, SRF reported that several US broadcasters — including Fox News — declined to send crews on a presidential trip in protest at the exclusions.",
+   "why": "The suit turns a rolling dispute between the president and outlets he dislikes into a test of whether a US administration can strip White House access as a punishment for coverage — a First Amendment question with no clear precedent.",
+   "url": "https://www.dw.com/en/us-news-outlets-sue-trump-over-white-house-ban/a-79362618",
+   "source_domain": "dw.com",
+   "date": "2026-09-22",
+   "date_label": "Sep 22",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "politics"
+   ],
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/22/news/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 22 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-22-news-the-leadership-of-the-swiss-armed-forces-flew-to",
+   "sid": "st-e9c7f2dcae62",
+   "headline": "Swiss army signs its first F-35 in Texas",
+   "summary": "The leadership of the Swiss armed forces flew to Lockheed Martin's plant in Fort Worth, Texas, on Monday 21 September to sign the fuselage of Switzerland's first F-35A fighter jet — a ceremonial \"bulkhead signing\" that lands amid the deepest crisis the defence procurement has faced. [ongoing since 2026-09-15]. Army chief Benedikt Roos, air-force commander Christian Oppliger, armaments-agency (Armasuisse) head Urs Loher and Switzerland's ambassador to Washington attended; eight Swiss jets are now in production, each taking about 20 months to build. The visit follows a finding days earlier by the National Council's oversight committee that the \"fixed price\" the Defence Department (VBS) had promised voters never existed — Switzerland, like every buyer, must pay whatever price Washington negotiates with Lockheed for each production lot, because the plant is US-government-owned. As a result, the 6 billion francs approved by voters in 2020 will buy only 30 jets instead of the planned 36, even with a 394-million-franc top-up; Roos told Le Temps the fleet would ultimately need to be larger still.",
+   "why": "The signing is the government trying to project momentum on a purchase that has become, in NZZ's words, one of the worst scandals the VBS has known — and the open questions about operating costs over the jets' 30-year life mean the final bill to Swiss taxpayers is still unknown.",
+   "url": "https://www.nzz.ch/schweiz/fixpreis-skandal-beim-f-35-beim-besuch-in-der-produktionsstaette-in-den-usa-will-die-schweizer-armee-lieber-nach-vorne-schauen-ld.10024848",
+   "source_domain": "nzz.ch",
+   "date": "2026-09-22",
+   "date_label": "Sep 22",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/22/news/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 22 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-22-news-vaud-voters-go-to-the-polls-on-sunday-27-septemb",
+   "sid": "st-73ca9ea4bcb5",
+   "headline": "Vaud votes Sunday on 12% tax cut",
+   "summary": "Vaud voters go to the polls on Sunday 27 September on a popular initiative, \"Baisse d'impôts pour tous,\" that would cut the canton's income and wealth tax on individuals by a flat 12% from the 2027 tax year — and, with five days to go, the outcome looks genuinely open. The cantonal government and the Grand Council recommend rejection: they estimate the cut would drain about 272 million francs a year in revenue on top of tax reductions already in train (worth some 365 million a year from 2027), against a 2026 budget that already runs a 297-million-franc deficit, and warn it could force cuts to public services and squeeze municipalities indirectly. The initiative's backers argue Vaud over-taxed residents through its surplus years and that the cut is a reasonable rebalancing that would restore purchasing power to the middle class. Le Temps reports the left-right battle lines are blurring, with some left-leaning voters open to the cut and some centre-right (PLR) deputies wary of the hit to communal budgets.",
+   "why": "It is a direct, dated decision on the cost of living and the size of the cantonal state for people in Vaud — and a vote that will either lock in a large permanent revenue cut or reaffirm the more gradual relief the authorities prefer.",
+   "url": "https://www.vd.ch/actualites/communiques-de-presse-de-letat-de-vaud/detail/communique/le-peuple-se-prononcera-sur-linitiative-populaire-baisse-dimpots-pour-tous",
+   "source_domain": "vd.ch",
+   "date": "2026-09-22",
+   "date_label": "Sep 22",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/22/news/",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 22 Sep",
+   "daybreak": false
+  },
+  {
    "id": "2026-09-21-news-two-german-state-elections-on-sunday-20-septembe",
    "sid": "st-6299f47c2ec9",
    "headline": "AfD wins Mecklenburg, Left takes Berlin",
@@ -2109,9 +2240,9 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/09/21/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 21 Sep",
    "daybreak": true
   },
@@ -2136,9 +2267,9 @@
    "importance": 3,
    "is_lead": true,
    "permalink": "/2026/09/21/sports/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 21 Sep",
    "daybreak": false
   },
@@ -2164,9 +2295,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/21/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 21 Sep",
    "daybreak": false
   },
@@ -2191,9 +2322,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/21/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 21 Sep",
    "daybreak": false
   },
@@ -2218,37 +2349,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/21/news/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 21 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-21-news-the-federal-department-of-defence-vbs-published",
-   "sid": "st-249c730bb69b",
-   "headline": "VBS report clears spy service cyber unit",
-   "summary": "The Federal Department of Defence (VBS) published on Monday 21 September the final report of an administrative investigation into the former cyber unit of the Federal Intelligence Service (NDB), concluding that the incidents there are \"sufficiently clarified\" and that earlier recommendations have largely been implemented, while questions over dealings with the Russian firm Kaspersky remain open. The inquiry, run by an independent law firm and commissioned in summer 2025 after an SRF investigation revealed the unit had shared sensitive data with private cybersecurity companies including Kaspersky, found no indication of large-scale data deletion or systematic espionage — no sign, in the VBS's framing, of a \"Russia affair.\" It said \"certain uncertainties\" persist around the former cyber unit's cooperation with Kaspersky, which the Office of the Attorney General is still examining in a separate criminal probe. The NDB has introduced changes including new rules for reporting suspected misconduct, and a reorganisation of the cyber unit and the service is due to be completed by the end of 2026.",
-   "why": "The report is the government's attempt to draw a line under a politically damaging affair about whether Switzerland's spy agency leaked material toward Russia — but with the prosecutor's inquiry unfinished, it stops short of fully closing the question.",
-   "url": "https://www.vbs.admin.ch/de/medienmitteilungen",
-   "source_domain": "vbs.admin.ch",
-   "date": "2026-09-21",
-   "date_label": "Sep 21",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "security"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/21/news/",
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 21 Sep",
    "daybreak": false
   },
@@ -2273,9 +2376,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/21/sports/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 21 Sep",
    "daybreak": false
   },
@@ -2300,37 +2403,9 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/21/sports/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 21 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-21-news-switzerland-has-stopped-importing-beef-and-poult",
-   "sid": "st-82f1b7219d83",
-   "headline": "Switzerland halts Brazilian meat imports",
-   "summary": "Switzerland has stopped importing beef and poultry from Brazil since 3 September, aligning with an EU ban imposed because Brazil could not give sufficient guarantees on antibiotic use in livestock, the Federal Food Safety and Veterinary Office (BLV) confirmed. EU rules bar antibiotics for growth promotion and ban so-called reserve antibiotics — those kept in reserve for human medicine — in farm animals entirely, to slow the spread of antibiotic resistance. The effect on Swiss shelves is uneven: nearly 80% of the beef eaten in Switzerland is home-produced and most imports come from Germany and Austria, so the beef impact is minimal, whereas about 40% of poultry is imported and roughly a third of that came from Brazil. The industry body Proviande calls the poultry situation manageable but does not rule out price rises.",
-   "why": "It is a concrete, if modest, cost-of-living and food-safety story — a rule change made in Brussels and mirrored in Bern that could nudge up chicken prices and shows how closely Swiss import standards track the EU's.",
-   "url": "https://www.srf.ch/sendungen/kassensturz-espresso/espresso/rindfleisch-und-gefluegel-schweiz-stoppt-fleisch-aus-brasilien-wegen-antibiotika",
-   "source_domain": "srf.ch",
-   "date": "2026-09-21",
-   "date_label": "Sep 21",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "economy"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/21/news/",
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 21 Sep",
    "daybreak": false
   },
@@ -2355,9 +2430,9 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/09/21/sports/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 21 Sep",
    "daybreak": false
   },
@@ -2382,9 +2457,9 @@
    "importance": 1,
    "is_lead": false,
    "permalink": "/2026/09/21/sports/",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 21 Sep",
    "daybreak": false
   },
@@ -2400,7 +2475,7 @@
     "<strong>A strong week for Swiss sport at the individual level.</strong> With the football title race unusually favouring an outsider at home and Reusser retaining a world crown abroad, the country's best results this week came from a smaller club and a lone rider rather than the usual heavyweights — a reminder that Swiss sporting strength often sits in the specialists (time-trialling, alpine racing) more than the big team codes."
    ],
    "kind": "editorial",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 21 Sep",
    "daybreak": false
   },
@@ -2428,7 +2503,7 @@
    "permalink": "/2026/09/20/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 20 Sep",
    "daybreak": true
   },
@@ -2456,7 +2531,7 @@
    "permalink": "/2026/09/20/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 20 Sep",
    "daybreak": false
   },
@@ -2484,7 +2559,7 @@
    "permalink": "/2026/09/20/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 20 Sep",
    "daybreak": false
   },
@@ -2512,7 +2587,7 @@
    "permalink": "/2026/09/20/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 20 Sep",
    "daybreak": false
   },
@@ -2540,7 +2615,7 @@
    "permalink": "/2026/09/19/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": true
   },
@@ -2573,7 +2648,7 @@
    "affiliation_label": "Tara Research, Mila – Quebec AI Institute +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2606,7 +2681,7 @@
    "affiliation_label": "Mila – Université de Montréal, Allen Institute for AI +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2637,7 +2712,7 @@
    "affiliation_label": "Princeton University",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2668,7 +2743,7 @@
    "affiliation_label": "Scale AI",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2696,7 +2771,7 @@
    "permalink": "/2026/09/19/weekend/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2729,7 +2804,7 @@
    "affiliation_label": "UMass Amherst, Emory University +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2760,7 +2835,7 @@
    "affiliation_label": "DeepSeek",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2793,7 +2868,7 @@
    "affiliation_label": "SUSTech, Peking University +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2825,7 +2900,7 @@
    "affiliation_label": "Sungkyunkwan University, Microsoft",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2858,7 +2933,7 @@
    "affiliation_label": "Icaro Foundation, Sant'Anna School of Advanced Studies +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2886,7 +2961,7 @@
    "permalink": "/2026/09/19/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2914,7 +2989,35 @@
    "permalink": "/2026/09/19/news/",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
+   "day_label": "Sat 19 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-19-news-voters-in-berlin-and-mecklenburg-western-pomeran",
+   "sid": "st-a89ad60de095",
+   "headline": "Germany votes in Berlin and Mecklenburg polls",
+   "summary": "Voters in Berlin and Mecklenburg–Western Pomerania go to the polls on Sunday 20 September in two German state elections shadowed by far-right momentum. In the northeastern state of Mecklenburg–Western Pomerania, a tight race is expected between the Alternative for Germany (AfD) and the centre-left Social Democrats (SPD) of Premier Manuela Schwesig, with the Greens hovering around the 5% threshold needed to stay in the state parliament; in Berlin, Chancellor Friedrich Merz's Christian Democrats (CDU) are neck-and-neck with the left-wing Die Linke, and the left-populist Sahra Wagenknecht Alliance (BSW) risks slipping below 5%. Public broadcaster ZDF put undecided voters at 21% in Mecklenburg and 23% in Berlin as of Thursday. The votes fall two weeks after the AfD's landslide in Saxony-Anhalt: Charlotte Knobloch, former head of Germany's Central Council of Jews, renewed her call for the party to be banned, and Berlin police searched the home of an aide to the AfD's lead Berlin candidate over suspected weapons- and explosives-law offences.",
+   "why": "two more strong AfD showings would sharpen the strain on Germany's mainstream parties, who still refuse to govern with a party that now tops polls across the east.",
+   "url": "https://www.dw.com/en/germany-news-campaigns-wrap-up-in-two-state-elections/live-79335548",
+   "source_domain": "dw.com",
+   "date": "2026-09-19",
+   "date_label": "Sep 19",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "politics",
+    "world"
+   ],
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/19/news/",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -2931,7 +3034,7 @@
     "<strong>3. It was a banner week for mathematics — and, pointedly, the machines sat this one out.</strong> Last week's loudest math story was AI-assisted fluid-blowup proofs and a contested \"AI solved a Millennium problem\" narrative. This week the field answered with four conjecture-level results produced the old way, by human ingenuity: <em>Marton's conjecture</em> got a polynomial-time algorithm (turning a celebrated 2025 existence theorem into an efficient procedure, with quantum-learning payoffs); <em>Szpiro's conjecture</em> — a cousin of the famous <em>abc</em> conjecture — got an unconditional bound previously known only under a deep unproven hypothesis; the <em>Pach–Tardos conjecture</em> in extremal combinatorics was proved outright; and new <em>Euclidean chromatic-number</em> bounds refuted a standing conjecture about optimal colourings. A quiet thread connects them and is worth naming: each is fundamentally about <em>structure under a constraint</em> — Marton is literally about additive structure in a set, Pach–Tardos about how much of a matrix you can fill while forbidding a pattern, the chromatic bounds squeezed out of explicit lattices. The same week, the quantum-information side matured in the same direction, from toy to real: LIGO evaded quantum measurement back-action on 40-kg mirrors, and a long-open construction of \"good\" quantum locally-testable codes landed. The honest synthesis is the mirror image of last week's: the machines are formidable at generating and checking answers, but the results that moved mathematics this week came from people finding the <em>idea</em>, and Quanta's own week — a feature on a decades-old graph conjecture finally proved — reads the same way."
    ],
    "kind": "editorial",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 19 Sep",
    "daybreak": false
   },
@@ -3105,6 +3208,39 @@
    "daybreak": false
   },
   {
+   "id": "2026-09-18-news-a-new-working-paper-by-economists-at-the-univers",
+   "sid": "st-6249db85bb4e",
+   "headline": "Study: richest Swiss pay lowest tax rate",
+   "summary": "A new working paper by economists at the University of St. Gallen and ETH Zurich finds that Switzerland's top 1 percent carry the country's lightest effective tax burden, and that income inequality is larger than tax statistics suggest. \"Income, Wealth, and Redistribution in a Tax Haven: Distributional National Accounts for Switzerland,\" by Enea Baselgia, Remo Gurtner, Julian Koller and Isabel Z. Martínez, builds Distributional National Accounts (DINA — a method pioneered by Thomas Piketty, Emmanuel Saez and Gabriel Zucman that starts from the whole economy's income and wealth as measured in the national accounts, rather than from tax returns that miss untaxed corporate profits, pension assets and property value). Covering 2003–2022, it corrects for the profit-shifting that Switzerland's tax-haven status introduces and reweights cantonal tax records to national totals; the effect is to raise the estimated income share of the richest while showing wealth inequality to be somewhat lower than rich-list figures imply.",
+   "why": "the finding cuts against the intuition that a progressive system taxes the wealthiest most, and hands ammunition to a live Swiss debate over whether the very top pays its share. Working paper — Baselgia, Gurtner, Koller & Martínez, 2026",
+   "url": "https://www.eneabaselgia.ch/research",
+   "source_domain": "eneabaselgia.ch",
+   "date": "2026-09-18",
+   "date_label": "Sep 18",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/18/news/",
+   "affiliations": [
+    "University of St. Gallen",
+    "ETH Zurich"
+   ],
+   "affiliation_label": "University of St. Gallen, ETH Zurich",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 3,
+   "day_label": "Fri 18 Sep",
+   "daybreak": false
+  },
+  {
    "id": "2026-09-18-ai-ml-entropy-coding-pushes-the-kv-cache-below-its-fix",
    "sid": "st-002c78b9e257",
    "headline": "Entropy coding shrinks the KV cache",
@@ -3203,6 +3339,34 @@
    "topic_primary": "geopolitics",
    "topic_label": "Geopolitics",
    "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "permalink": "/2026/09/17/news/",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 3,
+   "day_label": "Thu 17 Sep",
+   "daybreak": false
+  },
+  {
+   "id": "2026-09-17-news-the-federal-government-s-expert-group-sharply-ra",
+   "sid": "st-e12bc0cb0c6b",
+   "headline": "Bern lifts 2026 growth forecast to 1.7%",
+   "summary": "The federal government's expert group sharply raised its Swiss growth forecast on Thursday 17 September 2026, lifting expected real GDP growth for 2026 — adjusted for the distorting effect of major sporting events — from 0.9% to 1.7%. The State Secretariat for Economic Affairs (SECO) attributed the upgrade to an exceptionally strong second quarter, nearly half of which came from the chemical-pharmaceutical sector; SECO cautioned that the sector's volatile value-added flatters the headline figure and overstates the underlying momentum, so it expects growth to cool over the second half of the year. The group left its 2027 forecast unchanged at 1.6%.",
+   "why": "a stronger 2026 gives Bern a little more fiscal breathing room, but a pharma-driven bump is a shaky foundation for an export economy still facing an uncertain US trade backdrop.",
+   "url": "https://www.srf.ch/news/wirtschaft/bip-prognose-bund-erhoeht-wachstumsprognose-deutlich",
+   "source_domain": "srf.ch",
+   "date": "2026-09-17",
+   "date_label": "Sep 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/17/news/",
@@ -3491,21 +3655,6 @@
    "daybreak": false
   },
   {
-   "stream": "science",
-   "date": "2026-09-16",
-   "date_label": "Sep 16",
-   "kicker": "Science · Why it matters · Sep 16",
-   "heading": "Why it matters",
-   "title": "",
-   "paras": [
-    "Two of this week's astronomy results cut the same way: what a single detection <em>seems</em> to show can mislead until a wider or deeper survey reframes it. The Murchison array found low-frequency FRBs at the rate higher-frequency surveys predicted — killing the idea that the low band was intrinsically empty — while the little-red-dots fight turns on wringing whole formation histories from a few pixels, where each new spectrum or simulation shifts the odds. In both, instruments and statistics, not any one image, are doing the arbitration."
-   ],
-   "kind": "editorial",
-   "age_days": 3,
-   "day_label": "Wed 16 Sep",
-   "daybreak": false
-  },
-  {
    "id": "2026-09-15-news-the-us-supreme-court-on-monday-14-september-refu",
    "sid": "st-b22d68c655bf",
    "headline": "Supreme Court blocks Trump mail-ballot rule",
@@ -3700,33 +3849,6 @@
    "daybreak": true
   },
   {
-   "id": "2026-09-14-sports-werro-wins-the-first-ultimate-title-and-confirms",
-   "sid": "st-bedca5205ad7",
-   "headline": "Werro takes inaugural Ultimate 800m title",
-   "summary": "Switzerland's Audrey Werro won the women's 800m at the inaugural World Athletics Ultimate Championship in Budapest on Saturday 12 September, finishing in 1:55.88 ahead of Britain's Olympic champion Keely Hodgkinson (1:56.26) and the Netherlands' Femke Broeders-Bol. The Ultimate Championship is a new season-ending event — a three-day, invitation-only meet for the year's top-ranked athletes, with a $150,000 first prize in each discipline — and Werro's win confirmed what the whole summer had signalled: she is the world's best 800m runner. She had already beaten Hodgkinson repeatedly this season, winning in Stockholm, Paris and Zurich in under 1 minute 54 seconds, with a personal best of 1:53.70 that sits close to world-record territory. For a reader who does not follow athletics: the 800m — two laps of the track — is one of the sport's marquee middle-distance events, and Hodgkinson, a world indoor record-holder and Olympic champion, had been its dominant figure, so a Swiss athlete now beating her routinely is a genuine changing of the guard.",
-   "why": "Switzerland rarely produces a world-beating middle-distance runner, and Werro has become one inside a single season; this title — the first ever awarded in a brand-new championship — makes her the clear favourite heading into 2027.",
-   "url": "https://worldathletics.org/competitions/world-athletics-ultimate-championship/2026/news/report/report-women-800m-world-ultimate-championship-budapest-26",
-   "source_domain": "worldathletics.org",
-   "date": "2026-09-14",
-   "date_label": "Sep 14",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 3,
-   "is_lead": true,
-   "permalink": "/2026/09/14/sports/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 14 Sep",
-   "daybreak": false
-  },
-  {
    "id": "2026-09-14-news-sweden-s-centre-left-opposition-edged-ahead-in-a",
    "sid": "st-ba5c5ed0aef6",
    "headline": "Sweden's left bloc edges ahead",
@@ -3776,60 +3898,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/14/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 14 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-14-sports-pro-ref-admits-the-goal-that-decided-the-manches",
-   "sid": "st-a045b91f44b5",
-   "headline": "Refs admit error on derby-winning goal",
-   "summary": "Manchester City beat Manchester United 1-0 at Old Trafford on Sunday 13 September, and the only goal — an Erling Haaland finish — has been disowned by the people who allowed it to stand. Pro Ref, the body that runs Premier League refereeing, admitted an \"error of judgement\" in awarding it, an unusually blunt public concession about a call that decided a derby. City won despite having Phil Foden sent off, so they saw out the closing stretch a man down. For a non-follower: the Manchester derby is English football's most-watched club rivalry, and VAR — the video review system meant to catch exactly this kind of mistake — did not overturn the goal, which is why an official mea culpa lands harder than the usual grumble about a referee.",
-   "why": "When the officials' own body concedes that the goal deciding the biggest domestic derby should not have counted, it sharpens the running complaint that video review has dented trust in the big calls rather than settling them.",
-   "url": "https://www.bbc.co.uk/sport/football/articles/c5ym9ky3rzxo",
-   "source_domain": "bbc.co.uk",
-   "date": "2026-09-14",
-   "date_label": "Sep 14",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/14/sports/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 14 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-14-sports-basel-win-under-a-new-coach-as-the-swiss-title-r",
-   "sid": "st-84ff339bc9e6",
-   "headline": "Basel win at Luzern after Lichtsteiner exit",
-   "summary": "FC Basel won 4-2 away at Luzern in round 8, three days after sacking coach Stephan Lichtsteiner — the former Switzerland and Juventus full-back — on Wednesday 9 September following a run without a win. Under interim coach Luigi Nocentini, captain Xherdan Shaqiri ran the game with two goals and an assist (including a solo run for the fourth) to turn the match around after a poor start. In the same round, Servette beat Lausanne 1-0 in the Léman derby, played in front of closed supporter sections after crowd-trouble sanctions. Eight rounds in, Lugano lead the table on 19 points (from 7 games), Young Boys are second on 16, and Basel sit fourth on 13; Lausanne are bottom.",
-   "why": "A mid-week coaching change followed at once by an away win is a snapshot of an unsettled Swiss season — Lugano, not the traditional heavyweights, set the pace, and even a club Basel's size runs out of patience fast.",
-   "url": "https://www.srf.ch/sport/fussball/super-league/basel-siegt-nach-horrorstart-nach-lichtsteiners-abgang-wachsen-shaqiri-fluegel",
-   "source_domain": "srf.ch",
-   "date": "2026-09-14",
-   "date_label": "Sep 14",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/14/sports/",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
@@ -4166,88 +4234,6 @@
    "importance": 2,
    "is_lead": false,
    "permalink": "/2026/09/11/ai-ml/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 11 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-11-news-the-plr-vaud-the-canton-s-liberal-radical-party",
-   "sid": "st-b62f5089597c",
-   "headline": "Vaud PLR renews its three ministers",
-   "summary": "The PLR Vaud (the canton's liberal-radical party) endorsed its three sitting cantonal ministers — Christelle Luisier, Isabelle Moret and Frédéric Borloz — for re-election, at a party congress in Yvonand on Thursday 10 September. The trio, the party's only declared candidates, were confirmed by acclamation and will run for the Conseil d'État (Vaud's seven-member cantonal executive) at the February–March 2027 election as part of the centre-right \"Alliance vaudoise,\" alongside Jean-François Thuillard of the UDC (Union démocratique du centre — the right-wing Swiss People's Party). The move locks in the incumbent centre-right slate roughly six months before the vote.",
-   "why": "",
-   "url": "https://www.letemps.ch/articles/les-delegues-du-plr-vaud-valident-la-candidature-de-christelle-luisier-isabelle-moret-et-frederic-borloz",
-   "source_domain": "letemps.ch",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "politics"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/11/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 11 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-11-news-algeria-severed-diplomatic-relations-with-the-un",
-   "sid": "st-8b4678dfa0fa",
-   "headline": "Algeria severs ties with the UAE",
-   "summary": "Algeria severed diplomatic relations with the United Arab Emirates on Thursday 10 September, citing \"provocative and hostile acts,\" and said it would begin closing its airspace to the UAE from Friday. Algiers gave the Emirati ambassador 48 hours and said it acted \"after exhausting all avenues,\" though commercial flights to and from Algiers may continue until the end of 2026. Relations have been strained for years over what Algeria calls the UAE's expanding influence in North and West Africa; Algiers has accused Abu Dhabi of working to destabilise Libya, Mali and Sudan — including backing the Rapid Support Forces (RSF, a Sudanese paramilitary) in that country's civil war, a charge the UAE denies. The UAE said it hoped the decision would prove \"temporary.\"",
-   "why": "",
-   "url": "https://www.dw.com/en/algeria-cuts-diplomatic-ties-with-uae/a-79222141",
-   "source_domain": "dw.com",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "permalink": "/2026/09/11/news/",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 11 Sep",
-   "daybreak": false
-  },
-  {
-   "id": "2026-09-11-news-russian-president-vladimir-putin-arrived-in-new",
-   "sid": "st-668b25700daa",
-   "headline": "Putin joins BRICS summit in New Delhi",
-   "summary": "Russian President Vladimir Putin arrived in New Delhi on Friday 11 September for a summit of the BRICS bloc (Brazil, Russia, India, China, South Africa and newer members — the group of major emerging economies), with talks alongside Iran's President Masoud Pezeshkian and India's Prime Minister Narendra Modi expected the same day. Le Temps reports the gathering convenes amid strains on the bloc's cohesion, from the conflict in the Middle East to the war in Ukraine.",
-   "why": "",
-   "url": "https://www.letemps.ch/articles/l-inde-accueille-le-sommet-des-brics-en-pleines-turbulences-geopolitiques",
-   "source_domain": "letemps.ch",
-   "date": "2026-09-11",
-   "date_label": "Sep 11",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 1,
-   "is_lead": false,
-   "permalink": "/2026/09/11/news/",
    "fresh": false,
    "kind": "story",
    "age_days": 3,
