@@ -91,21 +91,6 @@
   @container front (min-width: 720px) {
     .fcards--rest > .fc { flex: 1 1 30%; }
     .js .fcards--rest > .fc:not(.is-folded) { flex-basis: 100%; }
-    /* a card alone on a full line (the open one, or a neighbour stranded beside it) sets its photo
-       beside the type rather than stretching a full-width slot */
-    .js .fcards--rest > .fc:not(.is-folded) > article:has(.photo:not([hidden])),
-    .js .fcards--rest > .fc:first-child:has(+ .fc:not(.is-folded)) > article:has(.photo:not([hidden])),
-    .js .fcards--rest > .fc:not(.is-folded) + .fc:last-child > article:has(.photo:not([hidden])) {
-      display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); column-gap: 28px; row-gap: 10px; align-content: start;
-      grid-template-rows: auto auto 1fr auto auto;
-      grid-template-areas: "top photo" "hl photo" "why photo" "fold fold" "line line";
-    }
-    .fcards--rest article > .fc__top { grid-area: top; }
-    .fcards--rest article > .hl { grid-area: hl; }
-    .fcards--rest article > .photo { grid-area: photo; }
-    .fcards--rest article > .why { grid-area: why; align-self: start; }
-    .fcards--rest article > .fold { grid-area: fold; }
-    .fcards--rest article > .line { grid-area: line; }
   }
   .desk { display: flex; flex-direction: column; }
 

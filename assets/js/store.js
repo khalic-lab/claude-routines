@@ -50,3 +50,21 @@ export const syncMap = objectOr(load(SYNC_KEY, {}));
   if (s) save(SYNC_KEY, syncMap);
   drop('siteKey');                                 // the retired shared write secret
 })();
+
+// Another tab wrote one of the maps: reload it IN PLACE (every module holds these very objects),
+// so this tab's next save carries the other tab's marks instead of writing its stale copy over
+// them (review F4; the old page had the same last-writer-wins loss). Listeners repaint.
+const external = [];
+export function onExternalChange(fn) { external.push(fn); }
+const MAPS = { [READ_KEY]: readMap, [UNREAD_KEY]: unreadMap, [SYNC_KEY]: syncMap };
+addEventListener('storage', (e) => {
+  if (e.storageArea !== localStorage) return;
+  const keys = e.key === null ? Object.keys(MAPS) : e.key in MAPS ? [e.key] : [];
+  if (!keys.length) return;
+  for (const k of keys) {
+    const map = MAPS[k];
+    for (const id of Object.keys(map)) delete map[id];
+    Object.assign(map, objectOr(load(k, {})));
+  }
+  external.forEach((fn) => fn());
+});

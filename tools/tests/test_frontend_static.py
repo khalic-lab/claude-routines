@@ -148,6 +148,14 @@ class TemplateTest(unittest.TestCase):
             self.assertIn('data-story="{{ id }}" data-edition="{{ s.edition }}"', s)
         self.assertIn('data-story="{{ e.sid }}"', read(os.path.join(REPO, "_includes", "home", "editorial.html")))
 
+    def test_the_editorial_pointer_is_one_link(self):
+        """The pointer is an <a>; a promoted lede's own link inside it would split it in two."""
+        src = read(HOME)
+        i = src.index('class="ptr__h ptr__h--ed"')
+        line = src[i:src.index("</span>", i)]
+        self.assertIn("it.title_text", line)
+        self.assertNotRegex(line, r"it\.title_html\s*\}\}")
+
     def test_deck_prints_when_the_record_has_one(self):
         """`deck` is emitted only when non-empty (test_deck.py); the page prints it after the
         headline and before the image slot (type leads, R9)."""

@@ -1,6 +1,7 @@
 // Homepage entry (assets/js/*.js, plain ES modules, stamped by the import map in head.html).
 // Each feature starts on its own; the head's `.js` gate stays only if this reaches the end.
 import { fb, initSync, on } from './sync.js';
+import { onExternalChange } from './store.js';
 import { current, record, initPrefs } from './prefs.js';
 import { initBoard } from './board.js';
 import { initFold } from './fold.js';
@@ -18,6 +19,7 @@ initDialogs();
 initFold();
 const board = initBoard({ prefs: current(), record });
 on('roam', board.remoteRead);
+onExternalChange(board.remoteRead);                // another tab marked something read
 initSync();
 initPrefs(board.remotePrefs);
 initVotes();

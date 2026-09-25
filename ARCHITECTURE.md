@@ -1041,7 +1041,10 @@ Not the post footer, whose date−7..date overlaps the previous weekly edition b
 (image eligible: lead/feature with a url, not arXiv/doi.org), `boot_open` (today's leads open, R33),
 `show_desk`; editorials get `sid` (`ed-<stream>-<date>`), `topics` (the sorted union of their
 edition's story topics, so a beat filter shows them), `title_html` + `title_is_lede` + `body` (a
-titleless editorial promotes its WHOLE bold lede, leading "1. " stripped, to the heading).
+titleless editorial promotes its WHOLE bold lede to the heading: a list number "1. " stripped but
+never a figure like "3.5", and a "." or ":" just outside the bold goes with it) and `title_text`
+(the same heading without tags, printed where the heading sits inside a link, e.g. the front's
+"On the front" pointer, since a promoted lede may carry its own `<a>`).
 Views: `days` (one per date, a contiguous board slice `[first, first+count)`, newest first),
 `front` (board indices: walk the newest dates until they hold four leads/features; the lead is the
 window's first lead, then leads and features in board order, briefs only to fill; `desk` = the

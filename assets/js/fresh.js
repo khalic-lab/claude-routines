@@ -15,7 +15,8 @@ export function initFresh() {
       .then((j) => { if (j && j.build_stamp && j.build_stamp !== stamp) bar.hidden = false; })
       .catch(() => {});
   };
-  let hiddenAt = 0;
+  // a tab opened in the background has been hidden since it loaded: count from then (review F5)
+  let hiddenAt = document.visibilityState === 'hidden' ? Date.now() : 0;
   addEventListener('pageshow', (e) => { if (e.persisted) check(); });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') hiddenAt = Date.now();

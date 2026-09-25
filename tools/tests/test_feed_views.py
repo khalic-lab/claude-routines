@@ -136,6 +136,29 @@ class EditorialHeadingTest(unittest.TestCase):
         html, lede, body = bsf.editorial_heading(self.ed(paras=["<strong>Only a lede.</strong>", "Next."]))
         self.assertEqual((html, body), ("Only a lede.", ["Next."]))
 
+    def test_a_decimal_lede_keeps_its_figure(self):
+        """Only a list number ("1. ", dot then space) is stripped; "3.5 million" is not "5 million"."""
+        html, _, body = bsf.editorial_heading(self.ed(paras=["<strong>3.5 million people moved.</strong> Rest."]))
+        self.assertEqual((html, body), ("3.5 million people moved.", ["Rest."]))
+        html, _, _ = bsf.editorial_heading(self.ed(paras=["<strong>2.6-million-year-old jaw found.</strong>"]))
+        self.assertEqual(html, "2.6-million-year-old jaw found.")
+
+    def test_a_decimal_lede_survives_the_whole_pipeline(self):
+        """Markdown in, heading out: _ed_title leaves an over-cap lede in the prose, _ed_paragraphs
+        renders it, editorial_heading promotes it -- the figure must arrive whole."""
+        lede = "3.5 million people moved this week, and this lede runs well past the ninety-character title cap"
+        self.assertGreater(len(lede), bsf.ED_TITLE_CAP)
+        title, lines = bsf._ed_title(["**%s.** Rest of it." % lede])
+        self.assertEqual(title, "")
+        html, promoted, body = bsf.editorial_heading(self.ed(paras=bsf._ed_paragraphs(lines)))
+        self.assertTrue(promoted)
+        self.assertEqual((html, body), (lede + ".", ["Rest of it."]))
+
+    def test_punctuation_just_outside_the_bold_goes_with_the_lede(self):
+        for mark in (".", ":"):
+            _, _, body = bsf.editorial_heading(self.ed(paras=["<strong>A long lede</strong>%s As agents move." % mark]))
+            self.assertEqual(body, ["As agents move."], mark)
+
     def test_no_title_and_no_lede_names_the_desk_and_day(self):
         html, lede, body = bsf.editorial_heading(self.ed(paras=["Plain opening.", "More."], stream="science",
                                                          date="2026-09-23"))
@@ -266,6 +289,19 @@ class BuildViewsTest(unittest.TestCase):
         self.assertEqual(beats["science"], 3)       # two stories + the editorial
         self.assertEqual(beats["health"], 2)        # the lead + the editorial
         self.assertEqual(beats["world"], 2)
+
+    def test_a_linked_lede_keeps_its_link_in_the_heading_and_none_in_title_text(self):
+        """The front's "On the front" pointer is itself a link, so it prints `title_text`; an <a>
+        inside it would be split by the HTML parser."""
+        lede = ("The week's strongest result came from [CERN's ALPHA team](https://home.cern/news/alpha?a=1&b=2) "
+                "measuring antihydrogen to a precision nobody expected this decade")
+        title, lines = bsf._ed_title(["**%s.** Then more." % lede])
+        ed = _ed("2026-09-23", "science", title, bsf._ed_paragraphs(lines))
+        bsf.build_views([ed], "2026-09-23", self.topics, posts_dir=self.posts)
+        self.assertIn('<a href="https://home.cern/news/alpha?a=1&amp;b=2"', ed["title_html"])
+        self.assertNotIn("<", ed["title_text"])
+        self.assertTrue(ed["title_text"].startswith("The week's strongest result came from CERN's ALPHA team measuring"))
+        self.assertEqual(ed["body"], ["Then more."])
 
     def test_empty_and_editorial_only_boards_do_not_raise(self):
         v = bsf.build_views([], None, [], posts_dir=self.posts)

@@ -45,6 +45,9 @@
     font: 700 .6rem/1.35 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted-ui);
     margin-block: 1em 2.4em;
   }
+  /* headings the routines write may carry a URL or a long identifier: wrap anywhere rather than
+     scroll the page (reset.css leaves h1/h2 out, for the vertical nameplate's sake) */
+  .prose__title, .prose__body > :is(h1, h2), .prm-doc :is(h1, h2) { overflow-wrap: anywhere; }
   .prose__head { margin-block-end: 1.6em; }
   .prose__head:has(.prose__meta) { margin-block-end: 0; }
   .prose__body :is(p, ul, ol, table, pre) { margin-block: 0 1em; }

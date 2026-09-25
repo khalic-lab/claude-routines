@@ -1178,7 +1178,9 @@ def _norm_label(s):
     return re.sub(r"[^a-z]", "", (s or "").lower())
 
 
-_LEDE_HTML_RE = re.compile(r"^\s*<strong>(.*?)</strong>\s*", re.S)
+# the bold run, plus the "." or ":" a writer may put just outside it (`**lede**. The rest`)
+_LEDE_HTML_RE = re.compile(r"^\s*<strong>(.*?)</strong>[.:]?\s*", re.S)
+_TAG_HTML_RE = re.compile(r"<[^>]+>")
 
 
 def editorial_heading(ed):
@@ -1197,7 +1199,8 @@ def editorial_heading(ed):
     if paras:
         m = _LEDE_HTML_RE.match(paras[0])
         if m and m.group(1).strip():
-            lede = re.sub(r"^\d+\.\s*", "", m.group(1)).strip()
+            # a list number is "1. " -- dot THEN space; "3.5 million" keeps its figure
+            lede = re.sub(r"^\d+\.\s+", "", m.group(1)).strip()
             rest = paras[0][m.end():].strip()
             return lede, True, ([rest] if rest else []) + paras[1:]
     d = _dt.date.fromisoformat(ed["date"])
@@ -1274,7 +1277,8 @@ def build_views(board, max_date, topics, posts_dir=None):
     `on_front`; stories `tier`, `tier_label`, `hl_dot`, `unfurl`, `boot_open`, `show_desk`;
     editorials `sid` ("ed-<stream>-<date>", the read id), `topics` (the sorted union of its
     edition's story topics, so a beat filter shows the desk's view of that beat), `stream_label`,
-    `title_html`, `title_is_lede`, `body`.
+    `title_html`, `title_text` (the same heading without tags, for places that are themselves a
+    link: a promoted lede may carry its own <a>), `title_is_lede`, `body`.
 
     Returns {"days": [...], "front": {...}, "beats": [...]}: one day per date, newest first, each
     a contiguous board slice [first, first+count); the front (board indices); the beat chips with
@@ -1295,6 +1299,7 @@ def build_views(board, max_date, topics, posts_dir=None):
             it["topics"] = sorted(ed_topics.get(it["edition"], set()))
             it["stream_label"] = STREAM_LABEL.get(stream, stream.title())
             it["title_html"], it["title_is_lede"], it["body"] = editorial_heading(it)
+            it["title_text"] = _TAG_HTML_RE.sub("", it["title_html"])
         else:
             imp = it.get("importance") if it.get("importance") in TIER else 1
             it["tier"], it["tier_label"] = TIER[imp]

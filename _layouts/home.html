@@ -150,7 +150,7 @@ body_class: home
         {%- if it.kind == 'editorial' %}
         {%- if it.on_front %}
         <p class="ptr ptr--ed" data-zone="pointer" data-ptr="{{ it.sid }}" data-edition="{{ it.edition }}">
-          <a href="#{{ it.sid }}"><span class="ptr__l"><span aria-hidden="true">↑</span>On the front</span><span class="ptr__h ptr__h--ed">{{ it.stream_label }} desk’s view — {{ it.title_html }}</span></a>
+          <a href="#{{ it.sid }}"><span class="ptr__l"><span aria-hidden="true">↑</span>On the front</span><span class="ptr__h ptr__h--ed">{{ it.stream_label }} desk’s view — {{ it.title_text | default: it.title_html | strip_html }}</span></a>
         </p>
         {%- else %}
         {% include home/editorial.html e=it where="day" %}

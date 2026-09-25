@@ -208,8 +208,11 @@ class LiveViewsTest(unittest.TestCase):
             self.assertEqual(it["edition"], "%s-%s" % (it["date"], it["stream"]))
             self.assertEqual(it["period"]["end"], it["date"])
             self.assertLessEqual(it["period"]["start"], it["period"]["end"])
+            # the visible label text is the builder's own formatting of start..end
+            self.assertEqual(it["period"], bsf.period_view(it["period"]["start"], it["period"]["end"]))
             if it["kind"] == "editorial":
                 self.assertEqual(it["sid"], "ed-%s-%s" % (it["stream"], it["date"]))
+                self.assertNotIn("<", it["title_text"])
 
 
 if __name__ == "__main__":
