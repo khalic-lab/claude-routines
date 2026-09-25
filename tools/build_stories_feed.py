@@ -1088,7 +1088,9 @@ def load_recent(days):
             #
             # `hid` above is deliberately still slugified from the PARSED lead: it is the story id
             # the reader's read-state is keyed on, so it must stay byte-stable across this change.
-            headline = (im.get("headline") or "").strip() or s["headline"]
+            # printed as escaped text, so emphasis markers go here too (2026-09-25). `hid` above is
+            # slugified from the PARSED lead and the sid from the url: no id sees this string.
+            headline = plain_emphasis((im.get("headline") or "").strip() or s["headline"])
             # `deck` (2026-07-25) takes NO fallback, unlike every other overlaid field above.
             # There is nothing in the post to recover it from — it is a front-page artifact the
             # writer authors in Step C and nowhere else — and briefs are specified to omit it, so

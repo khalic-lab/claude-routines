@@ -4,7 +4,8 @@
 A story's deck, summary and why are printed as ESCAPED TEXT, so "_Released 22 September 2026._"
 showed its underscores on the card. `plain_emphasis` drops the markers and keeps the words; it
 must never touch an underscore that is part of a word, a URL or a code span. Editorials are
-emitted as html and render the same emphasis as <em>. Headlines, urls and ids are left alone.
+emitted as html and render the same emphasis as <em>. Headlines lose their markers too (owner OK,
+2026-09-25), but no id is derived from the printed headline: urls, sids and ids stay byte-identical.
 """
 import contextlib
 import importlib.util
@@ -44,10 +45,19 @@ class PlainEmphasisTest(unittest.TestCase):
 
 
 class StoryFieldsTest(unittest.TestCase):
-    """Through load_recent: the recorded deck/body/why lose their markers, the parsed why too,
-    and the headline, url and ids come out exactly as before."""
+    """Through load_recent: the recorded deck/body/why and the headline lose their markers, the
+    parsed why too, and the url and ids come out exactly as before."""
 
-    def test_printed_fields(self):
+    def _load(self, root):
+        saved = (bsf.ROOT, bsf.POSTS_DIR, bsf.INDEX_DIR)
+        bsf.ROOT, bsf.POSTS_DIR, bsf.INDEX_DIR = root, os.path.join(root, "_posts"), os.path.join(root, "index", "stories")
+        try:
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                return bsf.load_recent(14)[0]
+        finally:
+            bsf.ROOT, bsf.POSTS_DIR, bsf.INDEX_DIR = saved
+
+    def _tree(self):
         root = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, root)
         os.makedirs(os.path.join(root, "_posts"))
@@ -64,21 +74,33 @@ class StoryFieldsTest(unittest.TestCase):
                "display_body": "Forces seized the _Trend_, a tanker.", "why": "It matters. _Released 22 September 2026._"}
         with open(os.path.join(root, "index", "stories", "2026-09-25-news.jsonl"), "w") as fh:
             fh.write(json.dumps(rec) + "\n")
-        saved = (bsf.ROOT, bsf.POSTS_DIR, bsf.INDEX_DIR)
-        bsf.ROOT, bsf.POSTS_DIR, bsf.INDEX_DIR = root, os.path.join(root, "_posts"), os.path.join(root, "index", "stories")
-        try:
-            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-                stories, _, _ = bsf.load_recent(14)
-        finally:
-            bsf.ROOT, bsf.POSTS_DIR, bsf.INDEX_DIR = saved
-        first, tanker = stories
+        return root
+
+    def test_printed_fields(self):
+        first, tanker = self._load(self._tree())
         self.assertEqual(first["why"], "the first charges in the case.")
-        self.assertIn("(_prévenus_)", first["headline"])          # headlines are left as they were
+        self.assertEqual(first["headline"], "Five employees formally charged (prévenus) after the collapse")
         self.assertEqual(first["url"], "https://srf.ch/a_b")
         self.assertTrue(first["id"].startswith("2026-09-25-news-five-employees"))
         self.assertEqual(tanker["deck"], "Seized at sea")
         self.assertEqual(tanker["summary"], "Forces seized the Trend, a tanker.")
         self.assertEqual(tanker["why"], "It matters. Released 22 September 2026.")
+
+    def test_ids_do_not_see_the_printed_headline(self):
+        """The 2026-07-31 "(_prévenus_)" shape: with the markers kept (plain_emphasis off) and
+        stripped, every id, sid and url is byte-identical; only the printed text differs."""
+        root = self._tree()
+        real = bsf.plain_emphasis
+        bsf.plain_emphasis = lambda t: t
+        try:
+            kept = self._load(root)
+        finally:
+            bsf.plain_emphasis = real
+        clean = self._load(root)
+        for k in ("id", "sid", "url", "date", "stream", "permalink"):
+            self.assertEqual([s[k] for s in kept], [s[k] for s in clean], k)
+        self.assertIn("(_prévenus_)", kept[0]["headline"])
+        self.assertNotIn("_", clean[0]["headline"])
 
 
 if __name__ == "__main__":

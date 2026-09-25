@@ -1004,10 +1004,11 @@ the writer-recorded `headline`/`deck`/`display_body`/`why` prose** from the matc
 record — **joined by exact edition identity `(date, stream, normalized_url)`** (slugified headlines
 diverge between the post's bold lead and the record's curated headline, so URL is the key; the
 edition is part of the key), slug-id as fallback; the build prints the join rate. A story's
-`deck`/`summary`/`why` are printed as escaped text, so `plain_emphasis()` drops markdown emphasis
-markers from them (`_x_`, `*x*`, `**x**`; underscores inside words, URLs and code spans stay,
-2026-09-25); editorials are html and render the same emphasis as `<em>`; headlines are left as
-written.
+`headline`/`deck`/`summary`/`why` are printed as escaped text, so `plain_emphasis()` drops
+markdown emphasis markers from them (`_x_`, `*x*`, `**x**`; underscores inside words, URLs and code
+spans stay, 2026-09-25); editorials are html and render the same emphasis as `<em>`. The headline
+is stripped at assembly, after the ids: `id` is slugified from the parsed lead and `sid` comes from
+the url, so no id, supersede key or dedup key sees the printed string.
 
 **A BARE URL IS NOT AN IDENTITY (fixed 2026-07-26, external-review R3).** The join used to key one
 record per normalized URL for the whole 14-day window, so two editions that legitimately re-cite one
