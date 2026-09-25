@@ -1,5 +1,8 @@
 date: 2026-09-20
 applied: false
+# PARTIAL (2026-09-25 apply pass): the four reach flips applied (per-patch `applied: true`); the plos.org
+#   and agu.org candidate adds are NOT approved and stay pending (both already exist in
+#   sources/registry.yml as candidates via the 2026-09-20 scout sync). File-level flag stays false.
 # Evaluator sandbox egress is allowlist-walled again this run: direct GET of plos.org /
 # agu.org / anthropic.com / esrf.fr / ohchr.org / congress.gov all returned code 000 with
 # "CONNECT tunnel failed, response 403"; only allowlisted hosts (aljazeera.com) resolved,
@@ -12,6 +15,8 @@ patches:
     field: reach
     from: direct
     to: proxy
+    applied: true
+    applied_on: 2026-09-25
     evidence: >-
       Recorded reach: direct, but this window's writer fetch log shows anthropic.com at
       0 ok-curl / 39 ok-proxy / 53 fail (health.json briefs.feeds). Curl never once
@@ -20,6 +25,8 @@ patches:
     field: reach
     from: direct
     to: proxy
+    applied: true
+    applied_on: 2026-09-25
     evidence: >-
       Recorded reach: direct; writer fetch log this window 0 ok-curl / 12 ok-proxy / 12 fail
       (health.json briefs.feeds). Proxy-only in practice.
@@ -27,6 +34,8 @@ patches:
     field: reach
     from: direct
     to: proxy
+    applied: true
+    applied_on: 2026-09-25
     evidence: >-
       Recorded reach: direct; writer fetch log this window 0 ok-curl / 13 ok-proxy / 17 fail
       (health.json briefs.feeds). Proxy-only in practice; the 57% fail rate also means UN News
@@ -35,6 +44,8 @@ patches:
     field: reach
     from: direct
     to: proxy
+    applied: true
+    applied_on: 2026-09-25
     evidence: >-
       Recorded reach: direct; writer fetch log this window 0 ok-curl / 2 ok-proxy / 7 fail
       (health.json briefs.feeds). Only 2 of 9 attempts succeeded, all via proxy; reach: direct

@@ -115,7 +115,7 @@ anthropic.com:
   class: outlet
   tier: T2
   status: established
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
     - weekend
@@ -124,6 +124,9 @@ anthropic.com:
     - date: 2026-07-07
       event: bootstrap
       status: established
+    - date: 2026-09-25
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 0 ok-curl / 39 ok-proxy / 53 fail -- evaluator registry patch 2026-09-20
 apnews.com:
   class: outlet
   tier: T2
@@ -1410,7 +1413,7 @@ rts.ch:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-05
@@ -1418,6 +1421,9 @@ rts.ch:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-09-25
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 0 ok-curl / 2 ok-proxy / 7 fail -- evaluator registry patch 2026-09-20
 science.org:
   class: outlet
   tier: T1
@@ -1676,7 +1682,7 @@ the-decoder.com:
   class: outlet
   tier: T2
   status: established
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-06-19
@@ -1684,6 +1690,9 @@ the-decoder.com:
     - date: 2026-07-07
       event: bootstrap
       status: established
+    - date: 2026-09-25
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 0 ok-curl / 12 ok-proxy / 12 fail -- evaluator registry patch 2026-09-20
 thehackernews.com:
   class: outlet
   tier: T2
@@ -2593,16 +2602,19 @@ news.un.org:
   class: institutional
   tier: T1
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   probe:
     url: https://news.un.org/feed/subscribe/en/news/all/rss.xml
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 0d, direct
+    - date: 2026-09-25
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 0 ok-curl / 13 ok-proxy / 17 fail -- evaluator registry patch 2026-09-20
 ecb.europa.eu:
   class: institutional
   tier: T1

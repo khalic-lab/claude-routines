@@ -1,5 +1,8 @@
 date: 2026-09-13
 applied: false
+# PARTIAL (2026-09-25 apply pass): admin.ch reach patch resolved; the europarl.europa.eu add is NOT
+#   approved and stays pending (note: it is already in sources/registry.yml as a candidate since
+#   2026-07-25 -- this file's 'absent from the registry' claim was wrong). File-level flag stays false.
 # No evaluator-side probe evidence this run: the evaluator sandbox egress is allowlist-walled
 # (direct GET of pnas.org / journals.aps.org / europarl.europa.eu etc. all returned code 000 /
 # CONNECT tunnel-block; linkcheck resolved 8/20 for the same reason). The reach flip below rests
@@ -9,6 +12,11 @@ patches:
     field: reach
     from: direct
     to: proxy
+    applied: true
+    applied_on: 2026-09-25
+    applied_note: >-
+      No-op -- sources/registry.yml already had admin.ch reach: proxy (set at its 2026-08-07
+      candidate seed). The telemetry shows 403 via the proxy too, so proxy alone will not fix it.
     evidence: >-
       admin.ch failed 13/13 fetch attempts this window (health.json feeds: 13 fail, 0 ok-curl,
       0 ok-proxy, all HTTP 403) — plus news.admin.ch 1/1 fail and bfs.admin.ch 1/1 fail. Whatever
