@@ -443,6 +443,19 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   // already read; all-read: the whole reserve and every editorial
   const seedRead = state === 'all-read' ? S3 : ['front-read', 'all-sync', 'all-sync-touched'].includes(state) ? S0 : null;
   if (seedRead) await page.addInitScript((ids) => localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(ids.map((id) => [id, Date.now()])))), seedRead);
+  // a made-up importance (SYNTH_IMP) goes on the cards when parsing ends, before the deferred
+  // modules run: All's pick is taken at load, and the expectations were derived with it
+  if (seedRead && Object.keys(SYNTH_IMP).length) {
+    await page.addInitScript((imp) => document.addEventListener('readystatechange', () => {
+      if (document.readyState !== 'interactive') return;
+      for (const [sid, v] of Object.entries(imp)) {
+        document.querySelectorAll(`.front li.fc[data-story="${sid}"]`).forEach((c) => { c.dataset.imp = String(v); });
+        const t = document.querySelector(`template[data-reserve-card="${sid}"]`);
+        if (t) t.content.firstElementChild.dataset.imp = String(v);
+      }
+      window.__synthImp = true;
+    }), SYNTH_IMP);
+  }
   if (state.startsWith('all-sync')) {
     // signed in, and the Worker's read set held until the page asks for it: the first pull marks
     // REMOTE1 read, the second REMOTE2 too; every other Worker call answers ok
@@ -848,12 +861,6 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         const movedR = Object.entries(layout()).filter(([k, v]) => lay0[k] !== v).map(([k]) => k);
         A.allReadView = [same(gr, { cards: F.FRONT, desk: F.DESK }) && !rowsR.length && !movedR.length,
           `Read: ${show(gr, { cards: F.FRONT, desk: F.DESK })}; builder-front rows shown ${rowsR.length}; back to All ${movedR.length} moved ${movedR.slice(0, 3).join(' ')}`];
-        // a made-up importance (see SYNTH_IMP) goes on the cards before the refill first reads them
-        for (const [sid, v] of Object.entries(F.SYNTH_IMP)) {
-          document.querySelectorAll(`.front li.fc[data-story="${sid}"]`).forEach((c) => { c.dataset.imp = String(v); });
-          const t = document.querySelector(`template[data-reserve-card="${sid}"]`);
-          if (t) t.content.firstElementChild.dataset.imp = String(v);
-        }
         const write = async (list, key = 'homeRead:v1') => {
           localStorage.setItem(key, JSON.stringify(Object.fromEntries(list.map((id) => [id, Date.now()]))));
           dispatchEvent(new StorageEvent('storage', { key, storageArea: localStorage }));
