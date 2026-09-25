@@ -144,6 +144,25 @@
 > route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
 > `hklaw.com`, `macrumors.com`, `wtvbam.com`.
 >
+> **Changed 2026-09-25: weekly-review apply pass — prompts, reach flips, a reading-surface check
+> and a missing-story alert.** Prompts (repo only, shims unchanged): News' primary-document rule
+> covers votes and government positions (an unreachable primary goes to Gaps) and rotates outlets off
+> the recurring top-5; Science anchors off saturated nature.com where another registered primary
+> exists; Weekend's recap cites only URLs fetched that run, states the ~50/50 paper balance (band
+> 35–65%, what §H measures) and aims mid-range of 4000–8000 words. Registry: `anthropic.com`,
+> `the-decoder.com`, `news.un.org`, `rts.ch` reach direct → proxy (`admin.ch` was already proxy and
+> 403s through it too). **Evaluator:** `linkcheck.py` always checks the Weekend "Week in headlines"
+> links on top of its 20-link sample and prints their pass rate separately (dimension C); new
+> `tools/evaluator/surface.py` (read-only, no network — imports the feed builder's parser and
+> `edition_parity`, never its `main()`, which writes the feed and `_data/stats.json`) reports
+> per-edition post/kept/card counts, parity misses, lede-fallback WARNs, overdue desks and a stale
+> feed, folded into dimension D. **Alert:** `publish.py` reads the feed step's output; any
+> `WARN no body parsed` or `PARITY-FAIL` row not alerted before becomes ONE
+> `pending-notifications/{ts}-alert-{slug}.json` stub (bridge schema, tag `warning`), deduped per
+> problem by one state file each under `index/alerts/` (per-file so concurrent desks never
+> rebase-conflict; a pending-file check cannot dedupe because the bridge deletes stubs). Non-fatal,
+> never `--strict-parity`; both files ride the edition commit.
+>
 > **Changed 2026-09-24: the front page rewritten as day editions, and the theme dropped.** Owner
 > ask: keep the look, rebuild it with semantic HTML/CSS and zones that cannot overlap, and fix
 > "editorials appearing days after they were published". Plan and decisions:
@@ -768,7 +787,8 @@
 | Artifact | Location | Shape | Producer → Consumer |
 |---|---|---|---|
 | Brief | `_posts/{YYYY-MM-DD}-{slug}.md` | front-matter (`layout,title,date,categories`) + body + Coverage footer | writer → homefeed/stats + Evaluator (data-only since 2026-07-18 — pages unpublished; only evaluator posts render, via `published: true`) |
-| Notification stub | `pending-notifications/{ts}-{slug}.json` | `{title, click, body, tags}` | writer/watch → bridge (then deleted) |
+| Notification stub | `pending-notifications/{ts}-{slug}.json` (watch: `{ts}-watch-{id}.json`; missing-story alert: `{ts}-alert-{slug}.json`) | `{title, click, body, tags}` | writer/watch/`publish.py` alert → bridge (then deleted) |
+| Missing-story alert state | `index/alerts/{sha1(key)[:16]}.json` (site-excluded) | `{key: "warn\|parity\|<edition>\|<story>", edition}` — one file per problem already alerted; pruned after 30 days | `publish.py` (after the feed step) → `publish.py` dedupe |
 | Watch registry | `watches.yml` | `[{id, query, match_when, cooldown_days, last_fired}]` | user + Watch (writes `last_fired`) |
 | Bridge config | `/usr/local/src/news-brief-ntfy-bridge/.env` | `NTFY_TOPIC, NTFY_SERVER, REPO, FEEDBACK_WORKER_URL, FEEDBACK_TOKEN` | bridge.sh |
 | Git creds | `…/git-credentials` (mode 600) | `https://x-access-token:<tok>@github.com` | bridge git push |
@@ -785,7 +805,7 @@
 | Reader state (local only) | browser localStorage | `homeRead:v1` `{sid: ms}` (stories + editorial ticks), `homeUnread:v1` `{ed-sid: ms}` (explicit un-tick of an editorial the edition rule calls read; 2026-09-24), `topicPrefs:v1` `{topics, rs, ts}` (roamed via `/prefs`), `syncSession:v1` `{token, reader, at}`; sessionStorage `homeOg:v2:<url>`. Retired, never reuse: `siteKey`, `homeOg:v1:`, `autoPreview:v2:` | `assets/js/store.js` (45-day prune) |
 | Institutions ledger | `sources/institutions.yml` | `meta.synced_editions` + `aliases:` + per-institution `{class, status, streams, first_seen, last_cited, citations, lifecycle}` | writer bylines → Step C `affiliations` → `institutions.py sync` (Step C.25c); class + aliases hand-curated |
 | Passkey auth | Cloudflare KV `cred:{id}` / `session:{token}` / `chal:{kind}:{c}` (not in repo) | credential pubkey+counter; 90d rolling sessions; single-use challenges TTL 300s | feedback-sink `/auth/*` (registration invite-gated by `INVITE_TOKEN` secret) |
-| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 726 tests, OK, 1 skip (2026-09-24; the old environment-dependent PyYAML/clock failures are gone). Site checks: `test_frontend_static`, `test_liquid_balance`, `test_admin_harness`, `test_feed_views`; browser checks live in `tools/verify/`: store invariants, fold, registry, institutions, affiliations + prompt-mirror drift, lint, metrics (+ computed briefs dimensions), dedup convergence, post-derived prose, reconcile, dual-write byte-identity goldens, fetch wrapper, computed footer, publish orchestrator, watch gate, linkcheck, plane (bake artifact roundtrip, cosine/groupbys, entities + blank-headline record path, thread enrichment) | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`); worker smokes run separately (`node tools/feedback-sink/test/smoke.mjs` 46 checks, `node tools/embed-proxy/test/smoke.mjs` 23 checks) |
+| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 775 tests, OK, 1 skip (2026-09-25; the old environment-dependent PyYAML/clock failures are gone). Site checks: `test_frontend_static`, `test_liquid_balance`, `test_admin_harness`, `test_feed_views`; browser checks live in `tools/verify/`: store invariants, fold, registry, institutions, affiliations + prompt-mirror drift, lint, metrics (+ computed briefs dimensions), dedup convergence, post-derived prose, reconcile, dual-write byte-identity goldens, fetch wrapper, computed footer, publish orchestrator + missing-story alert, watch gate, linkcheck (+ Weekend recap), reading surface, plane (bake artifact roundtrip, cosine/groupbys, entities + blank-headline record path, thread enrichment) | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`); worker smokes run separately (`node tools/feedback-sink/test/smoke.mjs` 46 checks, `node tools/embed-proxy/test/smoke.mjs` 23 checks) |
 | Plane artifact | Cloudflare KV `plane:v1` on embed-proxy (not in repo; namespace `459b76a2…`) | magic `PLANEv1\0` + meta JSON (n, dim, ts, norms, compact stories incl. entities) + n×1024 float32 vectors (~7.4MB), baked from the ledger | `tools/plane/bake.py --push` (publish-tail `plane-push`, every edition) → embed-proxy `/plane/*` queries (dedup check thread-enrichment, Weekend cross-cutting grounding, ad-hoc); `tools/plane/query.py` = offline reference twin |
 
 ### 1.3 Dedup today
