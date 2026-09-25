@@ -6,7 +6,9 @@ the authority on what to fetch"): prints a markdown plan with three sections --
 
   ## Fetch list   registered domains affine to this stream, with probe info if any.
   ## Pressure     rolling-30d citation share per domain for this stream; >20% of an outlet's
-                  (>30% of an institutional's; hubs exempt) share is flagged saturated.
+                  (>30% of an institutional's; hubs exempt) share is flagged saturated. Its
+                  first line names the recurring outlet cluster the writer rotates off (news
+                  rule 4): computed here, never a list in the prompt that goes stale.
   ## Discovery    today's discovery quota for this stream + registry candidate/dormant(>30d)
                   domains worth trying (candidates_to_try).
 
@@ -26,6 +28,12 @@ QUOTA = {"news": 1, "ai-ml": 1, "science": 2, "weekend": 2, "sports": 1}
 SATURATION_BAR = {"outlet": 0.20, "institutional": 0.30}  # hub: exempt (SPIKE §2/§3.4)
 DORMANT_DAYS = 30
 WINDOW_DAYS = 30
+# The recurring outlet cluster: the stream's most-cited outlets in the window, each cited at
+# least twice and holding at least 3% of the citations (2026-09-25; replaced news rule 4's
+# hard-coded "srf.ch, lemonde.fr, aljazeera.com, dw.com, letemps.ch").
+CLUSTER_SIZE = 5
+CLUSTER_MIN_COUNT = 2
+CLUSTER_MIN_SHARE = 0.03
 
 EMERGENCY_FLOOR = """## Fetch list
 source-plan unavailable -- degrading to the emergency slate (SRF, LeTemps, Al Jazeera, arXiv,
@@ -95,7 +103,13 @@ def build_pressure_section(slug, reg, root):
     if total == 0:
         lines.append("no citations in the rolling %dd window for %s." % (WINDOW_DAYS, slug))
         return "\n".join(lines)
-    for domain in sorted(counts, key=lambda d: (-counts[d], d)):
+    ranked = sorted(counts, key=lambda d: (-counts[d], d))
+    cluster = [d for d in ranked if class_of(d, reg) == "outlet" and counts[d] >= CLUSTER_MIN_COUNT
+               and counts[d] / total >= CLUSTER_MIN_SHARE][:CLUSTER_SIZE]
+    lines.append("- Recurring outlet cluster (the %d most-cited outlets, each >= %d citations and "
+                 ">= %d%%): %s" % (CLUSTER_SIZE, CLUSTER_MIN_COUNT, int(CLUSTER_MIN_SHARE * 100),
+                                   ", ".join(cluster) if cluster else "none"))
+    for domain in ranked:
         count = counts[domain]
         share = count / total
         cls = class_of(domain, reg)

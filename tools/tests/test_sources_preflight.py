@@ -181,6 +181,65 @@ class PressureSaturationTest(PreflightTestBase):
         self.assertEqual(proc.returncode, 0)
 
 
+class RecurringClusterTest(PreflightTestBase):
+    """News rule 4 rotates off the recurring outlet cluster, which the Pressure section computes
+    (2026-09-25; it replaced a hard-coded list in the prompt that went stale). The cluster is the
+    five most-cited OUTLETS in the rolling window, each cited at least twice: an institutional
+    source never joins it, a one-off outlet never does, and citations outside the window count
+    for nothing."""
+
+    def setUp(self):
+        super().setUp()
+        outlets = ["a.example", "b.example", "c.example", "d.example", "e.example", "f.example",
+                   "once.example", "old.example"]
+        reg = {d: {"class": "outlet", "status": "established", "reach": "direct",
+                   "streams": ["news"], "last_cited": H.days_ago(3)} for d in outlets}
+        reg["gov.example"] = {"class": "institutional", "status": "established", "reach": "direct",
+                              "streams": ["news"], "last_cited": H.days_ago(3)}
+        self.write_registry(reg)
+        stories_dir = os.path.join(self.root, "index", "stories")
+        os.makedirs(stories_dir, exist_ok=True)
+        import json
+
+        def write(fname, date, domains):
+            with open(os.path.join(stories_dir, fname), "w") as f:
+                for i, d in enumerate(domains):
+                    f.write(json.dumps({"date": date, "stream": "news", "source_domain": d,
+                                        "url": "https://%s/%s/%d" % (d, fname, i),
+                                        "headline": "story %d" % i, "tier": "T2"}) + "\n")
+
+        write("A-news.jsonl", H.days_ago(4), ["gov.example"] * 9 + ["a.example"] * 7 + ["b.example"] * 6)
+        write("B-news.jsonl", H.days_ago(9), ["c.example"] * 5 + ["d.example"] * 4 + ["e.example"] * 3)
+        write("C-news.jsonl", H.days_ago(14), ["f.example"] * 2 + ["once.example"])
+        write("D-news.jsonl", H.days_ago(45), ["old.example"] * 20)  # outside the window
+
+    def cluster_line(self):
+        pressure = _section(self.run_preflight("news").stdout, "pressure") or ""
+        lines = [l for l in pressure.split("\n") if "recurring outlet cluster" in l.lower()]
+        self.assertEqual(len(lines), 1, pressure)
+        return lines[0].split(":", 1)[1].strip()
+
+    def test_cluster_is_the_five_most_cited_outlets_in_order(self):
+        self.assertEqual(self.cluster_line(),
+                         "a.example, b.example, c.example, d.example, e.example")
+
+    def test_institutional_one_off_and_out_of_window_domains_never_join(self):
+        line = self.cluster_line()
+        for d in ("gov.example", "once.example", "old.example", "f.example"):
+            self.assertNotIn(d, line)
+
+    def test_no_outlet_cited_twice_says_none(self):
+        stories_dir = os.path.join(self.root, "index", "stories")
+        for f in os.listdir(stories_dir):
+            os.remove(os.path.join(stories_dir, f))
+        import json
+        with open(os.path.join(stories_dir, "A-news.jsonl"), "w") as f:
+            for d in ("a.example", "b.example", "gov.example", "gov.example"):
+                f.write(json.dumps({"date": H.days_ago(2), "stream": "news", "source_domain": d,
+                                    "url": "https://%s/x" % d, "headline": "s", "tier": "T2"}) + "\n")
+        self.assertEqual(self.cluster_line(), "none")
+
+
 class DiscoveryQuotaAndCandidatesTest(PreflightTestBase):
     """SPIKE 3.4 pull mechanism + Open Question 5 numbers: news>=1, ai-ml>=1 non-hub,
     science>=2, weekend>=2; candidates_to_try surfaces registry candidate/dormant(>30d) entries."""
