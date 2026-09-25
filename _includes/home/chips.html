@@ -1,0 +1,5 @@
+{%- comment -%} The beat chips. Rendered twice (bar and rail), one control: one state, one painter. {%- endcomment -%}
+<button class="chip" type="button" data-topic="" aria-pressed="true"><span class="chip__l">All</span> <span class="ct">{{ include.feed.board.size }}</span></button>
+{%- for t in include.feed.beats -%}
+<button class="chip" type="button" data-topic="{{ t.key }}" aria-pressed="false"><i class="dot" aria-hidden="true" style="--tc:{{ t.color }}"></i><span class="chip__l">{{ t.label | escape }}</span> <span class="ct">{{ t.count }}</span></button>
+{%- endfor -%}

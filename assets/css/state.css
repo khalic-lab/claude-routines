@@ -3,6 +3,14 @@
   [hidden] { display: none; }
   /* controls that only work with script are absent, not inert, without it */
   html:not(.js) .needs-js { display: none; }
+  /* folding is presentation, gated on script: without it every text shows */
+  .js .is-folded .fold { display: none; }
+  /* reading dims by colour toward --muted and never hides, moves or resizes anything (R3); the
+     AI disclosure keeps its colour (R5) */
+  .is-read .hl, .is-read .deck, .is-read .why, .is-read .sum, .is-read .ed__hl, .is-read .ed__body, .ptr.is-read .ptr__h { color: var(--muted); }
+  .is-read .photo img { opacity: .5; }
+  /* feedback kill switch (window.__FB.enabled = false) */
+  .fb-off .vote, .fb-off .vnote, .fb-off .rzn { display: none; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none; animation: none; scroll-behavior: auto; }
   }

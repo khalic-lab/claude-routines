@@ -1,0 +1,91 @@
+{%- comment -%}
+  "How this works": a native <dialog> opened with showModal() by every [data-dialog="hiw"] opener
+  (focus trap, Esc and the inert page come with it). Without script the openers are plain
+  #hiw links and CSS shows this dialog in flow via :target; its close controls need script and hide.
+{%- endcomment -%}
+<dialog id="hiw" class="dlg dlg--wide" aria-labelledby="hiw-h" aria-describedby="hiw-intro">
+  <div class="dlg__box">
+    <form class="dlg__x needs-js" method="dialog"><button type="submit" aria-label="Close how this works">×</button></form>
+    <h2 class="dlg__h" id="hiw-h">How this works</h2>
+    <p class="hiw__sub" id="hiw-intro">An AI writes this site. On a schedule, Claude reads what its sources published and files each story with a link to the original — no reporter involved. One person, Rafael, keeps the source list and reads what you send back.</p>
+
+    <figure class="hiw-architecture" aria-labelledby="hiw-cap">
+      <picture>
+        <source media="(max-width:900px) and (prefers-color-scheme:dark)" srcset="{{ '/assets/diagrams/how-it-works-mobile-dark.svg' | relative_url }}">
+        <source media="(max-width:900px)" srcset="{{ '/assets/diagrams/how-it-works-mobile-light.svg' | relative_url }}">
+        <source media="(prefers-color-scheme:dark)" srcset="{{ '/assets/diagrams/how-it-works-wide-dark.svg' | relative_url }}">
+        <img src="{{ '/assets/diagrams/how-it-works-wide-light.svg' | relative_url }}" alt="Research flows through a memory and editorial gate into a versioned GitHub release and delivery; reader feedback then flows through an evaluator to human approval." decoding="async" loading="lazy">
+      </picture>
+      <figcaption id="hiw-cap">
+        <span class="hiw-legend">
+          <span><i class="hiw-key hiw-key--path" aria-hidden="true"></i>Runs on its own</span>
+          <span><i class="hiw-key hiw-key--human" aria-hidden="true"></i>Rafael decides</span>
+          <span class="hiw-legend__wide"><i class="hiw-key hiw-key--boundary" aria-hidden="true"></i>Stops short of publishing</span>
+        </span>
+        <span class="hiw-scope"><strong>Reading the map:</strong> left, the five scheduled writing runs — it calls them desks — and the repeat check. Middle, publishing. Right, your feedback.</span>
+      </figcaption>
+    </figure>
+
+    <div class="vh">
+      <h3>The same map in words</h3>
+      <ol>
+        <li><strong>Write.</strong> Five scheduled runs — News, Sports, AI/ML, Science, Weekend Deep Read — start with no memory of the last one and follow instructions published on this site. They research from a maintained source list and fetch the pages themselves. Each candidate story is compared with earlier briefs: repeats are dropped, and a running story returns only when something real has changed.</li>
+        <li><strong>Publish.</strong> Claude writes the prose with its sources linked. Fixed scripts, not the AI, do the counting and the page building. If publishing fails, nothing ships.</li>
+        <li><strong>Learn.</strong> Votes, written reasons and topic proposals go to a private queue. A Sunday review run reads the week and recommends changes. Rafael approves, edits or rejects them before the next run sees them.</li>
+      </ol>
+    </div>
+
+    <section class="hiw-sec" aria-labelledby="hiw-page">
+      <header class="hiw-sec__head"><h3 id="hiw-page">Reading this page</h3><p>Position is the ranking.</p></header>
+      <p class="hiw-line">The front page carries the stories that matter most right now and the newest desk’s view. Below it, each day is one edition: its stories biggest first, and the day’s AI editorial closing it. A tag like <span class="ptag"><b>Science</b><span aria-hidden="true"> · </span>17–23 Sep</span> is the span that desk’s edition reports on — from the day after its previous edition to the day it was published, never more than the window its instructions set. Reading a story dims it where it stands; nothing moves or shrinks.</p>
+    </section>
+
+    {%- if site.data.stats %}{% assign st = site.data.stats %}
+    <section class="hiw-sec" aria-labelledby="hiw-evidence">
+      <header class="hiw-sec__head"><h3 id="hiw-evidence">What has been published</h3><p>Counted from the files.</p></header>
+      <ul class="hiw-stats" role="list">
+        <li><b>{{ st.all_time.stories }}</b><span>stories filed<br>since {{ st.all_time.since | date: "%-d %b %Y" }}</span></li>
+        <li><b>{{ st.all_time.distinct_domains }}</b><span>different sources<br>linked so far</span></li>
+        <li><b>{{ st.all_time.editions }}</b><span>briefs<br>published in that time</span></li>
+      </ul>
+      <p class="hiw-line">Of those stories, <strong>{{ st.all_time.tags["preprint"] | default: 0 }}</strong> rested on research not yet peer-reviewed, <strong>{{ st.all_time.tags["single-source"] | default: 0 }}</strong> on a single source, <strong>{{ st.all_time.tags["disputed"] | default: 0 }}</strong> on contested facts.</p>
+      {%- if st.dedup.since %}
+      <p class="hiw-line">{{ st.dedup.checked }} candidates checked against earlier briefs since {{ st.dedup.since | date: "%-d %b" }}; <strong>{{ st.dedup.repeats_dropped | plus: st.dedup.ongoing_dropped }} held back</strong> as things you already read.</p>
+      {%- else %}
+      <p class="hiw-line">Repeat-checking starts with the next brief.</p>
+      {%- endif %}
+    </section>
+    {%- endif %}
+
+    <section class="hiw-sec" aria-labelledby="hiw-contract">
+      <header class="hiw-sec__head"><h3 id="hiw-contract">What keeps it honest</h3><p>Rules, not aspirations.</p></header>
+      <ul class="hiw-principles" role="list">
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7"/><path d="M13.5 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7"/></svg>
+          <span><strong>You can check it yourself</strong><small>The link on a story is where it came from; big claims want a second.</small></span></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11V4a1 1 0 0 1 1-1h7l10 10-8 8L3 11z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>
+          <span><strong>Doubt is written down</strong><small>Unreviewed research, lone sources and contested facts get labelled.</small></span></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></svg>
+          <span><strong>It remembers what it told you</strong><small>New stories are checked against what has already been filed.</small></span></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6l7-3z"/></svg>
+          <span><strong>A person owns the list</strong><small>Rafael decides which sources are trusted and signs off on changes.</small></span></li>
+      </ul>
+      <p class="hiw-bound"><strong>What it is not:</strong> nobody here makes a phone call. It reads what is already public, and a model can misread — so the link is always there. Opinion pieces say an AI wrote them.</p>
+    </section>
+
+    <section class="hiw-sec" aria-labelledby="hiw-yours">
+      <header class="hiw-sec__head"><h3 id="hiw-yours">What your clicks do</h3><p>Slowly, never alone.</p></header>
+      <ul class="hiw-principles" role="list">
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.3a2 2 0 0 0 2-1.7l1.4-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+          <span><strong>Useful / not useful</strong><small>Counted, not obeyed. One tap changes nothing; a pattern can.</small></span></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14.5 6.5l3 3"/></svg>
+          <span><strong>Saying why</strong><small>A sentence outweighs a tap, and lands in a private file, not a public thread.</small></span></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+          <span><strong>Marking a story read</strong><small>Dims the story for you alone. It never steers the writing.</small></span></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          <span><strong>Proposing a topic</strong><small>Becomes an open question in the Sunday review.</small></span></li>
+      </ul>
+    </section>
+    <p class="hiw-read"><a href="{{ '/prompts/' | relative_url }}">Read the instructions the runs follow</a> — the real wording, kept version by version.</p>
+    <form class="dlg__end needs-js" method="dialog"><button class="btn" type="submit">Close</button></form>
+  </div>
+</dialog>

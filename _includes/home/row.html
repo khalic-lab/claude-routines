@@ -1,0 +1,21 @@
+{%- comment -%} A story in its day edition's index. Folded at rest; opens inline. {%- endcomment -%}
+{%- assign s = include.s -%}
+{%- assign id = s.sid | default: s.id -%}
+{%- assign fid = '' -%}
+{%- if s.summary != "" or s.importance == 1 and s.why != "" -%}{%- assign fid = 'f-' | append: id -%}{%- endif -%}
+{%- assign hcls = 'row-' | append: s.tier -%}
+<li class="row row--{{ s.tier }} is-folded" id="r-{{ id }}" data-zone="row" data-story="{{ id }}" data-edition="{{ s.edition }}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}">
+  <article class="row__in" aria-labelledby="h-{{ id }}">
+    <div class="row__g">{% include home/glyph.html imp=s.importance tier=s.tier label=s.tier_label quiet=true %}</div>
+    <header class="row__head">
+      {% include home/headline.html s=s id=id cls=hcls %}
+      {%- if s.deck %}<p class="deck">{{ s.deck | escape }}</p>{% endif %}
+      <p class="row__meta">{% if s.show_desk %}<span class="row__desk"><span class="vh">Desk: </span>{{ s.stream_label }}</span>{% endif %}{% if s.fresh %}<span class="fresh">Just in</span>{% endif %}{% include home/meta.html s=s %}</p>
+    </header>
+    {%- if s.importance > 1 and s.why and s.why != "" %}
+    <div class="row__why">{% include home/why.html s=s %}</div>
+    {%- endif %}
+    <div class="fold row__body" id="f-{{ id }}">{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}</div>
+    <footer class="row__foot">{% include home/actions.html fold=fid %}</footer>
+  </article>
+</li>

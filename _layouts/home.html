@@ -1,22 +1,182 @@
 ---
 layout: default
-css: [reset, base, prose, utilities, state]
+css: [reset, base, layout, components, utilities, state]
+js: [main, store, sync, prefs, board, fold, votes, og, fresh, dialog, propose, probe]
+body_class: home
 ---
-{%- comment -%} Interim plain list while the day-edition page is built (replaced next). {%- endcomment -%}
+{%- comment -%}
+  THE FRONT PAGE (2026-09-24 rewrite, docs/PLAN-2026-09-24-front-page-rewrite.md). A composed
+  front (lead + three stories + the newest desk's view), then one <section> per date: that day's
+  edition, its desks' period tags, its stories as an index biggest first, its editorial last.
+
+  This template decides nothing. tools/build_stories_feed.py emits the order (`board`), the day
+  slices (`days`), the front (`front`), the periods, tiers, headings and punctuation; Liquid only
+  prints them. DOM order is visual order and nothing re-sorts or measures (no layout script).
+  Without script every text is visible and no script-only control renders (`.needs-js`).
+
+  Contract kept byte-compatible with the old page (assets/js/store.js): read ids live on the item
+  element as data-story (`sid | default: id`, or `ed-<stream>-<date>`), data-edition is the
+  /submit `brief`.
+{%- endcomment -%}
 {%- assign feed = site.data.homefeed -%}
-<div class="page-shell">
-  <header class="site-head"><h1 class="site-name">{{ page.title | escape }}</h1></header>
-  <main id="main">
-    {%- for d in feed.days %}
-    <section aria-labelledby="d-{{ d.date }}-h">
-      <h2 id="d-{{ d.date }}-h"><time datetime="{{ d.date }}">{{ d.label_long }}</time></h2>
-      <ol>
-        {%- for it in feed.board offset: d.first limit: d.count %}
-        <li>{% if it.kind == 'editorial' %}{{ it.title_html }}{% else %}<a href="{{ it.url | escape }}">{{ it.headline | escape }}</a>{% endif %}</li>
+{%- assign board = feed.board -%}
+{%- assign review = site.categories.evaluator | first -%}
+<a class="skip" href="#main">Skip to the stories</a>
+<div class="page">
+  <header class="mast" data-zone="masthead">
+    <h1 class="nameplate">{{ page.title | escape }}</h1>
+    <div class="mast__meta">
+      {%- if feed.generated %}
+      <p class="edition"><time datetime="{{ feed.generated }}">{{ feed.edition_label | default: feed.generated }}</time></p>
+      {%- if feed.count_line %}
+      <p class="mast__count">{{ feed.count_line }}</p>
+      {%- endif %}
+      {%- endif %}
+      <p class="tagline">The day’s stories, sized by how much they matter.</p>
+    </div>
+    <div class="mast__acts">
+      <a class="linkbtn" href="#hiw" data-dialog="hiw" aria-haspopup="dialog">How this works</a>
+      {%- if review %}
+      <a class="linkbtn" href="{{ review.url | relative_url }}">Weekly pipeline review · {{ review.date | date: "%-d %b" }}</a>
+      {%- endif %}
+    </div>
+    {%- if feed.beats %}
+    <div class="mast__beats needs-js" role="group" aria-labelledby="rail-beat">
+      <p class="rail-lbl" id="rail-beat">Beat</p>
+      <div class="rbeats">{% include home/chips.html feed=feed %}</div>
+    </div>
+    {%- endif %}
+    <details class="mast__key">
+      <summary>How to read this page</summary>
+      <dl class="key">
+        <dt>{% include home/glyph.html imp=3 tier="lead" label="Lead" quiet=true %}</dt><dd>Lead — the day’s biggest story</dd>
+        <dt>{% include home/glyph.html imp=2 tier="feature" label="Feature" quiet=true %}</dt><dd>Feature — worth your time, not urgent</dd>
+        <dt>{% include home/glyph.html imp=1 tier="brief" label="Brief" quiet=true %}</dt><dd>Brief — its headline; open it for the rest</dd>
+        <dt><span class="edchip edchip--key">AI</span></dt><dd>AI editorial — opinion, not reporting</dd>
+      </dl>
+      <p class="key__note">Position is the ranking: the front page first, then each day’s edition, biggest story first. A tag like “Science · 17–23 Sep” is the span that desk’s edition reports on. Read stories dim; they never move or shrink.</p>
+    </details>
+  </header>
+
+  <div class="col" data-zone="column">
+    <search class="bar needs-js" data-zone="bar" aria-label="Filter the stories">
+      <div class="seg" role="group" aria-label="Read state">
+        <button type="button" data-rs="" aria-pressed="true">All<span class="ct">{{ board.size }}</span></button>
+        <button type="button" data-rs="unread" aria-pressed="false">Unread<span class="ct">{{ board.size }}</span></button>
+        <button type="button" data-rs="read" aria-pressed="false">Read<span class="ct">0</span></button>
+      </div>
+      <button class="syncbtn" type="button" data-dialog="sync" aria-haspopup="dialog" hidden>Sync</button>
+      {%- if feed.beats %}
+      <div class="beats" role="group" aria-label="Beat">{% include home/chips.html feed=feed %}</div>
+      {%- endif %}
+    </search>
+
+    <div class="notice needs-js" data-zone="notice" role="status" data-src="{{ '/edition.json' | relative_url }}" hidden>
+      <span>New edition</span><button class="syncbtn" type="button">Reload</button>
+    </div>
+
+    <main id="main" tabindex="-1" data-zone="main">
+      <p class="empty" id="empty" data-zone="empty" role="status" aria-live="polite" hidden></p>
+{%- if feed.days == nil %}
+      <p class="empty" data-zone="empty">Edition data is updating, reload in a minute.</p>
+{%- elsif feed.days.size == 0 %}
+      <p class="empty" data-zone="empty">No stories yet — check back after the next brief.</p>
+{%- else %}
+      {%- assign front = feed.front %}
+      {%- if front.items.size > 0 or front.desk != nil %}
+      <section class="front" data-zone="front" aria-labelledby="front-h">
+        <header class="front__head" data-zone="front-head">
+          <h2 class="front__h" id="front-h">Front page · <time datetime="{{ front.date }}">{{ front.date_label }}</time></h2>
+          <p class="front__n">{% if front.n == 1 %}The story{% else %}The {{ front.n }} stories{% endif %} that matter most right now{% if front.older.size > 0 %} · from {{ front.older | join: ", " }}{% endif %}</p>
+        </header>
+        <div class="front__grid" data-zone="front-grid">
+          <div class="front__top" data-zone="front-top">
+            {%- if front.items.size > 0 %}
+            {%- assign i = front.items.first %}{% assign card = board[i] %}
+            <ol class="fcards fcards--top" role="list" data-zone="front-lead">
+              {% include home/front-card.html s=card %}
+            </ol>
+            {%- endif %}
+            {%- if front.desk != nil %}
+            <aside class="desk" data-zone="desk" aria-labelledby="desk-h">
+              <p class="desk__lbl" id="desk-h">Desk’s view</p>
+              {%- assign desk = board[front.desk] %}
+              {% include home/editorial.html e=desk where="desk" %}
+            </aside>
+            {%- endif %}
+          </div>
+          {%- if front.items.size > 1 %}
+          <ol class="fcards fcards--rest" role="list" start="2" data-zone="front-rest">
+            {%- for i in front.items offset: 1 %}{% assign card = board[i] %}
+            {% include home/front-card.html s=card %}
+            {%- endfor %}
+          </ol>
+          {%- endif %}
+        </div>
+      </section>
+      {%- endif %}
+
+      {%- for d in feed.days %}
+      <section class="day" id="d-{{ d.date }}" data-zone="day" data-date="{{ d.date }}" aria-labelledby="d-{{ d.date }}-h">
+        <header class="day__head" data-zone="day-head">
+          <h2 class="day__h" id="d-{{ d.date }}-h"><time datetime="{{ d.date }}">{{ d.label_long }}</time></h2>
+          <div class="day__meta">
+            <p class="day__n" data-total="{{ d.n_stories }}">{{ d.n_stories }} {% if d.n_stories == 1 %}story{% else %}stories{% endif %}{% if d.n_front > 0 %} · {{ d.n_front }} on the front{% endif %}</p>
+            <p class="day__cov"><span class="day__covl">Covers</span>{% for st in d.streams %}{% include home/ptag.html stream=st.key label=st.label p=st.period %}{% endfor %}</p>
+            {%- if d.editorials > 0 %}
+            <p class="day__links">
+              {%- for it in board offset: d.first limit: d.count %}{% if it.kind == 'editorial' %}<a class="jump" href="#{{ it.sid }}"><span aria-hidden="true">→</span>{{ it.stream_label }} desk’s view{% if it.on_front %}<span class="vh"> (on the front)</span>{% endif %}</a>{% endif %}{% endfor -%}
+            </p>
+            {%- endif %}
+          </div>
+        </header>
+        {%- if d.n_stories > 0 %}
+        <ol class="rows" role="list" data-zone="rows">
+          {%- for it in board offset: d.first limit: d.count %}
+          {%- if it.kind != 'editorial' %}
+          {%- if it.on_front %}
+          {%- assign pid = it.sid | default: it.id %}
+          <li class="ptr" data-zone="pointer" data-ptr="{{ pid }}" data-edition="{{ it.edition }}">
+            <a href="#c-{{ pid }}"><span class="ptr__l"><span aria-hidden="true">↑</span>On the front</span><span class="ptr__h">{{ it.headline | escape }}</span></a>
+          </li>
+          {%- else %}
+          {% include home/row.html s=it %}
+          {%- endif %}
+          {%- endif %}
+          {%- endfor %}
+        </ol>
+        {%- endif %}
+        {%- for it in board offset: d.first limit: d.count %}
+        {%- if it.kind == 'editorial' %}
+        {%- if it.on_front %}
+        <p class="ptr ptr--ed" data-zone="pointer" data-ptr="{{ it.sid }}" data-edition="{{ it.edition }}">
+          <a href="#{{ it.sid }}"><span class="ptr__l"><span aria-hidden="true">↑</span>On the front</span><span class="ptr__h ptr__h--ed">{{ it.stream_label }} desk’s view — {{ it.title_html }}</span></a>
+        </p>
+        {%- else %}
+        {% include home/editorial.html e=it where="day" %}
+        {%- endif %}
+        {%- endif %}
         {%- endfor %}
-      </ol>
-    </section>
-    {%- endfor %}
-  </main>
-  <footer class="site-foot">{% include colophon.html home=true %}</footer>
+      </section>
+      {%- endfor %}
+{%- endif %}
+    </main>
+
+    <footer class="foot" data-zone="footer">
+      <details class="propose needs-js">
+        <summary>Propose a brief</summary>
+        <form class="propose__form" action="#">
+          <label>Topic <input class="propose__topic" name="topic" required maxlength="300" placeholder="A topic or beat you’d want covered"></label>
+          <label>Detail <textarea class="propose__detail" name="detail" rows="3" placeholder="Optional — why it matters, sources, the angle"></textarea></label>
+          <div class="propose__row"><button class="fb-btn" type="submit">Propose</button><span class="propose__msg" role="status" aria-live="polite"></span></div>
+        </form>
+      </details>
+      {% include colophon.html home=true generated=feed.generated %}
+    </footer>
+  </div>
 </div>
+{% include home/hiw.html %}
+{% include home/sync.html %}
+<p class="vh" id="announce" role="status" aria-live="polite"></p>
+{%- comment -%} the entry needs the stamp in its src: an import map remaps imports, not script src {%- endcomment -%}
+<script type="module" src="{{ '/assets/js/main.js' | relative_url }}?v={{ site.time | date: '%s' }}" onerror="document.documentElement.classList.remove('js')"></script>

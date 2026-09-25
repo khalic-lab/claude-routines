@@ -1,0 +1,24 @@
+{%- comment -%}
+  Passkey sync, in a top-layer dialog so nothing in the bar can clip it. Opened by the bar's Sync
+  button (shown only when WebAuthn exists) and by sign-in nudges from votes and the propose form.
+{%- endcomment -%}
+<dialog id="sync" class="dlg" aria-labelledby="sync-h">
+  <div class="dlg__box">
+    <form class="dlg__x" method="dialog"><button type="submit" aria-label="Close sync">×</button></form>
+    <h2 class="dlg__h" id="sync-h">Sync</h2>
+    <p class="sync__lede">Sign in with a passkey to carry your read stories, beats and votes across devices. Signed out, nothing leaves this browser.</p>
+    <div class="sync__out">
+      <button class="btn sync__signin" type="button">Sign in with passkey</button>
+      <button class="linkbtn sync__setup-t" type="button" aria-expanded="false" aria-controls="sync-setup">First time? Set up</button>
+      <div class="sync__setup" id="sync-setup" hidden>
+        <label class="sync__lbl">Invite code <input class="sync__invite" type="password" autocomplete="off"></label>
+        <button class="btn sync__create" type="button">Create passkey</button>
+      </div>
+    </div>
+    <div class="sync__in" hidden>
+      <p class="sync__who"></p>
+      <button class="btn sync__signout" type="button">Sign out</button>
+    </div>
+    <p class="sync__status" role="status" aria-live="polite"></p>
+  </div>
+</dialog>

@@ -1,0 +1,31 @@
+{%- comment -%}
+  A story lifted to the front. Leads and features keep "why" visible and fold the body; a brief
+  folds its "why" too (R2). The og:image slot is reserved only when the builder says the story may
+  carry one (`unfurl`), and only with script, since only script can fill it.
+{%- endcomment -%}
+{%- assign s = include.s -%}
+{%- assign id = s.sid | default: s.id -%}
+{%- assign fid = '' -%}
+{%- if s.summary != "" or s.importance == 1 and s.why != "" -%}{%- assign fid = 'f-' | append: id -%}{%- endif -%}
+<li class="fc fc--{{ s.tier }}{% unless s.boot_open %} is-folded{% endunless %}" id="c-{{ id }}" data-zone="card" data-story="{{ id }}" data-edition="{{ s.edition }}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}">
+  <article aria-labelledby="h-{{ id }}">
+    <header class="fc__top">
+      {% include home/glyph.html imp=s.importance tier=s.tier label=s.tier_label %}<time class="fday" datetime="{{ s.date }}">{{ s.day_label }}</time>{% include home/ptag.html stream=s.stream label=s.stream_label p=s.period %}{% if s.fresh %}<span class="fresh">Just in</span>{% endif %}
+    </header>
+    {% include home/headline.html s=s id=id cls=s.tier %}
+    {%- if s.deck %}
+    <p class="deck">{{ s.deck | escape }}</p>
+    {%- endif %}
+    {%- if s.unfurl %}
+    <figure class="photo needs-js" data-og="{{ s.url | escape }}" aria-hidden="true"></figure>
+    {%- endif %}
+    {%- if s.importance > 1 %}
+    {% include home/why.html s=s %}
+    {%- endif %}
+    <div class="fold" id="f-{{ id }}">{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}</div>
+    <footer class="line">
+      {% include home/meta.html s=s %}
+      {% include home/actions.html fold=fid open=s.boot_open %}
+    </footer>
+  </article>
+</li>

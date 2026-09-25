@@ -1,0 +1,139 @@
+/* Layout layer: the homepage's zones. Every zone is in normal flow and reserves its own space, so
+   no two zones can overlap; DOM order is visual order for all content (no grid-auto-flow:dense, no
+   order: on content). The one use of `order` is CHROME ONLY: on phones the control bar rests
+   after <main>, in the thumb zone (R13), and test_frontend_static.py allows it on exactly
+   .bar / .notice / main / .foot. */
+@layer layout {
+  /* focus and in-page jumps land clear of the sticky bar: bottom edge on phones (two-row bar plus
+     the safe area), top edge from 700px */
+  html { scroll-padding-block-end: calc(6.5rem + env(safe-area-inset-bottom)); }
+  @media (min-width: 700px) { html { scroll-padding-block: 4.5rem 0; } }
+
+  /* ---- shell */
+  .page {
+    display: flex; flex-direction: column; min-block-size: 100dvh;
+    padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+  }
+  .col { display: flex; flex-direction: column; flex: 1 0 auto; min-inline-size: 0; }
+  .bar { order: 0; }
+  .notice { order: 1; }
+  main { order: 2; flex: 1 0 auto; min-inline-size: 0; display: flex; flex-direction: column; padding-block: 18px 28px; }
+  .foot { order: 3; }
+  @media (max-width: 699.98px) {
+    .bar { order: 2; position: sticky; inset-block-end: 0; }
+    main { order: 1; }
+  }
+  @media (min-width: 700px) { .bar { position: sticky; inset-block-start: 0; } }
+  @media (min-width: 1280px) {
+    .page { display: grid; grid-template-columns: 180px minmax(0, 1fr); align-items: start; }
+  }
+
+  /* ---- masthead; from 1280px the rail (sticky, never overscroll-contained: R18) */
+  .mast {
+    display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; row-gap: 10px;
+    padding-block: 18px 4px;
+  }
+  .mast__acts { display: flex; flex-wrap: wrap; gap: 0 16px; }
+  .mast__beats { display: none; }
+  @media (min-width: 700px) {
+    .mast { grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; column-gap: 18px; padding-block-end: 14px; border-block-end: 1px solid var(--rule); }
+    .nameplate { grid-row: 1 / span 2; }
+    .mast__acts { grid-column: 3; grid-row: 1 / span 2; flex-direction: column; align-items: flex-end; align-self: end; }
+    .mast__key { grid-column: 1 / -1; }
+  }
+  @media (min-width: 1280px) {
+    .mast {
+      position: sticky; inset-block-start: 0; align-self: start; max-block-size: 100dvh; overflow-y: auto;
+      display: flex; flex-direction: column; align-items: stretch; gap: 0;
+      padding: 22px 20px 24px 6px; margin-inline-start: -6px; border-block-end: 0; scroll-padding-block: 12px;
+    }
+    .col { border-inline-start: 1px solid var(--rule); padding-inline-start: 28px; min-block-size: 100dvh; }
+    .mast__acts { flex-direction: column; align-items: flex-start; gap: 0; padding-block: 10px; border-block: 1px solid var(--hair); margin-block-end: 18px; }
+    .mast__beats { display: block; }
+  }
+
+  /* ---- control bar (a <search>): read state, Sync, then the beat strip */
+  .bar { z-index: 3; background: var(--paper); display: flex; align-items: center; gap: 8px; min-inline-size: 0; }
+  .bar .seg, .bar .syncbtn { flex: none; }
+  .bar .beats {
+    display: flex; flex: 1 1 auto; min-inline-size: 0; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none;
+    padding: 4px; margin-block: -4px; scroll-padding-inline: 16px;
+    mask-image: linear-gradient(90deg, #000 88%, transparent);
+  }
+  .bar .beats:has(:focus-visible) { mask-image: none; }
+  .bar .beats::-webkit-scrollbar { display: none; }
+  .bar .beats > * { flex: 0 0 auto; }
+  @media (max-width: 699.98px) {
+    /* phones: [read state · Sync] over a full-width strip, so the widest chip and its ring fit */
+    .bar {
+      margin-inline: calc(-1 * max(16px, env(safe-area-inset-left))) calc(-1 * max(16px, env(safe-area-inset-right)));
+      padding: 8px max(16px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      border-block-start: 1px solid var(--rule); flex-wrap: wrap; row-gap: 6px;
+    }
+    .bar .syncbtn { margin-inline-start: auto; }
+    .bar .beats { flex-basis: 100%; margin-inline: -4px; }
+  }
+  @media (min-width: 700px) { .bar { padding-block: 10px 9px; border-block-end: 1px solid var(--hair); gap: 12px; } }
+  @media (min-width: 1280px) { .bar .beats { display: none; } .bar { justify-content: flex-end; } }
+
+  /* ---- the front: [lead | desk's view], then the stories; two flex-wrap bands. An open card
+     (opened by the reader, or today's lead booting open, R33) takes its band's full width and its
+     neighbours re-flow into full lines around it (R15). */
+  .front { padding-block-end: 30px; }
+  .front__grid { container: front / inline-size; display: flex; flex-direction: column; border-block-start: 1px solid var(--rule); border-inline-start: 1px solid var(--rule); }
+  .front__top, .fcards { display: flex; flex-wrap: wrap; min-inline-size: 0; }
+  .front__top > *, .fcards > .fc { flex: 1 1 100%; min-inline-size: 0; }
+  @container front (min-width: 860px) {
+    .front__top > .fcards--top { flex: 4 1 60%; }
+    .front__top > .desk { flex: 1 1 clamp(240px, 27%, 340px); }
+    .js .front__top:has(:is(.fc, .ed):not(.is-folded)) > * { flex-basis: 100%; }
+  }
+  @container front (min-width: 720px) {
+    .fcards--rest > .fc { flex: 1 1 30%; }
+    .js .fcards--rest > .fc:not(.is-folded) { flex-basis: 100%; }
+    /* a card alone on a full line (the open one, or a neighbour stranded beside it) sets its photo
+       beside the type rather than stretching a full-width slot */
+    .js .fcards--rest > .fc:not(.is-folded) > article:has(.photo:not([hidden])),
+    .js .fcards--rest > .fc:first-child:has(+ .fc:not(.is-folded)) > article:has(.photo:not([hidden])),
+    .js .fcards--rest > .fc:not(.is-folded) + .fc:last-child > article:has(.photo:not([hidden])) {
+      display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); column-gap: 28px; row-gap: 10px; align-content: start;
+      grid-template-rows: auto auto 1fr auto auto;
+      grid-template-areas: "top photo" "hl photo" "why photo" "fold fold" "line line";
+    }
+    .fcards--rest article > .fc__top { grid-area: top; }
+    .fcards--rest article > .hl { grid-area: hl; }
+    .fcards--rest article > .photo { grid-area: photo; }
+    .fcards--rest article > .why { grid-area: why; align-self: start; }
+    .fcards--rest article > .fold { grid-area: fold; }
+    .fcards--rest article > .line { grid-area: line; }
+  }
+  .desk { display: flex; flex-direction: column; }
+
+  /* ---- day editions: one section per date, in flow; nothing of day D can sit beside day D-1 */
+  section.day { padding-block-end: 26px; }
+  .day__head { display: flex; flex-direction: column; gap: 6px; }
+  .day__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+  .day__cov { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .day__links { display: flex; flex-wrap: wrap; gap: 0 14px; }
+  @media (min-width: 700px) { .day__links { margin-inline-start: auto; } }
+  .rows { display: flex; flex-direction: column; }
+  .row__in {
+    display: grid; grid-template-columns: 14px minmax(0, 1fr); column-gap: 10px; row-gap: 6px; padding-block: 12px 10px;
+    grid-template-areas: "g head" "g why" "g body" "g foot";
+  }
+  .row__g { grid-area: g; padding-block-start: .45em; }
+  .row__head { grid-area: head; display: flex; flex-direction: column; gap: 5px; min-inline-size: 0; }
+  .row__why { grid-area: why; min-inline-size: 0; }
+  .row__body { grid-area: body; min-inline-size: 0; }
+  .row__foot { grid-area: foot; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+  @media (min-width: 1024px) {
+    .row__in {
+      grid-template-columns: 14px minmax(0, 5fr) minmax(0, 7fr); column-gap: 24px;
+      grid-template-rows: auto 1fr auto; grid-template-areas: "g head why" "g foot why" "g body body";
+    }
+    .row__foot { align-self: start; }
+  }
+
+  /* ---- footer */
+  .foot { display: flex; flex-direction: column; gap: 12px; }
+}

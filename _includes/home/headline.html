@@ -1,0 +1,2 @@
+{%- assign s = include.s -%}
+<h3 class="hl hl--{{ include.cls }}{% if s.hl_dot %} hl--dot{% endif %}" id="h-{{ include.id }}">{% if s.url and s.url != "" %}<a href="{{ s.url | escape }}" target="_blank" rel="noopener noreferrer">{{ s.headline | escape }}<span class="vh"> (opens in a new tab)</span></a>{% else %}{{ s.headline | escape }}{% endif %}</h3>

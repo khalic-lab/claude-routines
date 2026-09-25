@@ -2,9 +2,9 @@
 """Liquid block tags must balance in every template.
 
 WHY THIS EXISTS. Nothing else in the repo can catch a malformed Liquid tag before GitHub
-Pages does. `tools/home_harness.py` regex-extracts the <style>/<script> blocks and builds
-the cards in Python — it never parses Liquid — and the rest of `tools/tests` is Python
-covering Python. So the first thing that ever sees a broken template is the Pages build,
+Pages does in production (tools/verify/build.sh runs the same build locally, but only when
+someone runs it), and the rest of `tools/tests` is Python covering Python. So the first
+thing that ever sees a broken template may be the Pages build,
 and a failed Pages deploy poisons the commit SHA: rebuilding the SAME sha keeps failing,
 and the fix is a new commit (see the pages-deploy-wedge history). That makes a Liquid
 syntax error unusually expensive for how trivially it happens.
@@ -45,9 +45,10 @@ def templates():
             continue
         for dirpath, _dirnames, filenames in os.walk(base):
             for fn in filenames:
-                if fn.endswith((".html", ".md")):
+                if fn.endswith((".html", ".md", ".json")):
                     out.append(os.path.join(dirpath, fn))
-    for fn in ("index.html", "index.md"):
+    # root pages carry Liquid too (admin, prompts, the 404, the edition stamp for the freshness check)
+    for fn in ("index.html", "index.md", "admin.html", "prompts.html", "404.html", "edition.json"):
         p = os.path.join(ROOT, fn)
         if os.path.isfile(p):
             out.append(p)
@@ -108,6 +109,8 @@ class LiquidBalanceTests(unittest.TestCase):
         """Guard the guard: the walk must actually reach the file this was written for."""
         rels = [os.path.relpath(p, ROOT) for p in templates()]
         self.assertIn(os.path.join("_layouts", "home.html"), rels)
+        for rel in (os.path.join("_includes", "home", "row.html"), "prompts.html", "edition.json"):
+            self.assertIn(rel, rels)
 
     # --- the checker itself, or it could pass everything and we would not know ---
 
