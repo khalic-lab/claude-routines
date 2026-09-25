@@ -4,8 +4,10 @@
 // editorial of front.desk_reserve. Under Unread that pick is live: it follows every read and beat.
 // Under All it is taken ONCE, at load, from the read set the page opened with (beats aside, which
 // then filter as they always did) and never again: a read in the session only dims (the
-// 2026-07-26 ruling, amended by the owner on 2026-09-25). With nothing unread, All is the
-// builder's front, dimmed. Read always shows the builder's front. One pick, three uses.
+// 2026-07-26 ruling, amended by the owner on 2026-09-25). A partly-read All front is filled up to
+// four with read stories, in reserve order, after the unread ones (the lead stays unread): that
+// is normally the builder's own front, dimmed. With nothing unread, All is the builder's front,
+// dimmed. Read always shows the builder's front. One pick, three uses.
 //
 // This file never ranks. The reserve's later entries are <template>s in the front section, so
 // they stay out of the board's item list, its counts and its ids until one is needed; a copy is
@@ -87,12 +89,19 @@ export function createRefill(main, { isRead, beatOk, adopt }) {
     const sid = deskReserve.find((s) => { const st = edState(s); return st && !isRead(st) && beatOk(st, active); });
     return (sid && sid !== deskDefault.dataset.story && fromTemplate('data-reserve-desk', sid)) || deskDefault;
   }
-  // All's composition, taken at load (and once more at the first roamed read set, board.js):
-  // with nothing unread, the builder's front; a Desk's view with nothing unread keeps its own
+  // All's composition, taken at load (and once more at the first roamed read set, board.js): the
+  // unread pick, filled up to four with read stories in reserve order after it; with nothing
+  // unread, the builder's front; a Desk's view with nothing unread keeps its own
   let all = { cards: defaults, desk: deskDefault };
   function take() {
     const cards = pick(new Set());
-    return { cards: cards.length ? cards : defaults, desk: deskPick(new Set()) };
+    if (!cards.length) return { cards: defaults, desk: deskPick(new Set()) };
+    for (const sid of reserve) {
+      if (cards.length >= 4) break;
+      const el = card(sid);
+      if (el && isRead(el) && !cards.includes(el)) cards.push(el);
+    }
+    return { cards, desk: deskPick(new Set()) };
   }
   function snapshot() { all = take(); }
   // What placing `next` under All hides or takes out, against the page now: the cards and the

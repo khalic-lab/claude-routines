@@ -1092,8 +1092,9 @@ beats (lead slot to the first importance-3 one) and the first unread matching ed
 Desk's view; Read puts the builder's front back exactly.
 **Reading dims and never hides, moves or folds (owner ruling, 2026-07-26) — AMENDED by the owner on
 2026-09-25:** under All the front is composed ONCE, at load, from the unread stories, through the
-same pick Unread uses (beats aside; they filter as before); with nothing unread it is the builder's
-front, dimmed, never empty. Within a session reading still only dims: a tick under All moves and
+same pick Unread uses (beats aside; they filter as before); a partly-read All front is filled
+with read stories in reserve order after the unread ones, the lead staying unread (2026-09-25);
+with nothing unread it is the builder's front, dimmed, never empty. Within a session reading still only dims: a tick under All moves and
 hides nothing, and Unread→All shows the load-time front, not a new pick. Signed in, the roamed
 read set can land after first paint: the local set composes first and the FIRST roam takes the
 pick once more, only if the reader has not interacted with the page since load: a pointer, key,
