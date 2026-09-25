@@ -1074,6 +1074,18 @@ edition contributed **0 of its 7** recorded stories. A non-canonical anchor is m
 `edition_parity()` reports, by identity rather than by count, any kept record of the current edition
 that reached no card; `--strict-parity` makes it fatal.
 
+**Citation tails, and no silent drop (fixed 2026-09-25).** `strip_trailing_citations()` did not know
+the news desk's `25.09.2026` date form, so a story closing on two sources (`[Euronews, 25.09.2026](u) ·
+[SRF, 25.09.2026](u)`) kept its tail, the middot and bare domains read as a byline, the body came back
+empty and `load_recent()` dropped the story without a word: 12 of 21 News stories on 23–25 Sep,
+29 stories across Aug–Sep counting the ai-ml and weekend shapes. The walk now takes a run of N
+sources in any of the desks' forms (dated links in every date form, undated links chained into
+the run by middots, a trailing `([…](u) · `[preprint]`)` parenthetical); a byline written into the
+middle of a line is split out (`_INLINE_BYLINE_RE`) and a paper cited as a sentence's subject is
+prose (`_cited_subject`). A story whose prose still cannot be found keeps its card with the lede
+as body and a `WARN no body parsed: <post> story <id>` line, and `edition_parity()` counts every
+parsed story. `tools/tests/test_citation_tails.py` pins the shapes with the real 25 Sep lines.
+
 **The record's `headline` wins over the parsed one (2026-07-25), and it matters more than it looks.**
 The post's bold run is a *lead sentence* by the writers' spec ("a bolded lead sentence stating what
 happened AND when"), while `display_body` is that same paragraph — so pairing the parsed lead with

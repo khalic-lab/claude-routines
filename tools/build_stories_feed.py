@@ -187,6 +187,21 @@ def clean_body(text):
     return text
 
 
+# "[arXiv:2608.31046](u) (Y. Ding, R. Zhang · Purdue) measured how …": the paper IS the sentence's
+# subject, its byline a parenthetical, and a lowercase verb follows. A byline never continues so.
+_CITED_SUBJECT_RE = re.compile(r"^\*{0,2}\[[^\[\]]+\]\([^)]*\)\*{0,2}(?:\s*\([^()]*\))?\s+"
+                               r"(?!(?:and|or|nor|with|via|plus|by)\b)[a-z][a-z'’-]+\s")
+
+
+def _cited_subject(p):
+    """True for prose whose subject is a cited paper (see _CITED_SUBJECT_RE). Two links joined by
+    "and", or a middot OUTSIDE the parentheses before the first full stop, is a byline instead."""
+    if len(p) < 120 or not _CITED_SUBJECT_RE.match(p):
+        return False
+    head = re.sub(r"\([^()]*\)", "", p.split(". ", 1)[0])
+    return " · " not in head
+
+
 def _is_meta(p):
     """A citation / author / date byline, not story prose.
 
@@ -199,6 +214,8 @@ def _is_meta(p):
     p = _TAG_RE.sub("", p or "").strip()
     if not p:
         return True
+    if _cited_subject(p):
+        return False                                    # a sentence whose SUBJECT is a cited paper
     if re.match(r"^\*{0,2}\[", p):                      # leading link: **[Nature](…) or [arXiv…]
         return True
     if re.match(r"^[—–]\s*\**\[", p):        # em-dash INTO a citation: "— [arXiv…] · authors" (not "— prose")
@@ -228,8 +245,23 @@ _INLINE_WHY_RE = re.compile(r"(?:^|\s+)\*{0,2}Why (?:it|this) matters:\s*\*{0,2}
 _WHY_LABEL = "*Why it matters:* "     # normalized label, so _pick_why/_pick_body see one form
 
 
+# A paper byline written INTO a line instead of on its own ("— lede. **[arXiv:2609.17895](u)** ·
+# Prior Labs · `[preprint]`. Body…", "— [arXiv:…](u) · A. Khatri (Wrynx) · `[preprint]` A 2026
+# result…"): a link, middot fields, and the status tag(s) that close every byline.
+# The byline must run to its END -- every middot field and tag -- and a NEW SENTENCE must follow
+# (capital letter); a line that merely continues with more citation apparatus ("· counterpoint via
+# [the-decoder, …](u)", "· (affiliation not listed) · `[disputed]`") is not split.
+_INLINE_BYLINE_RE = re.compile(r"(?:—\s*)?\*{0,2}\[[^\[\]]+\]\([^)]*\)\*{0,2}"
+                               r"(?:\s*·\s*(?:`\[[^\]]+\]`|[^·`\n]{1,200}?))*?"
+                               r"\s*·\s*`\[[^\]]+\]`(?:\s*(?:·\s*)?`\[[^\]]+\]`)*\.?"
+                               r"(?=\s+[A-Z“\"‘'])")
+
+
 def _paragraphs(lines):
     """Stripped lines (blanks kept as "") -> paragraphs.
+
+    A byline written into the middle of a line is split out first (_INLINE_BYLINE_RE), and the
+    prose on either side of it rejoined, so it cannot make the whole line read as a byline.
 
     A LINE IS NOT A PARAGRAPH. The science/weekend paper forms hard-wrap their prose and their
     `*Why it matters:*` across several lines with no blank between them, and reading each line
@@ -244,8 +276,16 @@ def _paragraphs(lines):
             paras.append(" ".join(cur))
             del cur[:]
 
+    expanded = []
     for ln in lines:
         s = ln.strip()
+        m = _INLINE_BYLINE_RE.search(s) if s else None
+        if m and len(_TAG_RE.sub("", s[m.end():]).strip()) >= 40:
+            prose = (s[:m.start()].rstrip() + " " + s[m.end():].strip()).strip()
+            expanded += [m.group(0).strip(), prose]
+        else:
+            expanded.append(s)
+    for s in expanded:
         if not s:
             flush()
             continue
@@ -284,6 +324,7 @@ def _split_inline_why(paras):
 # so the third alternative below matches a link FOLLOWED by a date. It still keys on the date,
 # which is what keeps the undated prose link untouched.
 _CITE_DATE = (r"(?:\d{4}-\d{2}-\d{2}"
+              r"|\d{1,2}\.\d{1,2}\.\d{4}"               # "25.09.2026", the news desk's form since 09-2026
               r"|\d{1,2}\s+[A-Z][a-z]{2,8}\.?\s+\d{4}"
               r"|[A-Z][a-z]{2,8}\.?\s+\d{1,2},?\s+\d{4})")
 _CITE_LINK_RE = re.compile(r"\[\[[^\[\]]+\]\([^)]*\)\]"
@@ -296,21 +337,65 @@ _CITE_GLUE_RE = re.compile(r"^[\s.,;:·—–\-()\[\]]*(?:[A-Za-z][A-Za-z0-9 '�
 _CITE_EDGE = " \t([{;,:·—–-"
 
 
+_ANY_LINK_RE = re.compile(r"\[\[[^\[\]]+\]\([^)]*\)\]|\[[^\[\]]+\]\([^)]*\)")
+
+
 def strip_trailing_citations(text):
     """Drop the run of citation links a paragraph ENDS on, and only that run: the walk starts
-    at the last one and stops at the first gap that is not furniture, so a dated link in the
-    middle of a sentence is never touched."""
-    ms = list(_CITE_LINK_RE.finditer(text))
-    if not ms:
-        return text
-    cut = len(text)
-    for m in reversed(ms):
-        if m.end() > cut:
-            continue                                    # already inside the cut tail
-        if not _CITE_GLUE_RE.match(_TAG_RE.sub("", text[m.end():cut])):
+    at the last link and stops at the first gap that is not furniture, so a dated link in the
+    middle of a sentence is never touched.
+
+    A link is furniture when it is DATED (the key since the beginning), or when it is UNDATED
+    but chained into the run by a middot -- the tail of N sources the desks write as
+    "[Model card, updated 14 Sep 2026](u) · [framework](u)" or "[Hugging Face model card](u) ·
+    [GGUF port](u)" -- or when it opens a trailing parenthetical of sources
+    ("([arXiv:2608.13505](u) · `[preprint]`)", "([Parlament, Herbstsession 2026](u) ; [SRF,
+    14.09.2026](u))"). A lone undated link at
+    the end of a sentence ("… released [the full report](u).") is prose and stays. An undated
+    link may OPEN the run only after a sentence boundary, so "the code is on [GitHub](u) ·
+    [Paper, 2026-07-01](u)" keeps its GitHub.
+
+    Until 2026-09-25 only dated links counted and "25.09.2026" was not a date, so a two-source
+    tail ("[Euronews, 25.09.2026](u) · [SRF, 25.09.2026](u)") stayed in the paragraph, its
+    middot and bare domains read as a byline, and the story lost its body and was dropped."""
+    toks = []
+    for m in _ANY_LINK_RE.finditer(text):
+        d = _CITE_LINK_RE.match(text, m.start())       # a dated link (or link + date after it)
+        toks.append((m.start(), d.end() if d else m.end(), bool(d)))
+    cut, run = len(text), []                           # run: (start, end, dated, gap to its right), right to left
+    for start, end, dated in reversed(toks):
+        if end > cut:
+            continue                                    # inside an already-accepted token
+        raw_gap = text[end:cut]
+        if not _CITE_GLUE_RE.match(_TAG_RE.sub("", raw_gap)):
             break
-        cut = m.start()
-    return text if cut == len(text) else text[:cut].rstrip(_CITE_EDGE)
+        run.append((start, end, dated, raw_gap))
+        cut = start
+    accepted = []
+    for i, (start, end, dated, gap) in enumerate(run):
+        left_gap = run[i + 1][3] if i + 1 < len(run) else ""
+        chained = ("·" in gap and len(accepted) == i and i > 0) or ("·" in left_gap and i + 1 < len(run))
+        closing = "".join(t[3] for t in run[:i + 1])     # every gap from this link to the end
+        enclosed = (text[:start].rstrip().endswith("(") and ")" in closing
+                    and ("·" in closing or ";" in closing or bool(_TAG_RE.search(closing))
+                         or any(t[2] for t in accepted)))
+        if dated or chained or enclosed:
+            accepted.append(run[i])
+        else:
+            break
+    if not accepted:
+        return text
+    if not any(t[2] for t in accepted) and len(accepted) < 2 and not (
+            text[:accepted[-1][0]].rstrip().endswith("(")):
+        return text                                     # one undated link and no citation around it
+    if not accepted[-1][2]:                             # an undated link opens the run: only after a boundary
+        before = _TAG_RE.sub("", text[:accepted[-1][0]]).rstrip()
+        if before and not re.search(r"[.!?)\]:;—–·(]$", before):
+            while accepted and not accepted[-1][2]:     # else the run starts at its first dated link
+                accepted.pop()
+            if not accepted:
+                return text
+    return text[:accepted[-1][0]].rstrip(_CITE_EDGE)
 
 
 def _is_meta_para(p):
@@ -911,7 +996,14 @@ def load_recent(days):
         lead_pos = next((i for i, sgl in enumerate(singles) if not sgl), 0)
         for pos, s in enumerate(parsed):
             if not s["body"]:
-                continue
+                # NOTHING DROPS SILENTLY (2026-09-25). This `continue` used to lose every story
+                # whose prose the parser could not find -- 5 of 6 on 2026-09-24's News, the page
+                # printing "1 STORY". The lede stands in (the index record's display_body, when
+                # there is one, still wins below) and the shape is named so it gets fixed.
+                s["body"] = clean_body(s["headline"]) or s["headline"]
+                print("WARN no body parsed: %s story %s -- the card falls back to its lede"
+                      % (os.path.relpath(path, ROOT), s.get("anchor_sid")
+                         or "%s-%s-%s" % (date, stream, slugify(s["headline"]))))
             nu = norm_url(s["url"])
             replace_at = None
             if nu and nu in url_pos:
@@ -1401,7 +1493,7 @@ def edition_parity(date):
         if not os.path.exists(idx):
             continue
         with open(path) as fh:
-            parsed = [s for s in parse_post(fh.read()) if s["body"]]
+            parsed = parse_post(fh.read())         # every story reaches a card (load_recent)
         urls, sids, hids = set(), set(), set()
         for s in parsed:
             for u in _URL_RE.findall(s["raw"] or ""):

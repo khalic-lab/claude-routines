@@ -918,7 +918,9 @@ if (process.env.FAULTS !== '0') {
   const d3 = `#d-${dates[Math.min(2, dates.length - 1)]}`;
   const FAULTS = [
     { key: 'overflow', state: 'default', css: 'main{min-width:1800px}' },
-    { key: 'overlap', state: 'default', css: '.fcards--rest > .fc:nth-child(2){margin-left:-120px}' },
+    // pull the second day edition up into the first: two sibling zones overlap whatever the front
+    // holds (a margin on the 2nd front card overlapped nothing once a boot-open card took row 1)
+    { key: 'overlap', state: 'default', css: `#d-${dates[Math.min(1, dates.length - 1)]}{margin-top:-160px}` },
     { key: 'containment', state: 'default', css: `${d3} .rows{translate:0 -300px}` },
     { key: 'order', state: 'default', css: `${d3} .rows{flex-direction:column-reverse}` },
     { key: 'periods', state: 'default', css: '.day__cov{display:none}' },
