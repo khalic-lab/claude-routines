@@ -24,9 +24,9 @@ node suite.mjs /tmp/fp-build/src/_site > /tmp/fp-suite.log 2>&1   # ~10 min; one
 
 - Serves the built `_site` under `/claude-routines/`.
 - Stubs both Workers with `route()`, and aborts and logs any other host.
-- Runs these states: default, expanded, unread-edition, beat, multi-beat, empty, stale and
-  stale-bg (a tab opened in the background), plus no-JS, contract parity, two tabs and the
-  reading pages.
+- Runs these states: default, expanded, unread-edition, front-read (the default front read, then
+  Unread), beat, multi-beat, empty, stale and stale-bg (a tab opened in the background), plus
+  no-JS, contract parity, two tabs and the reading pages.
 - Covers Chromium at 360, 390, 700, 768, 1024, 1280, 1440 and 1600, and WebKit as iPhone 15 and at
   1024, all in light and dark.
 
@@ -35,6 +35,8 @@ feed, not only the one it was written against:
 
 - periods come from the `_posts/` filenames and the "Coverage window" line in `routines/src/*.md`
 - the front selection, day slices and targets come from `_data/homefeed.json`'s board
+- the Unread refill order is the same selection re-run in rounds over the board, and the
+  "Happened" labels come from each story's `event_date` against its derived period
 
 **Assertions:**
 
@@ -43,6 +45,13 @@ feed, not only the one it was written against:
 - every item stays inside its day section
 - DOM order equals visual order, and equals board order
 - the period tags are correct
+- a "Happened" label shows on a card, row or reserve template exactly when the story's event date
+  is day-precise and before its period start, and it stays inside its card
+- under Unread the front refills: the first four unread reserve entries in order, lead slot to the
+  first importance-3 one, the next unread editorial as the Desk's view; a promoted story's day row
+  becomes its pointer; a tick, a beat and another tab's write recompose it; with the whole reserve
+  read the front hides; back under All the builder's front returns dimmed and nothing on the page
+  has moved
 - honest counts: each chip shows what pressing it shows
 - the editorial read rule and its un-tick override
 - in-page links have visible targets
@@ -75,7 +84,7 @@ storage, or one line of a JS module (served mutated through `route()`, e.g. the 
 `every` turned into `some`) on purpose. Each break must fail its own assertion.
 
 Screenshots go to `$SHOTS` (default `/tmp/fp-shots`). Narrow a run with `WIDTHS=390,1440`,
-`ONLY=default,contract`, `FAULTS=0` or `SHOTS=0`.
+`ONLY=default,contract`, `FAULTS=0` or `SHOTS=0`; `VERBOSE=1` prints every assertion's detail.
 
 **Not covered here:** Safari's floating tab bar and real passkeys. Headless WebKit has no browser
 chrome, so those need the iPhone simulator (`?probe=1` prints the viewport numbers on the page)

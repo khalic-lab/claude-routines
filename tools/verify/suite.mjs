@@ -1,7 +1,7 @@
 // Browser checks for the built site (tools/verify/build.sh output), 2026-09-24 rewrite.
 //
 //   node tools/verify/suite.mjs [SITE_DIR]      default SITE_DIR=/tmp/fp-build/src/_site
-//   ONLY=default,stale WIDTHS=390,1440 node ...  narrow a run; FAULTS=0 skips the self-test
+//   ONLY=default,stale WIDTHS=390,1440 node ...  narrow a run; FAULTS=0 skips the self-test; VERBOSE=1 prints every detail
 //
 // Serves SITE_DIR itself under /claude-routines/ (the production baseurl) and stubs both Workers
 // with route(), so nothing leaves the machine. EVERY expectation is derived here from the repo's
@@ -24,7 +24,7 @@ const SHOTS = process.env.SHOTS || '/tmp/fp-shots';
 const FB = 'https://feedback-sink.khalic-lab.workers.dev';
 const OGP = 'https://og-proxy.khalic-lab.workers.dev';
 const WIDTHS = (process.env.WIDTHS || '360,390,700,768,1024,1280,1440,1600').split(',').map(Number);
-const STATES = ['default', 'expanded', 'unread-edition', 'beat', 'multi-beat', 'empty', 'stale', 'stale-bg'];
+const STATES = ['default', 'expanded', 'unread-edition', 'front-read', 'beat', 'multi-beat', 'empty', 'stale', 'stale-bg'];
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
 const TOKEN = 'cd'.repeat(32);
 
@@ -77,16 +77,68 @@ const sidOf = (x) => (x.kind === 'editorial' ? `ed-${x.stream}-${x.date}` : x.si
 // features in board order, briefs only to fill
 const stories = board.filter((x) => x.kind !== 'editorial');
 const eds = board.filter((x) => x.kind === 'editorial');
-let win = [];
-for (const d of dates) {
-  win = win.concat(stories.filter((x) => x.date === d));
-  if (win.filter((x) => x.importance >= 2).length >= 4) break;
+function frontOf(skip = new Set()) {
+  const pool = stories.filter((x) => !skip.has(sidOf(x)));
+  let win = [];
+  for (const d of [...new Set(pool.map((x) => x.date))].sort().reverse()) {
+    win = win.concat(pool.filter((x) => x.date === d));
+    if (win.filter((x) => x.importance >= 2).length >= 4) break;
+  }
+  const lead = win.find((x) => x.importance === 3) || win[0];
+  const rest = win.filter((x) => x !== lead);
+  return lead ? [lead, ...[...rest.filter((x) => x.importance >= 2), ...rest.filter((x) => x.importance < 2)].slice(0, 3)].map(sidOf) : [];
 }
-const lead = win.find((x) => x.importance === 3) || win[0];
-const rest = win.filter((x) => x !== lead);
-const EXPECT_FRONT = lead ? [lead, ...[...rest.filter((x) => x.importance >= 2), ...rest.filter((x) => x.importance < 2)].slice(0, 3)].map(sidOf) : [];
+const EXPECT_FRONT = frontOf();
 const deskEd = eds.length ? eds.reduce((a, b) => (b.date > a.date ? b : a)) : null;
 const EXPECT_DESK = deskEd ? sidOf(deskEd) : null;
+// the Unread refill: four rounds of the same selection over what the earlier rounds left, and
+// every editorial newest first; the page shows the first four unread entries that match the
+// beats, lead slot to the first importance-3 one
+const RESERVE = [];
+for (let r = 0; r < 4; r++) { const f = frontOf(new Set(RESERVE)); if (!f.length) break; RESERVE.push(...f); }
+const DESK_RESERVE = eds.map((e, i) => [e, i]).sort((a, b) => b[0].date.localeCompare(a[0].date) || a[1] - b[1]).map(([e]) => sidOf(e));
+const bySid = new Map(board.map((x) => [sidOf(x), x]));
+// an editorial is read when marked, or when every story of its edition is (no local un-tick here);
+// its beats are its edition's
+const edition = (e) => stories.filter((x) => x.date === e.date && x.stream === e.stream);
+function refillOf(read, beats = []) {
+  const onBeat = (topics) => !beats.length || topics.some((t) => beats.includes(t));
+  const pick = RESERVE.filter((sid) => !read.has(sid) && onBeat(bySid.get(sid).topics)).slice(0, 4);
+  const lead = pick.find((sid) => bySid.get(sid).importance === 3) || pick[0];
+  const edRead = (e) => read.has(sidOf(e)) || (edition(e).length > 0 && edition(e).every((x) => read.has(sidOf(x))));
+  const desk = DESK_RESERVE.find((sid) => { const e = bySid.get(sid); return !edRead(e) && onBeat(edition(e).flatMap((x) => x.topics)); }) || null;
+  return { cards: lead ? [lead, ...pick.filter((s) => s !== lead)] : [], desk };
+}
+// a read state where the lead rule decides: the reserve's first non-importance-3 entry stays
+// unread together with a later importance-3 one, everything else in the reserve is read
+const LEAD_X = RESERVE.find((sid, i) => bySid.get(sid).importance !== 3 && RESERVE.slice(i + 1).some((s) => bySid.get(s).importance === 3)) || null;
+const LEAD_Y = LEAD_X && RESERVE.slice(RESERVE.indexOf(LEAD_X) + 1).find((s) => bySid.get(s).importance === 3);
+// front-read: the default front and its Desk's view read, then a tick on the refilled lead, a
+// beat that changes the refill, the lead-rule state, and the whole reserve read
+const S0 = [...EXPECT_FRONT, EXPECT_DESK].filter(Boolean);
+const REFILL0 = refillOf(new Set(S0));
+const REFILL1 = refillOf(new Set([...S0, REFILL0.cards[0]]));
+const REFILL_BEAT = [...new Set(RESERVE.flatMap((s) => bySid.get(s).topics))].sort()
+  .find((t) => { const r = refillOf(new Set(S0), [t]).cards; return r.length > 0 && r.join() !== REFILL0.cards.join(); }) || null;
+const S2 = LEAD_X ? [...RESERVE.filter((s) => s !== LEAD_X && s !== LEAD_Y), EXPECT_DESK].filter(Boolean) : [];
+const S3 = [...RESERVE, ...DESK_RESERVE];
+const FR = { FRONT: EXPECT_FRONT, DESK: EXPECT_DESK, S0, R0: REFILL0, R1: REFILL1, RB: REFILL_BEAT, RBW: REFILL_BEAT ? refillOf(new Set(S0), [REFILL_BEAT]) : null,
+  LEAD_X, S2, R2: LEAD_X ? refillOf(new Set(S2)) : null, S3, NEWEST: dates[0] };
+// the "Happened 16 Sep" label: only a valid day-precise event date before the story's derived
+// period start; the year shows when it differs from the story's
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const dayLabel = (d) => `${WD[day(d).getUTCDay()]} ${day(d).getUTCDate()} ${MON[day(d).getUTCMonth()]}`;
+const DAYLBL = Object.fromEntries(dates.map((d) => [d, dayLabel(d)]));
+const PSTART = {}, EVT = {};
+for (const x of stories) {
+  const [s0] = period(x.date, x.stream); const ev = String(x.event_date || '').trim();
+  PSTART[sidOf(x)] = s0;
+  if (!/^\d{4}-\d\d-\d\d$/.test(ev) || isNaN(day(ev)) || iso(day(ev)) !== ev || ev >= s0) continue;
+  const e = day(ev), y = ev.slice(0, 4) === x.date.slice(0, 4) ? '' : ' ' + ev.slice(0, 4);
+  EVT[sidOf(x)] = [ev, `Happened ${e.getUTCDate()} ${MON[e.getUTCMonth()]}${y}`];
+}
+// the fault's label: a story whose event date falls inside its period (or, failing that, its own day)
+const IN_PERIOD = stories.find((x) => /^\d{4}-\d\d-\d\d$/.test(String(x.event_date || '')) && x.event_date >= PSTART[sidOf(x)]) || stories[0];
 // dynamic targets (the mock pinned 24 Sep ids; these follow the data)
 const deskEdition = deskEd ? `${deskEd.date}-${deskEd.stream}` : null;
 const beatCounts = {};
@@ -343,6 +395,8 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   const page = await ctx.newPage();
   watchRequests(page, rec);
   if (fault?.init) await page.addInitScript(fault.init);
+  // front-read: the default front's stories and the Desk's view editorial are already read
+  if (state === 'front-read') await page.addInitScript((ids) => localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(ids.map((id) => [id, Date.now()])))), S0);
   if (state === 'stale-bg') {
     // a tab opened in the background: hidden from its first byte until the reader looks at it
     await page.addInitScript(() => {
@@ -352,7 +406,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   }
   await page.goto(BASE);
   await page.evaluate(() => document.fonts.ready);
-  if (state === 'default' || state === 'expanded') {
+  if (state === 'default' || state === 'expanded' || state === 'front-read') {
     // bring every image slot within the observer's reach, then wait until each is filled or gone
     // (each slot is scrolled to and held for two frames, so the IntersectionObserver sees it)
     await page.evaluate(async () => {
@@ -366,7 +420,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   await page.evaluate(`window.__L = (${LIB.toString()})()`);
   const X = { state, ogRequests: rec.og, injected: frontWithSlots().injected, EXPECT_TAGS, EXPECT_FRONT, EXPECT_DESK, deskEdition, BEAT, BEAT_ED: BEAT_ED ? sidOf(BEAT_ED) : null, BEAT_DAYS,
     MEASURE_ROW: MEASURE_ROW ? sidOf(MEASURE_ROW) : null, boardIds: board.map(sidOf), boardDates: board.map((x) => x.date),
-    boardKinds: board.map((x) => x.kind), nBoard: board.length, nDays: dates.length };
+    boardKinds: board.map((x) => x.kind), nBoard: board.length, nDays: dates.length, FR, EVT, PSTART, DAYLBL };
   if (state === 'stale') {
     // a bfcache restore, then a tab shown again after ten minutes away: both must offer the reload
     await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
@@ -416,10 +470,29 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       if (secs.length !== X.nDays) orderBad.push(`${secs.length} day sections, want ${X.nDays}`);
       for (const sec of secs) {
         const want = X.boardIds.filter((_, i) => X.boardDates[i] === sec.dataset.date);
-        const got = [...sec.querySelectorAll('[data-story], [data-ptr]')].map((x) => x.dataset.story || x.dataset.ptr);
+        const got = [...sec.querySelectorAll('[data-story], [data-ptr]:not([data-reserve-ptr])')].map((x) => x.dataset.story || x.dataset.ptr);
         if (want.join() !== got.join()) orderBad.push(`${sec.dataset.date}: ${got.length} vs ${want.length} items or order differs`);
       }
-      A.boardOrder = [orderBad.length === 0, orderBad.join('; ') || `${secs.length} day sections carry the board in order`];
+      const rptr = [...document.querySelectorAll('[data-reserve-ptr]')].filter(L.vis).map((p) => p.dataset.ptr);
+      if (rptr.length) orderBad.push(`reserve pointers shown under All: ${rptr.join(' ')}`);
+      A.boardOrder = [orderBad.length === 0, orderBad.join('; ') || `${secs.length} day sections carry the board in order, no reserve pointer shown`];
+      // "Happened 16 Sep": on a card, row or reserve template exactly when the story's event date
+      // is day-precise and before its derived period start, reading that date, inside its card
+      const evBad = []; let evShown = 0, evTpl = 0;
+      const evCheck = (el, where) => {
+        const sid = el.dataset.story, t = el.querySelector('.evt time'), want = X.EVT[sid];
+        if (!t) { if (want) evBad.push(`${where} ${sid} lacks "${want[1]}"`); return; }
+        const dt = t.getAttribute('datetime'), txt = t.textContent.trim();
+        if (!(dt < X.PSTART[sid])) evBad.push(`${where} ${sid} "${txt}" dated ${dt}, on or after its period start ${X.PSTART[sid]}`);
+        else if (!want || dt !== want[0] || txt !== want[1]) evBad.push(`${where} ${sid} "${txt}" @${dt}, want ${want ? `"${want[1]}" @${want[0]}` : 'none'}`);
+        if (where === 'template') { evTpl++; return; }
+        evShown++;
+        const r = L.R(t.closest('.evt')), c = L.R(el);
+        if (L.vis(el) && (r.right > c.right + 0.5 || r.left < c.left - 0.5)) evBad.push(`${sid} label sticks out of its ${where} by ${Math.round(r.right - c.right)}px`);
+      };
+      for (const el of document.querySelectorAll('main [data-story]:not([data-zone="editorial"])')) evCheck(el, el.dataset.zone);
+      for (const t of document.querySelectorAll('template[data-reserve-card]')) evCheck(t.content.firstElementChild, 'template');
+      A.eventLabel = [evBad.length === 0, evBad.slice(0, 3).join('; ') || `${evShown} labels on cards and rows + ${evTpl} in reserve templates, each before its period start; ${Object.keys(X.EVT).length} stories qualify`];
       const h1 = document.querySelectorAll('h1').length, h2 = document.querySelectorAll('main h2').length;
       const h3 = document.querySelectorAll('main h3').length, items = document.querySelectorAll('main [data-story]').length;
       A.headings = [h1 === 1 && h2 === X.nDays + 1 && h3 === items, `h1 ${h1}, main h2 ${h2} (days + front ${X.nDays + 1}), h3 ${h3} for ${items} items`];
@@ -547,6 +620,111 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       const sync = JSON.parse(localStorage.getItem('syncState:v1') || '{}');
       A.localEd = [!Object.keys(sync).some((k) => !/^st-[0-9a-f]{12}$/.test(k)), `syncState:v1 holds ${Object.keys(sync).length} st- ids and no ed- id`];
     }
+    if (X.state === 'front-read') {
+      // the page opened under All with the default front and its Desk's view read (seeded)
+      const F = X.FR;
+      const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const doc = (e) => { const r = L.R(e); return [r.left + scrollX, r.top + scrollY, r.width, r.height].map(Math.round).join(); };
+      const layout = () => Object.fromEntries([...document.querySelectorAll('main [data-story], main [data-ptr]')].filter(L.vis)
+        .map((e) => [e.id || `${e.dataset.zone}>${e.dataset.ptr}`, doc(e)]));
+      const now = () => ({ top: [...document.querySelectorAll('.front .fcards--top > .fc')].filter(L.vis).map((c) => c.dataset.story),
+        cards: [...document.querySelectorAll('.front .fc')].filter(L.vis).map((c) => c.dataset.story),
+        desk: ([...document.querySelectorAll('.front .desk .ed')].find(L.vis) || { dataset: {} }).dataset.story || null });
+      const same = (g, w) => g.cards.join() === w.cards.join() && (g.top[0] || null) === (w.cards[0] || null) && g.top.length <= 1 && g.desk === w.desk;
+      const show = (g, w) => `front [${g.cards.join(' ')}] lead ${g.top[0] || '-'} desk ${g.desk}; want [${w.cards.join(' ')}] desk ${w.desk}`;
+      // a held beat chip counts what shows; the All chip counts every beat
+      const counts = (beat = '') => { const n = L.visibleItems().length, u = L.ct(L.seg('unread')), c = L.ct(L.chip(beat)); return [n === u && n === c, `visible ${n} / Unread ${u} / ${beat || 'All'} chip ${c}`]; };
+      const shownPtrs = () => [...document.querySelectorAll('[data-reserve-ptr]')].filter(L.vis).map((p) => p.dataset.ptr);
+      // a promoted story is a pointer in its day, and the pointer reaches the card; nothing else points
+      const ptrs = (w) => {
+        const bad = [];
+        const promoted = [...w.cards.filter((s) => !F.FRONT.includes(s)), ...(w.desk && w.desk !== F.DESK ? [w.desk] : [])];
+        for (const sid of promoted) {
+          const own = document.querySelector(`section.day [data-story="${sid}"]`), p = document.querySelector(`section.day [data-ptr="${sid}"]`);
+          if (own && L.vis(own)) bad.push(`${sid} still shown in its day`);
+          const t = p && document.getElementById(p.querySelector('a').getAttribute('href').slice(1));
+          if (!p || !L.vis(p)) bad.push(`${sid} has no pointer`);
+          else if (!t || !L.vis(t) || !t.closest('.front') || t.dataset.story !== sid) bad.push(`${sid} pointer -> ${t ? t.id : 'nothing'}`);
+        }
+        const stray = shownPtrs().filter((s) => !promoted.includes(s));
+        if (stray.length) bad.push('pointers for stories not on the front: ' + stray.join(' '));
+        return [bad.length === 0, bad.slice(0, 3).join('; ') || `${promoted.length} promoted, each a pointer in its day`];
+      };
+      const line = (w) => {
+        const n = w.cards.length, u = 'unread ';
+        const older = [...new Set(w.cards.map((s) => X.boardDates[X.boardIds.indexOf(s)]))]
+          .filter((d) => d !== F.NEWEST).sort().reverse().map((d) => X.DAYLBL[d]);
+        return (n === 1 ? `The ${u}story that matters` : `The ${n} ${u}stories that matter`) + ' most right now' + (older.length ? ' · from ' + older.join(', ') : '');
+      };
+      const frontN = document.querySelector('.front__n'), line0 = frontN.textContent;
+      const settle = async () => {
+        for (let k = 0; k < 20 && document.querySelector('.front .photo[data-og]:not([hidden]):not(.is-loaded)'); k++) {
+          for (const p of document.querySelectorAll('.front .photo[data-og]:not([hidden]):not(.is-loaded)')) { p.scrollIntoView({ block: 'center' }); await frames(); }
+          await sleep(100);
+        }
+        scrollTo(0, 0); await frames();
+      };
+      const lay0 = layout();
+      // 1. Unread: the first four unread reserve entries, lead first; the next unread editorial
+      click(L.seg('unread')); await settle();
+      const g0 = now();
+      A.refill = [same(g0, F.R0), show(g0, F.R0)];
+      A.refillPtrs = ptrs(F.R0);
+      A.counts = counts();
+      A.refillLine = [frontN.textContent === line(F.R0), `"${frontN.textContent}"`];
+      const ids = [...document.querySelectorAll('[id]')].map((e) => e.id), dup = ids.filter((x, i) => ids.indexOf(x) !== i);
+      A.refillIds = [dup.length === 0, dup.length ? 'duplicate ids ' + dup.slice(0, 4).join(' ') : `${ids.length} ids, none twice`];
+      const fb = []; let nf = 0;
+      for (const sid of F.R0.cards.filter((s) => !F.FRONT.includes(s))) {
+        const c = document.getElementById('c-' + sid);
+        if (!c || !c.classList.contains('is-folded')) { fb.push(`${sid} not folded`); continue; }
+        const b = c.querySelector('.more'); if (!b) continue;
+        const f = document.getElementById(b.getAttribute('aria-controls')); nf++;
+        click(b); const opened = !c.classList.contains('is-folded') && b.getAttribute('aria-expanded') === 'true' && !!f && c.contains(f) && L.vis(f);
+        click(b); const closed = c.classList.contains('is-folded') && b.getAttribute('aria-expanded') === 'false';
+        if (!opened || !closed) fb.push(`${sid} More opens its own fold ${opened}, closes ${closed}`);
+      }
+      A.refillFold = [fb.length === 0, fb.join('; ') || `promoted cards start folded; More opens and closes the own fold of ${nf}`];
+      const g = L.geometry(), dead = L.deadLinks(), dm = L.dayMeta();
+      A.refillGeom = [!g.overlap.length && !g.order.length && !g.containment.length && !g.overflow.length,
+        `refilled: ${g.overlap.length} overlaps / ${g.pairs} pairs, ${g.order.length} inversions, ${g.containment.length} outside, overflow ${g.overflow.length} ${[...g.overlap, ...g.order].slice(0, 2).join('; ')}`];
+      A.refillLinks = [!dead.length && !dm.bad.length, `refilled: ${dead.length} dead links ${dead.slice(0, 2).join('; ')}; day headers ${dm.bad.join('; ') || 'match'}`];
+      // 2. a beat changes the refill; releasing it restores it
+      if (F.RB) {
+        click(L.chip(F.RB)); const gb = now(), cb = counts(F.RB); click(L.chip(F.RB));
+        A.refillBeat = [same(gb, F.RBW) && cb[0] && same(now(), F.R0), `${F.RB}: ${show(gb, F.RBW)}; ${cb[1]}`];
+      }
+      // 3. tick the refilled lead: the next entry takes its place, its pointer goes with it
+      const u0 = L.ct(L.seg('unread'));
+      const lead = document.querySelector('.front .fcards--top > .fc');
+      click(lead && lead.querySelector('.readbtn'));
+      const g1 = now(), p1 = ptrs(F.R1), c1 = counts();
+      A.refillTick = [same(g1, F.R1) && p1[0] && c1[0] && L.ct(L.seg('unread')) === u0 - 1,
+        `after ticking ${F.R0.cards[0]}: ${show(g1, F.R1)}; ${p1[1]}; ${c1[1]}; Unread ${u0} -> ${L.ct(L.seg('unread'))}`];
+      // 4. All: the builder's front, dimmed, and nothing on the page has moved
+      click(L.seg('')); await frames();
+      const ga = now(), lay1 = layout();
+      const moved = [...new Set([...Object.keys(lay0), ...Object.keys(lay1)])].filter((k) => lay0[k] !== lay1[k]);
+      const dim = F.S0.every((s) => { const e = document.querySelector(`.front [data-story="${s}"]`); return e && e.classList.contains('is-read'); });
+      A.refillAll = [ga.cards.join() === F.FRONT.join() && ga.desk === F.DESK && dim && moved.length === 0 && !shownPtrs().length && frontN.textContent === line0,
+        `${show(ga, { cards: F.FRONT, desk: F.DESK })}; dimmed ${dim}; ${moved.length} of ${Object.keys(lay0).length} moved ${moved.slice(0, 3).join(' ')}; reserve pointers shown ${shownPtrs().length}; line ${frontN.textContent === line0 ? 'restored' : `"${frontN.textContent}"`}`];
+      // 5. under Unread, another tab leaves only a non-lead entry and a later lead unread: the lead slot takes the lead
+      click(L.seg('unread'));
+      const write = async (list) => {
+        localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(list.map((id) => [id, Date.now()]))));
+        dispatchEvent(new StorageEvent('storage', { key: 'homeRead:v1', storageArea: localStorage }));
+        await frames();
+      };
+      if (F.LEAD_X) {
+        await write(F.S2);
+        const g2 = now();
+        A.refillLead = [same(g2, F.R2) && frontN.textContent === line(F.R2) && counts()[0], `${show(g2, F.R2)}; "${frontN.textContent}"`];
+      } else A.refillLead = [false, 'no scenario in the data: the reserve has no non-importance-3 entry before an importance-3 one'];
+      // 6. the whole reserve read: the front hides, and nothing points into it
+      await write(F.S3);
+      const fr = document.querySelector('section.front'), c3 = counts(), d3 = L.deadLinks();
+      A.refillEmpty = [!L.vis(fr) && !shownPtrs().length && c3[0] && !d3.length, `front shown ${L.vis(fr)}; reserve pointers shown ${shownPtrs().length}; ${c3[1]}; dead links ${d3.length}`];
+    }
     if (X.state === 'beat') {
       click(L.chip(X.BEAT));
       const n = L.visibleItems().length, c = L.ct(L.chip(X.BEAT)), all = L.ct(L.seg(''));
@@ -665,18 +843,22 @@ async function runNoJs(browser, ctxOpts) {
   await stub(ctx, rec);
   const p = await ctx.newPage(); watchRequests(p, rec);
   await p.goto(BASE);
-  const r = await p.evaluate(() => {
+  const r = await p.evaluate((want) => {
     const vis = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
     const hiddenText = [...document.querySelectorAll('.page :is(.fold, .why, .sum, .ed__body, .ed__disc, .hl, .ptag)')].filter((e) => !vis(e) && e.textContent.trim()).length;
     const controls = [...document.querySelectorAll('.page button, .page input, .page textarea')].filter(vis).length;
     const hiwLink = [...document.querySelectorAll('a[href="#hiw"]')].some(vis), key = vis(document.querySelector('.mast__key summary'));
-    return { hiddenText, controls, hiwLink, key, scroll: document.documentElement.scrollWidth - innerWidth, js: document.documentElement.className };
-  });
+    // the builder's front as it is, whatever the refill would do: no reserve card or pointer shows
+    const front = [...document.querySelectorAll('.front .fc')].filter(vis).map((c) => c.dataset.story).join() === want.front.join()
+      && (([...document.querySelectorAll('.front .desk .ed')].find(vis) || {}).id || null) === want.desk
+      && ![...document.querySelectorAll('[data-reserve-ptr]')].some(vis);
+    return { hiddenText, controls, hiwLink, key, front, scroll: document.documentElement.scrollWidth - innerWidth, js: document.documentElement.className };
+  }, { front: EXPECT_FRONT, desk: EXPECT_DESK });
   await p.goto(BASE + '#hiw');
   r.hiw = await p.evaluate(() => { const d = document.getElementById('hiw'), b = d.getBoundingClientRect(); return b.width > 0 && b.height > 0 && b.top < innerHeight && b.bottom > 0 && [...d.querySelectorAll('button')].every((x) => !x.getBoundingClientRect().width); });
   await ctx.close();
-  const ok = r.hiddenText === 0 && r.controls === 0 && r.scroll <= 0 && r.hiwLink && r.hiw && r.key && rec.ext.length === 0;
-  return [ok, `hidden text blocks ${r.hiddenText}, visible controls ${r.controls}, overflow ${r.scroll}, How-this-works link ${r.hiwLink} -> #hiw shown ${r.hiw}, key ${r.key}, external ${rec.ext.length}`];
+  const ok = r.hiddenText === 0 && r.controls === 0 && r.scroll <= 0 && r.hiwLink && r.hiw && r.key && r.front && rec.ext.length === 0;
+  return [ok, `hidden text blocks ${r.hiddenText}, visible controls ${r.controls}, overflow ${r.scroll}, How-this-works link ${r.hiwLink} -> #hiw shown ${r.hiw}, key ${r.key}, default front ${r.front}, external ${rec.ext.length}`];
 }
 
 // ------------------------------------------------------------------ contract parity with the old page
@@ -867,11 +1049,13 @@ async function sweep(browser, label, opts) {
     Object.values(A).forEach(([ok]) => tally(st, ok));
     log(`${label.padEnd(24)} ${st.padEnd(15)} ${bad.length ? 'FAIL ' + bad.map(([k, [, d]]) => k + ': ' + d).join(' | ') : 'PASS ' + Object.keys(A).length}`
       + (st === 'default' && A.measure ? `  (${A.measure[1]}${A.focus ? '; ' + A.focus[1] : ''})` : ''));
+    if (process.env.VERBOSE) for (const [k, [ok, d]] of Object.entries(A)) log(`    ${ok ? 'ok  ' : 'FAIL'} ${k}: ${d}`);
   }
 }
 const c = await chromium.launch();
 const wk = await webkit.launch();
 log(`suite: ${BASE} <- ${SITE}; board ${board.length} items, ${dates.length} days, front [${EXPECT_FRONT.join(' ')}] desk ${EXPECT_DESK}; beat ${BEAT}; caps ${JSON.stringify(CAP)}`);
+log(`refill: reserve ${RESERVE.length} (${RESERVE.join(' ')}), desk reserve ${DESK_RESERVE.join(' ')}; front-read [${REFILL0.cards.join(' ')}] desk ${REFILL0.desk}; beat ${REFILL_BEAT}; lead rule [${FR.R2 ? FR.R2.cards.join(' ') : '-'}]; ${Object.keys(EVT).length} event labels`);
 for (const scheme of ['light', 'dark']) {
   for (const w of WIDTHS) await sweep(c, `chromium ${w} ${scheme}`, { viewport: { width: w, height: 900 }, colorScheme: scheme });
   await sweep(wk, `webkit iPhone15 ${scheme}`, { ...devices['iPhone 15'], colorScheme: scheme });
@@ -954,6 +1138,15 @@ if (process.env.FAULTS !== '0') {
     { key: 'freshBg', state: 'stale-bg', js: { file: 'fresh.js', from: "let hiddenAt = document.visibilityState === 'hidden' ? Date.now() : 0;", to: 'let hiddenAt = 0;' } },
     { key: 'periods', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const t = document.querySelector('.day__cov .ptag time'); t.textContent = t.textContent.replace(/^\d+/, '1'); }) },
     { key: 'focus', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('.bar button, .mast a, .mast summary').forEach((e) => e.setAttribute('tabindex', '-1'))) },
+    // round 2 (2026-09-25): the Unread refill and the event label
+    { key: 'refill', state: 'front-read', js: { file: 'refill.js', from: 'if (el && !isRead(el) && beatOk(el, active)) pick.push(el);', to: 'if (el && beatOk(el, active)) pick.push(el);' } },
+    { key: 'refillPtrs', state: 'front-read', js: { file: 'board.js', from: 'p.hidden = !t || !t.isConnected || t.hidden;', to: "p.hidden = p.hasAttribute('data-reserve-ptr') || !t || !t.isConnected || t.hidden;" } },
+    { key: 'counts', state: 'front-read', js: { file: 'board.js', from: "export const items = main ? [...main.querySelectorAll('[data-story]')] : [];",
+      to: "export const items = main ? [...main.querySelectorAll('[data-story]'), ...[...main.querySelectorAll('template')].flatMap((t) => [...t.content.querySelectorAll('[data-story]')])] : [];" } },
+    { key: 'refillLead', state: 'front-read', js: { file: 'refill.js', from: "const lead = pick.find((el) => el.dataset.imp === '3') || pick[0];", to: 'const lead = pick[0];' } },
+    { key: 'eventLabel', state: 'default', css: '', init: `document.addEventListener('DOMContentLoaded', () => {
+      const el = document.querySelector('main [data-story="${sidOf(IN_PERIOD)}"]'), old = el.querySelector('.evt'); if (old) old.remove();
+      el.querySelector('.row__meta, .fc__top').insertAdjacentHTML('beforeend', '<span class="evt"><time datetime="${IN_PERIOD.event_date >= PSTART[sidOf(IN_PERIOD)] ? IN_PERIOD.event_date : IN_PERIOD.date}">Happened</time></span>'); })` },
   ];
   let caught = 0;
   const base = await runCase(c, { viewport: { width: 1440, height: 900 } }, 'default');
@@ -1008,6 +1201,26 @@ if (process.env.SHOTS !== '0') {
     ['admin-1024', c, { viewport: { width: 1024, height: 900 } }, 'admin/'],
     ['404-390', c, { viewport: { width: 390, height: 844 } }, '404.html'],
   ];
+  // round 2: the refilled front under Unread (the default front and its Desk's view read), and a
+  // "Happened" label at the narrowest width, on a front card when the refill holds one
+  const extra = [['front-read-unread-1440', c, { viewport: { width: 1440, height: 900 } }, 'front-read'],
+    ['front-read-unread-iphone15', wk, { ...devices['iPhone 15'] }, 'front-read'],
+    ['event-label-360', c, { viewport: { width: 360, height: 800 } }, 'event']];
+  for (const [name, b, opts, kind] of extra) {
+    const ctx = await b.newContext(opts); const rec = { fb: [], og: 0, ext: [], errors: [] }; await stub(ctx, rec);
+    const p = await ctx.newPage();
+    await p.addInitScript((ids) => localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(ids.map((id) => [id, Date.now()])))), S0);
+    await p.goto(BASE); await p.evaluate(() => document.fonts.ready);
+    await p.evaluate((kind) => {
+      document.querySelector('.seg button[data-rs="unread"]').click();
+      const e = kind === 'event' && [...document.querySelectorAll('.front .fc .evt, main .evt')].find((x) => x.getBoundingClientRect().width > 0);
+      if (e) e.closest('[data-story]').scrollIntoView({ block: 'center' }); else document.querySelector('.front').scrollIntoView();
+    }, kind);
+    await p.waitForTimeout(400);
+    await p.screenshot({ path: path.join(SHOTS, name + '.png') });
+    await ctx.close();
+    log(`shot ${path.join(SHOTS, name + '.png')}`);
+  }
   for (const [name, b, opts, rel, y] of pages) {
     const ctx = await b.newContext(opts); const rec = { fb: [], og: 0, ext: [], errors: [] }; await stub(ctx, rec);
     const p = await ctx.newPage(); await p.goto(BASE + rel); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(400);

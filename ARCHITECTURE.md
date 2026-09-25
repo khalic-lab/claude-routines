@@ -1039,7 +1039,10 @@ sports 7; ai-ml uncapped — "since the last AI/ML edition"; a first-ever editio
 Not the post footer, whose date−7..date overlaps the previous weekly edition by a day. Stories get
 `tier`/`tier_label`, `hl_dot` (the terminal period, from the headline's own punctuation), `unfurl`
 (image eligible: lead/feature with a url, not arXiv/doi.org), `boot_open` (today's leads open, R33),
-`show_desk`; editorials get `sid` (`ed-<stream>-<date>`), `topics` (the sorted union of their
+`show_desk`, `event_label` ("Happened 16 Sep", 2026-09-25: only when the index record's `event_date`
+is a day-precise date before `period.start`; month-only, missing, malformed and later dates give "",
+so the period rule is untouched; the board copies keep `event_date`, `feed.stories` does not);
+editorials get `sid` (`ed-<stream>-<date>`), `topics` (the sorted union of their
 edition's story topics, so a beat filter shows them), `title_html` + `title_is_lede` + `body` (a
 titleless editorial promotes its WHOLE bold lede to the heading: a list number "1. " stripped but
 never a figure like "3.5", and a "." or ":" just outside the bold goes with it) and `title_text`
@@ -1048,10 +1051,16 @@ never a figure like "3.5", and a "." or ":" just outside the bold goes with it) 
 Views: `days` (one per date, a contiguous board slice `[first, first+count)`, newest first),
 `front` (board indices: walk the newest dates until they hold four leads/features; the lead is the
 window's first lead, then leads and features in board order, briefs only to fill; `desk` = the
-newest editorial), `beats` (chip counts over the whole board, editorials included),
+newest editorial; since 2026-09-25 also `reserve`, the order the front refills in under the Unread
+filter: the same selection in up to 4 rounds, each over what the earlier rounds left, round 0 ==
+`items`, no index twice; and `desk_reserve`, every editorial newest first, first == `desk`), `beats` (chip counts over the whole board, editorials included),
 `edition_label`/`count_line` (masthead) and `build_stamp` (the newest writer post's front-matter
 `date:` — input-derived, so a rebuild from the same posts does not change it; the page compares it
-with `edition.json` on resume). `tools/tests/test_feed_views.py` pins all of it, including the CLI
+with `edition.json` on resume). Board items past round 0 of either reserve carry `in_reserve`: the
+page renders them as `<template>` copies in the front plus a hidden "On the front" pointer in their
+day. Under Unread, `assets/js/refill.js` shows the first four unread reserve entries that match the
+beats (lead slot to the first importance-3 one) and the first unread matching editorial as the
+Desk's view; All and Read put the builder's front back exactly. `tools/tests/test_feed_views.py` pins all of it, including the CLI
 under `python3 -S` on sparse `_posts/` trees; `test_feed_age.py` re-checks the views on the
 committed artifact.
 
