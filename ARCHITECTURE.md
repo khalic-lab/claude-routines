@@ -888,7 +888,11 @@ fifty news/lab domains, and the browser-UA-from-edge bypasses the datacenter-IP 
 Cloudflare/Akamai-fronted sites. All 4 writers route non-allowlisted hosts through it (direct curl
 stays for the feed hosts; arXiv stays direct per its rate-limit ask). The proxy mirrors upstream
 status, so `curl -fsSL` keeps fail→snippet semantics; footers mark proxied fetches `{ok via proxy}`.
-Hard Cloudflare Bot-Management / JS-challenge sites can still block even the proxy.
+Hard Cloudflare Bot-Management / JS-challenge sites can still block even the proxy. Since 2026-09-25 a
+403 to the browser headers is retried once with an honest UA (`news-brief-fetch/1.0`), inside the
+same 20 s budget: www.admin.ch's WAF refuses a client that claims Chrome without being one and
+serves the honest one (verified from the edge), which opened the Federal Council communiqués. A
+retried answer carries `X-Proxy-Retry: honest-ua`.
 
 ---
 

@@ -3420,11 +3420,17 @@ admin.ch:
   reach: proxy
   streams:
     - news
+  probe:
+    url: https://www.newsd.admin.ch/newsd/feeds/rss?lang=fr&org-nr=1&kind=M
+    method: proxy
   last_cited: null
   lifecycle:
     - date: 2026-08-07
       event: candidate
       note: scout 2026-08-07 (state review)
+    - date: 2026-09-25
+      event: probe
+      note: www.admin.ch 403s the fetch-proxy browser UA (WAF client check); the proxy now retries a 403 with an honest UA -> 200, verified from the Cloudflare edge. Probe = the Federal Council communique feed (newsd RSS, 200 through the proxy); items link to www.admin.ch/<lang>/newnsb/<id>
 rsi.ch:
   class: outlet
   tier: T2

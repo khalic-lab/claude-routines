@@ -17,6 +17,9 @@ patches:
     applied_note: >-
       No-op -- sources/registry.yml already had admin.ch reach: proxy (set at its 2026-08-07
       candidate seed). The telemetry shows 403 via the proxy too, so proxy alone will not fix it.
+      RESOLVED 2026-09-25 (follow-up): the 403 is www.admin.ch's WAF refusing the proxy's Chrome UA;
+      fetch-proxy now retries a 403 with an honest UA (200 from the edge), and admin.ch probes the
+      Federal Council newsd RSS.
     evidence: >-
       admin.ch failed 13/13 fetch attempts this window (health.json feeds: 13 fail, 0 ok-curl,
       0 ok-proxy, all HTTP 403) — plus news.admin.ch 1/1 fail and bfs.admin.ch 1/1 fail. Whatever

@@ -28,6 +28,14 @@ const BROWSER_HEADERS = {
   "Accept-Language": "en-US,en;q=0.9,de;q=0.6,fr;q=0.5",
   "Accept-Encoding": "gzip, deflate, br",
 };
+// Some WAFs refuse a client that CLAIMS to be Chrome but does not look like one below the headers
+// (www.admin.ch, the Federal Council's news: 403 to this UA, 200 to curl's; measured 2026-09-25).
+// A 403 to BROWSER_HEADERS is retried once, saying what we are. Anything else is mirrored as is.
+const HONEST_HEADERS = {
+  "User-Agent": "news-brief-fetch/1.0 (+https://khalic-lab.github.io/claude-routines/)",
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.9,*/*;q=0.8",
+  "Accept-Language": BROWSER_HEADERS["Accept-Language"],
+};
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -107,19 +115,26 @@ export default {
       return text("target host not allowed", 403);
     }
 
+    // one timeout for the whole exchange, the honest retry included
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    let upstream;
+    const get = (headers) => fetch(dest.toString(), { method: "GET", headers, redirect: "follow", signal: controller.signal });
+    let upstream, retried = false;
     try {
-      upstream = await fetch(dest.toString(), {
-        method: "GET",
-        headers: { ...BROWSER_HEADERS, Referer: dest.origin + "/" },
-        redirect: "follow",
-        signal: controller.signal,
-      });
+      upstream = await get({ ...BROWSER_HEADERS, Referer: dest.origin + "/" });
     } catch (e) {
       clearTimeout(timer);
       return text(`upstream fetch failed: ${String((e && e.message) || e)}`, 502);
+    }
+    if (upstream.status === 403) {
+      try {
+        const again = await get(HONEST_HEADERS);
+        if (upstream.body) upstream.body.cancel();
+        upstream = again;
+        retried = true;
+      } catch {
+        // the retry failed or ran out of time: the first answer (403) stands
+      }
     }
     clearTimeout(timer);
 
@@ -142,6 +157,7 @@ export default {
         "Cache-Control": "no-store",
         "X-Proxy-Final-Url": upstream.url || dest.toString(),
         "X-Proxy-Upstream-Status": String(upstream.status),
+        ...(retried ? { "X-Proxy-Retry": "honest-ua" } : {}),
         ...CORS,
       },
     });
