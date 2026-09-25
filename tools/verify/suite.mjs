@@ -126,6 +126,46 @@ async function mutateJs(ctx, js) {
   const body = src.replace(js.from, js.to);
   await ctx.route((u) => u.pathname.endsWith('/assets/js/' + js.file), (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body }));
 }
+// The og and open-card-photo gates must not depend on the day's data: a front whose stories are all
+// arXiv/doi links has no image slot at all. For the default and expanded states the homepage is
+// served with slots injected where the include would put them (after the headline, or the deck),
+// so there are always >= 2 slots and the first openable card in the rest band always has one.
+// Everything else is still the day's real markup.
+let slotted = null;
+function frontWithSlots() {
+  if (slotted) return slotted;
+  let html = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8');
+  const cards = [];                                         // [start, end] of each front card <li>
+  const lead = html.indexOf('data-zone="front-lead"'), rest = html.indexOf('data-zone="front-rest"');
+  for (const [from, band] of [[rest, 'rest'], [lead, 'lead']]) {
+    if (from < 0) continue;
+    const stop = html.indexOf('</ol>', from);
+    for (let i = html.indexOf('<li class="fc ', from); i >= 0 && i < stop; i = html.indexOf('<li class="fc ', i + 1)) {
+      cards.push({ band, start: i, end: html.indexOf('</li>', i) });
+    }
+  }
+  const hasSlot = (c) => html.slice(c.start, c.end).includes('<figure class="photo');
+  const openable = (c) => html.slice(c.start, c.end).includes('class="more');
+  const want = [];
+  const firstRest = cards.find((c) => c.band === 'rest' && openable(c));
+  if (firstRest && !hasSlot(firstRest)) want.push(firstRest);
+  let total = (html.match(/<figure class="photo[^>]*data-og=/g) || []).length + want.length;
+  for (const c of cards) { if (total >= 2) break; if (!hasSlot(c) && !want.includes(c)) { want.push(c); total++; } }
+  // insert from the end of the document backwards, so earlier offsets stay valid
+  want.sort((a, b) => b.start - a.start).forEach((c, k) => {
+    let at = html.indexOf('</h3>', c.start) + '</h3>'.length;
+    const after = html.slice(at).match(/^\s*<p class="deck">[\s\S]*?<\/p>/);
+    if (after) at += after[0].length;
+    html = html.slice(0, at) + `\n    <figure class="photo needs-js" data-og="https://example.org/verify-slot-${k + 1}" aria-hidden="true"></figure>` + html.slice(at);
+  });
+  slotted = { html, injected: want.length, restCard: !!firstRest };
+  return slotted;
+}
+async function serveFrontWithSlots(ctx) {
+  const { html } = frontWithSlots();
+  await ctx.route((u) => u.origin === ORIGIN && (u.pathname === '/claude-routines/' || u.pathname === '/claude-routines/index.html'),
+    (route) => route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: html }));
+}
 async function stub(ctx, rec, { stamp, ogAll } = {}) {
   let ogN = 0;
   // anything that is neither this server nor a Worker is logged (watchRequests) and never leaves
@@ -299,6 +339,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   const rec = { fb: [], og: 0, ext: [], errors: [] };
   await stub(ctx, rec, { stamp: state === 'stale' || state === 'stale-bg' ? 'a-newer-edition' : null, ogAll: state === 'expanded' });
   if (fault?.js) await mutateJs(ctx, fault.js);
+  if (state === 'default' || state === 'expanded') await serveFrontWithSlots(ctx);
   const page = await ctx.newPage();
   watchRequests(page, rec);
   if (fault?.init) await page.addInitScript(fault.init);
@@ -323,7 +364,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   }
   if (fault?.css) await page.addStyleTag({ content: fault.css });
   await page.evaluate(`window.__L = (${LIB.toString()})()`);
-  const X = { state, ogRequests: rec.og, EXPECT_TAGS, EXPECT_FRONT, EXPECT_DESK, deskEdition, BEAT, BEAT_ED: BEAT_ED ? sidOf(BEAT_ED) : null, BEAT_DAYS,
+  const X = { state, ogRequests: rec.og, injected: frontWithSlots().injected, EXPECT_TAGS, EXPECT_FRONT, EXPECT_DESK, deskEdition, BEAT, BEAT_ED: BEAT_ED ? sidOf(BEAT_ED) : null, BEAT_DAYS,
     MEASURE_ROW: MEASURE_ROW ? sidOf(MEASURE_ROW) : null, boardIds: board.map(sidOf), boardDates: board.map((x) => x.date),
     boardKinds: board.map((x) => x.kind), nBoard: board.length, nDays: dates.length };
   if (state === 'stale') {
@@ -392,15 +433,15 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         const mx = Math.max(whyN, sumN), mn = Math.min(whyN, sumN);
         A.measure = [mx <= 80 && (innerWidth < 700 || mn >= 50), `opened row: why ${whyN}, body ${sumN} chars/line (columns ${cols})`];
       }
-      // og: the stub gives the first unfurl an image and the rest none; both outcomes must land,
-      // and the request must carry its referrer policy (old bug B6)
+      // og: at least two slots (the suite injects slots when the day's front has fewer); the stub
+      // gives the first an image and the rest none. Both outcomes must land every run, and the
+      // image request must carry its referrer policy (old bug B6).
       const slots = [...document.querySelectorAll('.photo[data-og]')];
       const filled = slots.filter((p) => p.classList.contains('is-loaded')), gone = slots.filter((p) => p.hidden);
       const img = filled[0] && filled[0].querySelector('img');
-      const ogDetail = `${slots.length} slots, ${X.ogRequests} og-proxy calls, filled ${filled.length}, collapsed ${gone.length}` + (img ? `, referrerPolicy "${img.referrerPolicy}", loading "${img.loading}"` : '');
-      A.og = slots.length === 0 ? [true, 'no image-eligible story on this front (n/a)']
-        : [X.ogRequests > 0 && filled.length >= 1 && (slots.length < 2 || gone.length >= 1) && filled.length + gone.length === slots.length
-          && !!img && img.referrerPolicy === 'no-referrer' && img.loading === 'lazy', ogDetail];
+      const ogDetail = `${slots.length} slots (${X.injected} injected), ${X.ogRequests} og-proxy calls, filled ${filled.length}, collapsed ${gone.length}` + (img ? `, referrerPolicy "${img.referrerPolicy}", loading "${img.loading}"` : '');
+      A.og = [slots.length >= 2 && X.ogRequests >= 2 && filled.length >= 1 && gone.length >= 1 && filled.length + gone.length === slots.length
+        && !!img && img.referrerPolicy === 'no-referrer' && img.loading === 'lazy', ogDetail];
       // freshness, negative control: an unchanged edition never offers a reload
       const bar = document.querySelector('.notice');
       window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
@@ -459,17 +500,20 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         if (!(startOk && flipOk && backOk)) bad++;
       }
       A.fold = [bad === 0 && n > 0, `${n} More buttons (${bootOpen} boot open) flip and return truthfully, ${bad} bad`];
-      // an open card alone on its line sets its photo in a column beside the headline
+      // an open card with a photo: from a 720px front its photo sits in a column beside the
+      // headline; below that the card is one column and the photo sits under the headline. The
+      // first openable rest card always has a slot (injected if the day's data gives it none).
       const grid = document.querySelector('.front__grid');
       const withPhoto = [...document.querySelectorAll('.fcards--rest .fc')].find((c) => c.querySelector('.photo.is-loaded') && c.querySelector('.more'));
-      if (!grid || L.R(grid).width < 720) A.photoBeside = [true, `front ${grid ? Math.round(L.R(grid).width) : 0}px wide: stacked by design below 720 (n/a)`];
-      else if (!withPhoto) A.photoBeside = [![...document.querySelectorAll('.fcards--rest .photo[data-og]')].length, 'no loaded photo on an openable card'];
+      if (!grid || !withPhoto) A.photoBeside = [false, `no loaded photo on an openable front card (${X.injected} slots injected): the check has nothing to measure`];
       else {
+        const wide = L.R(grid).width >= 720;
         const was = isOpen(withPhoto);
         setOpen(withPhoto, true);
         const h = L.R(withPhoto.querySelector('.hl')), ph = L.R(withPhoto.querySelector('.photo'));
         const beside = ph.left >= h.right - 1 && ph.top < h.bottom && ph.bottom > h.top;
-        A.photoBeside = [beside, `open card: headline x ${Math.round(h.left)}–${Math.round(h.right)}, photo x ${Math.round(ph.left)}–${Math.round(ph.right)} y ${Math.round(ph.top)}–${Math.round(ph.bottom)} (${beside ? 'beside' : 'stacked'})`];
+        const under = ph.top >= h.bottom - 1 && Math.abs(ph.left - h.left) < 2;
+        A.photoBeside = [wide ? beside : under, `front ${Math.round(L.R(grid).width)}px, open card: headline x ${Math.round(h.left)}–${Math.round(h.right)} y ${Math.round(h.top)}–${Math.round(h.bottom)}, photo x ${Math.round(ph.left)}–${Math.round(ph.right)} y ${Math.round(ph.top)}–${Math.round(ph.bottom)} (${beside ? 'beside' : under ? 'under' : 'misplaced'}, want ${wide ? 'beside' : 'under'})`];
         setOpen(withPhoto, was);
       }
     }

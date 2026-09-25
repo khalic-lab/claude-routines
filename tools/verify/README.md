@@ -52,7 +52,10 @@ feed, not only the one it was written against:
 - the "New edition" bar appears on resume, including for a tab opened in the background, and
   never for an unchanged edition
 - two open tabs keep each other's read marks (a `storage` listener reloads the maps)
-- the og slots really fill and collapse, and the image request carries `no-referrer`
+- the og slots really fill and collapse, and the image request carries `no-referrer`. A front whose
+  stories are all arXiv/doi links has no image slot, so for these checks the suite serves the day's
+  homepage with slots injected where the template puts them (always ≥ 2, one on the first openable
+  card of the rest band): no gate passes, or says n/a, for lack of data
 - an open front card with a photo sets it beside the headline
 - every visible masthead and bar control is reached by Tab
 - every reading page (each review, /prompts/ fully open, the 404, /admin/) fits the width at 360px, 1440px and on an iPhone
