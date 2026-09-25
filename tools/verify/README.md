@@ -24,8 +24,9 @@ node suite.mjs /tmp/fp-build/src/_site > /tmp/fp-suite.log 2>&1   # ~10 min; one
 
 - Serves the built `_site` under `/claude-routines/`.
 - Stubs both Workers with `route()`, and aborts and logs any other host.
-- Runs these states: default, expanded, unread-edition, beat, multi-beat, empty and stale, plus
-  no-JS and contract parity.
+- Runs these states: default, expanded, unread-edition, beat, multi-beat, empty, stale and
+  stale-bg (a tab opened in the background), plus no-JS, contract parity, two tabs and the
+  reading pages.
 - Covers Chromium at 360, 390, 700, 768, 1024, 1280, 1440 and 1600, and WebKit as iPhone 15 and at
   1024, all in light and dark.
 
@@ -48,7 +49,12 @@ feed, not only the one it was written against:
 - focus rings are whole, including under the phone bar
 - the measure of opened rows is 50–80 characters per line (the ceiling only below 700px)
 - read text contrast is ≥ 4.5:1, and the AI disclosure is never dimmed
-- the "New edition" bar appears on resume
+- the "New edition" bar appears on resume, including for a tab opened in the background, and
+  never for an unchanged edition
+- two open tabs keep each other's read marks (a `storage` listener reloads the maps)
+- the og slots really fill and collapse, and the image request carries `no-referrer`
+- an open front card with a photo sets it beside the headline
+- every visible masthead and bar control is reached by Tab
 - every reading page (each review, /prompts/ fully open, the 404, /admin/) fits the width at 360px, 1440px and on an iPhone
 - zero requests to hosts other than the two Workers
 - zero Worker requests while signed out
@@ -61,8 +67,9 @@ against the old page:
 - the same interactions write the same storage shapes and send the same Worker bodies, minus the
   `ed-` ids that the Worker never accepted
 
-**Fault injection:** the suite ends with a self-test that breaks the CSS, markup, a request or
-storage on purpose. Each break must fail its own assertion.
+**Fault injection:** the suite ends with a self-test that breaks the CSS, the markup, a request,
+storage, or one line of a JS module (served mutated through `route()`, e.g. the editorial rule's
+`every` turned into `some`) on purpose. Each break must fail its own assertion.
 
 Screenshots go to `$SHOTS` (default `/tmp/fp-shots`). Narrow a run with `WIDTHS=390,1440`,
 `ONLY=default,contract`, `FAULTS=0` or `SHOTS=0`.

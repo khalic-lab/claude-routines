@@ -24,7 +24,7 @@ const SHOTS = process.env.SHOTS || '/tmp/fp-shots';
 const FB = 'https://feedback-sink.khalic-lab.workers.dev';
 const OGP = 'https://og-proxy.khalic-lab.workers.dev';
 const WIDTHS = (process.env.WIDTHS || '360,390,700,768,1024,1280,1440,1600').split(',').map(Number);
-const STATES = ['default', 'expanded', 'unread-edition', 'beat', 'multi-beat', 'empty', 'stale'];
+const STATES = ['default', 'expanded', 'unread-edition', 'beat', 'multi-beat', 'empty', 'stale', 'stale-bg'];
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
 const TOKEN = 'cd'.repeat(32);
 
@@ -59,10 +59,18 @@ function period(date, stream) {
   return [start, date];
 }
 const dates = [...new Set(board.map((x) => x.date))].sort().reverse();
-const EXPECT_TAGS = {};                              // date -> {stream: [start, end]}
+// the visible text of a period, formatted here: "24 Sep", "17–23 Sep", "29 Aug–4 Sep", "29 Dec 2025–4 Jan"
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function periodTexts(s, e) {
+  const a = day(s), b = day(e), end = `${b.getUTCDate()} ${MON[b.getUTCMonth()]}`;
+  if (s === e) return [end];
+  if (a.getUTCFullYear() !== b.getUTCFullYear()) return [`${a.getUTCDate()} ${MON[a.getUTCMonth()]} ${a.getUTCFullYear()}`, end];
+  return [a.getUTCMonth() === b.getUTCMonth() ? `${a.getUTCDate()}` : `${a.getUTCDate()} ${MON[a.getUTCMonth()]}`, end];
+}
+const EXPECT_TAGS = {};                              // date -> {stream: [start, end, [visible texts]]}
 for (const d of dates) {
   EXPECT_TAGS[d] = {};
-  for (const x of board.filter((x) => x.date === d)) EXPECT_TAGS[d][x.stream] = period(d, x.stream);
+  for (const x of board.filter((x) => x.date === d)) { const [s0, e0] = period(d, x.stream); EXPECT_TAGS[d][x.stream] = [s0, e0, periodTexts(s0, e0)]; }
 }
 const sidOf = (x) => (x.kind === 'editorial' ? `ed-${x.stream}-${x.date}` : x.sid || x.id);
 // the front: walk the newest dates until four leads/features; lead = first lead; then leads and
@@ -111,7 +119,14 @@ const BASE = ORIGIN + '/claude-routines/';
 const OG_IMG = BASE + 'assets/diagrams/how-it-works-mobile-light.svg';   // same-origin stand-in image
 
 // ------------------------------------------------------------------ Worker stubs + request log
-async function stub(ctx, rec, { stamp } = {}) {
+// a JS fault: serve one module with one string replaced (the string must exist, or the fault is vacuous)
+async function mutateJs(ctx, js) {
+  const src = fs.readFileSync(path.join(SITE, 'assets/js', js.file), 'utf8');
+  if (!src.includes(js.from)) throw new Error(`fault string not found in ${js.file}: ${js.from}`);
+  const body = src.replace(js.from, js.to);
+  await ctx.route((u) => u.pathname.endsWith('/assets/js/' + js.file), (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body }));
+}
+async function stub(ctx, rec, { stamp, ogAll } = {}) {
   let ogN = 0;
   // anything that is neither this server nor a Worker is logged (watchRequests) and never leaves
   await ctx.route((u) => u.origin !== ORIGIN && u.origin !== FB && u.origin !== OGP && u.protocol !== 'data:', (route) => route.abort());
@@ -128,7 +143,7 @@ async function stub(ctx, rec, { stamp } = {}) {
     // the first unfurl gets a real (same-origin) image, the rest none: both the filled slot and
     // the collapse are exercised
     await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' },
-      body: JSON.stringify({ image: ogN++ === 0 ? OG_IMG : null }) });
+      body: JSON.stringify({ image: ogAll || ogN++ === 0 ? OG_IMG : null }) });
   });
   if (stamp) {
     await ctx.route((u) => u.pathname.endsWith('/edition.json'), (route) => route.fulfill({ status: 200, contentType: 'application/json',
@@ -138,6 +153,7 @@ async function stub(ctx, rec, { stamp } = {}) {
 function watchRequests(page, rec) {
   page.on('request', (r) => {
     const u = new URL(r.url());
+    if (u.origin === ORIGIN && u.pathname.endsWith('/edition.json')) rec.edition = (rec.edition || 0) + 1;
     if (u.protocol === 'data:' || u.origin === ORIGIN) return;
     if (u.origin === FB || u.origin === OGP) return;
     rec.ext.push(r.url());
@@ -281,15 +297,33 @@ const frame2 = (page) => page.evaluate(() => new Promise((r) => requestAnimation
 async function runCase(browser, ctxOpts, state, fault = null) {
   const ctx = await browser.newContext(ctxOpts);
   const rec = { fb: [], og: 0, ext: [], errors: [] };
-  await stub(ctx, rec, { stamp: state === 'stale' ? 'a-newer-edition' : null });
+  await stub(ctx, rec, { stamp: state === 'stale' || state === 'stale-bg' ? 'a-newer-edition' : null, ogAll: state === 'expanded' });
+  if (fault?.js) await mutateJs(ctx, fault.js);
   const page = await ctx.newPage();
   watchRequests(page, rec);
   if (fault?.init) await page.addInitScript(fault.init);
+  if (state === 'stale-bg') {
+    // a tab opened in the background: hidden from its first byte until the reader looks at it
+    await page.addInitScript(() => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => window.__vis || 'hidden' });
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => (window.__vis || 'hidden') === 'hidden' });
+    });
+  }
   await page.goto(BASE);
   await page.evaluate(() => document.fonts.ready);
+  if (state === 'default' || state === 'expanded') {
+    // bring every image slot within the observer's reach, then wait until each is filled or gone
+    // (each slot is scrolled to and held for two frames, so the IntersectionObserver sees it)
+    await page.evaluate(async () => {
+      const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      for (const p of document.querySelectorAll('.photo[data-og]')) { p.scrollIntoView({ block: 'center' }); await frames(); await frames(); }
+      scrollTo(0, 0); await frames();
+    });
+    await page.waitForFunction(() => [...document.querySelectorAll('.photo[data-og]')].every((p) => p.hidden || p.classList.contains('is-loaded')), null, { timeout: 8000 }).catch(() => {});
+  }
   if (fault?.css) await page.addStyleTag({ content: fault.css });
   await page.evaluate(`window.__L = (${LIB.toString()})()`);
-  const X = { state, EXPECT_TAGS, EXPECT_FRONT, EXPECT_DESK, deskEdition, BEAT, BEAT_ED: BEAT_ED ? sidOf(BEAT_ED) : null, BEAT_DAYS,
+  const X = { state, ogRequests: rec.og, EXPECT_TAGS, EXPECT_FRONT, EXPECT_DESK, deskEdition, BEAT, BEAT_ED: BEAT_ED ? sidOf(BEAT_ED) : null, BEAT_DAYS,
     MEASURE_ROW: MEASURE_ROW ? sidOf(MEASURE_ROW) : null, boardIds: board.map(sidOf), boardDates: board.map((x) => x.date),
     boardKinds: board.map((x) => x.kind), nBoard: board.length, nDays: dates.length };
   if (state === 'stale') {
@@ -312,19 +346,23 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         for (const t of tags) {
           nTags++;
           const ts = [...t.querySelectorAll('time')].map((x) => x.getAttribute('datetime'));
-          const [s, e] = m[t.dataset.stream] || [];
+          const [s, e, texts] = m[t.dataset.stream] || [];
           const got = ts.length === 1 ? [ts[0], ts[0]] : ts;
           if (got[0] !== s || got[1] !== e || !L.vis(t)) bad.push(`${d} ${t.dataset.stream}: ${got} (want ${s}..${e})`);
+          const shown = [...t.querySelectorAll('time')].map((x) => x.textContent.trim());
+          if (shown.join('|') !== (texts || []).join('|')) bad.push(`${d} ${t.dataset.stream} reads "${shown.join('–')}", want "${(texts || []).join('–')}"`);
         }
       }
       for (const ed of document.querySelectorAll('.ed')) {
         const [date, stream] = [ed.dataset.edition.slice(0, 10), ed.dataset.edition.slice(11)];
-        const [s, e] = X.EXPECT_TAGS[date][stream];
+        const [s, e, texts] = X.EXPECT_TAGS[date][stream];
         const k = [...ed.querySelectorAll('.ed__kick time')].map((x) => x.getAttribute('datetime'));
         const got = k.length === 1 ? [k[0], k[0]] : k;
         if (got[0] !== s || got[1] !== e) bad.push(`${ed.id} kicker ${got}`);
+        const shown = [...ed.querySelectorAll('.ed__kick time')].map((x) => x.textContent.trim());
+        if (shown.join('|') !== texts.join('|')) bad.push(`${ed.id} kicker reads "${shown.join('–')}", want "${texts.join('–')}"`);
       }
-      A.periods = [bad.length === 0 && nTags > 0, bad.join('; ') || `${nTags} day tags + ${document.querySelectorAll('.ed').length} editorial kickers match the derived periods`];
+      A.periods = [bad.length === 0 && nTags > 0, bad.join('; ') || `${nTags} day tags + ${document.querySelectorAll('.ed').length} editorial kickers match the derived periods, dates and visible text`];
       const frontIds = [...document.querySelectorAll('.front .fc')].map((x) => x.dataset.story);
       const desk = (document.querySelector('.front .desk .ed') || {}).id || null;
       A.front = [frontIds.join() === X.EXPECT_FRONT.join() && desk === X.EXPECT_DESK, `front ${frontIds.length} ${frontIds.join() === X.EXPECT_FRONT.join() ? '=' : '!='} derived; desk ${desk} (want ${X.EXPECT_DESK})`];
@@ -354,9 +392,36 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         const mx = Math.max(whyN, sumN), mn = Math.min(whyN, sumN);
         A.measure = [mx <= 80 && (innerWidth < 700 || mn >= 50), `opened row: why ${whyN}, body ${sumN} chars/line (columns ${cols})`];
       }
-      const img = document.querySelector('.photo.is-loaded img'), gone = [...document.querySelectorAll('.photo[data-og]')].filter((p) => p.hidden).length;
-      A.og = [true, `photo slots: ${document.querySelectorAll('.photo').length}, filled ${document.querySelectorAll('.photo.is-loaded').length}, collapsed ${gone}`];
-      if (img) A.og = [img.referrerPolicy === 'no-referrer' && img.loading === 'lazy', A.og[1] + `, referrerPolicy ${img.referrerPolicy}, loading ${img.loading}`];
+      // og: the stub gives the first unfurl an image and the rest none; both outcomes must land,
+      // and the request must carry its referrer policy (old bug B6)
+      const slots = [...document.querySelectorAll('.photo[data-og]')];
+      const filled = slots.filter((p) => p.classList.contains('is-loaded')), gone = slots.filter((p) => p.hidden);
+      const img = filled[0] && filled[0].querySelector('img');
+      const ogDetail = `${slots.length} slots, ${X.ogRequests} og-proxy calls, filled ${filled.length}, collapsed ${gone.length}` + (img ? `, referrerPolicy "${img.referrerPolicy}", loading "${img.loading}"` : '');
+      A.og = slots.length === 0 ? [true, 'no image-eligible story on this front (n/a)']
+        : [X.ogRequests > 0 && filled.length >= 1 && (slots.length < 2 || gone.length >= 1) && filled.length + gone.length === slots.length
+          && !!img && img.referrerPolicy === 'no-referrer' && img.loading === 'lazy', ogDetail];
+      // freshness, negative control: an unchanged edition never offers a reload
+      const bar = document.querySelector('.notice');
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+      await sleep(300);
+      const afterRestore = L.vis(bar);
+      const now0 = Date.now;
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+      document.dispatchEvent(new Event('visibilitychange'));
+      Date.now = () => now0() + 60 * 1000;                          // one minute away: no check at all
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+      document.dispatchEvent(new Event('visibilitychange'));
+      await sleep(150);
+      const afterMinute = L.vis(bar);
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+      document.dispatchEvent(new Event('visibilitychange'));
+      Date.now = () => now0() + 12 * 60 * 1000;                     // twelve minutes: checks, same stamp
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+      document.dispatchEvent(new Event('visibilitychange'));
+      await sleep(300);
+      Date.now = now0;
+      A.freshSame = [!afterRestore && !afterMinute && !L.vis(bar), `unchanged edition: no bar after a bfcache restore (${!afterRestore}), after 1 min away (${!afterMinute}), after 12 min away (${!L.vis(bar)})`];
     }
     if (X.state === 'expanded') {
       // toggle-agnostic: today's leads boot open (R33), so every check first folds, measures,
@@ -394,13 +459,29 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         if (!(startOk && flipOk && backOk)) bad++;
       }
       A.fold = [bad === 0 && n > 0, `${n} More buttons (${bootOpen} boot open) flip and return truthfully, ${bad} bad`];
+      // an open card alone on its line sets its photo in a column beside the headline
+      const grid = document.querySelector('.front__grid');
+      const withPhoto = [...document.querySelectorAll('.fcards--rest .fc')].find((c) => c.querySelector('.photo.is-loaded') && c.querySelector('.more'));
+      if (!grid || L.R(grid).width < 720) A.photoBeside = [true, `front ${grid ? Math.round(L.R(grid).width) : 0}px wide: stacked by design below 720 (n/a)`];
+      else if (!withPhoto) A.photoBeside = [![...document.querySelectorAll('.fcards--rest .photo[data-og]')].length, 'no loaded photo on an openable card'];
+      else {
+        const was = isOpen(withPhoto);
+        setOpen(withPhoto, true);
+        const h = L.R(withPhoto.querySelector('.hl')), ph = L.R(withPhoto.querySelector('.photo'));
+        const beside = ph.left >= h.right - 1 && ph.top < h.bottom && ph.bottom > h.top;
+        A.photoBeside = [beside, `open card: headline x ${Math.round(h.left)}–${Math.round(h.right)}, photo x ${Math.round(ph.left)}–${Math.round(ph.right)} y ${Math.round(ph.top)}–${Math.round(ph.bottom)} (${beside ? 'beside' : 'stacked'})`];
+        setOpen(withPhoto, was);
+      }
     }
     if (X.state === 'unread-edition') {
       const u0 = L.ct(L.seg('unread'));
       const sci = [...document.querySelectorAll(`[data-story][data-edition="${X.deskEdition}"]`)].filter((x) => x.dataset.zone !== 'editorial');
-      sci.forEach((s) => click(s.querySelector('.readbtn')));
-      const u1 = L.ct(L.seg('unread'));
       const ed = document.getElementById(X.EXPECT_DESK);
+      // one story of the edition read: the editorial stays unread, and Unread drops by exactly one
+      click(sci[0].querySelector('.readbtn'));
+      const partial = sci.length < 2 || (!ed.classList.contains('is-read') && ed.querySelector('.readbtn').getAttribute('aria-pressed') === 'false' && L.ct(L.seg('unread')) === u0 - 1);
+      sci.slice(1).forEach((s) => click(s.querySelector('.readbtn')));
+      const u1 = L.ct(L.seg('unread'));
       const derived = ed.classList.contains('is-read') && ed.querySelector('.readbtn').getAttribute('aria-pressed') === 'true';
       const disc = ed.querySelector('.ed__disc');
       const dOp = L.opacityOf(disc);
@@ -414,7 +495,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       click(ed.querySelector('.readbtn'));
       click(L.seg('unread'));
       const n = L.visibleItems().length, u2 = L.ct(L.seg('unread'));
-      A.edRead = [u0 - u1 === sci.length + 1 && derived, `${sci.length} stories ticked: Unread ${u0} -> ${u1} (editorial counted once: ${u0 - u1 === sci.length + 1}), derived read ${derived}`];
+      A.edRead = [partial && u0 - u1 === sci.length + 1 && derived, `1 of ${sci.length} ticked leaves the editorial unread: ${partial}; all ${sci.length} ticked: Unread ${u0} -> ${u1} (editorial counted once: ${u0 - u1 === sci.length + 1}), derived read ${derived}`];
       A.override = [untick && stored, `explicit un-tick wins over the edition rule: ${untick}, kept locally ${stored}`];
       A.counts = [n === u2 && !L.vis(ed), `Unread chip ${u2} vs visible ${n}; the edition's editorial hidden ${!L.vis(ed)}`];
       const emptyDays = [...document.querySelectorAll('section.day')].filter((s) => !s.hidden && !s.querySelector('[data-story]:not([hidden]),[data-ptr]:not([hidden])'));
@@ -466,13 +547,26 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       const afterResume = L.vis(bar);
       A.fresh = [afterPageshow && afterResume && !!bar.querySelector('button'), `New edition bar after a bfcache restore ${afterPageshow}, after 11 min away ${afterResume}`];
     }
+    if (X.state === 'stale-bg') {
+      const bar = document.querySelector('.notice');
+      const before = L.vis(bar);
+      const now = Date.now; Date.now = () => now() + 5 * 3600 * 1000;       // first looked at five hours later
+      window.__vis = 'visible';
+      document.dispatchEvent(new Event('visibilitychange'));
+      await sleep(300);
+      Date.now = now;
+      A.freshBg = [!before && L.vis(bar), `tab opened in the background, shown 5 h later: bar hidden before ${!before}, New edition bar after ${L.vis(bar)}`];
+    }
     const dead = L.deadLinks(); A.links = [dead.length === 0, dead.length ? dead.join('; ') : 'every visible in-page link has a rendered target'];
     const dm = L.dayMeta(); A.dayMeta = [dm.bad.length === 0, `${dm.days} day headers ${dm.bad.join('; ') || 'match what they show'}`];
     return A;
   }, X);
   const KEY = browser.browserType().name() === 'webkit' ? 'Alt+Tab' : 'Tab';
   if (state === 'default' && !fault?.noFocus) {
-    await page.evaluate(() => { scrollTo(0, 0); document.activeElement && document.activeElement.blur(); });
+    const reachable = await page.evaluate(() => [...document.querySelectorAll('.mast :is(a[href], button, summary, input), .bar :is(a[href], button, summary, input)')]
+      .filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !e.closest('[hidden]'); }).length);
+    // start the walk at the skip link, the page's first stop, whatever moved the navigation point
+    await page.evaluate(() => { scrollTo(0, 0); document.querySelector('.skip').focus(); });
     const seen = [];
     for (let i = 0; i < 70; i++) {
       await page.keyboard.press(KEY);
@@ -501,10 +595,10 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       }
       fn.focusMain = [stops >= 8 && under.length === 0, `${stops} controls parked under the phone bar then tabbed to, ${under.length} left under it ${under.slice(0, 2).join('; ')}`];
     }
-    if (seen.length) {
-      const bad = seen.filter((f) => f.bad.length);
-      fn.focus = [bad.length === 0, `${seen.length} chrome controls tabbed${bad.length ? ': ' + bad.slice(0, 3).map((f) => f.label + ' ' + f.bad.join(',')).join(' | ') : ', every ring whole'}`];
-    }
+    // every visible masthead and bar control is reached by Tab, and every ring is whole
+    const bad = seen.filter((f) => f.bad.length);
+    fn.focus = [bad.length === 0 && reachable >= 8 && seen.length === reachable,
+      `${seen.length} of ${reachable} chrome controls tabbed${bad.length ? ': ' + bad.slice(0, 3).map((f) => f.label + ' ' + f.bad.join(',')).join(' | ') : ', every ring whole'}`];
   }
   const g = await page.evaluate(() => window.__L.geometry());
   await ctx.close();
@@ -659,6 +753,32 @@ async function runContract(browser, ctxOpts, fault = null) {
   return A;
 }
 
+// ------------------------------------------------------------------ two tabs of the homepage
+// Tab A ticks the desk's editorial and a story; tab B, loaded before those ticks, then ticks another
+// story. All three marks must survive in homeRead:v1 and paint in both tabs (review F4).
+async function runTwoTabs(browser, ctxOpts, fault = null) {
+  const ctx = await browser.newContext(ctxOpts);
+  const rec = { fb: [], og: 0, ext: [], errors: [] };
+  await stub(ctx, rec);
+  if (fault?.js) await mutateJs(ctx, fault.js);
+  const a = await ctx.newPage(), b = await ctx.newPage();
+  watchRequests(a, rec); watchRequests(b, rec);
+  await a.goto(BASE); await b.goto(BASE);
+  const ids = { ed: EXPECT_DESK, x: sidOf(stories[1]), y: sidOf(stories[2]) };
+  await a.evaluate((ids) => { for (const id of [ids.ed, ids.x].filter(Boolean)) document.querySelector(`[data-story="${id}"] .readbtn`).click(); }, ids);
+  await b.waitForTimeout(250);
+  await b.evaluate((ids) => document.querySelector(`[data-story="${ids.y}"] .readbtn`).click(), ids);
+  await a.waitForTimeout(250);
+  const stored = await a.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('homeRead:v1') || '{}')));
+  const painted = async (pg, list) => pg.evaluate((list) => list.filter(Boolean).every((id) => document.querySelector(`[data-story="${id}"]`).classList.contains('is-read')), list);
+  const inB = await painted(b, [ids.ed, ids.x]), inA = await painted(a, [ids.y]);
+  await ctx.close();
+  const want = [ids.ed, ids.x, ids.y].filter(Boolean);
+  const kept = want.filter((id) => stored.includes(id));
+  return [kept.length === want.length && inB && inA && rec.ext.length === 0,
+    `homeRead:v1 keeps ${kept.length} of ${want.length} marks from two tabs; tab B paints tab A's marks ${inB}, tab A paints tab B's ${inA}`];
+}
+
 // ------------------------------------------------------------------ the reading pages
 const REVIEWS = fs.readdirSync(path.join(REPO, '_posts')).filter((f) => /-evaluator\.md$/.test(f)
   && /^published:\s*true\s*$/m.test(fs.readFileSync(path.join(REPO, '_posts', f), 'utf8').split(/^---\s*$/m)[1] || ''))
@@ -675,6 +795,11 @@ async function runPages(browser, ctxOpts, css = null) {
     if (css) await page.addStyleTag({ content: css });
     const r = await page.evaluate(() => {
       document.querySelectorAll('details').forEach((d) => { d.open = true; });   // every prompt open
+      // a heading carrying a long unbroken token (a URL, a file path) must wrap, not widen the page
+      const long = ' https://example.org/' + 'a'.repeat(96);
+      for (const sel of ['.prose__title', '.prose__body > h1', '.prose__body > h2', '.prm-doc h1', '.prm-doc h2']) {
+        const h = document.querySelector(sel); if (h) h.append(long);
+      }
       return { over: document.documentElement.scrollWidth - innerWidth, h1: document.querySelectorAll('h1').length };
     });
     if (!res.ok()) bad.push(`${rel} HTTP ${res.status()}`);
@@ -684,7 +809,7 @@ async function runPages(browser, ctxOpts, css = null) {
   await ctx.close();
   if (rec.ext.length) bad.push(rec.ext.length + ' requests to other hosts');
   if (rec.errors.length) bad.push(rec.errors.length + ' page errors');
-  return [bad.length === 0, bad.length ? bad.slice(0, 4).join('; ') : `${READING.length} pages (${REVIEWS.length} reviews, /prompts/ fully open, 404, /admin/): no sideways scroll, no other hosts`];
+  return [bad.length === 0, bad.length ? bad.slice(0, 4).join('; ') : `${READING.length} pages (${REVIEWS.length} reviews, /prompts/ fully open, 404, /admin/), headings carrying a 116-char token: no sideways scroll, no other hosts`];
 }
 
 // ------------------------------------------------------------------ sweeps
@@ -725,6 +850,12 @@ if (!ONLY || ONLY.includes('contract')) {
   }
 }
 
+if (!ONLY || ONLY.includes('two-tab')) {
+  for (const [label, b, opts] of [['chromium 1024', c, { viewport: { width: 1024, height: 900 } }], ['webkit iPhone15', wk, { ...devices['iPhone 15'] }]]) {
+    const [ok, d] = await runTwoTabs(b, opts);
+    tally('two-tab', ok); log(`${label.padEnd(24)} two-tab         ${ok ? 'PASS' : 'FAIL'} ${d}`);
+  }
+}
 if (!ONLY || ONLY.includes('pages')) {
   for (const [label, b, opts] of [['chromium 360', c, { viewport: { width: 360, height: 800 } }], ['chromium 1440 dark', c, { viewport: { width: 1440, height: 900 }, colorScheme: 'dark' }], ['webkit iPhone15', wk, { ...devices['iPhone 15'] }]]) {
     const [ok, d] = await runPages(b, opts);
@@ -768,6 +899,15 @@ if (process.env.FAULTS !== '0') {
     { key: 'headings', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => document.querySelector('.day__h').insertAdjacentHTML('afterend', '<h1>extra</h1>')) },
     { key: 'external', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const i = new Image(); i.src = 'https://cdn.jsdelivr.net/npm/x.png'; }) },
     { key: 'fresh', state: 'stale', css: '.notice{display:none!important}' },
+    // review 2026-09-25: each strengthened gate must fail on the defect it now guards
+    { key: 'photoBeside', state: 'expanded', css: '.js .fcards--rest > .fc > article{display:flex!important}' },
+    { key: 'edRead', state: 'unread-edition', js: { file: 'board.js', from: 'return mine.length > 0 && mine.every(', to: 'return mine.length > 0 && mine.some(' } },
+    { key: 'og', state: 'default', js: { file: 'og.js', from: "img.referrerPolicy = 'no-referrer';", to: '' } },
+    { key: 'og', state: 'default', js: { file: 'og.js', from: 'if (!src) { slot.hidden = true; return; }', to: 'if (!src) return;' } },
+    { key: 'freshSame', state: 'default', js: { file: 'fresh.js', from: 'j.build_stamp && j.build_stamp !== stamp', to: 'j.build_stamp' } },
+    { key: 'freshBg', state: 'stale-bg', js: { file: 'fresh.js', from: "let hiddenAt = document.visibilityState === 'hidden' ? Date.now() : 0;", to: 'let hiddenAt = 0;' } },
+    { key: 'periods', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const t = document.querySelector('.day__cov .ptag time'); t.textContent = t.textContent.replace(/^\d+/, '1'); }) },
+    { key: 'focus', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('.bar button, .mast a, .mast summary').forEach((e) => e.setAttribute('tabindex', '-1'))) },
   ];
   let caught = 0;
   const base = await runCase(c, { viewport: { width: 1440, height: 900 } }, 'default');
@@ -775,7 +915,7 @@ if (process.env.FAULTS !== '0') {
     const A = await runCase(c, { viewport: { width: f.w || 1440, height: 900 } }, f.state, f);
     const flipped = A[f.key] && !A[f.key][0];
     if (flipped) caught++;
-    log(`${flipped ? 'CAUGHT' : 'MISSED'}  ${f.key.padEnd(12)} ${f.state.padEnd(14)} ${(f.w || 1440) + 'px'}  ${f.css || '(script)'}  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
+    log(`${flipped ? 'CAUGHT' : 'MISSED'}  ${f.key.padEnd(12)} ${f.state.padEnd(14)} ${(f.w || 1440) + 'px'}  ${f.css || (f.js ? `${f.js.file}: ${f.js.from} -> ${f.js.to || '(removed)'}` : '(script)')}  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
   }
   // contract faults: the /prefs body grows a field; homeRead:v1 gets a non-number value
   const CF = [
@@ -788,12 +928,19 @@ if (process.env.FAULTS !== '0') {
     if (flipped) caught++;
     log(`${flipped ? 'CAUGHT' : 'MISSED'}  ${f.key.padEnd(12)} contract       (script)  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
   }
-  {
-    const [ok, d] = await runPages(c, { viewport: { width: 360, height: 800 } }, '.prose pre{overflow-x:visible!important;max-inline-size:none!important}');
+  const PF = ['.prose pre{overflow-x:visible!important;max-inline-size:none!important}',
+    '.prose__title,.prose__body > :is(h1,h2),.prm-doc :is(h1,h2){overflow-wrap:normal!important}'];
+  for (const css of PF) {
+    const [ok, d] = await runPages(c, { viewport: { width: 360, height: 800 } }, css);
     if (!ok) caught++;
-    log(`${!ok ? 'CAUGHT' : 'MISSED'}  pages        reading        360px  .prose pre{overflow-x:visible}  ->  ${d}`);
+    log(`${!ok ? 'CAUGHT' : 'MISSED'}  pages        reading        360px  ${css}  ->  ${d}`);
   }
-  const total = FAULTS.length + CF.length + 1;
+  {
+    const [ok, d] = await runTwoTabs(c, { viewport: { width: 1024, height: 900 } }, { js: { file: 'store.js', from: "addEventListener('storage',", to: "((t, f) => {})('storage'," } });
+    if (!ok) caught++;
+    log(`${!ok ? 'CAUGHT' : 'MISSED'}  two-tab      store.js       1024px  (no storage listener)  ->  ${d}`);
+  }
+  const total = FAULTS.length + CF.length + PF.length + 1;
   const clean = Object.values(base).every(([ok]) => ok);
   log(`fault self-test: ${caught}/${total} faults caught (baseline default@1440 ${clean ? 'clean' : 'NOT clean'})`);
   if (caught !== total || !clean) fails++;
