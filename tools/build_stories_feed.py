@@ -741,7 +741,8 @@ def load_index_meta(window_dates):
                 m = {"topics": r.get("topics"), "importance": r.get("importance"),
                      "headline": r.get("headline"), "deck": r.get("deck"),
                      "display_body": r.get("display_body"), "why": r.get("why"),
-                     "affiliations": r.get("affiliations"), "url": r.get("url")}
+                     "affiliations": r.get("affiliations"), "url": r.get("url"),
+                     "event_date": r.get("event_date")}
                 if r.get("id"):
                     by_id[r["id"]] = m
                 nu = norm_url(r.get("url"))
@@ -1080,6 +1081,11 @@ def load_recent(days):
                 "importance": imp, "is_lead": imp == 3,
                 "permalink": "/%s/%s/%s/%s/" % (y, mo, dy, stream),
             }
+            # when the reported event happened (writer-supplied, ISO of any precision). The board
+            # turns it into a card label; `feed.stories` does not carry it (main() pops it after
+            # build_board), because the golden feed pins that list's keys.
+            if im.get("event_date"):
+                story["event_date"] = str(im["event_date"]).strip()
             if deck:
                 # Emitted ONLY when non-empty, for the same reason as `affiliations` below:
                 # Liquid counts "" as truthy, so a always-present `deck` key would open an empty
@@ -1301,14 +1307,18 @@ def editorial_heading(ed):
     return _h.escape(fallback, quote=False), True, paras
 
 
-def select_front(board, n=FRONT_N):
+FRONT_RESERVE_ROUNDS = 4                       # the Unread front can refill from up to 16 stories
+
+
+def select_front(board, n=FRONT_N, exclude=()):
     """Board indices of the front page, lead first. Deterministic:
 
     walk the dates newest first, collecting their stories, until the window holds `n` leads or
     features. The lead slot takes the window's first lead (board order), or its first story when
     it has none; the other slots take leads and features in board order, and briefs fill in only
-    when there are too few -- a folded brief is a bare headline, i.e. exactly its index row."""
-    stories = [i for i, it in enumerate(board) if it.get("kind") == "story"]
+    when there are too few -- a folded brief is a bare headline, i.e. exactly its index row.
+    `exclude` removes indices from consideration (front_reserve's later rounds)."""
+    stories = [i for i, it in enumerate(board) if it.get("kind") == "story" and i not in exclude]
     dates = sorted({board[i]["date"] for i in stories}, reverse=True)
     window = []
     for d in dates:
@@ -1322,6 +1332,41 @@ def select_front(board, n=FRONT_N):
     big = [i for i in rest if board[i].get("importance", 1) >= 2]
     small = [i for i in rest if board[i].get("importance", 1) < 2]
     return [lead] + (big + small)[:n - 1]
+
+
+def front_reserve(board, rounds=FRONT_RESERVE_ROUNDS, n=FRONT_N):
+    """The order the front refills in under the Unread filter: round 0 is select_front(board)
+    (today's front, unchanged), round 1 is select_front of what is left, and so on, each round in
+    its own order (lead, leads/features, briefs), no index twice. The page shows the first 4
+    UNREAD entries that match the reader's beats; it never re-ranks. The board is already past
+    load_recent's supersede pass, so a superseded telling cannot appear here."""
+    out = []
+    for _ in range(rounds):
+        r = select_front(board, n, exclude=set(out))
+        if not r:
+            break
+        out += r
+    return out
+
+
+_DAY_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def event_label(event_date, period_start, story_date):
+    """"Happened 16 Sep" when the reported event is dated to the DAY and falls before the span
+    the edition reports on (period.start), else "". Month-only ("2026-09"), missing, malformed and
+    future dates give nothing: the card's day and period tag already say when it was reported."""
+    ev = (event_date or "").strip()
+    if not _DAY_DATE_RE.match(ev) or not period_start:
+        return ""
+    try:
+        e = _dt.date.fromisoformat(ev)
+    except ValueError:
+        return ""
+    if ev >= period_start:
+        return ""
+    year = "" if e.year == _dt.date.fromisoformat(story_date).year else " %d" % e.year
+    return "Happened %d %s%s" % (e.day, _MONTHS[e.month - 1], year)
 
 
 def build_stamp(posts_dir=None, streams=None):
@@ -1398,6 +1443,7 @@ def build_views(board, max_date, topics, posts_dir=None):
             it["hl_dot"] = hl_dot(it.get("headline"))
             it["unfurl"] = bool(it.get("url")) and imp > 1 and not _is_paper(it.get("url"))
             it["boot_open"] = imp == 3 and date == max_date
+            it["event_label"] = event_label(it.get("event_date"), it["period"]["start"], date)
 
     front = select_front(board)
     for i in front:
@@ -1406,6 +1452,14 @@ def build_views(board, max_date, topics, posts_dir=None):
     desk = max(eds, key=lambda i: (board[i]["date"], -i)) if eds else None
     if desk is not None:
         board[desk]["on_front"] = True
+    # The Unread front refills from these (the page renders the later entries as <template>s):
+    # stories in select_front rounds, editorials newest first. Their first entries ARE the front.
+    reserve = front_reserve(board)
+    desk_reserve = sorted(eds, key=lambda i: (board[i]["date"], -i), reverse=True)
+    for i in reserve[len(front):]:
+        board[i]["in_reserve"] = True
+    for i in desk_reserve[1:]:
+        board[i]["in_reserve"] = True
 
     days = []
     for i, it in enumerate(board):
@@ -1438,6 +1492,7 @@ def build_views(board, max_date, topics, posts_dir=None):
     front_dates = sorted({board[i]["date"] for i in front}, reverse=True)
     front_view = {
         "date": newest, "items": front, "desk": desk, "n": len(front),
+        "reserve": reserve, "desk_reserve": desk_reserve,
         "date_label": days[0]["label_short"] if days else "",
         "older": [next(d["label_short"] for d in days if d["date"] == fd) for fd in front_dates if fd != newest],
     }
@@ -1643,6 +1698,8 @@ def main():
     editorials = load_editorials(args.days, max_date, live_editions)
     board = build_board(stories, editorials, max_date)
     views = build_views(board, max_date, topics)
+    for s in stories:                  # the board copies keep it; feed.stories' keys are pinned
+        s.pop("event_date", None)
     edition_label, count_line = masthead(max_date, len(stories), len(editorials), len(views["days"]))
     feed = {"generated": max_date, "count": len(stories), "topics": topics,
             "editorials": editorials, "stories": stories, "board": board,

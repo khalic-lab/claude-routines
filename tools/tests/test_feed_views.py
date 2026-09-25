@@ -401,3 +401,103 @@ class SandboxCliTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FrontReserveTest(unittest.TestCase):
+    """The Unread front refills in select_front rounds; round 0 IS today's front."""
+
+    def board(self):
+        b = []
+        for d in ("2026-09-25", "2026-09-24", "2026-09-23"):
+            b += [_story(d, 3, headline="%s lead" % d), _story(d, 2, headline="%s f1" % d),
+                  _story(d, 2, headline="%s f2" % d), _story(d, 1, headline="%s b1" % d),
+                  _story(d, 2, headline="%s f3" % d), _story(d, 1, headline="%s b2" % d)]
+        b.insert(6, _ed("2026-09-25", "science"))
+        b.append(_ed("2026-09-23", "sports"))
+        return b
+
+    def test_round_zero_is_the_front_and_nothing_repeats(self):
+        b = self.board()
+        r = bsf.front_reserve(b)
+        self.assertEqual(r[:4], bsf.select_front(b))
+        self.assertEqual(len(r), len(set(r)))
+        self.assertTrue(all(b[i]["kind"] == "story" for i in r))
+        self.assertEqual(r[4:8], bsf.select_front(b, exclude=set(r[:4])))
+
+    def test_depth_is_capped_at_four_rounds(self):
+        b = [_story("2026-09-%02d" % (25 - k // 5), 2, headline="s%d" % k) for k in range(40)]
+        r = bsf.front_reserve(b)
+        self.assertEqual(len(r), 4 * bsf.FRONT_N)
+        self.assertEqual(bsf.FRONT_RESERVE_ROUNDS, 4)
+        self.assertEqual(bsf.front_reserve(b[:6]), bsf.front_reserve(b[:6], rounds=10))   # runs dry: fewer
+
+    def test_views_emit_the_reserves(self):
+        b = self.board()
+        posts = _posts_dir(["2026-09-25-news.md"])
+        self.addCleanup(shutil.rmtree, posts)
+        v = bsf.build_views(b, "2026-09-25", [], posts_dir=posts)
+        f = v["front"]
+        self.assertEqual(f["reserve"][:4], f["items"])
+        self.assertEqual(f["desk_reserve"][0], f["desk"])
+        eds = [i for i, it in enumerate(b) if it["kind"] == "editorial"]
+        self.assertEqual(sorted(f["desk_reserve"]), eds)
+        self.assertEqual([b[i]["date"] for i in f["desk_reserve"]], sorted((b[i]["date"] for i in eds), reverse=True))
+        self.assertTrue(all(b[i].get("in_reserve") for i in f["reserve"][4:] + f["desk_reserve"][1:]))
+        self.assertFalse(any(b[i].get("in_reserve") for i in f["items"] + [f["desk"]]))
+
+    def test_empty_board(self):
+        self.assertEqual(bsf.front_reserve([]), [])
+        v = bsf.build_views([], None, [], posts_dir=_posts_dir([]))
+        self.assertEqual((v["front"]["reserve"], v["front"]["desk_reserve"]), ([], []))
+
+    def test_no_superseded_story(self):
+        """A story re-cited by a newer edition is superseded in load_recent; the reserve works on
+        the board after that pass, so only the newer telling can be in it."""
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root)
+        os.makedirs(os.path.join(root, "_posts"))
+        os.makedirs(os.path.join(root, "index", "stories"))
+        line = "- **%s.** A body long enough to be the prose of the story, and then some more. [SRF, %s](https://srf.ch/same)\n"
+        for d, h in (("2026-09-24", "Older telling"), ("2026-09-25", "Newer telling")):
+            with open(os.path.join(root, "_posts", "%s-news.md" % d), "w") as fh:
+                fh.write("---\ntitle: x\n---\n\n## World\n\n" + line % (h, d) +
+                         "- **Other %s.** Another body that is certainly long enough to be kept. [DW, %s](https://dw.com/%s)\n" % (d, d, d))
+        saved = (bsf.ROOT, bsf.POSTS_DIR, bsf.INDEX_DIR)
+        bsf.ROOT, bsf.POSTS_DIR, bsf.INDEX_DIR = root, os.path.join(root, "_posts"), os.path.join(root, "index", "stories")
+        try:
+            import contextlib, io
+            with contextlib.redirect_stdout(io.StringIO()):
+                stories, max_date, _ = bsf.load_recent(14)
+            board = bsf.build_board(stories, [], max_date)
+            reserve = bsf.front_reserve(board)
+        finally:
+            bsf.ROOT, bsf.POSTS_DIR, bsf.INDEX_DIR = saved
+        heads = [board[i]["headline"] for i in reserve]
+        self.assertIn("Newer telling", heads)
+        self.assertNotIn("Older telling", heads)
+        self.assertEqual(len(reserve), 3)
+
+
+class EventLabelTest(unittest.TestCase):
+    def test_a_day_dated_event_before_the_period(self):
+        self.assertEqual(bsf.event_label("2026-09-16", "2026-09-17", "2026-09-23"), "Happened 16 Sep")
+        self.assertEqual(bsf.event_label("2025-12-30", "2026-01-02", "2026-01-02"), "Happened 30 Dec 2025")
+
+    def test_inside_the_period_on_its_start_or_in_the_future(self):
+        self.assertEqual(bsf.event_label("2026-09-17", "2026-09-17", "2026-09-23"), "")
+        self.assertEqual(bsf.event_label("2026-09-20", "2026-09-17", "2026-09-23"), "")
+        self.assertEqual(bsf.event_label("2026-09-27", "2026-09-17", "2026-09-23"), "")
+
+    def test_month_only_missing_and_malformed(self):
+        for ev in ("2026-09", "2026", "", None, "2026-02-30", "16 Sep 2026"):
+            self.assertEqual(bsf.event_label(ev, "2026-09-17", "2026-09-23"), "", ev)
+
+    def test_views_put_it_on_stories_only(self):
+        posts = _posts_dir(["2026-09-16-science.md", "2026-09-23-science.md"])
+        self.addCleanup(shutil.rmtree, posts)
+        b = [_story("2026-09-23", 2, "science", headline="old event"), _story("2026-09-23", 2, "science", headline="in span"),
+             _story("2026-09-23", 2, "science", headline="no date"), _ed("2026-09-23", "science")]
+        b[0]["event_date"], b[1]["event_date"] = "2026-09-16", "2026-09-20"
+        b[3]["event_date"] = "2026-09-01"
+        bsf.build_views(b, "2026-09-23", [], posts_dir=posts)
+        self.assertEqual([it.get("event_label") for it in b], ["Happened 16 Sep", "", "", None])
