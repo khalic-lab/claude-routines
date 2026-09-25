@@ -1206,7 +1206,7 @@ if (!ONLY || ONLY.includes('pages')) {
   }
 }
 
-log('\n== TOTALS per state (assertions passed / failed)');
+log('\n== TOTALS per state (assertions passed / failed / skipped)');
 let P = 0, F = 0;
 let S = 0;
 for (const [k, t] of Object.entries(totals)) { log(`${k.padEnd(15)} ${t.pass} passed / ${t.fail} failed / ${t.skip} skipped`); P += t.pass; F += t.fail; S += t.skip; }
@@ -1271,16 +1271,20 @@ if (process.env.FAULTS !== '0') {
       ['const placed = (box, want) => !box || (box.children.length === want.length && want.every((el, i) => box.children[i] === el));', 'const placed = () => false;']] } },
     { key: 'refillFocusMove', state: 'front-read', js: { file: 'board.js', from: "if (had && had !== document.body && document.activeElement !== had && had.isConnected && !had.closest('[hidden]')) {", to: 'if (false) {' } },
     { key: 'frontLineDesk', state: 'front-read', js: { file: 'board.js', from: 'frontN.hidden = !cards.length && (!!rs || active.size > 0);', to: 'frontN.hidden = false;' } },
+    { key: 'refillBeat', state: 'front-read', js: { file: 'refill.js', from: 'if (el && !isRead(el) && beatOk(el, active)) pick.push(el);', to: 'if (el && !isRead(el)) pick.push(el);' } },
     { key: 'refillDayLink', state: 'front-read', js: { file: 'refill.js', from: 'pointDayLinks(copy ? chosen : null);', to: 'pointDayLinks(null);' } },
     { key: 'eventLabelShown', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const e = document.querySelector('main .evt'); if (e) e.remove(); }) },
   ];
-  let caught = 0;
+  // a fault whose gate is a SKIP on this data proves nothing either way: it is counted apart, not
+  // MISSED (that would turn a SKIP back into a failure on valid data); an absent gate is MISSED
+  let caught = 0, skipped = 0;
   const base = await runCase(c, { viewport: { width: 1440, height: 900 } }, 'default');
   for (const f of FAULTS) {
     const A = await runCase(c, { viewport: { width: f.w || 1440, height: 900 } }, f.state, f);
-    const flipped = !!A[f.key] && A[f.key][0] === false;
+    const flipped = !!A[f.key] && A[f.key][0] === false, skip = !!A[f.key] && A[f.key][0] === null;
     if (flipped) caught++;
-    log(`${flipped ? 'CAUGHT' : 'MISSED'}  ${f.key.padEnd(12)} ${f.state.padEnd(14)} ${(f.w || 1440) + 'px'}  ${f.css || (f.js ? `${f.js.file}: ${(f.js.edits || [[f.js.from, f.js.to]]).map(([a, b]) => `${a} -> ${b || '(removed)'}`).join(' + ').replace(/\n\s*/g, ' ')}` : '(script)')}  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
+    if (skip) skipped++;
+    log(`${flipped ? 'CAUGHT' : skip ? 'SKIPPED' : 'MISSED'}  ${f.key.padEnd(12)} ${f.state.padEnd(14)} ${(f.w || 1440) + 'px'}  ${f.css || (f.js ? `${f.js.file}: ${(f.js.edits || [[f.js.from, f.js.to]]).map(([a, b]) => `${a} -> ${b || '(removed)'}`).join(' + ').replace(/\n\s*/g, ' ')}` : '(script)')}  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
   }
   // contract faults: the /prefs body grows a field; homeRead:v1 gets a non-number value
   const CF = [
@@ -1305,9 +1309,9 @@ if (process.env.FAULTS !== '0') {
     if (!ok) caught++;
     log(`${!ok ? 'CAUGHT' : 'MISSED'}  two-tab      store.js       1024px  (no storage listener)  ->  ${d}`);
   }
-  const total = FAULTS.length + CF.length + PF.length + 1;
+  const total = FAULTS.length + CF.length + PF.length + 1 - skipped;
   const clean = Object.values(base).every(([ok]) => ok !== false);
-  log(`fault self-test: ${caught}/${total} faults caught (baseline default@1440 ${clean ? 'clean' : 'NOT clean'})`);
+  log(`fault self-test: ${caught}/${total} faults caught${skipped ? ` (${skipped} more skipped: their gate had no scenario on this data)` : ''} (baseline default@1440 ${clean ? 'clean' : 'NOT clean'})`);
   if (caught !== total || !clean) fails++;
 }
 
