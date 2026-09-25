@@ -112,6 +112,10 @@ function counts() {
 const anyShown = (root) => !!root.querySelector('[data-story]:not([hidden]), [data-ptr]:not([hidden])');
 
 export function apply() {
+  // compose() can still move a card between the lead and the rest, and a moved node drops the
+  // focus to <body>: an element that is still shown gets it back, with its caret (review F1)
+  const had = document.activeElement;
+  const sel = had && typeof had.selectionStart === 'number' ? [had.selectionStart, had.selectionEnd, had.selectionDirection] : null;
   let shown = 0;
   for (const el of items) { const m = matches(el); el.hidden = !m; if (m) shown++; }
   // the front: the builder's, or under Unread the refill; nothing below unhides what it decided
@@ -151,6 +155,10 @@ export function apply() {
     }
   }
   counts();
+  if (had && had !== document.body && document.activeElement !== had && had.isConnected && !had.closest('[hidden]')) {
+    had.focus({ preventScroll: true });
+    if (sel) try { had.setSelectionRange(...sel); } catch (e) { /* a type without a caret */ }
+  }
 }
 
 // "The 4 stories that matter most right now · from Wed 23 Sep", recounted from the cards shown
@@ -158,6 +166,8 @@ const frontN = main && main.querySelector('.front__n');
 function frontLine(cards) {
   if (!frontN || !frontN.dataset.date) return;
   if (!frontN.dataset.orig) frontN.dataset.orig = frontN.textContent;
+  // no story card under a filter (the Desk's view alone, or nothing): no count to state (review F2)
+  frontN.hidden = !cards.length && (!!rs || active.size > 0);
   if (!cards.length) { frontN.textContent = frontN.dataset.orig; return; }
   const unread = rs === 'unread' ? 'unread ' : '';
   const n = cards.length === 1 ? 'The ' + unread + 'story that matters' : 'The ' + cards.length + ' ' + unread + 'stories that matter';
@@ -228,7 +238,9 @@ export function initBoard({ prefs, record, adopt = () => {} }) {
         if (announce) announce.textContent = isRead(el) ? 'Marked read' : 'Marked unread';
         if (rs) {
           apply();
-          if (el.hidden || !el.isConnected) { const on = segs.find((b) => b.getAttribute('aria-pressed') === 'true'); if (on) on.focus(); }
+          // the ✓ left with its item: the focus goes to the filter, unless it is somewhere else
+          const f = document.activeElement;
+          if ((el.hidden || !el.isConnected) && (!f || f === document.body || el.contains(f))) { const on = segs.find((b) => b.getAttribute('aria-pressed') === 'true'); if (on) on.focus(); }
         }
         return;
       }
