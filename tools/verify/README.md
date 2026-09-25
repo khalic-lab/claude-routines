@@ -25,8 +25,9 @@ node suite.mjs /tmp/fp-build/src/_site > /tmp/fp-suite.log 2>&1   # ~10 min; one
 - Serves the built `_site` under `/claude-routines/`.
 - Stubs both Workers with `route()`, and aborts and logs any other host.
 - Runs these states: default, expanded, unread-edition, front-read (the default front read, then
-  Unread), all-read (the whole reserve read), all-sync (signed in, with the Worker's read set held
-  until the page asks: seven scenarios, a fresh page each), beat, multi-beat, empty, stale and
+  Unread), all-read (the whole reserve read), all-partial (the reserve read but its last two
+  entries), all-sync (signed in, with the Worker's read set held until the page asks: eight
+  scenarios, a fresh page each), beat, multi-beat, empty, stale and
   stale-bg (a tab opened in the background), plus no-JS, contract parity, two tabs and the reading
   pages.
 - Covers Chromium at 360, 390, 700, 768, 1024, 1280, 1440 and 1600, and WebKit as iPhone 15 and at
@@ -69,7 +70,9 @@ feed, not only the one it was written against:
   with; a tick under All only dims (nothing moves); Read is the builder's front; Unread→All shows
   the load-time front; with everything read All is the builder's front, dimmed; every story and
   editorial shows exactly once, a builder-front story off the front as its real row after its
-  pointer, and day headers count the front as composed; the Desk's view prints its edition's day
+  pointer, and day headers count the front as composed; the Desk's view prints its edition's day; a
+  partly-read All (the all-partial state) is filled to four with read stories in reserve order
+  after the unread ones, dimmed, the lead unread, and a first roam retakes it by the same rule
 - signed in: with no input since load the first roamed read set retakes All's front once, and a
   second roam moves nothing. Any interaction first means that roam only dims, with the focus
   kept: a click in the row of the story the roam would promote, focus in a builder-front story's

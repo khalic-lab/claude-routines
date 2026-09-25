@@ -24,7 +24,7 @@ const SHOTS = process.env.SHOTS || '/tmp/fp-shots';
 const FB = 'https://feedback-sink.khalic-lab.workers.dev';
 const OGP = 'https://og-proxy.khalic-lab.workers.dev';
 const WIDTHS = (process.env.WIDTHS || '360,390,700,768,1024,1280,1440,1600').split(',').map(Number);
-const STATES = ['default', 'expanded', 'unread-edition', 'front-read', 'all-read', 'all-sync', 'beat', 'multi-beat', 'empty', 'stale', 'stale-bg'];
+const STATES = ['default', 'expanded', 'unread-edition', 'front-read', 'all-read', 'all-partial', 'all-sync', 'beat', 'multi-beat', 'empty', 'stale', 'stale-bg'];
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
 const TOKEN = 'cd'.repeat(32);
 
@@ -153,18 +153,31 @@ const S2e = LEAD_X ? [...S2, LEAD_Y] : [];
 const S3 = [...RESERVE, ...DESK_RESERVE];
 // All's front (owner decision 2026-09-25): the same pick, taken once at load from the read set the
 // page opened with, beats aside; with nothing unread the builder's front; a Desk's view with no
-// unread editorial keeps the builder's. The sync states: the first roamed read set marks the All
-// front's second card read (All is taken once more, if the front was not touched); a second roam
-// marks its lead too, and nothing moves
-function allOf(read) { const r = refillOf(read); return { cards: r.cards.length ? r.cards : EXPECT_FRONT, desk: r.desk || EXPECT_DESK }; }
+// unread editorial keeps the builder's; a partly-read front is filled up to four with read stories
+// in reserve order after the unread ones (owner ruling, round 5). The sync states: the first
+// roamed read set marks the All front's second card read (All is taken once more, if the reader
+// did nothing yet); a second roam marks its lead too, and nothing moves
+function allOf(read) {
+  const r = refillOf(read);
+  if (!r.cards.length) return { cards: EXPECT_FRONT, desk: r.desk || EXPECT_DESK };
+  const pad = RESERVE.filter((s) => read.has(s) && !r.cards.includes(s)).slice(0, 4 - r.cards.length);
+  return { cards: [...r.cards, ...pad], desk: r.desk || EXPECT_DESK };
+}
 const ALL0 = allOf(new Set(S0));
 const REMOTE1 = ALL0.cards.length >= 2 ? ALL0.cards[1] : null;
 const REMOTE2 = REMOTE1 ? ALL0.cards[0] : null;
+// all-partial: the reserve read except its last two entries, so All holds two unread stories
+// and two read ones padding the front (normally the builder's own); its roam un-reads the first
+// padded card
+const S_P = RESERVE.length >= 4 ? RESERVE.slice(0, -2) : null;
+const ALL_P = S_P ? allOf(new Set(S_P)) : null;
+const PAD0 = ALL_P ? ALL_P.cards.find((c) => S_P.includes(c)) : null;
+const ALL_PR = PAD0 ? allOf(new Set(S_P.filter((c) => c !== PAD0))) : null;
 const FR = { FRONT: EXPECT_FRONT, DESK: EXPECT_DESK, RESERVE, DESK_RESERVE, SYNTH_IMP, S0, R0: REFILL0,
   RB: REFILL_BEAT, RBW: REFILL_BEAT ? beatRefill(REFILL_BEAT) : null, S1, R1: REFILL1,
   FOCUS_L, TICK_T, R1b: REFILL1b, TYPE_T, S1c, R1c: refillOf(new Set(S1c)),
   LEAD_X, LEAD_Y, S2, R2: LEAD_X ? refillOf(new Set(S2)) : null, S2e, R2e: LEAD_X ? refillOf(new Set(S2e)) : null,
-  S3, NEWEST: dates[0], ALL0, ALL_READ: allOf(new Set(S3)), REMOTE1, REMOTE2,
+  S3, NEWEST: dates[0], ALL0, ALL_READ: allOf(new Set(S3)), REMOTE1, REMOTE2, S_P, ALL_P, PAD0, ALL_PR,
   ALL_SYNC: REMOTE1 ? allOf(new Set([...S0, REMOTE1])) : null };
 // the "Happened 16 Sep" label: only a valid day-precise event date before the story's derived
 // period start; the year shows when it differs from the story's
@@ -482,7 +495,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   if (fault?.init) await page.addInitScript(fault.init);
   // front-read and the sync states: the default front's stories and the Desk's view editorial are
   // already read; all-read: the whole reserve and every editorial
-  const seedRead = state === 'all-read' ? S3 : state === 'front-read' ? S0 : null;
+  const seedRead = state === 'all-read' ? S3 : state === 'front-read' ? S0 : state === 'all-partial' ? S_P : null;
   if (seedRead) await page.addInitScript((ids) => localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(ids.map((id) => [id, Date.now()])))), seedRead);
   // a made-up importance (SYNTH_IMP) goes on the cards when parsing ends, before the deferred
   // modules run: All's pick is taken at load, and the expectations were derived with it
@@ -728,9 +741,10 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       const sync = JSON.parse(localStorage.getItem('syncState:v1') || '{}');
       A.localEd = [!Object.keys(sync).some((k) => !/^st-[0-9a-f]{12}$/.test(k)), `syncState:v1 holds ${Object.keys(sync).length} st- ids and no ed- id`];
     }
-    if (['front-read', 'all-read'].includes(X.state)) {
+    if (['front-read', 'all-read', 'all-partial'].includes(X.state)) {
       // the page opened under All with a seeded read set: the default front and its Desk's view
-      // (front-read) or the whole reserve and every editorial (all-read)
+      // (front-read), the whole reserve and every editorial (all-read), or the reserve but its last
+      // two entries (all-partial)
       const F = X.FR;
       const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const doc = (e) => { const r = L.R(e); return [r.left + scrollX, r.top + scrollY, r.width, r.height].map(Math.round).join(); };
@@ -788,6 +802,24 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         return [bad.length === 0, bad.length ? 'dimmed wrong: ' + bad.slice(0, 3).join(' ') : 'every shown story dimmed exactly when read'];
       };
       const ctlOf = (sid) => { const c = document.querySelector(`.front .fc[data-story="${sid}"]`); return c && (c.querySelector('.more') || c.querySelector('.readbtn')); };
+      if (X.state === 'all-partial') {
+        // a partly-read All: the unread first (the lead one of them), then read ones in reserve
+        // order up to four, dimmed; every story once, day headers counting the front
+        if (!F.ALL_P) { A.allPartial = SKIP('a reserve of fewer than four entries'); A.allPartialLead = SKIP('a reserve of fewer than four entries'); }
+        else {
+          const g = now(), read = JSON.parse(localStorage.getItem('homeRead:v1') || '{}'), o = once();
+          const els = g.cards.map((c) => document.querySelector(`.front .fc[data-story="${c}"]`));
+          const dimOk = els.every((e) => e && e.classList.contains('is-read') === !!read[e.dataset.story]);
+          const nUnread = g.cards.filter((c) => !read[c]).length;
+          A.allPartial = [same(g, F.ALL_P) && g.cards.length === F.ALL_P.cards.length && dimOk && o[0],
+            `${show(g, F.ALL_P)}; ${nUnread} unread then ${g.cards.length - nUnread} read, dimmed exactly when read ${dimOk}; ${o[1]}`];
+          const lead = els[0], firstRead = g.cards.findIndex((c) => read[c]);
+          const unreadFirst = firstRead < 0 || g.cards.slice(firstRead).every((c) => read[c]);
+          A.allPartialLead = [!!lead && !lead.classList.contains('is-read') && nUnread > 0 && unreadFirst,
+            `lead ${lead ? lead.dataset.story : '-'} ${lead && lead.classList.contains('is-read') ? 'READ' : 'unread'}; the ${nUnread} unread before every read card ${unreadFirst}`];
+        }
+        A.allOnce = once();
+      }
       if (X.state === 'all-read') {
         // everything read: All is the builder's front, dimmed, never empty
         const g = now(), fr = document.querySelector('section.front');
@@ -1088,9 +1120,18 @@ async function runSync(browser, ctxOpts, fault = null) {
       await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(json) });
     } catch (e) { /* the page went on (the restore scenario's first load) */ }
   });
-  await ctx.addInitScript(([ids, t]) => {
-    const now = Date.now();
-    localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(ids.map((id) => [id, now]))));
+  await ctx.addInitScript(([ids, part, t, imp]) => {
+    const now = Date.now(), seed = new URLSearchParams(location.search).get('verify-seed') === 'partial' ? part : ids;
+    // a made-up importance (SYNTH_IMP), on the cards before the modules run, as in runCase
+    if (Object.keys(imp).length) document.addEventListener('readystatechange', () => {
+      if (document.readyState !== 'interactive') return;
+      for (const [sid, v] of Object.entries(imp)) {
+        document.querySelectorAll(`.front li.fc[data-story="${sid}"]`).forEach((c) => { c.dataset.imp = String(v); });
+        const tp = document.querySelector(`template[data-reserve-card="${sid}"]`);
+        if (tp) tp.content.firstElementChild.dataset.imp = String(v);
+      }
+    });
+    localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(seed.map((id) => [id, now]))));
     localStorage.removeItem('syncState:v1'); localStorage.removeItem('homeUnread:v1');
     localStorage.setItem('syncSession:v1', JSON.stringify({ token: t, reader: 'verify', at: now }));
     const below = (el, pad) => {
@@ -1104,7 +1145,7 @@ async function runSync(browser, ctxOpts, fault = null) {
       const n = performance.getEntriesByType('navigation')[0], e = document.getElementById(at.id);
       if (e && n && n.type === 'reload') below(e, at.pad);
     });
-  }, [S0, TOKEN]);
+  }, [S0, S_P || [], TOKEN, SYNTH_IMP]);
   const st = (sid, v) => (sid ? { [sid]: { ts: Date.now() + 60000, v } } : {});
   const open = async (payload, { url = BASE, at = null } = {}) => {
     const base = pulls;
@@ -1221,6 +1262,19 @@ async function runSync(browser, ctxOpts, fault = null) {
       return [nav === 'reload' && !!keep && ok && L.same(g, F.ALL_SYNC) && !L.vis(row) && Math.abs(t1 - t0) <= 2,
         `${nav}: ${id} on top ${onTop}; retaken ${L.show(g, F.ALL_SYNC)}; first kept on screen ${keep ? keep.id || 'pointer ' + keep.dataset.ptr : 'nothing'} ${Math.round(t0)} -> ${Math.round(t1)}px`];
     }, { F, i, id: 'r-' + ENTER });
+    await page.close();
+  }
+  // a partly-read All, no input: a first roam that un-reads a padded card retakes All by the same
+  // rule (unread first, then read ones up to four), every story still once
+  if (!FR.PAD0) A.allPartialRoam = [null, 'a reserve of fewer than four entries'];
+  else {
+    const { page, i } = await open(() => st(FR.PAD0, 0), { url: `${BASE}?verify-seed=partial` });
+    A.allPartialRoam = await page.evaluate(async ({ F, i }) => {
+      const L = window.__L, g0 = L.front();
+      const ok = await L.roam(i, F.PAD0), g = L.front(), o = L.once(F.boardIds, F.FRONT);
+      return [L.same(g0, F.ALL_P) && ok && L.same(g, F.ALL_PR) && o[0],
+        `at load ${L.show(g0, F.ALL_P)}; roamed ${F.PAD0} unread: ${L.show(g, F.ALL_PR)}; ${o[1]}`];
+    }, { F, i });
     await page.close();
   }
   // a #fragment load is the reader pointing at a place: it counts, and the named row stays
@@ -1567,11 +1621,11 @@ if (process.env.FAULTS !== '0') {
     { key: 'refillDayLink', state: 'front-read', js: { file: 'refill.js', from: 'pointDayLinks(ed.dataset.story);', to: 'pointDayLinks(deskDefault.dataset.story);' } },
     { key: 'eventLabelShown', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const e = document.querySelector('main .evt'); if (e) e.remove(); }) },
     // round 4 (owner decision 2026-09-25): All's front is composed at load; within a session reading only dims
-    { key: 'allLoad', state: 'front-read', js: { file: 'refill.js', from: 'return { cards: cards.length ? cards : defaults, desk: deskPick(new Set()) };', to: 'return { cards: defaults, desk: deskDefault };' } },
+    { key: 'allLoad', state: 'front-read', js: { file: 'refill.js', from: 'if (!cards.length) return { cards: defaults, desk: deskPick(new Set()) };', to: 'return { cards: defaults, desk: deskDefault };' } },
     { key: 'allTickDims', state: 'front-read', js: [
       { file: 'refill.js', from: "mode === 'all' ? all.cards : defaults", to: "mode === 'all' ? pick(new Set()) : defaults" },
       { file: 'board.js', from: '        if (rs) {\n          apply();', to: '        if (true) {\n          apply();' }] },
-    { key: 'allAllRead', state: 'all-read', js: { file: 'refill.js', from: 'return { cards: cards.length ? cards : defaults, desk: deskPick(new Set()) };', to: 'return { cards, desk: deskPick(new Set()) };' } },
+    { key: 'allAllRead', state: 'all-read', js: { file: 'refill.js', from: 'if (!cards.length) return { cards: defaults, desk: deskPick(new Set()) };', to: 'if (!cards.length) return { cards, desk: deskPick(new Set()) };' } },
     { key: 'allReadView', state: 'front-read', js: { file: 'refill.js', from: "const cards = mode === 'unread' ? pick(active) : mode === 'all' ? all.cards : defaults;", to: "const cards = mode === 'unread' ? pick(active) : all.cards;" } },
     { key: 'refillAll', state: 'front-read', js: { file: 'refill.js', from: "mode === 'all' ? all.cards : defaults", to: "mode === 'all' ? pick(new Set()) : defaults" } },
     { key: 'allOnce', state: 'front-read', js: { file: 'refill.js', from: '} else if (ptr.nextElementSibling !== row) ptr.after(row);', to: '}' } },
@@ -1586,6 +1640,10 @@ if (process.env.FAULTS !== '0') {
       ["addEventListener('scroll', onScroll, { passive: true });", ''],
       ['if (first && !touched) onScroll();', '']] } },
     { key: 'allSyncAnchor', state: 'all-sync', js: { file: 'board.js', from: 'anchored(topItem(rs ? undefined : gone), ', to: 'anchored(topItem(), ' } },
+    // round 5: a partly-read All front is filled with read stories after the unread ones
+    { key: 'allPartial', state: 'all-partial', js: { file: 'refill.js', from: 'if (el && isRead(el) && !cards.includes(el)) cards.push(el);', to: '' } },
+    { key: 'allPartialLead', state: 'all-partial', js: { file: 'refill.js', from: 'if (el && isRead(el) && !cards.includes(el)) cards.push(el);', to: 'if (el && isRead(el) && !cards.includes(el)) cards.unshift(el);' } },
+    { key: 'allPartialRoam', state: 'all-sync', js: { file: 'refill.js', from: 'function retake() { const next = take(),', to: 'function retake() { const next = { cards: pick(new Set()), desk: deskPick(new Set()) },' } },
     { key: 'allSyncHash', state: 'all-sync', js: { file: 'board.js', from: 'let roamedOnce = false, touched = !!location.hash, mark = null;', to: 'let roamedOnce = false, touched = false, mark = null;' } },
     { key: 'deskDate', state: 'front-read', css: '.ed--desk .ed__top .fday{display:none}' },
   ];
