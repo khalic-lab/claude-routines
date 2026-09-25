@@ -24,7 +24,7 @@ const SHOTS = process.env.SHOTS || '/tmp/fp-shots';
 const FB = 'https://feedback-sink.khalic-lab.workers.dev';
 const OGP = 'https://og-proxy.khalic-lab.workers.dev';
 const WIDTHS = (process.env.WIDTHS || '360,390,700,768,1024,1280,1440,1600').split(',').map(Number);
-const STATES = ['default', 'expanded', 'unread-edition', 'front-read', 'beat', 'multi-beat', 'empty', 'stale', 'stale-bg'];
+const STATES = ['default', 'expanded', 'unread-edition', 'front-read', 'all-read', 'all-sync', 'all-sync-touched', 'beat', 'multi-beat', 'empty', 'stale', 'stale-bg'];
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
 const TOKEN = 'cd'.repeat(32);
 
@@ -151,11 +151,21 @@ const S1c = TYPE_T ? [...S1b, TYPE_T] : S1b;
 const S2 = LEAD_X ? [...RESERVE.filter((s) => s !== LEAD_X && s !== LEAD_Y), EXPECT_DESK].filter(Boolean) : [];
 const S2e = LEAD_X ? [...S2, LEAD_Y] : [];
 const S3 = [...RESERVE, ...DESK_RESERVE];
+// All's front (owner decision 2026-09-25): the same pick, taken once at load from the read set the
+// page opened with, beats aside; with nothing unread the builder's front; a Desk's view with no
+// unread editorial keeps the builder's. The sync states: the first roamed read set marks the All
+// front's second card read (All is taken once more, if the front was not touched); a second roam
+// marks its lead too, and nothing moves
+function allOf(read) { const r = refillOf(read); return { cards: r.cards.length ? r.cards : EXPECT_FRONT, desk: r.desk || EXPECT_DESK }; }
+const ALL0 = allOf(new Set(S0));
+const REMOTE1 = ALL0.cards.length >= 2 ? ALL0.cards[1] : null;
+const REMOTE2 = REMOTE1 ? ALL0.cards[0] : null;
 const FR = { FRONT: EXPECT_FRONT, DESK: EXPECT_DESK, RESERVE, DESK_RESERVE, SYNTH_IMP, S0, R0: REFILL0,
   RB: REFILL_BEAT, RBW: REFILL_BEAT ? beatRefill(REFILL_BEAT) : null, S1, R1: REFILL1,
   FOCUS_L, TICK_T, R1b: REFILL1b, TYPE_T, S1c, R1c: refillOf(new Set(S1c)),
   LEAD_X, LEAD_Y, S2, R2: LEAD_X ? refillOf(new Set(S2)) : null, S2e, R2e: LEAD_X ? refillOf(new Set(S2e)) : null,
-  S3, NEWEST: dates[0] };
+  S3, NEWEST: dates[0], ALL0, ALL_READ: allOf(new Set(S3)), REMOTE1, REMOTE2,
+  ALL_SYNC: REMOTE1 ? allOf(new Set([...S0, REMOTE1])) : null };
 // the "Happened 16 Sep" label: only a valid day-precise event date before the story's derived
 // period start; the year shows when it differs from the story's
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -424,13 +434,35 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   const ctx = await browser.newContext(ctxOpts);
   const rec = { fb: [], og: 0, ext: [], errors: [] };
   await stub(ctx, rec, { stamp: state === 'stale' || state === 'stale-bg' ? 'a-newer-edition' : null, ogAll: state === 'expanded' });
-  if (fault?.js) await mutateJs(ctx, fault.js);
+  for (const js of fault?.js ? [].concat(fault.js) : []) await mutateJs(ctx, js);
   if (state === 'default' || state === 'expanded') await serveFrontWithSlots(ctx);
   const page = await ctx.newPage();
   watchRequests(page, rec);
   if (fault?.init) await page.addInitScript(fault.init);
-  // front-read: the default front's stories and the Desk's view editorial are already read
-  if (state === 'front-read') await page.addInitScript((ids) => localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(ids.map((id) => [id, Date.now()])))), S0);
+  // front-read and the sync states: the default front's stories and the Desk's view editorial are
+  // already read; all-read: the whole reserve and every editorial
+  const seedRead = state === 'all-read' ? S3 : ['front-read', 'all-sync', 'all-sync-touched'].includes(state) ? S0 : null;
+  if (seedRead) await page.addInitScript((ids) => localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(ids.map((id) => [id, Date.now()])))), seedRead);
+  if (state.startsWith('all-sync')) {
+    // signed in, and the Worker's read set held until the page asks for it: the first pull marks
+    // REMOTE1 read, the second REMOTE2 too; every other Worker call answers ok
+    await page.addInitScript((t) => localStorage.setItem('syncSession:v1', JSON.stringify({ token: t, reader: 'verify', at: Date.now() })), TOKEN);
+    const gates = [0, 1].map(() => { let open; const p = new Promise((r) => { open = r; }); return { p, open }; });
+    let pulls = 0;
+    await page.exposeFunction('__release', (i) => { gates[i].open(); });
+    await ctx.route((u) => u.origin === FB && u.pathname === '/readstate', async (route) => {
+      const r = route.request();
+      rec.fb.push({ method: r.method(), path: '/readstate', auth: (r.headers().authorization || '').replace(TOKEN, '<token>') });
+      const json = { ok: true };
+      if (r.method() === 'GET') {
+        const i = Math.min(pulls++, 1);
+        await gates[i].p;
+        const ts = Date.now() + 60000;
+        json.state = Object.fromEntries([REMOTE1, i ? REMOTE2 : null].filter(Boolean).map((sid) => [sid, { ts, v: 1 }]));
+      }
+      await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(json) });
+    });
+  }
   if (state === 'stale-bg') {
     // a tab opened in the background: hidden from its first byte until the reader looks at it
     await page.addInitScript(() => {
@@ -495,6 +527,10 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       const frontIds = [...document.querySelectorAll('.front .fc')].map((x) => x.dataset.story);
       const desk = (document.querySelector('.front .desk .ed') || {}).id || null;
       A.front = [frontIds.join() === X.EXPECT_FRONT.join() && desk === X.EXPECT_DESK, `front ${frontIds.length} ${frontIds.join() === X.EXPECT_FRONT.join() ? '=' : '!='} derived; desk ${desk} (want ${X.EXPECT_DESK})`];
+      // the Desk's view prints its edition's day, like a front card (an older editorial never reads as today's)
+      const dk = document.querySelector('.front .desk .ed'), dkt = dk && dk.querySelector('.ed__top .fday');
+      A.deskDate = !dk ? [null, 'no Desk\'s view'] : [!!dkt && L.vis(dkt) && dkt.getAttribute('datetime') === dk.dataset.edition.slice(0, 10) && dkt.textContent.trim() === X.DAYLBL[dk.dataset.edition.slice(0, 10)],
+        `${dk.dataset.story}: ${dkt ? `"${dkt.textContent.trim()}" shown ${L.vis(dkt)}` : 'no day'}`];
       const lifted = [...document.querySelectorAll('.front [data-story]')].map((x) => x.dataset.story);
       const miss = lifted.filter((s) => !document.querySelector(`section.day [data-ptr="${s}"]`));
       A.pointers = [miss.length === 0, miss.length ? 'missing ' + miss : `${lifted.length} lifted items all keep a pointer in their day`];
@@ -658,8 +694,9 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       const sync = JSON.parse(localStorage.getItem('syncState:v1') || '{}');
       A.localEd = [!Object.keys(sync).some((k) => !/^st-[0-9a-f]{12}$/.test(k)), `syncState:v1 holds ${Object.keys(sync).length} st- ids and no ed- id`];
     }
-    if (X.state === 'front-read') {
-      // the page opened under All with the default front and its Desk's view read (seeded)
+    if (['front-read', 'all-read', 'all-sync', 'all-sync-touched'].includes(X.state)) {
+      // the page opened under All with a seeded read set: the default front and its Desk's view
+      // (front-read, the sync states) or the whole reserve and every editorial (all-read)
       const F = X.FR;
       const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const doc = (e) => { const r = L.R(e); return [r.left + scrollX, r.top + scrollY, r.width, r.height].map(Math.round).join(); };
@@ -688,8 +725,8 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         if (stray.length) bad.push('pointers for stories not on the front: ' + stray.join(' '));
         return [bad.length === 0, bad.slice(0, 3).join('; ') || `${promoted.length} promoted, each a pointer in its day`];
       };
-      const line = (w) => {
-        const n = w.cards.length, u = 'unread ';
+      const line = (w, u = 'unread ') => {
+        const n = w.cards.length;
         const older = [...new Set(w.cards.map((s) => X.boardDates[X.boardIds.indexOf(s)]))]
           .filter((d) => d !== F.NEWEST).sort().reverse().map((d) => X.DAYLBL[d]);
         return (n === 1 ? `The ${u}story that matters` : `The ${n} ${u}stories that matter`) + ' most right now' + (older.length ? ' · from ' + older.join(', ') : '');
@@ -702,141 +739,248 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         }
         scrollTo(0, 0); await frames();
       };
-      const lay0 = layout();
-      // a made-up importance (see SYNTH_IMP) goes on the cards before the refill first reads them
-      for (const [sid, v] of Object.entries(F.SYNTH_IMP)) {
-        document.querySelectorAll(`.front li.fc[data-story="${sid}"]`).forEach((c) => { c.dataset.imp = String(v); });
-        const t = document.querySelector(`template[data-reserve-card="${sid}"]`);
-        if (t) t.content.firstElementChild.dataset.imp = String(v);
-      }
       const SKIP = (why) => [null, why];
-      const write = async (list, key = 'homeRead:v1') => {
-        localStorage.setItem(key, JSON.stringify(Object.fromEntries(list.map((id) => [id, Date.now()]))));
-        dispatchEvent(new StorageEvent('storage', { key, storageArea: localStorage }));
-        await frames();
+      const until = async (fn, ms = 4000) => { const t0 = Date.now(); while (!fn() && Date.now() - t0 < ms) await sleep(50); return fn(); };
+      // every story and editorial is on the page once, as a real card or a real row; a pointer
+      // reaches the front; a builder-front story off the front is its row again, right after its
+      // (hidden) pointer; a day header counts what is on the front as composed
+      const once = () => {
+        const bad = [], cards = now().cards;
+        for (const sid of X.boardIds) {
+          const shown = [...document.querySelectorAll(`main [data-story="${sid}"]`)].filter(L.vis).length;
+          if (shown !== 1) bad.push(`${sid} shown ${shown}x`);
+        }
+        for (const p of [...document.querySelectorAll('section.day [data-ptr]')].filter(L.vis)) {
+          const t = document.getElementById(p.querySelector('a').getAttribute('href').slice(1));
+          if (!t || !L.vis(t) || !t.closest('.front')) bad.push(`pointer ${p.dataset.ptr} -> ${t ? t.id : 'nothing'}`);
+        }
+        const off = F.FRONT.filter((s) => !cards.includes(s));
+        for (const sid of off) {
+          const r = document.getElementById('r-' + sid), prev = r && r.previousElementSibling;
+          if (!r || !L.vis(r) || !prev || prev.dataset.ptr !== sid) bad.push(`${sid} is off the front without its row after its pointer`);
+        }
+        for (const sec of document.querySelectorAll('section.day')) {
+          const n = sec.querySelector('.day__n').textContent, m = n.match(/· (\d+) on the front/);
+          const up = [...sec.querySelectorAll('.rows > [data-ptr]')].filter(L.vis).length;
+          if ((m ? +m[1] : 0) !== up) bad.push(`${sec.dataset.date} says "${n}" with ${up} on the front`);
+        }
+        return [bad.length === 0, bad.slice(0, 3).join('; ') || `${X.boardIds.length} board items each shown once, every pointer reaches the front, ${off.length} builder-front stories back in their days, day headers count the front`];
       };
-      // Focus must survive a recompose (review F1): the focused control keeps the focus (and its
-      // caret), and its card is never taken out of the document on the way (a card moved out and
-      // back drops the focus to <body>; the board's rescue would hide that, so removals are watched)
-      const keeps = async (ctl, act) => {
-        if (!ctl) return [false, 'the card to hold the focus is not on the front'];
-        const card = ctl.closest('[data-story]'), removed = [];
-        const note = (recs) => { for (const r of recs) for (const n of r.removedNodes) if (n === card || n.contains(card)) removed.push(n); };
-        const mo = new MutationObserver(note);
-        mo.observe(document.getElementById('main'), { childList: true, subtree: true });
-        ctl.focus();
-        const sel = typeof ctl.selectionStart === 'number' ? [ctl.selectionStart, ctl.selectionEnd, ctl.value] : null;
-        await act();
-        note(mo.takeRecords()); mo.disconnect();
-        const a = document.activeElement, selOk = !sel || (a === ctl && ctl.selectionStart === sel[0] && ctl.selectionEnd === sel[1] && ctl.value === sel[2]);
-        const where = (e) => (e ? (e.className || e.tagName).toString().split(' ')[0] + (e.closest && e.closest('[data-story]') ? ' in ' + e.closest('[data-story]').dataset.story : '') : 'none');
-        return [a === ctl && !removed.length && card.isConnected && selOk,
-          `focus on ${where(ctl)}: after ${where(a)}; card taken out ${removed.length}x${sel ? `; caret ${sel[0]}-${sel[1]} -> ${ctl.selectionStart}-${ctl.selectionEnd}` : ''}`];
+      // the Desk's view prints its edition's day, like a front card
+      const deskDate = () => {
+        const ed = [...document.querySelectorAll('.front .desk .ed')].find(L.vis);
+        if (!ed) return [false, 'no Desk\'s view shown'];
+        const t = ed.querySelector('.ed__top .fday'), d = ed.dataset.edition.slice(0, 10);
+        return [!!t && L.vis(t) && t.getAttribute('datetime') === d && t.textContent.trim() === X.DAYLBL[d],
+          `${ed.dataset.story}: ${t ? `"${t.textContent.trim()}" @${t.getAttribute('datetime')} shown ${L.vis(t)}` : 'no day'}, edition ${d}`];
+      };
+      // a story is dimmed exactly when it is read (All shows read and unread alike)
+      const dimHonest = () => {
+        const read = JSON.parse(localStorage.getItem('homeRead:v1') || '{}');
+        const bad = [...document.querySelectorAll('main [data-story]:not([data-zone="editorial"])')].filter(L.vis)
+          .filter((e) => e.classList.contains('is-read') !== !!read[e.dataset.story]).map((e) => e.dataset.story);
+        return [bad.length === 0, bad.length ? 'dimmed wrong: ' + bad.slice(0, 3).join(' ') : 'every shown story dimmed exactly when read'];
       };
       const ctlOf = (sid) => { const c = document.querySelector(`.front .fc[data-story="${sid}"]`); return c && (c.querySelector('.more') || c.querySelector('.readbtn')); };
-      // 1. Unread: the first four unread reserve entries, lead first; the next unread editorial
-      click(L.seg('unread')); await settle();
-      const g0 = now();
-      A.refill = [same(g0, F.R0), show(g0, F.R0)];
-      A.refillPtrs = ptrs(F.R0);
-      A.counts = counts();
-      A.refillLine = [frontN.textContent === line(F.R0), `"${frontN.textContent}"`];
-      const ids = [...document.querySelectorAll('[id]')].map((e) => e.id), dup = ids.filter((x, i) => ids.indexOf(x) !== i);
-      A.refillIds = [dup.length === 0, dup.length ? 'duplicate ids ' + dup.slice(0, 4).join(' ') : `${ids.length} ids, none twice`];
-      const fb = []; let nf = 0;
-      for (const sid of F.R0.cards.filter((s) => !F.FRONT.includes(s))) {
-        const c = document.getElementById('c-' + sid);
-        if (!c || !c.classList.contains('is-folded')) { fb.push(`${sid} not folded`); continue; }
-        const b = c.querySelector('.more'); if (!b) continue;
-        const f = document.getElementById(b.getAttribute('aria-controls')); nf++;
-        click(b); const opened = !c.classList.contains('is-folded') && b.getAttribute('aria-expanded') === 'true' && !!f && c.contains(f) && L.vis(f);
-        click(b); const closed = c.classList.contains('is-folded') && b.getAttribute('aria-expanded') === 'false';
-        if (!opened || !closed) fb.push(`${sid} More opens its own fold ${opened}, closes ${closed}`);
+      if (X.state === 'all-read') {
+        // everything read: All is the builder's front, dimmed, never empty
+        const g = now(), fr = document.querySelector('section.front');
+        const dim = [...F.FRONT, F.DESK].filter(Boolean).every((s) => { const e = document.querySelector(`.front [data-story="${s}"]`); return e && e.classList.contains('is-read'); });
+        const rows = F.FRONT.filter((s) => { const r = document.getElementById('r-' + s); return r && L.vis(r); });
+        A.allAllRead = [same(g, F.ALL_READ) && L.vis(fr) && dim && !rows.length && L.vis(frontN) && frontN.textContent === line(F.ALL_READ, ''),
+          `${show(g, F.ALL_READ)}; front shown ${L.vis(fr)}; dimmed ${dim}; builder-front rows in their days ${rows.length}; line "${frontN.textContent}"`];
+        A.allOnce = once();
+        A.deskDate = deskDate();
       }
-      A.refillFold = fb.length ? [false, fb.join('; ')] : nf ? [true, `promoted cards start folded; More opens and closes the own fold of ${nf}`]
-        : SKIP('no promoted card has a More to open');
-      const g = L.geometry(), dead = L.deadLinks(), dm = L.dayMeta();
-      A.refillGeom = [!g.overlap.length && !g.order.length && !g.containment.length && !g.overflow.length,
-        `refilled: ${g.overlap.length} overlaps / ${g.pairs} pairs, ${g.order.length} inversions, ${g.containment.length} outside, overflow ${g.overflow.length} ${[...g.overlap, ...g.order].slice(0, 2).join('; ')}`];
-      A.refillLinks = [!dead.length && !dm.bad.length, `refilled: ${dead.length} dead links ${dead.slice(0, 2).join('; ')}; day headers ${dm.bad.join('; ') || 'match'}`];
-      // a promoted editorial: its day's "→ desk's view" link stays and reaches the front copy (review F3)
-      if (F.R0.desk && F.R0.desk !== F.DESK) {
-        const links = [...document.querySelectorAll('section.day .day__links a.jump')].filter((a) => a.getAttribute('href').replace('#desk-', '#') === '#' + F.R0.desk);
-        const a = links[0], t = a && document.getElementById(a.getAttribute('href').slice(1));
-        A.refillDayLink = [links.length === 1 && L.vis(a) && !!t && L.vis(t) && !!t.closest('.front') && t.dataset.story === F.R0.desk,
-          `${F.R0.desk}: day link ${a ? `${a.getAttribute('href')} shown ${L.vis(a)}` : 'missing'} -> ${t ? `${t.id} shown ${L.vis(t)} on the front ${!!t.closest('.front')}` : 'nothing'}`];
-      } else A.refillDayLink = SKIP('no older editorial to promote to the Desk\'s view');
-      // (a) nothing changes: a middle-click reads a card without a recompose, its ✓ un-reads it
-      const cA = F.R0.cards[F.R0.cards.length - 1], hlA = cA && document.querySelector(`.front .fc[data-story="${cA}"] .hl a`);
-      if (hlA) {
-        hlA.dispatchEvent(new MouseEvent('auxclick', { button: 1, bubbles: true, cancelable: true }));
-        const rbA = hlA.closest('.fc').querySelector('.readbtn'), readA = hlA.closest('.fc').classList.contains('is-read');
-        const k = await keeps(rbA, async () => { click(rbA); await frames(); });
-        A.refillFocusSame = [readA && k[0] && same(now(), F.R0), `${cA} read by a middle-click ${readA}, then un-ticked: ${k[1]}`];
-      } else A.refillFocusSame = SKIP('no refilled card');
-      // 2. a beat changes the refill; releasing it restores it
-      if (F.RB) {
-        click(L.chip(F.RB)); const gb = now(), cb = counts(F.RB); click(L.chip(F.RB));
-        A.refillBeat = [same(gb, F.RBW) && cb[0] && same(now(), F.R0), `${F.RB}: ${show(gb, F.RBW)}; ${cb[1]}`];
-      } else A.refillBeat = SKIP('no beat on the board changes the refill');
-      // 3. tick the refilled lead: the next entry takes its place, its pointer goes with it
-      const u0 = L.ct(L.seg('unread'));
-      const lead = document.querySelector('.front .fcards--top > .fc');
-      click(lead && lead.querySelector('.readbtn'));
-      const g1 = now(), p1 = ptrs(F.R1), c1 = counts();
-      A.refillTick = [same(g1, F.R1) && p1[0] && c1[0] && L.ct(L.seg('unread')) === u0 - 1,
-        `after ticking ${F.R0.cards[0]}: ${show(g1, F.R1)}; ${p1[1]}; ${c1[1]}; Unread ${u0} -> ${L.ct(L.seg('unread'))}`];
-      // (b) the pick changes around a staying card: the last card holds the focus while a rest card is ticked
-      if (F.FOCUS_L) {
-        const k = await keeps(ctlOf(F.FOCUS_L), async () => { click(document.querySelector(`.front .fc[data-story="${F.TICK_T}"] .readbtn`)); await frames(); });
-        A.refillFocusAround = [k[0] && same(now(), F.R1b), `${F.TICK_T} ticked: ${show(now(), F.R1b)}; ${k[1]}`];
-      } else A.refillFocusAround = SKIP('fewer than three refilled cards');
-      // (c) another tab reads one more while the reader types in the last card's reason box
-      const cardL = F.TYPE_T && document.querySelector(`.front .fc[data-story="${F.FOCUS_L}"]`);
-      if (cardL) {
-        click(cardL.querySelector('.vote--down'));
-        const dlg = document.querySelector('dialog[open]'); if (dlg) dlg.close();
-        const inp = cardL.querySelector('.rzn input');
-        if (inp) { inp.value = 'not new'; inp.setSelectionRange(1, 5); }
-        const k = await keeps(inp, () => write(F.S1c));
-        A.refillFocusTyping = [k[0] && same(now(), F.R1c), `another tab read ${F.TYPE_T}: ${show(now(), F.R1c)}; ${k[1]}`];
-      } else A.refillFocusTyping = SKIP('fewer than three refilled cards after a tick');
-      // 4. All: the builder's front, dimmed, and nothing on the page has moved
-      click(L.seg('')); await frames();
-      const ga = now(), lay1 = layout();
-      const moved = [...new Set([...Object.keys(lay0), ...Object.keys(lay1)])].filter((k) => lay0[k] !== lay1[k]);
-      const dim = F.S0.every((s) => { const e = document.querySelector(`.front [data-story="${s}"]`); return e && e.classList.contains('is-read'); });
-      const deskLinks = document.querySelectorAll('.day__links a[href^="#desk-"]').length;
-      A.refillAll = [ga.cards.join() === F.FRONT.join() && ga.desk === F.DESK && dim && moved.length === 0 && !shownPtrs().length && frontN.textContent === line0 && !deskLinks,
-        `${show(ga, { cards: F.FRONT, desk: F.DESK })}; dimmed ${dim}; ${moved.length} of ${Object.keys(lay0).length} moved ${moved.slice(0, 3).join(' ')}; reserve pointers shown ${shownPtrs().length}; line ${frontN.textContent === line0 ? 'restored' : `"${frontN.textContent}"`}; day links to a front copy ${deskLinks}`];
-      // (d) under All an apply with nothing to change (a roamed selection does the same) moves nothing
-      const ctlD = ctlOf(F.FRONT[F.FRONT.length - 1]);
-      if (ctlD) {
-        const k = await keeps(ctlD, async () => { click(L.seg('')); await frames(); });
-        A.refillFocusAll = k;
-      } else A.refillFocusAll = SKIP('no front card');
-      // 5. under Unread, another tab leaves only a non-lead entry and a later lead unread: the lead slot takes the lead
-      click(L.seg('unread'));
-      if (F.LEAD_X) {
-        await write(F.S2);
-        const g2 = now();
-        A.refillLead = [same(g2, F.R2) && frontN.textContent === line(F.R2) && counts()[0], `${show(g2, F.R2)}; "${frontN.textContent}"${Object.keys(F.SYNTH_IMP).length ? ' (made-up importance)' : ''}`];
-        // (e) then its lead is read: the other card moves to the lead slot and keeps the focus
-        const k = await keeps(ctlOf(F.LEAD_X), () => write(F.S2e));
-        const moveOk = document.activeElement === ctlOf(F.LEAD_X) && same(now(), F.R2e);
-        A.refillFocusMove = [moveOk, `${F.LEAD_Y} read: ${show(now(), F.R2e)}; ${k[1]}`];
-      } else { A.refillLead = SKIP('a reserve of fewer than two entries'); A.refillFocusMove = SKIP('a reserve of fewer than two entries'); }
-      // only the Desk's view left: no story count to state (review F2)
-      if (F.DESK_RESERVE.length) {
-        await write([F.DESK_RESERVE[0]], 'homeUnread:v1'); await write(F.RESERVE);
-        const gd = now(), fr = document.querySelector('section.front');
-        A.frontLineDesk = [!gd.cards.length && gd.desk === F.DESK_RESERVE[0] && L.vis(fr) && !L.vis(frontN),
-          `${show(gd, { cards: [], desk: F.DESK_RESERVE[0] })}; front shown ${L.vis(fr)}; line ${L.vis(frontN) ? `"${frontN.textContent}"` : 'hidden'}`];
-      } else A.frontLineDesk = SKIP('no editorial');
-      // 6. the whole reserve read: the front hides, and nothing points into it
-      await write(F.S3);
-      const fr = document.querySelector('section.front'), c3 = counts(), d3 = L.deadLinks();
-      A.refillEmpty = [!L.vis(fr) && !shownPtrs().length && c3[0] && !d3.length, `front shown ${L.vis(fr)}; reserve pointers shown ${shownPtrs().length}; ${c3[1]}; dead links ${d3.length}`];
+      if (X.state === 'all-sync' || X.state === 'all-sync-touched') {
+        // signed in: All is taken from the local set at load, and the first roamed set may retake it
+        const merged = (sid) => !!(JSON.parse(localStorage.getItem('syncState:v1') || '{}')[sid]);
+        const g0 = now();
+        const loadOk = same(g0, F.ALL0);
+        if (!F.REMOTE1) { A.allSyncOnce = SKIP('fewer than two cards on All\'s front'); A.allSyncOnlyOnce = SKIP('fewer than two cards on All\'s front'); A.allSyncTouched = SKIP('fewer than two cards on All\'s front'); }
+        else if (X.state === 'all-sync') {
+          // the reader is in the days, not at the front: the first roamed set retakes All once
+          const ctl = [...document.querySelectorAll('section.day .rows > li.row .readbtn')].filter(L.vis).pop();
+          ctl.focus();
+          await window.__release(0);
+          const ok1 = await until(() => merged(F.REMOTE1)); await frames();
+          const g1 = now(), o1 = once();
+          A.allSyncOnce = [loadOk && ok1 && same(g1, F.ALL_SYNC) && document.activeElement === ctl && o1[0],
+            `at load ${show(g0, F.ALL0)}; roamed ${F.REMOTE1} read: ${show(g1, F.ALL_SYNC)}; focus kept ${document.activeElement === ctl}; ${o1[1]}`];
+          // a second roamed set (another pull) reads the lead too: nothing moves any more
+          const m = await import('/claude-routines/assets/js/sync.js');
+          m.initSync();
+          await window.__release(1);
+          const ok2 = await until(() => merged(F.REMOTE2)); await frames();
+          const g2 = now(), leadRead = !!document.querySelector(`.front .fc[data-story="${F.REMOTE2}"].is-read`) || !F.ALL_SYNC.cards.includes(F.REMOTE2);
+          A.allSyncOnlyOnce = [ok2 && same(g2, F.ALL_SYNC) && leadRead, `second roam (${F.REMOTE2} read too): ${show(g2, F.ALL_SYNC)}; dimmed in place ${leadRead}`];
+        } else {
+          // the reader is already at the front: the roamed set only dims
+          const ctl = ctlOf(F.ALL0.cards[1]);
+          if (ctl) ctl.focus();
+          await window.__release(0);
+          const ok1 = await until(() => merged(F.REMOTE1)); await frames();
+          const g1 = now(), c = ctl && ctl.closest('.fc');
+          A.allSyncTouched = [loadOk && ok1 && same(g1, F.ALL0) && !!ctl && document.activeElement === ctl && c.classList.contains('is-read'),
+            `focus at the front, then ${F.REMOTE1} roamed read: ${show(g1, F.ALL0)}; focus kept ${!!ctl && document.activeElement === ctl}; dimmed in place ${!!c && c.classList.contains('is-read')}`];
+        }
+      }
+      if (X.state === 'front-read') {
+        const lay0 = layout();
+        // All at load (owner decision 2026-09-25): the Unread pick from the read set the page opened with
+        const gl = now();
+        A.allLoad = [same(gl, F.ALL0) && ptrs(F.ALL0)[0] && frontN.textContent === line(F.ALL0, ''), `${show(gl, F.ALL0)}; ${ptrs(F.ALL0)[1]}; line "${frontN.textContent}"`];
+        A.allOnce = once();
+        A.deskDate = deskDate();
+        // a tick under All only dims: nothing moves or hides; its un-tick puts the read set back
+        const tl = document.querySelector('.front .fcards--top > .fc');
+        if (tl) {
+          click(tl.querySelector('.readbtn')); await frames();
+          const lt = layout(), dimT = tl.classList.contains('is-read'), gt = now();
+          click(tl.querySelector('.readbtn')); await frames();
+          const movedT = Object.keys(lay0).filter((k) => lay0[k] !== lt[k]);
+          A.allTickDims = [dimT && !movedT.length && same(gt, F.ALL0), `${tl.dataset.story} ticked under All: dimmed ${dimT}; ${movedT.length} of ${Object.keys(lay0).length} moved ${movedT.slice(0, 3).join(' ')}; ${show(gt, F.ALL0)}`];
+        } else A.allTickDims = SKIP('no card on All\'s front');
+        // Read is the builder's front, as before; back under All nothing has moved
+        click(L.seg('read')); await frames();
+        const gr = now(), rowsR = F.FRONT.filter((s) => { const r = document.getElementById('r-' + s); return r && L.vis(r); });
+        click(L.seg('')); await frames();
+        const movedR = Object.entries(layout()).filter(([k, v]) => lay0[k] !== v).map(([k]) => k);
+        A.allReadView = [same(gr, { cards: F.FRONT, desk: F.DESK }) && !rowsR.length && !movedR.length,
+          `Read: ${show(gr, { cards: F.FRONT, desk: F.DESK })}; builder-front rows shown ${rowsR.length}; back to All ${movedR.length} moved ${movedR.slice(0, 3).join(' ')}`];
+        // a made-up importance (see SYNTH_IMP) goes on the cards before the refill first reads them
+        for (const [sid, v] of Object.entries(F.SYNTH_IMP)) {
+          document.querySelectorAll(`.front li.fc[data-story="${sid}"]`).forEach((c) => { c.dataset.imp = String(v); });
+          const t = document.querySelector(`template[data-reserve-card="${sid}"]`);
+          if (t) t.content.firstElementChild.dataset.imp = String(v);
+        }
+        const write = async (list, key = 'homeRead:v1') => {
+          localStorage.setItem(key, JSON.stringify(Object.fromEntries(list.map((id) => [id, Date.now()]))));
+          dispatchEvent(new StorageEvent('storage', { key, storageArea: localStorage }));
+          await frames();
+        };
+        // Focus must survive a recompose (review F1): the focused control keeps the focus (and its
+        // caret), and its card is never taken out of the document on the way (a card moved out and
+        // back drops the focus to <body>; the board's rescue would hide that, so removals are watched)
+        const keeps = async (ctl, act) => {
+          if (!ctl) return [false, 'the card to hold the focus is not on the front'];
+          const card = ctl.closest('[data-story]'), removed = [];
+          const note = (recs) => { for (const r of recs) for (const n of r.removedNodes) if (n === card || n.contains(card)) removed.push(n); };
+          const mo = new MutationObserver(note);
+          mo.observe(document.getElementById('main'), { childList: true, subtree: true });
+          ctl.focus();
+          const sel = typeof ctl.selectionStart === 'number' ? [ctl.selectionStart, ctl.selectionEnd, ctl.value] : null;
+          await act();
+          note(mo.takeRecords()); mo.disconnect();
+          const a = document.activeElement, selOk = !sel || (a === ctl && ctl.selectionStart === sel[0] && ctl.selectionEnd === sel[1] && ctl.value === sel[2]);
+          const where = (e) => (e ? (e.className || e.tagName).toString().split(' ')[0] + (e.closest && e.closest('[data-story]') ? ' in ' + e.closest('[data-story]').dataset.story : '') : 'none');
+          return [a === ctl && !removed.length && card.isConnected && selOk,
+            `focus on ${where(ctl)}: after ${where(a)}; card taken out ${removed.length}x${sel ? `; caret ${sel[0]}-${sel[1]} -> ${ctl.selectionStart}-${ctl.selectionEnd}` : ''}`];
+        };
+        // 1. Unread: the first four unread reserve entries, lead first; the next unread editorial
+        click(L.seg('unread')); await settle();
+        const g0 = now();
+        A.refill = [same(g0, F.R0), show(g0, F.R0)];
+        A.refillPtrs = ptrs(F.R0);
+        A.counts = counts();
+        A.refillLine = [frontN.textContent === line(F.R0), `"${frontN.textContent}"`];
+        const ids = [...document.querySelectorAll('[id]')].map((e) => e.id), dup = ids.filter((x, i) => ids.indexOf(x) !== i);
+        A.refillIds = [dup.length === 0, dup.length ? 'duplicate ids ' + dup.slice(0, 4).join(' ') : `${ids.length} ids, none twice`];
+        const fb = []; let nf = 0;
+        for (const sid of F.R0.cards.filter((s) => !F.FRONT.includes(s))) {
+          const c = document.getElementById('c-' + sid);
+          if (!c || !c.classList.contains('is-folded')) { fb.push(`${sid} not folded`); continue; }
+          const b = c.querySelector('.more'); if (!b) continue;
+          const f = document.getElementById(b.getAttribute('aria-controls')); nf++;
+          click(b); const opened = !c.classList.contains('is-folded') && b.getAttribute('aria-expanded') === 'true' && !!f && c.contains(f) && L.vis(f);
+          click(b); const closed = c.classList.contains('is-folded') && b.getAttribute('aria-expanded') === 'false';
+          if (!opened || !closed) fb.push(`${sid} More opens its own fold ${opened}, closes ${closed}`);
+        }
+        A.refillFold = fb.length ? [false, fb.join('; ')] : nf ? [true, `promoted cards start folded; More opens and closes the own fold of ${nf}`]
+          : SKIP('no promoted card has a More to open');
+        const g = L.geometry(), dead = L.deadLinks(), dm = L.dayMeta();
+        A.refillGeom = [!g.overlap.length && !g.order.length && !g.containment.length && !g.overflow.length,
+          `refilled: ${g.overlap.length} overlaps / ${g.pairs} pairs, ${g.order.length} inversions, ${g.containment.length} outside, overflow ${g.overflow.length} ${[...g.overlap, ...g.order].slice(0, 2).join('; ')}`];
+        A.refillLinks = [!dead.length && !dm.bad.length, `refilled: ${dead.length} dead links ${dead.slice(0, 2).join('; ')}; day headers ${dm.bad.join('; ') || 'match'}`];
+        // a promoted editorial: its day's "→ desk's view" link stays and reaches the front copy (review F3)
+        if (F.R0.desk && F.R0.desk !== F.DESK) {
+          const links = [...document.querySelectorAll('section.day .day__links a.jump')].filter((a) => a.getAttribute('href').replace('#desk-', '#') === '#' + F.R0.desk);
+          const a = links[0], t = a && document.getElementById(a.getAttribute('href').slice(1));
+          A.refillDayLink = [links.length === 1 && L.vis(a) && !!t && L.vis(t) && !!t.closest('.front') && t.dataset.story === F.R0.desk,
+            `${F.R0.desk}: day link ${a ? `${a.getAttribute('href')} shown ${L.vis(a)}` : 'missing'} -> ${t ? `${t.id} shown ${L.vis(t)} on the front ${!!t.closest('.front')}` : 'nothing'}`];
+        } else A.refillDayLink = SKIP('no older editorial to promote to the Desk\'s view');
+        // (a) nothing changes: a middle-click reads a card without a recompose, its ✓ un-reads it
+        const cA = F.R0.cards[F.R0.cards.length - 1], hlA = cA && document.querySelector(`.front .fc[data-story="${cA}"] .hl a`);
+        if (hlA) {
+          hlA.dispatchEvent(new MouseEvent('auxclick', { button: 1, bubbles: true, cancelable: true }));
+          const rbA = hlA.closest('.fc').querySelector('.readbtn'), readA = hlA.closest('.fc').classList.contains('is-read');
+          const k = await keeps(rbA, async () => { click(rbA); await frames(); });
+          A.refillFocusSame = [readA && k[0] && same(now(), F.R0), `${cA} read by a middle-click ${readA}, then un-ticked: ${k[1]}`];
+        } else A.refillFocusSame = SKIP('no refilled card');
+        // 2. a beat changes the refill; releasing it restores it
+        if (F.RB) {
+          click(L.chip(F.RB)); const gb = now(), cb = counts(F.RB); click(L.chip(F.RB));
+          A.refillBeat = [same(gb, F.RBW) && cb[0] && same(now(), F.R0), `${F.RB}: ${show(gb, F.RBW)}; ${cb[1]}`];
+        } else A.refillBeat = SKIP('no beat on the board changes the refill');
+        // 3. tick the refilled lead: the next entry takes its place, its pointer goes with it
+        const u0 = L.ct(L.seg('unread'));
+        const lead = document.querySelector('.front .fcards--top > .fc');
+        click(lead && lead.querySelector('.readbtn'));
+        const g1 = now(), p1 = ptrs(F.R1), c1 = counts();
+        A.refillTick = [same(g1, F.R1) && p1[0] && c1[0] && L.ct(L.seg('unread')) === u0 - 1,
+          `after ticking ${F.R0.cards[0]}: ${show(g1, F.R1)}; ${p1[1]}; ${c1[1]}; Unread ${u0} -> ${L.ct(L.seg('unread'))}`];
+        // (b) the pick changes around a staying card: the last card holds the focus while a rest card is ticked
+        if (F.FOCUS_L) {
+          const k = await keeps(ctlOf(F.FOCUS_L), async () => { click(document.querySelector(`.front .fc[data-story="${F.TICK_T}"] .readbtn`)); await frames(); });
+          A.refillFocusAround = [k[0] && same(now(), F.R1b), `${F.TICK_T} ticked: ${show(now(), F.R1b)}; ${k[1]}`];
+        } else A.refillFocusAround = SKIP('fewer than three refilled cards');
+        // (c) another tab reads one more while the reader types in the last card's reason box
+        const cardL = F.TYPE_T && document.querySelector(`.front .fc[data-story="${F.FOCUS_L}"]`);
+        if (cardL) {
+          click(cardL.querySelector('.vote--down'));
+          const dlg = document.querySelector('dialog[open]'); if (dlg) dlg.close();
+          const inp = cardL.querySelector('.rzn input');
+          if (inp) { inp.value = 'not new'; inp.setSelectionRange(1, 5); }
+          const k = await keeps(inp, () => write(F.S1c));
+          A.refillFocusTyping = [k[0] && same(now(), F.R1c), `another tab read ${F.TYPE_T}: ${show(now(), F.R1c)}; ${k[1]}`];
+        } else A.refillFocusTyping = SKIP('fewer than three refilled cards after a tick');
+        // 4. All: its LOAD-TIME front (not a pick from the reads since), the reads dimmed, and
+        // nothing on the page has moved since load
+        click(L.seg('')); await frames();
+        const ga = now(), lay1 = layout(), dh = dimHonest();
+        const moved = [...new Set([...Object.keys(lay0), ...Object.keys(lay1)])].filter((k) => lay0[k] !== lay1[k]);
+        const hiddenLinks = [...document.querySelectorAll('.day__links a')].filter((a) => !L.vis(a)).length;
+        A.refillAll = [same(ga, F.ALL0) && dh[0] && moved.length === 0 && frontN.textContent === line0 && !hiddenLinks && once()[0],
+          `${show(ga, F.ALL0)}; ${dh[1]}; ${moved.length} of ${Object.keys(lay0).length} moved ${moved.slice(0, 3).join(' ')}; line ${frontN.textContent === line0 ? 'restored' : `"${frontN.textContent}"`}; day links hidden ${hiddenLinks}; ${once()[1]}`];
+        // (d) under All an apply with nothing to change (a roamed selection does the same) moves nothing
+        const ctlD = ctlOf(F.ALL0.cards[F.ALL0.cards.length - 1]);
+        if (ctlD) {
+          const k = await keeps(ctlD, async () => { click(L.seg('')); await frames(); });
+          A.refillFocusAll = k;
+        } else A.refillFocusAll = SKIP('no front card');
+        // 5. under Unread, another tab leaves only a non-lead entry and a later lead unread: the lead slot takes the lead
+        click(L.seg('unread'));
+        if (F.LEAD_X) {
+          await write(F.S2);
+          const g2 = now();
+          A.refillLead = [same(g2, F.R2) && frontN.textContent === line(F.R2) && counts()[0], `${show(g2, F.R2)}; "${frontN.textContent}"${Object.keys(F.SYNTH_IMP).length ? ' (made-up importance)' : ''}`];
+          // (e) then its lead is read: the other card moves to the lead slot and keeps the focus
+          const k = await keeps(ctlOf(F.LEAD_X), () => write(F.S2e));
+          const moveOk = document.activeElement === ctlOf(F.LEAD_X) && same(now(), F.R2e);
+          A.refillFocusMove = [moveOk, `${F.LEAD_Y} read: ${show(now(), F.R2e)}; ${k[1]}`];
+        } else { A.refillLead = SKIP('a reserve of fewer than two entries'); A.refillFocusMove = SKIP('a reserve of fewer than two entries'); }
+        // only the Desk's view left: no story count to state (review F2)
+        if (F.DESK_RESERVE.length) {
+          await write([F.DESK_RESERVE[0]], 'homeUnread:v1'); await write(F.RESERVE);
+          const gd = now(), fr = document.querySelector('section.front');
+          A.frontLineDesk = [!gd.cards.length && gd.desk === F.DESK_RESERVE[0] && L.vis(fr) && !L.vis(frontN),
+            `${show(gd, { cards: [], desk: F.DESK_RESERVE[0] })}; front shown ${L.vis(fr)}; line ${L.vis(frontN) ? `"${frontN.textContent}"` : 'hidden'}`];
+        } else A.frontLineDesk = SKIP('no editorial');
+        // 6. the whole reserve read: the front hides, and nothing points into it
+        await write(F.S3);
+        const fr = document.querySelector('section.front'), c3 = counts(), d3 = L.deadLinks();
+        A.refillEmpty = [!L.vis(fr) && !shownPtrs().length && c3[0] && !d3.length, `front shown ${L.vis(fr)}; reserve pointers shown ${shownPtrs().length}; ${c3[1]}; dead links ${d3.length}`];
+      }
     }
     if (X.state === 'beat') {
       click(L.chip(X.BEAT));
@@ -943,7 +1087,9 @@ async function runCase(browser, ctxOpts, state, fault = null) {
     containment: [g.containment.length === 0, `${g.containment.length} of ${g.contained} outside ${g.containment.slice(0, 3).join('; ')}`],
     order: [g.order.length === 0, `${g.order.length} inversions over ${g.groups} groups ${g.order.slice(0, 3).join('; ')}`],
     external: [rec.ext.length === 0, rec.ext.length + ' requests to other hosts ' + rec.ext.slice(0, 2).join(' ')],
-    signedOut: [rec.fb.length === 0, `${rec.fb.length} feedback-sink requests while signed out`],
+    signedOut: state.startsWith('all-sync')
+      ? [rec.fb.length > 0 && rec.fb.every((r) => ['/readstate', '/prefs'].includes(r.path) && r.auth === 'Bearer <token>'), `signed in: ${rec.fb.length} feedback-sink requests, all /readstate or /prefs with the session's bearer`]
+      : [rec.fb.length === 0, `${rec.fb.length} feedback-sink requests while signed out`],
     errors: [rec.errors.length === 0, rec.errors.length + ' page errors ' + rec.errors.slice(0, 2).join(' | ')],
     ...fn,
   };
@@ -1255,25 +1401,36 @@ if (process.env.FAULTS !== '0') {
     { key: 'periods', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const t = document.querySelector('.day__cov .ptag time'); t.textContent = t.textContent.replace(/^\d+/, '1'); }) },
     { key: 'focus', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('.bar button, .mast a, .mast summary').forEach((e) => e.setAttribute('tabindex', '-1'))) },
     // round 2 (2026-09-25): the Unread refill and the event label
-    { key: 'refill', state: 'front-read', js: { file: 'refill.js', from: 'if (el && !isRead(el) && beatOk(el, active)) pick.push(el);', to: 'if (el && beatOk(el, active)) pick.push(el);' } },
+    { key: 'refill', state: 'front-read', js: { file: 'refill.js', from: 'if (el && !isRead(el) && beatOk(el, active)) out.push(el);', to: 'if (el && beatOk(el, active)) out.push(el);' } },
     { key: 'refillPtrs', state: 'front-read', js: { file: 'board.js', from: 'p.hidden = !t || !t.isConnected || t.hidden;', to: "p.hidden = p.hasAttribute('data-reserve-ptr') || !t || !t.isConnected || t.hidden;" } },
     { key: 'counts', state: 'front-read', js: { file: 'board.js', from: "export const items = main ? [...main.querySelectorAll('[data-story]')] : [];",
       to: "export const items = main ? [...main.querySelectorAll('[data-story]'), ...[...main.querySelectorAll('template')].flatMap((t) => [...t.content.querySelectorAll('[data-story]')])] : [];" } },
-    { key: 'refillLead', state: 'front-read', js: { file: 'refill.js', from: "const lead = pick.find((el) => el.dataset.imp === '3') || pick[0];", to: 'const lead = pick[0];' } },
+    { key: 'refillLead', state: 'front-read', js: { file: 'refill.js', from: "const lead = out.find((el) => el.dataset.imp === '3') || out[0];", to: 'const lead = out[0];' } },
     { key: 'eventLabel', state: 'default', css: '', init: `document.addEventListener('DOMContentLoaded', () => {
       const el = document.querySelector('main [data-story="${sidOf(IN_PERIOD)}"]'), old = el.querySelector('.evt'); if (old) old.remove();
       el.querySelector('.row__meta, .fc__top').insertAdjacentHTML('beforeend', '<span class="evt"><time datetime="${IN_PERIOD.event_date >= PSTART[sidOf(IN_PERIOD)] ? IN_PERIOD.event_date : IN_PERIOD.date}">Happened</time></span>'); })` },
     // round 3 (review 2026-09-25): focus through a recompose, the desk-only line, the day link
     ...['refillFocusSame', 'refillFocusAround', 'refillFocusTyping'].map((key) => ({ key, state: 'front-read',
       js: { file: 'refill.js', from: 'function reconcile(box, want) {\n  if (!box) return;', to: 'function reconcile(box, want) {\n  if (box) box.replaceChildren(...want);\n  return;' } })),
-    { key: 'refillFocusAll', state: 'front-read', js: { file: 'refill.js', edits: [
-      ['function reconcile(box, want) {\n  if (!box) return;', 'function reconcile(box, want) {\n  if (box) box.replaceChildren(...want);\n  return;'],
-      ['const placed = (box, want) => !box || (box.children.length === want.length && want.every((el, i) => box.children[i] === el));', 'const placed = () => false;']] } },
+    { key: 'refillFocusAll', state: 'front-read', js: { file: 'refill.js', from: 'function reconcile(box, want) {\n  if (!box) return;', to: 'function reconcile(box, want) {\n  if (box) box.replaceChildren(...want);\n  return;' } },
     { key: 'refillFocusMove', state: 'front-read', js: { file: 'board.js', from: "if (had && had !== document.body && document.activeElement !== had && had.isConnected && !had.closest('[hidden]')) {", to: 'if (false) {' } },
     { key: 'frontLineDesk', state: 'front-read', js: { file: 'board.js', from: 'frontN.hidden = !cards.length && (!!rs || active.size > 0);', to: 'frontN.hidden = false;' } },
-    { key: 'refillBeat', state: 'front-read', js: { file: 'refill.js', from: 'if (el && !isRead(el) && beatOk(el, active)) pick.push(el);', to: 'if (el && !isRead(el)) pick.push(el);' } },
-    { key: 'refillDayLink', state: 'front-read', js: { file: 'refill.js', from: 'pointDayLinks(copy ? chosen : null);', to: 'pointDayLinks(null);' } },
+    { key: 'refillBeat', state: 'front-read', js: { file: 'refill.js', from: 'if (el && !isRead(el) && beatOk(el, active)) out.push(el);', to: 'if (el && !isRead(el)) out.push(el);' } },
+    { key: 'refillDayLink', state: 'front-read', js: { file: 'refill.js', from: 'pointDayLinks(ed.dataset.story);', to: 'pointDayLinks(deskDefault.dataset.story);' } },
     { key: 'eventLabelShown', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const e = document.querySelector('main .evt'); if (e) e.remove(); }) },
+    // round 4 (owner decision 2026-09-25): All's front is composed at load; within a session reading only dims
+    { key: 'allLoad', state: 'front-read', js: { file: 'refill.js', from: 'all = { cards: cards.length ? cards : defaults, desk: deskPick(new Set()) };', to: 'all = { cards: defaults, desk: deskDefault };' } },
+    { key: 'allTickDims', state: 'front-read', js: [
+      { file: 'refill.js', from: "mode === 'all' ? all.cards : defaults", to: "mode === 'all' ? pick(new Set()) : defaults" },
+      { file: 'board.js', from: '        if (rs) {\n          apply();', to: '        if (true) {\n          apply();' }] },
+    { key: 'allAllRead', state: 'all-read', js: { file: 'refill.js', from: 'all = { cards: cards.length ? cards : defaults, desk: deskPick(new Set()) };', to: 'all = { cards, desk: deskPick(new Set()) };' } },
+    { key: 'allReadView', state: 'front-read', js: { file: 'refill.js', from: "const cards = mode === 'unread' ? pick(active) : mode === 'all' ? all.cards : defaults;", to: "const cards = mode === 'unread' ? pick(active) : all.cards;" } },
+    { key: 'refillAll', state: 'front-read', js: { file: 'refill.js', from: "mode === 'all' ? all.cards : defaults", to: "mode === 'all' ? pick(new Set()) : defaults" } },
+    { key: 'allOnce', state: 'front-read', js: { file: 'refill.js', from: '} else if (ptr.nextElementSibling !== row) ptr.after(row);', to: '}' } },
+    { key: 'allSyncOnce', state: 'all-sync', js: { file: 'board.js', from: '      refill.snapshot();\n      anchored(topItem(), () => { paint(); apply(); });', to: '      anchored(topItem(), () => { paint(); apply(); });' } },
+    { key: 'allSyncOnlyOnce', state: 'all-sync', js: { file: 'board.js', from: 'if (!first || touched) { remoteRead(); return; }', to: 'if (touched) { remoteRead(); return; }' } },
+    { key: 'allSyncTouched', state: 'all-sync-touched', js: { file: 'board.js', from: 'if (!first || touched) { remoteRead(); return; }', to: 'if (!first) { remoteRead(); return; }' } },
+    { key: 'deskDate', state: 'front-read', css: '.ed--desk .ed__top .fday{display:none}' },
   ];
   // a fault whose gate is a SKIP on this data proves nothing either way: it is counted apart, not
   // MISSED (that would turn a SKIP back into a failure on valid data); an absent gate is MISSED
@@ -1284,7 +1441,7 @@ if (process.env.FAULTS !== '0') {
     const flipped = !!A[f.key] && A[f.key][0] === false, skip = !!A[f.key] && A[f.key][0] === null;
     if (flipped) caught++;
     if (skip) skipped++;
-    log(`${flipped ? 'CAUGHT' : skip ? 'SKIPPED' : 'MISSED'}  ${f.key.padEnd(12)} ${f.state.padEnd(14)} ${(f.w || 1440) + 'px'}  ${f.css || (f.js ? `${f.js.file}: ${(f.js.edits || [[f.js.from, f.js.to]]).map(([a, b]) => `${a} -> ${b || '(removed)'}`).join(' + ').replace(/\n\s*/g, ' ')}` : '(script)')}  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
+    log(`${flipped ? 'CAUGHT' : skip ? 'SKIPPED' : 'MISSED'}  ${f.key.padEnd(12)} ${f.state.padEnd(14)} ${(f.w || 1440) + 'px'}  ${f.css || (f.js ? [].concat(f.js).map((j) => `${j.file}: ${(j.edits || [[j.from, j.to]]).map(([a, b]) => `${a} -> ${b || '(removed)'}`).join(' + ')}`).join(' + ').replace(/\n\s*/g, ' ') : '(script)')}  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
   }
   // contract faults: the /prefs body grows a field; homeRead:v1 gets a non-number value
   const CF = [
@@ -1335,13 +1492,17 @@ if (process.env.SHOTS !== '0') {
   // "Happened" label at the narrowest width, on a front card when the refill holds one
   const extra = [['front-read-unread-1440', c, { viewport: { width: 1440, height: 900 } }, 'front-read'],
     ['front-read-unread-iphone15', wk, { ...devices['iPhone 15'] }, 'front-read'],
-    ['event-label-360', c, { viewport: { width: 360, height: 800 } }, 'event']];
+    ['event-label-360', c, { viewport: { width: 360, height: 800 } }, 'event'],
+    // All at load with the default front read: an older editorial promoted to the Desk's view
+    ['desk-promoted-390', c, { viewport: { width: 390, height: 844 } }, 'desk'],
+    ['desk-promoted-1280', c, { viewport: { width: 1280, height: 900 } }, 'desk']];
   for (const [name, b, opts, kind] of extra) {
     const ctx = await b.newContext(opts); const rec = { fb: [], og: 0, ext: [], errors: [] }; await stub(ctx, rec);
     const p = await ctx.newPage();
     await p.addInitScript((ids) => localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(ids.map((id) => [id, Date.now()])))), S0);
     await p.goto(BASE); await p.evaluate(() => document.fonts.ready);
     await p.evaluate((kind) => {
+      if (kind === 'desk') { const d = document.querySelector('.front .desk'); d.scrollIntoView({ block: innerWidth < 700 ? 'start' : 'center' }); return; }
       document.querySelector('.seg button[data-rs="unread"]').click();
       const e = kind === 'event' && [...document.querySelectorAll('.front .fc .evt, main .evt')].find((x) => x.getBoundingClientRect().width > 0);
       if (e) e.closest('[data-story]').scrollIntoView({ block: 'center' }); else document.querySelector('.front').scrollIntoView();

@@ -25,8 +25,9 @@ node suite.mjs /tmp/fp-build/src/_site > /tmp/fp-suite.log 2>&1   # ~10 min; one
 - Serves the built `_site` under `/claude-routines/`.
 - Stubs both Workers with `route()`, and aborts and logs any other host.
 - Runs these states: default, expanded, unread-edition, front-read (the default front read, then
-  Unread), beat, multi-beat, empty, stale and stale-bg (a tab opened in the background), plus
-  no-JS, contract parity, two tabs and the reading pages.
+  Unread), all-read (the whole reserve read), all-sync and all-sync-touched (signed in, with the
+  Worker's read set held until the page asks), beat, multi-beat, empty, stale and stale-bg (a tab
+  opened in the background), plus no-JS, contract parity, two tabs and the reading pages.
 - Covers Chromium at 360, 390, 700, 768, 1024, 1280, 1440 and 1600, and WebKit as iPhone 15 and at
   1024, all in light and dark.
 
@@ -63,6 +64,13 @@ feed, not only the one it was written against:
   document (a mutation observer watches), since the board's focus rescue would hide that
 - a promoted editorial's day link reaches its front copy, and with only the Desk's view on the
   front the story-count line is hidden
+- All's front (owner decision 2026-09-25) is the Unread pick from the read set the page opened
+  with; a tick under All only dims (nothing moves); Read is the builder's front; Unread→All shows
+  the load-time front; with everything read All is the builder's front, dimmed; every story and
+  editorial shows exactly once, a builder-front story off the front as its real row after its
+  pointer, and day headers count the front as composed; the Desk's view prints its edition's day
+- signed in: the first roamed read set retakes All's front once (the focus kept), a second roam
+  moves nothing, and a reader already at the front sees the roamed reads only dim
 - honest counts: each chip shows what pressing it shows
 - the editorial read rule and its un-tick override
 - in-page links have visible targets
