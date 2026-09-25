@@ -1065,7 +1065,17 @@ with `edition.json` on resume). Board items past round 0 of either reserve carry
 page renders them as `<template>` copies in the front plus a hidden "On the front" pointer in their
 day. Under Unread, `assets/js/refill.js` shows the first four unread reserve entries that match the
 beats (lead slot to the first importance-3 one) and the first unread matching editorial as the
-Desk's view; All and Read put the builder's front back exactly. `tools/tests/test_feed_views.py` pins all of it, including the CLI
+Desk's view; Read puts the builder's front back exactly.
+**Reading dims and never hides, moves or folds (owner ruling, 2026-07-26) — AMENDED by the owner on
+2026-09-25:** under All the front is composed ONCE, at load, from the unread stories, through the
+same pick Unread uses (beats aside; they filter as before); with nothing unread it is the builder's
+front, dimmed, never empty. Within a session reading still only dims: a tick under All moves and
+hides nothing, and Unread→All shows the load-time front, not a new pick. Signed in, the roamed
+read set can land after first paint: the local set composes first and the FIRST roam takes the
+pick once more, only if the reader has not touched the front (pointer, key or focus in it). Every
+story is on the page once: a builder-front story All leaves off gets its real day row back (a
+`<template>` beside its pointer), the builder's Desk's view its day article; the day header counts
+what is on the front as composed, and the Desk's view prints its edition's day. `tools/tests/test_feed_views.py` pins all of it, including the CLI
 under `python3 -S` on sparse `_posts/` trees; `test_feed_age.py` re-checks the views on the
 committed artifact.
 

@@ -18,7 +18,7 @@ if (!fb().enabled) root.classList.add('fb-off');  // feedback kill switch: votes
 initDialogs();
 initFold();
 const board = initBoard({ prefs: current(), record, adopt: watchSlots });
-on('roam', board.remoteRead);
+on('roam', board.roamed);                          // the first one may recompose All's front
 onExternalChange(board.remoteRead);                // another tab marked something read
 initSync();
 initPrefs(board.remotePrefs);

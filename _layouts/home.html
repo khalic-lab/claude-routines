@@ -54,7 +54,7 @@ body_class: home
         <dt>{% include home/glyph.html imp=1 tier="brief" label="Brief" quiet=true %}</dt><dd>Brief — its headline; open it for the rest</dd>
         <dt><span class="edchip edchip--key">AI</span></dt><dd>AI editorial — opinion, not reporting</dd>
       </dl>
-      <p class="key__note">Position is the ranking: the front page first, then each day’s edition, biggest story first. A tag like “Science · 17–23 Sep” is the span that desk’s edition reports on. Read stories dim; they never move or shrink. Under Unread, the front page refills with the most important stories you haven’t read.</p>
+      <p class="key__note">Position is the ranking: the front page first, then each day’s edition, biggest story first. A tag like “Science · 17–23 Sep” is the span that desk’s edition reports on. Each visit, the front page opens on the most important stories you haven’t read. Stories you read while here dim; they never move or shrink. Under Unread, the front page refills as you read.</p>
     </details>
   </header>
 
@@ -152,6 +152,8 @@ body_class: home
           <li class="ptr" data-zone="pointer" data-ptr="{{ pid }}" data-edition="{{ it.edition }}">
             <a href="#c-{{ pid }}"><span class="ptr__l"><span aria-hidden="true">↑</span>On the front</span><span class="ptr__h">{{ it.headline | escape }}</span></a>
           </li>
+          {%- comment %} its real row, for when All's load-time front leaves it off (refill.js) {% endcomment %}
+          <template data-front-row="{{ pid }}">{% include home/row.html s=it %}</template>
           {%- else %}
           {%- if it.in_reserve %}
           {%- assign pid = it.sid | default: it.id %}
@@ -171,6 +173,7 @@ body_class: home
         <p class="ptr ptr--ed" data-zone="pointer" data-ptr="{{ it.sid }}" data-edition="{{ it.edition }}">
           <a href="#{{ it.sid }}"><span class="ptr__l"><span aria-hidden="true">↑</span>On the front</span><span class="ptr__h ptr__h--ed">{{ it.stream_label }} desk’s view — {{ it.title_text | default: it.title_html | strip_html }}</span></a>
         </p>
+        <template data-front-ed="{{ it.sid }}">{% include home/editorial.html e=it where="day" idp="day-" %}</template>
         {%- else %}
         {%- if it.in_reserve %}
         <p class="ptr ptr--ed" data-zone="pointer" data-ptr="{{ it.sid }}" data-edition="{{ it.edition }}" data-reserve-ptr hidden>

@@ -1,8 +1,10 @@
 {%- comment -%}
   An AI editorial: `where` is "desk" (the front's Desk's view) or "day" (closing its own day).
   Always boots folded (R7): kicker, heading, the disclosure (which never hides, R5), More.
-  `title_html` and `body` are builder-escaped HTML. `idp` prefixes the element ids for the Unread
-  refill's desk copy ("desk-"), so it never shares an id with the same editorial in its day.
+  `title_html` and `body` are builder-escaped HTML. `idp` prefixes the element ids of a copy: the
+  refill's desk copy ("desk-") and the Desk's view's own day article ("day-"), so no id is shared.
+  In the Desk's view the edition's day is printed like a front card's: an older editorial the
+  front composes in never reads as today's.
 {%- endcomment -%}
 {%- assign e = include.e -%}
 {%- assign eid = include.idp | append: e.sid -%}
@@ -10,7 +12,7 @@
 {%- if e.body.size > 0 -%}{%- assign fid = 'f-' | append: eid -%}{%- endif -%}
 <article class="ed ed--{{ include.where }} is-folded" id="{{ eid }}" data-zone="editorial" data-story="{{ e.sid }}" data-edition="{{ e.edition }}" data-topics="{{ e.topics | join: ' ' }}" aria-labelledby="h-{{ eid }}">
   <header class="ed__top">
-    <span class="edchip">AI editorial</span>
+    <span class="edchip">AI editorial</span>{% if include.where == "desk" %}<time class="fday" datetime="{{ e.date }}">{{ e.day_label }}</time>{% endif %}
     <p class="ed__kick">{{ e.stream_label }} desk’s view<span aria-hidden="true"> · </span><span class="vh">, covering </span>{% include home/range.html p=e.period %}</p>
   </header>
   <h3 class="ed__hl{% if e.title_is_lede %} ed__hl--lede{% endif %}" id="h-{{ eid }}">{{ e.title_html }}</h3>

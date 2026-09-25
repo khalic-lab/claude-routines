@@ -2,9 +2,9 @@
 //
 // Items are the elements that carry a read id (data-story): front cards, index rows and
 // editorials. Pointer rows ([data-ptr]) stand in a day for an item lifted to the front and follow
-// that item. Filtering only sets the `hidden` attribute; it never measures anything. The one
-// thing that moves is the front under the Unread filter, which refill.js composes from the
-// builder's reserve (reserve copies are not items: each story is counted once, by its row).
+// that item. Filtering only sets the `hidden` attribute; it never measures anything. What moves
+// is the front, which refill.js composes from the builder's reserve: live under Unread, once at
+// load under All (copies are not items: each story is counted once, by its own element).
 import { READ_KEY, UNREAD_KEY, readMap, unreadMap, save } from './store.js';
 import { noteLocalRead } from './sync.js';
 import { anchored } from './fold.js';
@@ -62,18 +62,20 @@ function setRead(el, v) {
 const target = (p) => document.getElementById((p.querySelector('a') || { getAttribute: () => '#' }).getAttribute('href').slice(1));
 let refill = { compose: () => [], copies: () => [] };
 
-// Reading dims and never hides, moves or folds (owner ruling, 2026-07-26): paint touches the
-// read class and the ✓ state only.
-export function paint() {
-  for (const el of [...items, ...refill.copies()]) {
-    const r = isRead(el);
-    el.classList.toggle('is-read', r);
-    const b = el.querySelector('.readbtn');
-    if (b) {
-      b.setAttribute('aria-pressed', String(r));
-      b.title = r ? 'mark as unread' : 'mark as read';
-    }
+// Reading dims and never hides, moves or folds (owner ruling, 2026-07-26; since 2026-09-25 All's
+// front is composed once at load, and within the session reading still only dims): paint touches
+// the read class and the ✓ state only.
+function paintEl(el) {
+  const r = isRead(el);
+  el.classList.toggle('is-read', r);
+  const b = el.querySelector('.readbtn');
+  if (b) {
+    b.setAttribute('aria-pressed', String(r));
+    b.title = r ? 'mark as unread' : 'mark as read';
   }
+}
+export function paint() {
+  for (const el of [...items, ...refill.copies()]) paintEl(el);
   for (const p of ptrs) {
     const t = target(p);
     p.classList.toggle('is-read', !!t && isRead(t));
@@ -118,8 +120,10 @@ export function apply() {
   const sel = had && typeof had.selectionStart === 'number' ? [had.selectionStart, had.selectionEnd, had.selectionDirection] : null;
   let shown = 0;
   for (const el of items) { const m = matches(el); el.hidden = !m; if (m) shown++; }
-  // the front: the builder's, or under Unread the refill; nothing below unhides what it decided
-  const cards = refill.compose(rs === 'unread', active);
+  // the front: Unread's live pick, All's load-time pick, or the builder's under Read; nothing
+  // below unhides what it decided. Copies on the page filter like the items they stand in for.
+  const cards = refill.compose(rs === 'unread' ? 'unread' : rs === 'read' ? 'read' : 'all', active);
+  for (const c of refill.copies()) if (c.isConnected) { c.hidden = !matches(c); paintEl(c); }
   for (const p of ptrs) { const t = target(p); p.hidden = !t || !t.isConnected || t.hidden; }
   frontLine(cards.filter((c) => !c.hidden));
   if (main) {
@@ -136,10 +140,10 @@ export function apply() {
     for (const sec of main.querySelectorAll('section.day')) {
       if (sec.hidden) continue;
       const n = sec.querySelector('.day__n');
-      if (!n.dataset.orig) n.dataset.orig = n.textContent;
-      const total = +n.dataset.total;
+      const total = +n.dataset.total, noun = total === 1 ? 'story' : 'stories';
       const v = sec.querySelectorAll('.rows > [data-story]:not([hidden]), .rows > [data-ptr]:not([hidden])').length;
-      n.textContent = filtering ? v + ' of ' + total + ' ' + (total === 1 ? 'story' : 'stories') + ' shown' : n.dataset.orig;
+      const up = sec.querySelectorAll('.rows > [data-ptr]:not([hidden])').length;   // on the front as composed
+      n.textContent = filtering ? v + ' of ' + total + ' ' + noun + ' shown' : total + ' ' + noun + (up ? ' · ' + up + ' on the front' : '');
       for (const t of sec.querySelectorAll('.day__cov .ptag')) {
         t.hidden = !sec.querySelector('[data-edition="' + sec.dataset.date + '-' + t.dataset.stream + '"]:not([hidden])');
       }
@@ -197,6 +201,13 @@ function topItem() {
 
 export function initBoard({ prefs, record, adopt = () => {} }) {
   refill = createRefill(main, { isRead, beatOk, adopt });
+  refill.snapshot();                              // All's front: the pick from the read set at load
+  // The roamed read set can land after first paint. All's pick is then taken once more, at the
+  // first roam only, and only if the reader has not been at the front yet (2026-09-25, option ii:
+  // the local set is usually right, so holding every load for the network would cost more).
+  let roamedOnce = false, touched = false;
+  const frontEl = main && main.querySelector('section.front');
+  if (frontEl) for (const t of ['pointerdown', 'keydown', 'focusin']) frontEl.addEventListener(t, () => { touched = true; }, { passive: true });
   // restore the stored selection; held keys survive (R37)
   const seed = (p) => {
     active.clear();
@@ -257,9 +268,17 @@ export function initBoard({ prefs, record, adopt = () => {} }) {
   paint();
   apply();
 
+  function remoteRead() { anchored(topItem(), () => { paint(); if (rs) apply(); }); }
   return {
     // a roamed selection re-filters without throwing the reader down the page (old bug R2)
     remotePrefs(p) { seed(p); paintControls(); anchored(topItem(), apply); },
-    remoteRead() { anchored(topItem(), () => { paint(); if (rs) apply(); }); },
+    remoteRead,
+    roamed() {
+      const first = !roamedOnce;
+      roamedOnce = true;
+      if (!first || touched) { remoteRead(); return; }
+      refill.snapshot();
+      anchored(topItem(), () => { paint(); apply(); });
+    },
   };
 }
