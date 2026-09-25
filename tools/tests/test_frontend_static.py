@@ -115,7 +115,10 @@ class AssetsTest(unittest.TestCase):
 
     def test_modules_import_only_siblings(self):
         for p in JS:
-            for spec in re.findall(r"""(?:from|import)\s*\(?\s*['"]([^'"]+)['"]""", read(p)):
+            src = read(p)
+            specs = re.findall(r"""^\s*(?:import\b[^'"\n]*?|export\b[^'"\n]*?\bfrom\s*)['"]([^'"]+)['"]""", src, re.M)
+            specs += re.findall(r"""\bimport\(\s*['"]([^'"]+)['"]\s*\)""", src)
+            for spec in specs:
                 self.assertRegex(spec, r"^\./[a-z]+\.js$", "%s imports %s" % (os.path.basename(p), spec))
                 self.assertTrue(os.path.exists(os.path.join(os.path.dirname(p), spec[2:])), spec)
 

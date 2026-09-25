@@ -1,19 +1,21 @@
 {%- comment -%}
   An AI editorial: `where` is "desk" (the front's Desk's view) or "day" (closing its own day).
   Always boots folded (R7): kicker, heading, the disclosure (which never hides, R5), More.
-  `title_html` and `body` are builder-escaped HTML.
+  `title_html` and `body` are builder-escaped HTML. `idp` prefixes the element ids for the Unread
+  refill's desk copy ("desk-"), so it never shares an id with the same editorial in its day.
 {%- endcomment -%}
 {%- assign e = include.e -%}
+{%- assign eid = include.idp | append: e.sid -%}
 {%- assign fid = '' -%}
-{%- if e.body.size > 0 -%}{%- assign fid = 'f-' | append: e.sid -%}{%- endif -%}
-<article class="ed ed--{{ include.where }} is-folded" id="{{ e.sid }}" data-zone="editorial" data-story="{{ e.sid }}" data-edition="{{ e.edition }}" data-topics="{{ e.topics | join: ' ' }}" aria-labelledby="h-{{ e.sid }}">
+{%- if e.body.size > 0 -%}{%- assign fid = 'f-' | append: eid -%}{%- endif -%}
+<article class="ed ed--{{ include.where }} is-folded" id="{{ eid }}" data-zone="editorial" data-story="{{ e.sid }}" data-edition="{{ e.edition }}" data-topics="{{ e.topics | join: ' ' }}" aria-labelledby="h-{{ eid }}">
   <header class="ed__top">
     <span class="edchip">AI editorial</span>
     <p class="ed__kick">{{ e.stream_label }} desk’s view<span aria-hidden="true"> · </span><span class="vh">, covering </span>{% include home/range.html p=e.period %}</p>
   </header>
-  <h3 class="ed__hl{% if e.title_is_lede %} ed__hl--lede{% endif %}" id="h-{{ e.sid }}">{{ e.title_html }}</h3>
+  <h3 class="ed__hl{% if e.title_is_lede %} ed__hl--lede{% endif %}" id="h-{{ eid }}">{{ e.title_html }}</h3>
   <p class="ed__disc">Opinion, written by the desk’s AI — a synthesis across the week’s sourced stories, not itself sourced reporting.</p>
-  <div class="fold ed__body" id="f-{{ e.sid }}">{% for p in e.body %}<p>{{ p }}</p>{% endfor %}</div>
+  <div class="fold ed__body" id="f-{{ eid }}">{% for p in e.body %}<p>{{ p }}</p>{% endfor %}</div>
   <footer class="line line--ed">
     <a class="jump" href="#d-{{ e.date }}"><span aria-hidden="true">←</span>{{ e.day_label }} edition</a>
     {% include home/actions.html fold=fid %}

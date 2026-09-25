@@ -10,7 +10,7 @@
     <header class="row__head">
       {% include home/headline.html s=s id=id cls=hcls %}
       {%- if s.deck %}<p class="deck">{{ s.deck | escape }}</p>{% endif %}
-      <p class="row__meta">{% if s.show_desk %}<span class="row__desk"><span class="vh">Desk: </span>{{ s.stream_label }}</span>{% endif %}{% if s.fresh %}<span class="fresh">Just in</span>{% endif %}{% include home/meta.html s=s %}</p>
+      <p class="row__meta">{% include home/event.html s=s %}{% if s.show_desk %}<span class="row__desk"><span class="vh">Desk: </span>{{ s.stream_label }}</span>{% endif %}{% if s.fresh %}<span class="fresh">Just in</span>{% endif %}{% include home/meta.html s=s %}</p>
     </header>
     {%- if s.importance > 1 and s.why and s.why != "" %}
     <div class="row__why">{% include home/why.html s=s %}</div>

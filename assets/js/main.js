@@ -6,7 +6,7 @@ import { current, record, initPrefs } from './prefs.js';
 import { initBoard } from './board.js';
 import { initFold } from './fold.js';
 import { initVotes } from './votes.js';
-import { initOg } from './og.js';
+import { initOg, watchSlots } from './og.js';
 import { initFresh } from './fresh.js';
 import { initDialogs } from './dialog.js';
 import { initPropose } from './propose.js';
@@ -17,7 +17,7 @@ if (!fb().enabled) root.classList.add('fb-off');  // feedback kill switch: votes
 
 initDialogs();
 initFold();
-const board = initBoard({ prefs: current(), record });
+const board = initBoard({ prefs: current(), record, adopt: watchSlots });
 on('roam', board.remoteRead);
 onExternalChange(board.remoteRead);                // another tab marked something read
 initSync();

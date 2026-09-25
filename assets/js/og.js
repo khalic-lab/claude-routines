@@ -34,12 +34,22 @@ function fill(slot) {
   }).catch(() => { slot.hidden = true; });
 }
 
-export function initOg() {
-  const slots = [...document.querySelectorAll('.photo[data-og]')];
+let io = null;
+
+// observe every image slot under `root` (the page at start; a reserve card when the Unread refill
+// first brings it in)
+export function watchSlots(root) {
+  const slots = [...root.querySelectorAll('.photo[data-og]')].filter((s) => !s.dataset.ogDone);
   if (!slots.length) return;
   if (!('IntersectionObserver' in window)) { slots.forEach((s) => { s.hidden = true; }); return; }
-  const io = new IntersectionObserver((es) => {
-    for (const e of es) if (e.isIntersecting) { io.unobserve(e.target); fill(e.target); }
-  }, { rootMargin: '600px 0px' });
+  if (!io) {
+    io = new IntersectionObserver((es) => {
+      for (const e of es) if (e.isIntersecting) { io.unobserve(e.target); fill(e.target); }
+    }, { rootMargin: '600px 0px' });
+  }
   slots.forEach((s) => io.observe(s));
+}
+
+export function initOg() {
+  watchSlots(document);
 }

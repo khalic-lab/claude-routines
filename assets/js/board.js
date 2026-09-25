@@ -2,20 +2,19 @@
 //
 // Items are the elements that carry a read id (data-story): front cards, index rows and
 // editorials. Pointer rows ([data-ptr]) stand in a day for an item lifted to the front and follow
-// that item. Filtering only sets the `hidden` attribute; it never reorders or measures anything.
+// that item. Filtering only sets the `hidden` attribute; it never measures anything. The one
+// thing that moves is the front under the Unread filter, which refill.js composes from the
+// builder's reserve (reserve copies are not items: each story is counted once, by its row).
 import { READ_KEY, UNREAD_KEY, readMap, unreadMap, save } from './store.js';
 import { noteLocalRead } from './sync.js';
 import { anchored } from './fold.js';
+import { createRefill } from './refill.js';
 
 const main = document.getElementById('main');
 export const items = main ? [...main.querySelectorAll('[data-story]')] : [];
 const ptrs = main ? [...main.querySelectorAll('[data-ptr]')] : [];
-const byId = new Map();
 const storiesByEdition = new Map();
 for (const el of items) {
-  const id = el.dataset.story;
-  if (!byId.has(id)) byId.set(id, []);
-  byId.get(id).push(el);
   if (!isEditorial(el)) {
     if (!storiesByEdition.has(el.dataset.edition)) storiesByEdition.set(el.dataset.edition, []);
     storiesByEdition.get(el.dataset.edition).push(el);
@@ -59,10 +58,14 @@ function setRead(el, v) {
   noteLocalRead(id, v);
 }
 
+// a pointer follows the element its link targets: a front card (#c-…) or the desk's editorial
+const target = (p) => document.getElementById((p.querySelector('a') || { getAttribute: () => '#' }).getAttribute('href').slice(1));
+let refill = { compose: () => [], copies: () => [] };
+
 // Reading dims and never hides, moves or folds (owner ruling, 2026-07-26): paint touches the
 // read class and the ✓ state only.
 export function paint() {
-  for (const el of items) {
+  for (const el of [...items, ...refill.copies()]) {
     const r = isRead(el);
     el.classList.toggle('is-read', r);
     const b = el.querySelector('.readbtn');
@@ -72,7 +75,7 @@ export function paint() {
     }
   }
   for (const p of ptrs) {
-    const t = (byId.get(p.dataset.ptr) || [])[0];
+    const t = target(p);
     p.classList.toggle('is-read', !!t && isRead(t));
   }
   counts();
@@ -111,7 +114,10 @@ const anyShown = (root) => !!root.querySelector('[data-story]:not([hidden]), [da
 export function apply() {
   let shown = 0;
   for (const el of items) { const m = matches(el); el.hidden = !m; if (m) shown++; }
-  for (const p of ptrs) { const t = (byId.get(p.dataset.ptr) || [])[0]; p.hidden = !t || t.hidden; }
+  // the front: the builder's, or under Unread the refill; nothing below unhides what it decided
+  const cards = refill.compose(rs === 'unread', active);
+  for (const p of ptrs) { const t = target(p); p.hidden = !t || !t.isConnected || t.hidden; }
+  frontLine(cards.filter((c) => !c.hidden));
   if (main) {
     for (const z of main.querySelectorAll('.fcards, .desk, .front, section.day')) z.hidden = !anyShown(z);
     // an in-page link never points at something the filter hid (pointer rows follow their item)
@@ -147,6 +153,23 @@ export function apply() {
   counts();
 }
 
+// "The 4 stories that matter most right now · from Wed 23 Sep", recounted from the cards shown
+const frontN = main && main.querySelector('.front__n');
+function frontLine(cards) {
+  if (!frontN || !frontN.dataset.date) return;
+  if (!frontN.dataset.orig) frontN.dataset.orig = frontN.textContent;
+  if (!cards.length) { frontN.textContent = frontN.dataset.orig; return; }
+  const unread = rs === 'unread' ? 'unread ' : '';
+  const n = cards.length === 1 ? 'The ' + unread + 'story that matters' : 'The ' + cards.length + ' ' + unread + 'stories that matter';
+  const older = new Map();
+  for (const c of cards) {
+    const t = c.querySelector('.fday');
+    if (t && t.getAttribute('datetime') !== frontN.dataset.date) older.set(t.getAttribute('datetime'), t.textContent);
+  }
+  const from = [...older.keys()].sort().reverse().map((k) => older.get(k));
+  frontN.textContent = n + ' most right now' + (from.length ? ' · from ' + from.join(', ') : '');
+}
+
 function paintControls() {
   for (const c of chips) {
     const k = c.dataset.topic;
@@ -162,7 +185,8 @@ function topItem() {
   return items.find((el) => !el.hidden && el.getBoundingClientRect().bottom > top) || null;
 }
 
-export function initBoard({ prefs, record }) {
+export function initBoard({ prefs, record, adopt = () => {} }) {
+  refill = createRefill(main, { isRead, beatOk, adopt });
   // restore the stored selection; held keys survive (R37)
   const seed = (p) => {
     active.clear();
@@ -204,7 +228,7 @@ export function initBoard({ prefs, record }) {
         if (announce) announce.textContent = isRead(el) ? 'Marked read' : 'Marked unread';
         if (rs) {
           apply();
-          if (el.hidden) { const on = segs.find((b) => b.getAttribute('aria-pressed') === 'true'); if (on) on.focus(); }
+          if (el.hidden || !el.isConnected) { const on = segs.find((b) => b.getAttribute('aria-pressed') === 'true'); if (on) on.focus(); }
         }
         return;
       }

@@ -1,7 +1,7 @@
 ---
 layout: default
 css: [reset, base, layout, components, utilities, state]
-js: [main, store, sync, prefs, board, fold, votes, og, fresh, dialog, propose, probe]
+js: [main, store, sync, prefs, board, refill, fold, votes, og, fresh, dialog, propose, probe]
 body_class: home
 ---
 {%- comment -%}
@@ -54,7 +54,7 @@ body_class: home
         <dt>{% include home/glyph.html imp=1 tier="brief" label="Brief" quiet=true %}</dt><dd>Brief — its headline; open it for the rest</dd>
         <dt><span class="edchip edchip--key">AI</span></dt><dd>AI editorial — opinion, not reporting</dd>
       </dl>
-      <p class="key__note">Position is the ranking: the front page first, then each day’s edition, biggest story first. A tag like “Science · 17–23 Sep” is the span that desk’s edition reports on. Read stories dim; they never move or shrink.</p>
+      <p class="key__note">Position is the ranking: the front page first, then each day’s edition, biggest story first. A tag like “Science · 17–23 Sep” is the span that desk’s edition reports on. Read stories dim; they never move or shrink. Under Unread, the front page refills with the most important stories you haven’t read.</p>
     </details>
   </header>
 
@@ -84,10 +84,17 @@ body_class: home
 {%- else %}
       {%- assign front = feed.front %}
       {%- if front.items.size > 0 or front.desk != nil %}
-      <section class="front" data-zone="front" aria-labelledby="front-h">
+      {%- capture rsv %}{% for i in front.reserve %}{% assign r = board[i] %}{{ r.sid | default: r.id }} {% endfor %}{% endcapture %}
+      {%- capture drsv %}{% for i in front.desk_reserve %}{{ board[i].sid }} {% endfor %}{% endcapture %}
+      {%- comment -%}
+        data-reserve / data-desk-reserve: the builder's refill order for the Unread filter
+        (front.reserve, front.desk_reserve). Their first entries are the front below; the rest are
+        <template>s at the end of this section, out of the document until the page needs one.
+      {%- endcomment %}
+      <section class="front" data-zone="front" aria-labelledby="front-h" data-reserve="{{ rsv | strip }}" data-desk-reserve="{{ drsv | strip }}">
         <header class="front__head" data-zone="front-head">
           <h2 class="front__h" id="front-h">Front page · <time datetime="{{ front.date }}">{{ front.date_label }}</time></h2>
-          <p class="front__n">{% if front.n == 1 %}The story{% else %}The {{ front.n }} stories{% endif %} that matter most right now{% if front.older.size > 0 %} · from {{ front.older | join: ", " }}{% endif %}</p>
+          <p class="front__n" data-date="{{ front.date }}">{% if front.n == 1 %}The story that matters{% else %}The {{ front.n }} stories that matter{% endif %} most right now{% if front.older.size > 0 %} · from {{ front.older | join: ", " }}{% endif %}</p>
         </header>
         <div class="front__grid" data-zone="front-grid">
           <div class="front__top" data-zone="front-top">
@@ -105,7 +112,7 @@ body_class: home
             </aside>
             {%- endif %}
           </div>
-          {%- if front.items.size > 1 %}
+          {%- if front.items.size > 1 or front.reserve.size > front.items.size %}
           <ol class="fcards fcards--rest" role="list" start="2" data-zone="front-rest">
             {%- for i in front.items offset: 1 %}{% assign card = board[i] %}
             {% include home/front-card.html s=card %}
@@ -113,6 +120,12 @@ body_class: home
           </ol>
           {%- endif %}
         </div>
+        {%- for i in front.reserve offset: front.items.size %}{% assign card = board[i] %}
+        <template data-reserve-card="{{ card.sid | default: card.id }}">{% include home/front-card.html s=card reserve=true %}</template>
+        {%- endfor %}
+        {%- for i in front.desk_reserve offset: 1 %}{% assign ed = board[i] %}
+        <template data-reserve-desk="{{ ed.sid }}">{% include home/editorial.html e=ed where="desk" idp="desk-" %}</template>
+        {%- endfor %}
       </section>
       {%- endif %}
 
@@ -140,6 +153,12 @@ body_class: home
             <a href="#c-{{ pid }}"><span class="ptr__l"><span aria-hidden="true">↑</span>On the front</span><span class="ptr__h">{{ it.headline | escape }}</span></a>
           </li>
           {%- else %}
+          {%- if it.in_reserve %}
+          {%- assign pid = it.sid | default: it.id %}
+          <li class="ptr" data-zone="pointer" data-ptr="{{ pid }}" data-edition="{{ it.edition }}" data-reserve-ptr hidden>
+            <a href="#c-{{ pid }}"><span class="ptr__l"><span aria-hidden="true">↑</span>On the front</span><span class="ptr__h">{{ it.headline | escape }}</span></a>
+          </li>
+          {%- endif %}
           {% include home/row.html s=it %}
           {%- endif %}
           {%- endif %}
@@ -153,6 +172,11 @@ body_class: home
           <a href="#{{ it.sid }}"><span class="ptr__l"><span aria-hidden="true">↑</span>On the front</span><span class="ptr__h ptr__h--ed">{{ it.stream_label }} desk’s view — {{ it.title_text | default: it.title_html | strip_html }}</span></a>
         </p>
         {%- else %}
+        {%- if it.in_reserve %}
+        <p class="ptr ptr--ed" data-zone="pointer" data-ptr="{{ it.sid }}" data-edition="{{ it.edition }}" data-reserve-ptr hidden>
+          <a href="#desk-{{ it.sid }}"><span class="ptr__l"><span aria-hidden="true">↑</span>On the front</span><span class="ptr__h ptr__h--ed">{{ it.stream_label }} desk’s view — {{ it.title_text | default: it.title_html | strip_html }}</span></a>
+        </p>
+        {%- endif %}
         {% include home/editorial.html e=it where="day" %}
         {%- endif %}
         {%- endif %}
