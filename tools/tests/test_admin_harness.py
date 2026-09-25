@@ -2,7 +2,7 @@
 browser (the no-browser rule for agents). We render tools/admin/harness.py, then assert the shape
 the architect will screenshot: the fixture's data is inlined, no Liquid survives, nothing loads off
 the network except the self-hosted fonts, the document-scroll constraints hold, and every JS block
-parses under `node --check`. The layout's page script carries no dependency on _layouts/home.html.
+parses under `node --check`. The layout's page script carries no dependency on the homepage's modules.
 
 The harness is run by subprocess, not imported: tools/admin/ holds only harness.py on this branch
 (tools/admin/__init__.py is a sibling slice), so a package import would fail before integration.
@@ -77,6 +77,13 @@ class AdminHarness(unittest.TestCase):
     def test_proposal_present(self):
         self.assertIn(self.fix["proposals_pending"][0]["file"], self.html)
 
+    # ---- the shared tokens really are embedded (an empty embed renders an untokened page) ----
+    def test_tokens_are_embedded(self):
+        self.assertIn("@layer reset, tokens, base, layout, components, utilities, state;", self.html)
+        self.assertRegex(self.html, r"--paper:\s*light-dark\(")
+        self.assertIn("color-scheme: light dark", self.html)
+        self.assertIn("font-family: 'Anton'", self.html)
+
     # ---- no Liquid survives ----
     def test_no_liquid(self):
         self.assertNotIn("{{", self.html)
@@ -138,7 +145,7 @@ class AdminHarness(unittest.TestCase):
 
     def test_session_shape_matches_home(self):
         script = _scripts(self.layout)[0]
-        # same validator and same {token, reader, at} seed shape as _layouts/home.html
+        # same validator and same {token, reader, at} seed shape as the homepage (assets/js/sync.js)
         self.assertIn("typeof s.token === \"string\" && s.token && s.reader", script)
         self.assertIn("reader: j.reader, at: Date.now()", script)
 

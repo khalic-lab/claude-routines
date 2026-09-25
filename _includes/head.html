@@ -1,0 +1,44 @@
+{%- comment -%}
+  <head> for every layout except the self-owned admin one. Stylesheets come from the rendering
+  layout's `css:` list (layout front matter merges up to default.html), each stamped with the build
+  time so a new build never pairs new HTML with a cached old sheet (Pages serves max-age=600).
+  Layouts that ship modules list them in `js:` (entry first): they get an import map that stamps every
+  module the same way, and the `.js` gate, which folds text only when module script is supported and removes itself if the
+  entry module never reports ready -- without script every text shows.
+{%- endcomment -%}
+{%- assign v = site.time | date: '%s' -%}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+{%- if page.noindex %}
+<meta name="robots" content="noindex">
+{%- endif %}
+{%- comment -%} jekyll-seo-tag titles the homepage "News | <description>"; the site's own rule is
+  "<page> | News" and just "News" for the front page. {%- endcomment %}
+<title>{% if page.title and page.title != site.title %}{{ page.title | escape }} | {% endif %}{{ site.title | escape }}</title>
+{% seo title=false %}
+{% feed_meta %}
+<link rel="preload" as="font" type="font/woff2" crossorigin href="{{ '/assets/fonts/anton-latin.woff2' | relative_url }}">
+{% include tokens.html %}
+{%- for sheet in layout.css %}
+<link rel="stylesheet" href="{{ '/assets/css/' | append: sheet | append: '.css' | relative_url }}?v={{ v }}">
+{%- endfor %}
+{%- if layout.js %}
+{%- if site.data.homefeed.build_stamp %}
+<meta name="build-stamp" content="{{ site.data.homefeed.build_stamp }}">
+{%- endif %}
+<script type="importmap">
+{ "imports": {
+{%- for m in layout.js -%}
+{%- assign mp = '/assets/js/' | append: m | append: '.js' | relative_url %}
+  "{{ mp }}": "{{ mp }}?v={{ v }}"{% unless forloop.last %},{% endunless %}
+{%- endfor %}
+} }
+</script>
+<script>
+  (function (d) {
+    if (!('noModule' in HTMLScriptElement.prototype)) return;
+    d.classList.add('js');
+    document.addEventListener('DOMContentLoaded', function () { if (!window.__siteReady) d.classList.remove('js'); });
+  })(document.documentElement);
+</script>
+{%- endif %}

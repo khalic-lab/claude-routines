@@ -2,9 +2,9 @@
 """Render /admin/ as a standalone HTML file — the smoke surface for _layouts/admin.html's inline
 CSS/JS, which Jekyll-only rendering makes otherwise untestable without a local Ruby toolchain.
 
-It composes admin.html's content into _layouts/admin.html, substitutes the one theme include
-(`head/custom.html`) with that file's Folio palette <style> blocks (fonts rewritten to file:// so
-they actually load, exactly as tools/home_harness.py does), strips all remaining Liquid, then
+It composes admin.html's content into _layouts/admin.html, substitutes the one shared include
+(`tokens.html`) with that file's <style> blocks (palette, layer order, fonts rewritten to file://
+so they actually load), strips all remaining Liquid, then
 injects a small bootstrap that:
   * seeds the passkey session (syncSession:v1) so the page renders SIGNED IN — unless --signed-out,
   * stubs window.fetch for /admin/* and /auth/* off the inlined fixture snapshot (no network), and
@@ -26,22 +26,23 @@ import re
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DEFAULT_FIXTURE = os.path.join("tools", "tests", "fixtures", "admin-snapshot.json")
 
-# window.__FB in head/custom.html is a <script>, not a <style>, so the style-only embed below does
+# window.__FB in _includes/tokens.html is a <script>, not a <style>, so the style-only embed below does
 # not carry it. Define it here so base() resolves the Worker origin just as it does in production;
 # the fetch stub matches on pathname, so the host is cosmetic.
 FB_URL = "https://feedback-sink.khalic-lab.workers.dev"
 
 
 def _tokens():
-    """Every <style> block from _includes/head/custom.html, fonts rewritten to file:// URLs.
+    """Every <style> block from _includes/tokens.html, fonts rewritten to file:// URLs.
 
-    Mirrors tools/home_harness.py._extract_tokens: embedding the whole blocks (not a regex-picked
-    :root) cannot silently drop a token, and it carries the button/field chrome too. Any Liquid left
-    after the font substitution is a wrong render, so fail loudly.
+    Embedding the whole blocks (not a regex-picked :root) cannot silently drop a token. Liquid
+    comments are dropped first; any other Liquid left after the font substitution is a wrong
+    render, so fail loudly.
     """
-    src = os.path.join(ROOT, "_includes", "head", "custom.html")
+    src = os.path.join(ROOT, "_includes", "tokens.html")
     with open(src) as fh:
-        blocks = re.findall(r"<style>.*?</style>", fh.read(), re.S)
+        text = re.sub(r"\{%-?\s*comment\s*-?%\}.*?\{%-?\s*endcomment\s*-?%\}", "", fh.read(), flags=re.S)
+        blocks = re.findall(r"<style>.*?</style>", text, re.S)
     if not blocks:
         raise SystemExit("admin harness: no <style> block in %s" % src)
     blocks = [re.sub(r"""\{\{\s*["'](/assets/fonts/[^"']+)["']\s*\|\s*relative_url\s*\}\}""",
@@ -49,7 +50,7 @@ def _tokens():
     joined = "".join(blocks)
     leftover = re.findall(r"\{\{.*?\}\}|\{%.*?%\}", joined, re.S)
     if leftover:
-        raise SystemExit("admin harness: unexpanded Liquid in custom.html CSS: %r" % leftover[:4])
+        raise SystemExit("admin harness: unexpanded Liquid in tokens.html CSS: %r" % leftover[:4])
     fb = '<script>window.__FB = { enabled: true, url: "%s" };</script>' % FB_URL
     return joined + fb
 
@@ -112,8 +113,8 @@ def render(fixture_path, signed_out):
     with open(fixture_path) as fh:
         fixture = json.load(fh)
 
-    # the one theme include -> embedded palette tokens + window.__FB
-    layout = re.sub(r"\{%-?\s*include\s+head/custom\.html\s*-?%\}", lambda m: _tokens(), layout)
+    # the one shared include -> embedded palette tokens + window.__FB
+    layout = re.sub(r"\{%-?\s*include\s+tokens\.html\s*-?%\}", lambda m: _tokens(), layout)
     # {{ content }} -> admin.html body
     layout = layout.replace("{{ content }}", _page_content())
     # bootstrap goes right after <body> so it runs before the page script at </body>

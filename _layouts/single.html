@@ -1,0 +1,58 @@
+---
+layout: default
+css: [reset, base, prose, utilities, state]
+---
+{%- comment -%}
+  Reading pages: the weekly evaluator reviews (the only posts still published), /prompts/ and the
+  404. The name `single` is pinned by tools/publish.py (ensure_front_matter writes it into every
+  post) and tools/tests/test_publish.py, so it stays.
+{%- endcomment -%}
+{%- assign is_review = false -%}
+{%- if page.categories contains 'evaluator' -%}{%- assign is_review = true -%}{%- endif -%}
+<div class="page-shell">
+  <header class="site-head">
+    <a class="site-name" href="{{ '/' | relative_url }}">{{ site.title | escape }}</a>
+    <nav class="site-head__nav" aria-label="Site">
+      <a href="{{ '/' | relative_url }}">Front page</a>
+      <a href="{{ '/prompts/' | relative_url }}">The prompts</a>
+    </nav>
+  </header>
+  <main id="main">
+    <article class="prose">
+      <header class="prose__head">
+        {%- if is_review %}<p class="prose__kicker">Weekly pipeline review</p>{% endif %}
+        <h1 class="prose__title">{{ page.title | escape }}</h1>
+        {%- if page.collection == 'posts' %}
+        <p class="prose__meta"><time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%-d %B %Y" }}</time></p>
+        {%- endif %}
+      </header>
+      <div class="prose__body">
+{{ content }}
+      </div>
+    </article>
+    {%- if page.previous or page.next %}
+    <nav class="pager" aria-label="Other reviews">
+      {%- if page.previous %}<a class="pager__prev" href="{{ page.previous.url | relative_url }}"><small>← Earlier</small><span>{{ page.previous.title | escape }}</span></a>{% endif %}
+      {%- if page.next %}<a class="pager__next" href="{{ page.next.url | relative_url }}"><small>Later →</small><span>{{ page.next.title | escape }}</span></a>{% endif %}
+    </nav>
+    {%- endif %}
+  </main>
+  <footer class="site-foot">
+    {% include colophon.html %}
+  </footer>
+</div>
+{%- if is_review %}
+<script>
+  // The reviews open their section headings with an emoji; the kicker styling carries the
+  // hierarchy, so strip a leading emoji run from the rendered h2/h3 (the source stays untouched).
+  (function () {
+    var LEAD;
+    try { LEAD = /^(?:(?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|‍\p{Extended_Pictographic})*\s*)+/u; }
+    catch (e) { return; }
+    document.querySelectorAll('.prose__body h2, .prose__body h3').forEach(function (h) {
+      var n = h.firstChild;
+      if (n && n.nodeType === 3) n.nodeValue = n.nodeValue.replace(LEAD, '');
+    });
+  })();
+</script>
+{%- endif %}

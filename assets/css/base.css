@@ -1,0 +1,21 @@
+/* Base layer: the document's type and colour, links, focus, selection. */
+@layer base {
+  /* The root ladder every rem rides on: 16/18/20/22px at 0/768/1024/1280. It was the theme's until
+     2026-09-24 and is now ours, byte for byte, so no rem value on the site moved with the theme. */
+  html { font-size: 16px; }
+  @media (min-width: 768px) { html { font-size: 18px; } }
+  @media (min-width: 1024px) { html { font-size: 20px; } }
+  @media (min-width: 1280px) { html { font-size: 22px; } }
+
+  body {
+    background: var(--paper); color: var(--ink);
+    font: 1rem/1.5 var(--serif);
+    text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  strong, b { font-weight: 600; }
+  code, kbd, pre, samp { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  /* one focus ring for every control on every page */
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  ::selection { background: var(--accent); color: var(--paper); }
+}

@@ -1,0 +1,76 @@
+{%- comment -%}
+  THE ONE SHARED INCLUDE: cascade-layer order, the palette, the self-hosted display face and the
+  feedback Worker's address. Every page gets it (default layout via head.html, and the self-owned
+  admin layout directly). Keep it to tokens only: tools/admin/harness.py embeds these <style>
+  blocks into the admin smoke page and bans sticky/fixed/100vh/100dvh/overflow-y in them, and the
+  only Liquid it can expand is the font `url()` form below.
+{%- endcomment -%}
+<style>
+  /* One declaration of the layer order, first thing on every page. Later layers win regardless of
+     specificity, which is what replaces the old page's priority flags and specificity fights:
+     `state` (hidden, read, js gates) beats `components`, which beats `layout`, and so on. */
+  @layer reset, tokens, base, layout, components, utilities, state;
+
+  @layer tokens {
+    /* ONE palette, both schemes: light-dark(light, dark), armed by `color-scheme`. Red is a
+       deliberate PAIR (4.89:1 on light paper, 5.97:1 on dark); --accent carries structure. */
+    :root {
+      color-scheme: light dark;
+      --paper:    light-dark(#eceae4, #14151a);
+      --panel:    light-dark(#e2e1d9, #1d1e25);
+      --card:     light-dark(#f3f2ec, #1a1b21);
+      --ink:      light-dark(#23252b, #e7e5dd);
+      --muted:    light-dark(#5f616a, #9a9ca6);
+      --muted-ui: light-dark(#565863, #b0b2bb);
+      --rule:     light-dark(rgb(35 37 43 / .62), rgb(231 229 221 / .5));
+      --hair:     light-dark(rgb(35 37 43 / .14), rgb(231 229 221 / .13));
+      --field:    light-dark(#f6f5f0, rgb(255 255 255 / .05));
+      --frame:    light-dark(rgb(35 37 43 / .46), rgb(231 229 221 / .3));
+      --accent:   light-dark(#2b3f6b, #8fa9df);
+      --red:      light-dark(#c8102e, #ff5a5f);
+      --shadow-pop: 0 8px 30px light-dark(rgb(0 0 0 / .14), rgb(0 0 0 / .55));
+      --scrim: rgb(0 0 0 / .45);
+      --img-filter: grayscale(1) contrast(1.08);
+      --serif: ui-serif, 'New York', 'Iowan Old Style', Charter, Georgia, 'Times New Roman', serif;
+      /* 'Anton Fallback' is metric-matched and must stay ahead of the system condensed faces */
+      --display: 'Anton', 'Anton Fallback', 'Arial Narrow', 'Helvetica Neue Condensed', sans-serif-condensed, sans-serif;
+      --sans: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    /* a filter cannot take light-dark(), so the one scheme-dependent filter is set here */
+    @media (prefers-color-scheme: dark) {
+      :root { --img-filter: grayscale(1) contrast(1.06) brightness(.9); }
+    }
+  }
+
+  /* Anton, SIL OFL 1.1, self-hosted (assets/fonts/OFL.txt): no third-party font request.
+     `font-weight: 400 900` is a deliberate over-claim that suppresses faux-bold; do not "fix" it.
+     `relative_url` is load-bearing: the site lives under the /claude-routines baseurl. */
+  @font-face {
+    font-family: 'Anton';
+    src: url('{{ "/assets/fonts/anton-latin.woff2" | relative_url }}') format('woff2');
+    font-weight: 400 900; font-style: normal; font-display: swap;
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+      U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Anton';
+    src: url('{{ "/assets/fonts/anton-latin-ext.woff2" | relative_url }}') format('woff2');
+    font-weight: 400 900; font-style: normal; font-display: swap;
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+      U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+      U+2C60-2C7F, U+A720-A7FF;
+  }
+  /* Swap-window stand-in fitted to the live headline corpus (86% sets total headline height equal
+     to Anton's; above 88% is monotonically worse). Overrides are pre-divided by size-adjust. */
+  @font-face {
+    font-family: 'Anton Fallback';
+    src: local('Arial Narrow'), local('ArialNarrow'), local('Helvetica Neue Condensed Bold'), local('Roboto Condensed');
+    font-weight: 400 900; font-style: normal;
+    size-adjust: 86%; ascent-override: 140%; descent-override: 39.1%; line-gap-override: 0%;
+  }
+</style>
+<script>
+  // Feedback Worker (tools/feedback-sink). Kill switch: enabled:false hides votes and the propose
+  // form site-wide. Read by the homepage modules and by /admin/.
+  window.__FB = { enabled: true, url: "https://feedback-sink.khalic-lab.workers.dev" };
+</script>

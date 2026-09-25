@@ -1,11 +1,6 @@
 source "https://rubygems.org"
 
-gem "jekyll"
-gem "minimal-mistakes-jekyll"
-
-group :jekyll_plugins do
-  gem "jekyll-feed"
-  gem "jekyll-sitemap"
-  gem "jekyll-paginate"
-  gem "jekyll-include-cache"
-end
+# Local builds match GitHub Pages exactly (tools/verify/build.sh runs Pages' own container). The
+# gem pins Jekyll and the allowlisted plugins _config.yml uses: jekyll-feed, jekyll-sitemap and
+# jekyll-seo-tag.
+gem "github-pages", group: :jekyll_plugins

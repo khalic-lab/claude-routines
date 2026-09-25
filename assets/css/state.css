@@ -1,0 +1,9 @@
+/* State layer, last in the order: it wins over every other layer with no priority flag. */
+@layer state {
+  [hidden] { display: none; }
+  /* controls that only work with script are absent, not inert, without it */
+  html:not(.js) .needs-js { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none; animation: none; scroll-behavior: auto; }
+  }
+}

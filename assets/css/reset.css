@@ -1,0 +1,11 @@
+/* Reset layer: box model and zeroed margins, nothing visual. */
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body, h1, h2, h3, h4, h5, h6, p, ol, ul, dl, dd, figure, blockquote, pre { margin: 0; }
+  ol[role="list"], ul[role="list"] { list-style: none; padding: 0; }
+  img, picture, video { display: block; max-inline-size: 100%; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  /* prose never forces a horizontal scroll, whatever token it carries */
+  p, li, dd, dt, h1, h2, h3, h4, blockquote, figcaption { overflow-wrap: anywhere; }
+}

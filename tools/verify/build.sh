@@ -2,7 +2,7 @@
 # Faithful local GitHub Pages build: the same container GitHub's own Pages action runs
 # (ghcr.io/actions/jekyll-build-pages, github-pages gem, safe mode, the Pages plugin allowlist).
 #
-#   tools/verify/build.sh [OUT_DIR]        # default OUT_DIR=/tmp/fp-build
+#   tools/verify/build.sh [OUT_DIR]        # default OUT_DIR=/tmp/fp-build; LOG=... overrides the log
 #
 # The repo is COPIED to OUT_DIR/src first (tracked + untracked-but-not-ignored files), so _site
 # and .jekyll-cache never land in the working tree. The site ends up in OUT_DIR/src/_site and is
@@ -19,7 +19,7 @@ REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${1:-/tmp/fp-build}"
 SRC="$OUT/src"
 IMAGE="ghcr.io/actions/jekyll-build-pages:v1.0.13"
-LOG="$OUT/build.log"
+LOG="${LOG:-$OUT/build.log}"
 
 mkdir -p "$OUT"
 rm -rf "$SRC" "$OUT/www"
@@ -43,8 +43,8 @@ INPUT_TOKEN="$GH_TOKEN_VALUE" docker run --rm --platform linux/amd64 \
   -e INPUT_BUILD_REVISION="$REV" \
   -e INPUT_TOKEN \
   -e GITHUB_REPOSITORY=khalic-lab/claude-routines \
-  "$IMAGE" > "$LOG" 2>&1
-STATUS=$?
+  "$IMAGE" 2>&1 | tee "$LOG" | grep --line-buffered -E 'Writing:|done in|Error|Warning|warning' | sed -u 's/^ *//'
+STATUS=${PIPESTATUS[0]}
 set -e
 unset GH_TOKEN_VALUE
 
@@ -54,6 +54,7 @@ if grep -Eq 'gh[pousr]_[A-Za-z0-9]{20,}' "$LOG"; then
 fi
 
 WARN=$(grep -Eci 'liquid (warning|exception|syntax error)|Liquid Exception|Error:' "$LOG" || true)
-echo "build: exit $STATUS, liquid warnings/errors: $WARN"
+GEMWARN=$(grep -c "can't satisfy your Gemfile" "$LOG" || true)
+echo "build: exit $STATUS, liquid warnings/errors: $WARN, Gemfile warnings: $GEMWARN, pages: $(find "$SRC/_site" -name '*.html' | wc -l | tr -d ' ') html"
 ln -sfn "$SRC/_site" "$OUT/www/claude-routines"
-[ "$STATUS" -eq 0 ] && [ "$WARN" -eq 0 ]
+[ "$STATUS" -eq 0 ] && [ "$WARN" -eq 0 ] && [ "$GEMWARN" -eq 0 ]

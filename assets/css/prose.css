@@ -1,0 +1,126 @@
+/* Reading pages: the evaluator reviews, /prompts/ and the 404, all on _layouts/single.html. */
+@layer layout {
+  .page-shell {
+    display: flex; flex-direction: column; min-block-size: 100dvh;
+    padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+  }
+  .page-shell > main { flex: 1 0 auto; inline-size: 100%; max-inline-size: 42em; margin-inline: auto; padding-block: 1.6rem 2.4rem; }
+}
+
+@layer components {
+  /* site header: the nameplate as a link home, never a heading (the article owns the h1) */
+  .site-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap;
+    padding-block: 14px 10px; border-block-end: 3px solid var(--ink);
+  }
+  .site-name {
+    font: 600 2.1rem/.85 var(--display); text-transform: uppercase; letter-spacing: -.01em;
+    text-decoration: none; color: var(--ink);
+  }
+  .site-name:hover { color: var(--accent); }
+  .site-head__nav { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .site-head__nav a, .site-foot a {
+    font: 700 .6rem/1.3 var(--sans); letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted-ui); text-decoration: none; min-block-size: 28px; display: inline-flex; align-items: center;
+  }
+  .site-head__nav a:hover, .site-foot a:hover { color: var(--accent); }
+
+  .site-foot {
+    border-block-start: 3px solid var(--ink); padding-block: 14px calc(18px + env(safe-area-inset-bottom));
+    font: .72rem/1.5 var(--sans); color: var(--muted);
+  }
+  .colophon { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; }
+
+  /* ---- the article */
+  .prose { font-size: 1.06rem; line-height: 1.6; }
+  .prose__kicker {
+    font: 700 .6rem/1.35 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+    margin-block-end: .5em;
+  }
+  .prose__title {
+    font: 600 2.3em/1.1 var(--display); text-transform: uppercase; letter-spacing: .005em; color: var(--ink);
+    text-wrap: balance;
+  }
+  .prose__meta {
+    font: 700 .6rem/1.35 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted-ui);
+    margin-block: .8rem 1.4rem;
+  }
+  .prose__head { margin-block-end: 1.6em; }
+  .prose__head:has(.prose__meta) { margin-block-end: 0; }
+  .prose p, .prose ul, .prose ol, .prose table, .prose pre { margin-block: 0 1em; }
+  .prose ul, .prose ol { padding-inline-start: 1.3em; }
+  .prose li { margin-block-end: .35em; }
+  .prose a {
+    color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px;
+    text-underline-offset: 2px; text-decoration-color: var(--muted-ui);
+  }
+  .prose a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+  /* a review's body repeats its own title as an in-body h1: demote it under the page title */
+  .prose__body > h1 { font: 600 1.5em/1.2 var(--display); text-transform: uppercase; margin-block: .2em .6em; }
+  .prose__body > h2 {
+    font: 600 .82em/1.3 var(--sans); text-transform: uppercase; letter-spacing: .14em; color: var(--muted-ui);
+    margin-block: 2.4em 1.2em; padding-block-start: 1em; border-block-start: 1px solid var(--rule);
+  }
+  .prose__body > h2:first-child { margin-block-start: .7em; }
+  .prose__body > h3 { font: 600 1.25em/1.25 var(--display); text-transform: uppercase; margin-block: 1.6em .4em; color: var(--ink); }
+  .prose__body > :is(h4, h5, h6) { color: var(--ink); margin-block: 1.3em .4em; }
+  /* the credibility tags ([preprint], [single-source]) are inline code in the reviews */
+  .prose code {
+    font: 500 .72em var(--sans); text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
+    border: 1px solid var(--hair); border-radius: 999px; padding: .12em .6em;
+  }
+  .prose blockquote {
+    border-inline-start: 2px solid var(--accent); background: var(--panel); font-style: italic;
+    margin-block: 1.1em; padding: .5em 1.1em; color: var(--ink);
+  }
+  .prose hr { border: 0; border-block-start: 1px solid var(--rule); margin-block: 2.4em; }
+  .prose table {
+    display: block; overflow-x: auto; max-inline-size: 100%;
+    font: .8em/1.45 var(--sans); border-collapse: collapse;
+  }
+  .prose th, .prose td { border: 1px solid var(--hair); padding: .45em .6em; text-align: start; vertical-align: top; }
+  .prose th { background: var(--panel); font-weight: 600; }
+
+  .pager { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-block-start: 2.4em;
+    padding-block-start: 1em; border-block-start: 1px solid var(--rule); }
+  .pager a { display: grid; gap: 2px; max-inline-size: 48%; text-decoration: none; color: var(--ink); min-block-size: 44px; }
+  .pager a:hover { color: var(--accent); }
+  .pager small { font: 700 .6rem/1.3 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .pager span { font: .9rem/1.35 var(--serif); }
+  .pager__next { margin-inline-start: auto; text-align: end; }
+
+  /* ---- /prompts/: one disclosure per routine, each a rendered prompt document */
+  .prm-intro { font-family: var(--serif); color: var(--muted); }
+  .prm-intro code, .prm-doc code {
+    font: 400 .82em ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: none; letter-spacing: 0;
+    color: var(--ink); background: var(--card); border: 1px solid var(--hair); border-radius: 3px; padding: .08em .35em;
+  }
+  .prm { border: 1px solid var(--hair); background: var(--card); margin-block-end: 10px; }
+  .prm summary {
+    cursor: pointer; padding: 12px 14px; font: .72rem/1.4 var(--sans); text-transform: uppercase;
+    letter-spacing: .1em; color: var(--ink); min-block-size: 44px;
+  }
+  .prm summary::marker { color: var(--accent); }
+  .prm summary:hover { color: var(--accent); }
+  .prm summary:focus-visible { outline-offset: -2px; }
+  .prm summary strong { font-weight: 700; }
+  .prm summary span { color: var(--muted); margin-inline-start: .8em; letter-spacing: .08em; }
+  .prm-doc { padding: 4px 20px 20px; border-block-start: 1px solid var(--hair); background: var(--panel); font-size: .92rem; line-height: 1.65; }
+  .prm-doc h1, .prm-doc h2, .prm-doc h3 { font-family: var(--sans); color: var(--ink); border: 0; text-transform: none; letter-spacing: 0; padding: 0; }
+  .prm-doc h1 { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .14em;
+    margin-block: 1.9em .7em; padding-block-end: .4em; border-block-end: 1px solid var(--hair); }
+  .prm-doc h2 { font-size: .95rem; font-weight: 700; margin-block: 1.5em .45em; }
+  .prm-doc h3 { font-size: .88rem; font-weight: 600; margin-block: 1.3em .4em; }
+  .prm-doc p, .prm-doc li { font-size: .92rem; }
+  .prm-doc blockquote { margin-block: 1em; padding: .2em 0 .2em 1em; border-inline-start: 2px solid var(--accent);
+    color: var(--muted); font-style: normal; background: none; }
+  .prm-doc hr { border: 0; border-block-start: 1px solid var(--hair); margin-block: 1.6em; }
+  /* one dark terminal slab for fenced commands, in BOTH palettes (rouge tokens are tuned for a dark
+     background). Fixed hexes on purpose: `color-scheme: dark` on this subtree would flip every
+     light-dark() token inside it to its dark half in light mode. */
+  .prm-doc div.highlighter-rouge { font-size: .78rem; margin-block-end: 1.1em; background: #22252d; color: #e7e5dd; border: 1px solid var(--hair); }
+  .prm-doc pre { background: #22252d; color: #e7e5dd; padding: 10px 14px; margin-block-end: 1.1em;
+    overflow-x: auto; font-size: .78rem; line-height: 1.55; border: 1px solid var(--hair); }
+  .prm-doc div.highlighter-rouge pre { border: 0; margin: 0; }
+  .prm-doc pre code { border: 0; padding: 0; background: transparent; font: inherit; color: inherit; }
+}
