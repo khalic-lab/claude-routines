@@ -26,7 +26,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REQUIRED_EXCLUDES = {
     "CLAUDE.md", "ARCHITECTURE.md", "README.md", "reader-profile.md", "reader-profile",
     "docs", "diagrams", "tools", "routines", "feedback", "proposals", "briefs",
-    "index/stories", "watches.yml", "pending-notifications", "bridge.sh", "HANDOFF.md",
+    "index/stories", "index/alerts", "watches.yml", "pending-notifications", "bridge.sh", "HANDOFF.md",
 }
 
 SECRET_PATTERNS = [

@@ -4,7 +4,8 @@
 One command replaces the ~10 prompt-prose steps a writer routine used to replay by
 hand (DEDUP.md Steps C..E + its own Output section): record -> anchor -> computed
 footer telemetry -> source lint -> registry/institutions sync -> date lint -> feed
-+ stats rebuild -> source health -> notification stub -> git add/commit/push with
++ stats rebuild (+ missing-story alert) -> source health -> notification stub ->
+git add/commit/push with
 the rebase-conflict feed regeneration. A step can no longer be skipped, misordered,
 or typo'd -- the historical failure class this tool exists to close (registry.py
 sync went uninvoked 2026-07-07..07-10 and starved discovery).
@@ -81,20 +82,146 @@ def say(msg):
     print("[publish] %s" % msg, flush=True)
 
 
-def run_step(name, argv, root, dry_run):
+def run_step_out(name, argv, root, dry_run):
+    """run_step, also handing back the step's combined output ("" on dry-run or OSError)."""
     if dry_run:
         say("DRY-RUN %s: %s" % (name, " ".join(argv)))
-        return True
+        return True, ""
     try:
         proc = subprocess.run(argv, cwd=root, capture_output=True, text=True)
     except OSError as exc:
         say("%s: FAIL (%s)" % (name, exc))
-        return False
+        return False, ""
     out = (proc.stdout or "") + (proc.stderr or "")
     for line in out.strip().splitlines():
         say("  %s| %s" % (name, line))
     say("%s: %s" % (name, "OK" if proc.returncode == 0 else "FAIL (exit %d)" % proc.returncode))
-    return proc.returncode == 0
+    return proc.returncode == 0, out
+
+
+def run_step(name, argv, root, dry_run):
+    return run_step_out(name, argv, root, dry_run)[0]
+
+
+# --- missing-story alert (2026-09-25) ------------------------------------------------------
+# The feed builder never drops a story silently any more: a story whose prose it cannot parse
+# keeps a lede-only card and prints `WARN no body parsed: <post> story <id>`, and a kept index
+# record that reaches no card prints under `PARITY-FAIL:`. Both only print -- `--strict-parity`
+# would block the edition, the wrong trade -- so this turns them into ONE ntfy alert per run,
+# in the stub schema the bridge already drains ({title, click, body, tags}).
+#
+# Dedupe is per PROBLEM, not per run: the builder re-scans every post in its 14-day window, so
+# one broken post prints the same WARN on every publish of every desk for two weeks. Each
+# problem's key (kind|edition|story) gets one small state file under index/alerts/, named by
+# the key's hash, with deterministic content (no wall-clock). A pending-file check cannot
+# dedupe -- the bridge deletes stubs within ~10 minutes -- and one shared state file would be a
+# new rebase conflict whenever two desks publish at once (News + AI/ML share the Tue/Fri midday
+# slot); two runs creating the SAME file with the SAME bytes merge cleanly. The files ride the
+# edition's own commit (index/ is staged) and are pruned after 30 days, over twice the
+# builder's 14-day scan, so a pruned problem can no longer reprint.
+ALERT_DIR = os.path.join("index", "alerts")
+ALERT_KEEP_DAYS = 30
+ALERT_MAX_LISTED = 5
+# The builder's literal output lines (tools/build_stories_feed.py); test_publish_alert pins
+# that the builder still prints them, so a rewording there cannot silence this.
+WARN_LINE_RE = re.compile(r"WARN no body parsed: (\S+) story (\S+)")
+PARITY_HEADER = "PARITY-FAIL:"
+PARITY_ROW_RE = re.compile(r"^  (\d{4}-\d{2}-\d{2}-[a-z0-9-]+)  (.*?)  (\S+)\s*$")
+_EDITION_IN_RE = re.compile(r"(\d{4}-\d{2}-\d{2}-[a-z0-9-]+?)(?:\.md)?$")
+
+
+def feed_problems(out):
+    """[(key, edition, text)] for every lede-fallback WARN and PARITY-FAIL row in the feed
+    builder's output, in print order, de-duplicated by key."""
+    found, seen, in_parity = [], set(), False
+    for raw in (out or "").splitlines():
+        line = raw.rstrip()
+        w = WARN_LINE_RE.search(line)
+        if w:
+            post, sid = w.groups()
+            m = _EDITION_IN_RE.search(os.path.basename(post))
+            edition = m.group(1) if m else os.path.basename(post)
+            item = ("warn|%s|%s" % (edition, sid), edition,
+                    "%s %s: no prose parsed, the card shows only its lede" % (edition, sid))
+        elif line.startswith(PARITY_HEADER):
+            in_parity = True
+            continue
+        elif in_parity and PARITY_ROW_RE.match(line):
+            edition, headline, url = PARITY_ROW_RE.match(line).groups()
+            item = ("parity|%s|%s" % (edition, url if url != "-" else headline), edition,
+                    "%s \"%s\": kept, but reached no card" % (edition, headline.strip()))
+        else:
+            if in_parity and not line.startswith("  "):
+                in_parity = False
+            continue
+        if item[0] not in seen:
+            seen.add(item[0])
+            found.append(item)
+    return found
+
+
+def _alert_path(root, key):
+    import hashlib
+    return os.path.join(root, ALERT_DIR,
+                        hashlib.sha1(key.encode("utf-8")).hexdigest()[:16] + ".json")
+
+
+def _prune_alerts(root, today):
+    d = os.path.join(root, ALERT_DIR)
+    if not os.path.isdir(d):
+        return
+    cutoff = (dt.date.fromisoformat(today) - dt.timedelta(days=ALERT_KEEP_DAYS)).isoformat()
+    for name in os.listdir(d):
+        path = os.path.join(d, name)
+        try:
+            with open(path, encoding="utf-8") as fh:
+                edition = json.load(fh).get("edition", "")
+        except (OSError, ValueError):
+            continue
+        if edition[:10] and edition[:10] < cutoff:
+            os.remove(path)
+
+
+def alert_missing_stories(root, slug, date, feed_out, dry_run):
+    """Write one alert stub for the problems in `feed_out` not alerted before; return its path
+    or None. Non-fatal by construction: any error prints and returns None."""
+    try:
+        problems = feed_problems(feed_out)
+        new = [p for p in problems if not os.path.exists(_alert_path(root, p[0]))]
+        if not new:
+            say("alert: %s" % ("no missing-story problems in the feed build" if not problems
+                                else "%d known problem(s), already alerted" % len(problems)))
+            return None
+        lines = [text for _, _, text in new[:ALERT_MAX_LISTED]]
+        if len(new) > ALERT_MAX_LISTED:
+            lines.append("... and %d more" % (len(new) - ALERT_MAX_LISTED))
+        lines.append("Check: python3 tools/evaluator/surface.py")
+        stub = {"title": "Homepage: %d story problem(s) after %s"
+                         % (len(new), edition_title(slug, date)),
+                "click": SITE + "/",
+                "body": "\n".join(lines),
+                "tags": "warning"}
+        ts = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        path = os.path.join(root, "pending-notifications", "%s-alert-%s.json" % (ts, slug))
+        if dry_run:
+            say("DRY-RUN alert: %s -> %s" % (path, json.dumps(stub, ensure_ascii=False)))
+            return None
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(stub, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+        os.makedirs(os.path.join(root, ALERT_DIR), exist_ok=True)
+        for key, edition, _ in new:
+            with open(_alert_path(root, key), "w", encoding="utf-8") as fh:
+                json.dump({"key": key, "edition": edition}, fh, ensure_ascii=False)
+                fh.write("\n")
+        _prune_alerts(root, date)
+        say("alert: wrote %s (%d new problem(s), %d already alerted)"
+            % (os.path.relpath(path, root), len(new), len(problems) - len(new)))
+        return path
+    except Exception as exc:   # an alert must never cost an edition
+        say("alert: FAIL (%s: %s) -- non-fatal" % (type(exc).__name__, exc))
+        return None
 
 
 def zurich_now():
@@ -461,7 +588,8 @@ def main(argv=None):
                  root, args.dry_run)
         run_step("date-lint", [py, "tools/dedup/dedup.py", "lint", "--brief",
                                os.path.relpath(post, root)], root, args.dry_run)
-        run_step("feed", [py, "tools/build_stories_feed.py"], root, args.dry_run)
+        _, feed_out = run_step_out("feed", [py, "tools/build_stories_feed.py"], root, args.dry_run)
+        alert_missing_stories(root, args.slug, args.date, feed_out, args.dry_run)
         run_step("source-health", [py, "tools/sources/health.py"], root, args.dry_run)
         # refresh the Worker-hosted analytical plane (embed-proxy /plane/*) from the ledger the
         # record step just extended — non-fatal like everything else; analytics never cost an edition
