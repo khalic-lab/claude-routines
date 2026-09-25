@@ -98,32 +98,64 @@ const RESERVE = [];
 for (let r = 0; r < 4; r++) { const f = frontOf(new Set(RESERVE)); if (!f.length) break; RESERVE.push(...f); }
 const DESK_RESERVE = eds.map((e, i) => [e, i]).sort((a, b) => b[0].date.localeCompare(a[0].date) || a[1] - b[1]).map(([e]) => sidOf(e));
 const bySid = new Map(board.map((x) => [sidOf(x), x]));
+// importance as the page reads it (a card's data-imp); the lead-rule scenario may set one below
+const IMP = new Map(stories.map((x) => [sidOf(x), x.importance]));
 // an editorial is read when marked, or when every story of its edition is (no local un-tick here);
 // its beats are its edition's
 const edition = (e) => stories.filter((x) => x.date === e.date && x.stream === e.stream);
 function refillOf(read, beats = []) {
   const onBeat = (topics) => !beats.length || topics.some((t) => beats.includes(t));
   const pick = RESERVE.filter((sid) => !read.has(sid) && onBeat(bySid.get(sid).topics)).slice(0, 4);
-  const lead = pick.find((sid) => bySid.get(sid).importance === 3) || pick[0];
+  const lead = pick.find((sid) => IMP.get(sid) === 3) || pick[0];
   const edRead = (e) => read.has(sidOf(e)) || (edition(e).length > 0 && edition(e).every((x) => read.has(sidOf(x))));
   const desk = DESK_RESERVE.find((sid) => { const e = bySid.get(sid); return !edRead(e) && onBeat(edition(e).flatMap((x) => x.topics)); }) || null;
   return { cards: lead ? [lead, ...pick.filter((s) => s !== lead)] : [], desk };
 }
-// a read state where the lead rule decides: the reserve's first non-importance-3 entry stays
-// unread together with a later importance-3 one, everything else in the reserve is read
-const LEAD_X = RESERVE.find((sid, i) => bySid.get(sid).importance !== 3 && RESERVE.slice(i + 1).some((s) => bySid.get(s).importance === 3)) || null;
-const LEAD_Y = LEAD_X && RESERVE.slice(RESERVE.indexOf(LEAD_X) + 1).find((s) => bySid.get(s).importance === 3);
-// front-read: the default front and its Desk's view read, then a tick on the refilled lead, a
-// beat that changes the refill, the lead-rule state, and the whole reserve read
+// No front-read gate may pass or fail for want of data (review F4). Where the day's data lacks a
+// scenario the suite makes one, the way frontWithSlots() makes image slots; SYNTH=1 forces the
+// made-up ones on any data, so that path is exercised too. What cannot be made is reported as SKIP.
+const SYNTH = !!process.env.SYNTH;
+// the lead rule: the reserve's first non-importance-3 entry stays unread with a later
+// importance-3 one, the rest of the reserve read. Made up: the last two reserve entries become
+// importance 2 then 3 in the page (their cards' data-imp, set before the refill first runs).
+const SYNTH_IMP = {};
+let LEAD_X = SYNTH ? null : RESERVE.find((sid, i) => IMP.get(sid) !== 3 && RESERVE.slice(i + 1).some((s) => IMP.get(s) === 3)) || null;
+let LEAD_Y = LEAD_X && RESERVE.slice(RESERVE.indexOf(LEAD_X) + 1).find((s) => IMP.get(s) === 3);
+if (!LEAD_X && RESERVE.length >= 2) {
+  [LEAD_X, LEAD_Y] = RESERVE.slice(-2);
+  if (IMP.get(LEAD_X) === 3) SYNTH_IMP[LEAD_X] = 2;
+  if (IMP.get(LEAD_Y) !== 3) SYNTH_IMP[LEAD_Y] = 3;
+  for (const [sid, v] of Object.entries(SYNTH_IMP)) IMP.set(sid, v);
+}
+// front-read, in order: the default front and its Desk's view read (S0); a beat that changes the
+// refill; a tick on the refilled lead (S1); a tick on a rest card while the last card holds focus
+// (S1b); another tab reading one more while the reader types in that last card (S1c); the lead
+// rule (S2), then its lead read so the other card changes slot (S2e); only the Desk's view left;
+// the whole reserve read (S3)
 const S0 = [...EXPECT_FRONT, EXPECT_DESK].filter(Boolean);
 const REFILL0 = refillOf(new Set(S0));
-const REFILL1 = refillOf(new Set([...S0, REFILL0.cards[0]]));
-const REFILL_BEAT = [...new Set(RESERVE.flatMap((s) => bySid.get(s).topics))].sort()
-  .find((t) => { const r = refillOf(new Set(S0), [t]).cards; return r.length > 0 && r.join() !== REFILL0.cards.join(); }) || null;
+const topicsAll = [...new Set(board.flatMap((x) => x.topics || []))].sort();
+const beatRefill = (t) => refillOf(new Set(S0), [t]);
+const differs = (t) => beatRefill(t).cards.join() !== REFILL0.cards.join();
+// a beat that changes the refilled cards; made up: a beat no reserve story carries empties them
+const REFILL_BEAT = (SYNTH ? topicsAll.find((t) => differs(t) && !beatRefill(t).cards.length) : null)
+  || topicsAll.find((t) => differs(t) && beatRefill(t).cards.length) || topicsAll.find(differs) || null;
+const S1 = [...S0, REFILL0.cards[0]].filter(Boolean);
+const REFILL1 = refillOf(new Set(S1));
+const FOCUS_L = REFILL1.cards.length >= 3 ? REFILL1.cards[REFILL1.cards.length - 1] : null;
+const TICK_T = FOCUS_L ? REFILL1.cards[1] : null;
+const S1b = TICK_T ? [...S1, TICK_T] : S1;
+const REFILL1b = refillOf(new Set(S1b));
+const TYPE_T = FOCUS_L && REFILL1b.cards.length >= 3 ? REFILL1b.cards.find((s, i) => i > 0 && s !== FOCUS_L) : null;
+const S1c = TYPE_T ? [...S1b, TYPE_T] : S1b;
 const S2 = LEAD_X ? [...RESERVE.filter((s) => s !== LEAD_X && s !== LEAD_Y), EXPECT_DESK].filter(Boolean) : [];
+const S2e = LEAD_X ? [...S2, LEAD_Y] : [];
 const S3 = [...RESERVE, ...DESK_RESERVE];
-const FR = { FRONT: EXPECT_FRONT, DESK: EXPECT_DESK, S0, R0: REFILL0, R1: REFILL1, RB: REFILL_BEAT, RBW: REFILL_BEAT ? refillOf(new Set(S0), [REFILL_BEAT]) : null,
-  LEAD_X, S2, R2: LEAD_X ? refillOf(new Set(S2)) : null, S3, NEWEST: dates[0] };
+const FR = { FRONT: EXPECT_FRONT, DESK: EXPECT_DESK, RESERVE, DESK_RESERVE, SYNTH_IMP, S0, R0: REFILL0,
+  RB: REFILL_BEAT, RBW: REFILL_BEAT ? beatRefill(REFILL_BEAT) : null, S1, R1: REFILL1,
+  FOCUS_L, TICK_T, R1b: REFILL1b, TYPE_T, S1c, R1c: refillOf(new Set(S1c)),
+  LEAD_X, LEAD_Y, S2, R2: LEAD_X ? refillOf(new Set(S2)) : null, S2e, R2e: LEAD_X ? refillOf(new Set(S2e)) : null,
+  S3, NEWEST: dates[0] };
 // the "Happened 16 Sep" label: only a valid day-precise event date before the story's derived
 // period start; the year shows when it differs from the story's
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -171,11 +203,13 @@ const BASE = ORIGIN + '/claude-routines/';
 const OG_IMG = BASE + 'assets/diagrams/how-it-works-mobile-light.svg';   // same-origin stand-in image
 
 // ------------------------------------------------------------------ Worker stubs + request log
-// a JS fault: serve one module with one string replaced (the string must exist, or the fault is vacuous)
+// a JS fault: serve one module with strings replaced (each must exist, or the fault is vacuous)
 async function mutateJs(ctx, js) {
-  const src = fs.readFileSync(path.join(SITE, 'assets/js', js.file), 'utf8');
-  if (!src.includes(js.from)) throw new Error(`fault string not found in ${js.file}: ${js.from}`);
-  const body = src.replace(js.from, js.to);
+  let body = fs.readFileSync(path.join(SITE, 'assets/js', js.file), 'utf8');
+  for (const [from, to] of js.edits || [[js.from, js.to]]) {
+    if (!body.includes(from)) throw new Error(`fault string not found in ${js.file}: ${from}`);
+    body = body.replace(from, to);
+  }
   await ctx.route((u) => u.pathname.endsWith('/assets/js/' + js.file), (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body }));
 }
 // The og and open-card-photo gates must not depend on the day's data: a front whose stories are all
@@ -492,7 +526,11 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       };
       for (const el of document.querySelectorAll('main [data-story]:not([data-zone="editorial"])')) evCheck(el, el.dataset.zone);
       for (const t of document.querySelectorAll('template[data-reserve-card]')) evCheck(t.content.firstElementChild, 'template');
-      A.eventLabel = [evBad.length === 0, evBad.slice(0, 3).join('; ') || `${evShown} labels on cards and rows + ${evTpl} in reserve templates, each before its period start; ${Object.keys(X.EVT).length} stories qualify`];
+      const evMiss = evBad.filter((b) => b.includes(' lacks '));
+      A.eventLabel = [evBad.length === evMiss.length, evBad.filter((b) => !evMiss.includes(b)).slice(0, 3).join('; ') || `${evShown} labels on cards and rows + ${evTpl} in reserve templates, each on a qualifying story, before its period start, inside its card`];
+      // every story that qualifies shows one; with none qualifying there is nothing to show (review F4)
+      A.eventLabelShown = Object.keys(X.EVT).length ? [evMiss.length === 0, evMiss.slice(0, 3).join('; ') || `all ${Object.keys(X.EVT).length} qualifying stories show their label`]
+        : [null, 'no story has a day-precise event date before its period'];
       const h1 = document.querySelectorAll('h1').length, h2 = document.querySelectorAll('main h2').length;
       const h3 = document.querySelectorAll('main h3').length, items = document.querySelectorAll('main [data-story]').length;
       A.headings = [h1 === 1 && h2 === X.nDays + 1 && h3 === items, `h1 ${h1}, main h2 ${h2} (days + front ${X.nDays + 1}), h3 ${h3} for ${items} items`];
@@ -665,6 +703,37 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         scrollTo(0, 0); await frames();
       };
       const lay0 = layout();
+      // a made-up importance (see SYNTH_IMP) goes on the cards before the refill first reads them
+      for (const [sid, v] of Object.entries(F.SYNTH_IMP)) {
+        document.querySelectorAll(`.front li.fc[data-story="${sid}"]`).forEach((c) => { c.dataset.imp = String(v); });
+        const t = document.querySelector(`template[data-reserve-card="${sid}"]`);
+        if (t) t.content.firstElementChild.dataset.imp = String(v);
+      }
+      const SKIP = (why) => [null, why];
+      const write = async (list, key = 'homeRead:v1') => {
+        localStorage.setItem(key, JSON.stringify(Object.fromEntries(list.map((id) => [id, Date.now()]))));
+        dispatchEvent(new StorageEvent('storage', { key, storageArea: localStorage }));
+        await frames();
+      };
+      // Focus must survive a recompose (review F1): the focused control keeps the focus (and its
+      // caret), and its card is never taken out of the document on the way (a card moved out and
+      // back drops the focus to <body>; the board's rescue would hide that, so removals are watched)
+      const keeps = async (ctl, act) => {
+        if (!ctl) return [false, 'the card to hold the focus is not on the front'];
+        const card = ctl.closest('[data-story]'), removed = [];
+        const note = (recs) => { for (const r of recs) for (const n of r.removedNodes) if (n === card || n.contains(card)) removed.push(n); };
+        const mo = new MutationObserver(note);
+        mo.observe(document.getElementById('main'), { childList: true, subtree: true });
+        ctl.focus();
+        const sel = typeof ctl.selectionStart === 'number' ? [ctl.selectionStart, ctl.selectionEnd, ctl.value] : null;
+        await act();
+        note(mo.takeRecords()); mo.disconnect();
+        const a = document.activeElement, selOk = !sel || (a === ctl && ctl.selectionStart === sel[0] && ctl.selectionEnd === sel[1] && ctl.value === sel[2]);
+        const where = (e) => (e ? (e.className || e.tagName).toString().split(' ')[0] + (e.closest && e.closest('[data-story]') ? ' in ' + e.closest('[data-story]').dataset.story : '') : 'none');
+        return [a === ctl && !removed.length && card.isConnected && selOk,
+          `focus on ${where(ctl)}: after ${where(a)}; card taken out ${removed.length}x${sel ? `; caret ${sel[0]}-${sel[1]} -> ${ctl.selectionStart}-${ctl.selectionEnd}` : ''}`];
+      };
+      const ctlOf = (sid) => { const c = document.querySelector(`.front .fc[data-story="${sid}"]`); return c && (c.querySelector('.more') || c.querySelector('.readbtn')); };
       // 1. Unread: the first four unread reserve entries, lead first; the next unread editorial
       click(L.seg('unread')); await settle();
       const g0 = now();
@@ -684,16 +753,32 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         click(b); const closed = c.classList.contains('is-folded') && b.getAttribute('aria-expanded') === 'false';
         if (!opened || !closed) fb.push(`${sid} More opens its own fold ${opened}, closes ${closed}`);
       }
-      A.refillFold = [fb.length === 0, fb.join('; ') || `promoted cards start folded; More opens and closes the own fold of ${nf}`];
+      A.refillFold = fb.length ? [false, fb.join('; ')] : nf ? [true, `promoted cards start folded; More opens and closes the own fold of ${nf}`]
+        : SKIP('no promoted card has a More to open');
       const g = L.geometry(), dead = L.deadLinks(), dm = L.dayMeta();
       A.refillGeom = [!g.overlap.length && !g.order.length && !g.containment.length && !g.overflow.length,
         `refilled: ${g.overlap.length} overlaps / ${g.pairs} pairs, ${g.order.length} inversions, ${g.containment.length} outside, overflow ${g.overflow.length} ${[...g.overlap, ...g.order].slice(0, 2).join('; ')}`];
       A.refillLinks = [!dead.length && !dm.bad.length, `refilled: ${dead.length} dead links ${dead.slice(0, 2).join('; ')}; day headers ${dm.bad.join('; ') || 'match'}`];
+      // a promoted editorial: its day's "→ desk's view" link stays and reaches the front copy (review F3)
+      if (F.R0.desk && F.R0.desk !== F.DESK) {
+        const links = [...document.querySelectorAll('section.day .day__links a.jump')].filter((a) => a.getAttribute('href').replace('#desk-', '#') === '#' + F.R0.desk);
+        const a = links[0], t = a && document.getElementById(a.getAttribute('href').slice(1));
+        A.refillDayLink = [links.length === 1 && L.vis(a) && !!t && L.vis(t) && !!t.closest('.front') && t.dataset.story === F.R0.desk,
+          `${F.R0.desk}: day link ${a ? `${a.getAttribute('href')} shown ${L.vis(a)}` : 'missing'} -> ${t ? `${t.id} shown ${L.vis(t)} on the front ${!!t.closest('.front')}` : 'nothing'}`];
+      } else A.refillDayLink = SKIP('no older editorial to promote to the Desk\'s view');
+      // (a) nothing changes: a middle-click reads a card without a recompose, its ✓ un-reads it
+      const cA = F.R0.cards[F.R0.cards.length - 1], hlA = cA && document.querySelector(`.front .fc[data-story="${cA}"] .hl a`);
+      if (hlA) {
+        hlA.dispatchEvent(new MouseEvent('auxclick', { button: 1, bubbles: true, cancelable: true }));
+        const rbA = hlA.closest('.fc').querySelector('.readbtn'), readA = hlA.closest('.fc').classList.contains('is-read');
+        const k = await keeps(rbA, async () => { click(rbA); await frames(); });
+        A.refillFocusSame = [readA && k[0] && same(now(), F.R0), `${cA} read by a middle-click ${readA}, then un-ticked: ${k[1]}`];
+      } else A.refillFocusSame = SKIP('no refilled card');
       // 2. a beat changes the refill; releasing it restores it
       if (F.RB) {
         click(L.chip(F.RB)); const gb = now(), cb = counts(F.RB); click(L.chip(F.RB));
         A.refillBeat = [same(gb, F.RBW) && cb[0] && same(now(), F.R0), `${F.RB}: ${show(gb, F.RBW)}; ${cb[1]}`];
-      }
+      } else A.refillBeat = SKIP('no beat on the board changes the refill');
       // 3. tick the refilled lead: the next entry takes its place, its pointer goes with it
       const u0 = L.ct(L.seg('unread'));
       const lead = document.querySelector('.front .fcards--top > .fc');
@@ -701,25 +786,53 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       const g1 = now(), p1 = ptrs(F.R1), c1 = counts();
       A.refillTick = [same(g1, F.R1) && p1[0] && c1[0] && L.ct(L.seg('unread')) === u0 - 1,
         `after ticking ${F.R0.cards[0]}: ${show(g1, F.R1)}; ${p1[1]}; ${c1[1]}; Unread ${u0} -> ${L.ct(L.seg('unread'))}`];
+      // (b) the pick changes around a staying card: the last card holds the focus while a rest card is ticked
+      if (F.FOCUS_L) {
+        const k = await keeps(ctlOf(F.FOCUS_L), async () => { click(document.querySelector(`.front .fc[data-story="${F.TICK_T}"] .readbtn`)); await frames(); });
+        A.refillFocusAround = [k[0] && same(now(), F.R1b), `${F.TICK_T} ticked: ${show(now(), F.R1b)}; ${k[1]}`];
+      } else A.refillFocusAround = SKIP('fewer than three refilled cards');
+      // (c) another tab reads one more while the reader types in the last card's reason box
+      const cardL = F.TYPE_T && document.querySelector(`.front .fc[data-story="${F.FOCUS_L}"]`);
+      if (cardL) {
+        click(cardL.querySelector('.vote--down'));
+        const dlg = document.querySelector('dialog[open]'); if (dlg) dlg.close();
+        const inp = cardL.querySelector('.rzn input');
+        if (inp) { inp.value = 'not new'; inp.setSelectionRange(1, 5); }
+        const k = await keeps(inp, () => write(F.S1c));
+        A.refillFocusTyping = [k[0] && same(now(), F.R1c), `another tab read ${F.TYPE_T}: ${show(now(), F.R1c)}; ${k[1]}`];
+      } else A.refillFocusTyping = SKIP('fewer than three refilled cards after a tick');
       // 4. All: the builder's front, dimmed, and nothing on the page has moved
       click(L.seg('')); await frames();
       const ga = now(), lay1 = layout();
       const moved = [...new Set([...Object.keys(lay0), ...Object.keys(lay1)])].filter((k) => lay0[k] !== lay1[k]);
       const dim = F.S0.every((s) => { const e = document.querySelector(`.front [data-story="${s}"]`); return e && e.classList.contains('is-read'); });
-      A.refillAll = [ga.cards.join() === F.FRONT.join() && ga.desk === F.DESK && dim && moved.length === 0 && !shownPtrs().length && frontN.textContent === line0,
-        `${show(ga, { cards: F.FRONT, desk: F.DESK })}; dimmed ${dim}; ${moved.length} of ${Object.keys(lay0).length} moved ${moved.slice(0, 3).join(' ')}; reserve pointers shown ${shownPtrs().length}; line ${frontN.textContent === line0 ? 'restored' : `"${frontN.textContent}"`}`];
+      const deskLinks = document.querySelectorAll('.day__links a[href^="#desk-"]').length;
+      A.refillAll = [ga.cards.join() === F.FRONT.join() && ga.desk === F.DESK && dim && moved.length === 0 && !shownPtrs().length && frontN.textContent === line0 && !deskLinks,
+        `${show(ga, { cards: F.FRONT, desk: F.DESK })}; dimmed ${dim}; ${moved.length} of ${Object.keys(lay0).length} moved ${moved.slice(0, 3).join(' ')}; reserve pointers shown ${shownPtrs().length}; line ${frontN.textContent === line0 ? 'restored' : `"${frontN.textContent}"`}; day links to a front copy ${deskLinks}`];
+      // (d) under All an apply with nothing to change (a roamed selection does the same) moves nothing
+      const ctlD = ctlOf(F.FRONT[F.FRONT.length - 1]);
+      if (ctlD) {
+        const k = await keeps(ctlD, async () => { click(L.seg('')); await frames(); });
+        A.refillFocusAll = k;
+      } else A.refillFocusAll = SKIP('no front card');
       // 5. under Unread, another tab leaves only a non-lead entry and a later lead unread: the lead slot takes the lead
       click(L.seg('unread'));
-      const write = async (list) => {
-        localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(list.map((id) => [id, Date.now()]))));
-        dispatchEvent(new StorageEvent('storage', { key: 'homeRead:v1', storageArea: localStorage }));
-        await frames();
-      };
       if (F.LEAD_X) {
         await write(F.S2);
         const g2 = now();
-        A.refillLead = [same(g2, F.R2) && frontN.textContent === line(F.R2) && counts()[0], `${show(g2, F.R2)}; "${frontN.textContent}"`];
-      } else A.refillLead = [false, 'no scenario in the data: the reserve has no non-importance-3 entry before an importance-3 one'];
+        A.refillLead = [same(g2, F.R2) && frontN.textContent === line(F.R2) && counts()[0], `${show(g2, F.R2)}; "${frontN.textContent}"${Object.keys(F.SYNTH_IMP).length ? ' (made-up importance)' : ''}`];
+        // (e) then its lead is read: the other card moves to the lead slot and keeps the focus
+        const k = await keeps(ctlOf(F.LEAD_X), () => write(F.S2e));
+        const moveOk = document.activeElement === ctlOf(F.LEAD_X) && same(now(), F.R2e);
+        A.refillFocusMove = [moveOk, `${F.LEAD_Y} read: ${show(now(), F.R2e)}; ${k[1]}`];
+      } else { A.refillLead = SKIP('a reserve of fewer than two entries'); A.refillFocusMove = SKIP('a reserve of fewer than two entries'); }
+      // only the Desk's view left: no story count to state (review F2)
+      if (F.DESK_RESERVE.length) {
+        await write([F.DESK_RESERVE[0]], 'homeUnread:v1'); await write(F.RESERVE);
+        const gd = now(), fr = document.querySelector('section.front');
+        A.frontLineDesk = [!gd.cards.length && gd.desk === F.DESK_RESERVE[0] && L.vis(fr) && !L.vis(frontN),
+          `${show(gd, { cards: [], desk: F.DESK_RESERVE[0] })}; front shown ${L.vis(fr)}; line ${L.vis(frontN) ? `"${frontN.textContent}"` : 'hidden'}`];
+      } else A.frontLineDesk = SKIP('no editorial');
       // 6. the whole reserve read: the front hides, and nothing points into it
       await write(F.S3);
       const fr = document.querySelector('section.front'), c3 = counts(), d3 = L.deadLinks();
@@ -1040,22 +1153,24 @@ async function runPages(browser, ctxOpts, css = null) {
 
 // ------------------------------------------------------------------ sweeps
 let fails = 0; const totals = {};
-const tally = (k, ok) => { const t = (totals[k] ||= { pass: 0, fail: 0 }); ok ? t.pass++ : t.fail++; if (!ok) fails++; };
+// an assertion is [ok, detail]; ok === null is a SKIP (the data offers no scenario), counted apart
+const tally = (k, ok) => { const t = (totals[k] ||= { pass: 0, fail: 0, skip: 0 }); if (ok === null) t.skip++; else if (ok) t.pass++; else { t.fail++; fails++; } };
 async function sweep(browser, label, opts) {
   for (const st of STATES) {
     if (ONLY && !ONLY.includes(st)) continue;
     const A = await runCase(browser, opts, st);
-    const bad = Object.entries(A).filter(([, [ok]]) => !ok);
+    const bad = Object.entries(A).filter(([, [ok]]) => ok === false), skip = Object.entries(A).filter(([, [ok]]) => ok === null);
     Object.values(A).forEach(([ok]) => tally(st, ok));
-    log(`${label.padEnd(24)} ${st.padEnd(15)} ${bad.length ? 'FAIL ' + bad.map(([k, [, d]]) => k + ': ' + d).join(' | ') : 'PASS ' + Object.keys(A).length}`
+    log(`${label.padEnd(24)} ${st.padEnd(15)} ${bad.length ? 'FAIL ' + bad.map(([k, [, d]]) => k + ': ' + d).join(' | ') : 'PASS ' + (Object.keys(A).length - skip.length)}`
+      + (skip.length ? `  SKIP ${skip.map(([k, [, d]]) => k + ': ' + d).join(' | ')}` : '')
       + (st === 'default' && A.measure ? `  (${A.measure[1]}${A.focus ? '; ' + A.focus[1] : ''})` : ''));
-    if (process.env.VERBOSE) for (const [k, [ok, d]] of Object.entries(A)) log(`    ${ok ? 'ok  ' : 'FAIL'} ${k}: ${d}`);
+    if (process.env.VERBOSE) for (const [k, [ok, d]] of Object.entries(A)) log(`    ${ok === null ? 'SKIP' : ok ? 'ok  ' : 'FAIL'} ${k}: ${d}`);
   }
 }
 const c = await chromium.launch();
 const wk = await webkit.launch();
 log(`suite: ${BASE} <- ${SITE}; board ${board.length} items, ${dates.length} days, front [${EXPECT_FRONT.join(' ')}] desk ${EXPECT_DESK}; beat ${BEAT}; caps ${JSON.stringify(CAP)}`);
-log(`refill: reserve ${RESERVE.length} (${RESERVE.join(' ')}), desk reserve ${DESK_RESERVE.join(' ')}; front-read [${REFILL0.cards.join(' ')}] desk ${REFILL0.desk}; beat ${REFILL_BEAT}; lead rule [${FR.R2 ? FR.R2.cards.join(' ') : '-'}]; ${Object.keys(EVT).length} event labels`);
+log(`refill: reserve ${RESERVE.length} (${RESERVE.join(' ')}), desk reserve ${DESK_RESERVE.join(' ')}; front-read [${REFILL0.cards.join(' ')}] desk ${REFILL0.desk}; beat ${REFILL_BEAT}; lead rule [${FR.R2 ? FR.R2.cards.join(' ') : '-'}]${Object.keys(SYNTH_IMP).length ? ' (made up: data-imp ' + JSON.stringify(SYNTH_IMP) + ')' : ''}; focus kept in ${FOCUS_L}; ${Object.keys(EVT).length} event labels${SYNTH ? '; SYNTH=1' : ''}`);
 for (const scheme of ['light', 'dark']) {
   for (const w of WIDTHS) await sweep(c, `chromium ${w} ${scheme}`, { viewport: { width: w, height: 900 }, colorScheme: scheme });
   await sweep(wk, `webkit iPhone15 ${scheme}`, { ...devices['iPhone 15'], colorScheme: scheme });
@@ -1093,8 +1208,9 @@ if (!ONLY || ONLY.includes('pages')) {
 
 log('\n== TOTALS per state (assertions passed / failed)');
 let P = 0, F = 0;
-for (const [k, t] of Object.entries(totals)) { log(`${k.padEnd(15)} ${t.pass} passed / ${t.fail} failed`); P += t.pass; F += t.fail; }
-log(`ALL            ${P} passed / ${F} failed (${P + F} assertions)`);
+let S = 0;
+for (const [k, t] of Object.entries(totals)) { log(`${k.padEnd(15)} ${t.pass} passed / ${t.fail} failed / ${t.skip} skipped`); P += t.pass; F += t.fail; S += t.skip; }
+log(`ALL            ${P} passed / ${F} failed / ${S} skipped (${P + F + S} assertions)`);
 
 // ------------------------------------------------------------------ fault injection
 if (process.env.FAULTS !== '0') {
@@ -1147,14 +1263,24 @@ if (process.env.FAULTS !== '0') {
     { key: 'eventLabel', state: 'default', css: '', init: `document.addEventListener('DOMContentLoaded', () => {
       const el = document.querySelector('main [data-story="${sidOf(IN_PERIOD)}"]'), old = el.querySelector('.evt'); if (old) old.remove();
       el.querySelector('.row__meta, .fc__top').insertAdjacentHTML('beforeend', '<span class="evt"><time datetime="${IN_PERIOD.event_date >= PSTART[sidOf(IN_PERIOD)] ? IN_PERIOD.event_date : IN_PERIOD.date}">Happened</time></span>'); })` },
+    // round 3 (review 2026-09-25): focus through a recompose, the desk-only line, the day link
+    ...['refillFocusSame', 'refillFocusAround', 'refillFocusTyping'].map((key) => ({ key, state: 'front-read',
+      js: { file: 'refill.js', from: 'function reconcile(box, want) {\n  if (!box) return;', to: 'function reconcile(box, want) {\n  if (box) box.replaceChildren(...want);\n  return;' } })),
+    { key: 'refillFocusAll', state: 'front-read', js: { file: 'refill.js', edits: [
+      ['function reconcile(box, want) {\n  if (!box) return;', 'function reconcile(box, want) {\n  if (box) box.replaceChildren(...want);\n  return;'],
+      ['const placed = (box, want) => !box || (box.children.length === want.length && want.every((el, i) => box.children[i] === el));', 'const placed = () => false;']] } },
+    { key: 'refillFocusMove', state: 'front-read', js: { file: 'board.js', from: "if (had && had !== document.body && document.activeElement !== had && had.isConnected && !had.closest('[hidden]')) {", to: 'if (false) {' } },
+    { key: 'frontLineDesk', state: 'front-read', js: { file: 'board.js', from: 'frontN.hidden = !cards.length && (!!rs || active.size > 0);', to: 'frontN.hidden = false;' } },
+    { key: 'refillDayLink', state: 'front-read', js: { file: 'refill.js', from: 'pointDayLinks(copy ? chosen : null);', to: 'pointDayLinks(null);' } },
+    { key: 'eventLabelShown', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const e = document.querySelector('main .evt'); if (e) e.remove(); }) },
   ];
   let caught = 0;
   const base = await runCase(c, { viewport: { width: 1440, height: 900 } }, 'default');
   for (const f of FAULTS) {
     const A = await runCase(c, { viewport: { width: f.w || 1440, height: 900 } }, f.state, f);
-    const flipped = A[f.key] && !A[f.key][0];
+    const flipped = !!A[f.key] && A[f.key][0] === false;
     if (flipped) caught++;
-    log(`${flipped ? 'CAUGHT' : 'MISSED'}  ${f.key.padEnd(12)} ${f.state.padEnd(14)} ${(f.w || 1440) + 'px'}  ${f.css || (f.js ? `${f.js.file}: ${f.js.from} -> ${f.js.to || '(removed)'}` : '(script)')}  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
+    log(`${flipped ? 'CAUGHT' : 'MISSED'}  ${f.key.padEnd(12)} ${f.state.padEnd(14)} ${(f.w || 1440) + 'px'}  ${f.css || (f.js ? `${f.js.file}: ${(f.js.edits || [[f.js.from, f.js.to]]).map(([a, b]) => `${a} -> ${b || '(removed)'}`).join(' + ').replace(/\n\s*/g, ' ')}` : '(script)')}  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
   }
   // contract faults: the /prefs body grows a field; homeRead:v1 gets a non-number value
   const CF = [
@@ -1163,7 +1289,7 @@ if (process.env.FAULTS !== '0') {
   ];
   for (const f of CF) {
     const A = await runContract(c, { viewport: { width: 1024, height: 900 } }, f);
-    const flipped = A[f.key] && !A[f.key][0];
+    const flipped = !!A[f.key] && A[f.key][0] === false;
     if (flipped) caught++;
     log(`${flipped ? 'CAUGHT' : 'MISSED'}  ${f.key.padEnd(12)} contract       (script)  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
   }
@@ -1180,7 +1306,7 @@ if (process.env.FAULTS !== '0') {
     log(`${!ok ? 'CAUGHT' : 'MISSED'}  two-tab      store.js       1024px  (no storage listener)  ->  ${d}`);
   }
   const total = FAULTS.length + CF.length + PF.length + 1;
-  const clean = Object.values(base).every(([ok]) => ok);
+  const clean = Object.values(base).every(([ok]) => ok !== false);
   log(`fault self-test: ${caught}/${total} faults caught (baseline default@1440 ${clean ? 'clean' : 'NOT clean'})`);
   if (caught !== total || !clean) fails++;
 }

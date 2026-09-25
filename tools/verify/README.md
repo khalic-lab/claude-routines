@@ -37,6 +37,11 @@ feed, not only the one it was written against:
 - the front selection, day slices and targets come from `_data/homefeed.json`'s board
 - the Unread refill order is the same selection re-run in rounds over the board, and the
   "Happened" labels come from each story's `event_date` against its derived period
+- when the day's data has no scenario for a refill gate (no beat that changes the refill, no
+  non-lead entry before a lead), the suite makes one, as it injects image slots: a beat no reserve
+  story carries, or a card's `data-imp` set before the refill first runs. `SYNTH=1` forces the
+  made-up scenarios on any data. What cannot be made is reported as SKIP, counted apart from
+  passes and failures, never as a pass
 
 **Assertions:**
 
@@ -52,6 +57,12 @@ feed, not only the one it was written against:
   becomes its pointer; a tick, a beat and another tab's write recompose it; with the whole reserve
   read the front hides; back under All the builder's front returns dimmed and nothing on the page
   has moved
+- the focus survives a recompose: an un-tick that changes nothing, a tick around a card that
+  stays, another tab's write while the reader types in a reason box (the caret kept), an apply
+  under All, and a card moved to the lead slot. A card that stays is never taken out of the
+  document (a mutation observer watches), since the board's focus rescue would hide that
+- a promoted editorial's day link reaches its front copy, and with only the Desk's view on the
+  front the story-count line is hidden
 - honest counts: each chip shows what pressing it shows
 - the editorial read rule and its un-tick override
 - in-page links have visible targets
