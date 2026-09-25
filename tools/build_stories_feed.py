@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Build the homepage story feed (_data/homefeed.json) from the published briefs.
 
-The Folio homepage renders individual STORIES as a masonry grid with topic filters and
-importance-sized cards. It shows the writers' actual explanatory prose — so this reads the
+The homepage renders individual STORIES as a composed front page followed by one day edition
+per date, with beat filters and importance tiers. It shows the writers' actual explanatory
+prose — so this reads the
 `_posts/*.md` briefs (where the insightful multi-sentence body lives), NOT the dedup index
 (whose `summary` is a terse one-liner built for embedding). It flattens the four live streams'
 recent stories into `_data/homefeed.json` that the `home` layout iterates at build time.
@@ -20,8 +21,10 @@ Weekend brief can't evict the weekly Science edition from the page.
 
 `feed["board"]` is the ONE ranked sequence the page renders — stories and editorials in a single
 order, `(date, tier, position)` with editorials ranked below briefs so each closes its own
-edition's date block (see build_board). `feed["stories"]`, `feed["editorials"]` and `feed["count"]`
-keep their exact meanings; nothing else reads position semantics.
+edition's date block (see build_board). build_views adds the page's render fields to the board
+items and the `days` / `front` / `beats` views over it, plus `build_stamp`. `feed["stories"]`,
+`feed["editorials"]`, `feed["count"]` and `feed["topics"]` keep their exact meanings (the golden
+feed pins them); nothing else reads position semantics.
 
 Run after `dedup.py record` (DEDUP.md Step D) and commit the result with the brief.
 Usage: python3 tools/build_stories_feed.py [--days 14] [--max 80] [--out _data/homefeed.json]
@@ -892,7 +895,7 @@ def load_recent(days):
         if m and m.group(2) in CURRENT_STREAMS:
             posts.append((m.group(1), m.group(2), path))
     if not posts:
-        return [], None
+        return [], None, 0              # main() unpacks three; an empty _posts/ used to raise here
     max_date = max(p[0] for p in posts)
     cutoff = (_dt.date.fromisoformat(max_date) - _dt.timedelta(days=days)).isoformat()
     window = sorted(p for p in posts if p[0] >= cutoff)
@@ -1010,16 +1013,14 @@ def load_recent(days):
     return stories, max_date, sum(ov_flags)
 
 
-ED_MIN_BOARD_INDEX = 3   # no editorial may sit in the composed top band (nth-child 1..3)
-AGE_MAX = 3              # data-age is a clamped bucket, not a duration -- see below
-# DELIBERATELY STILL 3, AND DELIBERATELY NOT THE STALENESS CUE (2026-09-12). `data-age` feeds
-# the type scale only, and _layouts/home.html keys on the literal `[data-age="3"]` (:1431-1432)
-# as "the oldest bucket" -- raising this would silently stop those rules matching anything and
-# cost the page its age-vs-tier typography, which is not what the sports complaint was about.
-# The complaint was that a 12-day-old scoreline reported age_days 3, indistinguishable from
-# Monday's. That is now fixed upstream by STORY_MAX_AGE_DAYS: nothing old enough for the clamp
-# to mislead reaches the board at all. If a real duration is ever wanted on the card, emit a
-# SECOND field next to this one -- do not widen this one.
+AGE_MAX = 3              # age_days is a clamped bucket, not a duration -- see below
+# DELIBERATELY STILL 3, AND DELIBERATELY NOT THE STALENESS CUE (2026-09-12). `age_days` used to
+# feed the old page's type scale through the literal `[data-age="3"]`; the 2026-09-24 day-edition
+# page groups by date instead and reads no age at all, so the bucket is data only now (tests pin
+# it). The sports complaint it was once mistaken for was that a 12-day-old scoreline reported
+# age_days 3, indistinguishable from Monday's -- fixed upstream by STORY_MAX_AGE_DAYS: nothing old
+# enough for the clamp to mislead reaches the board at all. If a real duration is ever wanted on
+# the card, emit a SECOND field next to this one -- do not widen this one.
 
 
 def build_board(stories, editorials, max_date):
@@ -1041,16 +1042,14 @@ def build_board(stories, editorials, max_date):
     `-position` (with `reverse=True`, i.e. ascending) is what keeps the sort STABLE inside a
     (date, rank) group: within one tier of one day, the desk's own filed order survives.
 
-    ED_MIN_BOARD_INDEX is the one exception and it is structural, not editorial: the composed top
-    band places board children 1-3 by `nth-child`, and a `.fcard--ed` in slot 1 renders at
-    `grid-area:1/1/2/13` -- 100% of the board width with no news on screen at all (documented
-    failure, 2026-07-25). An editorial landing there is pushed past the next story. It is a dead
-    branch on any normal day: MIN_LATEST_EDITION floors the newest edition at 6 stories, so its
-    editorial sorts to index >= 6.
+    Because the key leads with the date, every date is ONE contiguous run of the board, which is
+    what lets build_views slice it into day editions by index. (ED_MIN_BOARD_INDEX, which used to
+    push an editorial out of the old page's nth-child top band and could split a run, is gone
+    with that band, 2026-09-24.)
     """
     # SHALLOW COPIES, so the board's own fields (`kind`, `age_days`, `daybreak`) land on the
     # board and nowhere else. `feed["stories"]` is a pinned shape — test_feed_sid.py asserts
-    # field-for-field that nothing but `sid` was ever added to it — and `feed.count`, the harness,
+    # field-for-field that nothing but `sid` was ever added to it — and `feed.count`,
     # store/anchor.py and four test files all read it. The board is a VIEW; it may not edit the
     # thing it is a view of.
     board = []
@@ -1067,18 +1066,6 @@ def build_board(stories, editorials, max_date):
                                0 if it["kind"] == "editorial" else it["importance"],
                                -pos[id(it)]), reverse=True)
 
-    i = 0
-    while i < min(ED_MIN_BOARD_INDEX, len(board)):
-        if board[i]["kind"] != "editorial":
-            i += 1
-            continue
-        nxt = next((k for k in range(i + 1, len(board))
-                    if board[k]["kind"] != "editorial"), None)
-        if nxt is None:
-            break                      # nothing but editorials below: leave the order alone
-        # pop shifts that story down to nxt-1, so inserting AT nxt lands just after it
-        board.insert(nxt, board.pop(i))
-
     newest = _dt.date.fromisoformat(max_date) if max_date else None
     prev_date = None
     for it in board:
@@ -1087,18 +1074,298 @@ def build_board(stories, editorials, max_date):
             it["age_days"] = max(0, min(AGE_MAX, (newest - d).days))
         else:
             it["age_days"] = 0
-        # The daybreak card prints this instead of nothing: weekday + full date, because the
-        # question a date block answers is "which day am I reading". Formatted HERE rather than
-        # by Liquid's `date` filter, so the page and tools/home_harness.py render one string
-        # from one place instead of two implementations of one format.
+        # Weekday + short date ("Thu 24 Sep"), formatted HERE rather than by Liquid's `date`
+        # filter so every surface prints one string from one place.
         it["day_label"] = "%s %d %s" % (_DAYS[d.weekday()], d.day, _MONTHS[d.month - 1])
         # DAYBREAK IS COMPUTED ON THE FINAL ORDER, over CONTIGUOUS runs rather than over the set
-        # of distinct dates, so it stays true even if ED_MIN_BOARD_INDEX has moved an editorial
-        # out of its own date block. What it marks is "a new date starts here", which is what the
-        # printed date on the card says.
+        # of distinct dates: it marks "a new date starts here", the index build_views slices on.
         it["daybreak"] = it["date"] != prev_date
         prev_date = it["date"]
     return board
+
+
+# ------------------------------------------------------------------ page views (2026-09-24)
+# The day-edition homepage (_layouts/home.html) renders from `feed.board` plus the views below.
+# Everything the page needs to DECIDE is decided here and emitted as data, so the template only
+# prints: the edition periods, the front selection, headline punctuation, image eligibility,
+# editorial headings. All of it is additive -- `feed.stories` / `feed.topics` stay exactly as the
+# golden feed pins them.
+
+# The lookback each routine prompt states for its edition, in inclusive days, read from
+# routines/src/<stream>.md ("Coverage window: ..."):
+#   news     "the last ~24 hours"               -> 1
+#   science  "the past 7 days"                  -> 7
+#   weekend  "past 7 days"                      -> 7
+#   sports   "the past 7 days"                  -> 7
+#   ai-ml    "since the last AI/ML edition"     -> uncapped (None)
+# A stream missing here is treated as uncapped: its period runs from the day after its previous
+# edition, which is what "since the last edition" means.
+PERIOD_CAP_DAYS = {"news": 1, "science": 7, "weekend": 7, "sports": 7, "ai-ml": None}
+_MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "July", "August",
+                "September", "October", "November", "December"]
+_DAYS_LONG = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+FRONT_N = 4                                    # the lead + three stories
+PAPER_HOSTS = ("arxiv.org", "doi.org")         # og:image is a logo (arXiv) or a publisher badge
+TIER = {3: ("lead", "Lead"), 2: ("feature", "Feature"), 1: ("brief", "Brief")}
+
+
+def edition_dates(posts_dir=None):
+    """{stream: [date, ...] ascending} from the `_posts/<date>-<stream>.md` filenames -- every
+    edition ever filed, not only the board window, so a period can look back past it."""
+    out = {}
+    for path in glob.glob(os.path.join(posts_dir or POSTS_DIR, "*.md")):
+        m = _FILE_RE.search(os.path.basename(path))
+        if m and m.group(2) in CURRENT_STREAMS:
+            out.setdefault(m.group(2), set()).add(m.group(1))
+    return {k: sorted(v) for k, v in out.items()}
+
+
+def edition_period(date, stream, by_stream):
+    """(start, end) ISO dates the (date, stream) edition reports on.
+
+    end = the edition date; start = the day after the same stream's PREVIOUS edition, then capped
+    to the routine's stated lookback (PERIOD_CAP_DAYS). A first-ever edition starts at the cap, or
+    on the day itself when the stream is uncapped. NOT the post footer: footers print date-7..date,
+    which overlaps the previous weekly edition by a day, so the tags use this non-overlapping rule.
+    """
+    end = _dt.date.fromisoformat(date)
+    cap = PERIOD_CAP_DAYS.get(stream)
+    prev = [d for d in by_stream.get(stream, []) if d < date]
+    if prev:
+        start = _dt.date.fromisoformat(prev[-1]) + _dt.timedelta(days=1)
+    else:
+        start = end - _dt.timedelta(days=(cap or 1) - 1)
+    if cap:
+        start = max(start, end - _dt.timedelta(days=cap - 1))
+    return start.isoformat(), end.isoformat()
+
+
+def period_view(start, end):
+    """The period as data the template prints without deciding anything:
+    {start, end, start_text, end_text, label}. start_text is "" for a single day, the bare day
+    inside one month ("17" of "17-23 Sep"), else day + month (+ year when the years differ)."""
+    a, b = _dt.date.fromisoformat(start), _dt.date.fromisoformat(end)
+    end_text = "%d %s" % (b.day, _MONTHS[b.month - 1])
+    if a == b:
+        start_text = ""
+    elif (a.year, a.month) == (b.year, b.month):
+        start_text = "%d" % a.day
+    elif a.year == b.year:
+        start_text = "%d %s" % (a.day, _MONTHS[a.month - 1])
+    else:
+        start_text = "%d %s %d" % (a.day, _MONTHS[a.month - 1], a.year)
+    label = end_text if not start_text else "%s–%s" % (start_text, end_text)
+    return {"start": start, "end": end, "start_text": start_text, "end_text": end_text,
+            "label": label}
+
+
+def hl_dot(headline):
+    """True when the headline needs the page's terminal period: it does not already end in
+    . ? or ! (looking inside one closing quote). Headlines stay period-free in the data."""
+    h = (headline or "").strip()
+    last = h[-1:]
+    if last in "\"'”’" and len(h) > 1:
+        last = h[-2]
+    return bool(h) and last not in ".?!"
+
+
+def _is_paper(url):
+    host = source_domain(url).split(":", 1)[0]
+    return any(host == p or host.endswith("." + p) for p in PAPER_HOSTS)
+
+
+def _norm_label(s):
+    return re.sub(r"[^a-z]", "", (s or "").lower())
+
+
+_LEDE_HTML_RE = re.compile(r"^\s*<strong>(.*?)</strong>\s*", re.S)
+
+
+def editorial_heading(ed):
+    """(title_html, title_is_lede, body_paras) for an editorial board item.
+
+    A titled editorial prints its title (escaped). A titleless one promotes its WHOLE opening bold
+    lede to the heading -- a leading "1. " stripped, never capped, and removed from the first
+    paragraph so it is not printed twice (ED_TITLE_CAP left it in the prose because a capped
+    title would be a crop; a heading that is the whole lede crops nothing). With no bold lede
+    either, the heading names the desk and day. `paras` is builder-escaped HTML already.
+    """
+    import html as _h
+    paras = [p for p in (ed.get("paras") or []) if (p or "").strip()]
+    if (ed.get("title") or "").strip():
+        return _h.escape(ed["title"].strip(), quote=False), False, paras
+    if paras:
+        m = _LEDE_HTML_RE.match(paras[0])
+        if m and m.group(1).strip():
+            lede = re.sub(r"^\d+\.\s*", "", m.group(1)).strip()
+            rest = paras[0][m.end():].strip()
+            return lede, True, ([rest] if rest else []) + paras[1:]
+    d = _dt.date.fromisoformat(ed["date"])
+    fallback = "%s desk, %s %d %s" % (STREAM_LABEL.get(ed.get("stream"), ed.get("stream") or ""),
+                                      _DAYS[d.weekday()], d.day, _MONTHS[d.month - 1])
+    return _h.escape(fallback, quote=False), True, paras
+
+
+def select_front(board, n=FRONT_N):
+    """Board indices of the front page, lead first. Deterministic:
+
+    walk the dates newest first, collecting their stories, until the window holds `n` leads or
+    features. The lead slot takes the window's first lead (board order), or its first story when
+    it has none; the other slots take leads and features in board order, and briefs fill in only
+    when there are too few -- a folded brief is a bare headline, i.e. exactly its index row."""
+    stories = [i for i, it in enumerate(board) if it.get("kind") == "story"]
+    dates = sorted({board[i]["date"] for i in stories}, reverse=True)
+    window = []
+    for d in dates:
+        window += [i for i in stories if board[i]["date"] == d]
+        if sum(1 for i in window if board[i].get("importance", 1) >= 2) >= n:
+            break
+    if not window:
+        return []
+    lead = next((i for i in window if board[i].get("importance") == 3), window[0])
+    rest = [i for i in window if i != lead]
+    big = [i for i in rest if board[i].get("importance", 1) >= 2]
+    small = [i for i in rest if board[i].get("importance", 1) < 2]
+    return [lead] + (big + small)[:n - 1]
+
+
+def build_stamp(posts_dir=None, streams=None):
+    """ISO time of the newest writer edition on file (its front-matter `date:`), or "".
+
+    Derived from the inputs rather than the wall clock on purpose: the page compares its baked
+    stamp against edition.json to offer a "New edition" reload, so the stamp must change when a
+    writer publishes and NOT when the feed is merely rebuilt from the same posts (publish.py's
+    push-conflict retry, a local re-run)."""
+    best, best_raw = None, ""
+    for path in glob.glob(os.path.join(posts_dir or POSTS_DIR, "*.md")):
+        m = _FILE_RE.search(os.path.basename(path))
+        if not m or m.group(2) not in (streams or CURRENT_STREAMS):
+            continue
+        try:
+            with open(path, encoding="utf-8", errors="replace") as fh:
+                head = fh.read(600)
+        except OSError:
+            continue
+        # front matter only: the first `date:` line between the opening `---` and its close
+        fm = re.match(r"\A---\s*\n(.*?)\n---", head, re.S)
+        dm = fm and re.search(r"^date:\s*[\"']?([0-9T:+\-. Z]+?)[\"']?\s*$", fm.group(1), re.M)
+        if not dm:
+            continue
+        # Jekyll also accepts "2026-09-24 12:21:02 +0200"; fromisoformat before 3.11 takes
+        # neither that nor a "Z" suffix, so normalize to "2026-09-24T12:21:02+02:00" first
+        raw = re.sub(r"^(\d{4}-\d\d-\d\d)[ T]+", r"\1T", dm.group(1).strip())
+        raw = re.sub(r"\s*(?:Z|([+-]\d\d):?(\d\d))$",
+                     lambda m: "+00:00" if not m.group(1) else "%s:%s" % (m.group(1), m.group(2)), raw)
+        try:
+            t = _dt.datetime.fromisoformat(raw)
+        except ValueError:
+            continue
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=_dt.timezone.utc)
+        if best is None or t > best:
+            best, best_raw = t, raw
+    return best_raw
+
+
+def build_views(board, max_date, topics, posts_dir=None):
+    """Annotate the board in place with the page's render fields and return the views.
+
+    Board item fields added: every item `edition` ("<date>-<stream>"), `period` (period_view),
+    `on_front`; stories `tier`, `tier_label`, `hl_dot`, `unfurl`, `boot_open`, `show_desk`;
+    editorials `sid` ("ed-<stream>-<date>", the read id), `topics` (the sorted union of its
+    edition's story topics, so a beat filter shows the desk's view of that beat), `stream_label`,
+    `title_html`, `title_is_lede`, `body`.
+
+    Returns {"days": [...], "front": {...}, "beats": [...]}: one day per date, newest first, each
+    a contiguous board slice [first, first+count); the front (board indices); the beat chips with
+    counts over the whole board, editorials included (what pressing the chip shows)."""
+    by_stream = edition_dates(posts_dir)
+    ed_topics = {}
+    for it in board:
+        if it.get("kind") == "story":
+            ed_topics.setdefault("%s-%s" % (it["date"], it["stream"]), set()).update(it.get("topics") or [])
+
+    for it in board:
+        stream, date = it.get("stream") or "", it["date"]
+        it["edition"] = "%s-%s" % (date, stream)
+        it["period"] = period_view(*edition_period(date, stream, by_stream))
+        it["on_front"] = False
+        if it.get("kind") == "editorial":
+            it["sid"] = "ed-%s-%s" % (stream, date)
+            it["topics"] = sorted(ed_topics.get(it["edition"], set()))
+            it["stream_label"] = STREAM_LABEL.get(stream, stream.title())
+            it["title_html"], it["title_is_lede"], it["body"] = editorial_heading(it)
+        else:
+            imp = it.get("importance") if it.get("importance") in TIER else 1
+            it["tier"], it["tier_label"] = TIER[imp]
+            it["hl_dot"] = hl_dot(it.get("headline"))
+            it["unfurl"] = bool(it.get("url")) and imp > 1 and not _is_paper(it.get("url"))
+            it["boot_open"] = imp == 3 and date == max_date
+
+    front = select_front(board)
+    for i in front:
+        board[i]["on_front"] = True
+    eds = [i for i, it in enumerate(board) if it.get("kind") == "editorial"]
+    desk = max(eds, key=lambda i: (board[i]["date"], -i)) if eds else None
+    if desk is not None:
+        board[desk]["on_front"] = True
+
+    days = []
+    for i, it in enumerate(board):
+        if not days or days[-1]["date"] != it["date"]:
+            d = _dt.date.fromisoformat(it["date"])
+            days.append({"date": it["date"], "first": i, "count": 0,
+                         "label_long": "%s %d %s" % (_DAYS_LONG[d.weekday()], d.day, _MONTHS_LONG[d.month - 1]),
+                         "label_short": "%s %d %s" % (_DAYS[d.weekday()], d.day, _MONTHS[d.month - 1]),
+                         "streams": [], "n_stories": 0, "n_front": 0, "editorials": 0})
+        day = days[-1]
+        day["count"] += 1
+        if not any(s["key"] == it.get("stream") for s in day["streams"]):
+            day["streams"].append({"key": it.get("stream"), "edition": it["edition"],
+                                   "label": STREAM_LABEL.get(it.get("stream"), it.get("stream")),
+                                   "period": it["period"]})
+        if it.get("kind") == "editorial":
+            day["editorials"] += 1
+        else:
+            day["n_stories"] += 1
+            day["n_front"] += 1 if it["on_front"] else 0
+    for day in days:
+        sl = board[day["first"]:day["first"] + day["count"]]
+        multi = len({it.get("stream") for it in sl if it.get("kind") == "story"}) > 1
+        day["multi_desk"] = multi
+        for it in sl:
+            if it.get("kind") == "story":
+                it["show_desk"] = multi and _norm_label(STREAM_LABEL.get(it.get("stream"))) != _norm_label(it.get("topic_label"))
+
+    newest = days[0]["date"] if days else max_date
+    front_dates = sorted({board[i]["date"] for i in front}, reverse=True)
+    front_view = {
+        "date": newest, "items": front, "desk": desk, "n": len(front),
+        "date_label": days[0]["label_short"] if days else "",
+        "older": [next(d["label_short"] for d in days if d["date"] == fd) for fd in front_dates if fd != newest],
+    }
+
+    counts = {}
+    for it in board:
+        for t in it.get("topics") or []:
+            counts[t] = counts.get(t, 0) + 1
+    meta = {t["key"]: t for t in topics}
+    beats = [{"key": k, "label": meta[k]["label"], "color": meta[k]["color"], "count": counts[k]}
+             for k in sorted(counts, key=lambda k: (-counts[k], k)) if k in meta]
+    return {"days": days, "front": front_view, "beats": beats}
+
+
+def masthead(max_date, n_stories, n_editorials, n_days):
+    """The masthead's edition line and count line, as strings."""
+    if not max_date:
+        return "", ""
+    d = _dt.date.fromisoformat(max_date)
+    edition = "%s %d %s %d" % (_DAYS_LONG[d.weekday()], d.day, _MONTHS_LONG[d.month - 1], d.year)
+    plural = lambda n, one, many: "%d %s" % (n, one if n == 1 else many)
+    counts = " · ".join([plural(n_stories, "story", "stories"),
+                              plural(n_editorials, "AI editorial", "AI editorials"),
+                              plural(n_days, "day", "days")])
+    return edition, counts
 
 
 def edition_parity(date):
@@ -1278,8 +1545,13 @@ def main():
     live_editions = {(s["date"], s["stream"]) for s in stories}
     editorials = load_editorials(args.days, max_date, live_editions)
     board = build_board(stories, editorials, max_date)
+    views = build_views(board, max_date, topics)
+    edition_label, count_line = masthead(max_date, len(stories), len(editorials), len(views["days"]))
     feed = {"generated": max_date, "count": len(stories), "topics": topics,
-            "editorials": editorials, "stories": stories, "board": board}
+            "editorials": editorials, "stories": stories, "board": board,
+            "days": views["days"], "front": views["front"], "beats": views["beats"],
+            "edition_label": edition_label, "count_line": count_line,
+            "build_stamp": build_stamp()}
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     with open(args.out, "w") as fh:
         json.dump(feed, fh, ensure_ascii=False, indent=1)
@@ -1292,9 +1564,11 @@ def main():
     print("editorials: %d (%s)" % (len(editorials),
           ", ".join("%s %s" % (e["stream"], e["date"]) for e in editorials) or "none in window"))
     eb = [i for i, it in enumerate(board) if it["kind"] == "editorial"]
-    print("board: %d items, %d daybreaks, editorials at %s"
-          % (len(board), sum(1 for it in board if it["daybreak"]),
-             ",".join(str(i) for i in eb) or "-"))
+    print("board: %d items, %d days, editorials at %s; front %s + desk %s; stamp %s"
+          % (len(board), len(views["days"]), ",".join(str(i) for i in eb) or "-",
+             ",".join(str(i) for i in views["front"]["items"]) or "-",
+             views["front"]["desk"] if views["front"]["desk"] is not None else "-",
+             feed["build_stamp"] or "-"))
     print("index overlay: %d/%d stories carry writer-supplied topics/importance"
           % (joined, n_parsed))                      # 0 is EXPECTED until routines start tagging
 

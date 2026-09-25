@@ -163,5 +163,54 @@ class LiveBoardAgeTest(unittest.TestCase):
                               "board" % (it["stream"], it["date"]))
 
 
+class LiveViewsTest(unittest.TestCase):
+    """The page's views on the committed _data/homefeed.json: the day-edition layout slices the
+    board with `days`, so a malformed slice renders a story in the wrong day or not at all."""
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        path = os.path.join(REPO_ROOT, "_data", "homefeed.json")
+        if not os.path.exists(path):
+            raise unittest.SkipTest("_data/homefeed.json not built")
+        with open(path, encoding="utf-8") as fh:
+            cls.feed = json.load(fh)
+
+    def test_the_feed_carries_the_views(self):
+        for k in ("days", "front", "beats", "build_stamp", "edition_label", "count_line"):
+            self.assertIn(k, self.feed, "regenerate with tools/build_stories_feed.py")
+
+    def test_days_are_contiguous_board_slices_newest_first(self):
+        board, days = self.feed["board"], self.feed["days"]
+        dates = [d["date"] for d in days]
+        self.assertEqual(dates, sorted(set(dates), reverse=True), "dates strictly descending, unique")
+        flat = []
+        for d in days:
+            sl = board[d["first"]:d["first"] + d["count"]]
+            self.assertTrue(sl and all(it["date"] == d["date"] for it in sl), d["date"])
+            kinds = [it["kind"] for it in sl]
+            self.assertEqual(kinds, sorted(kinds, key=lambda k: k == "editorial"),
+                             "an editorial closes its own day: " + d["date"])
+            flat += sl
+        self.assertEqual(flat, board)
+
+    def test_front_is_stories_and_desk_is_the_newest_editorial(self):
+        board, front = self.feed["board"], self.feed["front"]
+        self.assertTrue(all(board[i]["kind"] == "story" and board[i]["on_front"] for i in front["items"]))
+        self.assertEqual(sum(1 for it in board if it.get("on_front")),
+                         len(front["items"]) + (front["desk"] is not None))
+        eds = [it for it in board if it["kind"] == "editorial"]
+        if eds:
+            self.assertEqual(board[front["desk"]]["date"], max(e["date"] for e in eds))
+
+    def test_every_item_has_its_edition_and_a_period_ending_on_its_date(self):
+        for it in self.feed["board"]:
+            self.assertEqual(it["edition"], "%s-%s" % (it["date"], it["stream"]))
+            self.assertEqual(it["period"]["end"], it["date"])
+            self.assertLessEqual(it["period"]["start"], it["period"]["end"])
+            if it["kind"] == "editorial":
+                self.assertEqual(it["sid"], "ed-%s-%s" % (it["stream"], it["date"]))
+
+
 if __name__ == "__main__":
     unittest.main()

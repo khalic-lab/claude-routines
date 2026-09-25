@@ -248,17 +248,6 @@ class BuildBoardTest(unittest.TestCase):
         self.assertEqual(kinds.index("editorial"), len(board) - 1)
         self.assertEqual(board[-2]["headline"], "old-brief")   # below the briefs of its own day
 
-    def test_no_editorial_in_the_composed_top_band(self):
-        """A `.fcard--ed` at nth-child(1) renders `grid-area:1/1/2/13` — 100% of the board width
-        with no news on screen (documented failure, 2026-07-25)."""
-        for n_today in range(0, 4):
-            stories = [self._story("2026-07-26", 2, "t%d" % i) for i in range(n_today)] + \
-                      [self._story("2026-07-20", 2, "o%d" % i) for i in range(4)]
-            board = self._board(stories, [self._ed("2026-07-26")], "2026-07-26")
-            head = [it["kind"] for it in board[:bsf.ED_MIN_BOARD_INDEX]]
-            self.assertNotIn("editorial", head,
-                             "editorial in the composed band with %d fresh stories" % n_today)
-
     def test_editorial_only_board_is_left_alone_rather_than_looping(self):
         board = self._board([], [self._ed("2026-07-26", "a"), self._ed("2026-07-26", "b")],
                             "2026-07-26")
