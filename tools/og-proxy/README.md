@@ -1,6 +1,6 @@
 # og-proxy — Cloudflare Worker
 
-A ~150-line Worker that fetches a URL with a browser User-Agent, parses `<head>` for `og:image` / `twitter:image` / `link rel="image_src"`, and returns JSON. Used by `_includes/head/custom.html` on the Pages site to inject real thumbnails next to each citation link.
+A ~150-line Worker that fetches a URL with a browser User-Agent, parses `<head>` for `og:image` / `twitter:image` / `link rel="image_src"`, and returns JSON. Used by the homepage (`assets/js/og.js`) to fill the image slot of each lead/feature story on the front page.
 
 Free tier: 100k requests/day. Cold start ~25 ms. Per-URL responses cached for 30 days at the edge.
 
@@ -50,7 +50,7 @@ Internal failures (timeout, non-html content, parse error) intentionally return 
    https://og-proxy.your-account.workers.dev
    ```
 
-5. Send that URL back to the assistant; it edits `_includes/head/custom.html` to point the site at it.
+5. Send that URL back to the assistant; it edits the `OG` constant in `assets/js/og.js` (and the host allowlist in `tools/tests/test_frontend_static.py`).
 
 ## Verify
 

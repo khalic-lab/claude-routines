@@ -164,7 +164,7 @@ From this directory (`tools/feedback-sink`):
    ```
    Wrangler prints the live URL, e.g. `https://feedback-sink.<account>.workers.dev`.
 5. Send that URL back to the assistant. It then wires it into:
-   - the widget in `_includes/head/custom.html` (the `FEEDBACK_URL` constant),
+   - the site's `window.__FB.url` in `_includes/tokens.html` (read by the homepage modules and `/admin/`),
    - the bridge drain/ack step (`tools/feedback/feedback.py` env),
    - the **env_018** allowlist is NOT needed (the Worker is called by the *browser* and the *Mac
      bridge*, never the routine sandbox).

@@ -1,65 +1,54 @@
-# 05 · Frontend rendering pipeline — `_includes/head/custom.html`
+# 05 · Frontend rendering: the day-edition homepage (2026-09-24)
 
-All custom CSS + JS is layered over the minimal-mistakes "default" skin and loads last in the
-document head. On `DOMContentLoaded` a sequence of passes transforms the kramdown-rendered brief
-into the editorial layout, then enriches it with link previews, feedback widgets and the unlock
-modal. The editorial CSS targets only `.story` — the class the normaliser tags — so the
-Coverage-footer / "Gaps:" list stays plain prose.
+The site owns its layouts; there is no theme. The builder decides, Liquid prints, CSS lays out in
+cascade layers, and a handful of ES modules add the interactive state. No script measures or
+places anything: filtering only toggles `hidden`, and DOM order is visual order.
 
 ```mermaid
 flowchart TD
-  subgraph headblk["custom.html — parsed in document head"]
-    H["Shared helpers (global)<br/>findCoverageFooter(content) · afterFooter(footer, el)"]
-    stub["Stub: ensure .page__content exists<br/>(guards theme main.min.js)"]
+  subgraph build["tools/build_stories_feed.py (every writer fire)"]
+    B1["_posts/*.md + index/stories → board<br/>(date, tier, position; editorials close their day)"]
+    B2["build_views: edition + period per item<br/>days · front · beats · build_stamp"]
+    B1 --> B2
+  end
+  B2 --> HF["_data/homefeed.json"]
+  HF --> L
+
+  subgraph jekyll["Jekyll (GitHub Pages, no theme)"]
+    L["_layouts/home.html → default.html<br/>front · one section per day · editorials"]
+    H["_includes/head.html<br/>title · seo · feed_meta · stamped CSS · import map · .js gate"]
+    T["_includes/tokens.html<br/>@layer order · light-dark() palette · Anton · window.__FB"]
+    E["edition.json (build_stamp)"]
+    H --> T
   end
 
-  DCL(["DOMContentLoaded"]) --> tag
+  L --> CSS["assets/css: reset → base → layout → components → utilities → state"]
+  L --> JS
 
-  subgraph tag["1 · Story normaliser (tags .story)"]
-    direction TB
-    t1["for each .page__content &gt; ul &gt; li before the Coverage footer"]
-    t1 --> t2{"lead element?"}
-    t2 -->|"tight: leading &lt;strong&gt;"| t3["wrap inline run in p.story-body<br/>+ add class .story"]
-    t2 -->|"loose: &lt;p&gt;&lt;strong&gt;…"| t4["add class .story"]
-    t2 -->|"text lead (e.g. Gaps:)"| t5["leave untagged → plain prose"]
+  subgraph JS["assets/js (ES modules)"]
+    M["main.js"] --> BO["board.js<br/>read state · edition read rule · filters · honest counts"]
+    M --> SY["sync.js<br/>passkeys · /readstate (st- ids only)"]
+    M --> PR["prefs.js<br/>topicPrefs:v1 ↔ /prefs"]
+    M --> VO["votes.js → /submit"]
+    M --> OG["og.js → og-proxy (reserved slot)"]
+    M --> FR["fresh.js → edition.json on resume"]
+    M --> DI["dialog.js · fold.js · propose.js · probe.js"]
   end
-
-  tag --> prev
-  subgraph prev["2 · Link preview (IntersectionObserver, rootMargin 300px)"]
-    direction TB
-    p1{"external link kind"}
-    p1 -->|"arxiv.org"| p2["render a.auto-preview.pdf chip → /pdf/ID.pdf"]
-    p1 -->|"other host"| p3["unfurl via og-proxy worker"]
-    p3 -->|"og:image"| p4["a.auto-preview-wrap &gt; img.auto-preview (figure)"]
-    p3 -->|"no image"| p5["favicon → img.auto-preview.fav"]
-    p6["sessionStorage cache key: autoPreview:v2:"]
-  end
-
-  tag --> fb
-  subgraph fb["3 · Feedback widgets"]
-    direction TB
-    f1["per-story .fb-inline 👍 / 👎 + reason (story_id set)"]
-    f2["bottom .fb-box overall (story_id = null)"]
-    f1 --> f3
-    f2 --> f3
-    f3["post() → feedback-sink /submit<br/>Authorization: Bearer — passkey session (2026-07-25)"]
-    f3 -->|"no session / HTTP 401"| f4["Sync panel opens — sign in with passkey"]
-  end
-
-  tag --> emo["4 · Strip leading section emoji on h2/h3"]
-  home(["home page only"]) --> prop[".propose__form → feedback-sink /propose"]
-
-  CSS["Editorial CSS — variable-driven (:root + dark @media)<br/>.story headlines (Fraunces) · arXiv shape-A/B rules<br/>.auto-preview figures · feedback widgets"]
-  tag -.->|"styling targets .story"| CSS
+  FR -.-> E
+  SY --> FS["feedback-sink Worker"]
+  PR --> FS
+  VO --> FS
+  OG --> OGW["og-proxy Worker"]
 ```
 
 Notes:
-- Per-story `story_id` is `{date}-{slug}-{slugify(bold lead)}`, mirroring `dedup.py slugify()` so
-  the Evaluator can join feedback back to stories by re-slugifying the same bold leads.
-- The story id slug prefix comes from `window.__BRIEF` (injected by Jekyll on post pages only).
-- Both the normaliser and the feedback pass stop at the Coverage footer via the shared
-  `findCoverageFooter()` / `afterFooter()` helpers.
+- Read ids ride on the item element (`data-story`: `sid | default: id`, or `ed-<stream>-<date>`);
+  `data-edition` (`<date>-<stream>`) is the `/submit` `brief` and the key of the editorial read rule.
+- Storage keys: `homeRead:v1`, `syncState:v1`, `topicPrefs:v1`, `syncSession:v1`, `homeUnread:v1`
+  (local only), sessionStorage `homeOg:v2:`.
+- Evaluator reviews, `/prompts/` and the 404 use `_layouts/single.html` + `assets/css/prose.css`;
+  `/admin/` is self-owned and shares only `tokens.html`.
 
-**Grounded in:** `_includes/head/custom.html` (every class/function named here is literal), the
-arXiv markup shapes in `_posts/*.md`, `tools/og-proxy/` + `tools/feedback-sink/`, and
-`_layouts/home.html` (`.home-hero`, `.home-tagline`, `.entries-list`, `.propose__form`).
+**Grounded in:** `_layouts/home.html`, `_includes/{head,tokens}.html`, `_includes/home/*.html`,
+`assets/css/*.css`, `assets/js/*.js`, `tools/build_stories_feed.py` (`build_views`), and
+`docs/PLAN-2026-09-24-front-page-rewrite.md`.

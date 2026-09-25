@@ -16,7 +16,7 @@ Diagram 06 was separately verified against the implementation on **2026-07-20**.
 | 02 | [routines-and-schedules](02-routines-and-schedules.md) | The six triggers: IDs, models, crons, outputs, MCP connectors |
 | 03 | [compose-time-dedup](03-compose-time-dedup.md) | `dedup.py` verdict logic, embed-proxy, thresholds, the index |
 | 04 | [bridge-delivery-and-feedback](04-bridge-delivery-and-feedback.md) | Local bridge tick: ntfy delivery + two-phase feedback drain |
-| 05 | [frontend-rendering](05-frontend-rendering.md) | Client-side passes in `_includes/head/custom.html` |
+| 05 | [frontend-rendering](05-frontend-rendering.md) | Builder views → layouts → CSS layers → JS modules (day-edition homepage, 2026-09-24) |
 | 06 | [public-how-it-works](06-public-how-it-works-wide.mmd) | Public-safe trust map used by the homepage modal; a narrow-screen source lives beside it |
 
 > The `diagrams/` sources are excluded from the published Jekyll site (`_config.yml`). Diagrams

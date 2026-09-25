@@ -9,7 +9,7 @@ human gate**. Design + rationale: `docs/archive/REVIEW-2026-06-08-feedback-and-d
 The whole loop is wired and verified end-to-end (was BUILT + DORMANT until then):
 - **Worker deployed** → `https://feedback-sink.khalic-lab.workers.dev` (khalic-lab CF account; KV
   `FEEDBACK_KV`, secret `FEEDBACK_TOKEN`). All four routes verified (submit/drain/ack/401).
-- **Widget enabled** → `_includes/head/custom.html` `FEEDBACK_ENABLED=true` (renders on every brief).
+- **Widget enabled** → `window.__FB.enabled` in `_includes/tokens.html` (the kill switch; the homepage votes and propose form read it; until 2026-09-24 it lived in `_includes/head/custom.html`).
 - **Bridge wired** → `.env` has `FEEDBACK_WORKER_URL`+`FEEDBACK_TOKEN`; `bridge.sh` drains before its
   commit and acks after push (and now commits feedback even on no-notification ticks).
 - **Consumers wired** (RemoteTrigger, byte-verified) → Evaluator reads last-7d feedback and proposes

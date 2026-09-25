@@ -1,8 +1,8 @@
 # News Brief Pipeline — Architecture
 
 > Written 2026-05-25; §1 updated 2026-08-07; §3–§7 status updated 2026-06-22. §1 (current state) is
-> read from live trigger configs, `bridge.sh`, the user crontab, `_config.yml`, and
-> `_includes/head/custom.html` — not inferred. The two-plane design in §3–§7 is now **partially built**: **Phase 1 — the compose-time
+> read from live trigger configs, `bridge.sh`, the user crontab, `_config.yml`, and the site's
+> own layouts/includes (`_layouts/`, `_includes/tokens.html`, since the theme drop of 2026-09-24) — not inferred. The two-plane design in §3–§7 is now **partially built**: **Phase 1 — the compose-time
 > embeddings dedup (online plane)** is LIVE (`tools/dedup/dedup.py`, the `embed-proxy` Worker, the
 > in-repo `index/stories/` index; calibrated 2026-05-31). **Phase 2 — the analytical plane — is
 > BUILT (2026-07-18: `tools/plane/query.py`, SERVERLESS — the ledger is the database, folded
@@ -47,7 +47,7 @@
                      ▼                                   ▼
    ┌──────────────────────────────────┐   ┌──────────────────────────────────────────────┐
    │ GitHub Pages — Jekyll             │   │ LOCAL Mac                                      │
-   │  minimal-mistakes (dark)          │   │  crontab: */10 7-22 * * *  bridge.sh           │
+   │  own layouts, no theme (09-24)    │   │  crontab: */10 7-22 * * *  bridge.sh           │
    │  khalic-lab.github.io/            │   │   1 git pull --rebase                          │
    │     claude-routines               │   │   2 each pending-notifications/*.json →        │
    │  permalink /:y/:m/:d/:title/      │   │       curl -d body  $NTFY_SERVER/$NTFY_TOPIC   │
@@ -55,11 +55,11 @@
               │ browser                     │   4 push if ahead / Pages self-heal            │
               ▼                             │  creds: store --file=git-credentials (600)     │
    ┌──────────────────────────────────┐   └───────────────────┬────────────────────────────┘
-   │ home.html JS (homepage cards)     │                       │ HTTP POST
-   │  card → og-proxy worker →         │                       ▼
-   │  og:image thumbnail (lazy,        │              ┌─────────────┐     ┌──────────────┐
-   │  sessionStorage cache); custom.   │              │  ntfy.sh     │────▶│ phone (ntfy)  │
-   │  html = skin; propose in home     │              │  topic khalic│push └──────────────┘
+   │ assets/js modules (homepage)      │                       │ HTTP POST
+   │  front card → og-proxy worker →   │                       ▼
+   │  og:image into a reserved slot    │              ┌─────────────┐     ┌──────────────┐
+   │  (lazy, sessionStorage cache);    │              │  ntfy.sh     │────▶│ phone (ntfy)  │
+   │  assets/css = the look            │              │  topic khalic│push └──────────────┘
    └──────────┬────────────────────────┘             └─────────────┘
               ▼
    ┌──────────────────────────────────┐
@@ -143,6 +143,46 @@
 > `ethz.ch`/`epfl.ch`/`psi.ch` (they publish AI research and the desk had no institutional Swiss
 > route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
 > `hklaw.com`, `macrumors.com`, `wtvbam.com`.
+>
+> **Changed 2026-09-24: the front page rewritten as day editions, and the theme dropped.** Owner
+> ask: keep the look, rebuild it with semantic HTML/CSS and zones that cannot overlap, and fix
+> "editorials appearing days after they were published". Plan and decisions:
+> `docs/PLAN-2026-09-24-front-page-rewrite.md`; spec, mock and audits:
+> `docs/design/2026-09-24-front-page/`. (1) **Layout.** `_layouts/home.html` (the 2,767-line
+> monolith is gone) prints a composed FRONT (lead + three stories + the newest editorial as the
+> "Desk's view"), then one `<section>` per date: an `h2 <time>` header, each desk's **period tag**
+> ("Science · 17–23 Sep": the span that edition reports on), the day's stories as an index biggest
+> first, "↑ On the front" pointers for lifted stories, the day's editorial last. DOM order is
+> visual order and board order; no layout JS, no dense packing, no `order` on content (the phone
+> control bar's thumb-zone placement is the one chrome-only use, allow-listed in
+> `tools/tests/test_frontend_static.py`). Without script every text shows and no script-only
+> control renders. (2) **Late editorials**, all four page-side causes fixed: day zones end the
+> desktop misfiling; an editorial counts as read when ticked OR when every story of its edition is
+> read (explicit un-tick wins, kept in the new local-only key `homeUnread:v1`), and the counts are
+> honest (every chip shows what pressing it shows, editorials included); editorials inherit their
+> edition's story beats; a resumed tab (bfcache, or visible after ≥10 min) checks `edition.json`
+> and offers "New edition · Reload", never auto-reloading. (3) **Builder.** `build_stories_feed.py`
+> decides and emits everything the page shows: `edition`/`period` on every board item, render
+> fields (tier, `hl_dot`, `unfurl`, editorial `sid`/`topics`/`title_html`), and the `days`,
+> `front`, `beats` views plus `build_stamp` (newest writer post's front-matter date).
+> `ED_MIN_BOARD_INDEX` is gone with the nth-child band it served. (4) **No theme.**
+> minimal-mistakes, Font Awesome (loaded twice from jsdelivr for one icon) and `main.min.js` are
+> gone; the site owns `_layouts/{default,home,single,admin}.html`, `_includes/head.html`
+> (own `<title>`, jekyll-seo-tag, `{% feed_meta %}`), `_includes/tokens.html` (the one shared
+> include: cascade-layer order, `light-dark()` palette, Anton faces, `window.__FB`), a 404 page,
+> and static `assets/css` (one `@layer` per file, zero `!important`) + `assets/js` (ES modules
+> behind a build-stamped import map). `theme: null` keeps Pages' default primer theme out; the
+> Gemfile is `github-pages`. The root font ladder (16/18/20/22px at 0/768/1024/1280) is kept
+> byte for byte. (5) **Contract unchanged**: storage keys and shapes, read ids (now on the item as
+> `data-story`), Worker payloads; no Worker change. Old bugs fixed on the way: a signed-out vote's
+> sign-in nudge closed itself (B1), `ed-` ids were pushed to `/readstate` (B2, now pruned
+> locally), propose kept a dead session (B4) and ignored the kill switch (B5), og images were
+> requested before their referrer policy was set (B6), an untouched default could overwrite a
+> roamed selection (B8). (6) **Verification**: `tools/verify/` — `build.sh` runs GitHub's own
+> `jekyll-build-pages` container locally; `suite.mjs` is a Playwright suite over the built site
+> (Chromium 360–1600, WebKit iPhone 15 + 1024, light/dark, seven states + no-JS + contract parity
+> against a capture of the old page, with a fault-injection self-test). `tools/home_harness.py`
+> (disarmed since 09-13) is deleted.
 >
 > **Changed 2026-09-13: measured token usage, an admin page, and the front page back on a
 > scrolling document.** (1) **Usage is measured, not estimated.** `.claude/settings.json` (checked
@@ -741,10 +781,11 @@
 | Source health | `_data/source-health.json` | per-stream 30d `{stories, unique_domains, new_domains, top5_share, saturated, waiver_rate}` | `health.py` (writer Step D) → Evaluator + homepage-adjacent tooling |
 | Evaluator metrics | `_data/health.json` | `{week, streams, feedback, sources, continuity}` | `tools/evaluator/metrics.py` (evaluator fire start) → Evaluator |
 | Machine proposals | `proposals/{name}-{date}.json` | `[{id, dimension, target, change, evidence, applied, applied_by?}]` | Evaluator emits → human/auto applies + stamps → next Evaluator verifies |
-| Read state (sync) | Cloudflare KV `readstate:{reader}` (not in repo) | `{sid: {ts, v: 0\|1}}` LWW tombstone map; client shadow `syncState:v1` + paint source `homeRead:v1` in localStorage | homepage JS ↔ feedback-sink Worker (passkey session) |
+| Read state (sync) | Cloudflare KV `readstate:{reader}` (not in repo) | `{sid: {ts, v: 0\|1}}` LWW tombstone map (`st-` ids only); client shadow `syncState:v1` + paint source `homeRead:v1` in localStorage | homepage JS (`assets/js/sync.js`) ↔ feedback-sink Worker (passkey session) |
+| Reader state (local only) | browser localStorage | `homeRead:v1` `{sid: ms}` (stories + editorial ticks), `homeUnread:v1` `{ed-sid: ms}` (explicit un-tick of an editorial the edition rule calls read; 2026-09-24), `topicPrefs:v1` `{topics, rs, ts}` (roamed via `/prefs`), `syncSession:v1` `{token, reader, at}`; sessionStorage `homeOg:v2:<url>`. Retired, never reuse: `siteKey`, `homeOg:v1:`, `autoPreview:v2:` | `assets/js/store.js` (45-day prune) |
 | Institutions ledger | `sources/institutions.yml` | `meta.synced_editions` + `aliases:` + per-institution `{class, status, streams, first_seen, last_cited, citations, lifecycle}` | writer bylines → Step C `affiliations` → `institutions.py sync` (Step C.25c); class + aliases hand-curated |
 | Passkey auth | Cloudflare KV `cred:{id}` / `session:{token}` / `chal:{kind}:{c}` (not in repo) | credential pubkey+counter; 90d rolling sessions; single-use challenges TTL 300s | feedback-sink `/auth/*` (registration invite-gated by `INVITE_TOKEN` secret) |
-| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 545 tests (539 pass locally; the 6 failures are environment-dependent — PyYAML date coercion in `test_sources_registry` ×5, `test_reconcile_lint` ×1 — and fail identically at the prior HEAD): store invariants, fold, registry, institutions, affiliations + prompt-mirror drift, lint, metrics (+ computed briefs dimensions), dedup convergence, post-derived prose, reconcile, dual-write byte-identity goldens, fetch wrapper, computed footer, publish orchestrator, watch gate, linkcheck, plane (bake artifact roundtrip, cosine/groupbys, entities + blank-headline record path, thread enrichment) | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`); worker smokes run separately (`node tools/feedback-sink/test/smoke.mjs` 46 checks, `node tools/embed-proxy/test/smoke.mjs` 23 checks) |
+| Spec suite | `tools/tests/` (stdlib unittest + fixtures) | 726 tests, OK, 1 skip (2026-09-24; the old environment-dependent PyYAML/clock failures are gone). Site checks: `test_frontend_static`, `test_liquid_balance`, `test_admin_harness`, `test_feed_views`; browser checks live in `tools/verify/`: store invariants, fold, registry, institutions, affiliations + prompt-mirror drift, lint, metrics (+ computed briefs dimensions), dedup convergence, post-derived prose, reconcile, dual-write byte-identity goldens, fetch wrapper, computed footer, publish orchestrator, watch gate, linkcheck, plane (bake artifact roundtrip, cosine/groupbys, entities + blank-headline record path, thread enrichment) | dev/CI-less drift guard (`python3 -m unittest discover -s tools/tests`); worker smokes run separately (`node tools/feedback-sink/test/smoke.mjs` 46 checks, `node tools/embed-proxy/test/smoke.mjs` 23 checks) |
 | Plane artifact | Cloudflare KV `plane:v1` on embed-proxy (not in repo; namespace `459b76a2…`) | magic `PLANEv1\0` + meta JSON (n, dim, ts, norms, compact stories incl. entities) + n×1024 float32 vectors (~7.4MB), baked from the ledger | `tools/plane/bake.py --push` (publish-tail `plane-push`, every edition) → embed-proxy `/plane/*` queries (dedup check thread-enrichment, Weekend cross-cutting grounding, ad-hoc); `tools/plane/query.py` = offline reference twin |
 
 ### 1.3 Dedup today
@@ -768,7 +809,7 @@ reason on either thumb, and folds it into the writers' editorial guidance **thro
 (never auto-mutated from a tap — the documented n=1 sycophancy trap).
 
 ```
-homepage card widget (_layouts/home.html; kill switch + URL via window.__FB in custom.html —
+homepage votes (assets/js/votes.js; kill switch + URL via window.__FB in _includes/tokens.html —
                       the per-brief-page widget was deleted 2026-07-18 with the brief pages)
   │  POST /submit (CORS site-origin; passkey session Bearer — passkeys-only since 2026-07-25)
   ▼
@@ -952,9 +993,10 @@ the model's judgment over ~a few hundred recent headlines rather than a similari
 }
 ```
 
-**Homepage feed — `_data/homefeed.json`.** The front page (`_layouts/home.html`) is a per-STORY
-masonry grid (topic filters, importance-sized cards, real og:images lazy-loaded via og-proxy with
-text-only fallback, per-story thumbs posting `surface:"home"`), not the old edition list.
+**Homepage feed — `_data/homefeed.json`.** The front page (`_layouts/home.html`, rewritten
+2026-09-24) prints a composed front followed by one day edition per date (beat and read filters,
+tier glyphs, og:images lazy-loaded via og-proxy into reserved slots on front cards, per-story thumbs
+posting `surface:"home"`). It decides nothing: every choice below is made here and emitted as data.
 `tools/build_stories_feed.py` **parses the recent `_posts/*.md` briefs** for each story's real
 prose (headline, body, and the writers' `Why it matters` paragraph — the dedup summary is a terse
 embedding one-liner, deliberately not used for display), then overlays `topics`/`importance` **and
@@ -980,21 +1022,43 @@ below briefs**, so an editorial closes its own edition's date block instead of b
 fixed index. Before this, `feed.editorials` was a separate array the layout emitted after the third
 story, and nothing ever compared one against the other — a six-day-old Sports editorial sat at
 position 4 of a page whose first three cards were that morning's (owner report, 2026-07-26). Guards
-are invariants, not side effects: `ED_MAX_AGE_DAYS = 7` (one weekly cycle, whatever else is true),
-the editorial's `(date, stream)` edition must still have a story on the capped board, and
-`ED_MIN_BOARD_INDEX = 3` keeps any editorial out of the composed top band (a `.fcard--ed` at
-`nth-child(1)` renders at 100% board width). The old 14-day window and `[:3]` count cap are gone.
-Each board item also carries `age_days` (clamped 0..3 — the card's `data-age`, which drives one step
-of type demotion and the fold default), `daybreak` (first card of each date block, which prints
-`day_label`) and `kind`. `feed["stories"]`/`feed["editorials"]`/`feed["count"]` keep their exact
+are invariants, not side effects: `ED_MAX_AGE_DAYS = 5` (shorter than the weekly cadence, so a desk's
+editorial slot is genuinely empty before its successor lands — 7 was the "keeps reappearing" bug of
+2026-09-12), and the editorial's `(date, stream)` edition must still have a story on the capped board.
+(`ED_MIN_BOARD_INDEX`, which pushed editorials out of the old page's nth-child top band, went with
+that band on 2026-09-24.) The old 14-day window and `[:3]` count cap are gone. Each board item also
+carries `age_days` (a clamped 0..3 bucket, data only since 2026-09-24), `daybreak`, `day_label` and
+`kind`. `feed["stories"]`/`feed["editorials"]`/`feed["count"]`/`feed["topics"]` keep their exact
 shapes — the board holds copies, and `test_feed_sid.py` pins that nothing leaked into the stories.
+
+**The page's views (2026-09-24, `build_views()`).** Every board item gets `edition`
+(`<date>-<stream>`, the `/submit` `brief`) and `period` `{start, end, start_text, end_text, label}`:
+the span that edition reports on, **start = the day after the same desk's previous `_posts/` edition,
+capped at the lookback its routine prompt states** (`PERIOD_CAP_DAYS`: news 1 day; science, weekend,
+sports 7; ai-ml uncapped — "since the last AI/ML edition"; a first-ever edition starts at the cap).
+Not the post footer, whose date−7..date overlaps the previous weekly edition by a day. Stories get
+`tier`/`tier_label`, `hl_dot` (the terminal period, from the headline's own punctuation), `unfurl`
+(image eligible: lead/feature with a url, not arXiv/doi.org), `boot_open` (today's leads open, R33),
+`show_desk`; editorials get `sid` (`ed-<stream>-<date>`), `topics` (the sorted union of their
+edition's story topics, so a beat filter shows them), `title_html` + `title_is_lede` + `body` (a
+titleless editorial promotes its WHOLE bold lede, leading "1. " stripped, to the heading).
+Views: `days` (one per date, a contiguous board slice `[first, first+count)`, newest first),
+`front` (board indices: walk the newest dates until they hold four leads/features; the lead is the
+window's first lead, then leads and features in board order, briefs only to fill; `desk` = the
+newest editorial), `beats` (chip counts over the whole board, editorials included),
+`edition_label`/`count_line` (masthead) and `build_stamp` (the newest writer post's front-matter
+`date:` — input-derived, so a rebuild from the same posts does not change it; the page compares it
+with `edition.json` on resume). `tools/tests/test_feed_views.py` pins all of it, including the CLI
+under `python3 -S` on sparse `_posts/` trees; `test_feed_age.py` re-checks the views on the
+committed artifact.
 
 **Editorial card titles are the editorial's own opening bold lede**, consumed out of the prose it
 opened, with the scraped `## ` section heading moved to the kicker (`Sports · Why it matters ·
 Jul 20`). It used to print the heading as the headline, which put "Why it matters" on the front page
-as a story title. A lede over 90 chars leaves the prose untouched and the card renders with no
-`<h2>` at all: capping a *consumed* lede would delete the tail of a sentence from the only surface
-that prints it.
+as a story title. A lede over 90 chars leaves the prose untouched and `title` empty: capping a
+*consumed* lede would delete the tail of a sentence from the only surface that prints it. Since
+2026-09-24 the page view promotes that whole lede (never capped) to the heading instead of printing
+none (`title_html`, above).
 
 **Plain `- ` bullets are stories (fixed 2026-07-26, R4).** The parser accepted only `###` headings and
 bullets opening on a bold lede, while `routines/src/weekend.md`'s format block specifies bare
@@ -1022,7 +1086,7 @@ the parser becomes legacy fallback only.
 **`deck` — the writer-authored front-page standfirst (2026-07-25, Guardian `trailText` pattern).**
 The card prints headline + deck folded, and reveals `display_body` behind "More". Written in
 DEDUP.md Step C and budgeted by the story's own `importance`, which is what the card's tier label
-already reads from (`home.html`: 3 → Lead, 2 → Feature, else Brief): **3 → 1–2 complete sentences
+already reads from (`tier`: 3 → Lead, 2 → Feature, else Brief): **3 → 1–2 complete sentences
 ≤160 chars, 2 → one sentence ≤110 chars, 1 → omitted** (briefs are headline-only by design). It
 exists because the owner's 2026-07-25 ruling bars mid-text clamps — the front page may not crop a
 sentence or print an ellipsis the writer did not write — so shortening a folded card has to happen
@@ -1032,8 +1096,8 @@ the record carries a non-empty one**, exactly as it does for `affiliations` and 
 (Liquid counts `""` as truthy, so an always-present key would open an empty standfirst slot under
 every brief and every pre-2026-07-25 record). Decks therefore appear gradually as new editions
 publish; nothing is backfilled and nothing synthesizes one. `tools/tests/test_deck.py` pins the
-absence contract. `tools/home_harness.py` renders the layout standalone for
-headless-Chrome smoke tests (geometry self-check included) — no local Jekyll needed. Unmatched stories get derived tags (topic from section+keywords,
+absence contract. The rendered page is verified by `tools/verify/` (a local run of GitHub's own
+Pages build container, then a Playwright suite over the built site). Unmatched stories get derived tags (topic from section+keywords,
 importance from brief position). Output is URL-deduped across streams, sorted newest+lead first,
 and capped per-edition (each stream's latest edition keeps ≥6 stories, so weekly Science never
 vanishes). Writers regenerate and commit it after `record` (DEDUP.md Step D; `_data/` is in their

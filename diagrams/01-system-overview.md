@@ -23,9 +23,9 @@ flowchart TB
 
   GH["GitHub · khalic-lab/claude-routines (private)<br/>main = source of truth<br/>_posts/ · pending-notifications/ · index/stories/<br/>feedback/ · watches.yml · reader-profile"]
 
-  subgraph pages["GitHub Pages · Jekyll minimal-mistakes@4.26.2"]
+  subgraph pages["GitHub Pages · Jekyll (own layouts, no theme)"]
     SITE["khalic-lab.github.io/claude-routines"]
-    JS["browser: _includes/head/custom.html JS"]
+    JS["browser: assets/js modules"]
   end
 
   subgraph mac["Local Mac"]
@@ -56,7 +56,7 @@ flowchart TB
   BR -->|"GET /drain · POST /ack"| FS
 ```
 
-**Grounded in:** `ARCHITECTURE.md` §1.1, `_config.yml` (remote_theme, baseurl), `CLAUDE.md`
+**Grounded in:** `ARCHITECTURE.md` §1.1, `_config.yml` (baseurl, plugins), `CLAUDE.md`
 (env + trigger IDs), `tools/{og-proxy,embed-proxy,fetch-proxy,feedback-sink}/wrangler.toml`,
-`_includes/head/custom.html`. The Mac bridge `bridge.sh` + `.env`
+`_layouts/`, `_includes/tokens.html`, `assets/js/`. The Mac bridge `bridge.sh` + `.env`
 (`/usr/local/src/news-brief-ntfy-bridge/`) are excluded from the repo by `_config.yml`.
