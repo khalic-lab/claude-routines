@@ -35,7 +35,7 @@
   .prose { font-size: 1.06rem; line-height: 1.6; }
   .prose__kicker {
     font: 700 .6rem/1.35 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
-    margin-block-end: .5em;
+    margin-block-end: 1em;             /* the header's one step: kicker, title, date */
   }
   .prose__title {
     font: 600 2.3em/1.1 var(--display); text-transform: uppercase; letter-spacing: .005em; color: var(--ink);
@@ -43,11 +43,11 @@
   }
   .prose__meta {
     font: 700 .6rem/1.35 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--muted-ui);
-    margin-block: .8rem 1.4rem;
+    margin-block: 1em 2.4em;
   }
   .prose__head { margin-block-end: 1.6em; }
   .prose__head:has(.prose__meta) { margin-block-end: 0; }
-  .prose p, .prose ul, .prose ol, .prose table, .prose pre { margin-block: 0 1em; }
+  .prose__body :is(p, ul, ol, table, pre) { margin-block: 0 1em; }
   .prose ul, .prose ol { padding-inline-start: 1.3em; }
   .prose li { margin-block-end: .35em; }
   .prose a {
@@ -68,6 +68,15 @@
   .prose code {
     font: 500 .72em var(--sans); text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
     border: 1px solid var(--hair); border-radius: 999px; padding: .12em .6em;
+  }
+  /* fenced blocks in the reviews: a quiet slab that scrolls inside itself, never the page */
+  .prose pre {
+    max-inline-size: 100%; overflow-x: auto; padding: 10px 14px; background: var(--panel);
+    border: 1px solid var(--hair); font-size: .78rem; line-height: 1.55;
+  }
+  .prose pre code {
+    font: inherit; text-transform: none; letter-spacing: 0; color: inherit;
+    border: 0; border-radius: 0; padding: 0; background: none;
   }
   .prose blockquote {
     border-inline-start: 2px solid var(--accent); background: var(--panel); font-style: italic;

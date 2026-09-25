@@ -49,6 +49,7 @@ feed, not only the one it was written against:
 - the measure of opened rows is 50–80 characters per line (the ceiling only below 700px)
 - read text contrast is ≥ 4.5:1, and the AI disclosure is never dimmed
 - the "New edition" bar appears on resume
+- every reading page (each review, /prompts/ fully open, the 404, /admin/) fits the width at 360px, 1440px and on an iPhone
 - zero requests to hosts other than the two Workers
 - zero Worker requests while signed out
 

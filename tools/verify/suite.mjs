@@ -659,6 +659,34 @@ async function runContract(browser, ctxOpts, fault = null) {
   return A;
 }
 
+// ------------------------------------------------------------------ the reading pages
+const REVIEWS = fs.readdirSync(path.join(REPO, '_posts')).filter((f) => /-evaluator\.md$/.test(f)
+  && /^published:\s*true\s*$/m.test(fs.readFileSync(path.join(REPO, '_posts', f), 'utf8').split(/^---\s*$/m)[1] || ''))
+  .map((f) => f.slice(0, 10).replace(/-/g, '/') + '/evaluator/').sort();
+const READING = ['prompts/', '404.html', 'admin/', ...REVIEWS];
+async function runPages(browser, ctxOpts, css = null) {
+  const ctx = await browser.newContext(ctxOpts);
+  const rec = { fb: [], og: 0, ext: [], errors: [] };
+  await stub(ctx, rec);
+  const page = await ctx.newPage(); watchRequests(page, rec);
+  const bad = [];
+  for (const rel of READING) {
+    const res = await page.goto(BASE + rel);
+    if (css) await page.addStyleTag({ content: css });
+    const r = await page.evaluate(() => {
+      document.querySelectorAll('details').forEach((d) => { d.open = true; });   // every prompt open
+      return { over: document.documentElement.scrollWidth - innerWidth, h1: document.querySelectorAll('h1').length };
+    });
+    if (!res.ok()) bad.push(`${rel} HTTP ${res.status()}`);
+    if (r.over > 0) bad.push(`${rel} scrolls sideways by ${r.over}px`);
+    if (r.h1 < 1) bad.push(`${rel} has no h1`);
+  }
+  await ctx.close();
+  if (rec.ext.length) bad.push(rec.ext.length + ' requests to other hosts');
+  if (rec.errors.length) bad.push(rec.errors.length + ' page errors');
+  return [bad.length === 0, bad.length ? bad.slice(0, 4).join('; ') : `${READING.length} pages (${REVIEWS.length} reviews, /prompts/ fully open, 404, /admin/): no sideways scroll, no other hosts`];
+}
+
 // ------------------------------------------------------------------ sweeps
 let fails = 0; const totals = {};
 const tally = (k, ok) => { const t = (totals[k] ||= { pass: 0, fail: 0 }); ok ? t.pass++ : t.fail++; if (!ok) fails++; };
@@ -694,6 +722,13 @@ if (!ONLY || ONLY.includes('contract')) {
   for (const [label, b, opts] of [['chromium 1024', c, { viewport: { width: 1024, height: 900 } }], ['webkit iPhone15', wk, { ...devices['iPhone 15'] }]]) {
     const A = await runContract(b, opts);
     for (const [k, [ok, d]] of Object.entries(A)) { tally('contract', ok); log(`${label.padEnd(24)} contract        ${ok ? 'PASS' : 'FAIL'} ${k}: ${d}`); }
+  }
+}
+
+if (!ONLY || ONLY.includes('pages')) {
+  for (const [label, b, opts] of [['chromium 360', c, { viewport: { width: 360, height: 800 } }], ['chromium 1440 dark', c, { viewport: { width: 1440, height: 900 }, colorScheme: 'dark' }], ['webkit iPhone15', wk, { ...devices['iPhone 15'] }]]) {
+    const [ok, d] = await runPages(b, opts);
+    tally('pages', ok); log(`${label.padEnd(24)} pages           ${ok ? 'PASS' : 'FAIL'} ${d}`);
   }
 }
 
@@ -753,7 +788,12 @@ if (process.env.FAULTS !== '0') {
     if (flipped) caught++;
     log(`${flipped ? 'CAUGHT' : 'MISSED'}  ${f.key.padEnd(12)} contract       (script)  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
   }
-  const total = FAULTS.length + CF.length;
+  {
+    const [ok, d] = await runPages(c, { viewport: { width: 360, height: 800 } }, '.prose pre{overflow-x:visible!important;max-inline-size:none!important}');
+    if (!ok) caught++;
+    log(`${!ok ? 'CAUGHT' : 'MISSED'}  pages        reading        360px  .prose pre{overflow-x:visible}  ->  ${d}`);
+  }
+  const total = FAULTS.length + CF.length + 1;
   const clean = Object.values(base).every(([ok]) => ok);
   log(`fault self-test: ${caught}/${total} faults caught (baseline default@1440 ${clean ? 'clean' : 'NOT clean'})`);
   if (caught !== total || !clean) fails++;
