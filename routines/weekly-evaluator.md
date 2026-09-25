@@ -93,13 +93,15 @@ Per stream from `_data/source-health.json` (also embedded verbatim in `health.js
 `health.json` → `briefs.aggregator_leakage` lists every citation of news.ycombinator.com, lobste.rs, reddit.com, twitter.com, x.com, mastodon.social, threads.net, bsky.app — with post filename and URL. Any entry = policy violation; report each verbatim and name the section by reading that post.
 
 ## C. Link health (sampling computed; claim-checks yours)
-- Run `python3 tools/evaluator/linkcheck.py --check` — it draws the week's deterministic 20-link sample and resolves each via curl, printing per-URL status + the pass rate. Paste its summary line.
+- Run `python3 tools/evaluator/linkcheck.py --check` — it draws the week's deterministic 20-link sample and resolves each via curl, printing per-URL status + the pass rate. Paste its summary line. It also ALWAYS checks every Weekend "Week in headlines" link (marked `[recap]`, on top of the 20, never drawn into them) and prints their pass rate on its own `recap` line — paste that too. A recap 404 is a fabrication candidate (the recap must cite only URLs fetched that run); count it under Fabrication unless the page demonstrably existed and was removed.
 - For 8 of the resolved links: spot-check that the cited claim is actually in the source (this is the judgment half — fetch via curl/WebFetch and read).
 - Report: links broken / fabrications detected / overall pass rate per stream.
 - Note: if the checker reports near-total failure, report the dimension as **unmeasurable** and flag it — the feed URLs (arXiv RSS, Nature RSS, bioRxiv JSON) should NOT 403, and if they do that's an egress regression.
 
-## D. Section vitality (computed — read, don't recount)
+## D. Section vitality + reading surface (computed — read, don't recount)
 `health.json` → `briefs.by_stream.<slug>.sections` / `empty_sections` (per-post empty sections, named). Flag sections empty ≥3 times that week; your judgment call is WHY (dead beat, source gap, or honest omit-don't-fill).
+
+**Reading surface.** The homepage feed is the only place a reader sees a story. Run `python3 tools/evaluator/surface.py` (read-only, no network: it parses `_posts/` with the feed builder's own parser and compares against the committed `_data/homefeed.json`). It prints, per edition, stories in the post / records kept in the index / cards on the feed / kept records that reached no card, then `FLAG` lines: `PARITY` (a kept record reached no card), `WARN` (no prose parsed — the card shows only its lede), `SHORT` (a desk's newest edition shows fewer cards than its floor), `OVERDUE` (a desk's newest edition is older than its cadence), `STALE-FEED`. Paste its summary line and every FLAG. Fewer cards than stories on an OLDER edition is the builder's age-out/cap, not a finding. Your judgment: for each PARITY/WARN, read the post and say whether the writer broke the format contract or the parser missed a legal shape (the latter is a builder defect — name the shape); for OVERDUE, cross-check the cadence note above before calling a desk dead. If the script prints `surface: unavailable`, say so and spot-check the feed against the newest post by hand.
 
 ## E. Coverage gap recurrence
 Read the "Gaps" footer from each brief. Cluster recurring gaps. ≥3 times = structural. Flag and propose source additions.
@@ -198,6 +200,7 @@ _Files read: N news, N AI/ML (expect ~2), N science (expect ~1), N sports (expec
 | Fabrication count               |       | 0      | 🟢🟡🔴 |
 | Single-source rate (portfolio)  |       | <20%   | 🟢🟡🔴 |
 | Empty section instances         |       | <5     | 🟢🟡🔴 |
+| Reading-surface flags (§D, surface.py) |  | 0      | 🟢🟡🔴 |
 | Repeat rate (worst stream, health.json) |  | judge  | 🟢🟡🔴 |
 | Direct-fetch ratio (portfolio)  |       | ≥0.35  | 🟢🟡🔴 |
 | Feeds with >50% fail rate       |       | 0      | 🟢🟡🔴 |

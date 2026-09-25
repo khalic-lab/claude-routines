@@ -6,6 +6,13 @@ DETERMINISTIC sample (seeded by the window end date -- same week, same sample,
 so a re-run mid-review checks the same links), and with --check resolves each
 via `curl -sIL` (the sandbox egress path that works; no bearer needed).
 
+The Weekend's "Week in headlines" recap links are ALWAYS listed (and checked),
+on top of the random sample and excluded from its pool: that recap is where the
+pipeline's only measured link fabrications came from (2026-07-12 review: two
+reconstructed Al Jazeera slugs, both 404), so a sample that can miss it cannot
+tell whether the fetched-URL-only rule is holding. Their pass rate prints on its
+own line.
+
 The evaluator's remaining judgment work on this dimension is the claim
 spot-check: of the resolved sample, read ~8 and verify the cited claim is
 actually in the source. That cannot be scripted; this tool does the rest.
@@ -25,6 +32,7 @@ _POST_NAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-([a-z0-9-]+)\.md$")
 _LINK_RE = re.compile(r"\]\((https?://[^)\s]+)")
 _SLUGS = ("news", "ai-ml", "science", "weekend", "sports")
 _WINDOW_DAYS = 7
+_RECAP_HEADING = "Week in headlines"
 
 
 def collect_links(root, start, end):
@@ -44,6 +52,35 @@ def collect_links(root, start, end):
                 seen.add(url)
                 links.append((os.path.basename(path), url))
     return links
+
+
+def collect_recap_links(root, start, end):
+    """(post, url) for every link in the window's Weekend "Week in headlines" section(s)."""
+    links, seen = [], set()
+    for path in sorted(glob.glob(os.path.join(root, "_posts", "*-weekend.md"))):
+        m = _POST_NAME_RE.match(os.path.basename(path))
+        if not m or not (start <= m.group(1) <= end):
+            continue
+        try:
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+        except OSError:
+            continue
+        in_recap = False
+        for line in text.split("\n## Coverage footer")[0].splitlines():
+            if line.startswith("## "):
+                in_recap = _RECAP_HEADING in line
+                continue
+            if in_recap:
+                for url in _LINK_RE.findall(line):
+                    if url not in seen:
+                        seen.add(url)
+                        links.append((os.path.basename(path), url))
+    return links
+
+
+def _passed(status):
+    return status.isdigit() and 200 <= int(status) < 400
 
 
 def resolve(url, max_time=15):
@@ -74,16 +111,34 @@ def main(argv=None):
     if not links:
         print("linkcheck: no links found in window [%s, %s]." % (start, end))
         return 0
+    recap = collect_recap_links(args.root, start, end)
+    recap_urls = {u for _, u in recap}
+    pool = [l for l in links if l[1] not in recap_urls]
+
+    recap_ok = 0
+    for post, url in recap:
+        if args.check:
+            status = resolve(url)
+            recap_ok += _passed(status)
+            print("%s  %s  (%s) [recap]" % (status.rjust(7), url, post), flush=True)
+        else:
+            print("%s  (%s) [recap]" % (url, post))
+    if recap:
+        if args.check:
+            print("linkcheck: recap %d/%d resolve (2xx/3xx) — Weekend \"%s\", always checked."
+                  % (recap_ok, len(recap), _RECAP_HEADING))
+        else:
+            print("linkcheck: %d Weekend recap link(s) always included, outside the sample."
+                  % len(recap))
 
     rng = random.Random(end)  # deterministic per window
-    sample = rng.sample(links, min(args.sample, len(links)))
+    sample = rng.sample(pool, min(args.sample, len(pool)))
 
     ok = 0
     for post, url in sample:
         if args.check:
             status = resolve(url)
-            passed = status.isdigit() and 200 <= int(status) < 400
-            ok += passed
+            ok += _passed(status)
             print("%s  %s  (%s)" % (status.rjust(7), url, post), flush=True)
         else:
             print("%s  (%s)" % (url, post))
