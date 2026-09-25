@@ -187,6 +187,35 @@ def clean_body(text):
     return text
 
 
+# Markdown emphasis in a story field the page prints as ESCAPED TEXT (deck, summary, why): the
+# markers go, the words stay -- "_Released 22 September 2026._" printed its underscores on the
+# card (review F6, 2026-09-25). Editorials are emitted as html and already get <em>
+# (_ed_inline_html). The same word-boundary rule as _ED_EM_RE, so snake_case, `__init__`, file
+# names and a stray "a * b" keep theirs; URLs and code spans are never touched.
+_TEXT_EM_RE = re.compile(r"(?<![\w*])(\*{1,2})(?=[^\s*])([^*\n]+?)(?<=[^\s*])\1(?![\w*])"
+                         r"|(?<![\w_])_(?=[^\s_])([^_\n]+?)(?<=[^\s_])_(?![\w_])")
+_TEXT_KEEP_RE = re.compile(r"`[^`\n]*`|https?://\S+")
+
+
+def plain_emphasis(text):
+    """`*x*`, `**x**` and `_x_` -> x in text printed escaped; see _TEXT_EM_RE."""
+    if not text or ("_" not in text and "*" not in text):
+        return text
+
+    def strip(seg):
+        for _ in range(3):                                # "**_x_**" nests
+            new = _TEXT_EM_RE.sub(lambda m: m.group(2) if m.group(1) else m.group(3), seg)
+            if new == seg:
+                break
+            seg = new
+        return seg
+    out, last = [], 0
+    for m in _TEXT_KEEP_RE.finditer(text):
+        out += [strip(text[last:m.start()]), m.group(0)]
+        last = m.end()
+    return "".join(out + [strip(text[last:])])
+
+
 # "[arXiv:2608.31046](u) (Y. Ding, R. Zhang · Purdue) measured how …": the paper IS the sentence's
 # subject, its byline a parenthetical, and a lowercase verb follows. A byline never continues so.
 _CITED_SUBJECT_RE = re.compile(r"^\*{0,2}\[[^\[\]]+\]\([^)]*\)\*{0,2}(?:\s*\([^()]*\))?\s+"
@@ -1064,9 +1093,9 @@ def load_recent(days):
             # There is nothing in the post to recover it from — it is a front-page artifact the
             # writer authors in Step C and nowhere else — and briefs are specified to omit it, so
             # "absent" is a normal, correct state rather than a hole to fill.
-            deck = (im.get("deck") or "").strip()
-            body = (im.get("display_body") or "").strip() or s["body"]
-            why = (im.get("why") or "").strip() or s["why"]
+            deck = plain_emphasis((im.get("deck") or "").strip())
+            body = plain_emphasis((im.get("display_body") or "").strip() or s["body"])
+            why = plain_emphasis((im.get("why") or "").strip() or s["why"])
             affs = im.get("affiliations") or []
             story = {
                 # the post's embedded anchor id is authoritative (anchor.py keyed it on the
