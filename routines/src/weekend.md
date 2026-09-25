@@ -5,7 +5,7 @@ Write my weekend deep-read brief and publish it via the git pipeline. Use today'
 A long-form weekly digest. Coverage window: past 7 days. **This is the in-depth revisit of the week's most important stories** — the place where the week's biggest items get the *deep* treatment. Select and go deep on the strongest items across the past 7 days regardless of which day they broke, **including stories the daily editions (News / AI/ML / Science) already flagged this week.** Do NOT avoid a story just because a daily edition mentioned it — this is exactly where it gets revisited: go deeper than the daily did, with fuller analysis, the complete paper summary, and connection-drawing across stories.
 
 Bias the content toward:
-1. **ML/AI research** (heaviest), with RL prioritized
+1. **ML/AI research**, with RL prioritized — balanced ~50/50 against science (see Volume rules)
 2. **Fundamental science** (math, physics, astronomy, quantum) — papers, discoveries, conjecture progress
 3. **Biology, biotech, neuroscience**
 4. **Data science / applied ML**
@@ -27,6 +27,8 @@ Light news/politics — just a brief "what mattered this week" section at the to
 
 **Volume rules for weekend brief:**
 - Sections aren't capped at 4–7. Quality is the cap.
+- **Depth, not exhaustiveness.** Aim mid-range of the 4000–8000-word target. When the paper pool is deep, keep the highest-signal items rather than extending every desk; go past ~7000 words only when the week genuinely warrants it, and say why in the intro.
+- **Paper balance.** Aim for ~50/50 ML/AI vs fundamental science + biology; the evaluator measures ML's share of the two paper sections (📄 vs 🔭) against a 35–65% band. When the ML pool is deep, widen the science net (physics, quantum, astro, math, life-science primaries) before adding another ML paper. If the split still lands outside the band, say so and why in the intro.
 - Each paper covered gets a 3–5 sentence summary in your own words.
 - Each essay gets 2–3 sentence summary + your read on whether it's worth the full read.
 
@@ -89,10 +91,13 @@ Every bullet states what happened AND WHEN it happened — the date of the under
 the date of the latest development. For a death, attack, ruling, or launch, name the event date
 explicitly ("X died on {date}" / "the {date} strike"), even when the news peg is a later
 funeral/anniversary/reaction. If the daily briefs carried the event date, carry it forward.
+Each recap link must be a URL you fetched this run through `tools/fetch.py` — for an item a daily
+brief covered (step 8), fetch and reuse that brief's exact URL. Never rebuild an outlet slug from
+memory; no live fetch → drop the bullet (fewer than 5 is fine).
 
 **Feed-first sources:** Al Jazeera RSS, SRF DE RSS, Le Temps FR RSS.
 
-## 📄 ML / AI papers of the week (heaviest section)
+## 📄 ML / AI papers of the week
 
 **Feed-first sources:**
 - **arXiv RSS per category**: `https://export.arxiv.org/rss/cs.LG`, `cs.AI`, `cs.CL`, `cs.CV`, `stat.ML`. Hit all five.
@@ -214,7 +219,7 @@ _Coverage: {date 7 days ago} to {today}. Generated {timestamp} Europe/Zurich._
 
 # Constraints
 
-- Length target: long. 4000–8000 words.
+- Length target: 4000–8000 words, aiming mid-range (see Volume rules).
 - Paper summaries in your own words. Never copy abstract text directly.
 - If you'd cite an X/Twitter thread or HN comment, find the actual paper or blog post and cite that.
 - The cross-cutting threads section is the one place you should be opinionated. Elsewhere stay descriptive.
