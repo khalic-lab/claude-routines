@@ -5,7 +5,7 @@ Write my weekend deep-read brief and publish it via the git pipeline. Use today'
 A long-form weekly digest. Coverage window: past 7 days. **This is the in-depth revisit of the week's most important stories** — the place where the week's biggest items get the *deep* treatment. Select and go deep on the strongest items across the past 7 days regardless of which day they broke, **including stories the daily editions (News / AI/ML / Science) already flagged this week.** Do NOT avoid a story just because a daily edition mentioned it — this is exactly where it gets revisited: go deeper than the daily did, with fuller analysis, the complete paper summary, and connection-drawing across stories.
 
 Bias the content toward:
-1. **ML/AI research**, with RL prioritized — balanced ~50/50 against science (see Volume rules)
+1. **ML/AI research**, with RL prioritized — balanced ~50/50 against the 🔭 fundamental-science papers (see Volume rules)
 2. **Fundamental science** (math, physics, astronomy, quantum) — papers, discoveries, conjecture progress
 3. **Biology, biotech, neuroscience**
 4. **Data science / applied ML**
@@ -52,7 +52,7 @@ In practice: go to the primary source and read it yourself; report what it actua
 **Volume rules for weekend brief:**
 - Sections aren't capped at 4–7. Quality is the cap.
 - **Depth, not exhaustiveness.** Aim mid-range of the 4000–8000-word target. When the paper pool is deep, keep the highest-signal items rather than extending every desk; go past ~7000 words only when the week genuinely warrants it, and say why in the intro.
-- **Paper balance.** Aim for ~50/50 ML/AI vs fundamental science + biology; the evaluator measures ML's share of the two paper sections (📄 vs 🔭) against a 35–65% band. When the ML pool is deep, widen the science net (physics, quantum, astro, math, life-science primaries) before adding another ML paper. If the split still lands outside the band, say so and why in the intro.
+- **Paper balance.** Aim for ~50/50 between the two paper sections: 📄 ML/AI papers vs 🔭 fundamental-science papers. The evaluator computes ML's share over those two sections only — the entries under 📄 vs the entries under 🔭 — against a 35–65% band; 🧬 Biology and every other desk sit outside the measured band and move neither side. When the ML pool is deep, widen the 🔭 net (physics, quantum, astro, math) before adding another ML paper. If the 📄/🔭 split still lands outside the band, say so and why in the intro.
 - Each paper covered gets a 3–5 sentence summary in your own words.
 - Each essay gets 2–3 sentence summary + your read on whether it's worth the full read.
 

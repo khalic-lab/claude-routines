@@ -243,6 +243,39 @@ class SectionVitalityTest(unittest.TestCase):
                           {"post": "2026-07-18-weekend.md", "section": "🕳️ Blank section"}])
 
 
+class WeekendBalanceHeadingsTest(unittest.TestCase):
+    """The Weekend prompt's paper-balance rule (2026-09-25) names 📄 vs 🔭 as
+    the measured split and puts 🧬 Biology outside it. Build a post from the
+    prompt's own desk headings -- one item under each -- and check the metric
+    counts exactly that: 📄 as ML, 🔭 as science, every other desk nowhere.
+    A heading rename that silently moves a desk in or out of ml_share fails
+    here. Headings stop at `# Format`: the fenced example below it is a
+    template, not a desk list."""
+
+    @classmethod
+    def setUpClass(cls):
+        prompt = os.path.join(os.path.dirname(TOOLS), "routines", "src", "weekend.md")
+        with open(prompt, encoding="utf-8") as fh:
+            desks_text = fh.read().split("\n# Format\n", 1)[0]
+        cls.headings = [line[3:].strip() for line in desks_text.split("\n")
+                        if line.startswith("## ")]
+        body = "".join("## %s\n\n- **Item.** Text. [Src](https://e.org/%d)\n\n" % (h, i)
+                       for i, h in enumerate(cls.headings))
+        cls.root = tempfile.mkdtemp(prefix="balance-headings-")
+        os.makedirs(os.path.join(cls.root, "_posts"))
+        with open(os.path.join(cls.root, "_posts", "2026-09-26-weekend.md"), "w") as fh:
+            fh.write("---\ntitle: w\n---\n\n" + body)
+        cls.briefs = metrics.compute_health(cls.root, "2026-09-26")["briefs"]
+
+    def test_prompt_desks_include_the_three_named_sections(self):
+        for emoji in ("📄", "🔭", "🧬"):
+            self.assertTrue(any(h.startswith(emoji) for h in self.headings), emoji)
+
+    def test_only_ml_and_science_papers_enter_the_band(self):
+        self.assertEqual(self.briefs["weekend_balance"],
+                         {"ml_items": 1, "science_items": 1, "ml_share": 0.5})
+
+
 def _git(root, *argv):
     subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@e",
                     "-c", "commit.gpgsign=false"] + list(argv),
