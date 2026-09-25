@@ -118,7 +118,7 @@ Tag counts per stream are in `health.json` → `briefs.by_stream.<slug>.tags` �
 - `[via snippet]` — read the per-stream count from the computed tags. With the wrapper's curl-first chain, via-snippet rates should be **dropping**; rising or flat-high rates by stream means feeds are failing in that stream's sandbox. Flag.
 
 ## H. Topic balance (weekend brief only; computed — read, don't recount)
-`health.json` → `briefs.weekend_balance` (`ml_items` / `science_items` / `ml_share`, counted across the weekend paper sections). **Target (set 2026-07-10, making the long-assumed default explicit — three past reviews asked for one): ~50/50 ML-vs-(fundamental science + biology), ±15 percentage points** — i.e. `ml_share` outside [0.35, 0.65] is a flag.
+`health.json` → `briefs.weekend_balance` (`ml_items` / `science_items` / `ml_share`, counted across the weekend paper sections). **Target (set 2026-07-10, making the long-assumed default explicit — three past reviews asked for one): ~50/50 📄 ML vs 🔭 fundamental-science papers (the entries under those two sections only; 🧬 Biology and the other desks move neither side — the split `metrics.py` counts and the Weekend prompt states), ±15 percentage points** — i.e. `ml_share` outside [0.35, 0.65] is a flag.
 
 ## I. Repetition detection (computed — read, don't recount)
 `health.json` → `streams.<slug>.repeats` / `repeat_rate` (a 14-day story-id/thread-id lookback over the ledger). Don't re-cluster headlines by hand. Judgment work: for flagged repeats, check whether the re-run carried a genuinely new, dated fact (`[ongoing since]` discipline) or was a re-summary — the latter is the defect.
