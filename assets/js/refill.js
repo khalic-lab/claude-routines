@@ -26,7 +26,7 @@ function reconcile(box, want) {
 
 export function createRefill(main, { isRead, beatOk, adopt }) {
   const front = main && main.querySelector('section.front');
-  if (!front) return { compose() { return []; }, copies: () => [], snapshot() {} };
+  if (!front) return { compose() { return []; }, copies: () => [], snapshot() {}, retake: () => new Set() };
   const top = front.querySelector('.fcards--top');
   const rest = front.querySelector('.fcards--rest');
   const desk = front.querySelector('.desk');
@@ -90,10 +90,38 @@ export function createRefill(main, { isRead, beatOk, adopt }) {
   // All's composition, taken at load (and once more at the first roamed read set, board.js):
   // with nothing unread, the builder's front; a Desk's view with nothing unread keeps its own
   let all = { cards: defaults, desk: deskDefault };
-  function snapshot() {
+  function take() {
     const cards = pick(new Set());
-    all = { cards: cards.length ? cards : defaults, desk: deskPick(new Set()) };
+    return { cards: cards.length ? cards : defaults, desk: deskPick(new Set()) };
   }
+  function snapshot() { all = take(); }
+  // What placing `next` under All hides or takes out, against the page now: the cards and the
+  // Desk's view that leave the front with their pointers, the day rows of promoted stories, and
+  // the builder-front rows and day article that go back to the front. A recompose must not be
+  // anchored on any of them (board.js).
+  function leaving(next) {
+    const out = new Set(), keep = new Set(next.cards);
+    const ptr = (sid) => q(`section.day [data-ptr="${esc(sid)}"]`);
+    for (const c of [...(top ? top.children : []), ...(rest ? rest.children : [])]) {
+      if (keep.has(c)) continue;
+      out.add(c);
+      const p = ptr(c.dataset.story); if (p) out.add(p);
+    }
+    for (const c of next.cards) {
+      const sid = c.dataset.story;
+      const row = live.has(sid) ? copies.get('data-front-row' + sid) : q(`#r-${esc(sid)}`);
+      if (row && row.isConnected) out.add(row);
+    }
+    const cur = desk && desk.querySelector('article.ed');
+    if (cur && next.desk && cur !== next.desk) { out.add(cur); const p = ptr(cur.dataset.story); if (p) out.add(p); }
+    if (next.desk && deskDefault) {
+      const day = next.desk === deskDefault ? copies.get('data-front-ed' + deskDefault.dataset.story) : edState(next.desk.dataset.story);
+      if (day && day.isConnected) out.add(day);
+    }
+    return out;
+  }
+  // the first roamed read set: All's pick once more; returns what that takes off the page
+  function retake() { const next = take(), gone = leaving(next); all = next; return gone; }
 
   function place(cards, ed) {
     reconcile(top, cards.slice(0, 1));
@@ -124,5 +152,5 @@ export function createRefill(main, { isRead, beatOk, adopt }) {
     place(cards, mode === 'unread' ? deskPick(active) : mode === 'all' ? all.desk : deskDefault);
     return cards;
   }
-  return { compose, snapshot, copies: () => [...copies.values()] };
+  return { compose, snapshot, retake, copies: () => [...copies.values()] };
 }

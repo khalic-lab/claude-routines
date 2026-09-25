@@ -1072,7 +1072,11 @@ same pick Unread uses (beats aside; they filter as before); with nothing unread 
 front, dimmed, never empty. Within a session reading still only dims: a tick under All moves and
 hides nothing, and Unread→All shows the load-time front, not a new pick. Signed in, the roamed
 read set can land after first paint: the local set composes first and the FIRST roam takes the
-pick once more, only if the reader has not touched the front (pointer, key or focus in it). Every
+pick once more, only if the reader has not interacted with the page since load: a pointer, key,
+focus, wheel or touch anywhere, or a scroll of their own (one that moves the top item; a scroll
+restored by a reload or history step before load settles is the browser's, and a #fragment load
+counts as interaction, since a recompose could hide the row it names). Otherwise that roam only
+dims, like every later one; a recompose anchors on the first thing on screen it does not hide. Every
 story is on the page once: a builder-front story All leaves off gets its real day row back (a
 `<template>` beside its pointer), the builder's Desk's view its day article; the day header counts
 what is on the front as composed, and the Desk's view prints its edition's day. `tools/tests/test_feed_views.py` pins all of it, including the CLI

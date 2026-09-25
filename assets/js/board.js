@@ -193,21 +193,55 @@ function paintControls() {
 }
 
 // the topmost item still on screen: the anchor for a change nobody clicked (a roam)
-function topItem() {
+// The first story or pointer on screen below the chrome, copies included; a sliver of one (under
+// 24px) is not what the reader is looking at. A recompose hides some rows and takes others out
+// (`gone`): the anchor skips those for the next one that stays, and falls back to the day's
+// header when nothing below stays (review F2, 2026-09-25).
+function topItem(gone = new Set()) {
+  if (!main) return null;
   const bar = document.querySelector('.bar');
   const top = bar && matchMedia('(min-width:700px)').matches ? bar.getBoundingClientRect().bottom : 0;
-  return items.find((el) => !el.hidden && el.getBoundingClientRect().bottom > top) || null;
+  let first = null;
+  for (const el of main.querySelectorAll('[data-story], [data-ptr]')) {
+    if (el.closest('[hidden]')) continue;
+    const r = el.getBoundingClientRect();
+    if (!r.height || r.bottom <= top + Math.min(24, r.height)) continue;
+    if (!gone.has(el)) return el;
+    first = first || el;
+  }
+  const sec = first && first.closest('section');
+  return sec ? sec.querySelector('header') : null;
 }
 
 export function initBoard({ prefs, record, adopt = () => {} }) {
   refill = createRefill(main, { isRead, beatOk, adopt });
   refill.snapshot();                              // All's front: the pick from the read set at load
   // The roamed read set can land after first paint. All's pick is then taken once more, at the
-  // first roam only, and only if the reader has not been at the front yet (2026-09-25, option ii:
-  // the local set is usually right, so holding every load for the network would cost more).
-  let roamedOnce = false, touched = false;
-  const frontEl = main && main.querySelector('section.front');
-  if (frontEl) for (const t of ['pointerdown', 'keydown', 'focusin']) frontEl.addEventListener(t, () => { touched = true; }, { passive: true });
+  // first roam only (2026-09-25, option ii: the local set is usually right, so holding every load
+  // for the network would cost more), and only if the reader has not interacted with the page
+  // since load (owner ruling after review F1): a pointer, key, focus, wheel or touch anywhere, or
+  // a scroll of their own. A reader's scroll moves the content with it (the top item shifts by
+  // exactly what the page scrolled); scroll anchoring, the browser keeping a #fragment or a
+  // restored position in view, and anchored() move the page to keep content where it was, so
+  // they do not count. After a reload or a history step the browser restores a scroll position,
+  // and on a #fragment load it scrolls to the fragment, both by load: there scrolls count from two
+  // frames after load; after a plain navigation, from the first. The #fragment itself is the
+  // reader pointing at a place, and a recompose could hide the very row it names: it counts.
+  let roamedOnce = false, touched = !!location.hash, mark = null;
+  const TOUCH = ['pointerdown', 'keydown', 'focusin', 'wheel', 'touchstart'];
+  const markTop = () => { const el = topItem(); return el && { el, top: el.getBoundingClientRect().top, y: scrollY }; };
+  const onScroll = () => {
+    if (!mark) return;                            // before load settles: the browser's scroll
+    const { el, top, y } = mark, moved = scrollY - y;
+    const withIt = el.isConnected && !el.closest('[hidden]') && Math.abs(el.getBoundingClientRect().top - top + moved) < 2;
+    if (Math.abs(moved) >= 2 && withIt) touch(); else mark = markTop();
+  };
+  function quiet() { removeEventListener('scroll', onScroll); for (const t of TOUCH) document.removeEventListener(t, touch, true); }
+  function touch() { touched = true; quiet(); }
+  if (!touched) {
+    for (const t of TOUCH) document.addEventListener(t, touch, { capture: true, passive: true });
+    addEventListener('scroll', onScroll, { passive: true });
+  }
   // restore the stored selection; held keys survive (R37)
   const seed = (p) => {
     active.clear();
@@ -267,6 +301,15 @@ export function initBoard({ prefs, record, adopt = () => {} }) {
   paintControls();
   paint();
   apply();
+  if (!touched) {
+    // WebKit may not have the navigation entry yet while the modules run: the legacy field says it too
+    const entry = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    const nav = entry ? entry.type : ({ 1: 'reload', 2: 'back_forward' })[performance.navigation && performance.navigation.type];
+    const arm = () => { if (!touched) mark = markTop(); };
+    const late = () => requestAnimationFrame(() => requestAnimationFrame(arm));
+    if (nav !== 'reload' && nav !== 'back_forward' && !location.hash) arm();
+    else if (document.readyState === 'complete') late(); else addEventListener('load', late, { once: true });
+  }
 
   function remoteRead() { anchored(topItem(), () => { paint(); if (rs) apply(); }); }
   return {
@@ -276,9 +319,11 @@ export function initBoard({ prefs, record, adopt = () => {} }) {
     roamed() {
       const first = !roamedOnce;
       roamedOnce = true;
+      if (first && !touched) onScroll();          // a scroll whose event has not fired yet counts too
+      quiet();
       if (!first || touched) { remoteRead(); return; }
-      refill.snapshot();
-      anchored(topItem(), () => { paint(); apply(); });
+      const gone = refill.retake();
+      anchored(topItem(rs ? undefined : gone), () => { paint(); apply(); });
     },
   };
 }
