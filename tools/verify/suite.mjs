@@ -24,7 +24,7 @@ const SHOTS = process.env.SHOTS || '/tmp/fp-shots';
 const FB = 'https://feedback-sink.khalic-lab.workers.dev';
 const OGP = 'https://og-proxy.khalic-lab.workers.dev';
 const WIDTHS = (process.env.WIDTHS || '360,390,700,768,1024,1280,1440,1600').split(',').map(Number);
-const STATES = ['default', 'expanded', 'unread-edition', 'front-read', 'all-read', 'all-sync', 'all-sync-touched', 'beat', 'multi-beat', 'empty', 'stale', 'stale-bg'];
+const STATES = ['default', 'expanded', 'unread-edition', 'front-read', 'all-read', 'all-sync', 'beat', 'multi-beat', 'empty', 'stale', 'stale-bg'];
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
 const TOKEN = 'cd'.repeat(32);
 
@@ -424,13 +424,54 @@ const LIB = () => {
     }
     return { where: 'chrome', label, bad };
   };
-  return { R, vis, visibleItems, chip, seg, ct, frontVoids, hlSizes, geometry, cpl, contrast, opacityOf, deadLinks, dayMeta, focusRing };
+  // the front as shown: the lead band, every card in order, the Desk's view
+  const front = () => ({ top: [...document.querySelectorAll('.front .fcards--top > .fc')].filter(vis).map((c) => c.dataset.story),
+    cards: [...document.querySelectorAll('.front .fc')].filter(vis).map((c) => c.dataset.story),
+    desk: ([...document.querySelectorAll('.front .desk .ed')].find(vis) || { dataset: {} }).dataset.story || null });
+  const same = (g, w) => g.cards.join() === w.cards.join() && (g.top[0] || null) === (w.cards[0] || null) && g.top.length <= 1 && g.desk === w.desk;
+  const show = (g, w) => `front [${g.cards.join(' ')}] lead ${g.top[0] || '-'} desk ${g.desk}; want [${w.cards.join(' ')}] desk ${w.desk}`;
+  // every story and editorial is on the page once, as a real card or a real row; a pointer
+  // reaches the front; a builder-front story off the front is its row again, right after its
+  // (hidden) pointer; a day header counts what is on the front as composed
+  const once = (boardIds, builderFront) => {
+    const bad = [], cards = front().cards;
+    for (const sid of boardIds) {
+      const shown = [...document.querySelectorAll(`main [data-story="${sid}"]`)].filter(vis).length;
+      if (shown !== 1) bad.push(`${sid} shown ${shown}x`);
+    }
+    for (const p of [...document.querySelectorAll('section.day [data-ptr]')].filter(vis)) {
+      const t = document.getElementById(p.querySelector('a').getAttribute('href').slice(1));
+      if (!t || !vis(t) || !t.closest('.front')) bad.push(`pointer ${p.dataset.ptr} -> ${t ? t.id : 'nothing'}`);
+    }
+    const off = builderFront.filter((s) => !cards.includes(s));
+    for (const sid of off) {
+      const r = document.getElementById('r-' + sid), prev = r && r.previousElementSibling;
+      if (!r || !vis(r) || !prev || prev.dataset.ptr !== sid) bad.push(`${sid} is off the front without its row after its pointer`);
+    }
+    for (const sec of document.querySelectorAll('section.day')) {
+      const n = sec.querySelector('.day__n').textContent, m = n.match(/· (\d+) on the front/);
+      const up = [...sec.querySelectorAll('.rows > [data-ptr]')].filter(vis).length;
+      if ((m ? +m[1] : 0) !== up) bad.push(`${sec.dataset.date} says "${n}" with ${up} on the front`);
+    }
+    return [bad.length === 0, bad.slice(0, 3).join('; ') || `${boardIds.length} board items each shown once, every pointer reaches the front, ${off.length} builder-front stories back in their days, day headers count the front`];
+  };
+  // signed in: release the n-th held GET /readstate and wait until its read set is merged
+  const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const merged = (sid) => !!(JSON.parse(localStorage.getItem('syncState:v1') || '{}')[sid]);
+  const roam = async (i, sid) => {
+    await window.__release(i);
+    for (let t0 = Date.now(); !merged(sid) && Date.now() - t0 < 4000;) await new Promise((r) => setTimeout(r, 50));
+    await frames();
+    return merged(sid);
+  };
+  return { R, vis, visibleItems, chip, seg, ct, frontVoids, hlSizes, geometry, cpl, contrast, opacityOf, deadLinks, dayMeta, focusRing, front, same, show, once, frames, roam };
 };
 
 const frame2 = (page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 
 // ------------------------------------------------------------------ one (engine, context, state) case
 async function runCase(browser, ctxOpts, state, fault = null) {
+  if (state === 'all-sync') return runSync(browser, ctxOpts, fault);
   const ctx = await browser.newContext(ctxOpts);
   const rec = { fb: [], og: 0, ext: [], errors: [] };
   await stub(ctx, rec, { stamp: state === 'stale' || state === 'stale-bg' ? 'a-newer-edition' : null, ogAll: state === 'expanded' });
@@ -441,7 +482,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   if (fault?.init) await page.addInitScript(fault.init);
   // front-read and the sync states: the default front's stories and the Desk's view editorial are
   // already read; all-read: the whole reserve and every editorial
-  const seedRead = state === 'all-read' ? S3 : ['front-read', 'all-sync', 'all-sync-touched'].includes(state) ? S0 : null;
+  const seedRead = state === 'all-read' ? S3 : state === 'front-read' ? S0 : null;
   if (seedRead) await page.addInitScript((ids) => localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(ids.map((id) => [id, Date.now()])))), seedRead);
   // a made-up importance (SYNTH_IMP) goes on the cards when parsing ends, before the deferred
   // modules run: All's pick is taken at load, and the expectations were derived with it
@@ -455,26 +496,6 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       }
       window.__synthImp = true;
     }), SYNTH_IMP);
-  }
-  if (state.startsWith('all-sync')) {
-    // signed in, and the Worker's read set held until the page asks for it: the first pull marks
-    // REMOTE1 read, the second REMOTE2 too; every other Worker call answers ok
-    await page.addInitScript((t) => localStorage.setItem('syncSession:v1', JSON.stringify({ token: t, reader: 'verify', at: Date.now() })), TOKEN);
-    const gates = [0, 1].map(() => { let open; const p = new Promise((r) => { open = r; }); return { p, open }; });
-    let pulls = 0;
-    await page.exposeFunction('__release', (i) => { gates[i].open(); });
-    await ctx.route((u) => u.origin === FB && u.pathname === '/readstate', async (route) => {
-      const r = route.request();
-      rec.fb.push({ method: r.method(), path: '/readstate', auth: (r.headers().authorization || '').replace(TOKEN, '<token>') });
-      const json = { ok: true };
-      if (r.method() === 'GET') {
-        const i = Math.min(pulls++, 1);
-        await gates[i].p;
-        const ts = Date.now() + 60000;
-        json.state = Object.fromEntries([REMOTE1, i ? REMOTE2 : null].filter(Boolean).map((sid) => [sid, { ts, v: 1 }]));
-      }
-      await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(json) });
-    });
   }
   if (state === 'stale-bg') {
     // a tab opened in the background: hidden from its first byte until the reader looks at it
@@ -707,19 +728,15 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       const sync = JSON.parse(localStorage.getItem('syncState:v1') || '{}');
       A.localEd = [!Object.keys(sync).some((k) => !/^st-[0-9a-f]{12}$/.test(k)), `syncState:v1 holds ${Object.keys(sync).length} st- ids and no ed- id`];
     }
-    if (['front-read', 'all-read', 'all-sync', 'all-sync-touched'].includes(X.state)) {
+    if (['front-read', 'all-read'].includes(X.state)) {
       // the page opened under All with a seeded read set: the default front and its Desk's view
-      // (front-read, the sync states) or the whole reserve and every editorial (all-read)
+      // (front-read) or the whole reserve and every editorial (all-read)
       const F = X.FR;
       const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const doc = (e) => { const r = L.R(e); return [r.left + scrollX, r.top + scrollY, r.width, r.height].map(Math.round).join(); };
       const layout = () => Object.fromEntries([...document.querySelectorAll('main [data-story], main [data-ptr]')].filter(L.vis)
         .map((e) => [e.id || `${e.dataset.zone}>${e.dataset.ptr}`, doc(e)]));
-      const now = () => ({ top: [...document.querySelectorAll('.front .fcards--top > .fc')].filter(L.vis).map((c) => c.dataset.story),
-        cards: [...document.querySelectorAll('.front .fc')].filter(L.vis).map((c) => c.dataset.story),
-        desk: ([...document.querySelectorAll('.front .desk .ed')].find(L.vis) || { dataset: {} }).dataset.story || null });
-      const same = (g, w) => g.cards.join() === w.cards.join() && (g.top[0] || null) === (w.cards[0] || null) && g.top.length <= 1 && g.desk === w.desk;
-      const show = (g, w) => `front [${g.cards.join(' ')}] lead ${g.top[0] || '-'} desk ${g.desk}; want [${w.cards.join(' ')}] desk ${w.desk}`;
+      const { front: now, same, show } = L;
       // a held beat chip counts what shows; the All chip counts every beat
       const counts = (beat = '') => { const n = L.visibleItems().length, u = L.ct(L.seg('unread')), c = L.ct(L.chip(beat)); return [n === u && n === c, `visible ${n} / Unread ${u} / ${beat || 'All'} chip ${c}`]; };
       const shownPtrs = () => [...document.querySelectorAll('[data-reserve-ptr]')].filter(L.vis).map((p) => p.dataset.ptr);
@@ -754,31 +771,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       };
       const SKIP = (why) => [null, why];
       const until = async (fn, ms = 4000) => { const t0 = Date.now(); while (!fn() && Date.now() - t0 < ms) await sleep(50); return fn(); };
-      // every story and editorial is on the page once, as a real card or a real row; a pointer
-      // reaches the front; a builder-front story off the front is its row again, right after its
-      // (hidden) pointer; a day header counts what is on the front as composed
-      const once = () => {
-        const bad = [], cards = now().cards;
-        for (const sid of X.boardIds) {
-          const shown = [...document.querySelectorAll(`main [data-story="${sid}"]`)].filter(L.vis).length;
-          if (shown !== 1) bad.push(`${sid} shown ${shown}x`);
-        }
-        for (const p of [...document.querySelectorAll('section.day [data-ptr]')].filter(L.vis)) {
-          const t = document.getElementById(p.querySelector('a').getAttribute('href').slice(1));
-          if (!t || !L.vis(t) || !t.closest('.front')) bad.push(`pointer ${p.dataset.ptr} -> ${t ? t.id : 'nothing'}`);
-        }
-        const off = F.FRONT.filter((s) => !cards.includes(s));
-        for (const sid of off) {
-          const r = document.getElementById('r-' + sid), prev = r && r.previousElementSibling;
-          if (!r || !L.vis(r) || !prev || prev.dataset.ptr !== sid) bad.push(`${sid} is off the front without its row after its pointer`);
-        }
-        for (const sec of document.querySelectorAll('section.day')) {
-          const n = sec.querySelector('.day__n').textContent, m = n.match(/· (\d+) on the front/);
-          const up = [...sec.querySelectorAll('.rows > [data-ptr]')].filter(L.vis).length;
-          if ((m ? +m[1] : 0) !== up) bad.push(`${sec.dataset.date} says "${n}" with ${up} on the front`);
-        }
-        return [bad.length === 0, bad.slice(0, 3).join('; ') || `${X.boardIds.length} board items each shown once, every pointer reaches the front, ${off.length} builder-front stories back in their days, day headers count the front`];
-      };
+      const once = () => L.once(X.boardIds, F.FRONT);
       // the Desk's view prints its edition's day, like a front card
       const deskDate = () => {
         const ed = [...document.querySelectorAll('.front .desk .ed')].find(L.vis);
@@ -804,39 +797,6 @@ async function runCase(browser, ctxOpts, state, fault = null) {
           `${show(g, F.ALL_READ)}; front shown ${L.vis(fr)}; dimmed ${dim}; builder-front rows in their days ${rows.length}; line "${frontN.textContent}"`];
         A.allOnce = once();
         A.deskDate = deskDate();
-      }
-      if (X.state === 'all-sync' || X.state === 'all-sync-touched') {
-        // signed in: All is taken from the local set at load, and the first roamed set may retake it
-        const merged = (sid) => !!(JSON.parse(localStorage.getItem('syncState:v1') || '{}')[sid]);
-        const g0 = now();
-        const loadOk = same(g0, F.ALL0);
-        if (!F.REMOTE1) { A.allSyncOnce = SKIP('fewer than two cards on All\'s front'); A.allSyncOnlyOnce = SKIP('fewer than two cards on All\'s front'); A.allSyncTouched = SKIP('fewer than two cards on All\'s front'); }
-        else if (X.state === 'all-sync') {
-          // the reader is in the days, not at the front: the first roamed set retakes All once
-          const ctl = [...document.querySelectorAll('section.day .rows > li.row .readbtn')].filter(L.vis).pop();
-          ctl.focus();
-          await window.__release(0);
-          const ok1 = await until(() => merged(F.REMOTE1)); await frames();
-          const g1 = now(), o1 = once();
-          A.allSyncOnce = [loadOk && ok1 && same(g1, F.ALL_SYNC) && document.activeElement === ctl && o1[0],
-            `at load ${show(g0, F.ALL0)}; roamed ${F.REMOTE1} read: ${show(g1, F.ALL_SYNC)}; focus kept ${document.activeElement === ctl}; ${o1[1]}`];
-          // a second roamed set (another pull) reads the lead too: nothing moves any more
-          const m = await import('/claude-routines/assets/js/sync.js');
-          m.initSync();
-          await window.__release(1);
-          const ok2 = await until(() => merged(F.REMOTE2)); await frames();
-          const g2 = now(), leadRead = !!document.querySelector(`.front .fc[data-story="${F.REMOTE2}"].is-read`) || !F.ALL_SYNC.cards.includes(F.REMOTE2);
-          A.allSyncOnlyOnce = [ok2 && same(g2, F.ALL_SYNC) && leadRead, `second roam (${F.REMOTE2} read too): ${show(g2, F.ALL_SYNC)}; dimmed in place ${leadRead}`];
-        } else {
-          // the reader is already at the front: the roamed set only dims
-          const ctl = ctlOf(F.ALL0.cards[1]);
-          if (ctl) ctl.focus();
-          await window.__release(0);
-          const ok1 = await until(() => merged(F.REMOTE1)); await frames();
-          const g1 = now(), c = ctl && ctl.closest('.fc');
-          A.allSyncTouched = [loadOk && ok1 && same(g1, F.ALL0) && !!ctl && document.activeElement === ctl && c.classList.contains('is-read'),
-            `focus at the front, then ${F.REMOTE1} roamed read: ${show(g1, F.ALL0)}; focus kept ${!!ctl && document.activeElement === ctl}; dimmed in place ${!!c && c.classList.contains('is-read')}`];
-        }
       }
       if (X.state === 'front-read') {
         const lay0 = layout();
@@ -1094,11 +1054,192 @@ async function runCase(browser, ctxOpts, state, fault = null) {
     containment: [g.containment.length === 0, `${g.containment.length} of ${g.contained} outside ${g.containment.slice(0, 3).join('; ')}`],
     order: [g.order.length === 0, `${g.order.length} inversions over ${g.groups} groups ${g.order.slice(0, 3).join('; ')}`],
     external: [rec.ext.length === 0, rec.ext.length + ' requests to other hosts ' + rec.ext.slice(0, 2).join(' ')],
-    signedOut: state.startsWith('all-sync')
-      ? [rec.fb.length > 0 && rec.fb.every((r) => ['/readstate', '/prefs'].includes(r.path) && r.auth === 'Bearer <token>'), `signed in: ${rec.fb.length} feedback-sink requests, all /readstate or /prefs with the session's bearer`]
-      : [rec.fb.length === 0, `${rec.fb.length} feedback-sink requests while signed out`],
+    signedOut: [rec.fb.length === 0, `${rec.fb.length} feedback-sink requests while signed out`],
     errors: [rec.errors.length === 0, rec.errors.length + ' page errors ' + rec.errors.slice(0, 2).join(' | ')],
     ...fn,
+  };
+}
+
+// ------------------------------------------------------------------ signed in: the first roamed read set
+// All's pick is taken at load from the local read set; the FIRST roamed set takes it once more,
+// only if the reader has not interacted with the page since load (owner ruling 2026-09-25). One
+// context per case and a fresh page per scenario, each seeded with the default front and its
+// Desk's view read and a session. The n-th GET /readstate waits until the page calls
+// __release(n). A scenario that must start scrolled to an element reloads the page and puts it
+// there at load: after a reload the page counts scrolls as the reader's only from two frames after
+// load (the browser restores a position by then), so that one is not the reader's.
+const ENTER = FR.ALL_SYNC ? FR.ALL_SYNC.cards.find((s) => !ALL0.cards.includes(s)) || null : null;   // enters the front at the roam
+const OFF = EXPECT_FRONT.find((s) => !ALL0.cards.includes(s)) || null;                              // a builder-front story All leaves off
+async function runSync(browser, ctxOpts, fault = null) {
+  const ctx = await browser.newContext(ctxOpts);
+  const rec = { fb: [], og: 0, ext: [], errors: [] };
+  await stub(ctx, rec);
+  for (const js of fault?.js ? [].concat(fault.js) : []) await mutateJs(ctx, js);
+  const gates = [];
+  const gate = (i) => (gates[i] ||= (() => { let open; const p = new Promise((r) => { open = r; }); return { p, open }; })());
+  let pulls = 0, remote = () => ({});
+  await ctx.exposeFunction('__release', (i) => { gate(i).open(); });
+  await ctx.route((u) => u.origin === FB && u.pathname === '/readstate', async (route) => {
+    const r = route.request();
+    rec.fb.push({ method: r.method(), path: '/readstate', auth: (r.headers().authorization || '').replace(TOKEN, '<token>') });
+    const json = { ok: true };
+    if (r.method() === 'GET') { const i = pulls++, state = remote(i); await gate(i).p; json.state = state; }
+    try {
+      await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(json) });
+    } catch (e) { /* the page went on (the restore scenario's first load) */ }
+  });
+  await ctx.addInitScript(([ids, t]) => {
+    const now = Date.now();
+    localStorage.setItem('homeRead:v1', JSON.stringify(Object.fromEntries(ids.map((id) => [id, now]))));
+    localStorage.removeItem('syncState:v1'); localStorage.removeItem('homeUnread:v1');
+    localStorage.setItem('syncSession:v1', JSON.stringify({ token: t, reader: 'verify', at: now }));
+    const below = (el, pad) => {
+      const bar = document.querySelector('.bar');
+      const top = bar && matchMedia('(min-width:700px)').matches ? bar.getBoundingClientRect().bottom : 0;
+      scrollTo(0, el.getBoundingClientRect().top + scrollY - top - pad);
+    };
+    // a scenario's reload: at load, where a restored scroll position would put the page
+    const at = JSON.parse(sessionStorage.getItem('__at') || 'null');
+    if (at) addEventListener('load', () => {
+      const n = performance.getEntriesByType('navigation')[0], e = document.getElementById(at.id);
+      if (e && n && n.type === 'reload') below(e, at.pad);
+    });
+  }, [S0, TOKEN]);
+  const st = (sid, v) => (sid ? { [sid]: { ts: Date.now() + 60000, v } } : {});
+  const open = async (payload, { url = BASE, at = null } = {}) => {
+    const base = pulls;
+    remote = (i) => payload(i - base);
+    const page = await ctx.newPage();
+    watchRequests(page, rec);
+    await page.goto(url);
+    await page.waitForFunction(() => window.__siteReady);
+    let i = base;
+    if (at) {                                     // the first load's pull is never answered
+      await page.evaluate((at) => { sessionStorage.setItem('__at', JSON.stringify(at)); history.scrollRestoration = 'manual'; }, at);
+      await page.reload();
+      await page.waitForFunction(() => window.__siteReady);
+      i = base + 1;
+    }
+    await page.evaluate(`window.__L = (${LIB.toString()})()`);
+    await page.evaluate(() => window.__L.frames().then(window.__L.frames));    // past the page's arming
+    return { page, i };
+  };
+  const F = { ...FR, ENTER, OFF, boardIds: board.map(sidOf) };
+  const A = {};
+  const none = !FR.REMOTE1 ? 'fewer than two cards on All\'s front' : null;
+  // no input since load: the first roam retakes All once, and a second one moves nothing
+  if (none) { A.allSyncOnce = [null, none]; A.allSyncOnlyOnce = [null, none]; } else {
+    const { page, i } = await open((k) => ({ ...st(FR.REMOTE1, 1), ...(k ? st(FR.REMOTE2, 1) : {}) }));
+    Object.assign(A, await page.evaluate(async ({ F, i }) => {
+      const L = window.__L, g0 = L.front(), out = {};
+      const ok1 = await L.roam(i, F.REMOTE1), g1 = L.front(), o1 = L.once(F.boardIds, F.FRONT);
+      out.allSyncOnce = [L.same(g0, F.ALL0) && ok1 && L.same(g1, F.ALL_SYNC) && o1[0], `no input since load; at load ${L.show(g0, F.ALL0)}; roamed ${F.REMOTE1} read: ${L.show(g1, F.ALL_SYNC)}; ${o1[1]}`];
+      (await import('/claude-routines/assets/js/sync.js')).initSync();          // a second pull
+      const ok2 = await L.roam(i + 1, F.REMOTE2), g2 = L.front();
+      const dimmed = !F.ALL_SYNC.cards.includes(F.REMOTE2) || !!document.querySelector(`.front .fc[data-story="${F.REMOTE2}"].is-read`);
+      out.allSyncOnlyOnce = [ok2 && L.same(g2, F.ALL_SYNC) && dimmed, `second roam (${F.REMOTE2} read too): ${L.show(g2, F.ALL_SYNC)}; dimmed in place ${dimmed}`];
+      return out;
+    }, { F, i }));
+    await page.close();
+  }
+  // review F1 (A): a click on the row of the story the roam would promote
+  const moreOf = ENTER && `#r-${ENTER} .more`;
+  if (none || !ENTER) A.allSyncRowClick = [null, none || 'no story enters the front at the roam'];
+  else {
+    const { page, i } = await open(() => st(FR.REMOTE1, 1), { at: { id: 'r-' + ENTER, pad: 200 } });
+    if (!(await page.$(moreOf))) A.allSyncRowClick = [null, `${ENTER}'s row has no More`];
+    else {
+      await page.click(moreOf);
+      await page.focus(moreOf);                     // WebKit does not focus a clicked button
+      A.allSyncRowClick = await page.evaluate(async ({ F, i, sel }) => {
+        const L = window.__L, ctl = document.querySelector(sel);
+        const ok = await L.roam(i, F.REMOTE1), g = L.front();
+        return [ok && L.same(g, F.ALL0) && document.activeElement === ctl && L.vis(ctl),
+          `More clicked on ${F.ENTER}'s row, then ${F.REMOTE1} roamed read: ${L.show(g, F.ALL0)}; focus kept ${document.activeElement === ctl}; row shown ${L.vis(ctl)}`];
+      }, { F, i, sel: moreOf });
+    }
+    await page.close();
+  }
+  // review F1 (B): focus in a builder-front story's restored row, then the roam un-reads it
+  if (!OFF) A.allSyncRowFocus = [null, 'no builder-front story is off All\'s front'];
+  else {
+    const sel = `#r-${OFF} .readbtn`;
+    const { page, i } = await open(() => st(OFF, 0), { at: { id: 'r-' + OFF, pad: 200 } });
+    await page.focus(sel);
+    A.allSyncRowFocus = await page.evaluate(async ({ F, i, sel }) => {
+      const L = window.__L, ctl = document.querySelector(sel), row = ctl && ctl.closest('[data-story]');
+      const was = !!row && row.classList.contains('is-read');
+      const ok = await L.roam(i, F.OFF), g = L.front();
+      return [was && ok && L.same(g, F.ALL0) && document.activeElement === ctl && ctl.isConnected && !row.classList.contains('is-read'),
+        `focus in ${F.OFF}'s restored row, then roamed unread: ${L.show(g, F.ALL0)}; focus kept ${document.activeElement === ctl}; row un-dimmed ${!!row && !row.classList.contains('is-read')}`];
+    }, { F, i, sel });
+    await page.close();
+  }
+  // a scroll only (by script: no pointer, key, wheel or touch) counts as the reader's
+  if (none) A.allSyncScroll = [null, none];
+  else {
+    const { page, i } = await open(() => st(FR.REMOTE1, 1));
+    A.allSyncScroll = await page.evaluate(async ({ F, i }) => {
+      const L = window.__L;
+      scrollTo(0, Math.min(700, document.documentElement.scrollHeight - innerHeight)); await L.frames();
+      const ok = await L.roam(i, F.REMOTE1), g = L.front();
+      return [ok && L.same(g, F.ALL0), `scrolled ${scrollY}px by script, then ${F.REMOTE1} roamed read: ${L.show(g, F.ALL0)} (not retaken)`];
+    }, { F, i });
+    await page.close();
+  }
+  // focus inside the front: the roam only dims
+  if (none) A.allSyncTouched = [null, none];
+  else {
+    const c = ALL0.cards[1], sel = `.front .fc[data-story="${c}"] .readbtn`;
+    const { page, i } = await open(() => st(FR.REMOTE1, 1));
+    await page.focus(sel);
+    A.allSyncTouched = await page.evaluate(async ({ F, i, sel }) => {
+      const L = window.__L, ctl = document.querySelector(sel);
+      const ok = await L.roam(i, F.REMOTE1), g = L.front(), card = ctl.closest('.fc');
+      return [ok && L.same(g, F.ALL0) && document.activeElement === ctl && card.classList.contains('is-read'),
+        `focus at the front, then ${F.REMOTE1} roamed read: ${L.show(g, F.ALL0)}; focus kept ${document.activeElement === ctl}; dimmed in place ${card.classList.contains('is-read')}`];
+    }, { F, i, sel });
+    await page.close();
+  }
+  // review F2: a reload puts the page back with the promoted row on top (the browser's scroll,
+  // not the reader's); the roam retakes All, and what was below that row stays where it was
+  if (none || !ENTER) A.allSyncAnchor = [null, none || 'no story enters the front at the roam'];
+  else {
+    const { page, i } = await open(() => st(FR.REMOTE1, 1), { at: { id: 'r-' + ENTER, pad: -4 } });
+    A.allSyncAnchor = await page.evaluate(async ({ F, i, id }) => {
+      const L = window.__L;
+      const nav = performance.getEntriesByType('navigation')[0].type, row = document.getElementById(id);
+      const bar = document.querySelector('.bar'), top = bar && matchMedia('(min-width:700px)').matches ? bar.getBoundingClientRect().bottom : 0;
+      const els = [...document.querySelectorAll('main [data-story], main [data-ptr]')].filter((e) => { const r = L.R(e); return L.vis(e) && r.bottom > top + Math.min(24, r.height); });
+      // what the reader sees first that the recompose keeps: past the promoted row when it is on
+      // top (WebKit, with no scroll anchoring, may shift it after load), and past the pointers of
+      // the cards that leave the front
+      const leave = F.ALL0.cards.filter((c) => !F.ALL_SYNC.cards.includes(c));
+      const doomed = new Set([row, ...leave.map((c) => document.querySelector(`section.day [data-ptr="${c}"]`))]);
+      const onTop = els[0] === row, keep = els.find((e) => !doomed.has(e)), t0 = keep ? L.R(keep).top : null;
+      const ok = await L.roam(i, F.REMOTE1), g = L.front(), t1 = keep ? L.R(keep).top : null;
+      return [nav === 'reload' && !!keep && ok && L.same(g, F.ALL_SYNC) && !L.vis(row) && Math.abs(t1 - t0) <= 2,
+        `${nav}: ${id} on top ${onTop}; retaken ${L.show(g, F.ALL_SYNC)}; first kept on screen ${keep ? keep.id || 'pointer ' + keep.dataset.ptr : 'nothing'} ${Math.round(t0)} -> ${Math.round(t1)}px`];
+    }, { F, i, id: 'r-' + ENTER });
+    await page.close();
+  }
+  // a #fragment load is the reader pointing at a place: it counts, and the named row stays
+  if (none || !ENTER) A.allSyncHash = [null, none || 'no story enters the front at the roam'];
+  else {
+    const { page, i } = await open(() => st(FR.REMOTE1, 1), { url: `${BASE}#r-${ENTER}` });
+    A.allSyncHash = await page.evaluate(async ({ F, i, id }) => {
+      const L = window.__L, row = document.getElementById(id);
+      const ok = await L.roam(i, F.REMOTE1), g = L.front();
+      return [ok && L.same(g, F.ALL0) && L.vis(row), `opened at #${id}, then ${F.REMOTE1} roamed read: ${L.show(g, F.ALL0)}; the named row shown ${L.vis(row)}`];
+    }, { F, i, id: 'r-' + ENTER });
+    await page.close();
+  }
+  await ctx.close();
+  return {
+    external: [rec.ext.length === 0, rec.ext.length + ' requests to other hosts ' + rec.ext.slice(0, 2).join(' ')],
+    signedIn: [rec.fb.length > 0 && rec.fb.every((r) => ['/readstate', '/prefs'].includes(r.path) && r.auth === 'Bearer <token>'), `${rec.fb.length} feedback-sink requests, all /readstate or /prefs with the session's bearer`],
+    errors: [rec.errors.length === 0, rec.errors.length + ' page errors ' + rec.errors.slice(0, 2).join(' | ')],
+    ...A,
   };
 }
 
@@ -1426,17 +1567,26 @@ if (process.env.FAULTS !== '0') {
     { key: 'refillDayLink', state: 'front-read', js: { file: 'refill.js', from: 'pointDayLinks(ed.dataset.story);', to: 'pointDayLinks(deskDefault.dataset.story);' } },
     { key: 'eventLabelShown', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const e = document.querySelector('main .evt'); if (e) e.remove(); }) },
     // round 4 (owner decision 2026-09-25): All's front is composed at load; within a session reading only dims
-    { key: 'allLoad', state: 'front-read', js: { file: 'refill.js', from: 'all = { cards: cards.length ? cards : defaults, desk: deskPick(new Set()) };', to: 'all = { cards: defaults, desk: deskDefault };' } },
+    { key: 'allLoad', state: 'front-read', js: { file: 'refill.js', from: 'return { cards: cards.length ? cards : defaults, desk: deskPick(new Set()) };', to: 'return { cards: defaults, desk: deskDefault };' } },
     { key: 'allTickDims', state: 'front-read', js: [
       { file: 'refill.js', from: "mode === 'all' ? all.cards : defaults", to: "mode === 'all' ? pick(new Set()) : defaults" },
       { file: 'board.js', from: '        if (rs) {\n          apply();', to: '        if (true) {\n          apply();' }] },
-    { key: 'allAllRead', state: 'all-read', js: { file: 'refill.js', from: 'all = { cards: cards.length ? cards : defaults, desk: deskPick(new Set()) };', to: 'all = { cards, desk: deskPick(new Set()) };' } },
+    { key: 'allAllRead', state: 'all-read', js: { file: 'refill.js', from: 'return { cards: cards.length ? cards : defaults, desk: deskPick(new Set()) };', to: 'return { cards, desk: deskPick(new Set()) };' } },
     { key: 'allReadView', state: 'front-read', js: { file: 'refill.js', from: "const cards = mode === 'unread' ? pick(active) : mode === 'all' ? all.cards : defaults;", to: "const cards = mode === 'unread' ? pick(active) : all.cards;" } },
     { key: 'refillAll', state: 'front-read', js: { file: 'refill.js', from: "mode === 'all' ? all.cards : defaults", to: "mode === 'all' ? pick(new Set()) : defaults" } },
     { key: 'allOnce', state: 'front-read', js: { file: 'refill.js', from: '} else if (ptr.nextElementSibling !== row) ptr.after(row);', to: '}' } },
-    { key: 'allSyncOnce', state: 'all-sync', js: { file: 'board.js', from: '      refill.snapshot();\n      anchored(topItem(), () => { paint(); apply(); });', to: '      anchored(topItem(), () => { paint(); apply(); });' } },
+    { key: 'allSyncOnce', state: 'all-sync', js: { file: 'board.js', from: '      const gone = refill.retake();\n      anchored(topItem(rs ? undefined : gone), () => { paint(); apply(); });', to: '      anchored(topItem(), () => { paint(); apply(); });' } },
     { key: 'allSyncOnlyOnce', state: 'all-sync', js: { file: 'board.js', from: 'if (!first || touched) { remoteRead(); return; }', to: 'if (touched) { remoteRead(); return; }' } },
-    { key: 'allSyncTouched', state: 'all-sync-touched', js: { file: 'board.js', from: 'if (!first || touched) { remoteRead(); return; }', to: 'if (!first) { remoteRead(); return; }' } },
+    { key: 'allSyncTouched', state: 'all-sync', js: { file: 'board.js', from: 'if (!first || touched) { remoteRead(); return; }', to: 'if (!first) { remoteRead(); return; }' } },
+    // round 4 review: the guard is the whole page, a script scroll counts, the anchor stays, a #fragment counts
+    ...['allSyncRowClick', 'allSyncRowFocus'].map((key) => ({ key, state: 'all-sync', js: { file: 'board.js',
+      from: 'for (const t of TOUCH) document.addEventListener(t, touch, { capture: true, passive: true });',
+      to: "for (const t of TOUCH) main.querySelector('section.front').addEventListener(t, touch, { capture: true, passive: true });" } })),
+    { key: 'allSyncScroll', state: 'all-sync', js: { file: 'board.js', edits: [
+      ["addEventListener('scroll', onScroll, { passive: true });", ''],
+      ['if (first && !touched) onScroll();', '']] } },
+    { key: 'allSyncAnchor', state: 'all-sync', js: { file: 'board.js', from: 'anchored(topItem(rs ? undefined : gone), ', to: 'anchored(topItem(), ' } },
+    { key: 'allSyncHash', state: 'all-sync', js: { file: 'board.js', from: 'let roamedOnce = false, touched = !!location.hash, mark = null;', to: 'let roamedOnce = false, touched = false, mark = null;' } },
     { key: 'deskDate', state: 'front-read', css: '.ed--desk .ed__top .fday{display:none}' },
   ];
   // a fault whose gate is a SKIP on this data proves nothing either way: it is counted apart, not

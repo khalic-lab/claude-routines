@@ -25,9 +25,10 @@ node suite.mjs /tmp/fp-build/src/_site > /tmp/fp-suite.log 2>&1   # ~10 min; one
 - Serves the built `_site` under `/claude-routines/`.
 - Stubs both Workers with `route()`, and aborts and logs any other host.
 - Runs these states: default, expanded, unread-edition, front-read (the default front read, then
-  Unread), all-read (the whole reserve read), all-sync and all-sync-touched (signed in, with the
-  Worker's read set held until the page asks), beat, multi-beat, empty, stale and stale-bg (a tab
-  opened in the background), plus no-JS, contract parity, two tabs and the reading pages.
+  Unread), all-read (the whole reserve read), all-sync (signed in, with the Worker's read set held
+  until the page asks: seven scenarios, a fresh page each), beat, multi-beat, empty, stale and
+  stale-bg (a tab opened in the background), plus no-JS, contract parity, two tabs and the reading
+  pages.
 - Covers Chromium at 360, 390, 700, 768, 1024, 1280, 1440 and 1600, and WebKit as iPhone 15 and at
   1024, all in light and dark.
 
@@ -69,8 +70,12 @@ feed, not only the one it was written against:
   the load-time front; with everything read All is the builder's front, dimmed; every story and
   editorial shows exactly once, a builder-front story off the front as its real row after its
   pointer, and day headers count the front as composed; the Desk's view prints its edition's day
-- signed in: the first roamed read set retakes All's front once (the focus kept), a second roam
-  moves nothing, and a reader already at the front sees the roamed reads only dim
+- signed in: with no input since load the first roamed read set retakes All's front once, and a
+  second roam moves nothing. Any interaction first means that roam only dims, with the focus
+  kept: a click in the row of the story the roam would promote, focus in a builder-front story's
+  restored row while the roam un-reads it, focus in the front, a scroll by script alone, and a
+  #fragment load. A reload that puts the promoted row on top is the browser's scroll: the roam
+  retakes All and what was below that row stays within 2px
 - honest counts: each chip shows what pressing it shows
 - the editorial read rule and its un-tick override
 - in-page links have visible targets
