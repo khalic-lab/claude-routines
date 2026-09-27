@@ -1,0 +1,57 @@
+date: 2026-09-27
+applied: false
+# Evaluator sandbox egress is allowlist-walled again this run (same as 2026-09-20): direct GET of
+# royalsociety.org / pubs.aip.org / admin.ch / pnas.org / science.org all returned code 000
+# ("CONNECT tunnel failed, response 403"); only allowlisted hosts resolved (aljazeera.com 200,
+# srf.ch 200, nature.com 303). linkcheck resolved 8/20 for the same reason. So the two reach flips
+# below rest on WRITER-side fetch telemetry (health.json -> briefs.feeds), NOT evaluator probes:
+# each is a domain recorded reach: direct whose writer fetches this window were 0 via curl and
+# succeeded only via the proxy. Writers confirm with the bearer at next citation. This continues the
+# 2026-09-20 reach-drift cleanup (anthropic.com / the-decoder.com / news.un.org / rts.ch flipped and
+# verified reach: proxy). nature.com was checked and is CORRECT at reach: direct (10 ok-curl this
+# window + 303 from the evaluator), so it is deliberately NOT flipped.
+patches:
+  - domain: dw.com
+    field: reach
+    from: direct
+    to: proxy
+    applied: false
+    evidence: >-
+      Recorded reach: direct, but this window's writer fetch log shows dw.com at 0 ok-curl /
+      18 ok-proxy / 15 fail, and the RSS host rss.dw.com at 0 ok-curl / 12 ok-proxy / 8 fail
+      (health.json briefs.feeds). Curl never once succeeded; the proxy carried every success.
+      Direct is not the real reach. (If rss.dw.com is a separate registry entry, flip it too.)
+  - domain: euronews.com
+    field: reach
+    from: direct
+    to: proxy
+    applied: false
+    evidence: >-
+      Recorded reach: direct; writer fetch log this window 0 ok-curl / 5 ok-proxy / 5 fail
+      (health.json briefs.feeds). Proxy-only in practice; direct never succeeded.
+
+  # New primary-science candidates from the Sunday scout (science was again the worst-deficit stream:
+  # new_domains 6 = lowest, top5_share 1.00 = highest). Both are genuine primary publishers absent from
+  # the registry (most major science publishers -- pnas, science.org, iopscience, elife, cell, plos, agu,
+  # chemrxiv -- are already present); both 403'd the evaluator egress, so reach: proxy-needed and the
+  # writers vet at first citation. Appended to sources/candidates.jsonl this run. Caveat (as 2026-09-20):
+  # science's deficit is structural (narrow primary-journal universe + institutional egress wall), not a
+  # candidate shortage -- these broaden the bench but the binding constraint is reachability, not supply.
+  - domain: royalsociety.org
+    action: add
+    proposed_status: candidate
+    reach: proxy-needed
+    stream: science
+    evidence: >-
+      The Royal Society -- primary open/hybrid journals (Proceedings A/B, Royal Society Open Science,
+      Biology Letters). Genuine primary publisher absent from the registry; broadens science beyond the
+      Nature/arXiv anchor pair driving top5_share 1.00. Needs a probation cycle.
+  - domain: pubs.aip.org
+    action: add
+    proposed_status: candidate
+    reach: proxy-needed
+    stream: science
+    evidence: >-
+      AIP Publishing -- primary physics journals (Applied Physics Letters, Journal of Chemical Physics,
+      Review of Scientific Instruments). Fills a genuine physics-primary gap complementary to APS/IOP
+      already in the registry. Needs a probation cycle.

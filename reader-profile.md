@@ -77,3 +77,11 @@
   Where the official source is unreachable this run (admin.ch 403 this window), say so in Gaps rather
   than leading on the secondary. Sharpens the standing primary-over-aggregator line for the specific
   vote/recommendation case.
+- 2026-09-27: do not attach a contested ideological label ("far-left", "radical", "hard-left") to a
+  party in the brief's OWN voice when the cited source does not — Die Linke (The Left) is a
+  left/democratic-socialist party, not "far-left"; the 09-21 Euronews source headline said "The Left",
+  and the brief added "far-left" (repeated in the 09-26 weekend recap), asymmetric to the consensus
+  "far-right" for the AfD (1× emphatic 👎 on news 2026-09-21, "Die Linke is NOT FAR LEFT"). Extends the
+  2026-07-19 impartial-voice line from actors' self-characterisations to the writer's own party labels:
+  use the party's plain name or the source's wording, and reserve loaded labels for where they are
+  genuinely consensus or attributed.
