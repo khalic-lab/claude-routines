@@ -459,7 +459,9 @@ def build_briefs(root, window_start, window_end):
 
 
 # A `reach: direct` registry domain is drifting when the window's writer fetch log never reached
-# it over plain curl yet the proxy carried at least this many successes.
+# it over plain curl yet the proxy carried at least this many successes. At least one logged
+# failure is also required: `fetch.py --proxy` skips curl entirely, so 0 curl successes with 0
+# failures means curl was never tried, not that it failed.
 _REACH_DRIFT_MIN_PROXY = 3
 
 
@@ -483,7 +485,8 @@ def build_reach_drift(root, feeds):
     """Registry `reach:` drift from the writers' own fetch telemetry (K). Each feed label is a
     host; it maps to the longest registry key equal to it or a parent domain of it (rss.dw.com
     -> dw.com). An entry recorded `reach: direct` whose mapped hosts show 0 curl successes and
-    >= _REACH_DRIFT_MIN_PROXY proxy successes this window is listed as a direct -> proxy flip.
+    >= _REACH_DRIFT_MIN_PROXY proxy successes and at least one failure this window is listed as
+    a direct -> proxy flip. Malformed (non-mapping) registry entries are skipped, never raised on.
     Writer telemetry, not an evaluator probe: the evaluator's egress cannot reach most of these
     hosts, which is why `reach:` drifted unmaintained until 2026-10-01."""
     reg = _load_registry(root)
@@ -503,8 +506,10 @@ def build_reach_drift(root, feeds):
         acc["hosts"].append(label)
     drift = []
     for domain, acc in by_domain.items():
-        entry = reg.get(domain) or {}
-        if (entry.get("reach") == "direct" and acc["ok_curl"] == 0
+        entry = reg.get(domain)
+        if not isinstance(entry, dict):
+            continue
+        if (entry.get("reach") == "direct" and acc["ok_curl"] == 0 and acc["fail"] > 0
                 and acc["ok_proxy"] >= _REACH_DRIFT_MIN_PROXY):
             drift.append(dict(domain=domain, recorded="direct", observed="proxy",
                               hosts=sorted(acc["hosts"]), ok_curl=0,

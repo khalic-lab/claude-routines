@@ -154,8 +154,8 @@
 > boundary in `shallow_skipped` instead of listing them; anything on a remote branch is always
 > listed. **Reach drift:** no probe job ever maintained `reach:`; `metrics.py` now folds the
 > writers' fetch telemetry by registry domain into `health.json → briefs.reach_drift` (recorded
-> `direct`, 0 curl successes, ≥3 via proxy) and the Evaluator copies every entry into its
-> registry proposal — on the 09-27 window that is 12 domains, against the 2 found by hand.
+> `direct`, 0 curl successes, ≥1 failure, ≥3 via proxy) and the Evaluator copies every entry into its
+> registry proposal — on the 09-27 window that is 11 domains, against the 2 found by hand.
 > `fetch.py` never reads `reach:` (curl first, proxy on failure), so a flip changes the preflight
 > plan, not what is fetched. **Targets** are tiered by cadence: news/ai-ml keep ≥30 unique
 > domains and top-5 ≤0.50; science/sports/weekend (one edition a week) get ≥10 unique domains,

@@ -396,6 +396,13 @@ export.arxiv.org:
 arxiv.org:
   class: outlet
   reach: direct
+api.github.com:
+  class: outlet
+  reach: proxy
+github.com:
+  class: outlet
+  reach: direct
+broken.example: direct
 """
     FEEDS = {
         "dw.com": {"ok_curl": 0, "ok_proxy": 2, "fail": 5},
@@ -405,6 +412,11 @@ arxiv.org:
         "the-decoder.com": {"ok_curl": 0, "ok_proxy": 14, "fail": 14},
         "export.arxiv.org": {"ok_curl": 28, "ok_proxy": 0, "fail": 0},
         "unregistered.example": {"ok_curl": 0, "ok_proxy": 9, "fail": 0},
+        # proxy-only under its own `proxy` key; folding it into the parent would flag github.com
+        "api.github.com": {"ok_curl": 0, "ok_proxy": 9, "fail": 9},
+        # fetched with --proxy only: curl never tried, so no evidence direct fails
+        "vbs.example": {"ok_curl": 0, "ok_proxy": 4, "fail": 0},
+        "broken.example": {"ok_curl": 0, "ok_proxy": 9, "fail": 9},
     }
 
     @classmethod
@@ -426,7 +438,17 @@ arxiv.org:
             self.assertNotIn(domain, flagged)
 
     def test_longest_registry_key_wins(self):
-        self.assertNotIn("arxiv.org", {d["domain"] for d in self.drift["flips"]})
+        self.assertNotIn("github.com", {d["domain"] for d in self.drift["flips"]})
+
+    def test_proxy_successes_without_any_failure_are_not_drift(self):
+        root = tempfile.mkdtemp(prefix="reachdrift-")
+        os.makedirs(os.path.join(root, "sources"))
+        with open(os.path.join(root, "sources", "registry.yml"), "w") as f:
+            f.write("vbs.example:\n  class: outlet\n  reach: direct\n")
+        self.assertEqual(metrics.build_reach_drift(root, self.FEEDS)["flips"], [])
+
+    def test_malformed_registry_entry_is_skipped_not_raised(self):
+        self.assertNotIn("broken.example", {d["domain"] for d in self.drift["flips"]})
 
     def test_missing_registry_degrades(self):
         self.assertEqual(metrics.build_reach_drift(tempfile.mkdtemp(), self.FEEDS),
