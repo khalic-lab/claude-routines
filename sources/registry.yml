@@ -723,7 +723,7 @@ euronews.com:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-07
@@ -731,6 +731,9 @@ euronews.com:
     - date: 2026-07-10
       event: candidate
       status: candidate
+    - date: 2026-10-01
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 0 ok-curl / 5 ok-proxy / 5 fail -- evaluator registry patch 2026-09-27
 export.arxiv.org:
   class: outlet
   tier: T2
@@ -2675,16 +2678,19 @@ dw.com:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   probe:
     url: https://rss.dw.com/rdf/rss-en-all
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 0d, direct
+    - date: 2026-10-01
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 0 ok-curl / 18 ok-proxy / 15 fail (feed host rss.dw.com 0 / 12 / 8) -- evaluator registry patch 2026-09-27
 rfi.fr:
   class: outlet
   tier: T2

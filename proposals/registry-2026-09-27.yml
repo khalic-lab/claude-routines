@@ -1,5 +1,8 @@
 date: 2026-09-27
-applied: false
+applied: true
+# APPLIED (2026-10-01 apply pass): both reach flips applied (dw.com probe method moves to proxy with it;
+#   rss.dw.com has no registry entry of its own, it is dw.com's probe host). royalsociety.org and
+#   pubs.aip.org were already in sources/registry.yml as candidates via the scout sync -- no-op.
 # Evaluator sandbox egress is allowlist-walled again this run (same as 2026-09-20): direct GET of
 # royalsociety.org / pubs.aip.org / admin.ch / pnas.org / science.org all returned code 000
 # ("CONNECT tunnel failed, response 403"); only allowlisted hosts resolved (aljazeera.com 200,
@@ -15,7 +18,8 @@ patches:
     field: reach
     from: direct
     to: proxy
-    applied: false
+    applied: true
+    applied_on: 2026-10-01
     evidence: >-
       Recorded reach: direct, but this window's writer fetch log shows dw.com at 0 ok-curl /
       18 ok-proxy / 15 fail, and the RSS host rss.dw.com at 0 ok-curl / 12 ok-proxy / 8 fail
@@ -25,7 +29,8 @@ patches:
     field: reach
     from: direct
     to: proxy
-    applied: false
+    applied: true
+    applied_on: 2026-10-01
     evidence: >-
       Recorded reach: direct; writer fetch log this window 0 ok-curl / 5 ok-proxy / 5 fail
       (health.json briefs.feeds). Proxy-only in practice; direct never succeeded.
@@ -39,6 +44,9 @@ patches:
   # candidate shortage -- these broaden the bench but the binding constraint is reachability, not supply.
   - domain: royalsociety.org
     action: add
+    applied: true
+    applied_on: 2026-10-01
+    applied_note: No-op -- already in sources/registry.yml as a candidate via the scout sync.
     proposed_status: candidate
     reach: proxy-needed
     stream: science
@@ -48,6 +56,9 @@ patches:
       Nature/arXiv anchor pair driving top5_share 1.00. Needs a probation cycle.
   - domain: pubs.aip.org
     action: add
+    applied: true
+    applied_on: 2026-10-01
+    applied_note: No-op -- already in sources/registry.yml as a candidate via the scout sync.
     proposed_status: candidate
     reach: proxy-needed
     stream: science
