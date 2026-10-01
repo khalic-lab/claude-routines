@@ -26,7 +26,10 @@ PRICING = {
     "claude-opus-4-8": {"input": 5.0, "output": 25.0, "cache_write_5m": 6.25, "cache_write_1h": 10.0, "cache_read": 0.50},
     "claude-opus-4-7": {"input": 5.0, "output": 25.0, "cache_write_5m": 6.25, "cache_write_1h": 10.0, "cache_read": 0.50},
     "claude-opus-5":   {"input": 5.0, "output": 25.0, "cache_write_5m": 6.25, "cache_write_1h": 10.0, "cache_read": 0.50},
-    # Sonnet tier.
+    # Opus 5.5 is cheaper than the rest of the Opus tier ($4 / $20).
+    "claude-opus-5-5": {"input": 4.0, "output": 20.0, "cache_write_5m": 5.00, "cache_write_1h": 8.0, "cache_read": 0.20},
+    # Sonnet tier. Sonnet 5.5 is priced the same as Sonnet 5.
+    "claude-sonnet-5-5": {"input": 2.0, "output": 10.0, "cache_write_5m": 2.50, "cache_write_1h": 4.0, "cache_read": 0.20},
     "claude-sonnet-5":   {"input": 2.0, "output": 10.0, "cache_write_5m": 2.50, "cache_write_1h": 4.0, "cache_read": 0.20},
     "claude-sonnet-4-6": {"input": 3.0, "output": 15.0, "cache_write_5m": 3.75, "cache_write_1h": 6.0, "cache_read": 0.30},
     # Haiku -- the second model the routines run on (Watch, and Haiku-tier writers).
