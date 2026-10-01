@@ -262,6 +262,13 @@ writer Step D **and added to the rebase-retry regenerate list** (review C2 fix).
 4-stream targets: top-5 outlet-class share ≤0.50 in 4 weeks (≤0.35 steady); unique domains 30d ≥30
 (≥35); new domains/month ≥10 (≥25); waiver rate ≤50% (≤30%).
 
+**Tiered 2026-10-01** (2026-09-27 review, open question 4): those targets apply to the multi-edition
+streams, news and ai-ml. The one-edition-a-week streams — science, sports, weekend, ~4 editions per
+30d — get unique domains 30d ≥10, new domains/month ≥3, and top-5 share reported without a status,
+since with ~10 domains the top five hold most citations by construction. Waiver rate ≤50% stays
+for every stream. Science sat at 10 unique / top-5 1.00 and Weekend at 15–22 / 0.71–0.79 for
+every review from 2026-09-06 on, flagged red each week for a denominator, not a defect.
+
 **Bootstrap** (`registry.py bootstrap`, from the live index): ≥5 citations → `established`, 1–4 →
 `probation`, the 7 allowlisted feed hosts get `probe:` blocks — **excluding the retired streams'
 domains** (`nvd.nist.gov`, `cisa.gov`, `ecb.europa.eu` are still inside the 40-day window and would

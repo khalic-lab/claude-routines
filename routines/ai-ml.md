@@ -295,6 +295,7 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: since the last AI/ML edition
 # Constraints
 
 - This is the AI/ML home — comprehensive coverage of the window's industry/lab activity AND research papers. 1500–2500 words target.
+- **Depth, not exhaustiveness.** Stay inside the 1500–2500-word target. When the window is busy, keep the highest-signal items and tighten each one rather than adding paper summaries or extending every section; go past ~3000 words only when the window genuinely warrants it, and say why in the intro.
 - A section appears ONLY if it has genuinely new substance for the window; otherwise omit it entirely — no placeholder, no "nothing notable in this window" line.
 - Tag `[vendor PR]` aggressively — most lab blog posts are PR.
 - For benchmark claims: state the methodology if known. "Beats GPT-X on Y" is meaningless without knowing Y.

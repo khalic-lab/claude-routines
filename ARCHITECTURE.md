@@ -144,6 +144,23 @@
 > route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
 > `hklaw.com`, `macrumors.com`, `wtvbam.com`.
 >
+> **Changed 2026-10-01: the 2026-09-27 review applied, and its four open questions settled.**
+> Prompts (repo only, shims unchanged): a shared-ethos rule against contested ideological labels
+> in the writer's own voice (all five writers); AI/ML stays inside its 1500–2500-word target and
+> explains in the intro past ~3000. Registry: `dw.com`, `euronews.com` reach direct → proxy.
+> **Off-main guard:** the sandbox pulls into a depth-limited clone, so the pull prints "(forced
+> update)" and the stale pre-pull tip read as ~20 stranded commits — `main` was never rewritten.
+> In a shallow clone `build_off_main` now counts commits from before origin/main's history
+> boundary in `shallow_skipped` instead of listing them; anything on a remote branch is always
+> listed. **Reach drift:** no probe job ever maintained `reach:`; `metrics.py` now folds the
+> writers' fetch telemetry by registry domain into `health.json → briefs.reach_drift` (recorded
+> `direct`, 0 curl successes, ≥3 via proxy) and the Evaluator copies every entry into its
+> registry proposal — on the 09-27 window that is 12 domains, against the 2 found by hand.
+> `fetch.py` never reads `reach:` (curl first, proxy on failure), so a flip changes the preflight
+> plan, not what is fetched. **Targets** are tiered by cadence: news/ai-ml keep ≥30 unique
+> domains and top-5 ≤0.50; science/sports/weekend (one edition a week) get ≥10 unique domains,
+> ≥3 new a month, top-5 reported without status.
+>
 > **Changed 2026-09-25: weekly-review apply pass — prompts, reach flips, a reading-surface check
 > and a missing-story alert.** Prompts (repo only, shims unchanged): News' primary-document rule
 > covers votes and government positions (an unreachable primary goes to Gaps) and rotates outlets off

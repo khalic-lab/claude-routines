@@ -5,7 +5,9 @@ reads the story ledger + feedback/_posts/_data trees and writes/prints
 dimensions the evaluator used to hand-count (B aggregator leakage, D section
 vitality, F single-source rate, G tag counts, H weekend paper balance, K
 footer fetch ratios + feeds, L word-count means) under the top-level "briefs"
-key, plus the off-main self-delivery guard under continuity.off_main. Schema
+key, plus the off-main self-delivery guard under continuity.off_main. Since
+2026-10-01 also briefs.reach_drift: registry `reach: direct` domains the
+writers' fetch log reached only through the proxy. Schema
 is fixed by tools/tests/test_metrics.py -- see that file's module docstring
 for the exact shape; this module implements it, it does not re-derive it.
 
@@ -456,6 +458,61 @@ def build_briefs(root, window_start, window_end):
             "feeds": feeds, "weekend_balance": balance}
 
 
+# A `reach: direct` registry domain is drifting when the window's writer fetch log never reached
+# it over plain curl yet the proxy carried at least this many successes.
+_REACH_DRIFT_MIN_PROXY = 3
+
+
+def _load_registry(root):
+    """sources/registry.yml through registry.py's own loader (the file is a YAML subset PyYAML
+    does not fully accept). None when absent or unreadable -- never raises."""
+    import importlib.util
+    tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sources", "registry.py")
+    try:
+        spec = importlib.util.spec_from_file_location("_registry_m", os.path.normpath(tool))
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        with open(mod.registry_path(root), encoding="utf-8") as f:
+            reg = mod.yaml_load(f.read())
+    except (OSError, ValueError, ImportError, AttributeError, SyntaxError):
+        return None
+    return reg if isinstance(reg, dict) else None
+
+
+def build_reach_drift(root, feeds):
+    """Registry `reach:` drift from the writers' own fetch telemetry (K). Each feed label is a
+    host; it maps to the longest registry key equal to it or a parent domain of it (rss.dw.com
+    -> dw.com). An entry recorded `reach: direct` whose mapped hosts show 0 curl successes and
+    >= _REACH_DRIFT_MIN_PROXY proxy successes this window is listed as a direct -> proxy flip.
+    Writer telemetry, not an evaluator probe: the evaluator's egress cannot reach most of these
+    hosts, which is why `reach:` drifted unmaintained until 2026-10-01."""
+    reg = _load_registry(root)
+    if reg is None:
+        return {"available": False}
+    by_domain = {}
+    for label, counts in feeds.items():
+        host = label.lower()
+        host = host[4:] if host.startswith("www.") else host
+        keys = [k for k in reg if host == k or host.endswith("." + k)]
+        if not keys:
+            continue
+        domain = max(keys, key=len)
+        acc = by_domain.setdefault(domain, {"ok_curl": 0, "ok_proxy": 0, "fail": 0, "hosts": []})
+        for field in ("ok_curl", "ok_proxy", "fail"):
+            acc[field] += counts.get(field, 0)
+        acc["hosts"].append(label)
+    drift = []
+    for domain, acc in by_domain.items():
+        entry = reg.get(domain) or {}
+        if (entry.get("reach") == "direct" and acc["ok_curl"] == 0
+                and acc["ok_proxy"] >= _REACH_DRIFT_MIN_PROXY):
+            drift.append(dict(domain=domain, recorded="direct", observed="proxy",
+                              hosts=sorted(acc["hosts"]), ok_curl=0,
+                              ok_proxy=acc["ok_proxy"], fail=acc["fail"]))
+    drift.sort(key=lambda d: (-d["ok_proxy"], d["domain"]))
+    return {"available": True, "min_proxy": _REACH_DRIFT_MIN_PROXY, "flips": drift}
+
+
 def _git_lines(root, argv):
     proc = subprocess.run(["git"] + argv, cwd=root, capture_output=True, text=True)
     if proc.returncode != 0:
@@ -473,17 +530,42 @@ def build_off_main(root, window_start):
     which leaves local `main` stale and made every pulled commit look off-main
     (~14-20 phantoms a week). No fetch here -- the fire-start already pulled, so
     the local `origin/main` ref is current; if it cannot be resolved this
-    degrades to available:false rather than falling back to the stale ref."""
+    degrades to available:false rather than falling back to the stale ref.
+
+    Shallow clones (2026-09-20/27 reviews): the sandbox pulls into a depth-limited
+    clone, so the new origin/main history stops at a fresh shallow boundary and
+    git cannot connect it to the pre-pull tip -- the pull prints "(forced update)"
+    and the stale local `main` plus its ancestors read as off-main although they
+    are on main. Ancestry is unknowable below the boundary, so in a shallow repo
+    a commit dated at or before origin/main's oldest visible commit is not
+    judged: it is counted in `shallow_skipped`, never listed. The skip applies
+    only to commits reachable from local refs/HEAD; anything on a remote branch
+    (the `outcomes` claude/* stranding class) is always listed, and a commit made
+    after the pull is newer than the boundary, so both stay caught."""
     if not os.path.isdir(os.path.join(root, ".git")):
         return {"available": False}
     try:
         branches = [b.strip() for b in _git_lines(root, ["branch", "-r", "--format=%(refname:short)"])
                     if b.strip() not in ("", "origin", "origin/main") and "HEAD" not in b]
-        commits = _git_lines(root, ["log", "--all", "--oneline",
-                                    "--since=%s" % window_start, "--not", "origin/main"])
+        shallow = _git_lines(root, ["rev-parse", "--is-shallow-repository"]) == ["true"]
+        since = "--since=%s" % window_start
+        rows = _git_lines(root, ["log", "--all", "--format=%ct %H %h %s", since, "--not", "origin/main"])
+        boundary, on_remote = None, set()
+        if shallow and rows:
+            boundary = min(int(t) for t in _git_lines(root, ["log", "--format=%ct", "origin/main"]))
+            on_remote = set(_git_lines(root, ["log", "--remotes", "--format=%H", since,
+                                              "--not", "origin/main"]))
+        commits, skipped = [], 0
+        for row in rows:
+            ts, sha, line = row.split(" ", 2)
+            if boundary is not None and int(ts) <= boundary and sha not in on_remote:
+                skipped += 1
+            else:
+                commits.append(line)
         return {"available": True, "remote_branches": branches,
-                "commits_not_on_main": commits[:20]}
-    except (OSError, RuntimeError):
+                "commits_not_on_main": commits[:20],
+                "shallow": shallow, "shallow_skipped": skipped}
+    except (OSError, RuntimeError, ValueError):
         return {"available": False}
 
 
@@ -511,13 +593,15 @@ def compute_health(root, week_arg):
     occurrences = dedup_publishes(events)
     continuity = build_continuity(root, window_end)
     continuity["off_main"] = build_off_main(root, window_start)
+    briefs = build_briefs(root, window_start, window_end)
+    briefs["reach_drift"] = build_reach_drift(root, briefs["feeds"])
     return {
         "week": {"start": window_start, "end": window_end},
         "streams": build_streams(occurrences, window_start, window_end, thread_map),
         "feedback": build_feedback(events, root, window_start, window_end),
         "sources": build_sources(root),
         "continuity": continuity,
-        "briefs": build_briefs(root, window_start, window_end),
+        "briefs": briefs,
     }
 
 

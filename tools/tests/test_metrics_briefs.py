@@ -324,5 +324,114 @@ class OffMainTest(unittest.TestCase):
         self.assertEqual(self.off_main["remote_branches"], ["origin/claude/stranded"])
 
 
+class ShallowOffMainTest(unittest.TestCase):
+    """2026-09-20/27 reviews: the sandbox pulls into a depth-limited clone, the pull
+    prints "(forced update)" and the stale pre-pull tip reads as off-main although
+    every one of those commits is on main. Reproduced here with a real shallow clone
+    and a depth-limited pull; a commit stranded on a remote branch must still list."""
+
+    @staticmethod
+    def _commit(root, msg, date):
+        subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@e",
+                        "-c", "commit.gpgsign=false", "commit", "--allow-empty", "-q", "-m", msg],
+                       cwd=root, check=True,
+                       env=dict(os.environ, GIT_AUTHOR_DATE=date, GIT_COMMITTER_DATE=date))
+
+    @classmethod
+    def setUpClass(cls):
+        base = tempfile.mkdtemp(prefix="offmain-shallow-")
+        up = os.path.join(base, "up")
+        os.makedirs(up)
+        _git(up, "-c", "init.defaultBranch=main", "init", "-q")
+        for i in range(1, 6):
+            cls._commit(up, "old %d" % i, "2026-01-0%dT12:00:00" % i)
+        cls.root = os.path.join(base, "clone")
+        _git(base, "clone", "-q", "--depth", "2", "file://" + up, cls.root)
+        for i in range(6, 11):
+            cls._commit(up, "new %d" % i, "2026-01-%dT12:00:00" % (10 + i))
+        # stranded on a remote branch, and OLDER than the new shallow boundary
+        _git(up, "checkout", "-q", "-b", "claude/stranded")
+        cls._commit(up, "stranded", "2026-01-08T12:00:00")
+        _git(up, "checkout", "-q", "main")
+        _git(cls.root, "checkout", "-q", "--detach")
+        _git(cls.root, "fetch", "-q", "--depth", "2", "origin",
+             "main:refs/remotes/origin/main", "claude/stranded:refs/remotes/origin/claude/stranded",
+             "--update-head-ok", "--force")
+        cls.off_main = metrics.build_off_main(cls.root, "2026-01-01")
+
+    def test_fixture_is_shallow_and_disconnected(self):
+        self.assertTrue(self.off_main["shallow"])
+        self.assertGreater(self.off_main["shallow_skipped"], 0)
+
+    def test_stale_pre_pull_tip_is_not_reported(self):
+        subjects = [l.split(" ", 1)[1] for l in self.off_main["commits_not_on_main"]]
+        self.assertFalse([s for s in subjects if s.startswith("old ")], subjects)
+
+    def test_commit_on_a_remote_branch_is_always_listed(self):
+        subjects = [l.split(" ", 1)[1] for l in self.off_main["commits_not_on_main"]]
+        self.assertIn("stranded", subjects)
+        self.assertEqual(self.off_main["remote_branches"], ["origin/claude/stranded"])
+
+
+class ReachDriftTest(unittest.TestCase):
+    """2026-10-01: nothing maintained the registry's `reach:` -- the evaluator surfaced
+    proxy-only `direct` domains one or two a week by reading the feeds table. Fixed
+    from the writers' own fetch telemetry: hosts fold to their registry domain."""
+
+    REGISTRY = """dw.com:
+  class: outlet
+  reach: direct
+euronews.com:
+  class: outlet
+  reach: direct
+srf.ch:
+  class: outlet
+  reach: direct
+the-decoder.com:
+  class: outlet
+  reach: proxy
+export.arxiv.org:
+  class: outlet
+  reach: direct
+arxiv.org:
+  class: outlet
+  reach: direct
+"""
+    FEEDS = {
+        "dw.com": {"ok_curl": 0, "ok_proxy": 2, "fail": 5},
+        "rss.dw.com": {"ok_curl": 0, "ok_proxy": 2, "fail": 1},
+        "euronews.com": {"ok_curl": 0, "ok_proxy": 2, "fail": 9},
+        "srf.ch": {"ok_curl": 39, "ok_proxy": 3, "fail": 4},
+        "the-decoder.com": {"ok_curl": 0, "ok_proxy": 14, "fail": 14},
+        "export.arxiv.org": {"ok_curl": 28, "ok_proxy": 0, "fail": 0},
+        "unregistered.example": {"ok_curl": 0, "ok_proxy": 9, "fail": 0},
+    }
+
+    @classmethod
+    def setUpClass(cls):
+        cls.root = tempfile.mkdtemp(prefix="reachdrift-")
+        os.makedirs(os.path.join(cls.root, "sources"))
+        with open(os.path.join(cls.root, "sources", "registry.yml"), "w") as f:
+            f.write(cls.REGISTRY)
+        cls.drift = metrics.build_reach_drift(cls.root, cls.FEEDS)
+
+    def test_subdomain_hosts_fold_into_their_registry_domain(self):
+        self.assertEqual(self.drift["flips"], [
+            {"domain": "dw.com", "recorded": "direct", "observed": "proxy",
+             "hosts": ["dw.com", "rss.dw.com"], "ok_curl": 0, "ok_proxy": 4, "fail": 6}])
+
+    def test_below_threshold_curl_working_and_already_proxy_are_not_flagged(self):
+        flagged = {d["domain"] for d in self.drift["flips"]}
+        for domain in ("euronews.com", "srf.ch", "the-decoder.com", "export.arxiv.org"):
+            self.assertNotIn(domain, flagged)
+
+    def test_longest_registry_key_wins(self):
+        self.assertNotIn("arxiv.org", {d["domain"] for d in self.drift["flips"]})
+
+    def test_missing_registry_degrades(self):
+        self.assertEqual(metrics.build_reach_drift(tempfile.mkdtemp(), self.FEEDS),
+                         {"available": False})
+
+
 if __name__ == "__main__":
     unittest.main()
