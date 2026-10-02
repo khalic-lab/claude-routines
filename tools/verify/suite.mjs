@@ -1595,7 +1595,8 @@ if (process.env.FAULTS !== '0') {
     { key: 'beatEd', state: 'beat', css: `#${BEAT_ED ? sidOf(BEAT_ED) : 'x'}{display:none!important}` },
     { key: 'emptyFirst', state: 'empty', css: '#empty{display:none!important}' },
     { key: 'overflow', state: 'default', css: '.day__cov{white-space:nowrap}.day__cov::after{content:"";display:inline-block;inline-size:600px}', w: 360 },
-    { key: 'measure', state: 'default', css: '.row__body{columns:auto!important}.row .why,.row .sum{max-inline-size:none!important}' },
+    // from 1024px the right-hand track bounds the row too, so the break also spans it full width
+    { key: 'measure', state: 'default', css: '.row__in{grid-template-rows:none!important;grid-template-areas:"g head head" "g body body" "g why why" "g foot foot"!important}.row__body{columns:auto!important}.row .why,.row .sum{max-inline-size:none!important}' },
     { key: 'measure', state: 'default', css: '.row__body{columns:auto!important}.row .why,.row .sum{max-inline-size:none!important}', w: 768 },
     { key: 'frontMeasure', state: 'default', css: '.why,.sum,.ed__body,.fold{max-inline-size:none!important}' },
     { key: 'whyAfterBody', state: 'default', css: '.fc>article>.why{order:-1}' },

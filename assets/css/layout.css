@@ -112,13 +112,15 @@
   .row__body { grid-area: body; min-inline-size: 0; }
   .row__foot { grid-area: foot; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
   /* from 1024px the story reads down the right-hand track, body then why, beside its headline;
-     folded (script only), the why rises to the headline's line */
+     folded (script only), the why rises to the headline's line. One row gap in both, so opening
+     never shifts the foot's More (fold.js would scroll to hold it, and the page counts that scroll
+     as the reader's) */
   @media (min-width: 1024px) {
     .row__in {
-      grid-template-columns: 14px minmax(0, 5fr) minmax(0, 7fr); column-gap: 24px; row-gap: 8px;
+      grid-template-columns: 14px minmax(0, 5fr) minmax(0, 7fr); column-gap: 24px;
       grid-template-rows: auto 1fr auto; grid-template-areas: "g head body" "g foot body" "g foot why";
     }
-    .js .row.is-folded .row__in { row-gap: 6px; grid-template-rows: auto 1fr; grid-template-areas: "g head why" "g foot why"; }
+    .js .row.is-folded .row__in { grid-template-rows: auto 1fr; grid-template-areas: "g head why" "g foot why"; }
     .row__foot { align-self: start; }
   }
 
