@@ -627,6 +627,21 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         const mx = Math.max(whyN, sumN), mn = Math.min(whyN, sumN);
         A.measure = [mx <= 80 && (innerWidth < 700 || mn >= 50), `opened row: why ${whyN}, body ${sumN} chars/line (columns ${cols})`];
       }
+      // the front's measure and order (2026-10-02): every opened card's why and body, and the opened
+      // Desk's view, read at no more than 80 characters a line; a why follows its story's body
+      const long = [], above = []; let seen = 0;
+      const after = (it) => { const s = it.querySelector('.sum'), y = it.querySelector('.why');
+        if (s && y && L.vis(s) && L.vis(y) && L.R(y).top < L.R(s).bottom - 1) above.push(it.dataset.story); };
+      for (const it of document.querySelectorAll('section.front :is(.fc, .ed)')) {
+        if (!L.vis(it)) continue;
+        const shut = it.classList.contains('is-folded'); if (shut) click(it.querySelector('.more'));
+        for (const el of it.querySelectorAll('.why, .sum, .ed__body')) if (L.vis(el)) { seen++; const n = L.cpl(el); if (n > 80) long.push(`${it.dataset.story} .${el.classList[0]} ${n}`); }
+        after(it);
+        if (shut) click(it.querySelector('.more'));
+      }
+      if (row) { click(row.querySelector('.more')); after(row); click(row.querySelector('.more')); }
+      A.frontMeasure = [seen > 0 && !long.length, long.slice(0, 3).join('; ') || `${seen} opened front blocks, each at most 80 chars/line`];
+      A.whyAfterBody = [!above.length, above.length ? `why above its body in ${above.slice(0, 3).join(', ')}` : 'every opened why sits under its body'];
       // og: at least two slots (the suite injects slots when the day's front has fewer); the stub
       // gives the first an image and the rest none. Both outcomes must land every run, and the
       // image request must carry its referrer policy (old bug B6).
@@ -1582,6 +1597,8 @@ if (process.env.FAULTS !== '0') {
     { key: 'overflow', state: 'default', css: '.day__cov{white-space:nowrap}.day__cov::after{content:"";display:inline-block;inline-size:600px}', w: 360 },
     { key: 'measure', state: 'default', css: '.row__body{columns:auto!important}.row .why,.row .sum{max-inline-size:none!important}' },
     { key: 'measure', state: 'default', css: '.row__body{columns:auto!important}.row .why,.row .sum{max-inline-size:none!important}', w: 768 },
+    { key: 'frontMeasure', state: 'default', css: '.why,.sum,.ed__body,.fold{max-inline-size:none!important}' },
+    { key: 'whyAfterBody', state: 'default', css: '.fc>article>.why{order:-1}' },
     { key: 'focus', state: 'default', css: '.seg{overflow:hidden}' },
     { key: 'focus', state: 'default', css: '.bar .beats:has(:focus-visible){mask-image:linear-gradient(90deg,#000 88%,transparent)}', w: 768 },
     { key: 'focusMain', state: 'default', css: 'html{scroll-padding-block-end:0!important}', w: 390 },

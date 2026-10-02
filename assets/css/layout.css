@@ -104,18 +104,21 @@
   .rows { display: flex; flex-direction: column; }
   .row__in {
     display: grid; grid-template-columns: 14px minmax(0, 1fr); column-gap: 10px; row-gap: 6px; padding-block: 12px 10px;
-    grid-template-areas: "g head" "g why" "g body" "g foot";
+    grid-template-areas: "g head" "g body" "g why" "g foot";
   }
   .row__g { grid-area: g; padding-block-start: .45em; }
   .row__head { grid-area: head; display: flex; flex-direction: column; gap: 5px; min-inline-size: 0; }
   .row__why { grid-area: why; min-inline-size: 0; }
   .row__body { grid-area: body; min-inline-size: 0; }
   .row__foot { grid-area: foot; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+  /* from 1024px the story reads down the right-hand track, body then why, beside its headline;
+     folded (script only), the why rises to the headline's line */
   @media (min-width: 1024px) {
     .row__in {
-      grid-template-columns: 14px minmax(0, 5fr) minmax(0, 7fr); column-gap: 24px;
-      grid-template-rows: auto 1fr auto; grid-template-areas: "g head why" "g foot why" "g body body";
+      grid-template-columns: 14px minmax(0, 5fr) minmax(0, 7fr); column-gap: 24px; row-gap: 8px;
+      grid-template-rows: auto 1fr auto; grid-template-areas: "g head body" "g foot body" "g foot why";
     }
+    .js .row.is-folded .row__in { row-gap: 6px; grid-template-rows: auto 1fr; grid-template-areas: "g head why" "g foot why"; }
     .row__foot { align-self: start; }
   }
 

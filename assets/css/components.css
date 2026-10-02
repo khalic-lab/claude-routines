@@ -130,8 +130,8 @@
     .js .fcards--rest > .fc:first-child:has(+ .fc:not(.is-folded)) > article:has(.photo:not([hidden])),
     .js .fcards--rest > .fc:not(.is-folded) + .fc:last-child > article:has(.photo:not([hidden])) {
       display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); column-gap: 28px; row-gap: 10px; align-content: start;
-      grid-template-rows: auto auto auto 1fr auto auto;
-      grid-template-areas: "top photo" "hl photo" "deck photo" "why photo" "fold fold" "line line";
+      grid-template-rows: auto auto auto auto 1fr auto;
+      grid-template-areas: "top photo" "hl photo" "deck photo" "fold photo" "why photo" "line line";
     }
     .fcards--rest article > .fc__top { grid-area: top; }
     .fcards--rest article > .hl { grid-area: hl; }
@@ -183,11 +183,16 @@
   .fcards--rest .fc:not(.is-folded) .fold, .fc--lead .fold { display: block; }
   .fcards--rest .fc:not(.is-folded) .fold > * + *, .fc--lead .fold > * + * { margin-block-start: 10px; }
   @container front (min-width: 720px) {
-    .fc--lead .fold, .fcards--rest .fc:not(.is-folded) .fold { columns: 2 20em; column-gap: 28px; }
-    .desk .ed:not(.is-folded) .ed__body { display: block; columns: 2 22em; column-gap: 28px; }
+    /* two columns where two fit, each capped at --col: the box stops growing once both are full */
+    .fc--lead .fold, .fcards--rest .fc:not(.is-folded) .fold { columns: 2 20em; column-gap: 28px; max-inline-size: calc(2 * var(--col) + 28px); }
+    .fcards--rest article:has(.photo:not([hidden])) > .fold { columns: auto; }
+    .fc--feature .fold, .fc--brief .fold { font-size: .88rem; }  /* their text's size, so --col counts in it */
+    .desk .ed:not(.is-folded) .ed__body { display: block; columns: 2 22em; column-gap: 28px; max-inline-size: calc(2 * var(--col) + 28px); }
     .desk .ed:not(.is-folded) .ed__body p { margin-block-end: .8em; break-inside: avoid-column; }
   }
   .why { font: .95rem/1.5 var(--serif); border-inline-start: 2px solid var(--accent); padding-inline-start: 10px; break-inside: avoid; }
+  /* no line of prose runs past the measure, at any width (the fold's columns cap it further) */
+  .why, .sum, .deck, .ed__body { max-inline-size: var(--measure); }
   .why__l { display: block; color: var(--accent); font-size: .56rem; margin-block-end: 2px; }
 
   .line {
@@ -247,7 +252,6 @@
   .ed--desk .ed__body { font-size: .84rem; }
   .line--ed { border-block-start: 0; padding-block-start: 0; }
   section.day > .ed { margin-block-start: 6px; background: var(--panel); border: 1px solid var(--rule); border-inline-start: 3px solid var(--ink); }
-  @media (min-width: 1024px) { section.day > .ed .ed__body { max-inline-size: 46em; } }
 
   /* ---- day index rows */
   .row, .ptr { border-block-start: 1px solid var(--hair); }
@@ -256,10 +260,11 @@
   .row__meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; letter-spacing: .06em; font-weight: 400; }
   .row__desk { font-weight: 700; color: var(--ink); background: var(--panel); padding: 1px 5px 0; border-radius: 2px; letter-spacing: .1em; }
   .row__meta .fresh { font-weight: 700; }
-  /* a readable measure at every width: an opened row sets two columns where they fit */
-  .row .why, .row .sum { max-inline-size: 36em; }
+  /* a readable measure at every width: an opened row sets two columns where they fit; from 1024px
+     the body has the right-hand track to itself and reads as one column at the measure */
   .row .why, .row .sum { font-size: .86rem; }
-  .row__body { display: block; columns: 2 17em; column-gap: 28px; max-inline-size: 56rem; }  /* ≤ ~80 chars a column at 1600 */
+  .row__body { display: block; columns: 2 17em; column-gap: 28px; max-inline-size: calc(2 * var(--col) + 28px); }
+  @media (min-width: 1024px) { .row__body { columns: auto; } }
   .row__body > * + * { margin-block-start: 8px; }
   .row .why__l { display: inline; margin: 0 6px 0 0; }
   .hl--row-lead { font-size: clamp(22px, 2.1vw, 30px); }

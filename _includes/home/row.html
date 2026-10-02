@@ -12,10 +12,10 @@
       {%- if s.deck %}<p class="deck">{{ s.deck | escape }}</p>{% endif %}
       <p class="row__meta">{% include home/event.html s=s %}{% if s.show_desk %}<span class="row__desk"><span class="vh">Desk: </span>{{ s.stream_label }}</span>{% endif %}{% if s.fresh %}<span class="fresh">Just in</span>{% endif %}{% include home/meta.html s=s %}</p>
     </header>
+    <div class="fold row__body" id="f-{{ id }}">{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}</div>
     {%- if s.importance > 1 and s.why and s.why != "" %}
     <div class="row__why">{% include home/why.html s=s %}</div>
     {%- endif %}
-    <div class="fold row__body" id="f-{{ id }}">{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}</div>
     <footer class="row__foot">{% include home/actions.html fold=fid %}</footer>
   </article>
 </li>
