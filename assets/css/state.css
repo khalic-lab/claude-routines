@@ -5,6 +5,7 @@
   html:not(.js) .needs-js { display: none; }
   /* folding is presentation, gated on script: without it every text shows */
   .js .is-folded .fold { display: none; }
+  .js .is-folded .fc__text:not(:has(> .why)) { display: none; }   /* nothing left to show: no empty gap */
   /* reading dims by colour toward --muted and never hides, moves or resizes anything (R3); the
      AI disclosure keeps its colour (R5) */
   .is-read .hl, .is-read .deck, .is-read .why, .is-read .sum, .is-read .ed__hl, .is-read .ed__body, .ptr.is-read .ptr__h { color: var(--muted); }

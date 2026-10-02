@@ -1598,8 +1598,8 @@ if (process.env.FAULTS !== '0') {
     // from 1024px the right-hand track bounds the row too, so the break also spans it full width
     { key: 'measure', state: 'default', css: '.row__in{grid-template-rows:none!important;grid-template-areas:"g head head" "g body body" "g why why" "g foot foot"!important}.row__body{columns:auto!important}.row .why,.row .sum{max-inline-size:none!important}' },
     { key: 'measure', state: 'default', css: '.row__body{columns:auto!important}.row .why,.row .sum{max-inline-size:none!important}', w: 768 },
-    { key: 'frontMeasure', state: 'default', css: '.why,.sum,.ed__body,.fold{max-inline-size:none!important}' },
-    { key: 'whyAfterBody', state: 'default', css: '.fc>article>.why{order:-1}' },
+    { key: 'frontMeasure', state: 'default', css: '.why,.sum,.ed__body,.fold,.fc__text{max-inline-size:none!important}' },
+    { key: 'whyAfterBody', state: 'default', css: '.fc__text{display:flex;flex-direction:column-reverse}' },
     { key: 'focus', state: 'default', css: '.seg{overflow:hidden}' },
     { key: 'focus', state: 'default', css: '.bar .beats:has(:focus-visible){mask-image:linear-gradient(90deg,#000 88%,transparent)}', w: 768 },
     { key: 'focusMain', state: 'default', css: 'html{scroll-padding-block-end:0!important}', w: 390 },

@@ -121,25 +121,29 @@
   .fc--lead > article { box-shadow: inset 0 3px 0 var(--accent); padding: 22px 22px 18px; }
   .fc--feature > article { box-shadow: inset 0 2px 0 color-mix(in srgb, var(--accent) 45%, transparent); }
   .fc > article:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
-  /* An open card alone on a full line (the open one, or a neighbour stranded beside it) sets its
-     photo in a column beside the type instead of stretching a full-width strip. It lives in this
-     layer, after `.fc > article`, because a later layer wins: in the layout layer this grid lost
-     to the flex column above and never applied (review F6, 2026-09-25). */
+  /* An open card alone on a full line (the open one, the lead included, or a neighbour stranded
+     beside it) sets its type at the measure and gives the rest of the line to its photo, beside
+     the headline (R9): the text track is exactly as wide as the text box (fit-content; headline,
+     kicker and deck are contained so they cannot widen it), so no strip opens between text and
+     photo. It lives in this layer, after `.fc > article`, because a later layer wins: in the layout
+     layer this grid lost to the flex column above and never applied (review F6, 2026-09-25). */
   @container front (min-width: 720px) {
-    .js .fcards--rest > .fc:not(.is-folded) > article:has(.photo:not([hidden])),
-    .js .fcards--rest > .fc:first-child:has(+ .fc:not(.is-folded)) > article:has(.photo:not([hidden])),
-    .js .fcards--rest > .fc:not(.is-folded) + .fc:last-child > article:has(.photo:not([hidden])) {
-      display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); column-gap: 28px; row-gap: 10px; align-content: start;
-      grid-template-rows: auto auto auto auto 1fr auto;
-      grid-template-areas: "top photo" "hl photo" "deck photo" "fold photo" "why photo" "line line";
+    .js :is(.fc--lead:not(.is-folded), .fcards--rest > .fc:not(.is-folded), .fcards--rest > .fc:first-child:has(+ .fc:not(.is-folded)),
+      .fcards--rest > .fc:not(.is-folded) + .fc:last-child) > article:has(> .photo:not([hidden])) {
+      display: grid; grid-template-columns: fit-content(100%) minmax(12em, 1fr); column-gap: 32px; row-gap: 10px; align-content: start;
+      grid-template-rows: auto auto auto 1fr auto;
+      grid-template-areas: "top photo" "hl photo" "deck photo" "text photo" "line line";
     }
-    .fcards--rest article > .fc__top { grid-area: top; }
-    .fcards--rest article > .hl { grid-area: hl; }
-    .fcards--rest article > .deck { grid-area: deck; }
-    .fcards--rest article > .photo { grid-area: photo; }
-    .fcards--rest article > .why { grid-area: why; align-self: start; }
-    .fcards--rest article > .fold { grid-area: fold; }
-    .fcards--rest article > .line { grid-area: line; }
+    .js :is(.fc--lead:not(.is-folded), .fcards--rest > .fc:not(.is-folded), .fcards--rest > .fc:first-child:has(+ .fc:not(.is-folded)),
+      .fcards--rest > .fc:not(.is-folded) + .fc:last-child) > article:has(> .photo:not([hidden])) > .photo {
+      align-self: start; block-size: auto; aspect-ratio: 4 / 3;
+    }
+    .fc > article > .fc__top { grid-area: top; contain: inline-size; }
+    .fc > article > .hl { grid-area: hl; contain: inline-size; }
+    .fc > article > .deck { grid-area: deck; contain: inline-size; }
+    .fc > article > .photo { grid-area: photo; }
+    .fc > article > .fc__text { grid-area: text; }
+    .fc > article > .line { grid-area: line; }
   }
   .fc__top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
   .fc__top .tier { color: var(--ink); }
@@ -179,19 +183,23 @@
   .fc--lead .sum { font-size: 1.05rem; }
   .fc--feature .why, .fc--brief .why { font-size: .85rem; }
   .fc--feature .sum, .fc--brief .sum { font-size: .88rem; }
+  /* the text box: body then why, one column at the measure in the text's own size, both filling it
+     edge to edge (30em: the why, set smaller than the body, stays under ~75 a line too). An open
+     card with no photo keeps it: the rest of its line is margin, as beside any column of text. */
+  .fc__text { max-inline-size: 30em; }
+  .fc--lead .fc__text { font-size: 1.05rem; }
+  .fc--feature .fc__text, .fc--brief .fc__text { font-size: .88rem; }
+  .fc__text :is(.sum, .why) { max-inline-size: none; }
+  .fc__text > * + * { margin-block-start: 10px; }
   .fold { display: flex; flex-direction: column; gap: 10px; }
   .fcards--rest .fc:not(.is-folded) .fold, .fc--lead .fold { display: block; }
   .fcards--rest .fc:not(.is-folded) .fold > * + *, .fc--lead .fold > * + * { margin-block-start: 10px; }
   @container front (min-width: 720px) {
-    /* two columns where two fit, each capped at --col: the box stops growing once both are full */
-    .fc--lead .fold, .fcards--rest .fc:not(.is-folded) .fold { columns: 2 20em; column-gap: 28px; max-inline-size: calc(2 * var(--col) + 28px); }
-    .fcards--rest article:has(.photo:not([hidden])) > .fold { columns: auto; }
-    .fc--feature .fold, .fc--brief .fold { font-size: .88rem; }  /* their text's size, so --col counts in it */
     .desk .ed:not(.is-folded) .ed__body { display: block; columns: 2 22em; column-gap: 28px; max-inline-size: calc(2 * var(--col) + 28px); }
     .desk .ed:not(.is-folded) .ed__body p { margin-block-end: .8em; break-inside: avoid-column; }
   }
   .why { font: .95rem/1.5 var(--serif); border-inline-start: 2px solid var(--accent); padding-inline-start: 10px; break-inside: avoid; }
-  /* no line of prose runs past the measure, at any width (the fold's columns cap it further) */
+  /* no line of prose runs past the measure, at any width (a front card's text box caps it further) */
   .why, .sum, .deck, .ed__body, .ed__body p { max-inline-size: var(--measure); }
   .why__l { display: block; color: var(--accent); font-size: .56rem; margin-block-end: 2px; }
 

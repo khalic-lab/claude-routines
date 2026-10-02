@@ -1,7 +1,8 @@
 {%- comment -%}
   A story lifted to the front. Leads and features keep "why" visible and fold the body; a brief
   folds its "why" too (R2). The "why" follows the story it comments on: after the body, never
-  above it, so a folded card still shows it under the headline. The og:image slot is reserved only when the builder says the story may
+  above it, so a folded card still shows it under the headline. Body and why share one text box
+  (.fc__text), so the measure is one width and both keep the same edges. The og:image slot is reserved only when the builder says the story may
   carry one (`unfurl`), and only with script, since only script can fill it.
   `reserve=true` renders the Unread refill's copy (inside a <template>): always folded, never
   boot-open. Inner ids carry a "c-" so a card and its story's day row never share one.
@@ -25,10 +26,12 @@
     {%- if s.unfurl %}
     <figure class="photo needs-js" data-og="{{ s.url | escape }}" aria-hidden="true"></figure>
     {%- endif %}
-    <div class="fold" id="f-{{ cid }}">{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}</div>
-    {%- if s.importance > 1 %}
-    {% include home/why.html s=s %}
-    {%- endif %}
+    <div class="fc__text">
+      <div class="fold" id="f-{{ cid }}">{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}</div>
+      {%- if s.importance > 1 %}
+      {% include home/why.html s=s %}
+      {%- endif %}
+    </div>
     <footer class="line">
       {% include home/meta.html s=s %}
       {% include home/actions.html fold=fid open=open %}
