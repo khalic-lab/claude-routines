@@ -8,7 +8,8 @@ environment ID, trigger IDs and Worker URLs, so they stay off the public Pages s
   lineup (News / AI/ML / Science / Weekend), slug renames, bootstrap-shim prompt model.
   **Decisions taken + implemented 2026-06-29.**
 - [`SPIKE-model-tiering.md`](SPIKE-model-tiering.md) — per-routine model tiers; why writers are
-  on Opus, Watch on Haiku. **Decisions taken 2026-05-30.**
+  on Opus, Watch on Haiku. **Decisions taken 2026-05-30; superseded 2026-10-04** (all routines on
+  Opus 5.5, Sports on Sonnet 5.5 — `routines/MANIFEST.md`).
 - [`SPIKE-writer-token-levers.md`](SPIKE-writer-token-levers.md) — the real token spend is the
   writers; output caps / skip-on-empty / instrumentation. **Proposed; not yet implemented.**
 
