@@ -8,9 +8,9 @@ client-side enrichments and the feedback sink. `main` is the single source of tr
 flowchart TB
   subgraph cloud["Anthropic Cloud · routines · env_018zypSdRSdGdrZ8J5usqCWA"]
     direction TB
-    W["Writers — claude-opus-4-8<br/>News · AI/ML · Science · Weekend<br/>Write _posts/{date}-{slug}.md"]
-    WA["Watch — claude-haiku-4-5<br/>reads watches.yml every 4h<br/>writes pending-notifications/*.json"]
-    EV["Weekly Evaluator — claude-opus-4-8<br/>reads 7d of _posts + feedback/*.jsonl<br/>writes _posts/{date}-evaluator.md"]
+    W["Writers — claude-opus-5-5 (Sports: claude-sonnet-5-5)<br/>News · AI/ML · Science · Weekend · Sports<br/>Write _posts/{date}-{slug}.md"]
+    WA["Watch — claude-opus-5-5<br/>reads watches.yml every 4h<br/>writes pending-notifications/*.json"]
+    EV["Weekly Evaluator — claude-opus-5-5<br/>reads 7d of _posts + feedback/*.jsonl<br/>writes _posts/{date}-evaluator.md"]
     step["per run: clone → git pull → curl/WebFetch + MCP → Write → commit → push main"]
   end
 

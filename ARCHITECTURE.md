@@ -20,15 +20,15 @@
 ║                                                                                      ║
 ║  env_018zypSdRSdGdrZ8J5usqCWA   (network settings changed 2026-05-25 → Custom)        ║
 ║  ┌────────────────────────────────────────────────────────────────────────────┐     ║
-║  │ WRITERS (claude-opus-4-8)      cron (UTC)        output file                    │    ║
+║  │ WRITERS (claude-opus-5-5)      cron (UTC)        output file                    │    ║
 ║  │  • News (CH + world, noon)    0 10 * * *     _posts/{d}-news.md                  │   ║
 ║  │  • AI/ML (+ arXiv papers)     0 10 * * 2,5   _posts/{d}-ai-ml.md                 │   ║
 ║  │  • Science (non-AI, weekly)   0 15 * * 3     _posts/{d}-science.md               │   ║
 ║  │  • Weekend Deep Read          30 7 * * 6     _posts/{d}-weekend.md              │   ║
-║  │  • Sports (Swiss+global)      0 7 * * 1      _posts/{d}-sports.md                │   ║
-║  │  WATCH (claude-haiku-4-5)     0 */4 * * *    pending-notifications/              │   ║
+║  │  • Sports (claude-sonnet-5-5) 0 7 * * 1      _posts/{d}-sports.md                │   ║
+║  │  WATCH (claude-opus-5-5)      27 */4 * * *   pending-notifications/              │   ║
 ║  │      reads watches.yml → on match writes stub + updates last_fired              │    ║
-║  │  EVALUATOR (claude-opus-4-8)  30 9 * * 0     _posts/{d}-evaluator.md            │   ║
+║  │  EVALUATOR (claude-opus-5-5)  30 9 * * 0     _posts/{d}-evaluator.md            │   ║
 ║  │  ⮑ all triggers (except Watch) are BOOTSTRAP SHIMS → git pull + read              │   ║
 ║  │     routines/<slug>.md at fire time (see routines/MANIFEST.md)                    │   ║
 ║  │      reads last 7d of _posts → Health table + Patch proposals (human-applied)   │    ║
@@ -143,6 +143,14 @@
 > `ethz.ch`/`epfl.ch`/`psi.ch` (they publish AI research and the desk had no institutional Swiss
 > route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
 > `hklaw.com`, `macrumors.com`, `wtvbam.com`.
+>
+> **Changed 2026-10-04: one model for every routine but Sports.** News, AI/ML, Science, Weekend,
+> the Weekly Evaluator and Watch now run `claude-opus-5-5`; Sports runs `claude-sonnet-5-5`. This
+> retires the 2026-05-30 split by job: Watch leaves the Haiku polling tier (its quiet ticks are still
+> one `due.py` call). Only `session_context.model` changed — shims, crons and sources are as they
+> were, and each `RemoteTrigger update` echo was diffed against the trigger's prior GET.
+> `tools/usage/pricing.py` already priced both IDs. The docs also now show Watch's live cron,
+> `27 */4 * * *` (they said `0 */4`).
 >
 > **Changed 2026-10-01: the 2026-09-27 review applied, and its four open questions settled.**
 > Prompts (repo only, shims unchanged): a shared-ethos rule against contested ideological labels
