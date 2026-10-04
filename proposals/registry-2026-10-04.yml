@@ -1,0 +1,116 @@
+date: 2026-10-04
+applied: false
+# Reach flips below are ALL from health.json -> briefs.reach_drift.flips (min_proxy=3): every
+# registry domain recorded reach: direct whose writer fetches this window were 0 ok-curl, >=1 fail,
+# and >=3 ok-proxy (subdomains folded into their registry domain). These rest on WRITER-side fetch
+# telemetry, NOT evaluator probes -- the evaluator sandbox egress is allowlist-walled again this run
+# (direct curl of pubs.acs.org / pubs.rsc.org / eso.org / home.cern / physics.aps.org all returned
+# code 000, "CONNECT tunnel failed"; linkcheck resolved only the allowlisted curl-direct hosts
+# aljazeera/letemps/srf/quanta, 5/20 overall). Writers confirm each flip with the bearer at next
+# citation. This is a LARGER reach-drift batch than usual (13 domains) because the 2026-09-20/09-27
+# cleanups flipped only the then-worst offenders (anthropic/the-decoder/news.un/rts, then dw/euronews);
+# the registry still carries many reach: direct records that curl has not succeeded on in weeks.
+# NOTE on arxiv.org: flip the ABSTRACT host arxiv.org only. The RSS host export.arxiv.org is a SEPARATE
+# registry entry and is correctly reach: direct (58 ok-curl this window); do NOT flip it.
+patches:
+  - domain: arxiv.org
+    field: reach
+    from: direct
+    to: proxy
+    evidence: >-
+      0 ok-curl / 25 ok-proxy / 3 fail this window (health.json briefs.feeds). Abstract-page host only;
+      export.arxiv.org (the RSS API host, a distinct registry entry) stays reach: direct at 58 ok-curl.
+  - domain: arstechnica.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: 0 ok-curl / 16 ok-proxy / 16 fail (all fails ERR:56). Curl never succeeded; proxy carried every hit.
+  - domain: lemonde.fr
+    field: reach
+    from: direct
+    to: proxy
+    evidence: 0 ok-curl / 14 ok-proxy / 14 fail. Proxy-only in practice.
+  - domain: parlament.ch
+    field: reach
+    from: direct
+    to: proxy
+    evidence: >-
+      0 ok-curl / 9 ok-proxy / 9 fail. (Separately, the news writer reports parlament.ch vote records are
+      JavaScript-rendered and unparseable even via proxy -- see 2026-10-03-news Gaps -- so proxy reachability
+      is necessary but may not be sufficient; the writer anchors parliamentary stories on SRF.)
+  - domain: finma.ch
+    field: reach
+    from: direct
+    to: proxy
+    evidence: 0 ok-curl / 5 ok-proxy / 5 fail.
+  - domain: glamos.ch
+    field: reach
+    from: direct
+    to: proxy
+    evidence: 0 ok-curl / 5 ok-proxy / 9 fail (64% fail rate overall). Proxy-only.
+  - domain: theguardian.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: 0 ok-curl / 5 ok-proxy / 7 fail. A high-volume news source the writers lean on; cutting the doomed curl attempt saves fetch budget.
+  - domain: blog.google
+    field: reach
+    from: direct
+    to: proxy
+    evidence: 0 ok-curl / 3 ok-proxy / 3 fail.
+  - domain: huggingface.co
+    field: reach
+    from: direct
+    to: proxy
+    evidence: 0 ok-curl / 3 ok-proxy / 3 fail (aggregated across ai-ml + weekend).
+  - domain: newsroom.amd.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: 0 ok-curl / 3 ok-proxy / 2 fail. (This domain also entered via [new source] on 2026-09-29-ai-ml; it is a genuine primary and the flip just records how it is reachable.)
+  - domain: nzz.ch
+    field: reach
+    from: direct
+    to: proxy
+    evidence: 0 ok-curl / 3 ok-proxy / 3 fail.
+  - domain: rfi.fr
+    field: reach
+    from: direct
+    to: proxy
+    evidence: 0 ok-curl / 3 ok-proxy / 5 fail.
+  - domain: simonwillison.net
+    field: reach
+    from: direct
+    to: proxy
+    evidence: 0 ok-curl / 3 ok-proxy / 5 fail.
+
+  # Primary-chemistry candidates from the Sunday scout. Science was again the worst-deficit stream
+  # (new_domains 3 = exactly its weekly-tier floor and the lowest ratio of any stream; unique_domains 5
+  # vs the >=10 target; top5_share 1.00; waiver_rate 0.75). The registry's science roster is otherwise
+  # comprehensive -- physics (journals.aps.org, pubs.aip.org, iopscience.iop.org), bio (cell.com,
+  # elifesciences.org, plos.org, biorxiv.org), multidisciplinary (nature.com, science.org, pnas.org),
+  # geo (agu.org), preprints (arxiv.org, chemrxiv.org), and royalsociety.org/pubs.aip.org added last
+  # week -- but it has NO peer-reviewed chemistry primary (only the chemrxiv preprint server). These two
+  # fill that gap. Both 403/000'd the evaluator egress, so reach: proxy-needed and the writers vet at
+  # first citation. CAVEAT (as every prior science-scout note): science's deficit is structural
+  # (narrow primary-journal universe + institutional egress wall), not a candidate shortage -- these
+  # broaden the chemistry bench but the binding constraint stays reachability (this window the science
+  # writer's own feeds eso.org/home.cern/physics.aps.org/link.aps.org/api.openalex.org all failed).
+  - domain: pubs.acs.org
+    action: add
+    proposed_status: candidate
+    reach: proxy-needed
+    stream: science
+    evidence: >-
+      American Chemical Society -- primary peer-reviewed chemistry journals (JACS, Nano Letters, J. Phys.
+      Chem., Chem. Mater.). Genuine primary publisher absent from the registry; the science stream has no
+      chemistry-primary anchor beyond the chemrxiv preprint server. Needs a probation cycle.
+  - domain: pubs.rsc.org
+    action: add
+    proposed_status: candidate
+    reach: proxy-needed
+    stream: science
+    evidence: >-
+      Royal Society of Chemistry -- primary chemistry journals (Chemical Science [gold OA], Chem. Commun.,
+      Energy & Environmental Science). Complements ACS for the same gap; EES is a leading sustainable-energy
+      venue relevant to the reader's CH/climate interest. Needs a probation cycle.
