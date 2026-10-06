@@ -128,6 +128,10 @@ _HEALTH_KW = ["vaccine", "hiv", "antibody", "cancer", "clinical", "disease", "pr
 # stub structurally recovers them; the captured id is only HONORED as a story id when it is
 # canonical (see _CANON_SID_RE) -- a hand-written anchor is markup, not an identity, so those
 # cards fall back to story_id(url) like every pre-anchor post does.
+# The same holds for a heading's '{#st-…}' IAL. Headings used to keep any `st-` id: on
+# 2026-10-03 the Weekend re-told four AI/ML stories under writer ids (`{#st-ataraxos}`), each
+# superseded its AI/ML card by url under a new read id, and the reader saw stories already read
+# come back unread (and the new ids, not the Worker's SID_RE, never roamed).
 _ANCHOR_STUB = r'(?:<a id="([^"]*)" class="st-a"></a>\s*)?'
 _CANON_SID_RE = re.compile(r"^st-[0-9a-f]{12}$")
 _BULLET_RE = re.compile(r'^-\s+' + _ANCHOR_STUB + r'\*\*(.+?)\*\*\.?\s*(.*)$')
@@ -606,7 +610,7 @@ def parse_post(md):
                 j += 1
             head = h3.group(1).strip()
             ial = _H3_IAL_RE.search(head)
-            h3_sid = ial.group(1) if ial and ial.group(1).startswith("st-") else None
+            h3_sid = ial.group(1) if ial and _CANON_SID_RE.match(ial.group(1)) else None
             emit(_H3_IAL_RE.sub("", head).strip(), block, anchor_sid=h3_sid)
             i = j
             continue

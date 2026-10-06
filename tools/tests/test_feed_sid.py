@@ -279,6 +279,22 @@ class ParsePostAnchoredStoriesTests(unittest.TestCase):
         self.assertNotIn("{#", stories[0]["headline"])
         self.assertEqual(stories[0].get("anchor_sid"), "st-cccccccccccc")
 
+    def test_writer_authored_anchors_are_not_story_ids(self):
+        """2026-10-03: the Weekend gave headings writer ids ('{#st-ataraxos}') and the cards wore
+        them, so a story read under AI/ML came back unread. Heading and bullet alike, only the
+        canonical shape is an id; the rest is markup, and the card falls back to story_id(url)."""
+        md = (
+            "## Papers\n\n"
+            "### AI reaches superhuman Stratego {#st-ataraxos}\n"
+            "Body. ([Nature](https://www.nature.com/articles/s41586-026-11036-y))\n\n"
+            "## World\n\n"
+            '- <a id="st-bger1003" class="st-a"></a>**Court rules.** '
+            "Body. ([BGer](https://www.bger.ch/x))\n"
+        )
+        stories = self.mod.parse_post(md)
+        self.assertEqual([s["headline"] for s in stories], ["AI reaches superhuman Stratego", "Court rules"])
+        self.assertEqual([s.get("anchor_sid") for s in stories], [None, None])
+
     def test_unanchored_posts_parse_exactly_as_before(self):
         md = (
             "## Switzerland\n\n"

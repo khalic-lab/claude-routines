@@ -392,6 +392,25 @@ class SandboxCliTest(unittest.TestCase):
         self.assertEqual(len(feed["board"]), 1)
         self.assertEqual(feed["build_stamp"], "")
 
+    def test_a_retelling_keeps_the_read_id_of_the_card_it_supersedes(self):
+        # 2026-10-03: the Weekend re-told an AI/ML story under '{#st-ataraxos}'; the newer telling
+        # replaced the AI/ML card by url and the reader's read mark no longer matched it
+        url = "https://www.nature.com/articles/s41586-026-11036-y"
+        feed = self.run_cli({
+            "2026-10-02-ai-ml.md": ("---\ndate: 2026-10-02T12:00:00+02:00\n---\n\n## Models\n\n"
+                                    '- <a id="st-1" class="st-a"></a>**AI cracks Stratego.** '
+                                    "An academic team beat the best human. ([Nature](%s))\n" % url),
+            "2026-10-03-weekend.md": ("---\ndate: 2026-10-03T10:00:00+02:00\n---\n\n## Papers\n\n"
+                                      "### AI reaches superhuman Stratego {#st-ataraxos}\n"
+                                      "An academic team beat the best human. ([Nature](%s))\n" % url),
+        })
+        cards = [s for s in feed["stories"] if s["url"] == url]
+        self.assertEqual([c["stream"] for c in cards], ["weekend"])
+        spec = importlib.util.spec_from_file_location("store_for_sid", os.path.join(TOOLS, "store", "store.py"))
+        store = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(store)
+        self.assertEqual(cards[0]["sid"], store.story_id(url))
+
     def test_editorial_only_post_and_empty_tree(self):
         feed = self.run_cli({"2026-09-23-science.md": self.EDITORIAL_ONLY})
         self.assertEqual((feed["board"], feed["days"], feed["front"]["items"]), ([], [], []))
