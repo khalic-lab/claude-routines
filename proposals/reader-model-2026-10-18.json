@@ -1,0 +1,9 @@
+{"date": "2026-10-18",
+ "note": "Feedback: 6 ledger feedback events in window (ts 2026-10-12..10-18), all bare (reason \"\"): +1 st-5ff205b06c38 (news 10-13, Kabila/M23 front), +1 st-2ea302ed111c (ai-ml 10-16, METR access at Anthropic), and a +1/0/+1/0 toggle on st-f8cf0cbadfea (news 10-17, child poverty; net retracted). Zero reasoned events, so nothing to disposition and nothing clears the 2-distinct-stories bar: no reader-profile.md line auto-applied, no source-weights proposal. The one proposal below is a routine-prompt patch from pipeline telemetry, not reader feedback.",
+ "proposals": [
+  {"id": "rm-1",
+   "target": "routines/_shared/affiliations.md",
+   "action": "Replace the 'Published papers (journal DOI) — OpenAlex' bullet with: take institutions from the publisher/press page already being read (author/affiliation block or the institution's own release), else the sentinel; drop the api.openalex.org lookup. Then run python3 routines/assemble.py.",
+   "evidence": "api.openalex.org: 0 successes for the 4th straight week (this window 26 fail / 0 ok: 13 ERR:56 direct + 13 HTTP 429 via proxy, all in 2026-10-14-science; last week 23/0). The science writer's own Gaps line already says 'OpenAlex rate-limited (affiliations taken from publisher page metadata and the IOB release)', and affiliation coverage stayed at ~94% without it. Each dead attempt costs a call (science calls_mean 154, highest per-story of any stream).",
+   "applied": false}
+ ]}
