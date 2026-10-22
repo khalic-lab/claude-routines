@@ -93,6 +93,21 @@ feed, not only the one it was written against:
   homepage with slots injected where the template puts them (always ≥ 2, one on the first openable
   card of the rest band): no gate passes, or says n/a, for lack of data
 - an open front card with a photo sets it beside the headline
+- front voids are measured between the content's own line boxes and images, not between child
+  blocks (a stretched grid row can hide slack under a block)
+- multi-source stories (2026-10-22): on every copy of a story the meta line names the primary
+  outlet; the fold lists every outlet with its label in the builder's order, each opening in a
+  new tab; the header line reads "N sources" exactly when N > 1; the list is hidden on a folded
+  item and shown inside the item once opened
+- the desk's flags ("Preprint", "Single source", ...): the builder's labels in its order on every
+  copy, shown in the header line of a folded item
+- Discuss: one plain link per story, editorial and day to `https://claude.ai/new?q=`, its prompt
+  built at load from the page: the headline, body, flags, every source with its label, desk and
+  day (an editorial: title, desk, text; a day: every headline with its primary source); spaces
+  travel as `%20`, never `+`; a Discuss click reads the story as opening its article does, and
+  its ✓ un-reads it; a reserve copy promoted under Unread carries the full prompt too
+- without script the source list and the flags show, and every Discuss href is the template's
+  short prompt (headline and primary source; an editorial's title; a day's headlines)
 - every visible masthead and bar control is reached by Tab
 - every reading page (each review, /prompts/ fully open, the 404, /admin/) fits the width at 360px, 1440px and on an iPhone
 - zero requests to hosts other than the two Workers
@@ -108,7 +123,9 @@ against the old page:
 
 **Fault injection:** the suite ends with a self-test that breaks the CSS, the markup, a request,
 storage, or one line of a JS module (served mutated through `route()`, e.g. the editorial rule's
-`every` turned into `some`) on purpose. Each break must fail its own assertion.
+`every` turned into `some`, discuss.js without its source lines, board.js not reading on a
+Discuss click, main.js adopting a reserve copy without rebuilding its href) on purpose. Each
+break must fail its own assertion.
 
 Screenshots go to `$SHOTS` (default `/tmp/fp-shots`). Narrow a run with `WIDTHS=390,1440`,
 `ONLY=default,contract`, `FAULTS=0` or `SHOTS=0`; `VERBOSE=1` prints every assertion's detail.

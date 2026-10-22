@@ -5,6 +5,7 @@ import { onExternalChange } from './store.js';
 import { current, record, initPrefs } from './prefs.js';
 import { initBoard } from './board.js';
 import { initFold } from './fold.js';
+import { initDiscuss, prepare } from './discuss.js';
 import { initVotes } from './votes.js';
 import { initOg, watchSlots } from './og.js';
 import { initFresh } from './fresh.js';
@@ -17,7 +18,9 @@ if (!fb().enabled) root.classList.add('fb-off');  // feedback kill switch: votes
 
 initDialogs();
 initFold();
-const board = initBoard({ prefs: current(), record, adopt: watchSlots });
+initDiscuss();                                     // every Discuss href, from the text on the page
+// a reserve copy the refill brings in gets its image slots watched and its Discuss href built
+const board = initBoard({ prefs: current(), record, adopt: (el) => { watchSlots(el); prepare(el); } });
 on('roam', board.roamed);                          // the first one may recompose All's front
 onExternalChange(board.remoteRead);                // another tab marked something read
 initSync();

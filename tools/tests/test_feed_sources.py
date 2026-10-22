@@ -5,9 +5,10 @@ domain it cites, primary first, and the page prints them all.
 Before this the feed kept only the FIRST url of a story (`url` / `source_domain`), so a News
 story sourced from DW, Le Monde and SRF read as sourced from DW alone -- 124 of the 511 stories
 filed in October 2026 cited more than one outlet and the page named one. The builder now emits
-`sources: [{url, domain, label}]`, the meta line prints every domain (alternates linked), the
-Discuss link and the story RSS carry every URL. `url` and `source_domain` are unchanged: still
-the first one, still the headline's link, still what the record join keys on.
+`sources: [{url, domain, label}]`; the page lists every outlet in the story's fold and counts
+them in its header line, the Discuss prompt and the story RSS carry every URL. `url` and
+`source_domain` are unchanged: still the first one, still the headline's link, still what the
+record join keys on.
 
 Run: python3 -m unittest tools.tests.test_feed_sources
 """
@@ -138,37 +139,75 @@ class FeedCarriesSourcesTests(unittest.TestCase):
 
 
 class TemplateWiringTests(unittest.TestCase):
-    """The page side, checked statically (tools/verify/suite.mjs renders; this does not)."""
+    """The page side, checked statically (tools/verify/suite.mjs renders; this does not).
+    Round 2 (the frontend rebuild): the meta line names the primary alone again; every outlet is
+    listed in the fold (home/sources.html) and counted in the header line (home/signals.html,
+    with the desk's flags); Discuss is a plain link on stories, editorials and whole days whose
+    no-script href is a short prompt, rebuilt at load by assets/js/discuss.js."""
 
-    def test_meta_prints_every_domain_and_links_the_alternates(self):
+    def test_meta_names_the_primary_and_the_fold_lists_every_outlet(self):
         meta = _read("_includes/home/meta.html")
-        self.assertIn("{% for src in s.sources %}", meta)
-        self.assertIn('href="{{ src.url | escape }}"', meta)
-        self.assertIn("{{ s.source_domain | escape }}", meta, "an old-shape feed still prints the primary")
+        self.assertIn("{{ s.source_domain | escape }}", meta)
+        self.assertNotIn("for src in", meta, "the list moved into the fold")
+        srcs = _read("_includes/home/sources.html")
+        self.assertIn("{% for src in s.sources %}", srcs)
+        self.assertIn('href="{{ src.url | escape }}"', srcs)
+        self.assertIn("{{ src.label | escape }}", srcs)
+        self.assertIn('rel="noopener noreferrer"', srcs)
+        for inc, idv in (("row.html", "id"), ("front-card.html", "cid")):
+            src = _read("_includes/home/" + inc)
+            fold, lst = src.index('class="fold'), src.index("home/sources.html s=s id=%s" % idv)
+            self.assertLess(fold, lst, "%s: the sources close the fold" % inc)
+            self.assertLess(lst, src.index("</div>", fold), "%s: inside the fold" % inc)
+            self.assertIn("home/signals.html s=s", src)
 
-    def test_discuss_is_a_plain_prefilled_link_on_stories_only(self):
+    def test_signals_print_the_flags_and_the_count(self):
+        sig = _read("_includes/home/signals.html")
+        self.assertIn("{% for f in s.flags %}", sig)
+        self.assertIn('<span class="flag flag--{{ f.key }}">{{ f.label | escape }}</span>', sig)
+        self.assertIn("s.n_sources > 1", sig)
+        self.assertIn('<span class="srcn">{{ s.n_sources }} sources</span>', sig)
+
+    def test_discuss_is_a_plain_link_on_stories_editorials_and_days(self):
         acts = _read("_includes/home/actions.html")
-        self.assertIn('href="https://claude.ai/new?q={{ dq | url_encode | replace: "+", "%20" }}"', acts,
-                      "spaces must travel as %20: a plus only decodes to a space under a form-style decoder")
+        for kind in ("story", "editorial"):
+            self.assertIn('data-discuss="%s" href="https://claude.ai/new?q={{ dq | url_encode | replace: "+", "%%20" }}"' % kind,
+                          acts, "spaces travel as %20: a plus only decodes to a space under a form-style decoder")
         self.assertIn('rel="noopener noreferrer"', acts)
         self.assertNotIn('class="discuss needs-js"', acts, "Discuss must work without script")
         for inc in ("row.html", "front-card.html"):
             self.assertRegex(_read("_includes/home/" + inc), r"include home/actions\.html[^%]*\bs=s\b", inc)
-        self.assertNotRegex(_read("_includes/home/editorial.html"), r"include home/actions\.html[^%]*\bs=",
-                            "an AI editorial has no sources to discuss against")
+        self.assertRegex(_read("_includes/home/editorial.html"), r"include home/actions\.html[^%]*\be=e\b",
+                         "an editorial is discussed as what it is: an AI's opinion")
+        home = _read("_layouts/home.html")
+        self.assertIn('data-discuss="day" href="https://claude.ai/new?q={{ dayq | url_encode | replace: "+", "%20" }}"', home)
+        self.assertIn("{%- capture dayq -%}", home)
 
-    def test_the_prompt_carries_every_source_url(self):
+    def test_the_fallback_prompts_name_what_script_will_expand(self):
         acts = _read("_includes/home/actions.html")
         i, j = acts.index("{%- capture dq -%}"), acts.index("{%- endcapture -%}")
         prompt = acts[i:j]
-        self.assertIn("{% for src in st.sources %}", prompt)
-        self.assertIn("{{ src.url }}", prompt)
         self.assertIn("{{ st.headline }}", prompt)
+        self.assertIn("{{ st.url }}", prompt)
+        self.assertNotIn("st.summary", prompt, "the prose is on the page once; discuss.js reads it there")
+        home = _read("_layouts/home.html")
+        i, j = home.index("{%- capture dayq -%}"), home.index("{%- endcapture %}", home.index("{%- capture dayq -%}"))
+        self.assertIn("{{ it.headline }}", home[i:j])
 
-    def test_discuss_is_styled_inside_the_components_layer(self):
+    def test_discuss_js_builds_from_the_page_and_names_no_host(self):
+        js = _read("assets/js/discuss.js")
+        for sel in (".srcs a", ".flag", ".hl", ".sum", ".why", ".ed__body p", "a.discuss[data-discuss]"):
+            self.assertIn(sel, js)
+        self.assertNotIn("claude.ai", js, "the base URL is the template's; assets name only the Workers")
+        main = _read("assets/js/main.js")
+        self.assertIn("initDiscuss()", main)
+        self.assertIn("prepare(el)", main, "a reserve copy the refill adopts gets its href too")
+        self.assertIn("'.hl a, a.discuss'", _read("assets/js/board.js"), "a Discuss reads the item, as opening it does")
+
+    def test_styles_live_in_the_components_layer(self):
         css = _read("assets/css/components.css")
-        self.assertIn(".discuss", css)
-        self.assertIn("a.src__alt", css)
+        for cls in (".discuss", ".srcs", ".srcs__list", ".flag", ".srcn"):
+            self.assertIn(cls, css)
 
 
 class StoryFeedTests(unittest.TestCase):

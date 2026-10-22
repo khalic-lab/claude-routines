@@ -1,8 +1,12 @@
-{%- comment -%} A story in its day edition's index. Folded at rest; opens inline. {%- endcomment -%}
+{%- comment -%}
+  A story in its day edition's index. Folded at rest; opens inline. The meta line carries the
+  desk's flags and the source count (signals) before the beat and the primary source; the fold
+  closes with every outlet the story cites (sources).
+{%- endcomment -%}
 {%- assign s = include.s -%}
 {%- assign id = s.sid | default: s.id -%}
 {%- assign fid = '' -%}
-{%- if s.summary != "" or s.importance == 1 and s.why != "" -%}{%- assign fid = 'f-' | append: id -%}{%- endif -%}
+{%- if s.summary != "" or s.sources or s.importance == 1 and s.why != "" -%}{%- assign fid = 'f-' | append: id -%}{%- endif -%}
 {%- assign hcls = 'row-' | append: s.tier -%}
 <li class="row row--{{ s.tier }} is-folded" id="r-{{ id }}" data-zone="row" data-story="{{ id }}" data-edition="{{ s.edition }}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}">
   <article class="row__in" aria-labelledby="h-{{ id }}">
@@ -10,9 +14,9 @@
     <header class="row__head">
       {% include home/headline.html s=s id=id cls=hcls %}
       {%- if s.deck %}<p class="deck">{{ s.deck | escape }}</p>{% endif %}
-      <p class="row__meta">{% include home/event.html s=s %}{% if s.show_desk %}<span class="row__desk"><span class="vh">Desk: </span>{{ s.stream_label }}</span>{% endif %}{% if s.fresh %}<span class="fresh">Just in</span>{% endif %}{% include home/meta.html s=s %}</p>
+      <p class="row__meta">{% include home/event.html s=s %}{% if s.show_desk %}<span class="row__desk"><span class="vh">Desk: </span>{{ s.stream_label }}</span>{% endif %}{% include home/signals.html s=s %}{% if s.fresh %}<span class="fresh">Just in</span>{% endif %}{% include home/meta.html s=s %}</p>
     </header>
-    <div class="fold row__body" id="f-{{ id }}">{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}</div>
+    <div class="fold row__body" id="f-{{ id }}">{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}{% include home/sources.html s=s id=id %}</div>
     {%- if s.importance > 1 and s.why and s.why != "" %}
     <div class="row__why">{% include home/why.html s=s %}</div>
     {%- endif %}

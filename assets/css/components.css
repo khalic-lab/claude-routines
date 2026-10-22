@@ -9,7 +9,8 @@
 
   /* ---- the label voice: the page's one small-caps idiom */
   .fday, .topic, .tier, .fresh, .why__l, .desk__lbl, .ed__kick, .edchip, .ed__disc, .day__n, .day__cov,
-  .day__links, .front__n, .line, .row__meta, .more, .edition, .mast__count, .rail-lbl, .ptr__l, .notice {
+  .day__links, .front__n, .line, .row__meta, .more, .edition, .mast__count, .rail-lbl, .ptr__l, .notice,
+  .flag, .srcn, .srcs__l {
     font-family: var(--sans); font-size: .6rem; font-weight: 700; letter-spacing: .12em;
     text-transform: uppercase; line-height: 1.35;
   }
@@ -105,6 +106,15 @@
     font: 700 .6rem/1.35 var(--sans); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; border-radius: 2px;
   }
   .evt time { font-variant-numeric: tabular-nums; }
+  /* the doubt the desk wrote down ("Single source", "Preprint", "Disputed"): outlined like the
+     event label, never red (R36 spends red on the source, Just in and the lead glyph) */
+  .flag {
+    display: inline-flex; align-items: baseline; padding: 1px 5px 0; border: 1px solid var(--frame); color: var(--ink);
+    letter-spacing: .1em; white-space: nowrap; border-radius: 2px;
+  }
+  /* how many outlets a story cites, when more than one; the list itself is in the fold */
+  .srcn { color: var(--muted); white-space: nowrap; letter-spacing: .1em; }
+  .srcn::before { content: "\2693\00a0"; font-weight: 400; }
 
   /* ---- front and day headers */
   .front__head, .day__head { border-block-start: 3px solid var(--ink); padding-block: 8px 10px; }
@@ -210,9 +220,15 @@
   .src { flex: 1 1 10em; min-inline-size: 0; text-transform: lowercase; overflow-wrap: anywhere; }
   .src__aff { color: var(--muted); text-transform: none; }
   .src__dom { color: var(--red); }
-  .src__sep { color: var(--muted); }
-  a.src__alt { text-decoration: none; }
-  a.src__alt:hover { text-decoration: underline; }
+  /* every outlet the story cites, label then domain, each a link: the block closes an opened
+     story (in the fold, so folded cards keep the index shape, R2) and spans a row's columns */
+  .srcs { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; max-inline-size: var(--measure); column-span: all; break-inside: avoid; }
+  .srcs__l { color: var(--muted); }
+  .srcs__list { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; min-inline-size: 0; }
+  .srcs li { display: inline-flex; align-items: baseline; gap: .4em; font: .78rem/1.5 var(--sans); min-inline-size: 0; }
+  .srcs a { color: var(--ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; text-decoration-color: var(--muted-ui); }
+  .srcs a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+  .srcs__dom { color: var(--muted); text-transform: lowercase; overflow-wrap: anywhere; }
   .more {
     display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 6px 0; cursor: pointer;
     color: var(--ink); min-block-size: 28px;
@@ -243,6 +259,7 @@
     font: 700 .6rem/1.35 var(--sans); letter-spacing: .12em; text-transform: uppercase;
   }
   .jump:hover, .discuss:hover { text-decoration: underline; }
+  .discuss::before { content: "\2726"; font-weight: 400; }
 
   /* ---- the desk's view (paired with the lead) and every editorial */
   .desk { background: var(--panel); }

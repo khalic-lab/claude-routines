@@ -1,8 +1,6 @@
 {%- assign s = include.s -%}
 {%- comment -%}
-  Beat, then the sources. `sources` is one entry per distinct domain the story cites, primary
-  first (tools/build_stories_feed.py story_sources); the primary is the headline's link, so only
-  the alternates get their own link here. A feed built before `sources` existed prints the
-  primary domain alone, as it always did.
+  Beat, then the primary source: the headline's link. Every outlet the story cites, with its
+  label, is listed in the fold (home/sources.html); the header line counts them (home/signals.html).
 {%- endcomment -%}
-<span class="topic" style="--tc:{{ s.topic_color }}"><i class="dot" aria-hidden="true"></i>{{ s.topic_label | escape }}</span><span class="src">{% if s.affiliation_label %}<span class="src__aff">{{ s.affiliation_label | escape }} · </span>{% endif %}{% if s.sources %}{% for src in s.sources %}{% if forloop.first %}<span class="src__dom">{{ src.domain | escape }}</span>{% else %}<span class="src__sep" aria-hidden="true"> · </span><a class="src__dom src__alt" href="{{ src.url | escape }}" target="_blank" rel="noopener noreferrer">{{ src.domain | escape }}<span class="vh"> (opens in a new tab)</span></a>{% endif %}{% endfor %}{% else %}<span class="src__dom">{{ s.source_domain | escape }}</span>{% endif %}</span>
+<span class="topic" style="--tc:{{ s.topic_color }}"><i class="dot" aria-hidden="true"></i>{{ s.topic_label | escape }}</span><span class="src">{% if s.affiliation_label %}<span class="src__aff">{{ s.affiliation_label | escape }} · </span>{% endif %}<span class="src__dom">{{ s.source_domain | escape }}</span></span>

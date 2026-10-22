@@ -289,12 +289,13 @@ export function initBoard({ prefs, record, adopt = () => {} }) {
         }
         return;
       }
-      const a = e.target.closest('.hl a');       // opening the article reads it: dims, never re-filters
+      // opening the article, or a Discuss conversation from it, reads it: dims, never re-filters
+      const a = e.target.closest('.hl a, a.discuss');
       if (a) { const el = a.closest('[data-story]'); if (el && !isRead(el)) { setRead(el, true); paint(); } }
     });
     main.addEventListener('auxclick', (e) => {   // a middle-click "open in background tab" counts too
       if (e.button !== 1) return;
-      const a = e.target.closest('.hl a');
+      const a = e.target.closest('.hl a, a.discuss');
       if (a) { const el = a.closest('[data-story]'); if (el && !isRead(el)) { setRead(el, true); paint(); } }
     });
   }

@@ -194,6 +194,21 @@ for (const x of stories) {
 }
 // the fault's label: a story whose event date falls inside its period (or, failing that, its own day)
 const IN_PERIOD = stories.find((x) => /^\d{4}-\d\d-\d\d$/.test(String(x.event_date || '')) && x.event_date >= PSTART[sidOf(x)]) || stories[0];
+// multi-source stories, the desk's flags and Discuss (round 2, 2026-10-22): what the page must
+// print for each story, editorial and day, from the board. The primary (`url`, `source_domain`)
+// is the headline's link and the meta line; `sources` is every outlet, primary first, with the
+// label the writer gave it; `flags` is the builder's fixed vocabulary, in its order.
+const norm = (v) => String(v || '').replace(/\s+/g, ' ').trim();
+// builder text that may carry markup (an editorial's paragraphs, its title_html), as the page's textContent reads
+const plainOf = (v) => norm(String(v || '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
+const STORY_X = Object.fromEntries(stories.map((x) => [sidOf(x), {
+  headline: norm(x.headline), url: x.url || '', domain: x.source_domain || '', desk: norm(x.stream_label), date: x.date,
+  sources: (x.sources || []).map((s) => ({ url: s.url, label: norm(s.label), domain: s.domain })),
+  flags: (x.flags || []).map((f) => norm(f.label)), summary: norm(x.summary) }]));
+const ED_X = Object.fromEntries(eds.map((e) => [sidOf(e), { title: e.title_text ? norm(e.title_text) : plainOf(e.title_html),
+  desk: norm(e.stream_label), date: e.date, first: plainOf((e.body || [])[0]) }]));   // body: the paragraphs the page prints (a bold lede is lifted into title_html)
+const DAY_X = Object.fromEntries(dates.map((d) => [d, stories.filter((x) => x.date === d)
+  .map((x) => ({ sid: sidOf(x), headline: norm(x.headline), url: (x.sources && x.sources[0] ? x.sources[0].url : x.url) || '' }))]));
 // dynamic targets (the mock pinned 24 Sep ids; these follow the data)
 const deskEdition = deskEd ? `${deskEd.date}-${deskEd.stream}` : null;
 const beatCounts = {};
@@ -319,14 +334,26 @@ const LIB = () => {
   const chip = (k) => [...document.querySelectorAll('.chip')].find((c) => c.dataset.topic === k && vis(c));
   const seg = (r) => document.querySelector(`.seg button[data-rs="${r}"]`);
   const ct = (b) => +b.querySelector('.ct').textContent;
+  // the content's own boxes inside an element: each non-blank text node's line boxes, each image
+  // or icon. A front void is measured between these, not between the child blocks: since the
+  // photo-beside grid (2026-09-25) a stretched grid row lets a block cover slack, so a 30%-wide
+  // open card read as void-free by the block measure (its gap fault went unseen)
+  const content = (root) => {
+    const out = [], rg = document.createRange();
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, { acceptNode: (n) => {
+      if (n.nodeType === 1) return n.matches('.vh') ? NodeFilter.FILTER_REJECT : n.matches('img, svg') ? NodeFilter.FILTER_ACCEPT : n === root || vis(n) ? NodeFilter.FILTER_SKIP : NodeFilter.FILTER_REJECT;
+      return n.data.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP; } });
+    for (let n; (n = w.nextNode());) {
+      if (n.nodeType === 1) { const r = R(n); if (r.width > 0 && r.height > 0) out.push([r.top, r.bottom]); continue; }
+      rg.selectNodeContents(n); for (const r of rg.getClientRects()) if (r.width > 0 && r.height > 0) out.push([r.top, r.bottom]);
+    }
+    return out;
+  };
   const frontVoids = () => {
     const cells = [...document.querySelectorAll('.front .fc, .front .desk')].filter(vis);
     let max = 0; const per = [];
     for (const c of cells) {
-      const blocks = c.classList.contains('desk')
-        ? [...c.children, ...c.querySelectorAll('.ed > *')].filter((x) => vis(x) && !x.classList.contains('ed'))
-        : [...c.querySelector('article').children].filter(vis);
-      const iv = blocks.map((b) => [R(b).top, R(b).bottom]).sort((a, b) => a[0] - b[0]);
+      const iv = content(c).sort((a, b) => a[0] - b[0]);
       const cr = R(c); let cur = cr.top, gap = 0;
       for (const [t, bt] of iv) { if (t > cur) gap = Math.max(gap, t - cur); cur = Math.max(cur, bt); }
       gap = Math.max(gap, cr.bottom - cur);
@@ -340,6 +367,8 @@ const LIB = () => {
     return { max: Math.round(max), per };
   };
   const hlSizes = () => [...document.querySelectorAll('.front .hl')].map((h) => getComputedStyle(h).fontSize).join(',');
+  // visible text, without the screen-reader suffixes, spaces folded (what discuss.js reads)
+  const txt = (el, drop = '.vh') => { if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll(drop).forEach((x) => x.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };
   const geometry = () => {
     const st = document.createElement('style'); st.textContent = '.bar,.mast{position:static!important}';
     document.head.appendChild(st);
@@ -477,7 +506,7 @@ const LIB = () => {
     await frames();
     return merged(sid);
   };
-  return { R, vis, visibleItems, chip, seg, ct, frontVoids, hlSizes, geometry, cpl, contrast, opacityOf, deadLinks, dayMeta, focusRing, front, same, show, once, frames, roam };
+  return { R, vis, visibleItems, chip, seg, ct, frontVoids, hlSizes, txt, geometry, cpl, contrast, opacityOf, deadLinks, dayMeta, focusRing, front, same, show, once, frames, roam };
 };
 
 const frame2 = (page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
@@ -533,7 +562,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   await page.evaluate(`window.__L = (${LIB.toString()})()`);
   const X = { state, ogRequests: rec.og, injected: frontWithSlots().injected, EXPECT_TAGS, EXPECT_FRONT, EXPECT_DESK, deskEdition, BEAT, BEAT_ED: BEAT_ED ? sidOf(BEAT_ED) : null, BEAT_DAYS,
     MEASURE_ROW: MEASURE_ROW ? sidOf(MEASURE_ROW) : null, boardIds: board.map(sidOf), boardDates: board.map((x) => x.date),
-    boardKinds: board.map((x) => x.kind), nBoard: board.length, nDays: dates.length, FR, EVT, PSTART, DAYLBL };
+    boardKinds: board.map((x) => x.kind), nBoard: board.length, nDays: dates.length, FR, EVT, PSTART, DAYLBL, STORY_X, ED_X, DAY_X };
   if (state === 'stale') {
     // a bfcache restore, then a tab shown again after ten minutes away: both must offer the reload
     await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
@@ -617,6 +646,106 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       const h1 = document.querySelectorAll('h1').length, h2 = document.querySelectorAll('main h2').length;
       const h3 = document.querySelectorAll('main h3').length, items = document.querySelectorAll('main [data-story]').length;
       A.headings = [h1 === 1 && h2 === X.nDays + 1 && h3 === items, `h1 ${h1}, main h2 ${h2} (days + front ${X.nDays + 1}), h3 ${h3} for ${items} items`];
+      // multi-source stories (round 2, 2026-10-22): on every copy of a story (card, row, reserve
+      // template) the meta line names the primary; the fold lists every outlet with its label, in
+      // the builder's order, each opening in a new tab; the header line counts them when there is
+      // more than one. The list is part of the fold: hidden on a folded item, shown inside the
+      // item's own box once it is opened
+      const sBad = []; let sN = 0, sMulti = 0, sListed = 0;
+      const storyEls = [...document.querySelectorAll('main [data-story]:not([data-zone="editorial"])'),
+        ...[...document.querySelectorAll('main template')].flatMap((t) => [...t.content.querySelectorAll('[data-story]:not([data-zone="editorial"])')])];
+      for (const el of storyEls) {
+        const w = X.STORY_X[el.dataset.story]; if (!w) { sBad.push(`${el.id}: not a board story`); continue; }
+        sN++;
+        const dom = el.querySelector('.src__dom');
+        if (!dom || L.txt(dom) !== w.domain) sBad.push(`${el.id} primary "${dom ? L.txt(dom) : '-'}", want "${w.domain}"`);
+        const links = [...el.querySelectorAll('.srcs a')].map((a) => [a.getAttribute('href'), L.txt(a)]);
+        const want = w.sources.map((x) => [x.url, x.label]);
+        if (JSON.stringify(links) !== JSON.stringify(want)) sBad.push(`${el.id} lists [${links.map((l) => l[1]).join(', ')}], want [${want.map((l) => l[1]).join(', ')}]`);
+        if (links.length) sListed++;
+        if ([...el.querySelectorAll('.srcs a')].some((a) => a.target !== '_blank' || !/\bnoopener\b/.test(a.rel))) sBad.push(`${el.id}: a source link without target=_blank rel=noopener`);
+        const cnt = el.querySelector('.srcn'), cntWant = w.sources.length > 1 ? `${w.sources.length} sources` : null;
+        if ((cnt ? L.txt(cnt) : null) !== cntWant) sBad.push(`${el.id} count "${cnt ? L.txt(cnt) : '-'}", want "${cntWant || '-'}"`);
+        if (cntWant) sMulti++;
+      }
+      const inside = (part, it) => { const r = L.R(part), c = L.R(it); return L.vis(part) && r.top >= c.top - 0.5 && r.bottom <= c.bottom + 0.5 && r.left >= c.left - 0.5 && r.right <= c.right + 0.5; };
+      const openedIn = [];
+      for (const it of [[...document.querySelectorAll('section.day .row')].find((r) => L.vis(r) && r.querySelector('.srcs') && r.querySelector('.more')),
+        [...document.querySelectorAll('.front .fc')].find((c) => L.vis(c) && c.querySelector('.srcs') && c.querySelector('.more'))].filter(Boolean)) {
+        const list = it.querySelector('.srcs'), wasOpen = !it.classList.contains('is-folded');
+        if (!wasOpen) { if (L.vis(list)) sBad.push(`${it.id} folded: its source list shows`); click(it.querySelector('.more')); }
+        if (!inside(list, it)) sBad.push(`${it.id} opened: its source list is ${L.vis(list) ? 'outside the item' : 'hidden'}`);
+        if (!wasOpen) click(it.querySelector('.more'));
+        openedIn.push(it.id);
+      }
+      A.sources = [sBad.length === 0 && sN > 0, sBad.slice(0, 3).join('; ') || `${sN} story copies (${sListed} with a list, ${sMulti} counting 2+ outlets): primary in the meta line, every outlet in order in the fold, shown inside ${openedIn.join(' and ') || 'nothing'} when opened`];
+      // the desk's own flags ("Preprint", "Single source", ...): the builder's labels in its order
+      // on every copy, shown in the header line of a folded item
+      const fBad = []; let fN = 0, fShown = 0;
+      for (const el of storyEls) {
+        const w = X.STORY_X[el.dataset.story]; if (!w) continue;
+        const got = [...el.querySelectorAll('.flag')].map((f) => L.txt(f));
+        if (got.join('|') !== w.flags.join('|')) fBad.push(`${el.id} flags [${got.join(', ')}], want [${w.flags.join(', ')}]`);
+        fN += got.length;
+        if (el.isConnected && L.vis(el)) for (const f of el.querySelectorAll('.flag')) { if (L.vis(f) && inside(f, el)) fShown++; else fBad.push(`${el.id} flag "${L.txt(f)}" not shown inside the item`); }
+      }
+      A.flags = [fBad.length === 0, fBad.slice(0, 3).join('; ') || (fN ? `${fN} flags on ${storyEls.length} story copies match the builder's, ${fShown} shown on the page` : 'no story is flagged today, and none shows a flag')];
+      // Discuss (round 2): one plain link per story, editorial and day to a new Claude conversation.
+      // Its prompt is built at load from the page (discuss.js): the headline, the body, the desk's
+      // flags, every source with its label, desk and day; an editorial's title, desk and text; a
+      // day's every headline with its primary source. Spaces travel as %20, never as "+".
+      const dBad = []; let dS = 0, dE = 0, dD = 0;
+      const prompt = (a, who) => {
+        let u; try { u = new URL(a.getAttribute('href')); } catch (e) { return null; }
+        if (u.origin !== 'https://claude.ai' || u.pathname !== '/new' || !u.searchParams.has('q')) return null;
+        if (a.getAttribute('href').includes('+')) dBad.push(`${who}: a raw "+" in the Discuss href`);
+        if (a.target !== '_blank' || !/\bnoopener\b/.test(a.rel)) dBad.push(`${who}: Discuss without target=_blank rel=noopener`);
+        return u.searchParams.get('q').replace(/\s+/g, ' ');
+      };
+      const lacks = (p, parts) => parts.filter((x) => x && !p.includes(x)).slice(0, 2).map((x) => `"${x.slice(0, 40)}"`).join(', ');
+      for (const el of storyEls.filter((e) => e.isConnected)) {
+        const w = X.STORY_X[el.dataset.story], as = el.querySelectorAll('a.discuss[data-discuss="story"]');
+        if (!w) continue;
+        if (as.length !== 1) { dBad.push(`${el.id}: ${as.length} Discuss links`); continue; }
+        const p = prompt(as[0], el.id); dS++;
+        if (p === null) { dBad.push(`${el.id}: Discuss href is not claude.ai/new?q=`); continue; }
+        const m = lacks(p, [w.headline, ...w.sources.flatMap((x) => [x.label, x.url]), ...w.flags, w.desk, w.summary.slice(0, 40)]);
+        if (m) dBad.push(`${el.id}: prompt lacks ${m}`);
+        const dayH = document.querySelector(`#d-${w.date} .day__h`);
+        if (!(p.includes(X.DAYLBL[w.date]) || (dayH && p.includes(L.txt(dayH))))) dBad.push(`${el.id}: prompt lacks its day`);
+      }
+      for (const el of document.querySelectorAll('main [data-zone="editorial"]')) {
+        const w = X.ED_X[el.dataset.story], as = el.querySelectorAll('a.discuss[data-discuss="editorial"]');
+        if (!w) { dBad.push(`${el.id}: not a board editorial`); continue; }
+        if (as.length !== 1) { dBad.push(`${el.id}: ${as.length} Discuss links`); continue; }
+        const p = prompt(as[0], el.id); dE++;
+        if (p === null) { dBad.push(`${el.id}: Discuss href is not claude.ai/new?q=`); continue; }
+        const m = lacks(p, [w.title, w.desk, w.first.slice(0, 40)]);
+        if (m) dBad.push(`${el.id}: prompt lacks ${m}`);
+      }
+      for (const sec of document.querySelectorAll('section.day')) {
+        const as = sec.querySelectorAll('.day__links a.discuss[data-discuss="day"]');
+        if (as.length !== 1 || !L.vis(as[0])) { dBad.push(`${sec.dataset.date}: ${as.length} Discuss links${as[0] && !L.vis(as[0]) ? ', hidden' : ''}`); continue; }
+        const p = prompt(as[0], sec.dataset.date); dD++;
+        if (p === null) { dBad.push(`${sec.dataset.date}: Discuss href is not claude.ai/new?q=`); continue; }
+        const m = lacks(p, [L.txt(sec.querySelector('.day__h')), ...X.DAY_X[sec.dataset.date].flatMap((x) => [x.headline, x.url])]);
+        if (m) dBad.push(`${sec.dataset.date}: prompt lacks ${m}`);
+      }
+      const liveStories = storyEls.filter((e) => e.isConnected).length;
+      A.discuss = [dBad.length === 0 && dS === liveStories && dS > 0 && dE === document.querySelectorAll('main [data-zone="editorial"]').length && dD === X.nDays,
+        dBad.slice(0, 3).join('; ') || `Discuss on ${dS} stories, ${dE} editorials and ${dD} days: claude.ai/new?q= carrying the headline, every source with its label, the flags, desk and day (an editorial: title, desk, text; a day: every headline and primary source); spaces as %20`];
+      // opening a Discuss conversation reads the story, as opening its article does (board.js): the
+      // click (its navigation cancelled here) dims it, stores it and drops Unread by one; its ✓ un-reads it
+      const dr = [...document.querySelectorAll('section.day .row:not(.is-read)')].find((r) => L.vis(r) && r.querySelector('a.discuss'));
+      if (dr) {
+        const sid = dr.dataset.story, u0 = L.ct(L.seg('unread')), stored = () => !!JSON.parse(localStorage.getItem('homeRead:v1') || '{}')[sid];
+        document.addEventListener('click', (e) => e.preventDefault(), { capture: true, once: true });
+        dr.querySelector('a.discuss').click();
+        const read = dr.classList.contains('is-read'), kept = stored(), u1 = L.ct(L.seg('unread'));
+        click(dr.querySelector('.readbtn'));
+        const back = !dr.classList.contains('is-read') && !stored() && L.ct(L.seg('unread')) === u0;
+        A.discussRead = [read && kept && u1 === u0 - 1 && back, `${sid}: a Discuss click reads it ${read}, stored ${kept}, Unread ${u0} -> ${u1}; its ✓ un-reads it ${back}`];
+      } else A.discussRead = [null, 'no unread row with a Discuss link'];
       // measure (PLAN decision 3): the longest opened index row reads at 50-80 characters per line;
       // below 700px only the ceiling applies (a phone column may be narrower than 50)
       const row = document.getElementById('r-' + X.MEASURE_ROW);
@@ -923,6 +1052,21 @@ async function runCase(browser, ctxOpts, state, fault = null) {
           A.refillDayLink = [links.length === 1 && L.vis(a) && !!t && L.vis(t) && !!t.closest('.front') && t.dataset.story === F.R0.desk,
             `${F.R0.desk}: day link ${a ? `${a.getAttribute('href')} shown ${L.vis(a)}` : 'missing'} -> ${t ? `${t.id} shown ${L.vis(t)} on the front ${!!t.closest('.front')}` : 'nothing'}`];
         } else A.refillDayLink = SKIP('no older editorial to promote to the Desk\'s view');
+        // a promoted copy, adopted from its <template>, carries the full Discuss prompt too (the
+        // board's adopt hook runs discuss.js on it): headline, every source url and the desk, not
+        // the template's short no-script fallback
+        const promoted = [...F.R0.cards.filter((s) => !F.FRONT.includes(s)).map((s) => [s, document.getElementById('c-' + s), X.STORY_X[s]]),
+          ...(F.R0.desk && F.R0.desk !== F.DESK ? [[F.R0.desk, document.getElementById('desk-' + F.R0.desk), X.ED_X[F.R0.desk]]] : [])];
+        const pBad = [];
+        for (const [sid, el, w] of promoted) {
+          const a = el && el.querySelector('a.discuss'); let u = null;
+          try { u = a && new URL(a.getAttribute('href')); } catch (e) { u = null; }
+          const p = u && u.origin === 'https://claude.ai' && u.pathname === '/new' ? (u.searchParams.get('q') || '').replace(/\s+/g, ' ') : '';
+          const want = w.sources ? [w.headline, ...w.sources.map((x) => x.url), w.desk] : [w.title, w.desk];
+          const m = want.filter((x) => x && !p.includes(x));
+          if (!a) pBad.push(`${sid}: no Discuss link`); else if (m.length) pBad.push(`${sid}: prompt lacks ${m.slice(0, 2).map((x) => `"${x.slice(0, 40)}"`).join(', ')}`);
+        }
+        A.refillDiscuss = promoted.length ? [pBad.length === 0, pBad.slice(0, 3).join('; ') || `${promoted.length} promoted copies carry the full Discuss prompt (headline, every source, desk)`] : SKIP('no promoted copy');
         // (a) nothing changes: a middle-click reads a card without a recompose, its ✓ un-reads it
         const cA = F.R0.cards[F.R0.cards.length - 1], hlA = cA && document.querySelector(`.front .fc[data-story="${cA}"] .hl a`);
         if (hlA) {
@@ -1329,20 +1473,37 @@ async function runNoJs(browser, ctxOpts) {
   await p.goto(BASE);
   const r = await p.evaluate((want) => {
     const vis = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
-    const hiddenText = [...document.querySelectorAll('.page :is(.fold, .why, .sum, .ed__body, .ed__disc, .hl, .ptag)')].filter((e) => !vis(e) && e.textContent.trim()).length;
+    const hiddenText = [...document.querySelectorAll('.page :is(.fold, .why, .sum, .ed__body, .ed__disc, .hl, .ptag, .srcs, .flag, .srcn)')].filter((e) => !vis(e) && e.textContent.trim()).length;
+    // Discuss works without script: the template's own href is claude.ai/new?q= with a short
+    // prompt (a story's headline and primary source; an editorial's title; a day's headlines)
+    const norm = (v) => String(v || '').replace(/\s+/g, ' ').trim();
+    const dBad = []; let dN = 0;
+    for (const a of document.querySelectorAll('.page a.discuss')) {
+      const kind = a.dataset.discuss, who = (a.closest('[data-story], section.day') || {}).id || kind;
+      if (!vis(a)) { dBad.push(`${who}: Discuss hidden`); continue; }
+      let u = null; try { u = new URL(a.getAttribute('href')); } catch (e) { u = null; }
+      if (!u || u.origin !== 'https://claude.ai' || u.pathname !== '/new' || !u.searchParams.has('q') || a.getAttribute('href').includes('+')) { dBad.push(`${who}: bad Discuss href`); continue; }
+      const p = norm(u.searchParams.get('q')); dN++;
+      const need = kind === 'story' ? [want.stories[a.closest('[data-story]').dataset.story].headline, want.stories[a.closest('[data-story]').dataset.story].url]
+        : kind === 'editorial' ? [want.eds[a.closest('[data-story]').dataset.story]] : kind === 'day' ? want.days[a.closest('section.day').dataset.date] : [null];
+      const m = need.filter((x) => !x || !p.includes(x));
+      if (m.length) dBad.push(`${who}: no-script prompt lacks ${m[0] ? `"${m[0].slice(0, 30)}"` : 'a known kind'}`);
+    }
+    const discuss = dBad.length === 0 && dN > 0 ? `${dN} no-script Discuss hrefs carry their headline and primary source` : dBad.slice(0, 2).join('; ') || 'no Discuss link';
     const controls = [...document.querySelectorAll('.page button, .page input, .page textarea')].filter(vis).length;
     const hiwLink = [...document.querySelectorAll('a[href="#hiw"]')].some(vis), key = vis(document.querySelector('.mast__key summary'));
     // the builder's front as it is, whatever the refill would do: no reserve card or pointer shows
     const front = [...document.querySelectorAll('.front .fc')].filter(vis).map((c) => c.dataset.story).join() === want.front.join()
       && (([...document.querySelectorAll('.front .desk .ed')].find(vis) || {}).id || null) === want.desk
       && ![...document.querySelectorAll('[data-reserve-ptr]')].some(vis);
-    return { hiddenText, controls, hiwLink, key, front, scroll: document.documentElement.scrollWidth - innerWidth, js: document.documentElement.className };
-  }, { front: EXPECT_FRONT, desk: EXPECT_DESK });
+    return { hiddenText, controls, hiwLink, key, front, discuss, discussOk: dBad.length === 0 && dN > 0, scroll: document.documentElement.scrollWidth - innerWidth, js: document.documentElement.className };
+  }, { front: EXPECT_FRONT, desk: EXPECT_DESK, stories: Object.fromEntries(Object.entries(STORY_X).map(([k, v]) => [k, { headline: v.headline, url: v.url }])),
+    eds: Object.fromEntries(Object.entries(ED_X).map(([k, v]) => [k, v.title])), days: Object.fromEntries(Object.entries(DAY_X).map(([k, v]) => [k, v.map((x) => x.headline)])) });
   await p.goto(BASE + '#hiw');
   r.hiw = await p.evaluate(() => { const d = document.getElementById('hiw'), b = d.getBoundingClientRect(); return b.width > 0 && b.height > 0 && b.top < innerHeight && b.bottom > 0 && [...d.querySelectorAll('button')].every((x) => !x.getBoundingClientRect().width); });
   await ctx.close();
-  const ok = r.hiddenText === 0 && r.controls === 0 && r.scroll <= 0 && r.hiwLink && r.hiw && r.key && r.front && rec.ext.length === 0;
-  return [ok, `hidden text blocks ${r.hiddenText}, visible controls ${r.controls}, overflow ${r.scroll}, How-this-works link ${r.hiwLink} -> #hiw shown ${r.hiw}, key ${r.key}, default front ${r.front}, external ${rec.ext.length}`];
+  const ok = r.hiddenText === 0 && r.controls === 0 && r.scroll <= 0 && r.hiwLink && r.hiw && r.key && r.front && r.discussOk && rec.ext.length === 0;
+  return [ok, `hidden text blocks ${r.hiddenText}, visible controls ${r.controls}, overflow ${r.scroll}, How-this-works link ${r.hiwLink} -> #hiw shown ${r.hiw}, key ${r.key}, default front ${r.front}, ${r.discuss}, external ${rec.ext.length}`];
 }
 
 // ------------------------------------------------------------------ contract parity with the old page
@@ -1672,6 +1833,17 @@ if (process.env.FAULTS !== '0') {
     { key: 'allPartialRoam', state: 'all-sync', js: { file: 'refill.js', from: 'function retake() { const next = take(),', to: 'function retake() { const next = { cards: pick(new Set()), desk: deskPick(new Set()) },' } },
     { key: 'allSyncHash', state: 'all-sync', js: { file: 'board.js', from: 'let roamedOnce = false, touched = !!location.hash, mark = null;', to: 'let roamedOnce = false, touched = false, mark = null;' } },
     { key: 'deskDate', state: 'front-read', css: '.ed--desk .ed__top .fday{display:none}' },
+    // round 2 (2026-10-22): every outlet listed, the desk's flags, Discuss built from the page
+    { key: 'sources', state: 'default', css: '.srcs{display:none!important}' },
+    { key: 'sources', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const li = document.querySelector('main .srcs li'); if (li) li.remove(); }) },
+    { key: 'flags', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => document.querySelector('main .row .row__meta').insertAdjacentHTML('afterbegin', '<span class="flag flag--disputed">Disputed</span>')) },
+    { key: 'discuss', state: 'default', js: { file: 'discuss.js', from: "if (srcs.length) { lines.push('Sources:'); for (const s of srcs) lines.push('- ' + s.label + ': ' + s.url); }", to: '' } },
+    { key: 'discuss', state: 'default', js: { file: 'discuss.js', from: "a.href = u.origin + u.pathname + '?q=' + encodeURIComponent(prompt);", to: "a.href = u.origin + u.pathname + '?q=' + encodeURIComponent(prompt).replace(/%20/g, '+');" } },
+    { key: 'discussRead', state: 'default', js: { file: 'board.js', from: "const a = e.target.closest('.hl a, a.discuss');\n      if (a) { const el = a.closest('[data-story]'); if (el && !isRead(el)) { setRead(el, true); paint(); } }\n    });\n    main.addEventListener('auxclick'",
+      to: "const a = e.target.closest('.hl a');\n      if (a) { const el = a.closest('[data-story]'); if (el && !isRead(el)) { setRead(el, true); paint(); } }\n    });\n    main.addEventListener('auxclick'" } },
+    { key: 'refillDiscuss', state: 'front-read', js: { file: 'main.js', from: 'adopt: (el) => { watchSlots(el); prepare(el); }', to: 'adopt: (el) => { watchSlots(el); }' } },
+    // an open rest card narrower than its band: the same break the gap fault makes, read by fullRow
+    { key: 'fullRow', state: 'expanded', css: '.js .fcards--rest > .fc.is-open{flex-basis:30%!important}' },
   ];
   // a fault whose gate is a SKIP on this data proves nothing either way: it is counted apart, not
   // MISSED (that would turn a SKIP back into a failure on valid data); an absent gate is MISSED
