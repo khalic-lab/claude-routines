@@ -148,7 +148,8 @@ class TemplateWiringTests(unittest.TestCase):
 
     def test_discuss_is_a_plain_prefilled_link_on_stories_only(self):
         acts = _read("_includes/home/actions.html")
-        self.assertIn('href="https://claude.ai/new?q={{ dq | url_encode }}"', acts)
+        self.assertIn('href="https://claude.ai/new?q={{ dq | url_encode | replace: "+", "%20" }}"', acts,
+                      "spaces must travel as %20: a plus only decodes to a space under a form-style decoder")
         self.assertIn('rel="noopener noreferrer"', acts)
         self.assertNotIn('class="discuss needs-js"', acts, "Discuss must work without script")
         for inc in ("row.html", "front-card.html"):

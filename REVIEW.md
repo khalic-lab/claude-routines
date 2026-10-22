@@ -130,6 +130,10 @@ Discuss links as part of the normal Pages build. `_data/homefeed.json` is rebuil
 so the page has the data on day one; the next routine publish regenerates it identically plus the
 new edition.
 
+**Merge note.** `main` rewrites `_data/homefeed.json` on every publish, so merging this branch
+will conflict on that file. It is derived: take `main`'s copy, run `python3 tools/build_stories_feed.py`
+on the merged tree, commit the result. (`publish.py` says the same about its own rebase retry.)
+
 ## Verification
 
 Ran here:
@@ -151,7 +155,8 @@ Not run, and why:
 - The Docker Pages build (`tools/verify/build.sh`): the OrbStack daemon is not running in this
   session. The Playwright suite needs that build.
 - The claude.ai prefill itself: no browser from the sandbox. The link follows the documented
-  `claude.ai/new?q=` scheme; a human click is the remaining check.
+  `claude.ai/new?q=` scheme, and the prompt is encoded with `%20` for spaces so it decodes the
+  same under a form-style and a plain URI decoder; a human click is the remaining check.
 
 ## What I would do next
 

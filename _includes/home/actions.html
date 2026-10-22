@@ -20,7 +20,9 @@ Headline: {{ st.headline }}
 {% endif %}
 Start by separating what the sources establish from what is still open, then ask me which angle I want to pursue.
 {%- endcapture -%}
-<a class="discuss" href="https://claude.ai/new?q={{ dq | url_encode }}" target="_blank" rel="noopener noreferrer">Discuss<span class="vh"> this story with Claude (opens in a new tab)</span></a>
+{%- comment -%} url_encode writes a space as "+", which only a form-style decoder turns back into a
+  space; "%20" reads as a space under either decoder, and a literal "+" is already "%2B" by then. {%- endcomment -%}
+<a class="discuss" href="https://claude.ai/new?q={{ dq | url_encode | replace: "+", "%20" }}" target="_blank" rel="noopener noreferrer">Discuss<span class="vh"> this story with Claude (opens in a new tab)</span></a>
 {%- endif -%}
 {%- if include.fold and include.fold != "" -%}
 <button class="more needs-js" type="button" aria-expanded="{% if include.open %}true{% else %}false{% endif %}" aria-controls="{{ include.fold }}"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 10 10"><path d="M1.5 3.5 5 7l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>{% if include.open %}Less{% else %}More{% endif %}</span></button>
