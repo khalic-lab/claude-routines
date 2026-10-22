@@ -25,8 +25,12 @@ mkdir -p "$OUT"
 rm -rf "$SRC" "$OUT/www"
 mkdir -p "$SRC" "$OUT/www"
 
-# tracked + untracked (not ignored) files, so an uncommitted change is built too
-(cd "$REPO" && git ls-files -z --cached --others --exclude-standard) \
+# tracked + untracked (not ignored) files, so an uncommitted change is built too. A tracked
+# file that is absent from the checkout (skip-worktree, a sparse worktree) is dropped from the
+# list here: rsync would otherwise exit 23 on it and, under `set -o pipefail`, end the build
+# (filtered in the shell because macOS ships openrsync, which has no --ignore-missing-args).
+(cd "$REPO" && git ls-files -z --cached --others --exclude-standard \
+  | while IFS= read -r -d '' f; do if [ -e "$f" ]; then printf '%s\0' "$f"; fi; done) \
   | (cd "$REPO" && rsync -a --from0 --files-from=- ./ "$SRC/")
 mkdir -p "$SRC/.git"          # jekyll-github-metadata looks for a repo; the rev comes from INPUT_BUILD_REVISION
 
