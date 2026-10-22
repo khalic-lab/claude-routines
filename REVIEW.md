@@ -147,10 +147,10 @@ Ran here:
   `_layouts/home.html` render without a Liquid error; every Discuss prompt decodes to the intended
   text with all source URLs; an old-shape story prints its primary domain only.
 
-Not run, and why:
+Not run in round 1, and why (both ran in round 2, see below):
 
-- The Docker Pages build (`tools/verify/build.sh`): the OrbStack daemon is not running in this
-  session. The Playwright suite needs that build.
+- The Docker Pages build (`tools/verify/build.sh`): the OrbStack daemon was not running in the
+  round-1 session. The Playwright suite needs that build.
 - The claude.ai prefill itself: no browser from the sandbox. The link follows the documented
   `claude.ai/new?q=` scheme, and the prompt is encoded with `%20` for spaces so it decodes the
   same under a form-style and a plain URI decoder; a human click is the remaining check.
@@ -193,7 +193,7 @@ feed, and runs the real Pages build and the browser suite as the deliverable. Ev
 | `358c20d1` | Suite: the reason-box step undoes itself before the All layout check (the 20 baseline failures) |
 | `10aca334` | Page: every outlet in the fold, the flags, Discuss on stories, editorials and days; the suite's new gates and the stronger void measure |
 | `22afcc78` | Feeds: one include renders `stories.xml` and a feed per desk, with the flags; the suite's feeds runner |
-| this one | REVIEW.md |
+| the REVIEW.md commit | this section |
 
 ## What the rebuild is
 
