@@ -173,7 +173,7 @@ _CITE_DATE_TAIL_RE = re.compile(r",\s*\d{1,2}\s+[A-Za-z]{3,9}\.?\s+\d{4}\s*$")
 # last citation, and in doing so unbalanced the citation paren — so `clean_body`'s
 # `_CITE_PAREN_RE` could no longer rescue it either, and the card printed
 # "… Al Jazeera, 4 Aug 2026 · NY State of Politics, 3 Aug 2026 [new source]" as prose.
-_TAG_RE = re.compile(r"`?\[(single-source|via snippet|new source|preprint|disputed|vendor pr|official pr|ongoing since[^\]]*)\]`?", re.I)
+_TAG_RE = re.compile(r"`?\[(single-source|via snippet|new source|preprint|disputed|unconfirmed|rumou?r|vendor pr|official pr|ongoing since[^\]]*)\]`?", re.I)
 _META_ITALIC_RE = re.compile(r"\s*_[^_]*(?:announced|submitted|published|reported)[^_]*_\s*", re.I)
 
 
@@ -748,6 +748,50 @@ def story_sources(raw):
     return out
 
 
+# ---- credibility flags (2026-10-22). The writers mark doubt inline (`[preprint]`,
+# `[single-source]`, `[disputed]`, `[ongoing since …]`); clean_body strips those tags from the
+# prose, and until now nothing on the page showed them, although "How this works" promises that
+# unreviewed research, lone sources and contested facts get labelled. The record's `tags` (the
+# dedup store) and the tags parsed from the post are merged, normalised and ALLOWLISTED here, in
+# one fixed order, so the page prints exactly this vocabulary and nothing else: records also carry
+# desk-internal notes ("new source", "via snippet") and the odd stray sport topic.
+FLAGS = [("single-source", "Single source"), ("disputed", "Disputed"), ("unconfirmed", "Unconfirmed"),
+         ("rumour", "Rumour"), ("preprint", "Preprint"), ("vendor-pr", "Vendor PR"),
+         ("official-pr", "Official PR"), ("ongoing", "Ongoing")]
+_FLAG_KEY = {k: k for k, _ in FLAGS}
+_FLAG_KEY.update({"vendor pr": "vendor-pr", "official pr": "official-pr", "rumor": "rumour",
+                  "single source": "single-source", "single_source": "single-source"})
+
+
+def norm_flag(tag):
+    """One tag, from a record or the prose, -> its flag key, or None when it is not a flag.
+    Tolerates brackets, backticks, case and spacing; `ongoing since 3 Oct` is `ongoing`."""
+    if not isinstance(tag, str):
+        return None
+    t = re.sub(r"\s+", " ", tag.strip().strip("`").strip("[]").strip().lower())
+    if t.startswith("ongoing"):
+        t = "ongoing"
+    return _FLAG_KEY.get(t)
+
+
+def story_flags(raw, record_tags):
+    """[{key, label}] in FLAGS order: the union of the record's tags and the tags written in the
+    story's prose, each normalised, unknown ones dropped. The record may carry anything (a
+    string, None); nothing here raises, since the writers run this at every fire."""
+    if isinstance(record_tags, str):
+        record_tags = [record_tags]
+    keys = set()
+    for t in (record_tags if isinstance(record_tags, (list, tuple)) else []):
+        k = norm_flag(t)
+        if k:
+            keys.add(k)
+    for t in _TAG_RE.findall(raw or ""):
+        k = norm_flag(t)
+        if k:
+            keys.add(k)
+    return [{"key": k, "label": label} for k, label in FLAGS if k in keys]
+
+
 def norm_url(url):
     """Canonicalize for the feed↔index join: scheme/www/fragment/utm-insensitive."""
     if not url:
@@ -806,7 +850,7 @@ def load_index_meta(window_dates):
                      "headline": r.get("headline"), "deck": r.get("deck"),
                      "display_body": r.get("display_body"), "why": r.get("why"),
                      "affiliations": r.get("affiliations"), "url": r.get("url"),
-                     "event_date": r.get("event_date")}
+                     "event_date": r.get("event_date"), "tags": r.get("tags")}
                 if r.get("id"):
                     by_id[r["id"]] = m
                 nu = norm_url(r.get("url"))
@@ -1153,6 +1197,11 @@ def load_recent(days):
             # build_board), because the golden feed pins that list's keys.
             if im.get("event_date"):
                 story["event_date"] = str(im["event_date"]).strip()
+            # the credibility flags: a board field (main() pops it from feed.stories, whose keys
+            # the golden pins), emitted on the board only when there is one (Liquid gates on the key)
+            flags = story_flags(s.get("raw"), im.get("tags"))
+            if flags:
+                story["flags"] = flags
             if deck:
                 # Emitted ONLY when non-empty, for the same reason as `affiliations` below:
                 # Liquid counts "" as truthy, so a always-present `deck` key would open an empty
@@ -1478,7 +1527,8 @@ def build_views(board, max_date, topics, posts_dir=None):
     """Annotate the board in place with the page's render fields and return the views.
 
     Board item fields added: every item `edition` ("<date>-<stream>"), `period` (period_view),
-    `on_front`; stories `tier`, `tier_label`, `hl_dot`, `unfurl`, `boot_open`, `show_desk`;
+    `on_front`; stories `tier`, `tier_label`, `hl_dot`, `unfurl`, `boot_open`, `show_desk`,
+    `n_sources` (and `flags`, which load_recent sets and main() keeps off feed.stories);
     editorials `sid` ("ed-<stream>-<date>", the read id), `topics` (the sorted union of its
     edition's story topics, so a beat filter shows the desk's view of that beat), `stream_label`,
     `title_html`, `title_text` (the same heading without tags, for places that are themselves a
@@ -1511,6 +1561,9 @@ def build_views(board, max_date, topics, posts_dir=None):
             it["unfurl"] = bool(it.get("url")) and imp > 1 and not _is_paper(it.get("url"))
             it["boot_open"] = imp == 3 and date == max_date
             it["event_label"] = event_label(it.get("event_date"), it["period"]["start"], date)
+            # how many distinct outlets the story cites (story_sources): the page prints the
+            # count when it is more than one, the flags say when it is one and should be more
+            it["n_sources"] = len(it.get("sources") or [])
 
     front = select_front(board)
     for i in front:
@@ -1765,8 +1818,9 @@ def main():
     editorials = load_editorials(args.days, max_date, live_editions)
     board = build_board(stories, editorials, max_date)
     views = build_views(board, max_date, topics)
-    for s in stories:                  # the board copies keep it; feed.stories' keys are pinned
+    for s in stories:                  # the board copies keep them; feed.stories' keys are pinned
         s.pop("event_date", None)
+        s.pop("flags", None)
     edition_label, count_line = masthead(max_date, len(stories), len(editorials), len(views["days"]))
     feed = {"generated": max_date, "count": len(stories), "topics": topics,
             "editorials": editorials, "stories": stories, "board": board,
