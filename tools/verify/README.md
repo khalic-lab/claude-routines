@@ -28,8 +28,8 @@ node suite.mjs /tmp/fp-build/src/_site > /tmp/fp-suite.log 2>&1   # ~10 min; one
   Unread), all-read (the whole reserve read), all-partial (the reserve read but its last two
   entries), all-sync (signed in, with the Worker's read set held until the page asks: eight
   scenarios, a fresh page each), beat, multi-beat, empty, stale and
-  stale-bg (a tab opened in the background), plus no-JS, contract parity, two tabs and the reading
-  pages.
+  stale-bg (a tab opened in the background), plus no-JS, contract parity, two tabs, the reading
+  pages and the story feeds.
 - Covers Chromium at 360, 390, 700, 768, 1024, 1280, 1440 and 1600, and WebKit as iPhone 15 and at
   1024, all in light and dark.
 
@@ -108,6 +108,11 @@ feed, not only the one it was written against:
   its ✓ un-reads it; a reserve copy promoted under Unread carries the full prompt too
 - without script the source list and the flags show, and every Discuss href is the template's
   short prompt (headline and primary source; an editorial's title; a day's headlines)
+- the story feeds: `stories.xml` and `feeds/<desk>.xml` (one per routine) are well-formed RSS
+  starting with the XML declaration, advertised by a `<link rel="alternate">` each and linked
+  from the masthead; the items are the board's stories in order (a desk feed: that desk's), each
+  with its headline, primary link, store-id guid, date, desk category, prose, why, the desk's
+  flags and every outlet with its label
 - every visible masthead and bar control is reached by Tab
 - every reading page (each review, /prompts/ fully open, the 404, /admin/) fits the width at 360px, 1440px and on an iPhone
 - zero requests to hosts other than the two Workers
@@ -124,8 +129,9 @@ against the old page:
 **Fault injection:** the suite ends with a self-test that breaks the CSS, the markup, a request,
 storage, or one line of a JS module (served mutated through `route()`, e.g. the editorial rule's
 `every` turned into `some`, discuss.js without its source lines, board.js not reading on a
-Discuss click, main.js adopting a reserve copy without rebuilding its href) on purpose. Each
-break must fail its own assertion.
+Discuss click, main.js adopting a reserve copy without rebuilding its href, a feed served with
+an item dropped, two swapped or a source link removed) on purpose. Each break must fail its own
+assertion.
 
 Screenshots go to `$SHOTS` (default `/tmp/fp-shots`). Narrow a run with `WIDTHS=390,1440`,
 `ONLY=default,contract`, `FAULTS=0` or `SHOTS=0`; `VERBOSE=1` prints every assertion's detail.

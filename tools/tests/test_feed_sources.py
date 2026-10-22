@@ -15,6 +15,7 @@ Run: python3 -m unittest tools.tests.test_feed_sources
 import importlib.util
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -211,24 +212,58 @@ class TemplateWiringTests(unittest.TestCase):
 
 
 class StoryFeedTests(unittest.TestCase):
-    """stories.xml: an RSS feed over the board, which /feed.xml never was (briefs are unpublished,
-    so jekyll-feed only ever listed the Sunday reviews)."""
+    """stories.xml and feeds/<desk>.xml: RSS over the board, one include (_includes/storyfeed.xml)
+    rendered for every desk or one. /feed.xml never was that (briefs are unpublished, so
+    jekyll-feed only ever listed the Sunday reviews)."""
 
-    def test_page_exists_with_null_layout_and_is_the_linked_feed(self):
+    @classmethod
+    def setUpClass(cls):
+        cls.desks = sorted(_mod().CURRENT_STREAMS)
+
+    def test_the_include_is_the_feed_and_its_first_byte_is_the_declaration(self):
+        inc = _read("_includes/storyfeed.xml")
+        self.assertIn('{%- if s.kind == "story" %}', inc)
+        self.assertIn("{%- if include.stream == nil or s.stream == include.stream %}", inc)
+        self.assertIn("{{ s.headline | xml_escape }}", inc)
+        self.assertIn("{{ s.url | xml_escape }}", inc)
+        self.assertIn("{{ desc | xml_escape }}", inc, "the HTML description is escaped once, as a whole")
+        self.assertIn('<guid isPermaLink="false">{{ s.sid | default: s.id | xml_escape }}</guid>', inc)
+        self.assertIn("{% for f in s.flags %}", inc, "the desk's flags travel with the item")
+        self.assertIn("{% for src in s.sources %}", inc, "every outlet travels with the item")
+        self.assertIn("{{ path | absolute_url }}", inc)
+        before = inc[:inc.index("<?xml ")]
+        before = re.sub(r"\{%-\s*comment\s*-%\}.*?\{%-\s*endcomment\s*-%\}", "", before, flags=re.S)
+        self.assertEqual(re.sub(r"\{%-.*?-%\}", "", before, flags=re.S).strip(), "",
+                         "everything before the XML declaration must be a trimming tag or comment")
+
+    def test_every_feed_page_wraps_the_include_in_a_null_layout(self):
         xml = _read("stories.xml")
         self.assertTrue(xml.startswith("---\nlayout: null\n"), "raw XML: no layout may wrap it")
         self.assertIn("sitemap: false", xml)
-        self.assertIn('{%- if s.kind == "story" %}', xml)
-        self.assertIn("{{ s.headline | xml_escape }}", xml)
-        self.assertIn("{{ s.url | xml_escape }}", xml)
-        self.assertIn("{{ desc | xml_escape }}", xml, "the HTML description is escaped once, as a whole")
-        self.assertIn("<guid isPermaLink=\"false\">{{ s.sid | default: s.id | xml_escape }}</guid>", xml)
-        self.assertIn("'/stories.xml' | relative_url", _read("_includes/colophon.html"))
-        self.assertIn("'/stories.xml' | relative_url", _read("_includes/head.html"))
+        self.assertIn('{%- include storyfeed.xml path="/stories.xml" -%}', xml)
+        self.assertNotIn("stream=", xml, "the main feed is every desk")
+        files = sorted(fn[:-4] for fn in os.listdir(os.path.join(REPO, "feeds")) if fn.endswith(".xml"))
+        self.assertEqual(files, self.desks, "one feed per current desk, no stale one")
+        for d in self.desks:
+            src = _read("feeds/%s.xml" % d)
+            self.assertTrue(src.startswith("---\nlayout: null\n"), d)
+            self.assertIn("sitemap: false", src)
+            self.assertIn("permalink: /feeds/%s.xml" % d, src)
+            self.assertRegex(src, r'\{%% include storyfeed\.xml stream="%s" label="[^"]+" path="/feeds/%s\.xml" %%\}' % (d, d))
 
-    def test_feed_is_excluded_from_nothing_but_the_sitemap(self):
+    def test_the_feeds_are_advertised_and_linked(self):
+        head = _read("_includes/head.html")
+        self.assertIn("'/stories.xml' | relative_url", head)
+        self.assertIn("'/stories.xml' | relative_url", _read("_includes/colophon.html"))
+        self.assertIn("'/stories.xml' | relative_url", _read("_layouts/home.html"), "the masthead link")
+        hiw = _read("_includes/home/hiw.html")
+        for d in self.desks:
+            self.assertIn("'/feeds/%s.xml' | relative_url" % d, head, "a <link rel=alternate> per desk")
+            self.assertIn("'/feeds/%s.xml' | relative_url" % d, hiw, "named where the page is explained")
+
+    def test_feeds_are_excluded_from_nothing_but_the_sitemap(self):
         cfg = _read("_config.yml")
-        self.assertNotRegex(cfg, r"(?m)^\s*-\s*stories\.xml")
+        self.assertNotRegex(cfg, r"(?m)^\s*-\s*(stories\.xml|feeds)\b")
 
 
 if __name__ == "__main__":

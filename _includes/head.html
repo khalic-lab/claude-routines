@@ -18,6 +18,12 @@
 {% seo title=false %}
 {% feed_meta %}
 <link rel="alternate" type="application/rss+xml" title="{{ site.title | escape }} — stories" href="{{ '/stories.xml' | relative_url }}">
+{%- comment -%} one feed per desk (feeds/<desk>.xml; the desks are the builder's CURRENT_STREAMS) {%- endcomment %}
+<link rel="alternate" type="application/rss+xml" title="{{ site.title | escape }} — News desk" href="{{ '/feeds/news.xml' | relative_url }}">
+<link rel="alternate" type="application/rss+xml" title="{{ site.title | escape }} — AI/ML desk" href="{{ '/feeds/ai-ml.xml' | relative_url }}">
+<link rel="alternate" type="application/rss+xml" title="{{ site.title | escape }} — Science desk" href="{{ '/feeds/science.xml' | relative_url }}">
+<link rel="alternate" type="application/rss+xml" title="{{ site.title | escape }} — Weekend desk" href="{{ '/feeds/weekend.xml' | relative_url }}">
+<link rel="alternate" type="application/rss+xml" title="{{ site.title | escape }} — Sports desk" href="{{ '/feeds/sports.xml' | relative_url }}">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ '/assets/fonts/anton-latin.woff2' | relative_url }}">
 {% include tokens.html %}
 {%- for sheet in layout.css %}

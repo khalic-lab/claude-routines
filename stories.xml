@@ -3,47 +3,5 @@ layout: null
 sitemap: false
 permalink: /stories.xml
 ---
-{%- comment -%}
-  A story-level RSS feed over the same board the front page prints. /feed.xml (jekyll-feed) only
-  ever carried the Sunday evaluator reviews, because every brief post is unpublished; this is
-  the feed a reader of the front page actually wants. One item per story, board order (newest
-  edition first, biggest story first), the source as the link and the store id as the guid, so
-  a running story re-told under the same source updates its item rather than duplicating it.
-{%- endcomment -%}
-{%- assign feed = site.data.homefeed -%}
-<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-<channel>
-<title>{{ site.title | xml_escape }} — stories</title>
-<link>{{ '/' | absolute_url }}</link>
-<atom:link href="{{ '/stories.xml' | absolute_url }}" rel="self" type="application/rss+xml"/>
-<description>{{ site.description | xml_escape }} Every story on the front page, with its sources.</description>
-<language>{{ site.lang | default: 'en' }}</language>
-{%- if feed.generated %}
-<lastBuildDate>{{ feed.generated | date_to_rfc822 }}</lastBuildDate>
-{%- endif %}
-{%- for s in feed.board %}
-{%- if s.kind == "story" %}
-{%- capture desc -%}
-<p>{{ s.summary | escape }}</p>
-{%- if s.why and s.why != "" %}<p><strong>Why it matters</strong> {{ s.why | escape }}</p>{% endif %}
-{%- if s.sources %}<p>Sources: {% for src in s.sources %}<a href="{{ src.url | escape }}">{{ src.label | escape }}</a>{% unless forloop.last %}, {% endunless %}{% endfor %}</p>{% endif %}
-<p>{{ s.stream_label | escape }} desk · {{ s.tier_label | escape }} · {{ s.day_label | escape }}</p>
-{%- endcapture %}
-<item>
-<title>{{ s.headline | xml_escape }}</title>
-{%- if s.url and s.url != "" %}
-<link>{{ s.url | xml_escape }}</link>
-{%- endif %}
-<guid isPermaLink="false">{{ s.sid | default: s.id | xml_escape }}</guid>
-<pubDate>{{ s.date | date_to_rfc822 }}</pubDate>
-<category>{{ s.stream_label | xml_escape }}</category>
-{%- if s.topic_label %}
-<category>{{ s.topic_label | xml_escape }}</category>
-{%- endif %}
-<description>{{ desc | xml_escape }}</description>
-</item>
-{%- endif %}
-{%- endfor %}
-</channel>
-</rss>
+{%- comment -%} every story on the board; feeds/<desk>.xml are the same include per desk {%- endcomment -%}
+{%- include storyfeed.xml path="/stories.xml" -%}

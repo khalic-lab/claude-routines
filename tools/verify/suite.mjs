@@ -1683,6 +1683,70 @@ async function runPages(browser, ctxOpts, css = null) {
   return [bad.length === 0, bad.length ? bad.slice(0, 4).join('; ') : `${READING.length} pages (${REVIEWS.length} reviews, /prompts/ fully open, 404, /admin/), headings carrying a 116-char token: no sideways scroll, no other hosts`];
 }
 
+// ------------------------------------------------------------------ the story feeds
+// /stories.xml and feeds/<desk>.xml (the desks are the routines): RSS 2.0 over the board, one item
+// per story in board order, the primary source as the link, the store id as the guid, the
+// description carrying the prose, the why, the desk's flags and every outlet with its label. The
+// homepage advertises each feed with a <link rel="alternate"> and links the story feed from the
+// masthead. `mutate` (fault injection) rewrites one served file's text.
+const FEEDS = [['stories.xml', null], ...Object.keys(CAP).sort().map((s) => [`feeds/${s}.xml`, s])];
+const FEED_FAULT_DESK = Object.keys(CAP).sort((a, b) => stories.filter((x) => x.stream === b).length - stories.filter((x) => x.stream === a).length)[0];
+const escHtml = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+async function runFeeds(browser, ctxOpts, mutate = null) {
+  const ctx = await browser.newContext(ctxOpts);
+  const rec = { fb: [], og: 0, ext: [], errors: [] };
+  await stub(ctx, rec);
+  if (mutate) await ctx.route((u) => u.origin === ORIGIN && mutate.path.test(u.pathname), async (route) => {
+    const res = await route.fetch();
+    await route.fulfill({ response: res, body: mutate.fn(await res.text()) });
+  });
+  const page = await ctx.newPage(); watchRequests(page, rec);
+  await page.goto(BASE);
+  const bad = []; let items = 0;
+  const head = await page.evaluate(() => [...document.querySelectorAll('head link[rel="alternate"][type="application/rss+xml"]')].map((l) => new URL(l.getAttribute('href'), location.href).pathname));
+  const mast = await page.evaluate(() => { const a = [...document.querySelectorAll('.mast a')].find((x) => /stories\.xml$/.test(x.getAttribute('href') || '')); const r = a && a.getBoundingClientRect(); return !!r && r.width > 0 && r.height > 0; });
+  if (!mast) bad.push('no visible masthead link to stories.xml');
+  for (const [rel, stream] of FEEDS) {
+    const want = stories.filter((x) => !stream || x.stream === stream);
+    if (!head.includes('/claude-routines/' + rel)) bad.push(`${rel}: no <link rel=alternate> in the head`);
+    const r = await page.evaluate(async (rel) => {
+      const res = await fetch(rel); if (!res.ok) return { status: res.status };
+      const text = await res.text();
+      const doc = new DOMParser().parseFromString(text, 'application/xml');
+      const err = doc.querySelector('parsererror'); if (err) return { error: err.textContent.replace(/\s+/g, ' ').slice(0, 120), first: text.slice(0, 40) };
+      const t = (el, sel) => { const x = el.querySelector(sel); return x ? x.textContent : null; };
+      const self = doc.getElementsByTagNameNS('http://www.w3.org/2005/Atom', 'link')[0];
+      return { first: text.slice(0, 38), title: t(doc, 'channel > title'), self: self ? self.getAttribute('href') : null, built: t(doc, 'channel > lastBuildDate'),
+        items: [...doc.querySelectorAll('channel > item')].map((it) => ({ title: t(it, 'title'), link: t(it, 'link'), guid: t(it, 'guid'), date: t(it, 'pubDate'),
+          cats: [...it.querySelectorAll('category')].map((c) => c.textContent), desc: t(it, 'description') || '' })) };
+    }, rel);
+    if (r.status) { bad.push(`${rel}: HTTP ${r.status}`); continue; }
+    if (r.error) { bad.push(`${rel}: not well-formed (${r.error}); starts "${r.first}"`); continue; }
+    if (!r.first.startsWith('<?xml version="1.0" encoding="UTF-8"?>')) bad.push(`${rel}: starts "${r.first}"`);
+    if (r.self !== 'https://khalic-lab.github.io/claude-routines/' + rel) bad.push(`${rel}: self link ${r.self}`);
+    if (!r.built || isNaN(Date.parse(r.built))) bad.push(`${rel}: lastBuildDate "${r.built}"`);
+    const got = r.items.map((i) => i.guid), exp = want.map(sidOf);
+    if (got.join() !== exp.join()) { bad.push(`${rel}: ${got.length} items vs ${exp.length} board stories${stream ? ' of ' + stream : ''}, or the order differs`); continue; }
+    items += got.length;
+    r.items.forEach((it, i) => {
+      const x = want[i], w = STORY_X[sidOf(x)], desc = it.desc.replace(/\s+/g, ' '), miss = [];
+      if (norm(it.title) !== w.headline) miss.push('title');
+      if ((it.link || '') !== w.url) miss.push('link');
+      if (isNaN(Date.parse(it.date || ''))) miss.push('pubDate');
+      if (!it.cats.includes(x.stream_label)) miss.push('desk category');
+      if (!desc.includes('<p>' + escHtml(w.summary).slice(0, 40))) miss.push('summary');
+      if (norm(x.why) && !desc.includes('<strong>Why it matters</strong> ' + escHtml(norm(x.why)).slice(0, 40))) miss.push('why');
+      for (const s of w.sources) if (!desc.includes(`<a href="${escHtml(s.url)}">${escHtml(s.label)}</a>`)) miss.push(`source ${s.label}`);
+      for (const f of w.flags) if (!desc.includes(escHtml(f))) miss.push(`flag ${f}`);
+      if (!w.flags.length && desc.includes('Flagged by the desk')) miss.push('a flag it does not have');
+      if (miss.length) bad.push(`${rel} item ${i + 1} (${it.guid}) lacks ${miss.slice(0, 3).join(', ')}`);
+    });
+  }
+  await ctx.close();
+  if (rec.ext.length) bad.push(rec.ext.length + ' requests to other hosts');
+  return [bad.length === 0 && items > 0, bad.length ? bad.slice(0, 4).join('; ') : `${FEEDS.length} feeds advertised in the head, ${items} items in board order with title, link, guid, date, desk, prose, why, flags and every source`];
+}
+
 // ------------------------------------------------------------------ sweeps
 let fails = 0; const totals = {};
 // an assertion is [ok, detail]; ok === null is a SKIP (the data offers no scenario), counted apart
@@ -1735,6 +1799,12 @@ if (!ONLY || ONLY.includes('pages')) {
   for (const [label, b, opts] of [['chromium 360', c, { viewport: { width: 360, height: 800 } }], ['chromium 1440 dark', c, { viewport: { width: 1440, height: 900 }, colorScheme: 'dark' }], ['webkit iPhone15', wk, { ...devices['iPhone 15'] }]]) {
     const [ok, d] = await runPages(b, opts);
     tally('pages', ok); log(`${label.padEnd(24)} pages           ${ok ? 'PASS' : 'FAIL'} ${d}`);
+  }
+}
+if (!ONLY || ONLY.includes('feeds')) {
+  for (const [label, b, opts] of [['chromium 1024', c, { viewport: { width: 1024, height: 900 } }], ['webkit iPhone15', wk, { ...devices['iPhone 15'] }]]) {
+    const [ok, d] = await runFeeds(b, opts);
+    tally('feeds', ok); log(`${label.padEnd(24)} feeds           ${ok ? 'PASS' : 'FAIL'} ${d}`);
   }
 }
 
@@ -1879,7 +1949,19 @@ if (process.env.FAULTS !== '0') {
     if (!ok) caught++;
     log(`${!ok ? 'CAUGHT' : 'MISSED'}  two-tab      store.js       1024px  (no storage listener)  ->  ${d}`);
   }
-  const total = FAULTS.length + CF.length + PF.length + 1 - skipped;
+  // the feeds, served rewritten: an item dropped, two swapped, a source link gone, the head's advertisement gone
+  const FF = [
+    ['stories.xml without its last item', { path: /\/stories\.xml$/, fn: (t) => t.replace(/<item>(?:(?!<item>)[\s\S])*<\/item>\s*(?=<\/channel>)/, '') }],
+    [`feeds/${FEED_FAULT_DESK}.xml with its first two items swapped`, { path: new RegExp(`/feeds/${FEED_FAULT_DESK}\\.xml$`), fn: (t) => t.replace(/(<item>[\s\S]*?<\/item>)(\s*)(<item>[\s\S]*?<\/item>)/, '$3$2$1') }],
+    ['stories.xml with one source link removed', { path: /\/stories\.xml$/, fn: (t) => t.replace(/&lt;a href=&quot;.*?&quot;&gt;.*?&lt;\/a&gt;(, )?/, '') }],
+    ['the homepage without its stories.xml alternate link', { path: /\/claude-routines\/(index\.html)?$/, fn: (t) => t.replace(/<link rel="alternate"[^>]*stories\.xml[^>]*>/, '') }],
+  ];
+  for (const [what, m] of FF) {
+    const [ok, d] = await runFeeds(c, { viewport: { width: 1024, height: 900 } }, m);
+    if (!ok) caught++;
+    log(`${!ok ? 'CAUGHT' : 'MISSED'}  feeds        rss            1024px  ${what}  ->  ${d}`);
+  }
+  const total = FAULTS.length + CF.length + PF.length + FF.length + 1 - skipped;
   const clean = Object.values(base).every(([ok]) => ok !== false);
   log(`fault self-test: ${caught}/${total} faults caught${skipped ? ` (${skipped} more skipped: their gate had no scenario on this data)` : ''} (baseline default@1440 ${clean ? 'clean' : 'NOT clean'})`);
   if (caught !== total || !clean) fails++;

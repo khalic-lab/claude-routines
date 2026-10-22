@@ -45,7 +45,7 @@ def templates():
             continue
         for dirpath, _dirnames, filenames in os.walk(base):
             for fn in filenames:
-                if fn.endswith((".html", ".md", ".json")):
+                if fn.endswith((".html", ".md", ".json", ".xml")):
                     out.append(os.path.join(dirpath, fn))
     # root pages carry Liquid too (admin, prompts, the 404, the edition stamp for the freshness check)
     for fn in ("index.html", "index.md", "admin.html", "prompts.html", "404.html", "edition.json",
@@ -53,6 +53,10 @@ def templates():
         p = os.path.join(ROOT, fn)
         if os.path.isfile(p):
             out.append(p)
+    # the per-desk story feeds (feeds/<desk>.xml), each a front-matter page around one include
+    feeds = os.path.join(ROOT, "feeds")
+    if os.path.isdir(feeds):
+        out.extend(os.path.join(feeds, fn) for fn in os.listdir(feeds) if fn.endswith(".xml"))
     return sorted(out)
 
 
@@ -111,7 +115,7 @@ class LiquidBalanceTests(unittest.TestCase):
         rels = [os.path.relpath(p, ROOT) for p in templates()]
         self.assertIn(os.path.join("_layouts", "home.html"), rels)
         for rel in (os.path.join("_includes", "home", "row.html"), "prompts.html", "edition.json",
-                    "stories.xml"):
+                    "stories.xml", os.path.join("_includes", "storyfeed.xml"), os.path.join("feeds", "news.xml")):
             self.assertIn(rel, rels)
 
     # --- the checker itself, or it could pass everything and we would not know ---
