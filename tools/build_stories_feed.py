@@ -24,7 +24,13 @@ order, `(date, tier, position)` with editorials ranked below briefs so each clos
 edition's date block (see build_board). build_views adds the page's render fields to the board
 items and the `days` / `front` / `beats` views over it, plus `build_stamp`. `feed["stories"]`,
 `feed["editorials"]`, `feed["count"]` and `feed["topics"]` keep their exact meanings (the golden
-feed pins them); nothing else reads position semantics.
+feed pins them; re-captured 2026-10-22 when `sources` was added and `permalink` dropped);
+nothing else reads position semantics.
+
+Every story carries `sources`: one entry per distinct domain the story cites, in prose order,
+primary first -- `{url, domain, label}`, the label being the writer's citation text with its
+trailing date removed ("DW, 1 Oct 2026" -> "DW"). The page prints every domain, the story RSS
+and the "Discuss" link carry every URL. `url` / `source_domain` stay the primary (first) one.
 
 Run after `dedup.py record` (DEDUP.md Step D) and commit the result with the brief.
 Usage: python3 tools/build_stories_feed.py [--days 14] [--max 80] [--out _data/homefeed.json]
@@ -158,6 +164,9 @@ _H2_RE = re.compile(r"^##\s+(.*)$")
 _H3_RE = re.compile(r"^###\s+(.*)$")
 _H3_IAL_RE = re.compile(r"\s*\{#([^}]+)\}\s*$")
 _URL_RE = re.compile(r"https?://[^\s)\]]+")
+_MDLINK_RE = re.compile(r"\[([^\[\]]+)\]\((https?://[^)\s]+)\)")
+# "DW, 1 Oct 2026" / "Le Monde, 01 October 2026" -> the outlet alone; the date is the card's job
+_CITE_DATE_TAIL_RE = re.compile(r",\s*\d{1,2}\s+[A-Za-z]{3,9}\.?\s+\d{4}\s*$")
 # EVERY LITERAL WRITER TAG MUST BE LISTED HERE, or `strip_trailing_citations` half-cuts.
 # `[new source]` and `[official PR]` are mandated by routines/_shared/feed-first-source-order.md
 # and were missing: the glue walk between two citations then broke on the tag, cut only the
@@ -582,6 +591,7 @@ def parse_post(md):
                     "body": _pick_body(paras), "why": _pick_why(paras),
                     "display_body": _display_body(head if lede else "", paras),
                     "url": urls[0] if urls else None, "raw": raw,
+                    "sources": story_sources(raw),
                     "anchor_sid": anchor_sid})
 
     while i < n:
@@ -715,6 +725,27 @@ def source_domain(url):
         return ""
     host = m.group(1).lower()
     return host[4:] if host.startswith("www.") else host
+
+
+def story_sources(raw):
+    """[{url, domain, label}] for every distinct DOMAIN the story text cites, in prose order.
+
+    One entry per domain, not per URL: a story that cites two DW pieces reads as sourced from
+    DW once on the card, and the first of them is the one the entry links. Bare URLs count too
+    (the same `_URL_RE` walk `url` comes from, so `sources[0].url == url` always holds); only
+    markdown links contribute a label, and a label falls back to the domain.
+    """
+    labels = {}
+    for label, url in _MDLINK_RE.findall(raw or ""):
+        labels.setdefault(url, _strip_md(_CITE_DATE_TAIL_RE.sub("", label)).strip())
+    out, seen = [], set()
+    for url in _URL_RE.findall(raw or ""):
+        dom = source_domain(url)
+        if not dom or dom in seen:
+            continue
+        seen.add(dom)
+        out.append({"url": url, "domain": dom, "label": labels.get(url) or dom})
+    return out
 
 
 def norm_url(url):
@@ -1077,7 +1108,6 @@ def load_recent(days):
             imp = importance_for(pos, lead_pos, singles[pos], im.get("importance"))
             primary = topics[0]
             label, color = TOPICS.get(primary, (primary.title(), "#6b6f76"))
-            y, mo, dy = date.split("-")
             # the writer's recorded prose (display_body/why, DEDUP Step C) beats the markdown
             # re-parse — the record is authored, the parse is recovered.
             #
@@ -1114,8 +1144,10 @@ def load_recent(days):
                 "stream": stream, "stream_label": STREAM_LABEL.get(stream, stream.title()),
                 "topics": topics, "topic_primary": primary, "topic_label": label, "topic_color": color,
                 "importance": imp, "is_lead": imp == 3,
-                "permalink": "/%s/%s/%s/%s/" % (y, mo, dy, stream),
             }
+            if s.get("sources"):
+                # absent, not [], for a linkless story: Liquid's `{% if s.sources %}` is the gate
+                story["sources"] = s["sources"]
             # when the reported event happened (writer-supplied, ISO of any precision). The board
             # turns it into a card label; `feed.stories` does not carry it (main() pops it after
             # build_board), because the golden feed pins that list's keys.
