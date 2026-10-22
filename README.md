@@ -4,7 +4,7 @@ Automated news-brief pipeline. Remote claude.ai routines research and write dail
 into this repo, publish them as a Jekyll site, and push notifications through a local ntfy bridge.
 Stories are deduped against a rolling embeddings index so the same item isn't re-run for days.
 
-- **Site:** https://khalic-lab.github.io/claude-routines/
+- **Site:** https://khalic-lab.github.io/claude-routines/ · **Story feed (RSS):** https://khalic-lab.github.io/claude-routines/stories.xml
 - **Briefs:** `_posts/{YYYY-MM-DD}-{slug}.md` (`news`, `sports`, `ai-ml`, `science`, `weekend`, `evaluator`)
 - **How it works / current state:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
 - **Working in this repo (for agents):** [`routines/README.md`](routines/README.md) (the live prompts, the publish step) · [`routines/MANIFEST.md`](routines/MANIFEST.md) (triggers, crons) · [`tools/admin/BRIDGE.md`](tools/admin/BRIDGE.md) (the local bridge)
