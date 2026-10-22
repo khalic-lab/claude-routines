@@ -957,6 +957,14 @@ async function runCase(browser, ctxOpts, state, fault = null) {
           if (inp) { inp.value = 'not new'; inp.setSelectionRange(1, 5); }
           const k = await keeps(inp, () => write(F.S1c));
           A.refillFocusTyping = [k[0] && same(now(), F.R1c), `another tab read ${F.TYPE_T}: ${show(now(), F.R1c)}; ${k[1]}`];
+          // the reason box and the "sign in to vote" note are this step's own, not the recompose's:
+          // retract the vote (which hides the box) and clear the note, so that step 4 compares the
+          // page with its load layout and measures the recompose alone. With a card that is on
+          // All's front here (today's data), the box left open made every item below it "move".
+          click(cardL.querySelector('.vote--down'));
+          const dlg2 = document.querySelector('dialog[open]'); if (dlg2) dlg2.close();
+          const vn = cardL.querySelector('.vnote'); if (vn) vn.textContent = '';
+          await frames();
         } else A.refillFocusTyping = SKIP('fewer than three refilled cards after a tick');
         // 4. All: its LOAD-TIME front (not a pick from the reads since), the reads dimmed, and
         // nothing on the page has moved since load
