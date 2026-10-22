@@ -1,4 +1,27 @@
-{%- comment -%} More (when the item folds), then ✓ and the two votes. All need script. {%- endcomment -%}
+{%- comment -%}
+  Discuss (a story only: the item passed as `s`), More (when the item folds), then ✓ and the two
+  votes. Discuss is a plain link and works without script: it opens a new Claude conversation
+  prefilled with the headline, the prose, the desk's note and every source URL, so the reader
+  can question the story against its own sources. The other controls need script.
+{%- endcomment -%}
+{%- if include.s -%}
+{%- assign st = include.s -%}
+{%- capture dq -%}
+Let's discuss this news story.
+
+Headline: {{ st.headline }}
+{% if st.deck %}Deck: {{ st.deck }}
+{% endif %}Summary: {{ st.summary | truncate: 500 }}
+{% if st.why and st.why != "" %}Why it matters: {{ st.why | truncate: 300 }}
+{% endif %}Desk: {{ st.stream_label }}, {{ st.day_label }}
+{% if st.sources %}Sources:
+{% for src in st.sources %}- {{ src.label }}: {{ src.url }}
+{% endfor %}{% elsif st.url %}Source: {{ st.url }}
+{% endif %}
+Start by separating what the sources establish from what is still open, then ask me which angle I want to pursue.
+{%- endcapture -%}
+<a class="discuss" href="https://claude.ai/new?q={{ dq | url_encode }}" target="_blank" rel="noopener noreferrer">Discuss<span class="vh"> this story with Claude (opens in a new tab)</span></a>
+{%- endif -%}
 {%- if include.fold and include.fold != "" -%}
 <button class="more needs-js" type="button" aria-expanded="{% if include.open %}true{% else %}false{% endif %}" aria-controls="{{ include.fold }}"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 10 10"><path d="M1.5 3.5 5 7l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6"/></svg><span>{% if include.open %}Less{% else %}More{% endif %}</span></button>
 {%- endif -%}

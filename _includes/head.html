@@ -17,6 +17,7 @@
 <title>{% if page.title and page.title != site.title %}{{ page.title | escape }} | {% endif %}{{ site.title | escape }}</title>
 {% seo title=false %}
 {% feed_meta %}
+<link rel="alternate" type="application/rss+xml" title="{{ site.title | escape }} — stories" href="{{ '/stories.xml' | relative_url }}">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="{{ '/assets/fonts/anton-latin.woff2' | relative_url }}">
 {% include tokens.html %}
 {%- for sheet in layout.css %}

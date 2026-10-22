@@ -48,7 +48,8 @@ def templates():
                 if fn.endswith((".html", ".md", ".json")):
                     out.append(os.path.join(dirpath, fn))
     # root pages carry Liquid too (admin, prompts, the 404, the edition stamp for the freshness check)
-    for fn in ("index.html", "index.md", "admin.html", "prompts.html", "404.html", "edition.json"):
+    for fn in ("index.html", "index.md", "admin.html", "prompts.html", "404.html", "edition.json",
+               "stories.xml"):
         p = os.path.join(ROOT, fn)
         if os.path.isfile(p):
             out.append(p)
@@ -109,7 +110,8 @@ class LiquidBalanceTests(unittest.TestCase):
         """Guard the guard: the walk must actually reach the file this was written for."""
         rels = [os.path.relpath(p, ROOT) for p in templates()]
         self.assertIn(os.path.join("_layouts", "home.html"), rels)
-        for rel in (os.path.join("_includes", "home", "row.html"), "prompts.html", "edition.json"):
+        for rel in (os.path.join("_includes", "home", "row.html"), "prompts.html", "edition.json",
+                    "stories.xml"):
             self.assertIn(rel, rels)
 
     # --- the checker itself, or it could pass everything and we would not know ---
