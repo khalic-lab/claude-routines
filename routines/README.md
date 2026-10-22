@@ -3,7 +3,7 @@
 **Since 2026-06-29 the live triggers are BOOTSTRAP SHIMS**: each writer/evaluator trigger's stored
 prompt is a small shim that `git pull`s this repo and reads its real prompt from `routines/<slug>.md`
 at fire time. The files here are not snapshots that can drift — they ARE the live prompts. See
-`MANIFEST.md` for the shim shape and per-trigger config, and "The edit workflow" below.
+`MANIFEST.md` for the shim shape and per-trigger config, and `../CLAUDE.md` → "Editing a routine".
 
 ## Files
 

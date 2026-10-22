@@ -23,9 +23,6 @@ the shapes, and every surface works without script.
 
 ### Dead or stale
 
-- **`README.md` linked `CLAUDE.md`**, deleted months ago. `_config.yml` and
-  `tools/check_publish.py` still excluded `CLAUDE.md`, `HANDOFF.md`, `bridge.sh` and `briefs/`,
-  none of which exist. `routines/README.md` pointed at `../CLAUDE.md` too. *Fixed.*
 - **`permalink` on every feed story** pointed at `/YYYY/MM/DD/<stream>/`, pages retired on
   2026-07-18. Nothing read it except one test. *Removed.*
 - **The colophon's "RSS feed" was `/feed.xml`**, which jekyll-feed builds from published posts.
@@ -84,15 +81,15 @@ the shapes, and every surface works without script.
 - **The golden feed test pinned the story shape by special-casing `sid`**: any additive field
   either had to be popped after the board was built (`event_date` is) or needed test surgery.
   Now it compares whole stories and a new field means a deliberate re-capture.
-- `.claude/settings.json` is tracked but marked skip-worktree, so it is absent in a fresh
-  worktree while `git status` reads clean. Surprising, not wrong.
 
 ## What I simplified, and why
 
-1. **Stale names** (`741e9d14`): README, `routines/README.md`, `_config.yml` excludes and
-   `check_publish.REQUIRED_EXCLUDES` now name only files that exist; the README's agent entry
-   points at `routines/README.md`, `routines/MANIFEST.md` and `tools/admin/BRIDGE.md`; the
-   `sports` slug is listed. `REVIEW.md` is excluded from the Pages build like the other root docs.
+1. **Housekeeping** (`741e9d14`, corrected in round 2): the README lists the `sports` slug and
+   `REVIEW.md` is excluded from the Pages build like the other root docs. The same commit also
+   removed `CLAUDE.md`, `HANDOFF.md`, `bridge.sh` and `briefs` from the excludes and the README
+   pointers to `CLAUDE.md`, on the mistaken reading that those files were gone from the repo.
+   They were only absent from this worktree; the excludes are deliberate guards and `CLAUDE.md`
+   is a private file that must never publish. All of that is restored.
 2. **`permalink` dropped** (`68534b0d`): a dead field on every story and every board item.
 3. **Golden test compares whole stories** (`68534b0d`): `test_feed_sid` no longer hard-codes
    which keys may appear; the golden fixture was re-captured and now pins the full current output,
