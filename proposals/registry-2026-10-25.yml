@@ -1,0 +1,146 @@
+date: 2026-10-25
+applied: false
+# Reach flips below are ALL entries of health.json -> briefs.reach_drift.flips (min_proxy=3): registry domains
+# recorded reach: direct whose writer fetches this window had 0 ok-curl, >=1 fail and >=3 ok-proxy (subdomain
+# hosts folded into the registry domain). WRITER-side telemetry, not evaluator probes (this egress is
+# allowlist-walled: ERR:56 on every non-allowlisted host). CARRIED = already proposed in an earlier,
+# still-unstamped file (pending, not applied); listed again only because the drift list is copied in full.
+# NOTE arxiv.org = abstract/HTML host only; export.arxiv.org stays reach: direct.
+# NOTE gfsbern.ch, svp.ch, merck.com, unep.org were first registered this month by the candidate sync, which
+# defaults every candidate to reach: direct (tools/sources/registry.py; see review Open question 2).
+patches:
+  - domain: arxiv.org
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 29 ok-proxy / 1 fail this window; hosts arxiv.org. CARRIED from 2026-10-04 + 2026-10-11 + 2026-10-18 (pending)."
+  - domain: lemonde.fr
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 13 ok-proxy / 13 fail this window; hosts lemonde.fr. CARRIED from 2026-10-04 + 2026-10-11 + 2026-10-18 (pending)."
+  - domain: techcrunch.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 12 ok-proxy / 12 fail this window; hosts techcrunch.com. CARRIED from 2026-10-11 + 2026-10-18 (pending)."
+  - domain: rfi.fr
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 9 ok-proxy / 9 fail this window; hosts rfi.fr. CARRIED from 2026-10-04 + 2026-10-11 + 2026-10-18 (pending)."
+  - domain: ansa.it
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 8 ok-proxy / 8 fail this window; hosts ansa.it. CARRIED from 2026-10-11 + 2026-10-18 (pending)."
+  - domain: europarl.europa.eu
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 6 ok-proxy / 6 fail this window; hosts europarl.europa.eu. CARRIED from 2026-10-18 (pending)."
+  - domain: github.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 6 ok-proxy / 5 fail this window; hosts api.github.com, github.com. CARRIED from 2026-10-11 (pending)."
+  - domain: huggingface.co
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 6 ok-proxy / 6 fail this window; hosts huggingface.co. CARRIED from 2026-10-04 + 2026-10-11 + 2026-10-18 (pending)."
+  - domain: arstechnica.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 5 ok-proxy / 5 fail this window; hosts arstechnica.com. CARRIED from 2026-10-04 + 2026-10-18 (pending)."
+  - domain: autosport.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 5 ok-proxy / 5 fail this window; hosts autosport.com. CARRIED from 2026-10-11 + 2026-10-18 (pending)."
+  - domain: elpais.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 5 ok-proxy / 7 fail this window; hosts elpais.com, feeds.elpais.com. CARRIED from 2026-10-11 + 2026-10-18 (pending)."
+  - domain: kyivindependent.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 5 ok-proxy / 5 fail this window; hosts kyivindependent.com. CARRIED from 2026-10-11 (pending)."
+  - domain: phys.org
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 5 ok-proxy / 5 fail this window; hosts phys.org."
+  - domain: gfsbern.ch
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 4 ok-proxy / 4 fail this window; hosts gfsbern.ch."
+  - domain: svp.ch
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 4 ok-proxy / 4 fail this window; hosts svp.ch."
+  - domain: theguardian.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 4 ok-proxy / 6 fail this window; hosts theguardian.com. CARRIED from 2026-10-04 + 2026-10-11 (pending)."
+  - domain: theverge.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 4 ok-proxy / 4 fail this window; hosts theverge.com. CARRIED from 2026-10-11 + 2026-10-18 (pending)."
+  - domain: vd.ch
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 4 ok-proxy / 4 fail this window; hosts vd.ch. CARRIED from 2026-10-11 + 2026-10-18 (pending)."
+  - domain: balkaninsight.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 3 ok-proxy / 3 fail this window; hosts balkaninsight.com."
+  - domain: merck.com
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 3 ok-proxy / 3 fail this window; hosts merck.com."
+  - domain: unep.org
+    field: reach
+    from: direct
+    to: proxy
+    evidence: "0 ok-curl / 3 ok-proxy / 4 fail this window; hosts unep.org."
+  - domain: ox.ac.uk
+    from: none
+    to: candidate
+    reach: proxy
+    evidence: "Sunday scout 2026-10-25 for science: institutional research newsroom (https://www.ox.ac.uk/news-listing); ERR:56 from evaluator egress (allowlist wall, not a site verdict); appended to sources/candidates.jsonl with reach proxy-needed."
+  - domain: helmholtz.de
+    from: none
+    to: candidate
+    reach: proxy
+    evidence: "Sunday scout 2026-10-25 for science: institutional research newsroom (https://www.helmholtz.de/en/newsroom/); ERR:56 from evaluator egress (allowlist wall, not a site verdict); appended to sources/candidates.jsonl with reach proxy-needed."
+  - domain: ucl.ac.uk
+    from: none
+    to: candidate
+    reach: proxy
+    evidence: "Sunday scout 2026-10-25 for science: institutional research newsroom (https://www.ucl.ac.uk/news/); ERR:56 from evaluator egress (allowlist wall, not a site verdict); appended to sources/candidates.jsonl with reach proxy-needed."
+  - domain: imperial.ac.uk
+    from: none
+    to: candidate
+    reach: proxy
+    evidence: "Sunday scout 2026-10-25 for science: institutional research newsroom (https://www.imperial.ac.uk/news/); ERR:56 from evaluator egress (allowlist wall, not a site verdict); appended to sources/candidates.jsonl with reach proxy-needed."
+  - domain: nih.gov
+    from: none
+    to: candidate
+    reach: proxy
+    evidence: "Sunday scout 2026-10-25 for science: institutional research newsroom (https://www.nih.gov/news-events/news-releases); ERR:56 from evaluator egress (allowlist wall, not a site verdict); appended to sources/candidates.jsonl with reach proxy-needed."
+  - domain: pasteur.fr
+    from: none
+    to: candidate
+    reach: proxy
+    evidence: "Sunday scout 2026-10-25 for science: institutional research newsroom (https://www.pasteur.fr/en/press-area); ERR:56 from evaluator egress (allowlist wall, not a site verdict); appended to sources/candidates.jsonl with reach proxy-needed."
