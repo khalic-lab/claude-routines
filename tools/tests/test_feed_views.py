@@ -105,17 +105,6 @@ class PeriodViewTest(unittest.TestCase):
         self.assertEqual(bsf.period_view("2025-12-29", "2026-01-04")["label"], "29 Dec 2025–4 Jan")
 
 
-class HeadlineDotTest(unittest.TestCase):
-    def test_terminal_punctuation(self):
-        self.assertTrue(bsf.hl_dot("Baltics sanction Russian oligarchs"))
-        self.assertFalse(bsf.hl_dot("Is the fixed price real?"))
-        self.assertFalse(bsf.hl_dot("It worked!"))
-        self.assertFalse(bsf.hl_dot("He said “no.”"))
-        self.assertTrue(bsf.hl_dot("The “fixed price”"))
-        self.assertFalse(bsf.hl_dot(""))
-        self.assertFalse(bsf.hl_dot(None))
-
-
 class EditorialHeadingTest(unittest.TestCase):
     def ed(self, title="", paras=None, stream="weekend", date="2026-09-19"):
         return {"title": title, "paras": paras if paras is not None else [], "stream": stream, "date": date}
@@ -248,9 +237,11 @@ class BuildViewsTest(unittest.TestCase):
         self.assertFalse(doi["unfurl"], "doi.org resolves to a publisher badge")
         self.assertFalse(brief["unfurl"], "briefs carry no image")
         self.assertFalse(nourl["unfurl"])
-        self.assertTrue(lead["boot_open"], "today's lead boots open (R33)")
-        self.assertFalse(news1["boot_open"])
-        self.assertFalse(doi["boot_open"])
+        # round 3 (2026-10-25): nothing boots open (R33 was agent-made) and the page adds no
+        # terminal period to a headline (the writers' prompts ban one), so neither field exists
+        for it in (lead, news1, doi, brief):
+            self.assertNotIn("boot_open", it)
+            self.assertNotIn("hl_dot", it)
 
     def test_desk_tag_only_on_multi_desk_days_and_only_when_it_says_something(self):
         lead, news1, paper, brief, _, doi, nourl = self.board

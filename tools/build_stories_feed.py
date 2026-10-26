@@ -1373,16 +1373,6 @@ def period_view(start, end):
             "label": label}
 
 
-def hl_dot(headline):
-    """True when the headline needs the page's terminal period: it does not already end in
-    . ? or ! (looking inside one closing quote). Headlines stay period-free in the data."""
-    h = (headline or "").strip()
-    last = h[-1:]
-    if last in "\"'”’" and len(h) > 1:
-        last = h[-2]
-    return bool(h) and last not in ".?!"
-
-
 def _is_paper(url):
     host = source_domain(url).split(":", 1)[0]
     return any(host == p or host.endswith("." + p) for p in PAPER_HOSTS)
@@ -1527,7 +1517,7 @@ def build_views(board, max_date, topics, posts_dir=None):
     """Annotate the board in place with the page's render fields and return the views.
 
     Board item fields added: every item `edition` ("<date>-<stream>"), `period` (period_view),
-    `on_front`; stories `tier`, `tier_label`, `hl_dot`, `unfurl`, `boot_open`, `show_desk`,
+    `on_front`; stories `tier`, `tier_label`, `unfurl`, `show_desk`,
     `n_sources` (and `flags`, which load_recent sets and main() keeps off feed.stories);
     editorials `sid` ("ed-<stream>-<date>", the read id), `topics` (the sorted union of its
     edition's story topics, so a beat filter shows the desk's view of that beat), `stream_label`,
@@ -1557,9 +1547,7 @@ def build_views(board, max_date, topics, posts_dir=None):
         else:
             imp = it.get("importance") if it.get("importance") in TIER else 1
             it["tier"], it["tier_label"] = TIER[imp]
-            it["hl_dot"] = hl_dot(it.get("headline"))
             it["unfurl"] = bool(it.get("url")) and imp > 1 and not _is_paper(it.get("url"))
-            it["boot_open"] = imp == 3 and date == max_date
             it["event_label"] = event_label(it.get("event_date"), it["period"]["start"], date)
             # how many distinct outlets the story cites (story_sources): the page prints the
             # count when it is more than one, the flags say when it is one and should be more
