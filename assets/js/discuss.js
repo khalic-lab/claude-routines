@@ -1,23 +1,19 @@
-// Discuss: a prefilled Claude conversation from a story, an editorial or a day edition.
+// Discuss: a prefilled Claude conversation from a story, an editorial or a day edition (C16).
 //
 // The link works without script: the template writes a short prompt into each href (the
 // headline and its primary source; a day's headlines). With script every Discuss href is
-// rebuilt ONCE, at load, and again when the refill adopts a reserve copy (the same `adopt` hook
-// og.js uses for image slots), from the text already on the page: headline, deck, summary, why,
-// the flags, every source with its label, desk and day. Built once rather than on an event, so
-// a keyboard activation, a middle-click and "copy link" all see the same href the suite reads.
-// Nothing is fetched. Before this the template wrote the whole prompt into every href: 140 KB
-// of a 586 KB homepage, twice for every story that also sat in a reserve <template>.
-//
-// The URL's origin and path come from the template's own href, so no host is named here
-// (tools/tests/test_frontend_static.py allows only the two Workers in assets/js).
+// rebuilt ONCE, at load, and again when the front adopts a reserve copy, from the text already
+// on the page: headline, deck, summary, why, the flags, every source with its label, desk and
+// day. Built once rather than on an event, so a keyboard activation, a middle-click and "copy
+// link" see the same href. Nothing is fetched. The URL's origin and path come from the
+// template's own href, so no host is named here.
 const CAP = { summary: 600, why: 300, editorial: 2500 };
 
 // visible text, without the screen-reader suffixes and the "Why it matters" label
 function plain(el, drop = '.vh') {
   if (!el) return '';
   const c = el.cloneNode(true);
-  c.querySelectorAll(drop).forEach((x) => x.remove());
+  for (const x of c.querySelectorAll(drop)) x.remove();
   return c.textContent.replace(/\s+/g, ' ').trim();
 }
 const cap = (s, n) => (s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : s);
@@ -26,8 +22,7 @@ const cap = (s, n) => (s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, '') +
 function where(item) {
   const ed = item.dataset.edition || '', date = ed.slice(0, 10), stream = ed.slice(11);
   const day = document.querySelector(`section.day[data-date="${date}"]`);
-  const desk = plain(item.querySelector('.ptag b')) || plain(day && day.querySelector(`.ptag[data-stream="${stream}"] b`))
-    || plain(item.querySelector('.row__desk', '.vh')) || stream;
+  const desk = plain(item.querySelector('.kick__desk')) || plain(day && day.querySelector(`.ptag[data-stream="${stream}"] b`)) || stream;
   const when = plain(item.querySelector('.fday')) || plain(day && day.querySelector('.day__h time')) || date;
   return { desk, when };
 }
@@ -66,13 +61,15 @@ function editorialPrompt(item) {
     '', 'Start by listing the claims it makes and which of them would need a source, then ask me which I want to test.',
   ].join('\n');
 }
+// the day's stories in rank order from `data-sids`: each one's element is its row or its card
+// (a story on the front has no row in its day)
 function dayPrompt(section) {
   const label = plain(section.querySelector('.day__h'));
   const desks = [...section.querySelectorAll('.day__cov .ptag')].map((t) => plain(t)).join('; ');
   const lines = ["Let's discuss the " + label + ' edition' + (desks ? ' (' + desks + ')' : '') + '.', '', 'Stories, biggest first:'];
   let n = 0;
-  for (const el of section.querySelectorAll('.rows > [data-story], .rows > [data-ptr]')) {
-    const item = el.dataset.ptr ? document.getElementById('c-' + el.dataset.ptr) : el;
+  for (const sid of (section.dataset.sids || '').split(' ').filter(Boolean)) {
+    const item = document.getElementById('r-' + sid) || document.getElementById('c-' + sid);
     if (!item) continue;
     const src = sourcesOf(item)[0], flags = flagsOf(item);
     lines.push(`${++n}. ${plain(item.querySelector('.hl'))}` + (src ? ' — ' + src.url : '') + (flags.length ? ' [' + flags.join(', ') + ']' : ''));
@@ -99,6 +96,4 @@ function build(a) {
 export function prepare(root) {
   for (const a of root.querySelectorAll('a.discuss[data-discuss]')) build(a);
 }
-export function initDiscuss() {
-  prepare(document);
-}
+export function initDiscuss() { prepare(document); }

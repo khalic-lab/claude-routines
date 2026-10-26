@@ -1,0 +1,20 @@
+{%- comment -%}
+  The phone's two bottom sheets, native <dialog>s opened from the bar (dialogs.js): the beats
+  (the same chips as the rail and the bar's strip; one painter) and the day jump. Top layer, so
+  the bar clips nothing (F5); the page behind is inert; Esc or the scrim closes.
+{%- endcomment -%}
+<dialog id="beats" class="dlg dlg--sheet" aria-labelledby="beats-h">
+  <div class="dlg__box">
+    <form class="dlg__x" method="dialog"><button type="submit" aria-label="Close beats">×</button></form>
+    <h2 class="dlg__h dlg__h--sheet" id="beats-h">Beats <small>pick any</small></h2>
+    <div class="chips chips--sheet" role="group" aria-label="Beat">{% include home/chips.html feed=include.feed %}</div>
+    <form class="dlg__end" method="dialog"><button class="btn" type="submit">Done</button></form>
+  </div>
+</dialog>
+<dialog id="days" class="dlg dlg--sheet" aria-labelledby="days-h">
+  <div class="dlg__box">
+    <form class="dlg__x" method="dialog"><button type="submit" aria-label="Close days">×</button></form>
+    <h2 class="dlg__h dlg__h--sheet" id="days-h">Jump to</h2>
+    <nav aria-label="Editions">{% include home/days.html feed=include.feed %}</nav>
+  </div>
+</dialog>

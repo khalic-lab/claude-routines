@@ -1,9 +1,9 @@
 // Beat + read-filter preferences: topicPrefs:v1 {topics, rs, ts}, local first, roamed through
-// the Worker's /prefs as ONE statement of intent (whole-object LWW by ts; the Worker re-serializes
-// exactly these three fields and rejects more than 50 topics). Topics with no chip today are
-// carried through by the caller ("held"), never dropped.
-import { PREFS_KEY, load, save } from './store.js';
-import { fb, session, authHeaders, sessionDied, say, on } from './sync.js';
+// the Worker's /prefs as ONE statement of intent (whole-object last-writer-wins by ts; the
+// Worker re-serialises exactly these three fields and rejects more than 50 topics). Keys with
+// no chip today are carried through by the board ("held", R37), never dropped.
+import { PREFS_KEY, load, save } from './state.js';
+import { fb, session, authHeaders, sessionDied, say, on } from './session.js';
 
 const TOPIC_CAP = 50;
 export const validRs = (v) => (v === 'unread' || v === 'read' ? v : '');
@@ -25,8 +25,8 @@ export function record(topics, rs) {             // every chip / read-filter pre
   push();
 }
 function push() {
-  // B8: never push an untouched default (ts 0). The Worker stamps a 0 ts as "now", and that
-  // empty default then beat a real selection another device made earlier.
+  // never push an untouched default (ts 0): the Worker stamps a 0 ts as "now", and that empty
+  // default would beat a real selection another device made earlier
   if (!session() || !prefs.ts) return;
   pending = true;
   clearTimeout(timer);

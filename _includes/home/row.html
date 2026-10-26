@@ -1,7 +1,9 @@
 {%- comment -%}
-  A story in its day edition's index. Folded at rest; opens inline. The meta line carries the
-  desk's flags and the source count (signals) before the beat and the primary source; the fold
-  closes with every outlet the story cites (sources).
+  A story in its day edition's index. Folded at rest; opens inline. Glyph | headline, [deck],
+  one kicker line (desk when the day has several, primary source, beat, the desk's flags, the
+  event date, Just in); the fold holds body, every outlet and Discuss; the why stays visible
+  (leads and features); the controls close it. From 1024px the body, why and controls run down
+  the right-hand track beside the headline (R15; PLAN decision 3 reopened in round 3).
 {%- endcomment -%}
 {%- assign s = include.s -%}
 {%- assign id = s.sid | default: s.id -%}
@@ -14,12 +16,12 @@
     <header class="row__head">
       {% include home/headline.html s=s id=id cls=hcls %}
       {%- if s.deck %}<p class="deck">{{ s.deck | escape }}</p>{% endif %}
-      <p class="row__meta">{% include home/event.html s=s %}{% if s.show_desk %}<span class="row__desk"><span class="vh">Desk: </span>{{ s.stream_label }}</span>{% endif %}{% include home/signals.html s=s %}{% if s.fresh %}<span class="fresh">Just in</span>{% endif %}{% include home/meta.html s=s %}</p>
+      <p class="kick">{% if s.show_desk %}<span class="kick__desk">{{ s.stream_label }}</span>{% endif %}{% include home/meta.html s=s %}{% include home/signals.html s=s %}{% include home/event.html s=s %}{% if s.fresh %}<span class="fresh">Just in</span>{% endif %}</p>
     </header>
-    <div class="fold row__body" id="f-{{ id }}">{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}{% include home/sources.html s=s id=id %}</div>
+    <div class="fold row__body" id="f-{{ id }}">{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}{% include home/sources.html s=s id=id %}<p class="talk">{% include home/actions.html s=s %}</p></div>
     {%- if s.importance > 1 and s.why and s.why != "" %}
     <div class="row__why">{% include home/why.html s=s %}</div>
     {%- endif %}
-    <footer class="row__foot">{% include home/actions.html fold=fid s=s %}</footer>
+    <footer class="row__foot">{% include home/controls.html fold=fid %}</footer>
   </article>
 </li>

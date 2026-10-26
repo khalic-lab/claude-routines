@@ -5,23 +5,28 @@ css: [reset, base, prose, utilities, state]
 {%- comment -%}
   Reading pages: the weekly evaluator reviews (the only posts still published), /prompts/ and the
   404. The name `single` is pinned by tools/publish.py (ensure_front_matter writes it into every
-  post) and tools/tests/test_publish.py, so it stays.
+  post) and tools/tests/test_publish.py, so it stays. A review whose body opens with its own
+  `# heading` gets one h1 (F13): the layout prints the kicker and the date, and the body's first
+  heading is styled as the title.
 {%- endcomment -%}
 {%- assign is_review = false -%}
 {%- if page.categories contains 'evaluator' -%}{%- assign is_review = true -%}{%- endif -%}
-<div class="page-shell">
+{%- assign lead = content | strip | slice: 0, 3 -%}
+{%- assign own_h1 = false -%}
+{%- if lead == '<h1' -%}{%- assign own_h1 = true -%}{%- endif -%}
+<div class="shell">
   <header class="site-head">
     <a class="site-name" href="{{ '/' | relative_url }}">{{ site.title | escape }}</a>
-    <nav class="site-head__nav" aria-label="Site">
+    <nav class="site-nav" aria-label="Site">
       <a href="{{ '/' | relative_url }}">Front page</a>
       <a href="{{ '/prompts/' | relative_url }}">The prompts</a>
     </nav>
   </header>
   <main id="main">
-    <article class="prose">
+    <article class="prose{% if own_h1 %} prose--own-h1{% endif %}">
       <header class="prose__head">
         {%- if is_review %}<p class="prose__kicker">Weekly pipeline review</p>{% endif %}
-        <h1 class="prose__title">{{ page.title | escape }}</h1>
+        {%- unless own_h1 %}<h1 class="prose__title">{{ page.title | escape }}</h1>{% endunless %}
         {%- if page.collection == 'posts' %}
         <p class="prose__meta"><time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%-d %B %Y" }}</time></p>
         {%- endif %}

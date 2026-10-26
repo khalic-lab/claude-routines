@@ -1,5 +1,5 @@
-// On-device readout (?probe): Mobile Safari hands no terminal its numbers, so the page prints its
-// own viewport measurements into a fixed layer and the screenshot is the measurement.
+// On-device readout (?probe): Mobile Safari hands no terminal its numbers, so the page prints
+// its own viewport measurements into a fixed layer and the screenshot is the measurement.
 export default function probe() {
   const p = document.createElement('div');
   p.style.cssText = 'position:fixed;inset-block-start:0;inset-inline:0;z-index:99999;'

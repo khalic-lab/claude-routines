@@ -1,6 +1,3 @@
+{%- comment -%} The primary source (the headline's link, in the red R36 spends on it) and the beat. Every outlet is listed in the fold (home/sources.html). {%- endcomment -%}
 {%- assign s = include.s -%}
-{%- comment -%}
-  Beat, then the primary source: the headline's link. Every outlet the story cites, with its
-  label, is listed in the fold (home/sources.html); the header line counts them (home/signals.html).
-{%- endcomment -%}
-<span class="topic" style="--tc:{{ s.topic_color }}"><i class="dot" aria-hidden="true"></i>{{ s.topic_label | escape }}</span><span class="src">{% if s.affiliation_label %}<span class="src__aff">{{ s.affiliation_label | escape }} · </span>{% endif %}<span class="src__dom">{{ s.source_domain | escape }}</span></span>
+<span class="src">{% if s.affiliation_label %}<span class="src__aff">{{ s.affiliation_label | escape }} · </span>{% endif %}<span class="src__dom">{{ s.source_domain | escape }}</span></span><span class="topic" style="--tc:{{ s.topic_color }}"><i class="dot" aria-hidden="true"></i>{{ s.topic_label | escape }}</span>

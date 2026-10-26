@@ -1,10 +1,11 @@
 {%- comment -%}
   <head> for every layout except the self-owned admin one. Stylesheets come from the rendering
-  layout's `css:` list (layout front matter merges up to default.html), each stamped with the build
-  time so a new build never pairs new HTML with a cached old sheet (Pages serves max-age=600).
-  Layouts that ship modules list them in `js:` (entry first): they get an import map that stamps every
-  module the same way, and the `.js` gate, which folds text only when module script is supported and removes itself if the
-  entry module never reports ready -- without script every text shows.
+  layout's `css:` list (layout front matter merges up to default.html), each stamped with the
+  build time so a new build never pairs new HTML with a cached old sheet (Pages serves
+  max-age=600). A layout that ships modules lists them in `js:` (entry first): it gets an import
+  map that stamps every module the same way, and the `.js` gate: the class folds text only when
+  module script is supported, and removes itself if the entry module never reports ready, so
+  without script every text shows (C5).
 {%- endcomment -%}
 {%- assign v = site.time | date: '%s' -%}
 <meta charset="utf-8">
@@ -12,8 +13,8 @@
 {%- if page.noindex %}
 <meta name="robots" content="noindex">
 {%- endif %}
-{%- comment -%} jekyll-seo-tag titles the homepage "News | <description>"; the site's own rule is
-  "<page> | News" and just "News" for the front page. {%- endcomment %}
+{%- comment -%} jekyll-seo-tag would title the homepage "News | <description>"; the site's rule is
+  "<page> | News", and plain "News" on the front page {%- endcomment %}
 <title>{% if page.title and page.title != site.title %}{{ page.title | escape }} | {% endif %}{{ site.title | escape }}</title>
 {% seo title=false %}
 {% feed_meta %}

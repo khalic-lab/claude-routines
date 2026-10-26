@@ -151,13 +151,27 @@ class TemplateTest(unittest.TestCase):
             self.assertIn('data-story="{{ id }}" data-edition="{{ s.edition }}"', s)
         self.assertIn('data-story="{{ e.sid }}"', read(os.path.join(REPO, "_includes", "home", "editorial.html")))
 
-    def test_the_editorial_pointer_is_one_link(self):
-        """The pointer is an <a>; a promoted lede's own link inside it would split it in two."""
+    def test_a_lifted_story_waits_in_a_template_and_the_day_counts_it(self):
+        """Round 3 (PLAN decision 1 reopened): no "On the front" pointer rows. A builder-front
+        story renders no live row in its day; its row waits in a <template data-front-row> at its
+        rank for when All's load-time front leaves it off (front.js), and the day header counts
+        what it lent with a link to the front (C9). The Desk's view editorial likewise."""
         src = read(HOME)
-        i = src.index('class="ptr__h ptr__h--ed"')
-        line = src[i:src.index("</span>", i)]
-        self.assertIn("it.title_text", line)
-        self.assertNotRegex(line, r"it\.title_html\s*\}\}")
+        self.assertNotIn('class="ptr', src, "pointer rows are gone")
+        self.assertIn('<template data-front-row="{{ it.sid | default: it.id }}">{% include home/row.html s=it %}</template>', src)
+        self.assertIn('<template data-front-ed="{{ it.sid }}">{% include home/editorial.html e=it where="day" idp="day-" %}</template>', src)
+        self.assertIn('<a class="day__front" href="#front">', src)
+        self.assertIn('data-sids="{{ sids | strip }}"', src)
+        self.assertIn('<section class="front" id="front"', src)
+
+    def test_nothing_boots_open(self):
+        """Every card, row and editorial renders folded (R33 retired in round 3); the lead's
+        body is behind More like every other."""
+        for inc in ("front-card.html", "row.html", "editorial.html"):
+            s = read(os.path.join(REPO, "_includes", "home", inc))
+            self.assertRegex(s, r'class="(fc|row|ed)[^"]* is-folded"', inc)
+            self.assertNotIn("boot_open", s, inc)
+        self.assertIn('aria-expanded="false"', read(os.path.join(REPO, "_includes", "home", "controls.html")))
 
     def test_deck_prints_when_the_record_has_one(self):
         """`deck` is emitted only when non-empty (test_deck.py); the page prints it after the

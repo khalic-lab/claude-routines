@@ -1,6 +1,6 @@
-// "New edition" on resume. A tab restored from the back/forward cache, or shown again after ten
-// minutes hidden, asks edition.json (no-store) for the current build stamp; if a writer has
-// published since, an in-flow bar offers a reload. Never reloads by itself.
+// "New edition" on resume (C13). A tab restored from the back/forward cache, or shown again
+// after ten minutes hidden, asks edition.json (no-store) for the current build stamp; if a
+// writer has published since, the in-flow notice offers a reload. Never reloads by itself.
 const AWAY_MS = 10 * 60 * 1000;
 
 export function initFresh() {
@@ -15,7 +15,7 @@ export function initFresh() {
       .then((j) => { if (j && j.build_stamp && j.build_stamp !== stamp) bar.hidden = false; })
       .catch(() => {});
   };
-  // a tab opened in the background has been hidden since it loaded: count from then (review F5)
+  // a tab opened in the background has been hidden since it loaded: count from then
   let hiddenAt = document.visibilityState === 'hidden' ? Date.now() : 0;
   addEventListener('pageshow', (e) => { if (e.persisted) check(); });
   document.addEventListener('visibilitychange', () => {

@@ -5,4 +5,5 @@ permalink: /404.html
 sitemap: false
 noindex: true
 ---
-<p>Nothing lives at this address. Individual brief pages were retired in July 2026: every story is on the <a href="{{ '/' | relative_url }}">front page</a>, and the weekly pipeline reviews link to each other from their own pages.</p>
+{%- assign review = site.categories.evaluator | first -%}
+<p>Nothing lives at this address. Individual brief pages were retired in July 2026: every story is on the <a href="{{ '/' | relative_url }}">front page</a>{% if review %}, and the weekly pipeline reviews start from the <a href="{{ review.url | relative_url }}">latest one, {{ review.date | date: "%-d %B %Y" }}</a>{% endif %}.</p>

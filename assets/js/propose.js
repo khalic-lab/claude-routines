@@ -1,7 +1,6 @@
-// "Propose a brief": /propose {topic, detail, surface:'web'} on the passkey session. Stands alone
-// so it answers even on an empty board. Uses the page's session check (token AND reader) and
-// drops a dead session on 401 (old bug B4); hidden with the feedback kill switch (old bug B5).
-import { fb, session, authHeaders, sessionDied, nudgeSignIn } from './sync.js';
+// "Propose a brief": /propose {topic, detail, surface:'web'} on the passkey session. Stands
+// alone so it answers even on an empty board; hidden with the feedback kill switch.
+import { fb, session, authHeaders, sessionDied, nudgeSignIn } from './session.js';
 
 export function initPropose() {
   const form = document.querySelector('.propose__form');
@@ -15,7 +14,7 @@ export function initPropose() {
     const t = (topic.value || '').trim();
     if (!t) { topic.focus(); return; }
     const s = session();
-    if (!s) { msg.textContent = 'sign in to propose — Sync, in the filter bar'; nudgeSignIn('sign in with your passkey to propose'); return; }
+    if (!s) { msg.textContent = 'sign in to propose (Sync, above)'; nudgeSignIn('sign in with your passkey to propose'); return; }
     msg.textContent = 'sending…';
     fetch(fb().url + '/propose', {
       method: 'POST', headers: authHeaders(s, true),
