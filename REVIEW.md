@@ -595,3 +595,311 @@ one painter), `.readbtn`, `.vote[data-v]`, `.more[aria-controls]`, `a.discuss[da
 6. Secondary pages (admin, single, prompts, 404) and their fixes.
 7. `tools/verify/build.sh`, the suite, unit tests, `assemble.py check`, `check_publish.py`;
    screenshots into `/tmp/argon-ux/shots-r3/` with `INDEX.md`; weights; this section completed.
+
+### 8. As built: what differs from the note
+
+The note above is the one pended before any page code (pending commit #1) and stands as written.
+What the build changed, and why:
+
+- **Measure 34 em, not 36.** At 18 px the serif runs 82–86 characters a line at 36 em in a row's
+  right-hand track at 1440; the gate is 50–80 (PLAN decision 3). 34 em measures 72–78. The
+  `--measure` token is set on the text block itself, never on a container in another size.
+- **Tap floor from 700 px: 32 px, not 36.** The rail's read-state list, its beat list and the
+  strip chips at 32 px keep every control above the fold at 804 px with eleven beats (R19).
+  Phones keep 44 px on every tappable thing, text links included (R13).
+- **A fold opens below the head and the head stays still; Less brings the head back.** The note
+  said nothing about scrolling on More, and the old page's anchoring ("the button stays under the
+  pointer") was carried into the first build. With More in the foot after the fold (F6), that
+  anchoring scrolled the page by the fold's height on every open, taking the headline off the
+  screen; and the board counted that scroll as the reader's, so after any More the first roam
+  never retook All, with or without its touch listeners. The fault self-test found it (C8's own
+  words: "that confusion once masked a real bug"). Built: `fold.js` anchors on the item, so
+  opening moves nothing; closing with the head above the chrome scrolls the head back under it
+  (8 px); `anchor.js` sums every scroll the page makes itself and `board.js` takes that sum off
+  its count. The sum is the net of a change: when the browser's own scroll anchoring fires
+  inside `anchored()` (content changed above the viewport) and the payback undoes it, the page
+  moved by nothing and counts nothing; counting only the payback left a phantom reader scroll of
+  the fold's height, which the same test found. Two assertions and three faults cover it
+  (`foldStill`, `allSyncOwnScroll`).
+- **The board arms two frames after `load`, not after DOMContentLoaded.** On WebKit the Sync
+  control appears after the board module runs; it wrapped the masthead links and moved the top
+  item, which the board read as the reader's first scroll.
+- **The Beats opener stays beside the strip at 700–1279 px**: the strip scrolls and the sheet
+  lists every beat; the Days opener is hidden there because the masthead day jump stands. On
+  phones the bar is 52 px plus the safe-area inset; the suite's ceiling is 64 px measured.
+- **A review's body-owned title sat over its date line** (F13's one-h1 fix pulled the body's h1
+  up by 1.2 em into the header, where the date is). Seen in the 1440 evaluator screenshot; the
+  head now closes up instead, reading kicker, date, title, and the pages check fails on any
+  overlap among those three (one fault).
+- **/prompts/ shifts the docs' headings one level** (h1→h2, h2→h3, h3→h4) so the page keeps
+  its one h1 (F13's rule, applied there too); the admin title wraps anywhere.
+- **The Desk's view at load is the builder's editorial** only when it is unread; the load-time
+  pick (C7) takes the first unread editorial of `desk_reserve` otherwise, and the suite's
+  all-sync scenarios, which seed a read set, show a different desk from the screenshots' clean
+  one. Nothing changed; recorded because the two outputs look contradictory side by side.
+
+### 9. Rule-to-test map
+
+"Rule" is a contract clause (brief §4) or an owner ruling the browser can check. "Assertions"
+are the suite's keys (state in brackets where it matters); "faults" the self-test breaks that
+must fail them. Every row's faults were caught in the final run (§10).
+
+| Rule | Assertions | Faults | Caught |
+|---|---|---|---|
+| C1 builder decides | counts, periods, front, boardOrder, frontRows | counts ×2, periods ×2, frontRows | yes |
+| C2 front then days | containment, order, boardOrder, dayMeta | containment, order, dayMeta | yes |
+| C3 DOM = visual = board order | order, boardOrder, overflow, overlap (+ `test_frontend_static` ORDER_ALLOWED) | order, overflow ×2, overlap | yes |
+| C4 never crop | noCrop, fold, bootFolded | noCrop ×2, fold, bootFolded | yes |
+| C5 no script | no-js run (text shown, no fold, `.needs-js` hidden, day links, front once, short Discuss hrefs) | NF ×2 (state.css fold gate; `.needs-js` gate) | yes |
+| C6 a tick only dims | allTickDims, readContrast | allTickDims, readContrast | yes |
+| C7 All's composition | allLoad, allOnce, allReadView, allAllRead, allPartial, allPartialLead, copiesShown | allLoad, allOnce ×2, allReadView, allAllRead, allPartial, allPartialLead, copiesShown | yes |
+| C8 the roam | allSyncOnce, allSyncOnlyOnce, allSyncTouched, allSyncRowClick, allSyncRowFocus, allSyncScroll, allSyncAnchor, allSyncHash, allSyncOwnScroll, allPartialRoam, foldStill | one each, foldStill ×2 | yes |
+| C9 every story once | frontRows, refillRows, dayMeta, refillDayLink, refillEmpty, allOnce | frontRows, refillRows, dayMeta, refillDayLink, refillEmpty | yes |
+| C10 the pick | refill, refillIds, refillLine, refillLead, refillBeat, refillTick, refillAll, frontLineDesk, refillGeom, refillLinks | refill, refillLead, refillBeat, refillAll, frontLineDesk | yes |
+| C11 editorial read rule | edRead, override, localEd, beatEd | edRead, beatEd | yes |
+| C12 honest counts | counts, multiBeat, beatMark, prefs, sheets (the sheet's copy) | counts ×2, multiBeat, beatMark, sheets | yes |
+| C13 new edition | fresh, freshBg, freshSame | fresh, freshBg, freshSame | yes |
+| C14 focus survives | refillFocusSame, refillFocusAround, refillFocusTyping, refillFocusMove, focus, focusMain | refillFocusMove, focus ×3, focusMain | yes |
+| C15 storage and requests | snapshotRead, legacyShapes, pruneEd, requests, storage, contractExternal, external, signedOut, two-tab | requests, storage, external, two-tab | yes |
+| C16 Discuss | discuss, discussPlace, discussRead, refillDiscuss, no-js hrefs | discuss ×2, discussPlace, discussRead, refillDiscuss | yes |
+| R1 never crop | noCrop | noCrop ×2 | yes |
+| R2 folded card anatomy | anatomy, bootFolded | anatomy ×2, bootFolded | yes |
+| R3 reading dims only | allTickDims, readContrast, disc | allTickDims, readContrast, disc | yes |
+| R4 no glyph on an editorial | anatomy | anatomy (glyph on the editorial) | yes |
+| R5 disclosure never dims | readContrast, disc | disc | yes |
+| R6/R7 folded editorial = chip, title, disclosure, More | anatomy | anatomy | yes |
+| R9 image after the headline | og, openCard | og ×3 (incl. photo above the headline), openCard | yes |
+| R10 one tier module | glyphs | glyphs | yes |
+| R13 phone: bottom bar, 44 px | chrome [360/390], tapTargets, sheets, focusMain | chrome (bar static), tapTargets ×2, sheets ×2, focusMain | yes |
+| R15 sideways, no giant lines | rowBeside, measure, frontMeasure, gap, gapDesk, gapLead, fullRow, hlSize | rowBeside, measure ×2, frontMeasure, gap, gapDesk, gapLead, fullRow, hlSize | yes |
+| R16 safe area | chrome (viewport-fit, env()) | chrome | yes |
+| R18 key behind a closed drawer | keyClosed | keyClosed | yes |
+| R19 rail order, above the fold | chrome [1280+] | chrome (`.mast__links{order:-1}`) | yes |
+| R20 no dead band at rail widths | chrome [1280+] (no bar) | chrome | yes |
+| R21 empty board says so first | emptyFirst | emptyFirst | yes |
+| R25 zero traffic signed out | signedOut, external | external | yes |
+| R36 red on three things | redUses | redUses | yes |
+| R37 held keys survive | prefs | multiBeat (prefs shape) | yes |
+| R38/PLAN 10 heading levels | headings | headings | yes |
+| F3 one kicker, the date once | kicker, deskDate | kicker, deskDate ×2 | yes |
+| F11 labels ≥ 12 px, root 16 | labelFloor | labelFloor ×2 | yes |
+| F16 prose before the diagram | hiwOrder | hiwOrder | yes |
+| F7 no pointer rows, day jump | frontRows, dayJump, sheets | frontRows, dayJump, sheets | yes |
+| F12/F13/F14/F18 reading pages | pages (one h1, title never over the kicker or date, admin gate, Front page link, Weekend, 404 → review, headings wrap, no sideways scroll) | PF ×5 | yes |
+| feeds | feeds (RSS shape, order, outlets, alternate link) | FF ×4 | yes |
+| contract parity | snapshotRead, legacyShapes, pruneEd, requests, storage | CF ×2 | yes |
+
+Rulings the browser cannot check (R8 lede as title, R11/R12 taste, R14 attention, R17 the
+simulator, R22–R24 fonts and affiliations beyond the slot, R26 voting's meaning, R27, R31–R35
+design choices) are covered by the static tests where a file can be read (`test_frontend_static`:
+Anton self-hosted, no transition on the swap, the `affiliation_label` slot) and otherwise by the
+screenshots in §10.
+
+### 10. Verification
+
+Everything below ran twice against the final tree. First against a local Jekyll 3.9.3
+stand-in in safe mode with the three Pages plugins (`jk.sh` with its `jk-local.yml`, both copied
+to `/tmp/argon-ux/shots-r3/`), because Docker (OrbStack) was down for the whole build: `docker
+info` found no daemon at the OrbStack socket at every checkpoint. Then, after the write-up, with
+the daemon back, against `tools/verify/build.sh`, the Pages container
+`ghcr.io/actions/jekyll-build-pages:v1.0.13`: exit 0, 0 Liquid warnings, 0 Gemfile warnings, 28
+HTML pages (`container-build.log` there), which closes the brief's exit-0 gate. The suite on the
+container build gave the same totals as the stand-in run, to the assertion: 4103 passed, 0
+failed, 0 skipped, 123/123 faults caught (`container-suite.log`), and the 59 screenshots were
+retaken from it. The stand-in build had logged 0 Liquid warnings and no Gemfile warning too.
+Logs, all copied to `/tmp/argon-ux/shots-r3/`: `full2.log` (the stand-in matrix and the
+self-test), `synth2.log` (`SYNTH=1`, on the stand-in), `container-build.log` and
+`container-suite.log`.
+
+**The suite, final run** (`node tools/verify/suite.mjs <_site>`, Chromium 360, 390, 700, 768,
+1024, 1280, 1440, 1600 and WebKit iPhone 15 and 1024, light and dark; 277 cases):
+
+| State | passed | failed | skipped |
+|---|---|---|---|
+| default | 846 | 0 | 0 |
+| expanded | 340 | 0 | 0 |
+| unread-edition | 320 | 0 | 0 |
+| front-read | 720 | 0 | 0 |
+| all-read | 240 | 0 | 0 |
+| all-partial | 240 | 0 | 0 |
+| all-sync | 260 | 0 | 0 |
+| beat | 280 | 0 | 0 |
+| multi-beat | 200 | 0 | 0 |
+| empty | 220 | 0 | 0 |
+| stale | 200 | 0 | 0 |
+| stale-bg | 200 | 0 | 0 |
+| no-js | 18 | 0 | 0 |
+| contract | 12 | 0 | 0 |
+| two-tab | 2 | 0 | 0 |
+| pages | 3 | 0 | 0 |
+| feeds | 2 | 0 | 0 |
+| **all** | **4103** | **0** | **0** |
+
+SKIPs are counted apart from passes and failures; this data produced none (an earlier run had
+four, from a scenario placement bug in the own-scroll check, fixed in §8's terms before the
+final run). Fault self-test: **123/123 caught**, baseline default@1440 clean, in the same run
+(the round-2 suite: 3743 assertions, 85/85 faults). `SYNTH=1` run (the made-up scenarios forced on this data, faults off): 4103 passed, 0 failed, 0 skipped, 277 cases, ALL PASS (`synth2.log` there).
+
+Two earlier full runs are part of the record: the first found three faults the suite let
+through (a stretched grid track's void, the row-click roam check masked by a pending scroll of
+the page's own, the admin sign-out check reading the attribute instead of the box) and, through
+the second of those, the fold-anchoring bug in the page (§8); the second found the own-scroll
+sum counting a payback the browser had already undone (§8). Each led to a page or suite change
+and a rerun; the numbers above are the run after the last change.
+
+**Static and build checks**, after the last edit: `python3 -m unittest discover -s tools/tests`:
+Ran 820 tests, OK (skipped=1). `python3 tools/check_publish.py`: PUBLISH-SAFE. `python3
+routines/assemble.py check`: exit 0.
+
+**Weights**, both measured on the same local build (bytes as served, before compression):
+
+| | 423fbfeb | round 3 |
+|---|---|---|
+| `index.html` | 537,154 | 538,538 |
+| CSS, seven files | | 48,340 |
+| JS, sixteen modules | | 62,704 |
+| CSS + JS | 110,837 | 111,044 |
+| `index.html` gzip | | 94,374 |
+| CSS + JS gzip | | 31,240 |
+
+The homepage carries the same data (`feed.board` once, plus one `<template>` per builder-front
+story and the desk editorial's day copy); the chrome markup grew by the rail, the bar and the
+two sheets and shrank by the pointer rows.
+
+**Screenshots**: 59 in `/tmp/argon-ux/shots-r3/`, indexed in its `INDEX.md`, first taken from the
+stand-in build and every one viewed, then retaken from the container build, by
+`shots-r3.mjs` (adapted from `/tmp/argon-ux/shots.mjs`; a copy sits beside the shots, not in
+the tree; `node shots-r3.mjs <_site>` retakes them against any build): WebKit iPhone 15, Chromium 1024 and 1440, light and dark; load, one screen down, a
+day edition, a row open at its top and at its end, a rest card open, the lead open, a beat
+pressed, How this works, no-JS, Unread after the front and the Desk's view were read, All after
+the same read, the two phone sheets, admin, the latest review, prompts, 404. One deviation from
+the source script, stated in the index: the og-proxy answers with the publisher's own image
+URL, so publisher image GETs are let through (logged, read-only) for the slots to fill; every
+other foreign request is aborted and the feedback Worker is stubbed as before, with no live
+write. I looked at every state at least once at one width and at the phone and 1440 sets in
+full; the review title overlap in §8 was found there.
+
+### 11. Old-suite assertions: dispositions
+
+Every assertion of the round-2 suite (423fbfeb) and what became of it. "Kept" is the same
+expectation on the same inputs, re-expressed on the new DOM contract (§4) where the old selector
+no longer exists; "rewritten" gives before → after; "dropped" only where the thing is gone.
+
+| Old key | Disposition |
+|---|---|
+| counts, periods, front, boardOrder, eventLabel, headings, sources, flags | kept (boardOrder now walks `[data-story]` and the `data-front-row`/`data-front-ed` templates, since a story elsewhere has no pointer) |
+| pointers | **dropped**: pointer rows no longer exist (decision 1 reopened). Replaced by `frontRows` (a builder-front story's template sits at its rank, no second live copy, no `.ptr`) and `refillRows` (a promoted story's live row hidden, once on the front) |
+| discuss, discussRead | kept; `discussPlace` added (inside the fold, after the outlets, last block, hidden while folded) |
+| measure | rewritten: 36 em token at 50–80 cpl → 34 em token at 50–80 cpl, measured on open rows and cards at every width; `rowBeside` added (≥1024: body beside the head, why and controls down the track) |
+| frontMeasure, whyAfterBody, og | kept; og also fails on a photo above a headline |
+| freshSame, fresh, freshBg | kept |
+| gap, hlSize, fullRow | kept; the void measure now includes the grid's own tracks (`.fcards--top`, `.desk`) and fails on a void that shrinks as well as one that grows (a stretched track shows one before the open) |
+| fold | kept (every More flips and returns truthfully); `bootFolded` added (nothing open at load); `foldStill` added (head still on open, back on Less) |
+| photoBeside | **rewritten** → `openCard`: an open card ≥ 760 px sets the photo under the headline in the left track and the text beside; narrower one column, photo under the headline, text under the photo |
+| disc, readContrast, edRead, override, dayHide, localEd | kept (readContrast also measures `.hl a` and `.deck`; dayHide reads the day header's "n on the front" instead of pointers) |
+| allPartial, allPartialLead, allAllRead, allLoad, allTickDims, allReadView | kept |
+| refill, refillLine, refillIds, refillGeom, refillLinks, refillDayLink, refillBeat, refillTick, refillAll, refillLead, frontLineDesk, refillEmpty | kept; refillDayLink's target is `#desk-<sid>` (the day's own editorial article) instead of the pointer; refillEmpty also wants every "n on the front" link hidden |
+| refillFocusSame, refillFocusAround, refillFocusTyping, refillFocusMove | kept |
+| beatEd, prefs, multiBeat, emptyFirst, links, dayMeta | kept; dayMeta parses "N of M stories shown · K on the front" and checks K against the composition and the link target; `beatMark` added (every chip copy pressed with a ✓) |
+| focusMain, focus | kept (reachability uses the shared `vis`, so a control inside a closed sheet or drawer is not "visible") |
+| allSyncOnce, allSyncOnlyOnce, allSyncRowFocus, allSyncScroll, allSyncTouched, allSyncAnchor, allPartialRoam, allSyncHash | kept |
+| allSyncRowClick | rewritten: the scenario places More itself in view (a lead row runs past the viewport; Playwright's own scroll-into-view before the click was a scroll of the page's own that the roam counted); the expectation is the same |
+| snapshotRead, legacyShapes, pruneEd, requests, storage, contractExternal | kept (`chips` any copy, joined `aria-pressed`) |
+| no-JS run | kept; adds `.deck`, `.kick`, `.day__n` to the shown-text set, `.needs-js` to the hidden controls, day links = days + 1, the builder's front once, `html` without `js` |
+| two-tab, feeds | kept |
+| pages | kept; adds exactly one h1 per page, the 116-char token on `.adm__title` and `.prm-doc h2/h3`, the admin gate (one sign-in control, no Sign out, a "Front page" link), /prompts/ naming Weekend, the 404 linking the latest review |
+| every-state overflow, overlap, containment, order, external, signedOut, errors | kept |
+| old faults `refillPtrs`, `photoBeside` | dropped with their assertions; `refillRows` and `openCard` faults replace them |
+
+New in round 3 (no old counterpart): frontRows, bootFolded, anatomy, glyphs, labelFloor,
+tapTargets, redUses, noCrop, kicker, deskDate, discussPlace, rowBeside, keyClosed, hiwOrder,
+chrome, sheets, dayJump, foldStill, openCard, refillRows, copiesShown, beatMark,
+allSyncOwnScroll; faults for each (§9), plus `mutateCss` (one sheet served rewritten) for the
+no-script gates and the admin/pages CSS faults.
+
+### 12. Kept verbatim
+
+Under `_layouts/home.html`, `_includes/home/`, `assets/css/` and `assets/js/` two files are
+byte-identical to 423fbfeb, both one-line helpers that turn builder data into markup and carry
+no design of their own: `_includes/home/range.html` (a period as two `<time>` elements) and
+`_includes/home/why.html` (the "Why it matters" paragraph, `.why` with its `.why__l` label);
+the new cards and rows call them in new places, and the suite reads their output on every item
+(`anatomy`, `whyAfterBody`, `rowBeside`). Every other file there is rewritten, replaced or
+deleted (`dialog.js` → `dialogs.js`,
+`refill.js` → `front.js` + `anchor.js` + `read.js`, `store.js` → `state.js`, `sync.js` →
+`session.js`; `_includes/home/controls.html`, `days.html`, `key.html`, `seg.html`,
+`sheets.html` are new). In `tools/verify/suite.mjs` the static server, the Worker stubs, the
+request watcher, `mutateJs` and `frontWithSlots` (the slot injector) are carried over nearly as
+they were: they are plumbing, not expectations, and the brief asked for the stubs "as the suite
+does now". The oracle's period derivation (`_posts/` names, the coverage line) is also carried;
+the composition oracle (`pick`, `all`, `desk`) is rewritten against the builder's `reserve` and
+`desk_reserve`.
+
+### 13. Commits (made at the end, once signing came back)
+
+`gpg-unlock --status` answered `personal no, spcs no` at every commit point during the build
+(the 1Password CLI signed out), so nothing was committed then, unsigned or otherwise. Each commit
+point was recorded in `/tmp/argon-ux/shots-r3/pending-commits.md` as the message, the paths and
+the `git write-tree` SHA of the worktree at that point; the trees are cumulative, so the chain
+replays in order. Signing came back after the container build ran, and the six commits were then
+made from the recorded trees with the replay below, each signed, in order, with no trailer;
+`review/cold-fable-2026-10-22` points at the sixth.
+
+| # | Message | Tree |
+|---|---|---|
+| 1 | REVIEW: round 3 design note before any page code | `bd1295849b70a000bd79842d724badb57ce5314d` |
+| 2 | Builder: nothing boots open and no synthetic headline period; views test, feed and golden | `d740963d8e12a0f8b7da188a9d2e75d7a221bccf` |
+| 3 | Front page: the round-3 rebuild — layout, includes, CSS, the engine, the other pages | `5ad20aa92dbdc874e89d36206bc0bd33fe772612` |
+| 4 | Page: folds keep the head still, the page's own scrolls are not the reader's, the review title under its date | `8f213cffabf1e90db5956b46a73226bb8b3962e5` |
+| 5 | verify: the round-3 suite, every state on the new page, a fault for each rule, README | `b0615828fb5165bed5d6bd1bd74f5957d9bed51a` |
+| 6 | REVIEW: round 3 as built, the rule-to-test map, dispositions, numbers | see pending-commits.md |
+
+Replay, once `gpg-unlock --status` says `personal yes`, from the worktree. It is written for
+bash or zsh alike (no array indexing: zsh counts from 1), T6 is read from entry 6 of
+pending-commits.md because this file is part of that tree, and the last `update-ref` names the
+old value, so it refuses to move a branch that is no longer at 423fbfeb:
+
+```sh
+F=/tmp/argon-ux/shots-r3/pending-commits.md
+T6=$(sed -n '/^## 6\./,$s/^- tree: \([0-9a-f]\{40\}\).*/\1/p' "$F"); echo "T6=$T6"
+P=423fbfebe70fdd4f6db1ca2007afd775cc052d5f
+P=$(git commit-tree -S -p "$P" -m "REVIEW: round 3 design note before any page code" bd1295849b70a000bd79842d724badb57ce5314d)
+P=$(git commit-tree -S -p "$P" -m "Builder: nothing boots open and no synthetic headline period; views test, feed and golden" d740963d8e12a0f8b7da188a9d2e75d7a221bccf)
+P=$(git commit-tree -S -p "$P" -m "Front page: the round-3 rebuild — layout, includes, CSS, the engine, the other pages" 5ad20aa92dbdc874e89d36206bc0bd33fe772612)
+P=$(git commit-tree -S -p "$P" -m "Page: folds keep the head still, the page's own scrolls are not the reader's, the review title under its date" 8f213cffabf1e90db5956b46a73226bb8b3962e5)
+P=$(git commit-tree -S -p "$P" -m "verify: the round-3 suite, every state on the new page, a fault for each rule, README" b0615828fb5165bed5d6bd1bd74f5957d9bed51a)
+P=$(git commit-tree -S -p "$P" -m "REVIEW: round 3 as built, the rule-to-test map, dispositions, numbers" "$T6")
+git update-ref refs/heads/review/cold-fable-2026-10-22 "$P" 423fbfebe70fdd4f6db1ca2007afd775cc052d5f
+git log --oneline 423fbfeb..HEAD   # six lines; git write-tree must equal T6
+python3 tools/check_publish.py      # must print PUBLISH-SAFE
+```
+
+No trailer and no attribution line on any of them. `git log -p` of the result reads as the
+build order in §7.
+
+### 14. Merge note
+
+- `main` rewrites `_data/homefeed.json` on every edition. At merge take `main`'s copy, then
+  rerun the builder (`python3 tools/build_stories_feed.py`) so the feed carries this round's two
+  builder changes (no `boot_open`, no `hl_dot`), and re-capture
+  `tools/tests/fixtures/dualwrite/golden-feed.json` the way `test_feed_views.py` documents.
+  `python3 -m unittest discover -s tools/tests` must be green before and after.
+- `CLAUDE.md` and `.claude/settings.json` exist on `main` and were absent here on purpose; every
+  reference to them (`_config.yml` excludes, `REQUIRED_EXCLUDES`, both READMEs) is untouched.
+  `python3 tools/check_publish.py` after the merge.
+- `tools/verify/build.sh` ran on this tree and passed (§10): run it again on the merge result
+  before it reaches Pages, then the suite and `shots-r3.mjs` against that output.
+- The three reader-facing changes to put in front of the owner: no pointer rows (decision 1),
+  the open row's right-hand track instead of columns (decision 3), and the fold behaviour (§8:
+  the head stays still on More, comes back on Less). The §6 proposals stay unshipped.
+
+### 15. What I would do next
+
+1. Done after the write-up: `tools/verify/build.sh` on the Pages container, exit 0, and the
+   suite and the screenshots against its output, same numbers (§10).
+2. Put the fold change and the three reopened decisions to the owner as one question each,
+   with the revert path from §3 beside it.
+3. Add one view-only Playwright pass on the iPhone simulator (R17) for the bottom bar under
+   Safari's own chrome; the suite cannot see it.
+4. The Beats sheet focuses its close control on open (correct, a visible ring on a × is loud on
+   a phone); `autofocus` on the first chip would be the quieter choice and deserves a ruling.
