@@ -13,28 +13,29 @@ read — <code>${FETCH_PROXY_TOKEN}</code> is a placeholder the runtime fills, n
 {% capture p_weekend %}{% include_relative routines/weekend.md %}{% endcapture %}
 {% capture p_sports %}{% include_relative routines/sports.md %}{% endcapture %}
 {% capture p_eval %}{% include_relative routines/weekly-evaluator.md %}{% endcapture %}
+{%- comment -%} each doc's headings shift one level down (h1 -> h2, h2 -> h3, h3 -> h4): the page keeps its one h1, the title {%- endcomment -%}
 
 <details class="prm">
   <summary><strong>News</strong><span>daily</span></summary>
-  <div class="prm-doc">{{ p_news | markdownify }}</div>
+  <div class="prm-doc">{{ p_news | markdownify | replace: "<h3", "<h4" | replace: "</h3>", "</h4>" | replace: "<h2", "<h3" | replace: "</h2>", "</h3>" | replace: "<h1", "<h2" | replace: "</h1>", "</h2>" }}</div>
 </details>
 <details class="prm">
   <summary><strong>AI/ML</strong><span>Tue + Fri</span></summary>
-  <div class="prm-doc">{{ p_aiml | markdownify }}</div>
+  <div class="prm-doc">{{ p_aiml | markdownify | replace: "<h3", "<h4" | replace: "</h3>", "</h4>" | replace: "<h2", "<h3" | replace: "</h2>", "</h3>" | replace: "<h1", "<h2" | replace: "</h1>", "</h2>" }}</div>
 </details>
 <details class="prm">
   <summary><strong>Science</strong><span>Wed</span></summary>
-  <div class="prm-doc">{{ p_science | markdownify }}</div>
+  <div class="prm-doc">{{ p_science | markdownify | replace: "<h3", "<h4" | replace: "</h3>", "</h4>" | replace: "<h2", "<h3" | replace: "</h2>", "</h3>" | replace: "<h1", "<h2" | replace: "</h1>", "</h2>" }}</div>
 </details>
 <details class="prm">
   <summary><strong>Weekend</strong><span>Sat</span></summary>
-  <div class="prm-doc">{{ p_weekend | markdownify }}</div>
+  <div class="prm-doc">{{ p_weekend | markdownify | replace: "<h3", "<h4" | replace: "</h3>", "</h4>" | replace: "<h2", "<h3" | replace: "</h2>", "</h3>" | replace: "<h1", "<h2" | replace: "</h1>", "</h2>" }}</div>
 </details>
 <details class="prm">
   <summary><strong>Sports</strong><span>Mon</span></summary>
-  <div class="prm-doc">{{ p_sports | markdownify }}</div>
+  <div class="prm-doc">{{ p_sports | markdownify | replace: "<h3", "<h4" | replace: "</h3>", "</h4>" | replace: "<h2", "<h3" | replace: "</h2>", "</h3>" | replace: "<h1", "<h2" | replace: "</h1>", "</h2>" }}</div>
 </details>
 <details class="prm">
   <summary><strong>Evaluator</strong><span>Sun</span></summary>
-  <div class="prm-doc">{{ p_eval | markdownify }}</div>
+  <div class="prm-doc">{{ p_eval | markdownify | replace: "<h3", "<h4" | replace: "</h3>", "</h4>" | replace: "<h2", "<h3" | replace: "</h2>", "</h3>" | replace: "<h1", "<h2" | replace: "</h1>", "</h2>" }}</div>
 </details>

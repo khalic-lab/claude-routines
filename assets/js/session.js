@@ -98,7 +98,7 @@ function mergeRemote(state) {
   if (dirty) { save(SYNC_KEY, syncMap); save(READ_KEY, readMap); }
   emit('roam');
 }
-function pullRemote() {
+export function pullRemote() {
   const s = session();
   if (!s) return;
   fetch(fb().url + '/readstate', { headers: authHeaders(s) })

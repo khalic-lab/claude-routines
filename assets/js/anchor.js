@@ -1,14 +1,35 @@
 // Keeping the reader's eye still through a change the page makes itself.
 
+// What the page has scrolled by itself since load, summed (C8): a scroll of the page's own is
+// not the reader's interaction, and board.js takes it off its count.
+let own = 0;
+export const ownScroll = () => own;
+export function scrollOwn(dy) {
+  const y = scrollY;
+  scrollBy(0, dy);
+  own += scrollY - y;                            // what the browser let it scroll (the ends clamp)
+}
+
 // Run a height-changing mutation and pay the difference back: measure the anchor, mutate,
 // scroll by what it moved. Browser scroll anchoring protects content above the viewport, not
-// the element being looked at.
+// the element being looked at; when it fires inside `fn` (content changed above the viewport)
+// the payback undoes it, and the sum counts the net of the two, which is what the page moved.
 export function anchored(el, fn) {
-  const before = el ? el.getBoundingClientRect().top : 0;
+  const y0 = scrollY, before = el ? el.getBoundingClientRect().top : 0;
   fn();
-  if (!el) return;
-  const after = el.getBoundingClientRect().top;
-  if (after !== before) scrollBy(0, after - before);
+  if (el) {
+    const after = el.getBoundingClientRect().top;
+    if (after !== before) scrollBy(0, after - before);
+  }
+  own += scrollY - y0;
+}
+
+// Where the page's own content starts: under the bar when it is pinned at the top (700–1279px),
+// else the viewport's top.
+export function chromeTop() {
+  const bar = document.querySelector('.bar');
+  const pinned = bar && getComputedStyle(bar).display !== 'none' && matchMedia('(min-width: 700px)').matches;
+  return pinned ? bar.getBoundingClientRect().bottom : 0;
 }
 
 // The topmost item on screen below the chrome: the anchor for a change nobody clicked. A
@@ -18,9 +39,7 @@ export function anchored(el, fn) {
 export function topItem(gone = new Set()) {
   const main = document.getElementById('main');
   if (!main) return null;
-  const bar = document.querySelector('.bar');
-  const barTop = bar && getComputedStyle(bar).display !== 'none' && matchMedia('(min-width: 700px)').matches;
-  const top = barTop ? bar.getBoundingClientRect().bottom : 0;
+  const top = chromeTop();
   let first = null;
   for (const el of main.querySelectorAll('[data-story]')) {
     if (el.closest('[hidden]')) continue;

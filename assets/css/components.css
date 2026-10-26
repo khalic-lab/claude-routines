@@ -23,13 +23,13 @@
   .mast__count { color: var(--muted); }
   .linkbtn {
     background: none; border: 0; padding: 0; cursor: pointer; color: var(--muted-ui); text-decoration: none;
-    min-block-size: 32px; display: inline-flex; align-items: center; gap: .5em;
+    min-block-size: var(--tap-wide); display: inline-flex; align-items: center; gap: .5em;
   }
   .linkbtn:hover { color: var(--accent); }
   .syncbtn.is-in { color: var(--accent); }
   .syncbtn.is-in::before { content: ""; inline-size: 6px; block-size: 6px; border-radius: 50%; background: var(--accent); }
   .drawer > summary {
-    cursor: pointer; list-style: none; color: var(--ink); display: flex; align-items: center; gap: 10px; min-block-size: 32px;
+    cursor: pointer; list-style: none; color: var(--ink); display: flex; align-items: center; gap: 10px; min-block-size: var(--tap-wide);
   }
   .drawer > summary::-webkit-details-marker { display: none; }
   .drawer > summary::after { content: "+"; font-weight: 400; font-size: 1rem; line-height: 1; color: var(--muted-ui); }
@@ -39,7 +39,7 @@
   .key__note { margin-block-start: 10px; font: var(--t-small)/1.5 var(--sans); color: var(--muted); max-inline-size: 40em; }
   .daylist { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-block: 6px 0; }
   .daylist a {
-    display: inline-flex; align-items: center; gap: .5em; min-block-size: 32px; color: var(--ink); text-decoration: none;
+    display: inline-flex; align-items: center; gap: .5em; min-block-size: var(--tap-wide); color: var(--ink); text-decoration: none;
     font-variant-numeric: tabular-nums;
   }
   .daylist a:hover { color: var(--accent); }
@@ -49,13 +49,16 @@
   @media (min-width: 1280px) {
     .nameplate { font-size: 56px; }
     .mast__ed { gap: 3px; }
-    .drawer > summary { min-block-size: 28px; }
     .daylist { flex-direction: column; gap: 0; }
-    .daylist a { min-block-size: 28px; justify-content: space-between; inline-size: 100%; }
+    .daylist a { justify-content: space-between; inline-size: 100%; }
   }
 
-  /* ---- controls: 44px targets on phones (one thumb, R13), 36px from 700px */
-  .seg { display: inline-flex; border: 1px solid var(--muted-ui); border-radius: var(--radius); overflow: hidden; }
+  /* ---- controls: 44px targets on phones (one thumb, R13: every tappable thing, text links too),
+     32px from 700px (the rail's list too) */
+  /* no overflow clip on the segment: a keyboard ring must draw whole (the buttons round their own ends) */
+  .seg { display: inline-flex; border: 1px solid var(--muted-ui); border-radius: var(--radius); }
+  .seg button:first-child { border-start-start-radius: calc(var(--radius) - 1px); border-end-start-radius: calc(var(--radius) - 1px); }
+  .seg button:last-child { border-start-end-radius: calc(var(--radius) - 1px); border-end-end-radius: calc(var(--radius) - 1px); }
   .seg button {
     border: 0; border-inline-start: 1px solid var(--hair); background: transparent; cursor: pointer; padding: 0 10px; min-block-size: var(--tap);
     font: 600 var(--t-ctl)/1 var(--sans); color: var(--muted-ui); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;
@@ -86,7 +89,7 @@
   .chips--rail { flex-direction: column; gap: 0; }
   .chips--rail .chip {
     inline-size: 100%; text-align: start; border: 0; border-inline-start: 2px solid transparent; border-radius: 0; background: none;
-    padding: 0 8px; min-block-size: 30px; color: var(--ink); gap: 8px;
+    padding: 0 8px; min-block-size: 32px; color: var(--ink); gap: 8px;
   }
   .chips--rail .chip .chip__l { flex: 1; min-inline-size: 0; white-space: normal; }
   .chips--rail .chip:hover { color: var(--accent); }
@@ -150,6 +153,9 @@
   @container front (min-width: 760px) {
     .fcards--rest > .fc:not(:first-child) > article { border-inline-start: 1px solid var(--hair); }
     .fcards--rest > .fc:last-child > article { padding-inline-end: 0; }
+    /* the first card of a line after an open story starts that line: no rule on its left */
+    .js .fcards--rest > .fc:not(.is-folded) + .fc > article { border-inline-start: 0; padding-inline-start: 0; }
+    .js .fcards--rest > .fc:not(.is-folded) > article { padding-inline: 0; border-inline-start: 0; }
   }
   /* an opened card at least 760px wide reads like an open row: kicker, headline, deck and the
      image down the left track; body, every outlet, Discuss, the why and then the controls line
@@ -195,7 +201,6 @@
   .why { font: var(--t-why)/1.5 var(--serif); border-inline-start: 2px solid var(--accent); padding-inline-start: 10px; max-inline-size: var(--measure); }
   .why__l { display: inline; color: var(--accent); margin-inline-end: 6px; }
   .fc__text { max-inline-size: var(--measure-card); }
-  .fc__text :is(.sum, .why, .deck) { max-inline-size: none; }
   .fc__text > * + *, .fold > * + *, .row__body > * + * { margin-block-start: 10px; }
   .row .sum, .row .why, .fcards--rest .sum, .fcards--rest .why { font-size: var(--t-why); }
 
@@ -208,7 +213,7 @@
   .srcs a:hover { color: var(--accent); text-decoration-color: var(--accent); }
   .srcs__dom { color: var(--muted); text-transform: lowercase; overflow-wrap: anywhere; }
   .talk { display: flex; }
-  .jump, .discuss { display: inline-flex; align-items: center; gap: .4em; min-block-size: 32px; color: var(--accent); text-decoration: none; }
+  .jump, .discuss { display: inline-flex; align-items: center; gap: .4em; min-block-size: var(--tap-wide); color: var(--accent); text-decoration: none; }
   .jump:hover, .discuss:hover { text-decoration: underline; }
 
   /* ---- the controls line: source and beat on cards; More, ✓ and the votes at the end */
@@ -253,7 +258,7 @@
 
   /* ---- the Desk's view (beside the lead) and every editorial */
   .desk { padding-block: 16px 12px; border-block-end: 1px solid var(--hair); }
-  @container front (min-width: 860px) { .desk { border-inline-start: 1px solid var(--rule); padding-inline-start: 24px; } }
+  @container front (min-width: 860px) { .desk { padding-inline-start: 24px; } }
   .desk__lbl { color: var(--ink); margin-block-end: 10px; }
   .ed { display: flex; flex-direction: column; gap: 10px; }
   .edchip { border: 1px solid var(--ink); color: var(--ink); border-radius: var(--radius); padding: 2px 6px 1px; }
@@ -278,7 +283,7 @@
   /* ---- footer and the propose form */
   .foot { border-block-start: 3px solid var(--ink); padding-block: 14px calc(18px + env(safe-area-inset-bottom)); color: var(--muted); }
   .colophon { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; font-weight: 500; letter-spacing: .04em; text-transform: none; }
-  .colophon a { color: var(--muted-ui); text-decoration: none; min-block-size: 32px; display: inline-flex; align-items: center; }
+  .colophon a { color: var(--muted-ui); text-decoration: none; min-block-size: var(--tap-wide); display: inline-flex; align-items: center; }
   .colophon a:hover { color: var(--accent); }
   .propose__form { display: grid; gap: 10px; margin-block-start: 8px; max-inline-size: 36em; }
   .field { display: grid; gap: 4px; font: 600 var(--t-lbl)/1.3 var(--sans); letter-spacing: var(--track-lbl); text-transform: uppercase; color: var(--ink); }
@@ -352,4 +357,7 @@
   .sync__setup { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
   .sync__who { font: var(--t-small) var(--sans); color: var(--muted); }
   .sync__status { margin-block-start: 12px; min-block-size: 1.3em; font: 600 var(--t-lbl)/1.3 var(--sans); letter-spacing: var(--track-lbl); text-transform: uppercase; color: var(--accent); }
+
+  /* ---- phones: every tappable thing is 44px tall, text links included (R13); last in the layer so it wins */
+  @media (max-width: 699.98px) { .linkbtn, .drawer > summary, .daylist a, .jump, .discuss, .colophon a { min-block-size: var(--tap); } }
 }

@@ -59,7 +59,7 @@
        wheel (R18: no overscroll containment), nothing dead above the sheet (R20) */
     .mast {
       position: sticky; inset-block-start: 0; max-block-size: 100dvh; overflow-y: auto;
-      gap: 16px; padding: 22px 0 24px; border-block-end: 0; scroll-padding-block: 12px;
+      gap: 16px; padding: 22px 4px 24px; margin-inline: -4px; border-block-end: 0; scroll-padding-block: 12px;
     }
     .mast__ctl { display: flex; flex-direction: column; gap: 16px; }
     .mast__links { flex-direction: column; align-items: flex-start; gap: 0; padding-block: 8px; border-block: 1px solid var(--hair); }
@@ -95,19 +95,29 @@
 
   /* ---- the front: lead | Desk's view, then the stories; a story grid that keeps DOM order */
   .front { container: front / inline-size; padding-block-end: 30px; }
-  .front__grid { display: grid; grid-template-columns: minmax(0, 1fr); border-block-start: 1px solid var(--rule); }
+  .front__grid { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; border-block-start: 1px solid var(--rule); }
   .fcards { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; min-inline-size: 0; }
   .fcards > .fc, .desk { min-inline-size: 0; }
   .fc { container-type: inline-size; }
   @container front (min-width: 860px) {
     .front__grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: 28px; }
-    .front__grid > .fcards--rest { grid-column: 1 / -1; }
+    .front__grid > .fcards--top { grid-area: 1 / 1; }
+    .front__grid > .desk { grid-area: 1 / 2; }
+    .front__grid > .fcards--rest { grid-row: 2; grid-column: 1 / -1; }
     .front__grid:has(> .desk[hidden]) > .fcards--top, .front__grid:has(> .fcards--top[hidden]) > .desk { grid-column: 1 / -1; }
+    /* the rule between the lead and the Desk's view runs the whole band, whichever is taller;
+       the cells themselves start-align, so neither stretches to the other's height (F10) */
+    .front__grid:has(> .fcards--top:not([hidden])):has(> .desk:not([hidden]))::before {
+      content: ""; grid-area: 1 / 2; align-self: stretch; justify-self: start; inline-size: 0;
+      border-inline-start: 1px solid var(--rule); pointer-events: none;
+    }
   }
   @container front (min-width: 760px) {
-    .fcards--rest { grid-template-columns: repeat(auto-fit, minmax(14em, 1fr)); }
-    /* an open story takes its own full line; its neighbours keep their order around it (R15) */
-    .js .fcards--rest > .fc:not(.is-folded) { grid-column: 1 / -1; }
+    /* the rest band: one line of equal cards. An open story takes a whole line of its own and
+       its neighbours fill the next line in their order, so no line is left part blank (R15, F10) */
+    .fcards--rest { display: flex; flex-wrap: wrap; }
+    .fcards--rest > .fc { flex: 1 1 14em; }
+    .js .fcards--rest > .fc:not(.is-folded) { flex-basis: 100%; }
   }
   .desk { display: flex; flex-direction: column; }
 

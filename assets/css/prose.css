@@ -34,7 +34,7 @@
     font: 600 2.25em/1.1 var(--display); text-transform: uppercase; letter-spacing: .005em; color: var(--ink); text-wrap: balance; overflow-wrap: anywhere;
     margin-block: 0 .5em;
   }
-  .prose--own-h1 .prose__body > h1:first-child { margin-block-start: -1.2em; }
+  .prose--own-h1 .prose__head { margin-block-end: .7em; }   /* kicker, date, then the body's title: never pulled over the date */
   .prose__body :is(p, ul, ol, table, pre) { margin-block: 0 1em; }
   .prose ul, .prose ol { padding-inline-start: 1.3em; }
   .prose li { margin-block-end: .35em; }
@@ -82,10 +82,10 @@
   .prm summary:focus-visible { outline-offset: -2px; }
   .prm summary span { color: var(--muted); margin-inline-start: .8em; font-weight: 500; }
   .prm-doc { padding: 4px 20px 20px; border-block-start: 1px solid var(--hair); background: var(--panel); font-size: var(--t-small); line-height: 1.65; }
-  .prm-doc h1, .prm-doc h2, .prm-doc h3 { font-family: var(--sans); color: var(--ink); border: 0; text-transform: none; letter-spacing: 0; padding: 0; }
-  .prm-doc h1 { font-size: var(--t-ctl); font-weight: 700; text-transform: uppercase; letter-spacing: .12em; margin-block: 1.9em .7em; padding-block-end: .4em; border-block-end: 1px solid var(--hair); }
-  .prm-doc h2 { font-size: 1rem; font-weight: 700; margin-block: 1.5em .45em; }
-  .prm-doc h3 { font-size: var(--t-small); font-weight: 600; margin-block: 1.3em .4em; }
+  .prm-doc h2, .prm-doc h3, .prm-doc h4 { font-family: var(--sans); color: var(--ink); border: 0; text-transform: none; letter-spacing: 0; padding: 0; }
+  .prm-doc h2 { font-size: var(--t-ctl); font-weight: 700; text-transform: uppercase; letter-spacing: .12em; margin-block: 1.9em .7em; padding-block-end: .4em; border-block-end: 1px solid var(--hair); }
+  .prm-doc h3 { font-size: 1rem; font-weight: 700; margin-block: 1.5em .45em; }
+  .prm-doc h4 { font-size: var(--t-small); font-weight: 600; margin-block: 1.3em .4em; }
   .prm-doc blockquote { margin-block: 1em; padding: .2em 0 .2em 1em; border-inline-start: 2px solid var(--accent); color: var(--muted); font-style: normal; background: none; }
   .prm-doc hr { border: 0; border-block-start: 1px solid var(--hair); margin-block: 1.6em; }
   /* one dark terminal slab for fenced commands, in BOTH palettes (rouge tokens are tuned for a dark

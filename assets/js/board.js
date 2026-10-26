@@ -3,7 +3,7 @@
 // never measures. What moves is the front, which front.js composes.
 import { readMap } from './state.js';
 import { isRead, setRead, paintEl, isEditorial } from './read.js';
-import { anchored, topItem } from './anchor.js';
+import { anchored, ownScroll, topItem } from './anchor.js';
 import { createFront } from './front.js';
 
 const main = document.getElementById('main');
@@ -143,19 +143,22 @@ export function initBoard({ prefs, record, adopt = () => {} }) {
   // the first roam only, and only if the reader has not interacted with the page since load: a
   // pointer, key, focus, wheel or touch anywhere, or a scroll of their own. A reader's scroll
   // moves the content with it (the top item shifts by exactly what the page scrolled); scroll
-  // anchoring, a #fragment or a restored position, and anchored() move the page to keep content
-  // where it was, so they do not count. After a reload or a history step the browser restores a
-  // position, and on a #fragment load it scrolls to the fragment, both by load: there scrolls
-  // count from two frames after load; after a plain navigation, from the first. The #fragment
-  // itself is the reader pointing at a place, and a recompose could hide the very row it names.
+  // anchoring, a #fragment or a restored position move the page to keep content where it was,
+  // so they do not count; the page's own scrolls (anchored(), a fold closing: anchor.js sums
+  // them) are taken off the count. Scrolls count from two frames after load: by then the
+  // browser has restored a position (a reload, a history step) or scrolled to a #fragment, and
+  // the masthead has settled (the Sync control appears after this module runs; a shift above
+  // the top item before the mark would make the reader's first scroll read as the page's). The
+  // #fragment itself is the reader pointing at a place, and a recompose could hide the very row
+  // it names.
   let roamedOnce = false, touched = !!location.hash, mark = null;
   const TOUCH = ['pointerdown', 'keydown', 'focusin', 'wheel', 'touchstart'];
-  const markTop = () => { const el = topItem(); return el && { el, top: el.getBoundingClientRect().top, y: scrollY }; };
+  const markTop = () => { const el = topItem(); return el && { el, top: el.getBoundingClientRect().top, y: scrollY, own: ownScroll() }; };
   const onScroll = () => {
     if (!mark) return;                            // before load settles: the browser's scroll
-    const { el, top, y } = mark, moved = scrollY - y;
+    const { el, top, y, own } = mark, moved = scrollY - y, theirs = moved - (ownScroll() - own);
     const withIt = visible(el) && Math.abs(el.getBoundingClientRect().top - top + moved) < 2;
-    if (Math.abs(moved) >= 2 && withIt) touch(); else mark = markTop();
+    if (Math.abs(theirs) >= 2 && withIt) touch(); else mark = markTop();
   };
   function quiet() { removeEventListener('scroll', onScroll); for (const t of TOUCH) document.removeEventListener(t, touch, true); }
   function touch() { touched = true; quiet(); }
@@ -223,13 +226,9 @@ export function initBoard({ prefs, record, adopt = () => {} }) {
   paint();
   apply();
   if (!touched) {
-    // WebKit may not have the navigation entry yet while the modules run: the legacy field says it too
-    const entry = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
-    const nav = entry ? entry.type : ({ 1: 'reload', 2: 'back_forward' })[performance.navigation && performance.navigation.type];
     const arm = () => { if (!touched) mark = markTop(); };
     const late = () => requestAnimationFrame(() => requestAnimationFrame(arm));
-    if (nav !== 'reload' && nav !== 'back_forward' && !location.hash) arm();
-    else if (document.readyState === 'complete') late(); else addEventListener('load', late, { once: true });
+    if (document.readyState === 'complete') late(); else addEventListener('load', late, { once: true });
   }
 
   function remoteRead() { anchored(topItem(), () => { paint(); if (rs) apply(); }); }
