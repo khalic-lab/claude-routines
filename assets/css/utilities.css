@@ -1,8 +1,14 @@
-/* Utilities layer: single-purpose helpers. */
+/* Utilities layer: single-purpose helpers shared by every page. */
 @layer utilities {
   /* visually hidden, still read aloud */
   .vh {
     position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden;
     clip-path: inset(50%); white-space: nowrap;
   }
+  /* the label voice: the page's one small-type idiom, never under 12px */
+  .lbl {
+    font-family: var(--sans); font-size: var(--t-lbl); font-weight: 600; line-height: 1.35;
+    letter-spacing: var(--track-lbl); text-transform: uppercase;
+  }
+  .num { font-variant-numeric: tabular-nums; }
 }

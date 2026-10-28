@@ -1,53 +1,68 @@
 {%- comment -%}
-  THE ONE SHARED INCLUDE: cascade-layer order, the palette, the self-hosted display face and the
-  feedback Worker's address. Every page gets it (default layout via head.html, and the self-owned
-  admin layout directly). Keep it to tokens only: tools/admin/harness.py embeds the style
-  blocks into the admin smoke page and bans sticky/fixed/100vh/100dvh/overflow-y in them, and the
-  only Liquid it can expand is the font `url()` form below.
+  THE ONE SHARED INCLUDE (round 3, 2026-10-25): cascade-layer order, the palette, the type
+  tokens, the self-hosted display face and the feedback Worker's address. Every page gets it
+  (default layout via head.html; the self-owned admin layout directly). Tokens only: no layout,
+  nothing sticky or fixed, no viewport units (tools/admin/harness.py embeds the <style> blocks
+  into the admin smoke page and tools/tests/test_frontend_static.py bans those there). The only
+  Liquid the harness can expand is the font url() form below.
 {%- endcomment -%}
 <style>
-  /* One declaration of the layer order, first thing on every page. Later layers win regardless of
-     specificity, which is what replaces the old page's priority flags and specificity fights:
-     `state` (hidden, read, js gates) beats `components`, which beats `layout`, and so on. */
+  /* Layer order, declared once and first on every page. A later layer wins whatever the
+     specificity, so `state` (hidden, read, the script gate) beats `components`, which beats
+     `layout`; nothing anywhere needs a priority flag. */
   @layer reset, tokens, base, layout, components, utilities, state;
 
   @layer tokens {
-    /* ONE palette, both schemes: light-dark(light, dark), armed by `color-scheme`. Red is a
-       deliberate PAIR (4.89:1 on light paper, 5.97:1 on dark); --accent carries structure. */
     :root {
       color-scheme: light dark;
+      /* one palette, both schemes: bone paper and slate, ink, an indigo for structure and a red
+         PAIR spent on three things only (source domain, Just in, the lead glyph) */
       --paper:    light-dark(#eceae4, #14151a);
-      --panel:    light-dark(#e2e1d9, #1d1e25);
+      --panel:    light-dark(#e3e1da, #1c1d24);
       --card:     light-dark(#f3f2ec, #1a1b21);
       --ink:      light-dark(#23252b, #e7e5dd);
-      --muted:    light-dark(#5f616a, #9a9ca6);
-      --muted-ui: light-dark(#565863, #b0b2bb);
+      --muted:    light-dark(#5a5c66, #a0a2ac);
+      --muted-ui: light-dark(#52545f, #b4b6bf);
       --rule:     light-dark(rgb(35 37 43 / .62), rgb(231 229 221 / .5));
-      --hair:     light-dark(rgb(35 37 43 / .14), rgb(231 229 221 / .13));
-      --field:    light-dark(#f6f5f0, rgb(255 255 255 / .05));
-      --frame:    light-dark(rgb(35 37 43 / .46), rgb(231 229 221 / .3));
+      --hair:     light-dark(rgb(35 37 43 / .15), rgb(231 229 221 / .14));
+      --frame:    light-dark(rgb(35 37 43 / .5), rgb(231 229 221 / .34));
+      --field:    light-dark(#f7f6f1, rgb(255 255 255 / .05));
       --accent:   light-dark(#2b3f6b, #8fa9df);
       --red:      light-dark(#c8102e, #ff5a5f);
-      --shadow-pop: 0 8px 30px light-dark(rgb(0 0 0 / .14), rgb(0 0 0 / .55));
-      --scrim: rgb(0 0 0 / .45);
+      --scrim:    rgb(0 0 0 / .45);
+      --shadow-pop: 0 10px 34px light-dark(rgb(0 0 0 / .16), rgb(0 0 0 / .6));
       --img-filter: grayscale(1) contrast(1.08);
-      --serif: ui-serif, 'New York', 'Iowan Old Style', Charter, Georgia, 'Times New Roman', serif;
-      /* 'Anton Fallback' is metric-matched and must stay ahead of the system condensed faces */
+      /* type: a condensed display face for headlines, the system serif for prose, the system
+         sans for labels and controls */
       --display: 'Anton', 'Anton Fallback', 'Arial Narrow', 'Helvetica Neue Condensed', sans-serif-condensed, sans-serif;
-      --sans: 'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont, sans-serif;
-      /* the measure, in the em of the text that uses it: a block of prose reads at ~65 characters
-         a line, a column of multi-column text at ~50 (Bringhurst: 45-75, 40-50 set in columns) */
-      --measure: 32em;
-      --col: 24em;
+      --serif: ui-serif, 'New York', 'Iowan Old Style', Charter, Georgia, 'Times New Roman', serif;
+      --sans: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      /* the root never changes with the viewport (PLAN decision 11 reopened, round 3): these
+         are the only sizes the page uses, so no label can fall under 12px */
+      --t-lbl: .75rem;           /* 12px: kickers, tags, flags, counts */
+      --t-ctl: .8125rem;         /* 13px: buttons, chips, links */
+      --t-small: .9375rem;       /* 15px: notes, the key, footers */
+      --t-why: 1rem;             /* 16px: why it matters, row bodies */
+      --t-prose: 1.0625rem;      /* 17px; 18px from 1024px (base.css) */
+      --lh-display: 1.1;         /* Anton clears Ä Ü Å at 1.10, never less */
+      --track-lbl: .08em;
+      /* measures, in the em of the text that uses them: 34em of the serif is 72-78 characters a
+         line (PLAN decision 3: 50-80), set on the text block itself, never on a container in
+         another size */
+      --measure: 34em;
+      --measure-card: 32em;
+      /* control heights: a thumb on phones, a pointer above 700px (components.css) */
+      --tap: 44px;
+      --tap-wide: 32px;
+      --radius: 2px;
     }
-    /* a filter cannot take light-dark(), so the one scheme-dependent filter is set here */
     @media (prefers-color-scheme: dark) {
       :root { --img-filter: grayscale(1) contrast(1.06) brightness(.9); }
     }
   }
 
-  /* Anton, SIL OFL 1.1, self-hosted (assets/fonts/OFL.txt): no third-party font request.
-     `font-weight: 400 900` is a deliberate over-claim that suppresses faux-bold; do not "fix" it.
+  /* Anton, SIL OFL 1.1, self-hosted (assets/fonts/OFL.txt): no third-party font request (R23).
+     `font-weight: 400 900` is a deliberate over-claim that suppresses faux-bold; keep it.
      `relative_url` is load-bearing: the site lives under the /claude-routines baseurl. */
   @font-face {
     font-family: 'Anton';
@@ -64,8 +79,8 @@
       U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
       U+2C60-2C7F, U+A720-A7FF;
   }
-  /* Swap-window stand-in fitted to the live headline corpus (86% sets total headline height equal
-     to Anton's; above 88% is monotonically worse). Overrides are pre-divided by size-adjust. */
+  /* The swap-window stand-in, metric-matched to Anton so the swap moves nothing (R22): 86%
+     sets the headline corpus to Anton's total height; the overrides are pre-divided by it. */
   @font-face {
     font-family: 'Anton Fallback';
     src: local('Arial Narrow'), local('ArialNarrow'), local('Helvetica Neue Condensed Bold'), local('Roboto Condensed');

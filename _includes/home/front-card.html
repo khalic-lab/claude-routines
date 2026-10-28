@@ -1,24 +1,21 @@
 {%- comment -%}
-  A story lifted to the front. Leads and features keep "why" visible and fold the body; a brief
-  folds its "why" too (R2). The "why" follows the story it comments on: after the body, never
-  above it, so a folded card still shows it under the headline. Body and why share one text box
-  (.fc__text), so the measure is one width and both keep the same edges. The og:image slot is reserved only when the builder says the story may
-  carry one (`unfurl`), and only with script, since only script can fill it.
-  `reserve=true` renders the Unread refill's copy (inside a <template>): always folded, never
-  boot-open. Inner ids carry a "c-" so a card and its story's day row never share one.
+  A story lifted to the front. Always folded at boot (R33 was Open; round 3 ends boot-open):
+  kicker, headline, [deck], image slot, "Why it matters" (visible on leads and features, folded
+  on briefs), the footer line (R2). The fold holds the body, every outlet the story cites and
+  Discuss. The image slot is reserved only when the builder says the story may carry one
+  (`unfurl`), and only with script, since only script can fill it (R9: after the headline, never
+  above). `front_date` lets the card print its own day only when it is not the front's.
+  `reserve=true` renders the Unread refill's copy (inside a <template>). Inner ids carry a "c-"
+  so a card and its story's day row never share one.
 {%- endcomment -%}
 {%- assign s = include.s -%}
 {%- assign id = s.sid | default: s.id -%}
 {%- assign cid = 'c-' | append: id -%}
-{%- assign open = s.boot_open -%}
-{%- if include.reserve -%}{%- assign open = false -%}{%- endif -%}
 {%- assign fid = '' -%}
-{%- if s.summary != "" or s.importance == 1 and s.why != "" -%}{%- assign fid = 'f-' | append: cid -%}{%- endif -%}
-<li class="fc fc--{{ s.tier }}{% unless open %} is-folded{% endunless %}" id="{{ cid }}" data-zone="card" data-story="{{ id }}" data-edition="{{ s.edition }}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}">
+{%- if s.summary != "" or s.sources or s.importance == 1 and s.why != "" -%}{%- assign fid = 'f-' | append: cid -%}{%- endif -%}
+<li class="fc fc--{{ s.tier }} is-folded" id="{{ cid }}" data-zone="card" data-story="{{ id }}" data-edition="{{ s.edition }}" data-topics="{{ s.topics | join: ' ' }}" data-imp="{{ s.importance }}">
   <article aria-labelledby="h-{{ cid }}">
-    <header class="fc__top">
-      {% include home/glyph.html imp=s.importance tier=s.tier label=s.tier_label %}<time class="fday" datetime="{{ s.date }}">{{ s.day_label }}</time>{% include home/ptag.html stream=s.stream label=s.stream_label p=s.period %}{% include home/event.html s=s %}{% if s.fresh %}<span class="fresh">Just in</span>{% endif %}
-    </header>
+    <p class="kick">{% include home/glyph.html imp=s.importance tier=s.tier label=s.tier_label %}<span class="kick__desk">{{ s.stream_label }}</span><time class="fday{% if s.date == include.front_date %} vh{% endif %}" datetime="{{ s.date }}">{{ s.day_label }}</time>{% include home/event.html s=s %}{% include home/signals.html s=s %}{% if s.fresh %}<span class="fresh">Just in</span>{% endif %}</p>
     {% include home/headline.html s=s id=cid cls=s.tier %}
     {%- if s.deck %}
     <p class="deck">{{ s.deck | escape }}</p>
@@ -27,14 +24,11 @@
     <figure class="photo needs-js" data-og="{{ s.url | escape }}" aria-hidden="true"></figure>
     {%- endif %}
     <div class="fc__text">
-      <div class="fold" id="f-{{ cid }}">{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}</div>
+      <div class="fold" id="f-{{ cid }}">{% if s.summary and s.summary != "" %}<p class="sum">{{ s.summary | escape }}</p>{% endif %}{% if s.importance == 1 %}{% include home/why.html s=s %}{% endif %}{% include home/sources.html s=s id=cid %}<p class="talk">{% include home/actions.html s=s %}</p></div>
       {%- if s.importance > 1 %}
       {% include home/why.html s=s %}
       {%- endif %}
     </div>
-    <footer class="line">
-      {% include home/meta.html s=s %}
-      {% include home/actions.html fold=fid open=open %}
-    </footer>
+    <footer class="line">{% include home/meta.html s=s %}{% include home/controls.html fold=fid %}</footer>
   </article>
 </li>

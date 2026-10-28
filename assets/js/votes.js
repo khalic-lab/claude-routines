@@ -1,8 +1,8 @@
-// Per-story votes: /submit {brief, vote, reason, story_id, surface:'home'}, on the passkey
-// session. Pressing the active thumb again retracts it (vote 0). One reason box per item, shared by
-// both thumbs; a down-vote asks for the why, an up-vote does not. Voting is not a read.
-import { fb, session, authHeaders, sessionDied, nudgeSignIn } from './sync.js';
-import { anchored } from './fold.js';
+// Per-story votes (R26): /submit {brief, vote, reason, story_id, surface:'home'} on the
+// passkey session. Pressing the active thumb again retracts it (vote 0). One reason box per
+// item, shared by both thumbs; a down-vote asks for the why. Voting is never a read.
+import { fb, session, authHeaders, sessionDied, nudgeSignIn } from './session.js';
+import { anchored } from './anchor.js';
 
 const announce = document.getElementById('announce');
 
@@ -54,14 +54,14 @@ export function initVotes() {
     const item = b.closest('[data-story]');
     const was = b.getAttribute('aria-pressed') === 'true';
     anchored(item, () => {
-      item.querySelectorAll('.vote').forEach((x) => x.setAttribute('aria-pressed', 'false'));
+      for (const x of item.querySelectorAll('.vote')) x.setAttribute('aria-pressed', 'false');
       const old = item.querySelector('.rzn');
       if (old) old.hidden = true;
       if (was) return;
       b.setAttribute('aria-pressed', 'true');
       const up = +b.dataset.v === 1;
       const box = reasonBox(item), input = box.querySelector('input');
-      input.value = '';                           // shared box: never carry text across polarities
+      input.value = '';                           // the shared box never carries text across polarities
       input.placeholder = up ? 'what stood out? (optional)' : 'why? (optional)';
       input.setAttribute('aria-label', up ? 'Reason for thumbs-up (optional)' : 'Reason for thumbs-down (optional)');
       box.hidden = false;

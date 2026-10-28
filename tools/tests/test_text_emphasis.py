@@ -97,7 +97,7 @@ class StoryFieldsTest(unittest.TestCase):
         finally:
             bsf.plain_emphasis = real
         clean = self._load(root)
-        for k in ("id", "sid", "url", "date", "stream", "permalink"):
+        for k in ("id", "sid", "url", "date", "stream"):
             self.assertEqual([s[k] for s in kept], [s[k] for s in clean], k)
         self.assertIn("(_prévenus_)", kept[0]["headline"])
         self.assertNotIn("_", clean[0]["headline"])

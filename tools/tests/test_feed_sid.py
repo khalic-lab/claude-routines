@@ -5,9 +5,10 @@
 Contract: `tools/build_stories_feed.py` gains a per-story `sid` key equal to
 `tools/store/store.py::story_id(url)` for every story that carries a `url`, and
 `null`/absent `sid` for url-less stories — with EVERY OTHER existing field/value preserved
-verbatim on the same fixture. `golden-feed.json` is a byte-for-byte capture of the CURRENT
-(pre-migration) `build_stories_feed.py` output on `fixtures/dualwrite/posts/` +
-`fixtures/dualwrite/index/` — see `capture_golden_feed()` at the bottom (a one-off
+verbatim on the same fixture. `golden-feed.json` is a byte-for-byte capture of
+`build_stories_feed.py` output on `fixtures/dualwrite/posts/` + `fixtures/dualwrite/index/`
+(first captured pre-migration; re-captured 2026-10-22 when every story gained `sources` and
+lost the dead `permalink`) — see `capture_golden_feed()` at the bottom (a one-off
 regeneration helper, NOT a test):
 
     python3 -c "import sys; sys.path.insert(0, 'tools/tests'); \\
@@ -118,21 +119,21 @@ class FeedSidTests(unittest.TestCase):
         with open(GOLDEN_FEED_PATH) as f:
             self.golden = json.load(f)
 
-    def test_output_preserves_every_existing_field_allowing_only_new_sid_key(self):
-        """Contract: 'preserves every existing field/value on the same fixture (allowing
-        ONLY the new sid key to appear)'."""
+    def test_output_matches_the_golden_field_for_field(self):
+        """Every story field and value on the fixture is pinned by the golden, so a new key, a
+        dropped key or a changed value fails here until the change is made deliberately and the
+        golden re-captured (capture_golden_feed). The golden carries `sid` and `sources` since
+        the 2026-10-22 re-capture; the original contract allowed only `sid` on top of the
+        pre-migration shape."""
         feed, _ = _run_build_feed(self.root, f"build_feed_{id(self)}_a")
         self.assertEqual(feed["generated"], self.golden["generated"])
         self.assertEqual(feed["count"], self.golden["count"])
         self.assertEqual(feed["topics"], self.golden["topics"])
         self.assertEqual(len(feed["stories"]), len(self.golden["stories"]))
         for actual, expected in zip(feed["stories"], self.golden["stories"]):
-            extra_keys = set(actual.keys()) - set(expected.keys())
-            self.assertEqual(extra_keys, {"sid"} & extra_keys,
-                              f"no new keys besides 'sid' may appear, got {extra_keys}")
-            actual_sans_sid = {k: v for k, v in actual.items() if k != "sid"}
-            self.assertEqual(actual_sans_sid, expected,
-                              "every pre-existing field/value must be preserved verbatim")
+            self.assertEqual(set(actual.keys()), set(expected.keys()),
+                             "a story key appeared or vanished without a golden re-capture")
+            self.assertEqual(actual, expected, "every field/value must match the golden verbatim")
 
     def test_url_bearing_story_sid_equals_store_story_id(self):
         """Contract: 'each story with a url carries sid == story_id(url)'."""

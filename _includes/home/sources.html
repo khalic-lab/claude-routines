@@ -1,0 +1,10 @@
+{%- comment -%}
+  Every outlet a story cites (builder: sources, one per distinct domain, primary first), its
+  label then its domain, each a link. The block closes the fold, after the prose, so a folded
+  story keeps the index shape (R2). `id` prefixes the label's id: a card, a row and a reserve
+  copy of one story never share it.
+{%- endcomment -%}
+{%- assign s = include.s -%}
+{%- if s.sources -%}
+<div class="srcs"><span class="srcs__l" id="sl-{{ include.id }}">Sources</span><ul class="srcs__list" role="list" aria-labelledby="sl-{{ include.id }}">{% for src in s.sources %}<li><a href="{{ src.url | escape }}" target="_blank" rel="noopener noreferrer">{{ src.label | escape }}<span class="vh"> (opens in a new tab)</span></a>{% if src.domain != src.label %}<span class="srcs__dom">{{ src.domain | escape }}</span>{% endif %}</li>{% endfor %}</ul></div>
+{%- endif -%}

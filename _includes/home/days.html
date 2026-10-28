@@ -1,0 +1,7 @@
+{%- comment -%} The day jump: the front, then every edition by date, plain links (so it works without script: masthead) and the phone sheet's list. {%- endcomment -%}
+<ol class="daylist" role="list">
+  <li><a href="#front">Front page<span class="ct num">{{ include.feed.front.n }}</span></a></li>
+  {%- for d in include.feed.days %}
+  <li><a href="#d-{{ d.date }}"><time datetime="{{ d.date }}">{{ d.label_short }}</time><span class="ct num">{{ d.n_stories }}</span></a></li>
+  {%- endfor %}
+</ol>

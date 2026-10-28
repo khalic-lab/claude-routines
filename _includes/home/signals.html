@@ -1,0 +1,8 @@
+{%- comment -%}
+  The desk's own flags on a story (builder: flags, a fixed vocabulary) and, when it cites more
+  than one outlet, how many (n_sources). They sit in the kicker, so a folded story already says
+  what kind of claim it is. The flags are the page's only outlined chips besides the AI one.
+{%- endcomment -%}
+{%- assign s = include.s -%}
+{%- if s.flags %}{% for f in s.flags %}<span class="flag flag--{{ f.key }}">{{ f.label | escape }}</span>{% endfor %}{% endif -%}
+{%- if s.n_sources and s.n_sources > 1 %}<span class="srcn">{{ s.n_sources }} sources</span>{% endif -%}

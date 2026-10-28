@@ -1,12 +1,13 @@
-// Passkey sign-in and read-state roaming through the feedback Worker. Signed out = zero
-// requests. Local-first: homeRead:v1 stays the paint source; syncState:v1 is the LWW shadow the
-// Worker merges (per sid, higher ts wins, a tie keeps local). Only st- ids ever travel.
-import { READ_KEY, SYNC_KEY, SESSION_KEY, ST_RE, readMap, syncMap, save, drop } from './store.js';
+// The passkey session and the read-state roam through the feedback Worker (R25: opt-in; signed
+// out = zero requests). Local first: homeRead:v1 is the paint source; syncState:v1 is the
+// last-writer-wins shadow the Worker merges (per sid, higher ts wins, a tie keeps local). Only
+// st- ids travel. Request and response shapes are the contract (C15), field for field.
+import { READ_KEY, SYNC_KEY, SESSION_KEY, ST_RE, readMap, syncMap, save, drop } from './state.js';
 
 export function fb() {
   return window.__FB || { enabled: true, url: 'https://feedback-sink.khalic-lab.workers.dev' };
 }
-// The same validator /admin/ uses (token AND reader); propose.js uses this one too (B4).
+// the same validator /admin/ uses: a token AND a reader
 export function session() {
   try {
     const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
@@ -21,40 +22,38 @@ export function authHeaders(s, json) {
 
 const hooks = { signin: [], roam: [], change: [] };
 export function on(name, fn) { hooks[name].push(fn); }
-const emit = (name, arg) => hooks[name].forEach((fn) => fn(arg));
+const emit = (name) => { for (const fn of hooks[name]) fn(); };
 
-// ---- UI (the #sync dialog); every function is a no-op without it or without WebAuthn
+// ---- the dialog; every UI function is a no-op without it or without WebAuthn
 const dlg = document.getElementById('sync');
-const btn = document.querySelector('.syncbtn[data-dialog="sync"]');
-const $ = (sel) => (dlg ? dlg.querySelector(sel) : null);
-const ui = dlg && btn && window.PublicKeyCredential ? {
-  out: $('.sync__out'), inn: $('.sync__in'), who: $('.sync__who'), status: $('.sync__status'),
-  signin: $('.sync__signin'), setupT: $('.sync__setup-t'), setup: $('.sync__setup'),
-  invite: $('.sync__invite'), create: $('.sync__create'), signout: $('.sync__signout'),
+const btns = [...document.querySelectorAll('.syncbtn[data-dialog="sync"]')];
+const q = (sel) => (dlg ? dlg.querySelector(sel) : null);
+const ui = dlg && btns.length && window.PublicKeyCredential ? {
+  out: q('.sync__out'), inn: q('.sync__in'), who: q('.sync__who'), status: q('.sync__status'),
+  signin: q('.sync__signin'), setupT: q('.sync__setup-t'), setup: q('.sync__setup'),
+  invite: q('.sync__invite'), create: q('.sync__create'), signout: q('.sync__signout'),
 } : null;
 
 export function say(m) { if (ui) ui.status.textContent = m || ''; }
 function paintUi() {
   if (!ui) return;
   const s = session();
-  btn.textContent = s ? 'Synced · ' + s.reader : 'Sync';
-  btn.classList.toggle('is-in', !!s);
+  for (const b of btns) { b.textContent = s ? 'Synced · ' + s.reader : 'Sync'; b.classList.toggle('is-in', !!s); }
   ui.out.hidden = !!s;
   ui.inn.hidden = !s;
   ui.who.textContent = s ? 'Signed in as ' + s.reader : '';
 }
-// Open the dialog and say why. Called from inside click handlers (a vote, propose): a modal
-// dialog has no outside-click listener to close it again on the same click (old bug B1).
+// open the dialog and say why (from a vote or the propose form)
 export function nudgeSignIn(msg) {
   if (!ui) return;
   if (!dlg.open) dlg.showModal();
   say(msg);
 }
 
-// ---- read-state shadow + push/pull
+// ---- read-state shadow, push and pull
 let pushTimer = 0, pushPending = false;
 export function noteLocalRead(sid, v) {
-  if (!ST_RE.test(sid)) return;                 // editorials (ed-) and slug ids never roam (B2)
+  if (!ST_RE.test(sid)) return;                 // editorials (ed-) and slug ids never roam
   syncMap[sid] = { ts: Date.now(), v: v ? 1 : 0 };
   save(SYNC_KEY, syncMap);
   schedulePush();
@@ -84,10 +83,10 @@ addEventListener('pagehide', flushPush);
 
 function mergeRemote(state) {
   let dirty = false;
-  for (const k in readMap) {                    // seed shadows for reads made before sync existed
+  for (const k of Object.keys(readMap)) {       // seed shadows for reads made before sync existed
     if (ST_RE.test(k) && !syncMap[k]) { syncMap[k] = { ts: readMap[k], v: 1 }; dirty = true; }
   }
-  for (const k in state) {
+  for (const k of Object.keys(state)) {
     const r = state[k];
     if (!ST_RE.test(k) || !r || typeof r.ts !== 'number' || (r.v !== 0 && r.v !== 1)) continue;
     const l = syncMap[k];
@@ -99,9 +98,9 @@ function mergeRemote(state) {
   if (dirty) { save(SYNC_KEY, syncMap); save(READ_KEY, readMap); }
   emit('roam');
 }
-function pullRemote() {
+export function pullRemote() {
   const s = session();
-  if (!s) return;                               // signed out: no sync traffic at all
+  if (!s) return;
   fetch(fb().url + '/readstate', { headers: authHeaders(s) })
     .then((r) => {
       if (r.status === 401) { sessionDied('session expired — sign in again'); return null; }
@@ -123,8 +122,8 @@ export function dropSession(reason) {           // an explicit sign-out passes n
   emit('change');
   if (reason) nudgeSignIn(reason);
 }
-// Every 401 lands here. A session younger than a minute gets a pass: a just-issued token can
-// 401 off an eventually consistent KV read at another edge.
+// every 401 lands here; a session under a minute old gets a pass (a just-issued token can 401
+// off an eventually consistent KV read at another edge)
 export function sessionDied(reason) {
   const s = session();
   if (s && typeof s.at === 'number' && Date.now() - s.at < 60000) return;
@@ -140,7 +139,7 @@ function adoptSession(j) {
   emit('signin');
 }
 
-// ---- WebAuthn (same payloads as the old page and /admin/)
+// ---- WebAuthn (the same payloads as /admin/)
 function b64uToBuf(s) {
   s = String(s).replace(/-/g, '+').replace(/_/g, '/');
   while (s.length % 4) s += '=';
@@ -161,6 +160,7 @@ function authFetch(path, body) {
 }
 const errMsg = (err) => (err && err.name === 'NotAllowedError' ? 'cancelled or timed out'
   : (err && err.message) ? err.message : 'failed');
+const extensions = (cred) => (cred.getClientExtensionResults ? cred.getClientExtensionResults() : {});
 
 function doLogin() {
   say('waiting for your passkey…');
@@ -168,14 +168,13 @@ function doLogin() {
     if (!res.ok) throw new Error('server error (' + res.status + ')');
     const o = res.j;
     o.challenge = b64uToBuf(o.challenge);
-    (o.allowCredentials || []).forEach((c) => { c.id = b64uToBuf(c.id); });
+    for (const c of (o.allowCredentials || [])) c.id = b64uToBuf(c.id);
     return navigator.credentials.get({ publicKey: o });
   }).then((cred) => {
     if (!cred) throw new Error('no credential');
     const r = cred.response;
     const payload = {
-      id: cred.id, rawId: bufToB64u(cred.rawId), type: cred.type,
-      clientExtensionResults: cred.getClientExtensionResults ? cred.getClientExtensionResults() : {},
+      id: cred.id, rawId: bufToB64u(cred.rawId), type: cred.type, clientExtensionResults: extensions(cred),
       response: {
         clientDataJSON: bufToB64u(r.clientDataJSON),
         authenticatorData: bufToB64u(r.authenticatorData),
@@ -196,14 +195,13 @@ function doRegister(invite) {
     const o = res.j;
     o.challenge = b64uToBuf(o.challenge);
     o.user.id = b64uToBuf(o.user.id);
-    (o.excludeCredentials || []).forEach((c) => { c.id = b64uToBuf(c.id); });
+    for (const c of (o.excludeCredentials || [])) c.id = b64uToBuf(c.id);
     return navigator.credentials.create({ publicKey: o });
   }).then((cred) => {
     if (!cred) throw new Error('no credential');
     const r = cred.response;
     const payload = {
-      id: cred.id, rawId: bufToB64u(cred.rawId), type: cred.type,
-      clientExtensionResults: cred.getClientExtensionResults ? cred.getClientExtensionResults() : {},
+      id: cred.id, rawId: bufToB64u(cred.rawId), type: cred.type, clientExtensionResults: extensions(cred),
       response: { clientDataJSON: bufToB64u(r.clientDataJSON), attestationObject: bufToB64u(r.attestationObject) },
     };
     if (r.getTransports) payload.response.transports = r.getTransports();
@@ -214,9 +212,9 @@ function doRegister(invite) {
   }).catch((err) => say(errMsg(err)));
 }
 
-export function initSync() {
-  if (ui) {                                     // no WebAuthn: the Sync button stays hidden
-    btn.hidden = false;
+export function initSession() {
+  if (ui) {                                     // no WebAuthn: the Sync control stays hidden
+    for (const b of btns) b.hidden = false;
     ui.signin.addEventListener('click', doLogin);
     ui.setupT.addEventListener('click', () => {
       const show = ui.setup.hidden;

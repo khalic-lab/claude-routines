@@ -1,17 +1,18 @@
-/* State layer, last in the order: it wins over every other layer with no priority flag. */
+/* State layer, last in the order: hidden, the script gate, folds, reading. It wins over every
+   other layer with no priority flag anywhere. */
 @layer state {
   [hidden] { display: none; }
-  /* controls that only work with script are absent, not inert, without it */
+  /* a control that only works with script is absent, not inert, without it (C5) */
   html:not(.js) .needs-js { display: none; }
-  /* folding is presentation, gated on script: without it every text shows */
+  /* folding is presentation, gated on script: without it every word shows (C4, C5) */
   .js .is-folded .fold { display: none; }
-  .js .is-folded .fc__text:not(:has(> .why)) { display: none; }   /* nothing left to show: no empty gap */
-  /* reading dims by colour toward --muted and never hides, moves or resizes anything (R3); the
-     AI disclosure keeps its colour (R5) */
-  .is-read .hl, .is-read .deck, .is-read .why, .is-read .sum, .is-read .ed__hl, .is-read .ed__body, .ptr.is-read .ptr__h { color: var(--muted); }
-  .is-read .photo img { opacity: .5; }
+  /* Reading dims and never hides, moves, folds or resizes anything (R3, C6): the text drops in
+     opacity, keeping 4.5:1 on both papers; the AI disclosure keeps its colour (R5); controls and
+     kickers stay crisp so the ✓ state still reads */
+  .is-read :is(.hl, .deck, .sum, .why, .ed__hl, .ed__body, .srcs) { opacity: .68; }
+  .is-read .photo img { opacity: .45; }
   /* feedback kill switch (window.__FB.enabled = false) */
-  .fb-off .vote, .fb-off .vnote, .fb-off .rzn { display: none; }
+  .fb-off :is(.vote, .vnote, .rzn) { display: none; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none; animation: none; scroll-behavior: auto; }
   }

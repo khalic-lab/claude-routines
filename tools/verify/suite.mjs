@@ -1,17 +1,22 @@
-// Browser checks for the built site (tools/verify/build.sh output), 2026-09-24 rewrite.
+// Browser checks for the built site (tools/verify/build.sh output): the round-3 suite
+// (2026-10-25), written against the rebuilt page and the contract C1–C16 (REVIEW.md, round 3).
 //
 //   node tools/verify/suite.mjs [SITE_DIR]      default SITE_DIR=/tmp/fp-build/src/_site
-//   ONLY=default,stale WIDTHS=390,1440 node ...  narrow a run; FAULTS=0 skips the self-test; VERBOSE=1 prints every detail
+//   ONLY=default,stale WIDTHS=390,1440 node ...  narrow a run; FAULTS=0 skips the self-test; SHOTS=0 the
+//   screenshots; VERBOSE=1 prints every assertion's detail; SYNTH=1 forces the made-up scenarios
 //
 // Serves SITE_DIR itself under /claude-routines/ (the production baseurl) and stubs both Workers
 // with route(), so nothing leaves the machine. EVERY expectation is derived here from the repo's
-// _posts/ filenames, routines/src/*.md and _data/homefeed.json (never from the builder's own
-// `period`/`front` output), so the suite stays valid after a rebase onto newer data.
+// _posts/ filenames, routines/src/*.md and _data/homefeed.json's board (never from the builder's
+// own `period`/`front` output), so the suite stays valid after a rebase onto newer data.
 //
 // Geometry is measured with the sticky chrome (.bar, .mast) forced to its flow position: a stuck
 // bar paints over scrolled content by definition; what must hold is that its flow box reserves
-// its own space. Ends with a fault-injection self-test: each deliberate break must fail its own
-// assertion, or the suite is not testing what it claims to.
+// its own space. An assertion is [ok, detail]; ok === null is a SKIP (the data offers no
+// scenario), counted apart from passes and failures. The run ends with a fault self-test: each
+// deliberate break (CSS, markup, a request, storage, or one line of a module served mutated)
+// must fail its own assertion, or the suite is not testing what it claims to. The rule each
+// assertion serves is in REVIEW.md's round-3 rule-to-test map.
 import { chromium, webkit, devices } from 'playwright';
 import http from 'node:http';
 import fs from 'node:fs';
@@ -32,6 +37,7 @@ const out = [];
 const log = (s) => { out.push(s); console.log(s); };
 
 // ------------------------------------------------------------------ expectations, derived here
+// (the oracle of the 2026-09-24 suite, kept: it reads the data, not the page)
 const feed = JSON.parse(fs.readFileSync(path.join(REPO, '_data/homefeed.json'), 'utf8'));
 const board = feed.board;
 const byStream = {};
@@ -111,9 +117,9 @@ function refillOf(read, beats = []) {
   const desk = DESK_RESERVE.find((sid) => { const e = bySid.get(sid); return !edRead(e) && onBeat(edition(e).flatMap((x) => x.topics)); }) || null;
   return { cards: lead ? [lead, ...pick.filter((s) => s !== lead)] : [], desk };
 }
-// No front-read gate may pass or fail for want of data (review F4). Where the day's data lacks a
-// scenario the suite makes one, the way frontWithSlots() makes image slots; SYNTH=1 forces the
-// made-up ones on any data, so that path is exercised too. What cannot be made is reported as SKIP.
+// No front-read gate may pass or fail for want of data. Where the day's data lacks a scenario
+// the suite makes one, the way frontWithSlots() makes image slots; SYNTH=1 forces the made-up
+// ones on any data, so that path is exercised too. What cannot be made is reported as SKIP.
 const SYNTH = !!process.env.SYNTH;
 // the lead rule: the reserve's first non-importance-3 entry stays unread with a later
 // importance-3 one, the rest of the reserve read. Made up: the last two reserve entries become
@@ -151,12 +157,12 @@ const S1c = TYPE_T ? [...S1b, TYPE_T] : S1b;
 const S2 = LEAD_X ? [...RESERVE.filter((s) => s !== LEAD_X && s !== LEAD_Y), EXPECT_DESK].filter(Boolean) : [];
 const S2e = LEAD_X ? [...S2, LEAD_Y] : [];
 const S3 = [...RESERVE, ...DESK_RESERVE];
-// All's front (owner decision 2026-09-25): the same pick, taken once at load from the read set the
-// page opened with, beats aside; with nothing unread the builder's front; a Desk's view with no
-// unread editorial keeps the builder's; a partly-read front is filled up to four with read stories
-// in reserve order after the unread ones (owner ruling, round 5). The sync states: the first
-// roamed read set marks the All front's second card read (All is taken once more, if the reader
-// did nothing yet); a second roam marks its lead too, and nothing moves
+// All's front (C7): the same pick, taken once at load from the read set the page opened with,
+// beats aside; with nothing unread the builder's front; a Desk's view with no unread editorial
+// keeps the builder's; a partly-read front is filled up to four with read stories in reserve
+// order after the unread ones. The sync states (C8): the first roamed read set marks the All
+// front's second card read (All is taken once more, if the reader did nothing yet); a second
+// roam marks its lead too, and nothing moves
 function allOf(read) {
   const r = refillOf(read);
   if (!r.cards.length) return { cards: EXPECT_FRONT, desk: r.desk || EXPECT_DESK };
@@ -194,7 +200,22 @@ for (const x of stories) {
 }
 // the fault's label: a story whose event date falls inside its period (or, failing that, its own day)
 const IN_PERIOD = stories.find((x) => /^\d{4}-\d\d-\d\d$/.test(String(x.event_date || '')) && x.event_date >= PSTART[sidOf(x)]) || stories[0];
-// dynamic targets (the mock pinned 24 Sep ids; these follow the data)
+// multi-source stories, the desk's flags and Discuss (C16): what the page must print for each
+// story, editorial and day, from the board. The primary (`url`, `source_domain`) is the
+// headline's link and the kicker; `sources` is every outlet, primary first, with the label the
+// writer gave it; `flags` is the builder's fixed vocabulary, in its order.
+const norm = (v) => String(v || '').replace(/\s+/g, ' ').trim();
+// builder text that may carry markup (an editorial's paragraphs, its title_html), as the page's textContent reads
+const plainOf = (v) => norm(String(v || '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"));
+const STORY_X = Object.fromEntries(stories.map((x) => [sidOf(x), {
+  headline: norm(x.headline), url: x.url || '', domain: x.source_domain || '', desk: norm(x.stream_label), date: x.date,
+  sources: (x.sources || []).map((s) => ({ url: s.url, label: norm(s.label), domain: s.domain })),
+  flags: (x.flags || []).map((f) => norm(f.label)), summary: norm(x.summary) }]));
+const ED_X = Object.fromEntries(eds.map((e) => [sidOf(e), { title: e.title_text ? norm(e.title_text) : plainOf(e.title_html),
+  desk: norm(e.stream_label), date: e.date, first: plainOf((e.body || [])[0]) }]));   // body: the paragraphs the page prints (a bold lede is lifted into title_html)
+const DAY_X = Object.fromEntries(dates.map((d) => [d, stories.filter((x) => x.date === d)
+  .map((x) => ({ sid: sidOf(x), headline: norm(x.headline), url: (x.sources && x.sources[0] ? x.sources[0].url : x.url) || '' }))]));
+// dynamic targets (these follow the data)
 const deskEdition = deskEd ? `${deskEd.date}-${deskEd.stream}` : null;
 const beatCounts = {};
 for (const x of board) for (const t of x.topics || []) beatCounts[t] = (beatCounts[t] || 0) + 1;
@@ -205,6 +226,8 @@ const BEAT_DAYS = dates.filter((d) => board.some((x) => x.date === d && ((x.kind
 const frontIds = new Set([...EXPECT_FRONT, EXPECT_DESK]);
 const MEASURE_ROW = stories.filter((x) => !frontIds.has(sidOf(x)) && x.importance > 1 && x.why)
   .sort((a, b) => (b.why.length + b.summary.length) - (a.why.length + a.summary.length))[0];
+// the day each builder-front story belongs to, and the stories of each day in rank order (C9)
+const DAY_SIDS = Object.fromEntries(dates.map((d) => [d, stories.filter((x) => x.date === d).map(sidOf)]));
 const OLD = JSON.parse(fs.readFileSync(path.join(REPO, 'tools/verify/fixtures/old-contract.json'), 'utf8'));
 
 // ------------------------------------------------------------------ a static server for SITE
@@ -235,7 +258,14 @@ async function mutateJs(ctx, js) {
   }
   await ctx.route((u) => u.pathname.endsWith('/assets/js/' + js.file), (route) => route.fulfill({ status: 200, contentType: 'text/javascript', body }));
 }
-// The og and open-card-photo gates must not depend on the day's data: a front whose stories are all
+// a CSS fault for the no-script run: one sheet served with a rule rewritten
+async function mutateCss(ctx, css) {
+  let body = fs.readFileSync(path.join(SITE, 'assets/css', css.file), 'utf8');
+  if (!body.includes(css.from)) throw new Error(`fault string not found in ${css.file}: ${css.from}`);
+  body = body.replace(css.from, css.to);
+  await ctx.route((u) => u.pathname.endsWith('/assets/css/' + css.file), (route) => route.fulfill({ status: 200, contentType: 'text/css', body }));
+}
+// The og and open-card gates must not depend on the day's data: a front whose stories are all
 // arXiv/doi links has no image slot at all. For the default and expanded states the homepage is
 // served with slots injected where the include would put them (after the headline, or the deck),
 // so there are always >= 2 slots and the first openable card in the rest band always has one.
@@ -313,29 +343,57 @@ function watchRequests(page, rec) {
 // ------------------------------------------------------------------ in-page helpers
 const LIB = () => {
   const R = (e) => e.getBoundingClientRect();
-  const vis = (e) => { const r = R(e); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden'; };
-  const name = (e) => e.dataset.zone + (e.dataset.story ? '#' + e.dataset.story : '') + (e.dataset.ptr ? '>' + e.dataset.ptr : '') + (e.dataset.date ? '@' + e.dataset.date : '');
+  // visible: a box with area, not visibility:hidden, and not screen-reader-only text (.vh)
+  const vis = (e) => {
+    if (!e) return false;
+    if (e.closest && e.closest('.vh')) return false;
+    // inside a closed <details>, only its summary shows (the content still has boxes to measure)
+    const dd = e.parentElement && e.parentElement.closest('details:not([open])');
+    if (dd) { const sm = dd.querySelector(':scope > summary'); if (!sm || !sm.contains(e)) return false; }
+    const r = R(e); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden';
+  };
+  const name = (e) => e.dataset.zone + (e.dataset.story ? '#' + e.dataset.story : '') + (e.dataset.date ? '@' + e.dataset.date : '');
   const visibleItems = () => [...document.querySelectorAll('main [data-story]')].filter(vis);
-  const chip = (k) => [...document.querySelectorAll('.chip')].find((c) => c.dataset.topic === k && vis(c));
-  const seg = (r) => document.querySelector(`.seg button[data-rs="${r}"]`);
+  // the filters render in up to three places (the rail, the bar, the phone's sheet), one module
+  // painting all of them: a check takes the visible copy, else the sheet's (a click lands unseen)
+  const chip = (k) => { const all = [...document.querySelectorAll('.chip')].filter((c) => c.dataset.topic === k); return all.find(vis) || all.find((c) => c.closest('#beats')) || all[0] || null; };
+  const chips = () => { const all = [...document.querySelectorAll('.chip')], seen = all.filter(vis); return seen.length ? seen : all.filter((c) => c.closest('#beats')); };
+  const seg = (r) => { const all = [...document.querySelectorAll(`.seg button[data-rs="${r}"]`)]; return all.find(vis) || all[0] || null; };
   const ct = (b) => +b.querySelector('.ct').textContent;
+  // visible text, without the screen-reader suffixes, spaces folded (what discuss.js reads)
+  const txt = (el, drop = '.vh') => { if (!el) return ''; const c = el.cloneNode(true); c.querySelectorAll(drop).forEach((x) => x.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };
+  // the content's own boxes inside an element: each non-blank text node's line boxes, each image
+  // or icon. A front void is measured between these, not between the child blocks: a stretched
+  // grid row lets a block cover slack, so a block measure would read a void-free card
+  const content = (root) => {
+    const out = [], rg = document.createRange();
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, { acceptNode: (n) => {
+      if (n.nodeType === 1) return n.matches('.vh') ? NodeFilter.FILTER_REJECT : n.matches('img, svg') ? NodeFilter.FILTER_ACCEPT : n === root || vis(n) ? NodeFilter.FILTER_SKIP : NodeFilter.FILTER_REJECT;
+      return n.data.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP; } });
+    for (let n; (n = w.nextNode());) {
+      if (n.nodeType === 1) { const r = R(n); if (r.width > 0 && r.height > 0) out.push([r.top, r.bottom]); continue; }
+      rg.selectNodeContents(n); for (const r of rg.getClientRects()) if (r.width > 0 && r.height > 0) out.push([r.top, r.bottom]);
+    }
+    return out;
+  };
+  // the front's voids: inside each cell (card, Desk's view), and a band line left part blank
   const frontVoids = () => {
-    const cells = [...document.querySelectorAll('.front .fc, .front .desk')].filter(vis);
+    const cells = [...document.querySelectorAll('.front .fcards--top, .front .fc, .front .desk')].filter(vis);   // the lead's track too: stretched, its void sits under the card
     let max = 0; const per = [];
     for (const c of cells) {
-      const blocks = c.classList.contains('desk')
-        ? [...c.children, ...c.querySelectorAll('.ed > *')].filter((x) => vis(x) && !x.classList.contains('ed'))
-        : [...c.querySelector('article').children].filter(vis);
-      const iv = blocks.map((b) => [R(b).top, R(b).bottom]).sort((a, b) => a[0] - b[0]);
+      const iv = content(c).sort((a, b) => a[0] - b[0]);
       const cr = R(c); let cur = cr.top, gap = 0;
       for (const [t, bt] of iv) { if (t > cur) gap = Math.max(gap, t - cur); cur = Math.max(cur, bt); }
       gap = Math.max(gap, cr.bottom - cur);
-      per.push([c.id || 'desk', Math.round(gap)]); max = Math.max(max, gap);
+      per.push([c.id || (c.matches('.desk') ? 'desk' : 'lead-track'), Math.round(gap)]); max = Math.max(max, gap);
     }
-    for (const box of document.querySelectorAll('.front__top, .fcards--rest')) {
-      if (!vis(box)) continue; const W = R(box).width; const lines = {};
-      for (const k of [...box.children].filter(vis)) { const r = R(k); const t = Math.round(r.top); (lines[t] ||= { w: 0, h: 0 }); lines[t].w += r.width; lines[t].h = Math.max(lines[t].h, r.height); }
-      for (const t in lines) if (lines[t].w < W - 2) { per.push(['partial-line', Math.round(lines[t].h)]); max = Math.max(max, lines[t].h); }
+    const grid = document.querySelector('.front__grid');
+    const bands = [grid ? [...grid.children].filter((k) => vis(k) && !k.matches('.fcards--rest')) : [],
+      ...[...document.querySelectorAll('.fcards--rest')].filter(vis).map((b) => [...b.children].filter(vis))].filter((b) => b.length);
+    for (const kids of bands) {
+      const W = R(kids[0].parentElement).width, lines = {};
+      for (const k of kids) { const r = R(k); const t = Math.round(r.top); (lines[t] ||= { w: 0, h: 0 }); lines[t].w += r.width; lines[t].h = Math.max(lines[t].h, r.height); }
+      for (const t in lines) if (lines[t].w < W - 40) { per.push(['partial-line', Math.round(lines[t].h)]); max = Math.max(max, lines[t].h); }
     }
     return { max: Math.round(max), per };
   };
@@ -352,7 +410,7 @@ const LIB = () => {
         pairs++; const a = inter(R(kids[i]), R(kids[j]));
         if (a > 1) overlaps.push(`${name(kids[i])} x ${name(kids[j])} = ${Math.round(a)}px2`);
       }
-      // DOM order == visual order; the control bar is chrome and rests after main on phones (R13)
+      // DOM order == visual order (C3); the control bar is chrome and rests after main on phones (R13)
       if (kids.length < 2 || kids.some((k) => k.dataset.zone === 'bar')) continue;
       groups++;
       for (let i = 0; i + 1 < kids.length; i++) {
@@ -374,7 +432,7 @@ const LIB = () => {
     st.remove();
     return res;
   };
-  // longest rendered line of an element's text, in characters (multicol-aware)
+  // longest rendered line of an element's text, in characters
   const cpl = (el) => {
     const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let max = 0, cur = 0, top = null; const rg = document.createRange();
     for (let n; (n = w.nextNode());) {
@@ -397,19 +455,45 @@ const LIB = () => {
     const m = c.slice(0, 3).map((v, i) => v * a + bg[i] * (1 - a)); const l1 = lum(m), l2 = lum(bg);
     return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
   };
+  // the page's red, resolved for the colour scheme in force
+  const red = () => { const p = document.createElement('i'); p.style.cssText = 'color:var(--red);position:absolute'; document.body.appendChild(p); const c = getComputedStyle(p).color; p.remove(); return c; };
+  // the smallest font size any visible text is set in
+  const fontFloor = (root) => {
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let min = Infinity, where = '';
+    for (let n; (n = w.nextNode());) {
+      if (!n.data.trim()) continue;
+      const el = n.parentElement; if (!el || el.closest('.vh') || !vis(el)) continue;
+      const s = parseFloat(getComputedStyle(el).fontSize);
+      if (s < min) { min = s; where = (el.className.toString().split(' ')[0] || el.tagName.toLowerCase()) + ' "' + n.data.trim().slice(0, 20) + '"'; }
+    }
+    return { min: Math.round(min * 100) / 100, where };
+  };
   const deadLinks = () => [...document.querySelectorAll('a[href^="#"]:not([data-dialog])')].filter(vis).map((a) => {
     const id = a.getAttribute('href').slice(1), t = document.getElementById(id);
     return t && vis(t) ? null : `"${a.textContent.trim().slice(0, 28)}" -> #${id}`;
   }).filter(Boolean);
+  // a day header says what it shows (C9, C12): "9 stories", "5 of 9 stories shown", "· 4 on the
+  // front ↑" (a link to the front); its period tags are the desks with a story shown anywhere
   const dayMeta = () => {
     const bad = []; let days = 0;
+    const onFront = new Set([...document.querySelectorAll('.front [data-story]')].filter(vis).map((e) => e.dataset.story));
+    const main = document.getElementById('main');
     for (const sec of document.querySelectorAll('section.day')) {
       if (!vis(sec)) continue; days++;
-      const num = parseInt(sec.querySelector('.day__n').textContent, 10);
-      const v = [...sec.querySelectorAll('.rows > [data-story], .rows > [data-ptr]')].filter(vis).length;
-      if (num !== v) bad.push(`${sec.dataset.date} says ${num}, shows ${v}`);
-      const tags = [...sec.querySelectorAll('.day__cov .ptag')].filter(vis).map((t) => t.dataset.stream).sort().join();
-      const desks = [...new Set([...sec.querySelectorAll('[data-edition]')].filter(vis).map((x) => x.dataset.edition.slice(11)))].sort().join();
+      const sids = (sec.dataset.sids || '').split(' ').filter(Boolean);
+      const rows = [...sec.querySelectorAll('.rows > [data-story]')].filter(vis).length;
+      const up = sids.filter((s) => onFront.has(s)).length;
+      const n = sec.querySelector('.day__n'), t = n.textContent.replace(/\s+/g, ' ').trim();
+      const m = t.match(/^(\d+)(?: of (\d+))? stor(?:y|ies)(?: shown)?(?: · (\d+) on the front)?/);
+      if (!m) { bad.push(`${sec.dataset.date} header reads "${t}"`); continue; }
+      const shown = +m[1], total = m[2] ? +m[2] : +m[1], upSaid = m[3] ? +m[3] : 0;
+      if (total !== sids.length) bad.push(`${sec.dataset.date} says ${total} stories, has ${sids.length}`);
+      if (shown !== rows + up) bad.push(`${sec.dataset.date} says ${shown} shown, shows ${rows} rows + ${up} on the front`);
+      const upEl = sec.querySelector('.day__up');
+      if (upSaid !== up || (up > 0) !== vis(upEl)) bad.push(`${sec.dataset.date} says ${upSaid} on the front, ${up} are`);
+      if (up > 0) { const a = upEl && upEl.querySelector('a'), tg = a && document.getElementById(a.getAttribute('href').slice(1)); if (!tg || !vis(tg)) bad.push(`${sec.dataset.date}'s front link has no shown target`); }
+      const tags = [...sec.querySelectorAll('.day__cov .ptag')].filter(vis).map((x) => x.dataset.stream).sort().join();
+      const desks = [...new Set([...main.querySelectorAll(`[data-edition^="${sec.dataset.date}-"]`)].filter(vis).map((x) => x.dataset.edition.slice(11)))].sort().join();
       if (tags !== desks) bad.push(`${sec.dataset.date} tags [${tags}] vs desks shown [${desks}]`);
     }
     return { bad, days };
@@ -443,30 +527,29 @@ const LIB = () => {
     desk: ([...document.querySelectorAll('.front .desk .ed')].find(vis) || { dataset: {} }).dataset.story || null });
   const same = (g, w) => g.cards.join() === w.cards.join() && (g.top[0] || null) === (w.cards[0] || null) && g.top.length <= 1 && g.desk === w.desk;
   const show = (g, w) => `front [${g.cards.join(' ')}] lead ${g.top[0] || '-'} desk ${g.desk}; want [${w.cards.join(' ')}] desk ${w.desk}`;
-  // every story and editorial is on the page once, as a real card or a real row; a pointer
-  // reaches the front; a builder-front story off the front is its row again, right after its
-  // (hidden) pointer; a day header counts what is on the front as composed
-  const once = (boardIds, builderFront) => {
-    const bad = [], cards = front().cards;
+  // every story and editorial on the page exactly once (C9): a promoted reserve story's live day
+  // row hidden; a builder-front story off the front as its real row right after its template, at
+  // its rank; the builder's Desk's view off the front as its day article after its template; the
+  // day headers counting what is on the front
+  const once = (boardIds, builderFront, builderDesk) => {
+    const bad = [], g = front(), cards = g.cards;
     for (const sid of boardIds) {
       const shown = [...document.querySelectorAll(`main [data-story="${sid}"]`)].filter(vis).length;
       if (shown !== 1) bad.push(`${sid} shown ${shown}x`);
     }
-    for (const p of [...document.querySelectorAll('section.day [data-ptr]')].filter(vis)) {
-      const t = document.getElementById(p.querySelector('a').getAttribute('href').slice(1));
-      if (!t || !vis(t) || !t.closest('.front')) bad.push(`pointer ${p.dataset.ptr} -> ${t ? t.id : 'nothing'}`);
-    }
     const off = builderFront.filter((s) => !cards.includes(s));
     for (const sid of off) {
-      const r = document.getElementById('r-' + sid), prev = r && r.previousElementSibling;
-      if (!r || !vis(r) || !prev || prev.dataset.ptr !== sid) bad.push(`${sid} is off the front without its row after its pointer`);
+      const t = document.querySelector(`template[data-front-row="${sid}"]`), r = t && t.nextElementSibling;
+      if (!t || !r || r.dataset.story !== sid || !vis(r)) bad.push(`${sid} is off the front without its row after its template`);
     }
-    for (const sec of document.querySelectorAll('section.day')) {
-      const n = sec.querySelector('.day__n').textContent, m = n.match(/· (\d+) on the front/);
-      const up = [...sec.querySelectorAll('.rows > [data-ptr]')].filter(vis).length;
-      if ((m ? +m[1] : 0) !== up) bad.push(`${sec.dataset.date} says "${n}" with ${up} on the front`);
+    const promoted = cards.filter((s) => !builderFront.includes(s));
+    for (const sid of promoted) { const r = document.getElementById('r-' + sid); if (r && vis(r)) bad.push(`promoted ${sid} still shows its day row`); }
+    if (builderDesk && g.desk && g.desk !== builderDesk) {
+      const t = document.querySelector(`template[data-front-ed="${builderDesk}"]`), e = t && t.nextElementSibling;
+      if (!t || !e || e.dataset.story !== builderDesk || !vis(e)) bad.push(`${builderDesk} is off the front without its day article after its template`);
     }
-    return [bad.length === 0, bad.slice(0, 3).join('; ') || `${boardIds.length} board items each shown once, every pointer reaches the front, ${off.length} builder-front stories back in their days, day headers count the front`];
+    const dm = dayMeta(); bad.push(...dm.bad);
+    return [bad.length === 0, bad.slice(0, 3).join('; ') || `${boardIds.length} board items each shown once, ${promoted.length} promoted rows hidden, ${off.length} builder-front stories back in their days, day headers count the front`];
   };
   // signed in: release the n-th held GET /readstate and wait until its read set is merged
   const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -477,7 +560,7 @@ const LIB = () => {
     await frames();
     return merged(sid);
   };
-  return { R, vis, visibleItems, chip, seg, ct, frontVoids, hlSizes, geometry, cpl, contrast, opacityOf, deadLinks, dayMeta, focusRing, front, same, show, once, frames, roam };
+  return { R, vis, visibleItems, chip, chips, seg, ct, frontVoids, hlSizes, txt, geometry, cpl, contrast, opacityOf, red, fontFloor, deadLinks, dayMeta, focusRing, front, same, show, once, frames, roam };
 };
 
 const frame2 = (page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
@@ -519,6 +602,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   }
   await page.goto(BASE);
   await page.evaluate(() => document.fonts.ready);
+  await page.waitForFunction(() => window.__siteReady || !document.documentElement.classList.contains('js'), null, { timeout: 8000 }).catch(() => {});
   if (state === 'default' || state === 'expanded' || state === 'front-read') {
     // bring every image slot within the observer's reach, then wait until each is filled or gone
     // (each slot is scrolled to and held for two frames, so the IntersectionObserver sees it)
@@ -533,7 +617,8 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   await page.evaluate(`window.__L = (${LIB.toString()})()`);
   const X = { state, ogRequests: rec.og, injected: frontWithSlots().injected, EXPECT_TAGS, EXPECT_FRONT, EXPECT_DESK, deskEdition, BEAT, BEAT_ED: BEAT_ED ? sidOf(BEAT_ED) : null, BEAT_DAYS,
     MEASURE_ROW: MEASURE_ROW ? sidOf(MEASURE_ROW) : null, boardIds: board.map(sidOf), boardDates: board.map((x) => x.date),
-    boardKinds: board.map((x) => x.kind), nBoard: board.length, nDays: dates.length, FR, EVT, PSTART, DAYLBL };
+    boardKinds: board.map((x) => x.kind), nBoard: board.length, nDays: dates.length, FR, EVT, PSTART, DAYLBL, STORY_X, ED_X, DAY_X, DAY_SIDS,
+    webkit: browser.browserType().name() === 'webkit' };
   if (state === 'stale') {
     // a bfcache restore, then a tab shown again after ten minutes away: both must offer the reload
     await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
@@ -544,6 +629,9 @@ async function runCase(browser, ctxOpts, state, fault = null) {
     const A = {};
     const click = (el) => el && el.click();
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const SKIP = (why) => [null, why];
+    const isOpen = (el) => !el.classList.contains('is-folded');
+    const setOpen = (el, want) => { if (isOpen(el) !== want) click(el.querySelector('.more')); };
     if (X.state === 'default') {
       const n = L.visibleItems().length, all = L.ct(L.seg('')), beatAll = L.ct(L.chip(''));
       A.counts = [n === all && n === beatAll && n === X.nBoard, `visible ${n} / All seg ${all} / All chip ${beatAll} / board ${X.nBoard}`];
@@ -574,25 +662,124 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       const frontIds = [...document.querySelectorAll('.front .fc')].map((x) => x.dataset.story);
       const desk = (document.querySelector('.front .desk .ed') || {}).id || null;
       A.front = [frontIds.join() === X.EXPECT_FRONT.join() && desk === X.EXPECT_DESK, `front ${frontIds.length} ${frontIds.join() === X.EXPECT_FRONT.join() ? '=' : '!='} derived; desk ${desk} (want ${X.EXPECT_DESK})`];
-      // the Desk's view prints its edition's day, like a front card (an older editorial never reads as today's)
-      const dk = document.querySelector('.front .desk .ed'), dkt = dk && dk.querySelector('.ed__top .fday');
+      // the Desk's view prints its edition's day in its kicker (an older editorial never reads as today's)
+      const dk = document.querySelector('.front .desk .ed'), dkt = dk && dk.querySelector('.kick .fday');
       A.deskDate = !dk ? [null, 'no Desk\'s view'] : [!!dkt && L.vis(dkt) && dkt.getAttribute('datetime') === dk.dataset.edition.slice(0, 10) && dkt.textContent.trim() === X.DAYLBL[dk.dataset.edition.slice(0, 10)],
         `${dk.dataset.story}: ${dkt ? `"${dkt.textContent.trim()}" shown ${L.vis(dkt)}` : 'no day'}`];
+      // C9 at load, no pointer rows (PLAN decision 1 reopened): a builder-front story has no live
+      // row in its day, only its <template data-front-row> at its rank; the builder's Desk's view
+      // has its <template data-front-ed>; every story shows once
       const lifted = [...document.querySelectorAll('.front [data-story]')].map((x) => x.dataset.story);
-      const miss = lifted.filter((s) => !document.querySelector(`section.day [data-ptr="${s}"]`));
-      A.pointers = [miss.length === 0, miss.length ? 'missing ' + miss : `${lifted.length} lifted items all keep a pointer in their day`];
-      // every board item in its own day, in board order (items or pointers)
+      const rowsBad = [];
+      for (const s of lifted) {
+        const ed = X.ED_X[s] ? 'data-front-ed' : 'data-front-row';
+        const t = document.querySelector(`section.day template[${ed}="${s}"]`);
+        if (!t) rowsBad.push(`${s} has no template in its day`);
+        else if (t.content.firstElementChild.dataset.story !== s) rowsBad.push(`${s}'s template holds ${t.content.firstElementChild.dataset.story}`);
+        const live = [...document.querySelectorAll(`section.day [data-story="${s}"]`)].filter(L.vis);
+        if (live.length) rowsBad.push(`${s} is on the front and shows in its day too`);
+      }
+      const ptr = document.querySelectorAll('[data-ptr], .ptr').length;
+      if (ptr) rowsBad.push(`${ptr} pointer rows`);
+      A.frontRows = [rowsBad.length === 0 && lifted.length > 0, rowsBad.slice(0, 3).join('; ') || `${lifted.length} front items each keep a template at their rank in their day, none a second live copy, no pointer rows`];
+      // every board item in its own day, in board order: live elements, or the templates of what
+      // the front holds; nothing from the reserve templates shows under All
       const orderBad = [];
       const secs = [...document.querySelectorAll('section.day')];
       if (secs.length !== X.nDays) orderBad.push(`${secs.length} day sections, want ${X.nDays}`);
       for (const sec of secs) {
         const want = X.boardIds.filter((_, i) => X.boardDates[i] === sec.dataset.date);
-        const got = [...sec.querySelectorAll('[data-story], [data-ptr]:not([data-reserve-ptr])')].map((x) => x.dataset.story || x.dataset.ptr);
+        const got = [...sec.querySelectorAll('[data-story], template[data-front-row], template[data-front-ed]')].map((x) => x.dataset.story || x.dataset.frontRow || x.dataset.frontEd);
         if (want.join() !== got.join()) orderBad.push(`${sec.dataset.date}: ${got.length} vs ${want.length} items or order differs`);
       }
-      const rptr = [...document.querySelectorAll('[data-reserve-ptr]')].filter(L.vis).map((p) => p.dataset.ptr);
-      if (rptr.length) orderBad.push(`reserve pointers shown under All: ${rptr.join(' ')}`);
-      A.boardOrder = [orderBad.length === 0, orderBad.join('; ') || `${secs.length} day sections carry the board in order, no reserve pointer shown`];
+      const copies = [...document.querySelectorAll('.front [data-story]')].filter(L.vis).filter((e) => !X.EXPECT_FRONT.includes(e.dataset.story) && e.dataset.story !== X.EXPECT_DESK).map((e) => e.dataset.story);
+      if (copies.length) orderBad.push(`reserve copies shown under All: ${copies.join(' ')}`);
+      A.boardOrder = [orderBad.length === 0, orderBad.join('; ') || `${secs.length} day sections carry the board in order (templates at the front items' ranks), no reserve copy shown`];
+      // every item boots folded (R33 ended in round 3): no card, row or editorial is open at load,
+      // and each More says so
+      const items = [...document.querySelectorAll('main [data-story]')];
+      const open = items.filter((it) => !it.classList.contains('is-folded') || it.classList.contains('is-open'));
+      const moreWrong = items.map((it) => it.querySelector('.more')).filter((b) => b && (b.getAttribute('aria-expanded') !== 'false' || b.textContent.trim() !== 'More'));
+      A.bootFolded = [items.length > 0 && !open.length && !moreWrong.length, `${items.length} items at load: ${open.length} open (${open.slice(0, 3).map((e) => e.id).join(' ')}), ${moreWrong.length} More buttons not saying More`];
+      // the folded anatomy (R2, R4, R6, R7): a card shows kicker, headline, [deck], its why
+      // (leads and features), and the controls line; its body, outlet list and Discuss are in the
+      // fold. A row shows glyph, headline, kicker, its why, the controls. An editorial shows the
+      // outlined AI chip, no tier glyph, its heading and the disclosure, with its body folded.
+      const aBad = []; let aN = 0;
+      const shows = (it, sel) => { const e = it.querySelector(sel); return !!e && L.vis(e); };
+      for (const it of items.filter(L.vis)) {
+        aN++;
+        const story = X.STORY_X[it.dataset.story], ed = X.ED_X[it.dataset.story];
+        if (!story && !ed) { aBad.push(`${it.id} is not a board item`); continue; }
+        if (!shows(it, '.kick')) aBad.push(`${it.id}: no kicker shown`);
+        if (shows(it, '.sum')) aBad.push(`${it.id}: body shown while folded`);
+        if (shows(it, '.srcs')) aBad.push(`${it.id}: outlet list shown while folded`);
+        if (shows(it, '.talk')) aBad.push(`${it.id}: Discuss shown while folded`);
+        if (ed) {
+          if (!shows(it, '.edchip')) aBad.push(`${it.id}: no AI chip`);
+          if (it.querySelector('.tier, .tg')) aBad.push(`${it.id}: an editorial with a tier glyph`);
+          if (!shows(it, '.ed__hl') || !shows(it, '.ed__disc')) aBad.push(`${it.id}: heading or disclosure hidden`);
+          if (shows(it, '.ed__body')) aBad.push(`${it.id}: editorial body shown while folded`);
+          continue;
+        }
+        if (!shows(it, '.hl')) aBad.push(`${it.id}: no headline`);
+        if (!it.querySelector('.tier .tg')) aBad.push(`${it.id}: no tier glyph`);
+        const imp = +it.dataset.imp, why = it.querySelector('.why');
+        if (imp > 1 && why && !L.vis(why)) aBad.push(`${it.id}: a ${imp === 3 ? 'lead' : 'feature'} with its why folded`);
+        if (imp === 1 && why && L.vis(why)) aBad.push(`${it.id}: a brief with its why shown`);
+        if (!shows(it, '.line, .row__foot')) aBad.push(`${it.id}: no controls line`);
+      }
+      A.anatomy = [aBad.length === 0 && aN > 0, aBad.slice(0, 3).join('; ') || `${aN} folded items: kicker, headline, why on leads and features, controls; body, outlets and Discuss in the fold; editorials with the AI chip and no glyph`];
+      // the tier vocabulary (R10): one glyph per story, lead/feature/brief by importance, drawn
+      // (not a bare word), and the same three in the key
+      const gBad = []; let gN = 0;
+      const tierOf = { 3: 'lead', 2: 'feature', 1: 'brief' };
+      for (const it of items.filter((e) => !X.ED_X[e.dataset.story] && L.vis(e))) {
+        const g = it.querySelectorAll('.tier .tg'); gN++;
+        if (g.length !== 1) { gBad.push(`${it.id}: ${g.length} glyphs`); continue; }
+        const want = tierOf[it.dataset.imp];
+        if (!g[0].classList.contains('tg--' + want)) gBad.push(`${it.id}: importance ${it.dataset.imp} drawn as ${g[0].className}`);
+        const r = L.R(g[0]); if (!(r.width >= 8 && r.height >= 2)) gBad.push(`${it.id}: glyph ${Math.round(r.width)}x${Math.round(r.height)}px`);
+        if (!it.querySelector('.tier .tier__w, .tier .vh')) gBad.push(`${it.id}: glyph without its word`);
+      }
+      for (const t of ['lead', 'feature', 'brief']) if (!document.querySelector(`.key .tg--${t}`)) gBad.push(`key lacks ${t}`);
+      A.glyphs = [gBad.length === 0 && gN > 0, gBad.slice(0, 3).join('; ') || `${gN} stories each carry one tier glyph matching data-imp, the key shows all three`];
+      // the type floor (PLAN decision 11 reopened; report: 9.6px labels): no visible text in the
+      // page under 12px, the root 16px at every width
+      const ff = L.fontFloor(document.querySelector('.page')), rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      A.labelFloor = [ff.min >= 12 && rootPx === 16, `smallest visible text ${ff.min}px (${ff.where}); root ${rootPx}px`];
+      // tap targets: every visible control in the bar and on the items at least 44px tall on
+      // phones (R13), 32px from 700px; the ✓ and votes square
+      const phone = innerWidth < 700, floor = phone ? 44 : 32;
+      const ctls = [...document.querySelectorAll('.bar button, .more, .readbtn, .vote, .discuss, .linkbtn, .daylist a, .drawer > summary')].filter(L.vis);
+      const small = ctls.map((c) => [c, L.R(c)]).filter(([, r]) => r.height < floor - 0.5);
+      const sq = ctls.filter((c) => c.matches('.readbtn, .vote')).map((c) => L.R(c)).filter((r) => r.width < floor - 0.5);
+      A.tapTargets = [ctls.length >= 8 && !small.length && !sq.length, `${ctls.length} visible controls, floor ${floor}px: ${small.length} short ${small.slice(0, 3).map(([c, r]) => `${(c.textContent.trim() || c.getAttribute('aria-label') || c.className).slice(0, 14)} ${Math.round(r.width)}x${Math.round(r.height)}`).join(', ')}; ${sq.length} ✓/votes narrower`];
+      // red is spent on three things only (R36): the source domain, "Just in" and the lead glyph
+      const red = L.red();
+      const redEls = [...document.querySelectorAll('.page *')].filter((e) => L.vis(e) && (getComputedStyle(e).color === red || getComputedStyle(e).backgroundColor === red));
+      const stray = redEls.filter((e) => !e.matches('.src__dom, .fresh, .tg--lead') && !e.closest('.src__dom, .fresh'));
+      A.redUses = [redEls.length > 0 && !stray.length, `${redEls.length} red elements (${red}); ${stray.length} outside .src__dom/.fresh/.tg--lead ${stray.slice(0, 3).map((e) => e.className.toString().split(' ')[0] || e.tagName).join(' ')}`];
+      // never crop text (R1, C4): no line clamp, no ellipsis, no hidden overflow on text blocks
+      const cropped = [...document.querySelectorAll('.hl, .deck, .sum, .why, .ed__hl, .ed__body, .ed__disc, .kick, .day__n, .front__n')].filter(L.vis).filter((e) => {
+        const s = getComputedStyle(e);
+        return s.textOverflow === 'ellipsis' || (s.webkitLineClamp && s.webkitLineClamp !== 'none') || (s.overflow === 'hidden' && s.display !== 'inline' && e.scrollHeight > e.clientHeight + 1);
+      });
+      const clipped = [...document.querySelectorAll('.hl, .sum, .why, .ed__hl')].filter(L.vis).filter((e) => { const r = L.R(e); for (let a = e.parentElement; a && a !== document.body; a = a.parentElement) { const s = getComputedStyle(a); if (s.overflow !== 'visible' && s.overflowY !== 'visible' && (L.R(a).bottom + 0.5 < r.bottom)) return true; } return false; });
+      A.noCrop = [!cropped.length && !clipped.length, `${cropped.length} text blocks with a clamp, ellipsis or a cut overflow; ${clipped.length} cut by an ancestor ${[...cropped, ...clipped].slice(0, 3).map((e) => e.className.toString().split(' ')[0]).join(' ')}`];
+      // one quiet kicker per item (report: metadata soup): one .kick, the day printed only when it
+      // is not the front's, and a story shows at most two dates (its day and a Happened label)
+      const kBad = []; let kN = 0;
+      const frontDate = (document.querySelector('.front__n') || { dataset: {} }).dataset.date;
+      for (const it of items.filter(L.vis)) {
+        const ks = it.querySelectorAll('.kick'); kN++;
+        if (ks.length !== 1) { kBad.push(`${it.id}: ${ks.length} kickers`); continue; }
+        const times = [...it.querySelectorAll('.kick time')].filter(L.vis);
+        if (!X.ED_X[it.dataset.story] && times.length > 2) kBad.push(`${it.id}: ${times.length} dates in the kicker`);
+        const fd = it.querySelector('.kick .fday');
+        if (it.closest('.front') && it.matches('.fc') && fd && L.vis(fd) === (it.dataset.edition.slice(0, 10) === frontDate)) kBad.push(`${it.id}: its day ${L.vis(fd) ? 'repeated' : 'missing'} (front's day ${frontDate})`);
+      }
+      A.kicker = [kBad.length === 0 && kN > 0, kBad.slice(0, 3).join('; ') || `${kN} items with one kicker each; a card prints its day only when it is not the front's; at most two dates`];
       // "Happened 16 Sep": on a card, row or reserve template exactly when the story's event date
       // is day-precise and before its derived period start, reading that date, inside its card
       const evBad = []; let evShown = 0, evTpl = 0;
@@ -608,25 +795,149 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         if (L.vis(el) && (r.right > c.right + 0.5 || r.left < c.left - 0.5)) evBad.push(`${sid} label sticks out of its ${where} by ${Math.round(r.right - c.right)}px`);
       };
       for (const el of document.querySelectorAll('main [data-story]:not([data-zone="editorial"])')) evCheck(el, el.dataset.zone);
-      for (const t of document.querySelectorAll('template[data-reserve-card]')) evCheck(t.content.firstElementChild, 'template');
+      for (const t of document.querySelectorAll('template[data-reserve-card], template[data-front-row]')) evCheck(t.content.firstElementChild, 'template');
       const evMiss = evBad.filter((b) => b.includes(' lacks '));
-      A.eventLabel = [evBad.length === evMiss.length, evBad.filter((b) => !evMiss.includes(b)).slice(0, 3).join('; ') || `${evShown} labels on cards and rows + ${evTpl} in reserve templates, each on a qualifying story, before its period start, inside its card`];
+      A.eventLabel = [evBad.length === evMiss.length, evBad.filter((b) => !evMiss.includes(b)).slice(0, 3).join('; ') || `${evShown} labels on cards and rows + ${evTpl} in templates, each on a qualifying story, before its period start, inside its card`];
       // every story that qualifies shows one; with none qualifying there is nothing to show (review F4)
       A.eventLabelShown = Object.keys(X.EVT).length ? [evMiss.length === 0, evMiss.slice(0, 3).join('; ') || `all ${Object.keys(X.EVT).length} qualifying stories show their label`]
         : [null, 'no story has a day-precise event date before its period'];
       const h1 = document.querySelectorAll('h1').length, h2 = document.querySelectorAll('main h2').length;
-      const h3 = document.querySelectorAll('main h3').length, items = document.querySelectorAll('main [data-story]').length;
-      A.headings = [h1 === 1 && h2 === X.nDays + 1 && h3 === items, `h1 ${h1}, main h2 ${h2} (days + front ${X.nDays + 1}), h3 ${h3} for ${items} items`];
-      // measure (PLAN decision 3): the longest opened index row reads at 50-80 characters per line;
-      // below 700px only the ceiling applies (a phone column may be narrower than 50)
+      const h3 = document.querySelectorAll('main h3').length, nItems = document.querySelectorAll('main [data-story]').length;
+      A.headings = [h1 === 1 && h2 === X.nDays + 1 && h3 === nItems, `h1 ${h1}, main h2 ${h2} (days + front ${X.nDays + 1}), h3 ${h3} for ${nItems} items`];
+      // multi-source stories (round 2, 2026-10-22): on every copy of a story (card, row, reserve
+      // template, front-row template) the controls line names the primary; the fold lists every
+      // outlet with its label, in the builder's order, each opening in a new tab; the kicker
+      // counts them when there is more than one. The list is part of the fold: hidden on a folded
+      // item, shown inside the item's own box once it is opened
+      const sBad = []; let sN = 0, sMulti = 0, sListed = 0;
+      const storyEls = [...document.querySelectorAll('main [data-story]:not([data-zone="editorial"])'),
+        ...[...document.querySelectorAll('main template')].flatMap((t) => [...t.content.querySelectorAll('[data-story]:not([data-zone="editorial"])')])];
+      for (const el of storyEls) {
+        const w = X.STORY_X[el.dataset.story]; if (!w) { sBad.push(`${el.id}: not a board story`); continue; }
+        sN++;
+        const dom = el.querySelector('.src__dom');
+        if (!dom || L.txt(dom) !== w.domain) sBad.push(`${el.id} primary "${dom ? L.txt(dom) : '-'}", want "${w.domain}"`);
+        const links = [...el.querySelectorAll('.srcs a')].map((a) => [a.getAttribute('href'), L.txt(a)]);
+        const want = w.sources.map((x) => [x.url, x.label]);
+        if (JSON.stringify(links) !== JSON.stringify(want)) sBad.push(`${el.id} lists [${links.map((l) => l[1]).join(', ')}], want [${want.map((l) => l[1]).join(', ')}]`);
+        if (links.length) sListed++;
+        if ([...el.querySelectorAll('.srcs a')].some((a) => a.target !== '_blank' || !/\bnoopener\b/.test(a.rel))) sBad.push(`${el.id}: a source link without target=_blank rel=noopener`);
+        const cnt = el.querySelector('.srcn'), cntWant = w.sources.length > 1 ? `${w.sources.length} sources` : null;
+        if ((cnt ? L.txt(cnt) : null) !== cntWant) sBad.push(`${el.id} count "${cnt ? L.txt(cnt) : '-'}", want "${cntWant || '-'}"`);
+        if (cntWant) sMulti++;
+      }
+      const inside = (part, it) => { const r = L.R(part), c = L.R(it); return L.vis(part) && r.top >= c.top - 0.5 && r.bottom <= c.bottom + 0.5 && r.left >= c.left - 0.5 && r.right <= c.right + 0.5; };
+      const openedIn = [];
+      for (const it of [[...document.querySelectorAll('section.day .row')].find((r) => L.vis(r) && r.querySelector('.srcs') && r.querySelector('.more')),
+        [...document.querySelectorAll('.front .fc')].find((c) => L.vis(c) && c.querySelector('.srcs') && c.querySelector('.more'))].filter(Boolean)) {
+        const list = it.querySelector('.srcs'), wasOpen = !it.classList.contains('is-folded');
+        if (!wasOpen) { if (L.vis(list)) sBad.push(`${it.id} folded: its source list shows`); click(it.querySelector('.more')); }
+        if (!inside(list, it)) sBad.push(`${it.id} opened: its source list is ${L.vis(list) ? 'outside the item' : 'hidden'}`);
+        if (!wasOpen) click(it.querySelector('.more'));
+        openedIn.push(it.id);
+      }
+      A.sources = [sBad.length === 0 && sN > 0, sBad.slice(0, 3).join('; ') || `${sN} story copies (${sListed} with a list, ${sMulti} counting 2+ outlets): primary on the controls line, every outlet in order in the fold, shown inside ${openedIn.join(' and ') || 'nothing'} when opened`];
+      // the desk's own flags ("Preprint", "Single source", ...): the builder's labels in its order
+      // on every copy, shown in the kicker of a folded item
+      const fBad = []; let fN = 0, fShown = 0;
+      for (const el of storyEls) {
+        const w = X.STORY_X[el.dataset.story]; if (!w) continue;
+        const got = [...el.querySelectorAll('.flag')].map((f) => L.txt(f));
+        if (got.join('|') !== w.flags.join('|')) fBad.push(`${el.id} flags [${got.join(', ')}], want [${w.flags.join(', ')}]`);
+        fN += got.length;
+        if (el.isConnected && L.vis(el)) for (const f of el.querySelectorAll('.flag')) { if (L.vis(f) && inside(f, el) && f.closest('.kick')) fShown++; else fBad.push(`${el.id} flag "${L.txt(f)}" not shown in the kicker`); }
+      }
+      A.flags = [fBad.length === 0, fBad.slice(0, 3).join('; ') || (fN ? `${fN} flags on ${storyEls.length} story copies match the builder's, ${fShown} shown in kickers` : 'no story is flagged today, and none shows a flag')];
+      // Discuss (round 2): one plain link per story, editorial and day to a new Claude conversation.
+      // Its prompt is built at load from the page (discuss.js): the headline, the body, the desk's
+      // flags, every source with its label, desk and day; an editorial's title, desk and text; a
+      // day's every headline with its primary source. Spaces travel as %20, never as "+".
+      const dBad = []; let dS = 0, dE = 0, dD = 0;
+      const prompt = (a, who) => {
+        let u; try { u = new URL(a.getAttribute('href')); } catch (e) { return null; }
+        if (u.origin !== 'https://claude.ai' || u.pathname !== '/new' || !u.searchParams.has('q')) return null;
+        if (a.getAttribute('href').includes('+')) dBad.push(`${who}: a raw "+" in the Discuss href`);
+        if (a.target !== '_blank' || !/\bnoopener\b/.test(a.rel)) dBad.push(`${who}: Discuss without target=_blank rel=noopener`);
+        return u.searchParams.get('q').replace(/\s+/g, ' ');
+      };
+      const lacks = (p, parts) => parts.filter((x) => x && !p.includes(x)).slice(0, 2).map((x) => `"${x.slice(0, 40)}"`).join(', ');
+      for (const el of storyEls.filter((e) => e.isConnected)) {
+        const w = X.STORY_X[el.dataset.story], as = el.querySelectorAll('a.discuss[data-discuss="story"]');
+        if (!w) continue;
+        if (as.length !== 1) { dBad.push(`${el.id}: ${as.length} Discuss links`); continue; }
+        const p = prompt(as[0], el.id); dS++;
+        if (p === null) { dBad.push(`${el.id}: Discuss href is not claude.ai/new?q=`); continue; }
+        const m = lacks(p, [w.headline, ...w.sources.flatMap((x) => [x.label, x.url]), ...w.flags, w.desk, w.summary.slice(0, 40)]);
+        if (m) dBad.push(`${el.id}: prompt lacks ${m}`);
+        const dayH = document.querySelector(`#d-${w.date} .day__h`);
+        if (!(p.includes(X.DAYLBL[w.date]) || (dayH && p.includes(L.txt(dayH))))) dBad.push(`${el.id}: prompt lacks its day`);
+      }
+      for (const el of document.querySelectorAll('main [data-zone="editorial"]')) {
+        const w = X.ED_X[el.dataset.story], as = el.querySelectorAll('a.discuss[data-discuss="editorial"]');
+        if (!w) { dBad.push(`${el.id}: not a board editorial`); continue; }
+        if (as.length !== 1) { dBad.push(`${el.id}: ${as.length} Discuss links`); continue; }
+        const p = prompt(as[0], el.id); dE++;
+        if (p === null) { dBad.push(`${el.id}: Discuss href is not claude.ai/new?q=`); continue; }
+        const m = lacks(p, [w.title, w.desk, w.first.slice(0, 40)]);
+        if (m) dBad.push(`${el.id}: prompt lacks ${m}`);
+      }
+      for (const sec of document.querySelectorAll('section.day')) {
+        const as = sec.querySelectorAll('.day__links a.discuss[data-discuss="day"]');
+        if (as.length !== 1 || !L.vis(as[0])) { dBad.push(`${sec.dataset.date}: ${as.length} Discuss links${as[0] && !L.vis(as[0]) ? ', hidden' : ''}`); continue; }
+        const p = prompt(as[0], sec.dataset.date); dD++;
+        if (p === null) { dBad.push(`${sec.dataset.date}: Discuss href is not claude.ai/new?q=`); continue; }
+        const m = lacks(p, [L.txt(sec.querySelector('.day__h')), ...X.DAY_X[sec.dataset.date].flatMap((x) => [x.headline, x.url])]);
+        if (m) dBad.push(`${sec.dataset.date}: prompt lacks ${m}`);
+      }
+      const liveStories = storyEls.filter((e) => e.isConnected).length;
+      A.discuss = [dBad.length === 0 && dS === liveStories && dS > 0 && dE === document.querySelectorAll('main [data-zone="editorial"]').length && dD === X.nDays,
+        dBad.slice(0, 3).join('; ') || `Discuss on ${dS} stories, ${dE} editorials and ${dD} days: claude.ai/new?q= carrying the headline, every source with its label, the flags, desk and day (an editorial: title, desk, text; a day: every headline and primary source); spaces as %20`];
+      // Discuss sits at the end of the fold (F7, C16): on every story and editorial it is inside
+      // the fold, after the outlet list, hidden while folded; a day's is in its header line
+      const pBad = []; let pN = 0;
+      for (const it of items.filter(L.vis)) {
+        const a = it.querySelector('a.discuss'), fold = it.querySelector('.fold'); if (!a) continue; pN++;
+        if (!fold || !fold.contains(a)) { pBad.push(`${it.id}: Discuss outside the fold`); continue; }
+        if (L.vis(a) && !isOpen(it)) pBad.push(`${it.id}: Discuss shown on a folded item`);
+        const srcs = it.querySelector('.srcs');
+        if (srcs && !(srcs.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING)) pBad.push(`${it.id}: Discuss before the outlets`);
+        if (fold.lastElementChild !== a.closest('.talk')) pBad.push(`${it.id}: Discuss is not the fold's last block`);
+      }
+      A.discussPlace = [pBad.length === 0 && pN > 0, pBad.slice(0, 3).join('; ') || `${pN} items carry Discuss as the last block of their fold, after the outlets, hidden while folded`];
+      // opening a Discuss conversation reads the story, as opening its article does (board.js): the
+      // click (its navigation cancelled here) dims it, stores it and drops Unread by one; its ✓ un-reads it
+      const dr = [...document.querySelectorAll('section.day .row:not(.is-read)')].find((r) => L.vis(r) && r.querySelector('a.discuss'));
+      if (dr) {
+        const sid = dr.dataset.story, u0 = L.ct(L.seg('unread')), stored = () => !!JSON.parse(localStorage.getItem('homeRead:v1') || '{}')[sid];
+        document.addEventListener('click', (e) => e.preventDefault(), { capture: true, once: true });
+        dr.querySelector('a.discuss').click();
+        const read = dr.classList.contains('is-read'), kept = stored(), u1 = L.ct(L.seg('unread'));
+        click(dr.querySelector('.readbtn'));
+        const back = !dr.classList.contains('is-read') && !stored() && L.ct(L.seg('unread')) === u0;
+        A.discussRead = [read && kept && u1 === u0 - 1 && back, `${sid}: a Discuss click reads it ${read}, stored ${kept}, Unread ${u0} -> ${u1}; its ✓ un-reads it ${back}`];
+      } else A.discussRead = SKIP('no unread row with a Discuss link');
+      // measure (PLAN decision 3, reopened in round 3 as two tracks): the longest opened index row
+      // reads at 50-80 characters per line; below 700px only the ceiling applies
       const row = document.getElementById('r-' + X.MEASURE_ROW);
       if (row) {
         const whyN = L.cpl(row.querySelector('.why'));
         click(row.querySelector('.more')); const sumN = L.cpl(row.querySelector('.sum'));
-        const cols = getComputedStyle(row.querySelector('.row__body')).columnCount; click(row.querySelector('.more'));
+        click(row.querySelector('.more'));
         const mx = Math.max(whyN, sumN), mn = Math.min(whyN, sumN);
-        A.measure = [mx <= 80 && (innerWidth < 700 || mn >= 50), `opened row: why ${whyN}, body ${sumN} chars/line (columns ${cols})`];
-      }
+        A.measure = [mx <= 80 && (innerWidth < 700 || mn >= 50), `opened row: why ${whyN}, body ${sumN} chars/line`];
+        // an open row from 1024px (R15, F6): its body runs beside the headline block in the
+        // right-hand track; why and the controls follow it down that track, so the controls sit
+        // where the eye finishes, and the headline column is not left over a void. Below 1024px
+        // the body comes under the headline.
+        click(row.querySelector('.more'));
+        const h = L.R(row.querySelector('.row__head')), b = L.R(row.querySelector('.row__body')), f = L.R(row.querySelector('.row__foot')), y = row.querySelector('.row__why') && L.R(row.querySelector('.row__why'));
+        const beside = b.left >= h.right - 1 && b.top < h.bottom + 1 && Math.abs(b.top - h.top) < 2;
+        const trackOk = Math.abs(f.left - b.left) < 2 && f.top >= b.bottom - 1 && (!y || (Math.abs(y.left - b.left) < 2 && y.top >= b.bottom - 1 && f.top >= y.bottom - 1));
+        const under = b.top >= h.bottom - 1 && Math.abs(b.left - h.left) < 2 && f.top >= b.bottom - 1;
+        click(row.querySelector('.more'));
+        const wide = innerWidth >= 1024;
+        A.rowBeside = [wide ? beside && trackOk : under, `${X.MEASURE_ROW} open at ${innerWidth}px: head x ${Math.round(h.left)}–${Math.round(h.right)} y ${Math.round(h.top)}–${Math.round(h.bottom)}; body x ${Math.round(b.left)} y ${Math.round(b.top)}–${Math.round(b.bottom)}; ${y ? `why y ${Math.round(y.top)}; ` : ''}controls x ${Math.round(f.left)} y ${Math.round(f.top)} (${wide ? `beside ${beside}, track ${trackOk}` : `under ${under}`})`];
+      } else { A.measure = SKIP('no off-front feature with a why'); A.rowBeside = SKIP('no off-front feature with a why'); }
       // the front's measure and order (2026-10-02): every opened card's why and body, and the opened
       // Desk's view, read at no more than 80 characters a line; a why follows its story's body
       const long = [], above = []; let seen = 0;
@@ -644,18 +955,106 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       A.whyAfterBody = [!above.length, above.length ? `why above its body in ${above.slice(0, 3).join(', ')}` : 'every opened why sits under its body'];
       // og: at least two slots (the suite injects slots when the day's front has fewer); the stub
       // gives the first an image and the rest none. Both outcomes must land every run, and the
-      // image request must carry its referrer policy (old bug B6).
+      // image request must carry its referrer policy (old bug B6). A slot sits after the headline
+      // (R9), never above it.
       const slots = [...document.querySelectorAll('.photo[data-og]')];
       const filled = slots.filter((p) => p.classList.contains('is-loaded')), gone = slots.filter((p) => p.hidden);
       const img = filled[0] && filled[0].querySelector('img');
-      const ogDetail = `${slots.length} slots (${X.injected} injected), ${X.ogRequests} og-proxy calls, filled ${filled.length}, collapsed ${gone.length}` + (img ? `, referrerPolicy "${img.referrerPolicy}", loading "${img.loading}"` : '');
-      A.og = [slots.length >= 2 && X.ogRequests >= 2 && filled.length >= 1 && gone.length >= 1 && filled.length + gone.length === slots.length
+      const aboveHl = filled.filter((p) => { const h = p.closest('[data-story]').querySelector('.hl'); return h && L.R(p).top < L.R(h).bottom - 1; }).length;
+      const ogDetail = `${slots.length} slots (${X.injected} injected), ${X.ogRequests} og-proxy calls, filled ${filled.length}, collapsed ${gone.length}, ${aboveHl} above a headline` + (img ? `, referrerPolicy "${img.referrerPolicy}", loading "${img.loading}"` : '');
+      A.og = [slots.length >= 2 && X.ogRequests >= 2 && filled.length >= 1 && gone.length >= 1 && filled.length + gone.length === slots.length && !aboveHl
         && !!img && img.referrerPolicy === 'no-referrer' && img.loading === 'lazy', ogDetail];
+      // the key (R18) is a closed drawer in the masthead: shown closed, its glyphs and note inside
+      const key = document.querySelector('.mast__key');
+      if (key) {
+        const sm = L.vis(key.querySelector('summary')), closed = !key.open, hid = !L.vis(key.querySelector('.key'));
+        key.open = true; const shows = L.vis(key.querySelector('.key')) && L.vis(key.querySelector('.key__note')) && key.querySelectorAll('.key .tg').length === 3; key.open = false;
+        A.keyClosed = [sm && closed && hid && shows, `key drawer: summary shown ${sm}, closed at load ${closed}, its list hidden ${hid}, opens to the three glyphs and the note ${shows}`];
+      } else A.keyClosed = [false, 'no key drawer'];
+      // How this works (F16): the dialog opens from its link, its prose about reading the page
+      // comes before the pipeline map, and it closes from its Close button
+      const hiw = document.getElementById('hiw'), opener = [...document.querySelectorAll('[data-dialog="hiw"]')].find(L.vis);
+      if (hiw && opener) {
+        click(opener); await sleep(50);
+        const shown = hiw.open && L.vis(hiw);
+        const secs = [...hiw.querySelectorAll('.hiw-sec')], page = secs.findIndex((s) => s.querySelector('#hiw-page')), map = secs.findIndex((s) => s.querySelector('.hiw-map'));
+        const order = page >= 0 && map > page;
+        const closeBtn = hiw.querySelector('.dlg__end button'); click(closeBtn); await sleep(50);
+        A.hiwOrder = [shown && order && !hiw.open, `How this works: opens ${shown}, reading-the-page section ${page + 1} before the map ${map + 1} (${order}), closes ${!hiw.open}`];
+      } else A.hiwOrder = [false, 'no How-this-works dialog or opener'];
+      // the chrome at each width (R13, R16, R19, R31, F5): on phones one bar at the bottom edge,
+      // at most 64px tall, with the read state and the two sheet openers, over a safe-area-aware
+      // viewport; from 700 to 1279px the bar sits at the top with the strip; from 1280px the rail
+      // holds the controls in the owner's order (nameplate, edition, read state, beats, links,
+      // days, key), sticky, and the bar is gone
+      const bar = document.querySelector('.bar'), mast = document.querySelector('.mast');
+      const vp = (document.querySelector('meta[name="viewport"]') || {}).content || '';
+      const cBad = [];
+      if (innerWidth < 700) {
+        const r = L.R(bar);
+        if (!L.vis(bar)) cBad.push('bar hidden');
+        if (Math.abs(r.bottom - innerHeight) > 1) cBad.push(`bar bottom ${Math.round(r.bottom)} vs viewport ${innerHeight}`);
+        if (r.height > 64) cBad.push(`bar ${Math.round(r.height)}px tall`);
+        if (!/viewport-fit=cover/.test(vp)) cBad.push('viewport without viewport-fit=cover');
+        if (!/env\(safe-area-inset-bottom\)/.test([...document.styleSheets].flatMap((s) => { try { return [...s.cssRules]; } catch (e) { return []; } }).map((x) => x.cssText).join(''))) cBad.push('no safe-area-inset-bottom in the CSS');
+        for (const sel of ['.seg', '.barbtn[data-dialog="beats"]', '.barbtn[data-dialog="days"]']) if (!L.vis(bar.querySelector(sel))) cBad.push(`${sel} not in the bar`);
+        if (L.vis(bar.querySelector('.bar__strip'))) cBad.push('the strip shows on a phone');
+        if (L.vis(mast.querySelector('.mast__ctl'))) cBad.push('the rail controls show on a phone');
+        if (L.R(bar).top < L.R(document.querySelector('main')).top) cBad.push('the bar paints above main');
+      } else if (innerWidth < 1280) {
+        if (!L.vis(bar) || !L.vis(bar.querySelector('.bar__strip')) || !L.vis(bar.querySelector('.seg'))) cBad.push('bar, strip or read state hidden');
+        if (L.R(bar).top > L.R(document.querySelector('main')).top) cBad.push('the bar is below main');
+        if (L.vis(bar.querySelector('.barbtn[data-dialog="days"]'))) cBad.push('Days opener shown with the strip');
+        if (!L.vis(mast.querySelector('.mast__days'))) cBad.push('day jump hidden');
+        if (L.vis(mast.querySelector('.mast__ctl'))) cBad.push('the rail controls show below 1280px');
+      } else {
+        const mr = L.R(mast);
+        if (L.vis(bar)) cBad.push('the bar shows beside the rail');
+        if (Math.abs(mr.width - 232) > 9) cBad.push(`rail ${Math.round(mr.width)}px wide`);
+        if (getComputedStyle(mast).position !== 'sticky') cBad.push('rail not sticky');
+        const parts = ['.nameplate', '.mast__ed', '.seg', '.chips--rail', '.mast__links', '.mast__days', '.mast__key'].map((s) => mast.querySelector(s));
+        if (parts.some((p) => !L.vis(p))) cBad.push('a rail part hidden: ' + parts.filter((p) => !L.vis(p)).map((p) => p && p.className.toString().split(' ')[0]).join(' '));
+        else for (let i = 1; i < parts.length; i++) if (L.R(parts[i]).top < L.R(parts[i - 1]).bottom - 1) cBad.push(`rail order: ${parts[i].className.toString().split(' ')[0]} above ${parts[i - 1].className.toString().split(' ')[0]}`);
+        if (L.R(document.querySelector('.col')).left < mr.right) cBad.push('the sheet overlaps the rail');
+      }
+      A.chrome = [cBad.length === 0, cBad.slice(0, 3).join('; ') || (innerWidth < 700 ? `phone: one ${Math.round(L.R(bar).height)}px bar at the bottom with read state, Beats, Days; viewport-fit=cover` : innerWidth < 1280 ? 'bar at the top with the read state and the beat strip; the day jump in the masthead' : `rail ${Math.round(L.R(mast).width)}px, sticky, in order; no bar`)];
+      // the phone's sheets (F5): Beats opens a sheet whose chips are the same control as the
+      // rail's (one press paints every copy and the bar's count), Done closes it; Days lists the
+      // front and every edition, a tap closes the sheet and lands on the day. From 700px the
+      // masthead's day jump counts every edition.
+      if (innerWidth < 700) {
+        const sBad2 = [];
+        const beats = document.getElementById('beats'), days = document.getElementById('days');
+        click(bar.querySelector('.barbtn[data-dialog="beats"]')); await sleep(50);
+        if (!beats.open || !L.vis(beats)) sBad2.push('Beats sheet did not open');
+        const sheetChip = [...beats.querySelectorAll('.chip')].find((c) => c.dataset.topic === X.BEAT);
+        click(sheetChip); await sleep(30);
+        const every = [...document.querySelectorAll('.chip')].filter((c) => c.dataset.topic === X.BEAT);
+        if (!every.every((c) => c.getAttribute('aria-pressed') === 'true')) sBad2.push('a press in the sheet did not paint every copy');
+        const nb = bar.querySelector('.bar__nbeats');
+        if (!nb || nb.hidden || nb.textContent.trim() !== '1') sBad2.push(`Beats opener count "${nb ? nb.textContent.trim() : '-'}" hidden ${nb ? nb.hidden : '-'}`);
+        click(sheetChip); await sleep(30);
+        click(beats.querySelector('.dlg__end button')); await sleep(50);
+        if (beats.open) sBad2.push('Done did not close the sheet');
+        click(bar.querySelector('.barbtn[data-dialog="days"]')); await sleep(50);
+        const links = [...days.querySelectorAll('.daylist a')];
+        if (!days.open || links.length !== X.nDays + 1) sBad2.push(`Days sheet open ${days.open} with ${links.length} links (want ${X.nDays + 1})`);
+        const second = links[1], target = second && document.getElementById(second.getAttribute('href').slice(1));
+        const y0 = scrollY; click(second); await sleep(120);
+        if (days.open) sBad2.push('a day link left the sheet open');
+        if (!target || Math.abs(L.R(target).top) > innerHeight * 0.5 || scrollY === y0) sBad2.push(`the day link did not land on ${second ? second.getAttribute('href') : '-'} (top ${target ? Math.round(L.R(target).top) : '-'})`);
+        scrollTo(0, 0);
+        A.sheets = [sBad2.length === 0, sBad2.slice(0, 3).join('; ') || `Beats sheet: one press paints every copy and the opener count, Done closes; Days sheet: ${links.length} links, a tap closes it and lands on the day`];
+      } else {
+        const dl = [...document.querySelectorAll('.mast__days .daylist a')];
+        const bad2 = dl.slice(1).filter((a) => { const sec = document.getElementById(a.getAttribute('href').slice(1)); return !sec || +a.querySelector('.ct').textContent !== +sec.querySelector('.day__n').dataset.total; });
+        A.dayJump = [dl.length === X.nDays + 1 && !bad2.length && L.vis(document.querySelector('.mast__days summary')), `masthead day jump: ${dl.length} links (want ${X.nDays + 1}), ${bad2.length} with a count unlike the day's total`];
+      }
       // freshness, negative control: an unchanged edition never offers a reload
-      const bar = document.querySelector('.notice');
+      const nbar = document.querySelector('.notice');
       window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
       await sleep(300);
-      const afterRestore = L.vis(bar);
+      const afterRestore = L.vis(nbar);
       const now0 = Date.now;
       Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
       document.dispatchEvent(new Event('visibilitychange'));
@@ -663,7 +1062,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
       document.dispatchEvent(new Event('visibilitychange'));
       await sleep(150);
-      const afterMinute = L.vis(bar);
+      const afterMinute = L.vis(nbar);
       Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
       document.dispatchEvent(new Event('visibilitychange'));
       Date.now = () => now0() + 12 * 60 * 1000;                     // twelve minutes: checks, same stamp
@@ -671,19 +1070,16 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       document.dispatchEvent(new Event('visibilitychange'));
       await sleep(300);
       Date.now = now0;
-      A.freshSame = [!afterRestore && !afterMinute && !L.vis(bar), `unchanged edition: no bar after a bfcache restore (${!afterRestore}), after 1 min away (${!afterMinute}), after 12 min away (${!L.vis(bar)})`];
+      A.freshSame = [!afterRestore && !afterMinute && !L.vis(nbar), `unchanged edition: no bar after a bfcache restore (${!afterRestore}), after 1 min away (${!afterMinute}), after 12 min away (${!L.vis(nbar)})`];
     }
     if (X.state === 'expanded') {
-      // toggle-agnostic: today's leads boot open (R33), so every check first folds, measures,
-      // opens, measures, then restores the item's own starting state
-      const isOpen = (el) => !el.classList.contains('is-folded');
-      const setOpen = (el, want) => { if (isOpen(el) !== want) click(el.querySelector('.more')); };
+      // every item boots folded; each check opens, measures, then restores the item's own state
       const card = document.querySelectorAll('.fcards--rest .fc')[1];
       if (card && card.querySelector('.more')) {
         const was = isOpen(card);
         setOpen(card, false); const f0 = L.frontVoids(), h0 = L.hlSizes();
         setOpen(card, true); const f1 = L.frontVoids(), h1 = L.hlSizes();
-        A.gap = [f1.max <= f0.max + 50, `folded max ${f0.max}px, after one expand ${f1.max}px`];
+        A.gap = [f1.max <= f0.max + 50, `folded max ${f0.max}px, after one expand ${f1.max}px ${f1.per.filter(([, g]) => g > f0.max + 50).slice(0, 2).map(([k, g]) => `${k} ${g}`).join(' ')}`];
         A.hlSize = [h0 === h1, h0 === h1 ? 'front headline sizes unchanged' : `${h0} -> ${h1}`];
         A.fullRow = [Math.abs(L.R(card).width - L.R(card.parentElement).width) < 2, `open card ${Math.round(L.R(card).width)} of ${Math.round(L.R(card.parentElement).width)}px`];
         setOpen(card, was);
@@ -693,9 +1089,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         const was = isOpen(el);
         setOpen(el, false); const g0 = L.frontVoids(), s0 = L.hlSizes();
         setOpen(el, true); const g1 = L.frontVoids(), s1 = L.hlSizes();
-        const top = el.closest('.front__top');
-        const full = !top || [...top.children].filter(L.vis).every((c) => Math.abs(L.R(c).width - L.R(top).width) < 2);
-        A[k] = [g1.max <= g0.max + 50 && s0 === s1 && full, `${sel} open: void ${g0.max} -> ${g1.max}px, headline sizes ${s0 === s1 ? 'unchanged' : 'changed'}, top band full rows ${full}`];
+        A[k] = [Math.abs(g1.max - g0.max) <= 50 && s0 === s1, `${sel} open: void ${g0.max} -> ${g1.max}px (${[...g0.per, ...g1.per].filter(([, g]) => g > 50).slice(0, 2).map(([n, g]) => `${n} ${g}`).join(' ') || 'none over 50'}), headline sizes ${s0 === s1 ? 'unchanged' : 'changed'}`];
         setOpen(el, was);
       }
       // every item opens and closes, and its More tells the truth, whatever its starting state
@@ -709,20 +1103,40 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         if (!(startOk && flipOk && backOk)) bad++;
       }
       A.fold = [bad === 0 && n > 0, `${n} More buttons (${bootOpen} boot open) flip and return truthfully, ${bad} bad`];
-      // an open card with a photo: from a 720px front its photo sits in a column beside the
-      // headline; below that the card is one column and the photo sits under the headline. The
-      // first openable rest card always has a slot (injected if the day's data gives it none).
-      const grid = document.querySelector('.front__grid');
+      // a fold opens below the head the reader read (the head stays still, Less at the fold's
+      // end); Less with the head scrolled past brings the head back under the chrome (C8: these
+      // scrolls are the page's own)
+      {
+        const row = [...document.querySelectorAll('.day [data-story]')].find((r) => r.querySelector('.more') && !isOpen(r));
+        if (!row) A.foldStill = [null, 'no folded day row to open'];
+        else {
+          // the chrome's edge is read where the page stands (the top bar sticks once scrolled past)
+          const bar = document.querySelector('.bar');
+          const chrome = () => (bar && getComputedStyle(bar).display !== 'none' && matchMedia('(min-width:700px)').matches ? bar.getBoundingClientRect().bottom : 0);
+          const topOf = () => Math.round(row.getBoundingClientRect().top), b = row.querySelector('.more');
+          scrollBy(0, topOf() - chrome() - 200); const t0 = topOf();
+          click(b); const t1 = topOf(), stillOpen = Math.abs(t1 - t0) < 2;
+          click(b); const t2 = topOf(), stillClose = Math.abs(t2 - t0) < 2;   // head on screen: nothing moves
+          click(b); scrollBy(0, topOf() - chrome() + 400); const above = topOf() < chrome();
+          click(b); const t3 = topOf() - Math.round(chrome()), back = above && t3 >= 6 && t3 <= 10;
+          A.foldStill = [stillOpen && stillClose && back, `head at ${t0}px: open ${t1}, closed ${t2}; head 400px past the chrome then Less: head at chrome+${t3}px (want 8)`];
+        }
+      }
+      // an open card with a photo (R9, R15): on a card at least 760px wide the photo sits under
+      // the headline in the left track and the text runs beside the headline in the right one;
+      // narrower, the card is one column, the photo under the headline and the text under the
+      // photo. The first openable rest card always has a slot (injected if the data gives none).
       const withPhoto = [...document.querySelectorAll('.fcards--rest .fc')].find((c) => c.querySelector('.photo.is-loaded') && c.querySelector('.more'));
-      if (!grid || !withPhoto) A.photoBeside = [false, `no loaded photo on an openable front card (${X.injected} slots injected): the check has nothing to measure`];
+      if (!withPhoto) A.openCard = [false, `no loaded photo on an openable front card (${X.injected} slots injected): the check has nothing to measure`];
       else {
-        const wide = L.R(grid).width >= 720;
         const was = isOpen(withPhoto);
         setOpen(withPhoto, true);
-        const h = L.R(withPhoto.querySelector('.hl')), ph = L.R(withPhoto.querySelector('.photo'));
-        const beside = ph.left >= h.right - 1 && ph.top < h.bottom && ph.bottom > h.top;
+        const wide = L.R(withPhoto).width >= 760;
+        const h = L.R(withPhoto.querySelector('.hl')), ph = L.R(withPhoto.querySelector('.photo')), tx = L.R(withPhoto.querySelector('.fc__text'));
         const under = ph.top >= h.bottom - 1 && Math.abs(ph.left - h.left) < 2;
-        A.photoBeside = [wide ? beside : under, `front ${Math.round(L.R(grid).width)}px, open card: headline x ${Math.round(h.left)}–${Math.round(h.right)} y ${Math.round(h.top)}–${Math.round(h.bottom)}, photo x ${Math.round(ph.left)}–${Math.round(ph.right)} y ${Math.round(ph.top)}–${Math.round(ph.bottom)} (${beside ? 'beside' : under ? 'under' : 'misplaced'}, want ${wide ? 'beside' : 'under'})`];
+        const beside = tx.left >= h.right - 1 && Math.abs(tx.top - L.R(withPhoto.querySelector('.kick')).top) < 2;
+        const below = tx.top >= ph.bottom - 1 && Math.abs(tx.left - h.left) < 2;
+        A.openCard = [under && (wide ? beside : below), `card ${Math.round(L.R(withPhoto).width)}px open: headline y ${Math.round(h.top)}–${Math.round(h.bottom)} x ${Math.round(h.left)}–${Math.round(h.right)}, photo y ${Math.round(ph.top)}–${Math.round(ph.bottom)} (under ${under}), text x ${Math.round(tx.left)} y ${Math.round(tx.top)} (${wide ? `beside ${beside}` : `below ${below}`})`];
         setOpen(withPhoto, was);
       }
     }
@@ -739,7 +1153,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       const disc = ed.querySelector('.ed__disc');
       const dOp = L.opacityOf(disc);
       A.disc = [derived && dOp === 1 && L.contrast(disc) >= 4.5, `read editorial's AI disclosure: opacity ${dOp}, ${L.contrast(disc).toFixed(2)}:1`];
-      const readText = [...document.querySelectorAll('.is-read .why, .is-read .sum, .is-read .ed__hl, .is-read .ed__body p, .ptr.is-read .ptr__h')].filter(L.vis);
+      const readText = [...document.querySelectorAll('.is-read .why, .is-read .sum, .is-read .ed__hl, .is-read .ed__body p, .is-read .hl a, .is-read .deck')].filter(L.vis);
       const worst = readText.map((e) => [L.contrast(e), e.className]).sort((a, b) => a[0] - b[0])[0];
       A.readContrast = [readText.length > 0 && worst[0] >= 4.5, `${readText.length} read text blocks, lowest ${worst ? worst[0].toFixed(2) + ':1' : 'n/a'}`];
       click(ed.querySelector('.readbtn'));                                     // explicit un-tick wins
@@ -751,8 +1165,8 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       A.edRead = [partial && u0 - u1 === sci.length + 1 && derived, `1 of ${sci.length} ticked leaves the editorial unread: ${partial}; all ${sci.length} ticked: Unread ${u0} -> ${u1} (editorial counted once: ${u0 - u1 === sci.length + 1}), derived read ${derived}`];
       A.override = [untick && stored, `explicit un-tick wins over the edition rule: ${untick}, kept locally ${stored}`];
       A.counts = [n === u2 && !L.vis(ed), `Unread chip ${u2} vs visible ${n}; the edition's editorial hidden ${!L.vis(ed)}`];
-      const emptyDays = [...document.querySelectorAll('section.day')].filter((s) => !s.hidden && !s.querySelector('[data-story]:not([hidden]),[data-ptr]:not([hidden])'));
-      A.dayHide = [emptyDays.length === 0, `${emptyDays.length} shown day editions with zero visible rows`];
+      const emptyDays = [...document.querySelectorAll('section.day')].filter((s) => !s.hidden && !s.querySelector('[data-story]:not([hidden])') && !L.vis(s.querySelector('.day__up')));
+      A.dayHide = [emptyDays.length === 0, `${emptyDays.length} shown day editions with zero visible rows and nothing on the front`];
       const sync = JSON.parse(localStorage.getItem('syncState:v1') || '{}');
       A.localEd = [!Object.keys(sync).some((k) => !/^st-[0-9a-f]{12}$/.test(k)), `syncState:v1 holds ${Object.keys(sync).length} st- ids and no ed- id`];
     }
@@ -763,26 +1177,26 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       const F = X.FR;
       const frames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       const doc = (e) => { const r = L.R(e); return [r.left + scrollX, r.top + scrollY, r.width, r.height].map(Math.round).join(); };
-      const layout = () => Object.fromEntries([...document.querySelectorAll('main [data-story], main [data-ptr]')].filter(L.vis)
-        .map((e) => [e.id || `${e.dataset.zone}>${e.dataset.ptr}`, doc(e)]));
+      const layout = () => Object.fromEntries([...document.querySelectorAll('main [data-story]')].filter(L.vis).map((e) => [e.id, doc(e)]));
       const { front: now, same, show } = L;
       // a held beat chip counts what shows; the All chip counts every beat
       const counts = (beat = '') => { const n = L.visibleItems().length, u = L.ct(L.seg('unread')), c = L.ct(L.chip(beat)); return [n === u && n === c, `visible ${n} / Unread ${u} / ${beat || 'All'} chip ${c}`]; };
-      const shownPtrs = () => [...document.querySelectorAll('[data-reserve-ptr]')].filter(L.vis).map((p) => p.dataset.ptr);
-      // a promoted story is a pointer in its day, and the pointer reaches the card; nothing else points
-      const ptrs = (w) => {
+      // C9 under a composed front: a promoted story's live day row is hidden and its copy on the
+      // front is the one shown; a builder-front story off the front shows its real row after its
+      // template; nothing from the reserve shows twice; the day headers count the front
+      const rowsOk = (w) => {
         const bad = [];
         const promoted = [...w.cards.filter((s) => !F.FRONT.includes(s)), ...(w.desk && w.desk !== F.DESK ? [w.desk] : [])];
         for (const sid of promoted) {
-          const own = document.querySelector(`section.day [data-story="${sid}"]`), p = document.querySelector(`section.day [data-ptr="${sid}"]`);
-          if (own && L.vis(own)) bad.push(`${sid} still shown in its day`);
-          const t = p && document.getElementById(p.querySelector('a').getAttribute('href').slice(1));
-          if (!p || !L.vis(p)) bad.push(`${sid} has no pointer`);
-          else if (!t || !L.vis(t) || !t.closest('.front') || t.dataset.story !== sid) bad.push(`${sid} pointer -> ${t ? t.id : 'nothing'}`);
+          const own = [...document.querySelectorAll(`section.day [data-story="${sid}"]`)].filter(L.vis);
+          if (own.length) bad.push(`${sid} still shown in its day`);
+          const c = [...document.querySelectorAll(`.front [data-story="${sid}"]`)].filter(L.vis);
+          if (c.length !== 1) bad.push(`${sid} on the front ${c.length}x`);
         }
-        const stray = shownPtrs().filter((s) => !promoted.includes(s));
-        if (stray.length) bad.push('pointers for stories not on the front: ' + stray.join(' '));
-        return [bad.length === 0, bad.slice(0, 3).join('; ') || `${promoted.length} promoted, each a pointer in its day`];
+        const copies = [...document.querySelectorAll('.front [data-story]')].filter(L.vis).map((e) => e.dataset.story).filter((s) => !w.cards.includes(s) && s !== w.desk);
+        if (copies.length) bad.push('front shows stories not in the pick: ' + copies.join(' '));
+        const dm = L.dayMeta(); bad.push(...dm.bad);
+        return [bad.length === 0, bad.slice(0, 3).join('; ') || `${promoted.length} promoted, each once on the front with its day row hidden; ${dm.days} day headers count the front`];
       };
       const line = (w, u = 'unread ') => {
         const n = w.cards.length;
@@ -798,14 +1212,12 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         }
         scrollTo(0, 0); await frames();
       };
-      const SKIP = (why) => [null, why];
-      const until = async (fn, ms = 4000) => { const t0 = Date.now(); while (!fn() && Date.now() - t0 < ms) await sleep(50); return fn(); };
-      const once = () => L.once(X.boardIds, F.FRONT);
-      // the Desk's view prints its edition's day, like a front card
+      const once = () => L.once(X.boardIds, F.FRONT, F.DESK);
+      // the Desk's view prints its edition's day in its kicker
       const deskDate = () => {
         const ed = [...document.querySelectorAll('.front .desk .ed')].find(L.vis);
         if (!ed) return [false, 'no Desk\'s view shown'];
-        const t = ed.querySelector('.ed__top .fday'), d = ed.dataset.edition.slice(0, 10);
+        const t = ed.querySelector('.kick .fday'), d = ed.dataset.edition.slice(0, 10);
         return [!!t && L.vis(t) && t.getAttribute('datetime') === d && t.textContent.trim() === X.DAYLBL[d],
           `${ed.dataset.story}: ${t ? `"${t.textContent.trim()}" @${t.getAttribute('datetime')} shown ${L.vis(t)}` : 'no day'}, edition ${d}`];
       };
@@ -848,8 +1260,8 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       if (X.state === 'front-read') {
         const lay0 = layout();
         // All at load (owner decision 2026-09-25): the Unread pick from the read set the page opened with
-        const gl = now();
-        A.allLoad = [same(gl, F.ALL0) && ptrs(F.ALL0)[0] && frontN.textContent === line(F.ALL0, ''), `${show(gl, F.ALL0)}; ${ptrs(F.ALL0)[1]}; line "${frontN.textContent}"`];
+        const gl = now(), rl = rowsOk(F.ALL0);
+        A.allLoad = [same(gl, F.ALL0) && rl[0] && frontN.textContent === line(F.ALL0, ''), `${show(gl, F.ALL0)}; ${rl[1]}; line "${frontN.textContent}"`];
         A.allOnce = once();
         A.deskDate = deskDate();
         // a tick under All only dims: nothing moves or hides; its un-tick puts the read set back
@@ -873,7 +1285,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
           dispatchEvent(new StorageEvent('storage', { key, storageArea: localStorage }));
           await frames();
         };
-        // Focus must survive a recompose (review F1): the focused control keeps the focus (and its
+        // Focus must survive a recompose (C14): the focused control keeps the focus (and its
         // caret), and its card is never taken out of the document on the way (a card moved out and
         // back drops the focus to <body>; the board's rescue would hide that, so removals are watched)
         const keeps = async (ctl, act) => {
@@ -895,7 +1307,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         click(L.seg('unread')); await settle();
         const g0 = now();
         A.refill = [same(g0, F.R0), show(g0, F.R0)];
-        A.refillPtrs = ptrs(F.R0);
+        A.refillRows = rowsOk(F.R0);
         A.counts = counts();
         A.refillLine = [frontN.textContent === line(F.R0), `"${frontN.textContent}"`];
         const ids = [...document.querySelectorAll('[id]')].map((e) => e.id), dup = ids.filter((x, i) => ids.indexOf(x) !== i);
@@ -916,13 +1328,40 @@ async function runCase(browser, ctxOpts, state, fault = null) {
         A.refillGeom = [!g.overlap.length && !g.order.length && !g.containment.length && !g.overflow.length,
           `refilled: ${g.overlap.length} overlaps / ${g.pairs} pairs, ${g.order.length} inversions, ${g.containment.length} outside, overflow ${g.overflow.length} ${[...g.overlap, ...g.order].slice(0, 2).join('; ')}`];
         A.refillLinks = [!dead.length && !dm.bad.length, `refilled: ${dead.length} dead links ${dead.slice(0, 2).join('; ')}; day headers ${dm.bad.join('; ') || 'match'}`];
+        // a promoted copy carries the anatomy of a card: a kicker with its day (not the front's),
+        // a glyph, the why shown on leads and features, the controls line; and the front's own
+        // copies of the builder's cards are not shown twice
+        const cBad = [];
+        for (const sid of F.R0.cards.filter((s) => !F.FRONT.includes(s))) {
+          const c = document.getElementById('c-' + sid); if (!c) { cBad.push(`${sid}: no copy`); continue; }
+          if (!c.querySelector('.kick .tier .tg') || !L.vis(c.querySelector('.kick'))) cBad.push(`${sid}: no kicker or glyph`);
+          const fd = c.querySelector('.kick .fday'); if (fd && X.boardDates[X.boardIds.indexOf(sid)] !== frontN.dataset.date && !L.vis(fd)) cBad.push(`${sid}: its day hidden`);
+          if (+c.dataset.imp > 1 && c.querySelector('.why') && !L.vis(c.querySelector('.why'))) cBad.push(`${sid}: why folded`);
+          if (!L.vis(c.querySelector('.line .readbtn'))) cBad.push(`${sid}: no ✓`);
+        }
+        A.copiesShown = F.R0.cards.some((s) => !F.FRONT.includes(s)) ? [cBad.length === 0, cBad.slice(0, 3).join('; ') || 'every promoted copy has a kicker with glyph and day, its why when a lead or feature, and the controls'] : SKIP('no promoted copy');
         // a promoted editorial: its day's "→ desk's view" link stays and reaches the front copy (review F3)
         if (F.R0.desk && F.R0.desk !== F.DESK) {
-          const links = [...document.querySelectorAll('section.day .day__links a.jump')].filter((a) => a.getAttribute('href').replace('#desk-', '#') === '#' + F.R0.desk);
+          const links = [...document.querySelectorAll('section.day .day__links a.jump')].filter((a) => a.getAttribute('href') === '#desk-' + F.R0.desk);
           const a = links[0], t = a && document.getElementById(a.getAttribute('href').slice(1));
           A.refillDayLink = [links.length === 1 && L.vis(a) && !!t && L.vis(t) && !!t.closest('.front') && t.dataset.story === F.R0.desk,
             `${F.R0.desk}: day link ${a ? `${a.getAttribute('href')} shown ${L.vis(a)}` : 'missing'} -> ${t ? `${t.id} shown ${L.vis(t)} on the front ${!!t.closest('.front')}` : 'nothing'}`];
         } else A.refillDayLink = SKIP('no older editorial to promote to the Desk\'s view');
+        // a promoted copy, adopted from its <template>, carries the full Discuss prompt too (the
+        // board's adopt hook runs discuss.js on it): headline, every source url and the desk, not
+        // the template's short no-script fallback
+        const promoted = [...F.R0.cards.filter((s) => !F.FRONT.includes(s)).map((s) => [s, document.getElementById('c-' + s), X.STORY_X[s]]),
+          ...(F.R0.desk && F.R0.desk !== F.DESK ? [[F.R0.desk, document.getElementById('desk-' + F.R0.desk), X.ED_X[F.R0.desk]]] : [])];
+        const pBad = [];
+        for (const [sid, el, w] of promoted) {
+          const a = el && el.querySelector('a.discuss'); let u = null;
+          try { u = a && new URL(a.getAttribute('href')); } catch (e) { u = null; }
+          const p = u && u.origin === 'https://claude.ai' && u.pathname === '/new' ? (u.searchParams.get('q') || '').replace(/\s+/g, ' ') : '';
+          const want = w.sources ? [w.headline, ...w.sources.map((x) => x.url), w.desk] : [w.title, w.desk];
+          const m = want.filter((x) => x && !p.includes(x));
+          if (!a) pBad.push(`${sid}: no Discuss link`); else if (m.length) pBad.push(`${sid}: prompt lacks ${m.slice(0, 2).map((x) => `"${x.slice(0, 40)}"`).join(', ')}`);
+        }
+        A.refillDiscuss = promoted.length ? [pBad.length === 0, pBad.slice(0, 3).join('; ') || `${promoted.length} promoted copies carry the full Discuss prompt (headline, every source, desk)`] : SKIP('no promoted copy');
         // (a) nothing changes: a middle-click reads a card without a recompose, its ✓ un-reads it
         const cA = F.R0.cards[F.R0.cards.length - 1], hlA = cA && document.querySelector(`.front .fc[data-story="${cA}"] .hl a`);
         if (hlA) {
@@ -936,11 +1375,11 @@ async function runCase(browser, ctxOpts, state, fault = null) {
           click(L.chip(F.RB)); const gb = now(), cb = counts(F.RB); click(L.chip(F.RB));
           A.refillBeat = [same(gb, F.RBW) && cb[0] && same(now(), F.R0), `${F.RB}: ${show(gb, F.RBW)}; ${cb[1]}`];
         } else A.refillBeat = SKIP('no beat on the board changes the refill');
-        // 3. tick the refilled lead: the next entry takes its place, its pointer goes with it
+        // 3. tick the refilled lead: the next entry takes its place, its day row with it
         const u0 = L.ct(L.seg('unread'));
         const lead = document.querySelector('.front .fcards--top > .fc');
         click(lead && lead.querySelector('.readbtn'));
-        const g1 = now(), p1 = ptrs(F.R1), c1 = counts();
+        const g1 = now(), p1 = rowsOk(F.R1), c1 = counts();
         A.refillTick = [same(g1, F.R1) && p1[0] && c1[0] && L.ct(L.seg('unread')) === u0 - 1,
           `after ticking ${F.R0.cards[0]}: ${show(g1, F.R1)}; ${p1[1]}; ${c1[1]}; Unread ${u0} -> ${L.ct(L.seg('unread'))}`];
         // (b) the pick changes around a staying card: the last card holds the focus while a rest card is ticked
@@ -957,6 +1396,13 @@ async function runCase(browser, ctxOpts, state, fault = null) {
           if (inp) { inp.value = 'not new'; inp.setSelectionRange(1, 5); }
           const k = await keeps(inp, () => write(F.S1c));
           A.refillFocusTyping = [k[0] && same(now(), F.R1c), `another tab read ${F.TYPE_T}: ${show(now(), F.R1c)}; ${k[1]}`];
+          // the reason box and the "sign in to vote" note are this step's own, not the recompose's:
+          // retract the vote (which hides the box) and clear the note, so that step 4 compares the
+          // page with its load layout and measures the recompose alone
+          click(cardL.querySelector('.vote--down'));
+          const dlg2 = document.querySelector('dialog[open]'); if (dlg2) dlg2.close();
+          const vn = cardL.querySelector('.vnote'); if (vn) vn.textContent = '';
+          await frames();
         } else A.refillFocusTyping = SKIP('fewer than three refilled cards after a tick');
         // 4. All: its LOAD-TIME front (not a pick from the reads since), the reads dimmed, and
         // nothing on the page has moved since load
@@ -990,10 +1436,12 @@ async function runCase(browser, ctxOpts, state, fault = null) {
           A.frontLineDesk = [!gd.cards.length && gd.desk === F.DESK_RESERVE[0] && L.vis(fr) && !L.vis(frontN),
             `${show(gd, { cards: [], desk: F.DESK_RESERVE[0] })}; front shown ${L.vis(fr)}; line ${L.vis(frontN) ? `"${frontN.textContent}"` : 'hidden'}`];
         } else A.frontLineDesk = SKIP('no editorial');
-        // 6. the whole reserve read: the front hides, and nothing points into it
+        // 6. the whole reserve read: the front hides, every day row of a formerly promoted story
+        // is back, and nothing links into the hidden front
         await write(F.S3);
         const fr = document.querySelector('section.front'), c3 = counts(), d3 = L.deadLinks();
-        A.refillEmpty = [!L.vis(fr) && !shownPtrs().length && c3[0] && !d3.length, `front shown ${L.vis(fr)}; reserve pointers shown ${shownPtrs().length}; ${c3[1]}; dead links ${d3.length}`];
+        const upShown = [...document.querySelectorAll('.day__up')].filter(L.vis).length;
+        A.refillEmpty = [!L.vis(fr) && c3[0] && !d3.length && !upShown, `front shown ${L.vis(fr)}; ${c3[1]}; dead links ${d3.length}; "on the front" counts shown ${upShown}`];
       }
     }
     if (X.state === 'beat') {
@@ -1006,11 +1454,17 @@ async function runCase(browser, ctxOpts, state, fault = null) {
       A.dayHide = [shownDays.join() === X.BEAT_DAYS.join(), `day editions shown: ${shownDays.join()} (want ${X.BEAT_DAYS.join()})`];
       const saved = JSON.parse(localStorage.getItem('topicPrefs:v1') || 'null');
       A.prefs = [!!saved && Object.keys(saved).join() === 'topics,rs,ts' && saved.topics.join() === X.BEAT && saved.rs === '' && saved.ts > 0, 'topicPrefs:v1 ' + JSON.stringify(saved)];
+      // a held beat is signalled on every copy of its chip (F4): pressed, with a check mark drawn
+      // before its label; All beats is released
+      const copies = [...document.querySelectorAll('.chip')].filter((c) => c.dataset.topic === X.BEAT);
+      const marked = copies.filter((c) => c.getAttribute('aria-pressed') === 'true' && getComputedStyle(c, '::before').content.includes('✓'));
+      const allOff = [...document.querySelectorAll('.chip[data-topic=""]')].every((c) => c.getAttribute('aria-pressed') === 'false');
+      A.beatMark = [copies.length >= 2 && marked.length === copies.length && allOff, `${marked.length} of ${copies.length} copies of the ${X.BEAT} chip pressed with a check; All beats released ${allOff}`];
     }
     if (X.state === 'multi-beat') {
       click(L.chip(X.BEAT));
       const bad = []; let tried = 0;
-      for (const c of [...document.querySelectorAll('.chip')].filter(L.vis)) {
+      for (const c of L.chips()) {
         const k = c.dataset.topic, n = L.ct(c); tried++;
         if (k === '') { click(c); const v = L.visibleItems().length; if (v !== n) bad.push(`All ${n} shows ${v}`); click(L.chip(X.BEAT)); continue; }
         if (c.getAttribute('aria-pressed') === 'true') { const v = L.visibleItems().length; if (v !== n) bad.push(`${k} (held) ${n} shows ${v}`); continue; }
@@ -1057,7 +1511,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   const KEY = browser.browserType().name() === 'webkit' ? 'Alt+Tab' : 'Tab';
   if (state === 'default' && !fault?.noFocus) {
     const reachable = await page.evaluate(() => [...document.querySelectorAll('.mast :is(a[href], button, summary, input), .bar :is(a[href], button, summary, input)')]
-      .filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && !e.closest('[hidden]'); }).length);
+      .filter((e) => window.__L.vis(e) && !e.closest('[hidden]')).length);
     // start the walk at the skip link, the page's first stop, whatever moved the navigation point
     await page.evaluate(() => { scrollTo(0, 0); document.querySelector('.skip').focus(); });
     const seen = [];
@@ -1107,7 +1561,7 @@ async function runCase(browser, ctxOpts, state, fault = null) {
   };
 }
 
-// ------------------------------------------------------------------ signed in: the first roamed read set
+// ------------------------------------------------------------------ signed in: the first roamed read set (C8)
 // All's pick is taken at load from the local read set; the FIRST roamed set takes it once more,
 // only if the reader has not interacted with the page since load (owner ruling 2026-09-25). One
 // context per case and a fresh page per scenario, each seeded with the default front and its
@@ -1151,13 +1605,13 @@ async function runSync(browser, ctxOpts, fault = null) {
     localStorage.setItem('syncSession:v1', JSON.stringify({ token: t, reader: 'verify', at: now }));
     const below = (el, pad) => {
       const bar = document.querySelector('.bar');
-      const top = bar && matchMedia('(min-width:700px)').matches ? bar.getBoundingClientRect().bottom : 0;
+      const top = bar && matchMedia('(min-width:700px)').matches && getComputedStyle(bar).display !== 'none' ? bar.getBoundingClientRect().bottom : 0;
       scrollTo(0, el.getBoundingClientRect().top + scrollY - top - pad);
     };
     // a scenario's reload: at load, where a restored scroll position would put the page
     const at = JSON.parse(sessionStorage.getItem('__at') || 'null');
     if (at) addEventListener('load', () => {
-      const n = performance.getEntriesByType('navigation')[0], e = document.getElementById(at.id);
+      const n = performance.getEntriesByType('navigation')[0], e = at.sel ? document.querySelector(at.sel) : document.getElementById(at.id);
       if (e && n && n.type === 'reload') below(e, at.pad);
     });
   }, [S0, S_P || [], TOKEN, SYNTH_IMP]);
@@ -1188,9 +1642,9 @@ async function runSync(browser, ctxOpts, fault = null) {
     const { page, i } = await open((k) => ({ ...st(FR.REMOTE1, 1), ...(k ? st(FR.REMOTE2, 1) : {}) }));
     Object.assign(A, await page.evaluate(async ({ F, i }) => {
       const L = window.__L, g0 = L.front(), out = {};
-      const ok1 = await L.roam(i, F.REMOTE1), g1 = L.front(), o1 = L.once(F.boardIds, F.FRONT);
+      const ok1 = await L.roam(i, F.REMOTE1), g1 = L.front(), o1 = L.once(F.boardIds, F.FRONT, F.DESK);
       out.allSyncOnce = [L.same(g0, F.ALL0) && ok1 && L.same(g1, F.ALL_SYNC) && o1[0], `no input since load; at load ${L.show(g0, F.ALL0)}; roamed ${F.REMOTE1} read: ${L.show(g1, F.ALL_SYNC)}; ${o1[1]}`];
-      (await import('/claude-routines/assets/js/sync.js')).initSync();          // a second pull
+      (await import('/claude-routines/assets/js/session.js')).pullRemote();   // a second pull (the import map stamps it)
       const ok2 = await L.roam(i + 1, F.REMOTE2), g2 = L.front();
       const dimmed = !F.ALL_SYNC.cards.includes(F.REMOTE2) || !!document.querySelector(`.front .fc[data-story="${F.REMOTE2}"].is-read`);
       out.allSyncOnlyOnce = [ok2 && L.same(g2, F.ALL_SYNC) && dimmed, `second roam (${F.REMOTE2} read too): ${L.show(g2, F.ALL_SYNC)}; dimmed in place ${dimmed}`];
@@ -1202,7 +1656,9 @@ async function runSync(browser, ctxOpts, fault = null) {
   const moreOf = ENTER && `#r-${ENTER} .more`;
   if (none || !ENTER) A.allSyncRowClick = [null, none || 'no story enters the front at the roam'];
   else {
-    const { page, i } = await open(() => st(FR.REMOTE1, 1), { at: { id: 'r-' + ENTER, pad: 200 } });
+    // More itself sits 480px down (a lead row runs past the viewport; a scroll-into-view before
+    // the click would be a scroll of the page's own, and the roam counts a pending one)
+    const { page, i } = await open(() => st(FR.REMOTE1, 1), { at: { sel: moreOf, pad: 480 } });
     if (!(await page.$(moreOf))) A.allSyncRowClick = [null, `${ENTER}'s row has no More`];
     else {
       await page.click(moreOf);
@@ -1214,6 +1670,22 @@ async function runSync(browser, ctxOpts, fault = null) {
           `More clicked on ${F.ENTER}'s row, then ${F.REMOTE1} roamed read: ${L.show(g, F.ALL0)}; focus kept ${document.activeElement === ctl}; row shown ${L.vis(ctl)}`];
       }, { F, i, sel: moreOf });
     }
+    await page.close();
+  }
+  // C8: a scroll the page makes itself is not interaction. A fold closed by script with its head
+  // scrolled past brings the head back (fold.js); the first roam still retakes All after it.
+  if (none || !ENTER) A.allSyncOwnScroll = [null, none || 'no story enters the front at the roam'];
+  else {
+    const { page, i } = await open(() => st(FR.REMOTE1, 1), { at: { sel: moreOf, pad: -120 } });   // More 120px past the chrome: the head is above on every layout
+    if (!(await page.$(moreOf))) A.allSyncOwnScroll = [null, `${ENTER}'s row has no More`];
+    else A.allSyncOwnScroll = await page.evaluate(async ({ F, i, sel }) => {
+      const L = window.__L, b = document.querySelector(sel), row = b.closest('[data-story]');
+      const y0 = scrollY; b.click(); const y1 = scrollY; b.click(); const dy = scrollY - y1;   // open: still; close: the head comes back
+      await L.frames();
+      if (!dy) return [null, `the row's head was not past the top (row top ${Math.round(row.getBoundingClientRect().top)}px): no scroll of the page's own to test`];
+      const ok = await L.roam(i, F.REMOTE1), g = L.front();
+      return [ok && L.same(g, F.ALL_SYNC), `fold opened (page moved ${y1 - y0}px) and closed by script (the page scrolled itself ${dy}px), then ${F.REMOTE1} roamed read: ${L.show(g, F.ALL_SYNC)}`];
+    }, { F, i, sel: moreOf });
     await page.close();
   }
   // review F1 (B): focus in a builder-front story's restored row, then the roam un-reads it
@@ -1265,17 +1737,17 @@ async function runSync(browser, ctxOpts, fault = null) {
     A.allSyncAnchor = await page.evaluate(async ({ F, i, id }) => {
       const L = window.__L;
       const nav = performance.getEntriesByType('navigation')[0].type, row = document.getElementById(id);
-      const bar = document.querySelector('.bar'), top = bar && matchMedia('(min-width:700px)').matches ? bar.getBoundingClientRect().bottom : 0;
-      const els = [...document.querySelectorAll('main [data-story], main [data-ptr]')].filter((e) => { const r = L.R(e); return L.vis(e) && r.bottom > top + Math.min(24, r.height); });
+      const bar = document.querySelector('.bar'), top = bar && matchMedia('(min-width:700px)').matches && getComputedStyle(bar).display !== 'none' ? bar.getBoundingClientRect().bottom : 0;
+      const els = [...document.querySelectorAll('main [data-story]')].filter((e) => { const r = L.R(e); return L.vis(e) && r.bottom > top + Math.min(24, r.height); });
       // what the reader sees first that the recompose keeps: past the promoted row when it is on
-      // top (WebKit, with no scroll anchoring, may shift it after load), and past the pointers of
-      // the cards that leave the front
+      // top (WebKit, with no scroll anchoring, may shift it after load), and past the cards that
+      // leave the front
       const leave = F.ALL0.cards.filter((c) => !F.ALL_SYNC.cards.includes(c));
-      const doomed = new Set([row, ...leave.map((c) => document.querySelector(`section.day [data-ptr="${c}"]`))]);
+      const doomed = new Set([row, ...leave.map((c) => document.querySelector(`.front .fc[data-story="${c}"]`))]);
       const onTop = els[0] === row, keep = els.find((e) => !doomed.has(e)), t0 = keep ? L.R(keep).top : null;
       const ok = await L.roam(i, F.REMOTE1), g = L.front(), t1 = keep ? L.R(keep).top : null;
       return [nav === 'reload' && !!keep && ok && L.same(g, F.ALL_SYNC) && !L.vis(row) && Math.abs(t1 - t0) <= 2,
-        `${nav}: ${id} on top ${onTop}; retaken ${L.show(g, F.ALL_SYNC)}; first kept on screen ${keep ? keep.id || 'pointer ' + keep.dataset.ptr : 'nothing'} ${Math.round(t0)} -> ${Math.round(t1)}px`];
+        `${nav}: ${id} on top ${onTop}; retaken ${L.show(g, F.ALL_SYNC)}; first kept on screen ${keep ? keep.id : 'nothing'} ${Math.round(t0)} -> ${Math.round(t1)}px`];
     }, { F, i, id: 'r-' + ENTER });
     await page.close();
   }
@@ -1286,7 +1758,7 @@ async function runSync(browser, ctxOpts, fault = null) {
     const { page, i } = await open(() => st(FR.PAD0, 0), { url: `${BASE}?verify-seed=partial` });
     A.allPartialRoam = await page.evaluate(async ({ F, i }) => {
       const L = window.__L, g0 = L.front();
-      const ok = await L.roam(i, F.PAD0), g = L.front(), o = L.once(F.boardIds, F.FRONT);
+      const ok = await L.roam(i, F.PAD0), g = L.front(), o = L.once(F.boardIds, F.FRONT, F.DESK);
       return [L.same(g0, F.ALL_P) && ok && L.same(g, F.ALL_PR) && o[0],
         `at load ${L.show(g0, F.ALL_P)}; roamed ${F.PAD0} unread: ${L.show(g, F.ALL_PR)}; ${o[1]}`];
     }, { F, i });
@@ -1312,32 +1784,55 @@ async function runSync(browser, ctxOpts, fault = null) {
   };
 }
 
-// ------------------------------------------------------------------ no-JS
-async function runNoJs(browser, ctxOpts) {
+// ------------------------------------------------------------------ no-JS (C5, PLAN decision 9)
+async function runNoJs(browser, ctxOpts, fault = null) {
   const ctx = await browser.newContext({ ...ctxOpts, javaScriptEnabled: false });
   const rec = { fb: [], og: 0, ext: [], errors: [] };
   await stub(ctx, rec);
+  if (fault?.css) await mutateCss(ctx, fault.css);
   const p = await ctx.newPage(); watchRequests(p, rec);
   await p.goto(BASE);
   const r = await p.evaluate((want) => {
-    const vis = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
-    const hiddenText = [...document.querySelectorAll('.page :is(.fold, .why, .sum, .ed__body, .ed__disc, .hl, .ptag)')].filter((e) => !vis(e) && e.textContent.trim()).length;
-    const controls = [...document.querySelectorAll('.page button, .page input, .page textarea')].filter(vis).length;
+    const vis = (e) => { if (!e || (e.closest && e.closest('.vh'))) return false; const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
+    const hiddenText = [...document.querySelectorAll('.page :is(.fold, .why, .sum, .ed__body, .ed__disc, .hl, .deck, .ptag, .srcs, .flag, .srcn, .kick, .day__n)')].filter((e) => !vis(e) && e.textContent.trim()).length;
+    // Discuss works without script: the template's own href is claude.ai/new?q= with a short
+    // prompt (a story's headline and primary source; an editorial's title; a day's headlines)
+    const norm = (v) => String(v || '').replace(/\s+/g, ' ').trim();
+    const dBad = []; let dN = 0;
+    for (const a of document.querySelectorAll('.page a.discuss')) {
+      const kind = a.dataset.discuss, who = (a.closest('[data-story], section.day') || {}).id || kind;
+      if (!vis(a)) { dBad.push(`${who}: Discuss hidden`); continue; }
+      let u = null; try { u = new URL(a.getAttribute('href')); } catch (e) { u = null; }
+      if (!u || u.origin !== 'https://claude.ai' || u.pathname !== '/new' || !u.searchParams.has('q') || a.getAttribute('href').includes('+')) { dBad.push(`${who}: bad Discuss href`); continue; }
+      const p = norm(u.searchParams.get('q')); dN++;
+      const need = kind === 'story' ? [want.stories[a.closest('[data-story]').dataset.story].headline, want.stories[a.closest('[data-story]').dataset.story].url]
+        : kind === 'editorial' ? [want.eds[a.closest('[data-story]').dataset.story]] : kind === 'day' ? want.days[a.closest('section.day').dataset.date] : [null];
+      const m = need.filter((x) => !x || !p.includes(x));
+      if (m.length) dBad.push(`${who}: no-script prompt lacks ${m[0] ? `"${m[0].slice(0, 30)}"` : 'a known kind'}`);
+    }
+    const discuss = dBad.length === 0 && dN > 0 ? `${dN} no-script Discuss hrefs carry their headline and primary source` : dBad.slice(0, 2).join('; ') || 'no Discuss link';
+    // no script-only control renders: no button, input or textarea, no More, ✓, vote, chip,
+    // read-state segment, bar or propose form
+    const controls = [...document.querySelectorAll('.page button, .page input, .page textarea, .page .needs-js')].filter(vis).length;
     const hiwLink = [...document.querySelectorAll('a[href="#hiw"]')].some(vis), key = vis(document.querySelector('.mast__key summary'));
-    // the builder's front as it is, whatever the refill would do: no reserve card or pointer shows
+    // the day jump is plain links in the masthead: the front and every edition
+    const dayLinks = [...document.querySelectorAll('.mast__days .daylist a')].filter(vis).length;
+    // the builder's front as it is, whatever the refill would do: no reserve copy shows, and a
+    // builder-front story shows once (its day row stays in its template)
     const front = [...document.querySelectorAll('.front .fc')].filter(vis).map((c) => c.dataset.story).join() === want.front.join()
-      && (([...document.querySelectorAll('.front .desk .ed')].find(vis) || {}).id || null) === want.desk
-      && ![...document.querySelectorAll('[data-reserve-ptr]')].some(vis);
-    return { hiddenText, controls, hiwLink, key, front, scroll: document.documentElement.scrollWidth - innerWidth, js: document.documentElement.className };
-  }, { front: EXPECT_FRONT, desk: EXPECT_DESK });
+      && (([...document.querySelectorAll('.front .desk .ed')].find(vis) || {}).id || null) === want.desk;
+    const twice = want.front.filter((s) => document.querySelectorAll(`main [data-story="${s}"]`).length !== 1).length;
+    return { hiddenText, controls, hiwLink, key, dayLinks, front, twice, discuss, discussOk: dBad.length === 0 && dN > 0, scroll: document.documentElement.scrollWidth - innerWidth, js: document.documentElement.className };
+  }, { front: EXPECT_FRONT, desk: EXPECT_DESK, stories: Object.fromEntries(Object.entries(STORY_X).map(([k, v]) => [k, { headline: v.headline, url: v.url }])),
+    eds: Object.fromEntries(Object.entries(ED_X).map(([k, v]) => [k, v.title])), days: Object.fromEntries(Object.entries(DAY_X).map(([k, v]) => [k, v.map((x) => x.headline)])) });
   await p.goto(BASE + '#hiw');
   r.hiw = await p.evaluate(() => { const d = document.getElementById('hiw'), b = d.getBoundingClientRect(); return b.width > 0 && b.height > 0 && b.top < innerHeight && b.bottom > 0 && [...d.querySelectorAll('button')].every((x) => !x.getBoundingClientRect().width); });
   await ctx.close();
-  const ok = r.hiddenText === 0 && r.controls === 0 && r.scroll <= 0 && r.hiwLink && r.hiw && r.key && r.front && rec.ext.length === 0;
-  return [ok, `hidden text blocks ${r.hiddenText}, visible controls ${r.controls}, overflow ${r.scroll}, How-this-works link ${r.hiwLink} -> #hiw shown ${r.hiw}, key ${r.key}, default front ${r.front}, external ${rec.ext.length}`];
+  const ok = r.hiddenText === 0 && r.controls === 0 && r.scroll <= 0 && r.hiwLink && r.hiw && r.key && r.dayLinks === dates.length + 1 && r.front && r.twice === 0 && r.discussOk && rec.ext.length === 0 && !/\bjs\b/.test(r.js);
+  return [ok, `hidden text blocks ${r.hiddenText}, visible controls ${r.controls}, overflow ${r.scroll}, How-this-works link ${r.hiwLink} -> #hiw shown ${r.hiw}, key ${r.key}, day jump ${r.dayLinks} links, default front ${r.front}, shown twice ${r.twice}, ${r.discuss}, external ${rec.ext.length}, html class "${r.js}"`];
 }
 
-// ------------------------------------------------------------------ contract parity with the old page
+// ------------------------------------------------------------------ contract parity with the old page (C15)
 async function runContract(browser, ctxOpts, fault = null) {
   const A = {};
   const picks = {                                     // the old capture's choices, re-made on today's board
@@ -1369,15 +1864,17 @@ async function runContract(browser, ctxOpts, fault = null) {
     const r = await page.evaluate((ids) => ({
       read: ids.filter((id) => document.querySelector(`[data-story="${id}"]`)).map((id) => [id, document.querySelector(`[data-story="${id}"]`).classList.contains('is-read')]),
       sync: Object.keys(JSON.parse(localStorage.getItem('syncState:v1') || '{}')),
-      chip: (document.querySelector('.bar .chip[data-topic="politics"]') || {}).ariaPressed || (document.querySelector('.bar .chip[data-topic="politics"]')?.getAttribute('aria-pressed')),
+      // one painter for every copy of a chip: any copy says whether politics is held
+      chip: [...document.querySelectorAll('.chip[data-topic="politics"]')].map((c) => c.getAttribute('aria-pressed')).join(),
+      nChips: document.querySelectorAll('.chip[data-topic="politics"]').length,
       rs: document.querySelector('.seg button[aria-pressed="true"]').dataset.rs,
       syncBtn: document.querySelector('.syncbtn[data-dialog="sync"]').textContent,
       siteKey: localStorage.getItem('siteKey'),
     }), Object.keys(snapshot));
     const gets = rec.fb.filter((x) => x.method === 'GET').map((x) => x.path).sort().join();
     A.snapshotRead = [r.read.length >= 3 && r.read.every(([, v]) => v), `${r.read.filter(([, v]) => v).length} of ${r.read.length} snapshot ids on the page paint read`];
-    A.legacyShapes = [r.chip === 'true' && r.rs === '' && /Synced · tester/.test(r.syncBtn) && gets === '/prefs,/readstate' && r.siteKey === null,
-      `topicPrefs without rs -> politics pressed ${r.chip}, rs "${r.rs}"; session without at -> "${r.syncBtn}", GETs ${gets}; siteKey removed ${r.siteKey === null}`];
+    A.legacyShapes = [r.nChips >= 1 && r.chip === Array(r.nChips).fill('true').join() && r.rs === '' && /Synced · tester/.test(r.syncBtn) && gets === '/prefs,/readstate' && r.siteKey === null,
+      `topicPrefs without rs -> politics pressed on ${r.nChips} copies [${r.chip}], rs "${r.rs}"; session without at -> "${r.syncBtn}", GETs ${gets}; siteKey removed ${r.siteKey === null}`];
     A.pruneEd = [!r.sync.some((k) => k.startsWith('ed-')) && r.sync.length > 0, `syncState:v1 after load: ${r.sync.length} ids, ed- ids ${r.sync.filter((k) => k.startsWith('ed-')).length}`];
     await ctx.close();
   }
@@ -1397,7 +1894,7 @@ async function runContract(browser, ctxOpts, fault = null) {
     await page.evaluate((p) => {
       const el = (id) => document.querySelector(`[data-story="${id}"]`);
       p.read.forEach((id) => el(id).querySelector('.readbtn').click());
-      document.querySelector(`.bar .chip[data-topic="${p.topic}"]`).click();
+      document.querySelector(`.chip[data-topic="${p.topic}"]`).click();      // any copy: one painter
       document.querySelector('.seg button[data-rs="unread"]').click();
       const v = el(p.vote);
       v.querySelector('.vote[data-v="-1"]').click();
@@ -1482,36 +1979,127 @@ async function runTwoTabs(browser, ctxOpts, fault = null) {
 }
 
 // ------------------------------------------------------------------ the reading pages
+// Each review, /prompts/ fully open, the 404 and /admin/ on the shared design system: one h1
+// each (F13), no sideways scroll under a long unbroken token, the admin signed out with ONE
+// sign-in control and a way back to the front (F12), the prompts page naming the Weekend desk
+// (F14), the 404 reaching the latest review (F15). `fault` is {css, init} for the self-test.
 const REVIEWS = fs.readdirSync(path.join(REPO, '_posts')).filter((f) => /-evaluator\.md$/.test(f)
   && /^published:\s*true\s*$/m.test(fs.readFileSync(path.join(REPO, '_posts', f), 'utf8').split(/^---\s*$/m)[1] || ''))
   .map((f) => f.slice(0, 10).replace(/-/g, '/') + '/evaluator/').sort();
 const READING = ['prompts/', '404.html', 'admin/', ...REVIEWS];
-async function runPages(browser, ctxOpts, css = null) {
+async function runPages(browser, ctxOpts, fault = null) {
   const ctx = await browser.newContext(ctxOpts);
   const rec = { fb: [], og: 0, ext: [], errors: [] };
   await stub(ctx, rec);
+  if (fault?.init) await ctx.addInitScript(fault.init);
   const page = await ctx.newPage(); watchRequests(page, rec);
   const bad = [];
   for (const rel of READING) {
     const res = await page.goto(BASE + rel);
-    if (css) await page.addStyleTag({ content: css });
-    const r = await page.evaluate(() => {
+    if (rel === 'admin/') await page.waitForTimeout(350);          // the console boots and paints its gate
+    if (fault?.css) await page.addStyleTag({ content: fault.css });
+    const r = await page.evaluate((rel) => {
+      const vis = (e) => { if (!e) return false; const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden'; };   // by geometry: a [hidden] forced to display shows
+      const out = { h1: document.querySelectorAll('h1').length, text: document.body.innerText };
+      if (rel === 'admin/') {
+        const signIns = [...document.querySelectorAll('button, a')].filter((e) => vis(e) && /sign in/i.test(e.textContent));
+        out.signIns = signIns.length; out.signOut = vis(document.getElementById('signout-btn'));
+        out.back = [...document.querySelectorAll('a')].some((a) => vis(a) && /^(\.\.\/|\/claude-routines\/?)$/.test(a.getAttribute('href') || '') && /front page/i.test(a.textContent));
+      }
+      if (rel === '404.html') out.toReview = [...document.querySelectorAll('a')].some((a) => vis(a) && /\/evaluator\/$/.test(a.getAttribute('href') || ''));
+      // the head's lines (kicker, date) and the title never overlap (a negative margin once pulled a
+      // body-owned title over the date line)
+      const headEls = ['.prose__kicker', '.prose__title', '.prose__meta', '.prose--own-h1 .prose__body > h1:first-child'].map((s) => document.querySelector(s)).filter(vis).map((e) => [e.className || e.tagName, e.getBoundingClientRect()]);
+      out.headOverlap = headEls.flatMap(([a, ra], i) => headEls.slice(i + 1).filter(([, rb]) => Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top) > 1 && Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left) > 1).map(([b]) => `${a} over ${b}`));
       document.querySelectorAll('details').forEach((d) => { d.open = true; });   // every prompt open
       // a heading carrying a long unbroken token (a URL, a file path) must wrap, not widen the page
       const long = ' https://example.org/' + 'a'.repeat(96);
-      for (const sel of ['.prose__title', '.prose__body > h1', '.prose__body > h2', '.prm-doc h1', '.prm-doc h2']) {
+      for (const sel of ['.prose__title', '.prose__body > h1', '.prose__body > h2', '.prm-doc h2', '.prm-doc h3', '.adm__title']) {
         const h = document.querySelector(sel); if (h) h.append(long);
       }
-      return { over: document.documentElement.scrollWidth - innerWidth, h1: document.querySelectorAll('h1').length };
-    });
+      out.over = document.documentElement.scrollWidth - innerWidth;
+      return out;
+    }, rel);
     if (!res.ok()) bad.push(`${rel} HTTP ${res.status()}`);
     if (r.over > 0) bad.push(`${rel} scrolls sideways by ${r.over}px`);
-    if (r.h1 < 1) bad.push(`${rel} has no h1`);
+    if (r.h1 !== 1) bad.push(`${rel} has ${r.h1} h1s`);
+    if (r.headOverlap.length) bad.push(`${rel}: ${r.headOverlap.join(', ')}`);
+    if (rel === 'admin/') {
+      if (r.signIns !== 1) bad.push(`admin signed out shows ${r.signIns} sign-in controls`);
+      if (r.signOut) bad.push('admin signed out shows Sign out');
+      if (!r.back) bad.push('admin has no visible link back to the front page');
+    }
+    if (rel === 'prompts/') { if (!/weekend/i.test(r.text)) bad.push('prompts page does not name the Weekend desk'); if (/deep read/i.test(r.text)) bad.push('prompts page still says "Deep Read"'); }
+    if (rel === '404.html' && REVIEWS.length && !r.toReview) bad.push('404 does not link to the latest review');
   }
   await ctx.close();
   if (rec.ext.length) bad.push(rec.ext.length + ' requests to other hosts');
-  if (rec.errors.length) bad.push(rec.errors.length + ' page errors');
-  return [bad.length === 0, bad.length ? bad.slice(0, 4).join('; ') : `${READING.length} pages (${REVIEWS.length} reviews, /prompts/ fully open, 404, /admin/), headings carrying a 116-char token: no sideways scroll, no other hosts`];
+  if (rec.errors.length) bad.push(rec.errors.length + ' page errors ' + rec.errors[0]);
+  return [bad.length === 0, bad.length ? bad.slice(0, 4).join('; ') : `${READING.length} pages (${REVIEWS.length} reviews, /prompts/ fully open naming Weekend, 404 linking the latest review, /admin/ signed out with one sign-in and a Front page link), one h1 each, headings carrying a 116-char token: no sideways scroll, no other hosts`];
+}
+
+// ------------------------------------------------------------------ the story feeds (C16)
+// /stories.xml and feeds/<desk>.xml (the desks are the routines): RSS 2.0 over the board, one item
+// per story in board order, the primary source as the link, the store id as the guid, the
+// description carrying the prose, the why, the desk's flags and every outlet with its label. The
+// homepage advertises each feed with a <link rel="alternate"> and links the story feed from the
+// masthead. `mutate` (fault injection) rewrites one served file's text.
+const FEEDS = [['stories.xml', null], ...Object.keys(CAP).sort().map((s) => [`feeds/${s}.xml`, s])];
+const FEED_FAULT_DESK = Object.keys(CAP).sort((a, b) => stories.filter((x) => x.stream === b).length - stories.filter((x) => x.stream === a).length)[0];
+const escHtml = (v) => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+async function runFeeds(browser, ctxOpts, mutate = null) {
+  const ctx = await browser.newContext(ctxOpts);
+  const rec = { fb: [], og: 0, ext: [], errors: [] };
+  await stub(ctx, rec);
+  if (mutate) await ctx.route((u) => u.origin === ORIGIN && mutate.path.test(u.pathname), async (route) => {
+    const res = await route.fetch();
+    await route.fulfill({ response: res, body: mutate.fn(await res.text()) });
+  });
+  const page = await ctx.newPage(); watchRequests(page, rec);
+  await page.goto(BASE);
+  const bad = []; let items = 0;
+  const head = await page.evaluate(() => [...document.querySelectorAll('head link[rel="alternate"][type="application/rss+xml"]')].map((l) => new URL(l.getAttribute('href'), location.href).pathname));
+  const mast = await page.evaluate(() => { const a = [...document.querySelectorAll('.mast a')].find((x) => /stories\.xml$/.test(x.getAttribute('href') || '')); const r = a && a.getBoundingClientRect(); return !!r && r.width > 0 && r.height > 0; });
+  if (!mast) bad.push('no visible masthead link to stories.xml');
+  for (const [rel, stream] of FEEDS) {
+    const want = stories.filter((x) => !stream || x.stream === stream);
+    if (!head.includes('/claude-routines/' + rel)) bad.push(`${rel}: no <link rel=alternate> in the head`);
+    const r = await page.evaluate(async (rel) => {
+      const res = await fetch(rel); if (!res.ok) return { status: res.status };
+      const text = await res.text();
+      const doc = new DOMParser().parseFromString(text, 'application/xml');
+      const err = doc.querySelector('parsererror'); if (err) return { error: err.textContent.replace(/\s+/g, ' ').slice(0, 120), first: text.slice(0, 40) };
+      const t = (el, sel) => { const x = el.querySelector(sel); return x ? x.textContent : null; };
+      const self = doc.getElementsByTagNameNS('http://www.w3.org/2005/Atom', 'link')[0];
+      return { first: text.slice(0, 38), title: t(doc, 'channel > title'), self: self ? self.getAttribute('href') : null, built: t(doc, 'channel > lastBuildDate'),
+        items: [...doc.querySelectorAll('channel > item')].map((it) => ({ title: t(it, 'title'), link: t(it, 'link'), guid: t(it, 'guid'), date: t(it, 'pubDate'),
+          cats: [...it.querySelectorAll('category')].map((c) => c.textContent), desc: t(it, 'description') || '' })) };
+    }, rel);
+    if (r.status) { bad.push(`${rel}: HTTP ${r.status}`); continue; }
+    if (r.error) { bad.push(`${rel}: not well-formed (${r.error}); starts "${r.first}"`); continue; }
+    if (!r.first.startsWith('<?xml version="1.0" encoding="UTF-8"?>')) bad.push(`${rel}: starts "${r.first}"`);
+    if (r.self !== 'https://khalic-lab.github.io/claude-routines/' + rel) bad.push(`${rel}: self link ${r.self}`);
+    if (!r.built || isNaN(Date.parse(r.built))) bad.push(`${rel}: lastBuildDate "${r.built}"`);
+    const got = r.items.map((i) => i.guid), exp = want.map(sidOf);
+    if (got.join() !== exp.join()) { bad.push(`${rel}: ${got.length} items vs ${exp.length} board stories${stream ? ' of ' + stream : ''}, or the order differs`); continue; }
+    items += got.length;
+    r.items.forEach((it, i) => {
+      const x = want[i], w = STORY_X[sidOf(x)], desc = it.desc.replace(/\s+/g, ' '), miss = [];
+      if (norm(it.title) !== w.headline) miss.push('title');
+      if ((it.link || '') !== w.url) miss.push('link');
+      if (isNaN(Date.parse(it.date || ''))) miss.push('pubDate');
+      if (!it.cats.includes(x.stream_label)) miss.push('desk category');
+      if (!desc.includes('<p>' + escHtml(w.summary).slice(0, 40))) miss.push('summary');
+      if (norm(x.why) && !desc.includes('<strong>Why it matters</strong> ' + escHtml(norm(x.why)).slice(0, 40))) miss.push('why');
+      for (const s of w.sources) if (!desc.includes(`<a href="${escHtml(s.url)}">${escHtml(s.label)}</a>`)) miss.push(`source ${s.label}`);
+      for (const f of w.flags) if (!desc.includes(escHtml(f))) miss.push(`flag ${f}`);
+      if (!w.flags.length && desc.includes('Flagged by the desk')) miss.push('a flag it does not have');
+      if (miss.length) bad.push(`${rel} item ${i + 1} (${it.guid}) lacks ${miss.slice(0, 3).join(', ')}`);
+    });
+  }
+  await ctx.close();
+  if (rec.ext.length) bad.push(rec.ext.length + ' requests to other hosts');
+  return [bad.length === 0 && items > 0, bad.length ? bad.slice(0, 4).join('; ') : `${FEEDS.length} feeds advertised in the head, ${items} items in board order with title, link, guid, date, desk, prose, why, flags and every source`];
 }
 
 // ------------------------------------------------------------------ sweeps
@@ -1555,7 +2143,6 @@ if (!ONLY || ONLY.includes('contract')) {
     for (const [k, [ok, d]] of Object.entries(A)) { tally('contract', ok); log(`${label.padEnd(24)} contract        ${ok ? 'PASS' : 'FAIL'} ${k}: ${d}`); }
   }
 }
-
 if (!ONLY || ONLY.includes('two-tab')) {
   for (const [label, b, opts] of [['chromium 1024', c, { viewport: { width: 1024, height: 900 } }], ['webkit iPhone15', wk, { ...devices['iPhone 15'] }]]) {
     const [ok, d] = await runTwoTabs(b, opts);
@@ -1568,6 +2155,12 @@ if (!ONLY || ONLY.includes('pages')) {
     tally('pages', ok); log(`${label.padEnd(24)} pages           ${ok ? 'PASS' : 'FAIL'} ${d}`);
   }
 }
+if (!ONLY || ONLY.includes('feeds')) {
+  for (const [label, b, opts] of [['chromium 1024', c, { viewport: { width: 1024, height: 900 } }], ['webkit iPhone15', wk, { ...devices['iPhone 15'] }]]) {
+    const [ok, d] = await runFeeds(b, opts);
+    tally('feeds', ok); log(`${label.padEnd(24)} feeds           ${ok ? 'PASS' : 'FAIL'} ${d}`);
+  }
+}
 
 log('\n== TOTALS per state (assertions passed / failed / skipped)');
 let P = 0, F = 0;
@@ -1576,105 +2169,155 @@ for (const [k, t] of Object.entries(totals)) { log(`${k.padEnd(15)} ${t.pass} pa
 log(`ALL            ${P} passed / ${F} failed / ${S} skipped (${P + F + S} assertions)`);
 
 // ------------------------------------------------------------------ fault injection
+// Each fault names the assertion it must fail. REVIEW.md's rule-to-test map (round 3) lists
+// which rule each pair serves.
 if (process.env.FAULTS !== '0') {
   log('\n== FAULT INJECTION (chromium 1440 unless noted): each deliberate break must fail its own assertion');
   const d3 = `#d-${dates[Math.min(2, dates.length - 1)]}`;
+  const dcl = (fn) => `document.addEventListener('DOMContentLoaded', ${fn.toString()})`;
   const FAULTS = [
     { key: 'overflow', state: 'default', css: 'main{min-width:1800px}' },
-    // pull the second day edition up into the first: two sibling zones overlap whatever the front
-    // holds (a margin on the 2nd front card overlapped nothing once a boot-open card took row 1)
+    // pull the second day edition up into the first: two sibling zones overlap whatever the front holds
     { key: 'overlap', state: 'default', css: `#d-${dates[Math.min(1, dates.length - 1)]}{margin-top:-160px}` },
     { key: 'containment', state: 'default', css: `${d3} .rows{translate:0 -300px}` },
     { key: 'order', state: 'default', css: `${d3} .rows{flex-direction:column-reverse}` },
     { key: 'periods', state: 'default', css: '.day__cov{display:none}' },
-    { key: 'gap', state: 'expanded', css: '.js .fcards--rest > .fc.is-open{flex-basis:30%!important}' },
-    { key: 'gapDesk', state: 'expanded', css: '.js .front__top:has(.is-open) > .desk{flex-basis:clamp(240px,27%,340px)!important}.js .front__top:has(.is-open) > .fcards--top{flex-basis:60%!important}' },
+    { key: 'periods', state: 'default', init: dcl(() => { const t = document.querySelector('.day__cov .ptag time'); t.textContent = t.textContent.replace(/^\d+/, '1'); }) },
+    // the round-2 defect: an open rest card beside folded ones, which stretch to its height
+    { key: 'gap', state: 'expanded', css: '.fcards--rest{align-items:stretch!important}.js .fcards--rest > .fc:not(.is-folded){flex-basis:30%!important}' },
+    { key: 'fullRow', state: 'expanded', css: '.js .fcards--rest > .fc:not(.is-folded){flex-basis:30%!important}' },
+    // the Desk's view (or the lead) stretched to the other cell's height (F10)
+    { key: 'gapDesk', state: 'expanded', css: '.front__grid{align-items:stretch!important}' },
+    { key: 'gapLead', state: 'expanded', css: '.front__grid{align-items:stretch!important}' },
     { key: 'hlSize', state: 'expanded', css: '.js .fcards--rest .fc.is-open .hl{font-size:48px!important}' },
     { key: 'fold', state: 'expanded', css: '.js .is-open .fold{display:none!important}' },
+    { key: 'openCard', state: 'expanded', css: '.js .fc:not(.is-folded) > article{display:flex!important}' },
     { key: 'counts', state: 'beat', css: '[data-story][hidden]{display:flex!important}' },
     { key: 'beatEd', state: 'beat', css: `#${BEAT_ED ? sidOf(BEAT_ED) : 'x'}{display:none!important}` },
+    { key: 'beatMark', state: 'beat', css: '.chip[aria-pressed="true"]::before{content:none!important}' },
     { key: 'emptyFirst', state: 'empty', css: '#empty{display:none!important}' },
     { key: 'overflow', state: 'default', css: '.day__cov{white-space:nowrap}.day__cov::after{content:"";display:inline-block;inline-size:600px}', w: 360 },
-    // from 1024px the right-hand track bounds the row too, so the break also spans it full width
-    { key: 'measure', state: 'default', css: '.row__in{grid-template-rows:none!important;grid-template-areas:"g head head" "g body body" "g why why" "g foot foot"!important}.row__body{columns:auto!important}.row .why,.row .sum{max-inline-size:none!important}' },
-    { key: 'measure', state: 'default', css: '.row__body{columns:auto!important}.row .why,.row .sum{max-inline-size:none!important}', w: 768 },
+    // the measure: a row's body let run across both tracks (1440), or past its measure (768)
+    { key: 'measure', state: 'default', css: '.row__in{grid-template-columns:14px minmax(0,1fr)!important;grid-template-areas:"g head" "g body" "g why" "g foot"!important}.row .why,.row .sum{max-inline-size:none!important}' },
+    { key: 'measure', state: 'default', css: '.row .why,.row .sum{max-inline-size:none!important}', w: 768 },
+    { key: 'rowBeside', state: 'default', css: '.js .row:not(.is-folded) > .row__in{grid-template-columns:14px minmax(0,1fr)!important;grid-template-areas:"g head" "g body" "g why" "g foot"!important}' },
     { key: 'frontMeasure', state: 'default', css: '.why,.sum,.ed__body,.fold,.fc__text{max-inline-size:none!important}' },
     { key: 'whyAfterBody', state: 'default', css: '.fc__text{display:flex;flex-direction:column-reverse}' },
     { key: 'focus', state: 'default', css: '.seg{overflow:hidden}' },
-    { key: 'focus', state: 'default', css: '.bar .beats:has(:focus-visible){mask-image:linear-gradient(90deg,#000 88%,transparent)}', w: 768 },
+    { key: 'focus', state: 'default', css: '.bar__strip:has(:focus-visible){mask-image:linear-gradient(90deg,#000 88%,transparent)}', w: 768 },
+    { key: 'focus', state: 'default', init: dcl(() => document.querySelectorAll('.bar button, .mast a, .mast summary').forEach((e) => e.setAttribute('tabindex', '-1'))) },
     { key: 'focusMain', state: 'default', css: 'html{scroll-padding-block-end:0!important}', w: 390 },
     { key: 'links', state: 'unread-edition', css: 'main a.jump[hidden],.day__links[hidden]{display:inline-flex!important}' },
     { key: 'dayMeta', state: 'beat', css: '.day__cov .ptag[hidden]{display:inline-flex!important}' },
     { key: 'disc', state: 'unread-edition', css: '.is-read .ed__disc{opacity:.58}' },
     { key: 'readContrast', state: 'unread-edition', css: '.is-read .why{opacity:.58}' },
     { key: 'multiBeat', state: 'multi-beat', css: 'section.day .row[hidden]{display:block!important}' },
-    { key: 'headings', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => document.querySelector('.day__h').insertAdjacentHTML('afterend', '<h1>extra</h1>')) },
-    { key: 'external', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const i = new Image(); i.src = 'https://cdn.jsdelivr.net/npm/x.png'; }) },
+    { key: 'headings', state: 'default', init: dcl(() => document.querySelector('.day__h').insertAdjacentHTML('afterend', '<h1>extra</h1>')) },
+    { key: 'external', state: 'default', init: dcl(() => { const i = new Image(); i.src = 'https://cdn.jsdelivr.net/npm/x.png'; }) },
     { key: 'fresh', state: 'stale', css: '.notice{display:none!important}' },
-    // review 2026-09-25: each strengthened gate must fail on the defect it now guards
-    { key: 'photoBeside', state: 'expanded', css: '.js .fcards--rest > .fc > article{display:flex!important}' },
-    { key: 'edRead', state: 'unread-edition', js: { file: 'board.js', from: 'return mine.length > 0 && mine.every(', to: 'return mine.length > 0 && mine.some(' } },
+    { key: 'edRead', state: 'unread-edition', js: { file: 'read.js', from: 'return mine.length > 0 && mine.every(', to: 'return mine.length > 0 && mine.some(' } },
     { key: 'og', state: 'default', js: { file: 'og.js', from: "img.referrerPolicy = 'no-referrer';", to: '' } },
     { key: 'og', state: 'default', js: { file: 'og.js', from: 'if (!src) { slot.hidden = true; return; }', to: 'if (!src) return;' } },
+    { key: 'og', state: 'default', css: '.fc > article{display:flex;flex-direction:column}.fc > article > .photo{order:-1}' },
     { key: 'freshSame', state: 'default', js: { file: 'fresh.js', from: 'j.build_stamp && j.build_stamp !== stamp', to: 'j.build_stamp' } },
     { key: 'freshBg', state: 'stale-bg', js: { file: 'fresh.js', from: "let hiddenAt = document.visibilityState === 'hidden' ? Date.now() : 0;", to: 'let hiddenAt = 0;' } },
-    { key: 'periods', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const t = document.querySelector('.day__cov .ptag time'); t.textContent = t.textContent.replace(/^\d+/, '1'); }) },
-    { key: 'focus', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('.bar button, .mast a, .mast summary').forEach((e) => e.setAttribute('tabindex', '-1'))) },
-    // round 2 (2026-09-25): the Unread refill and the event label
-    { key: 'refill', state: 'front-read', js: { file: 'refill.js', from: 'if (el && !isRead(el) && beatOk(el, active)) out.push(el);', to: 'if (el && beatOk(el, active)) out.push(el);' } },
-    { key: 'refillPtrs', state: 'front-read', js: { file: 'board.js', from: 'p.hidden = !t || !t.isConnected || t.hidden;', to: "p.hidden = p.hasAttribute('data-reserve-ptr') || !t || !t.isConnected || t.hidden;" } },
+    // the Unread refill (C10) and the event label
+    { key: 'refill', state: 'front-read', js: { file: 'front.js', from: 'if (el && !isRead(el) && beatOk(el, active)) out.push(el);', to: 'if (el && beatOk(el, active)) out.push(el);' } },
+    // C9: a promoted story's day row left shown
+    { key: 'refillRows', state: 'front-read', js: { file: 'front.js', from: 'if (row) row.hidden = true;', to: 'if (false) row.hidden = true;' } },
     { key: 'counts', state: 'front-read', js: { file: 'board.js', from: "export const items = main ? [...main.querySelectorAll('[data-story]')] : [];",
       to: "export const items = main ? [...main.querySelectorAll('[data-story]'), ...[...main.querySelectorAll('template')].flatMap((t) => [...t.content.querySelectorAll('[data-story]')])] : [];" } },
-    { key: 'refillLead', state: 'front-read', js: { file: 'refill.js', from: "const lead = out.find((el) => el.dataset.imp === '3') || out[0];", to: 'const lead = out[0];' } },
-    { key: 'eventLabel', state: 'default', css: '', init: `document.addEventListener('DOMContentLoaded', () => {
+    { key: 'refillLead', state: 'front-read', js: { file: 'front.js', from: "const lead = out.find((el) => el.dataset.imp === '3') || out[0];", to: 'const lead = out[0];' } },
+    { key: 'eventLabel', state: 'default', init: `document.addEventListener('DOMContentLoaded', () => {
       const el = document.querySelector('main [data-story="${sidOf(IN_PERIOD)}"]'), old = el.querySelector('.evt'); if (old) old.remove();
-      el.querySelector('.row__meta, .fc__top').insertAdjacentHTML('beforeend', '<span class="evt"><time datetime="${IN_PERIOD.event_date >= PSTART[sidOf(IN_PERIOD)] ? IN_PERIOD.event_date : IN_PERIOD.date}">Happened</time></span>'); })` },
-    // round 3 (review 2026-09-25): focus through a recompose, the desk-only line, the day link
-    ...['refillFocusSame', 'refillFocusAround', 'refillFocusTyping'].map((key) => ({ key, state: 'front-read',
-      js: { file: 'refill.js', from: 'function reconcile(box, want) {\n  if (!box) return;', to: 'function reconcile(box, want) {\n  if (box) box.replaceChildren(...want);\n  return;' } })),
-    { key: 'refillFocusAll', state: 'front-read', js: { file: 'refill.js', from: 'function reconcile(box, want) {\n  if (!box) return;', to: 'function reconcile(box, want) {\n  if (box) box.replaceChildren(...want);\n  return;' } },
-    { key: 'refillFocusMove', state: 'front-read', js: { file: 'board.js', from: "if (had && had !== document.body && document.activeElement !== had && had.isConnected && !had.closest('[hidden]')) {", to: 'if (false) {' } },
+      el.querySelector('.kick').insertAdjacentHTML('beforeend', '<span class="evt"><time datetime="${IN_PERIOD.event_date >= PSTART[sidOf(IN_PERIOD)] ? IN_PERIOD.event_date : IN_PERIOD.date}">Happened</time></span>'); })` },
+    { key: 'eventLabelShown', state: 'default', init: dcl(() => { const e = document.querySelector('main .evt'); if (e) e.remove(); }) },
+    // focus through a recompose (C14), the desk-only line, the day link
+    ...['refillFocusSame', 'refillFocusAround', 'refillFocusTyping', 'refillFocusAll'].map((key) => ({ key, state: 'front-read',
+      js: { file: 'front.js', from: 'function reconcile(box, want) {\n  if (!box) return;', to: 'function reconcile(box, want) {\n  if (box) box.replaceChildren(...want);\n  return;' } })),
+    { key: 'refillFocusMove', state: 'front-read', js: { file: 'board.js', from: 'if (had && had !== document.body && document.activeElement !== had && visible(had)) {', to: 'if (false) {' } },
     { key: 'frontLineDesk', state: 'front-read', js: { file: 'board.js', from: 'frontN.hidden = !cards.length && (!!rs || active.size > 0);', to: 'frontN.hidden = false;' } },
-    { key: 'refillBeat', state: 'front-read', js: { file: 'refill.js', from: 'if (el && !isRead(el) && beatOk(el, active)) out.push(el);', to: 'if (el && !isRead(el)) out.push(el);' } },
-    { key: 'refillDayLink', state: 'front-read', js: { file: 'refill.js', from: 'pointDayLinks(ed.dataset.story);', to: 'pointDayLinks(deskDefault.dataset.story);' } },
-    { key: 'eventLabelShown', state: 'default', css: '', init: () => document.addEventListener('DOMContentLoaded', () => { const e = document.querySelector('main .evt'); if (e) e.remove(); }) },
-    // round 4 (owner decision 2026-09-25): All's front is composed at load; within a session reading only dims
-    { key: 'allLoad', state: 'front-read', js: { file: 'refill.js', from: 'if (!cards.length) return { cards: defaults, desk: deskPick(new Set()) };', to: 'return { cards: defaults, desk: deskDefault };' } },
+    { key: 'refillBeat', state: 'front-read', js: { file: 'front.js', from: 'if (el && !isRead(el) && beatOk(el, active)) out.push(el);', to: 'if (el && !isRead(el)) out.push(el);' } },
+    { key: 'refillDayLink', state: 'front-read', js: { file: 'front.js', from: 'pointDayLinks(ed.dataset.story);', to: 'pointDayLinks(deskDefault.dataset.story);' } },
+    { key: 'copiesShown', state: 'front-read', css: '.fcards .fc .line .readbtn{display:none!important}' },
+    { key: 'refillEmpty', state: 'front-read', js: { file: 'board.js', from: 'if (upEl) { upEl.hidden = !up;', to: 'if (upEl) { upEl.hidden = false;' } },
+    // All's front is composed at load (C7); within a session reading only dims (C6)
+    { key: 'allLoad', state: 'front-read', js: { file: 'front.js', from: 'if (!cards.length) return { cards: defaults, desk: deskPick(new Set()) };', to: 'return { cards: defaults, desk: deskDefault };' } },
     { key: 'allTickDims', state: 'front-read', js: [
-      { file: 'refill.js', from: "mode === 'all' ? all.cards : defaults", to: "mode === 'all' ? pick(new Set()) : defaults" },
+      { file: 'front.js', from: "mode === 'all' ? all.cards : defaults", to: "mode === 'all' ? pick(new Set()) : defaults" },
       { file: 'board.js', from: '        if (rs) {\n          apply();', to: '        if (true) {\n          apply();' }] },
-    { key: 'allAllRead', state: 'all-read', js: { file: 'refill.js', from: 'if (!cards.length) return { cards: defaults, desk: deskPick(new Set()) };', to: 'if (!cards.length) return { cards, desk: deskPick(new Set()) };' } },
-    { key: 'allReadView', state: 'front-read', js: { file: 'refill.js', from: "const cards = mode === 'unread' ? pick(active) : mode === 'all' ? all.cards : defaults;", to: "const cards = mode === 'unread' ? pick(active) : all.cards;" } },
-    { key: 'refillAll', state: 'front-read', js: { file: 'refill.js', from: "mode === 'all' ? all.cards : defaults", to: "mode === 'all' ? pick(new Set()) : defaults" } },
-    { key: 'allOnce', state: 'front-read', js: { file: 'refill.js', from: '} else if (ptr.nextElementSibling !== row) ptr.after(row);', to: '}' } },
-    { key: 'allSyncOnce', state: 'all-sync', js: { file: 'board.js', from: '      const gone = refill.retake();\n      anchored(topItem(rs ? undefined : gone), () => { paint(); apply(); });', to: '      anchored(topItem(), () => { paint(); apply(); });' } },
+    { key: 'allAllRead', state: 'all-read', js: { file: 'front.js', from: 'if (!cards.length) return { cards: defaults, desk: deskPick(new Set()) };', to: 'if (!cards.length) return { cards, desk: deskPick(new Set()) };' } },
+    { key: 'allReadView', state: 'front-read', js: { file: 'front.js', from: "const cards = mode === 'unread' ? pick(active) : mode === 'all' ? all.cards : defaults;", to: "const cards = mode === 'unread' ? pick(active) : all.cards;" } },
+    { key: 'refillAll', state: 'front-read', js: { file: 'front.js', from: "mode === 'all' ? all.cards : defaults", to: "mode === 'all' ? pick(new Set()) : defaults" } },
+    // C9: a builder-front story All leaves off never gets its row back
+    { key: 'allOnce', state: 'front-read', js: { file: 'front.js', from: '} else if (t.nextElementSibling !== row) t.after(row);', to: '}' } },
+    { key: 'allOnce', state: 'all-partial', js: { file: 'front.js', from: '} else if (t.nextElementSibling !== row) t.after(row);', to: '}' } },
+    // the roamed read set (C8)
+    { key: 'allSyncOnce', state: 'all-sync', js: { file: 'board.js', from: '      const gone = front.retake();\n      anchored(topItem(rs ? undefined : gone), () => { paint(); apply(); });', to: '      anchored(topItem(), () => { paint(); apply(); });' } },
     { key: 'allSyncOnlyOnce', state: 'all-sync', js: { file: 'board.js', from: 'if (!first || touched) { remoteRead(); return; }', to: 'if (touched) { remoteRead(); return; }' } },
     { key: 'allSyncTouched', state: 'all-sync', js: { file: 'board.js', from: 'if (!first || touched) { remoteRead(); return; }', to: 'if (!first) { remoteRead(); return; }' } },
-    // round 4 review: the guard is the whole page, a script scroll counts, the anchor stays, a #fragment counts
     ...['allSyncRowClick', 'allSyncRowFocus'].map((key) => ({ key, state: 'all-sync', js: { file: 'board.js',
       from: 'for (const t of TOUCH) document.addEventListener(t, touch, { capture: true, passive: true });',
       to: "for (const t of TOUCH) main.querySelector('section.front').addEventListener(t, touch, { capture: true, passive: true });" } })),
+    { key: 'allSyncOwnScroll', state: 'all-sync', js: { file: 'anchor.js', from: 'own += scrollY - y;', to: '0;' } },
+    { key: 'foldStill', state: 'expanded', js: { file: 'fold.js', from: 'anchored(item, () => setOpen', to: 'anchored(btn, () => setOpen' } },
+    { key: 'foldStill', state: 'expanded', js: { file: 'fold.js', from: 'if (top < floor) scrollOwn(top - floor);', to: '' } },
     { key: 'allSyncScroll', state: 'all-sync', js: { file: 'board.js', edits: [
       ["addEventListener('scroll', onScroll, { passive: true });", ''],
       ['if (first && !touched) onScroll();', '']] } },
     { key: 'allSyncAnchor', state: 'all-sync', js: { file: 'board.js', from: 'anchored(topItem(rs ? undefined : gone), ', to: 'anchored(topItem(), ' } },
-    // round 5: a partly-read All front is filled with read stories after the unread ones
-    { key: 'allPartial', state: 'all-partial', js: { file: 'refill.js', from: 'if (el && isRead(el) && !cards.includes(el)) cards.push(el);', to: '' } },
-    { key: 'allPartialLead', state: 'all-partial', js: { file: 'refill.js', from: 'if (el && isRead(el) && !cards.includes(el)) cards.push(el);', to: 'if (el && isRead(el) && !cards.includes(el)) cards.unshift(el);' } },
-    { key: 'allPartialRoam', state: 'all-sync', js: { file: 'refill.js', from: 'function retake() { const next = take(),', to: 'function retake() { const next = { cards: pick(new Set()), desk: deskPick(new Set()) },' } },
+    { key: 'allPartial', state: 'all-partial', js: { file: 'front.js', from: 'if (el && isRead(el) && !cards.includes(el)) cards.push(el);', to: '' } },
+    { key: 'allPartialLead', state: 'all-partial', js: { file: 'front.js', from: 'if (el && isRead(el) && !cards.includes(el)) cards.push(el);', to: 'if (el && isRead(el) && !cards.includes(el)) cards.unshift(el);' } },
+    { key: 'allPartialRoam', state: 'all-sync', js: { file: 'front.js', from: 'function retake() { const next = take(),', to: 'function retake() { const next = { cards: pick(new Set()), desk: deskPick(new Set()) },' } },
     { key: 'allSyncHash', state: 'all-sync', js: { file: 'board.js', from: 'let roamedOnce = false, touched = !!location.hash, mark = null;', to: 'let roamedOnce = false, touched = false, mark = null;' } },
-    { key: 'deskDate', state: 'front-read', css: '.ed--desk .ed__top .fday{display:none}' },
+    { key: 'deskDate', state: 'front-read', css: '.ed--desk .kick .fday{display:none}' },
+    { key: 'deskDate', state: 'default', css: '.ed--desk .kick .fday{display:none}' },
+    // every outlet listed, the desk's flags, Discuss built from the page (C16)
+    { key: 'sources', state: 'default', css: '.srcs{display:none!important}' },
+    { key: 'sources', state: 'default', init: dcl(() => { const li = document.querySelector('main .srcs li'); if (li) li.remove(); }) },
+    { key: 'flags', state: 'default', init: dcl(() => document.querySelector('main .row .kick').insertAdjacentHTML('afterbegin', '<span class="flag flag--disputed">Disputed</span>')) },
+    { key: 'discuss', state: 'default', js: { file: 'discuss.js', from: "if (srcs.length) { lines.push('Sources:'); for (const s of srcs) lines.push('- ' + s.label + ': ' + s.url); }", to: '' } },
+    { key: 'discuss', state: 'default', js: { file: 'discuss.js', from: "a.href = u.origin + u.pathname + '?q=' + encodeURIComponent(prompt);", to: "a.href = u.origin + u.pathname + '?q=' + encodeURIComponent(prompt).replace(/%20/g, '+');" } },
+    { key: 'discussRead', state: 'default', js: { file: 'board.js', from: "const a = e.target.closest('.hl a, a.discuss');\n      if (a) readOn(a);\n    });\n    main.addEventListener('auxclick'",
+      to: "const a = e.target.closest('.hl a');\n      if (a) readOn(a);\n    });\n    main.addEventListener('auxclick'" } },
+    { key: 'discussPlace', state: 'default', init: dcl(() => { const t = document.querySelector('main .row .talk'); t.closest('.row__in').querySelector('.row__head').append(t); }) },
+    { key: 'refillDiscuss', state: 'front-read', js: { file: 'main.js', from: 'adopt: (el) => { watchSlots(el); prepare(el); }', to: 'adopt: (el) => { watchSlots(el); }' } },
+    // round 3: the folded anatomy, the tier glyphs, the type floor, tap targets, red's three
+    // uses, no cropping, one kicker, the key, How this works, the chrome at each width, the
+    // phone sheets, the day jump, no pointer rows
+    { key: 'bootFolded', state: 'default', init: dcl(() => { const c = document.querySelector('main .fc'); c.classList.remove('is-folded'); c.classList.add('is-open'); }) },
+    { key: 'anatomy', state: 'default', init: dcl(() => document.querySelector('main .ed .kick').insertAdjacentHTML('afterbegin', '<span class="tier" data-imp="3"><i class="tg tg--lead" aria-hidden="true"></i></span>')) },
+    { key: 'anatomy', state: 'default', css: '.js .is-folded .fold{display:block!important}' },
+    { key: 'glyphs', state: 'default', init: dcl(() => { const g = document.querySelector('main [data-imp="2"] .tg, main [data-imp="1"] .tg'); g.className = 'tg tg--lead'; }) },
+    { key: 'labelFloor', state: 'default', css: '.kick{font-size:10px}' },
+    { key: 'labelFloor', state: 'default', css: 'html{font-size:14px}', w: 390 },
+    { key: 'tapTargets', state: 'default', css: '.readbtn,.vote{inline-size:28px!important;block-size:28px!important}', w: 390 },
+    { key: 'tapTargets', state: 'default', css: '.more{min-block-size:24px!important}' },
+    { key: 'redUses', state: 'default', css: '.day__h{color:var(--red)}' },
+    { key: 'noCrop', state: 'default', css: '.why{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}' },
+    { key: 'noCrop', state: 'default', css: '.hl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}', w: 390 },
+    { key: 'kicker', state: 'default', init: dcl(() => { const t = document.querySelector('.front .fc .kick .fday.vh'); if (t) t.classList.remove('vh'); else document.querySelector('main .row .row__head').insertAdjacentHTML('beforeend', '<p class="kick">extra</p>'); }) },
+    { key: 'keyClosed', state: 'default', init: dcl(() => { document.querySelector('.mast__key').open = true; }) },
+    { key: 'hiwOrder', state: 'default', init: dcl(() => { const m = document.querySelector('.hiw-sec:has(.hiw-map)'), p = document.querySelector('.hiw-sec:has(#hiw-page)'); p.before(m); }) },
+    { key: 'chrome', state: 'default', css: '.bar{position:static!important}', w: 390 },
+    { key: 'chrome', state: 'default', css: '.barbtn[data-dialog="days"]{display:inline-flex!important}', w: 1024 },
+    { key: 'chrome', state: 'default', css: '.mast__links{order:-1}' },
+    { key: 'sheets', state: 'default', js: { file: 'dialogs.js', from: 'if (!d.open) d.showModal();', to: '' }, w: 390 },
+    { key: 'sheets', state: 'default', js: { file: 'dialogs.js', from: "if (e.target.closest('.daylist a')) d.close();", to: '' }, w: 390 },
+    { key: 'dayJump', state: 'default', css: '.mast__days{display:none}', w: 1024 },
+    { key: 'frontRows', state: 'default', init: dcl(() => { const t = document.querySelector('template[data-front-row]'); t.replaceWith(t.content.cloneNode(true)); }) },
   ];
   // a fault whose gate is a SKIP on this data proves nothing either way: it is counted apart, not
   // MISSED (that would turn a SKIP back into a failure on valid data); an absent gate is MISSED
   let caught = 0, skipped = 0;
   const base = await runCase(c, { viewport: { width: 1440, height: 900 } }, 'default');
-  for (const f of FAULTS) {
+  const PICK = process.env.FAULT ? process.env.FAULT.split(',') : null;   // FAULT=key,key runs a few faults alone
+  for (const f of FAULTS.filter((f) => !PICK || PICK.includes(f.key))) {
     const A = await runCase(c, { viewport: { width: f.w || 1440, height: 900 } }, f.state, f);
     const flipped = !!A[f.key] && A[f.key][0] === false, skip = !!A[f.key] && A[f.key][0] === null;
     if (flipped) caught++;
     if (skip) skipped++;
-    log(`${flipped ? 'CAUGHT' : skip ? 'SKIPPED' : 'MISSED'}  ${f.key.padEnd(12)} ${f.state.padEnd(14)} ${(f.w || 1440) + 'px'}  ${f.css || (f.js ? [].concat(f.js).map((j) => `${j.file}: ${(j.edits || [[j.from, j.to]]).map(([a, b]) => `${a} -> ${b || '(removed)'}`).join(' + ')}`).join(' + ').replace(/\n\s*/g, ' ') : '(script)')}  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
+    log(`${flipped ? 'CAUGHT' : skip ? 'SKIPPED' : 'MISSED'}  ${f.key.padEnd(16)} ${f.state.padEnd(14)} ${(f.w || 1440) + 'px'}  ${f.css || (f.js ? [].concat(f.js).map((j) => `${j.file}: ${(j.edits || [[j.from, j.to]]).map(([a, b]) => `${a} -> ${b || '(removed)'}`).join(' + ')}`).join(' + ').replace(/\n\s*/g, ' ') : '(script)')}  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
   }
   // contract faults: the /prefs body grows a field; homeRead:v1 gets a non-number value
   const CF = [
@@ -1685,21 +2328,50 @@ if (process.env.FAULTS !== '0') {
     const A = await runContract(c, { viewport: { width: 1024, height: 900 } }, f);
     const flipped = !!A[f.key] && A[f.key][0] === false;
     if (flipped) caught++;
-    log(`${flipped ? 'CAUGHT' : 'MISSED'}  ${f.key.padEnd(12)} contract       (script)  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
+    log(`${flipped ? 'CAUGHT' : 'MISSED'}  ${f.key.padEnd(16)} contract       (script)  ->  ${A[f.key] ? A[f.key][1] : 'n/a'}`);
   }
-  const PF = ['.prose pre{overflow-x:visible!important;max-inline-size:none!important}',
-    '.prose__title,.prose__body > :is(h1,h2),.prm-doc :is(h1,h2){overflow-wrap:normal!important}'];
-  for (const css of PF) {
-    const [ok, d] = await runPages(c, { viewport: { width: 360, height: 800 } }, css);
+  // the reading pages: a code block let widen the page, headings that no longer wrap, the admin
+  // showing Sign out while signed out, a second h1 on a review
+  const PF = [
+    ['a body-owned review title pulled over its date line', { css: '.prose--own-h1 .prose__body > h1:first-child{margin-block-start:-1.2em!important}' }],
+    ['.prose pre{overflow-x:visible!important;max-inline-size:none!important}', { css: '.prose pre{overflow-x:visible!important;max-inline-size:none!important}' }],
+    ['headings without overflow-wrap', { css: '.prose__title,.prose__body > :is(h1,h2),.prm-doc :is(h2,h3),.adm__title{overflow-wrap:normal!important}' }],
+    ['admin: Sign out shown while signed out', { css: '#signout-btn[hidden]{display:inline-flex!important}' }],
+    ['a second h1 on a reading page', { init: dcl(() => { const b = document.querySelector('.prose__body'); if (b) b.insertAdjacentHTML('afterbegin', '<h1>extra</h1>'); }) }],
+  ];
+  for (const [what, f] of PF) {
+    const [ok, d] = await runPages(c, { viewport: { width: 360, height: 800 } }, f);
     if (!ok) caught++;
-    log(`${!ok ? 'CAUGHT' : 'MISSED'}  pages        reading        360px  ${css}  ->  ${d}`);
+    log(`${!ok ? 'CAUGHT' : 'MISSED'}  pages            reading        360px  ${what}  ->  ${d}`);
   }
   {
-    const [ok, d] = await runTwoTabs(c, { viewport: { width: 1024, height: 900 } }, { js: { file: 'store.js', from: "addEventListener('storage',", to: "((t, f) => {})('storage'," } });
+    const [ok, d] = await runTwoTabs(c, { viewport: { width: 1024, height: 900 } }, { js: { file: 'state.js', from: "addEventListener('storage',", to: "((t, f) => {})('storage'," } });
     if (!ok) caught++;
-    log(`${!ok ? 'CAUGHT' : 'MISSED'}  two-tab      store.js       1024px  (no storage listener)  ->  ${d}`);
+    log(`${!ok ? 'CAUGHT' : 'MISSED'}  two-tab          state.js       1024px  (no storage listener)  ->  ${d}`);
   }
-  const total = FAULTS.length + CF.length + PF.length + 1 - skipped;
+  // the feeds, served rewritten: an item dropped, two swapped, a source link gone, the head's advertisement gone
+  const FF = [
+    ['stories.xml without its last item', { path: /\/stories\.xml$/, fn: (t) => t.replace(/<item>(?:(?!<item>)[\s\S])*<\/item>\s*(?=<\/channel>)/, '') }],
+    [`feeds/${FEED_FAULT_DESK}.xml with its first two items swapped`, { path: new RegExp(`/feeds/${FEED_FAULT_DESK}\\.xml$`), fn: (t) => t.replace(/(<item>[\s\S]*?<\/item>)(\s*)(<item>[\s\S]*?<\/item>)/, '$3$2$1') }],
+    ['stories.xml with one source link removed', { path: /\/stories\.xml$/, fn: (t) => t.replace(/&lt;a href=&quot;.*?&quot;&gt;.*?&lt;\/a&gt;(, )?/, '') }],
+    ['the homepage without its stories.xml alternate link', { path: /\/claude-routines\/(index\.html)?$/, fn: (t) => t.replace(/<link rel="alternate"[^>]*stories\.xml[^>]*>/, '') }],
+  ];
+  for (const [what, m] of FF) {
+    const [ok, d] = await runFeeds(c, { viewport: { width: 1024, height: 900 } }, m);
+    if (!ok) caught++;
+    log(`${!ok ? 'CAUGHT' : 'MISSED'}  feeds            rss            1024px  ${what}  ->  ${d}`);
+  }
+  // no-JS (C5): the fold hidden without the script gate; a script-only control shown without it
+  const NF = [
+    ['state.css: the fold hidden without the .js gate', { file: 'state.css', from: '.js .is-folded .fold { display: none; }', to: '.is-folded .fold { display: none; }' }],
+    ['state.css: .needs-js shown without script', { file: 'state.css', from: 'html:not(.js) .needs-js { display: none; }', to: '' }],
+  ];
+  for (const [what, css] of NF) {
+    const [ok, d] = await runNoJs(c, { viewport: { width: 1024, height: 900 } }, { css });
+    if (!ok) caught++;
+    log(`${!ok ? 'CAUGHT' : 'MISSED'}  no-js            no-js          1024px  ${what}  ->  ${d}`);
+  }
+  const total = FAULTS.length + CF.length + PF.length + FF.length + NF.length + 1 - skipped;
   const clean = Object.values(base).every(([ok]) => ok !== false);
   log(`fault self-test: ${caught}/${total} faults caught${skipped ? ` (${skipped} more skipped: their gate had no scenario on this data)` : ''} (baseline default@1440 ${clean ? 'clean' : 'NOT clean'})`);
   if (caught !== total || !clean) fails++;
@@ -1721,12 +2393,11 @@ if (process.env.SHOTS !== '0') {
     ['admin-1024', c, { viewport: { width: 1024, height: 900 } }, 'admin/'],
     ['404-390', c, { viewport: { width: 390, height: 844 } }, '404.html'],
   ];
-  // round 2: the refilled front under Unread (the default front and its Desk's view read), and a
-  // "Happened" label at the narrowest width, on a front card when the refill holds one
+  // the refilled front under Unread (the default front and its Desk's view read), a "Happened"
+  // label at the narrowest width, and All at load with an older editorial promoted
   const extra = [['front-read-unread-1440', c, { viewport: { width: 1440, height: 900 } }, 'front-read'],
     ['front-read-unread-iphone15', wk, { ...devices['iPhone 15'] }, 'front-read'],
     ['event-label-360', c, { viewport: { width: 360, height: 800 } }, 'event'],
-    // All at load with the default front read: an older editorial promoted to the Desk's view
     ['desk-promoted-390', c, { viewport: { width: 390, height: 844 } }, 'desk'],
     ['desk-promoted-1280', c, { viewport: { width: 1280, height: 900 } }, 'desk']];
   for (const [name, b, opts, kind] of extra) {

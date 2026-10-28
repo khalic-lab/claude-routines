@@ -1,24 +1,28 @@
 /* Layout layer: the homepage's zones. Every zone is in normal flow and reserves its own space, so
-   no two zones can overlap; DOM order is visual order for all content (no grid-auto-flow:dense, no
-   order: on content). The one use of `order` is CHROME ONLY: on phones the control bar rests
-   after <main>, in the thumb zone (R13), and test_frontend_static.py allows it on exactly
-   .bar / .notice / main / .foot. */
+   no two can overlap; DOM order is visual order for all content (no grid-auto-flow: dense, no
+   `order` on content, C3). The one use of `order` is CHROME ONLY: on phones the control bar rests
+   after <main>, in the thumb zone (R13); test_frontend_static.py allows it on exactly
+   .bar / .notice / main / .foot.
+   Widths: < 700 phones (one column, the bar at the bottom); 700–1023 (one-line masthead, the bar
+   at the top with the beat strip); 1024–1279 (the same, rows in two tracks); ≥ 1280 (a 232px
+   sticky rail holds every control, no bar). */
 @layer layout {
-  /* focus and in-page jumps land clear of the sticky bar: bottom edge on phones (two-row bar plus
-     the safe area), top edge from 700px */
-  html { scroll-padding-block-end: calc(6.5rem + env(safe-area-inset-bottom)); }
-  @media (min-width: 700px) { html { scroll-padding-block: 4.5rem 0; } }
+  /* in-page jumps and focus land clear of the sticky bar: the bottom edge on phones, the top
+     edge from 700px; the rail pins nothing over the sheet */
+  html { scroll-padding-block-end: calc(60px + env(safe-area-inset-bottom)); }
+  @media (min-width: 700px) { html { scroll-padding-block: 64px 0; } }
+  @media (min-width: 1280px) { html { scroll-padding-block: 16px 0; } }
 
   /* ---- shell */
   .page {
     display: flex; flex-direction: column; min-block-size: 100dvh;
     padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
-    max-inline-size: 1600px; margin-inline: auto;   /* the sheet: past 1600px the page stops growing */
+    max-inline-size: 1600px; margin-inline: auto;   /* past 1600px the page stops growing */
   }
   .col { display: flex; flex-direction: column; flex: 1 0 auto; min-inline-size: 0; }
   .bar { order: 0; }
   .notice { order: 1; }
-  main { order: 2; flex: 1 0 auto; min-inline-size: 0; display: flex; flex-direction: column; padding-block: 18px 28px; }
+  main { order: 2; flex: 1 0 auto; min-inline-size: 0; display: flex; flex-direction: column; padding-block: 12px 32px; }
   .foot { order: 3; }
   @media (max-width: 699.98px) {
     .bar { order: 2; position: sticky; inset-block-end: 0; }
@@ -26,71 +30,93 @@
   }
   @media (min-width: 700px) { .bar { position: sticky; inset-block-start: 0; } }
   @media (min-width: 1280px) {
-    .page { display: grid; grid-template-columns: 180px minmax(0, 1fr); align-items: start; }
+    .page { display: grid; grid-template-columns: 232px minmax(0, 1fr); column-gap: 28px; align-items: start; }
+    .col { border-inline-start: 1px solid var(--rule); padding-inline-start: 28px; min-block-size: 100dvh; }
   }
 
-  /* ---- masthead; from 1280px the rail (sticky, never overscroll-contained: R18) */
-  .mast {
-    display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; row-gap: 10px;
-    padding-block: 18px 4px;
+  /* ---- masthead: a compact block on phones, one line from 700px, the rail from 1280px */
+  .mast { display: flex; flex-direction: column; gap: 10px; padding-block: 14px 10px; border-block-end: 1px solid var(--rule); min-inline-size: 0; }
+  .mast__ed { display: flex; flex-direction: column; gap: 2px; min-inline-size: 0; }
+  .mast__ctl { display: none; }
+  .mast__links { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 18px; }
+  .mast__ref { display: flex; flex-wrap: wrap; gap: 4px 24px; }
+  .mast__ref > details { min-inline-size: 0; }
+  @media (min-width: 700px) and (max-width: 1279.98px) {
+    /* one line: wordmark, edition, then the links; the drawers on a second line */
+    .mast { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; column-gap: 24px; row-gap: 8px; padding-block: 12px 10px; }
+    .nameplate { grid-column: 1; grid-row: 1; }
+    .mast__ed { grid-column: 2; grid-row: 1; align-self: end; }
+    .mast__links { grid-column: 1 / -1; grid-row: 2; }
+    .mast__ref { grid-column: 1 / -1; grid-row: 3; }
   }
-  .mast__acts { display: flex; flex-wrap: wrap; gap: 0 16px; }
-  .mast__beats { display: none; }
-  @media (min-width: 700px) {
-    .mast { grid-template-columns: auto minmax(0, 1fr) auto; align-items: end; column-gap: 18px; padding-block-end: 14px; border-block-end: 1px solid var(--rule); }
-    .nameplate { grid-row: 1 / span 2; }
-    .mast__acts { grid-column: 3; grid-row: 1 / span 2; flex-direction: column; align-items: flex-end; align-self: end; }
-    .mast__key { grid-column: 1 / -1; }
+  @media (min-width: 1024px) and (max-width: 1279.98px) {
+    .mast { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .mast__links { grid-column: 3; grid-row: 1; justify-content: flex-end; align-self: end; }
+    .mast__ref { grid-row: 2; }
   }
   @media (min-width: 1280px) {
+    /* the rail: sticky, scrolls inside itself when taller than the viewport, never traps the
+       wheel (R18: no overscroll containment), nothing dead above the sheet (R20) */
     .mast {
-      position: sticky; inset-block-start: 0; align-self: start; max-block-size: 100dvh; overflow-y: auto;
-      display: flex; flex-direction: column; align-items: stretch; gap: 0;
-      padding: 22px 20px 24px 6px; margin-inline-start: -6px; border-block-end: 0; scroll-padding-block: 12px;
+      position: sticky; inset-block-start: 0; max-block-size: 100dvh; overflow-y: auto;
+      gap: 16px; padding: 22px 4px 24px; margin-inline: -4px; border-block-end: 0; scroll-padding-block: 12px;
     }
-    .col { border-inline-start: 1px solid var(--rule); padding-inline-start: 28px; min-block-size: 100dvh; }
-    .mast__acts { flex-direction: column; align-items: flex-start; gap: 0; padding-block: 10px; border-block: 1px solid var(--hair); margin-block-end: 18px; }
-    .mast__beats { display: block; }
+    .mast__ctl { display: flex; flex-direction: column; gap: 16px; }
+    .mast__links { flex-direction: column; align-items: flex-start; gap: 0; padding-block: 8px; border-block: 1px solid var(--hair); }
+    .mast__ref { flex-direction: column; gap: 4px; }
   }
 
-  /* ---- control bar (a <search>): read state, Sync, then the beat strip */
+  /* ---- the control bar (a <search>) */
   .bar { z-index: 3; background: var(--paper); display: flex; align-items: center; gap: 8px; min-inline-size: 0; }
-  .bar .seg, .bar .syncbtn { flex: none; }
-  .bar .beats {
-    display: flex; flex: 1 1 auto; min-inline-size: 0; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none;
-    padding: 4px; margin-block: -4px; scroll-padding-inline: 16px;
-    mask-image: linear-gradient(90deg, #000 88%, transparent);
-  }
-  .bar .beats:has(:focus-visible) { mask-image: none; }
-  .bar .beats::-webkit-scrollbar { display: none; }
-  .bar .beats > * { flex: 0 0 auto; }
+  .bar > * { flex: none; }
+  .bar__strip { display: none; }
   @media (max-width: 699.98px) {
-    /* phones: [read state · Sync] over a full-width strip, so the widest chip and its ring fit */
+    /* phones: full-bleed, 52px plus the safe area (R16), [read state] [Beats] [Days] */
     .bar {
       margin-inline: calc(-1 * max(16px, env(safe-area-inset-left))) calc(-1 * max(16px, env(safe-area-inset-right)));
-      padding: 8px max(16px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-      border-block-start: 1px solid var(--rule); flex-wrap: wrap; row-gap: 6px;
+      padding: 4px max(12px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+      border-block-start: 1px solid var(--rule); gap: 6px;
     }
-    .bar .syncbtn { margin-inline-start: auto; }
-    .bar .beats { flex-basis: 100%; margin-inline: -4px; }
+    .bar .seg { flex: 1 1 auto; min-inline-size: 0; }
+    .bar .seg button { flex: 1 1 auto; min-inline-size: 0; padding-inline: 6px; }
   }
-  @media (min-width: 700px) { .bar { padding-block: 10px 9px; border-block-end: 1px solid var(--hair); gap: 12px; } }
-  @media (min-width: 1280px) { .bar .beats { display: none; } .bar { justify-content: flex-end; } }
+  @media (min-width: 700px) {
+    .bar { padding-block: 8px; border-block-end: 1px solid var(--hair); gap: 14px; }
+    .bar__strip {
+      display: flex; flex: 1 1 auto; min-inline-size: 0; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: none;
+      padding: 4px; margin-block: -4px; scroll-padding-inline: 16px;
+      mask-image: linear-gradient(90deg, #000 calc(100% - 48px), transparent);
+    }
+    .bar__strip:has(:focus-visible) { mask-image: none; }
+    .bar__strip::-webkit-scrollbar { display: none; }
+    .bar__strip > * { flex: 0 0 auto; }
+  }
+  @media (min-width: 1280px) { .bar { display: none; } }
 
-  /* ---- the front: [lead | desk's view], then the stories; two flex-wrap bands. An open card
-     (opened by the reader, or today's lead booting open, R33) takes its band's full width and its
-     neighbours re-flow into full lines around it (R15). */
-  .front { padding-block-end: 30px; }
-  .front__grid { container: front / inline-size; display: flex; flex-direction: column; border-block-start: 1px solid var(--rule); border-inline-start: 1px solid var(--rule); }
-  .front__top, .fcards { display: flex; flex-wrap: wrap; min-inline-size: 0; }
-  .front__top > *, .fcards > .fc { flex: 1 1 100%; min-inline-size: 0; }
+  /* ---- the front: lead | Desk's view, then the stories; a story grid that keeps DOM order */
+  .front { container: front / inline-size; padding-block-end: 30px; }
+  .front__grid { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; border-block-start: 1px solid var(--rule); }
+  .fcards { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; min-inline-size: 0; }
+  .fcards > .fc, .desk { min-inline-size: 0; }
+  .fc { container-type: inline-size; }
   @container front (min-width: 860px) {
-    .front__top > .fcards--top { flex: 4 1 60%; }
-    .front__top > .desk { flex: 1 1 clamp(240px, 27%, 340px); }
-    .js .front__top:has(:is(.fc, .ed):not(.is-folded)) > * { flex-basis: 100%; }
+    .front__grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: 28px; }
+    .front__grid > .fcards--top { grid-area: 1 / 1; }
+    .front__grid > .desk { grid-area: 1 / 2; }
+    .front__grid > .fcards--rest { grid-row: 2; grid-column: 1 / -1; }
+    .front__grid:has(> .desk[hidden]) > .fcards--top, .front__grid:has(> .fcards--top[hidden]) > .desk { grid-column: 1 / -1; }
+    /* the rule between the lead and the Desk's view runs the whole band, whichever is taller;
+       the cells themselves start-align, so neither stretches to the other's height (F10) */
+    .front__grid:has(> .fcards--top:not([hidden])):has(> .desk:not([hidden]))::before {
+      content: ""; grid-area: 1 / 2; align-self: stretch; justify-self: start; inline-size: 0;
+      border-inline-start: 1px solid var(--rule); pointer-events: none;
+    }
   }
-  @container front (min-width: 720px) {
-    .fcards--rest > .fc { flex: 1 1 30%; }
+  @container front (min-width: 760px) {
+    /* the rest band: one line of equal cards. An open story takes a whole line of its own and
+       its neighbours fill the next line in their order, so no line is left part blank (R15, F10) */
+    .fcards--rest { display: flex; flex-wrap: wrap; }
+    .fcards--rest > .fc { flex: 1 1 14em; }
     .js .fcards--rest > .fc:not(.is-folded) { flex-basis: 100%; }
   }
   .desk { display: flex; flex-direction: column; }
@@ -100,29 +126,31 @@
   .day__head { display: flex; flex-direction: column; gap: 6px; }
   .day__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
   .day__cov { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-  .day__links { display: flex; flex-wrap: wrap; gap: 0 14px; }
+  .day__links { display: flex; flex-wrap: wrap; gap: 0 16px; }
   @media (min-width: 700px) { .day__links { margin-inline-start: auto; } }
   .rows { display: flex; flex-direction: column; }
+  /* a row: glyph | headline block; body (folded), why, controls below, one column at the measure.
+     No row gap: a folded body must not leave a hole, so each part carries its own top margin */
   .row__in {
-    display: grid; grid-template-columns: 14px minmax(0, 1fr); column-gap: 10px; row-gap: 6px; padding-block: 12px 10px;
+    display: grid; grid-template-columns: 14px minmax(0, 1fr); column-gap: 10px; padding-block: 12px 8px;
     grid-template-areas: "g head" "g body" "g why" "g foot";
   }
-  .row__g { grid-area: g; padding-block-start: .45em; }
-  .row__head { grid-area: head; display: flex; flex-direction: column; gap: 5px; min-inline-size: 0; }
-  .row__why { grid-area: why; min-inline-size: 0; }
-  .row__body { grid-area: body; min-inline-size: 0; }
-  .row__foot { grid-area: foot; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
-  /* from 1024px the story reads down the right-hand track, body then why, beside its headline;
-     folded (script only), the why rises to the headline's line. One row gap in both, so opening
-     never shifts the foot's More (fold.js would scroll to hold it, and the page counts that scroll
-     as the reader's) */
+  .row__g { grid-area: g; padding-block-start: .5em; }
+  .row__head { grid-area: head; display: flex; flex-direction: column; gap: 6px; min-inline-size: 0; }
+  .row__body { grid-area: body; min-inline-size: 0; margin-block-start: 10px; }
+  .row__why { grid-area: why; min-inline-size: 0; margin-block-start: 10px; }
+  .row__foot { grid-area: foot; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-block-start: 8px; }
+  /* from 1024px a row with a why, and every open row, reads in two tracks: the headline block on
+     the left; body, why and then the controls down the right-hand track beside it, so Less, ✓
+     and the votes sit where the eye finishes (F6, R15). A folded row without a why spans. */
   @media (min-width: 1024px) {
-    .row__in {
-      grid-template-columns: 14px minmax(0, 5fr) minmax(0, 7fr); column-gap: 24px;
-      grid-template-rows: auto 1fr auto; grid-template-areas: "g head body" "g foot body" "g foot why";
+    .row__in:has(.row__why), .js .row:not(.is-folded) > .row__in {
+      grid-template-columns: 14px minmax(0, 5fr) 18px minmax(0, 7fr);
+      grid-template-rows: auto auto 1fr; grid-template-areas: "g head . body" "g head . why" "g head . foot";
     }
-    .js .row.is-folded .row__in { grid-template-rows: auto 1fr; grid-template-areas: "g head why" "g foot why"; }
-    .row__foot { align-self: start; }
+    .row__in:has(.row__why) > :is(.row__head, .row__foot), .js .row:not(.is-folded) > .row__in > :is(.row__head, .row__foot) { align-self: start; }
+    .row__in:has(.row__why) > .row__why, .js .row:not(.is-folded) > .row__in > .row__body { margin-block-start: 0; }
+    .js .row:not(.is-folded) > .row__in > .row__why { margin-block-start: 10px; }
   }
 
   /* ---- footer */

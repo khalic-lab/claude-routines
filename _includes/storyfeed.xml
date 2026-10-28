@@ -1,0 +1,51 @@
+{%- comment -%}
+  A story-level RSS 2.0 feed over the board the front page prints: /stories.xml carries every
+  story, feeds/<desk>.xml (include.stream, include.label) one desk's. /feed.xml (jekyll-feed)
+  only ever carried the Sunday evaluator reviews, because every brief post is unpublished.
+  One item per story, board order (newest edition first, biggest story first); the primary
+  source is the link and the store id the guid, so a running story re-told under the same
+  source updates its item rather than duplicating it. The description carries the prose, the
+  desk's "why it matters", its flags and every outlet the story cites, as the page does.
+  The first byte of the output must be the XML declaration: every tag above it trims.
+{%- endcomment -%}
+{%- assign feed = site.data.homefeed -%}
+{%- assign path = include.path | default: '/stories.xml' -%}
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+<title>{{ site.title | xml_escape }} — {% if include.label %}{{ include.label | xml_escape }} desk{% else %}stories{% endif %}</title>
+<link>{{ '/' | absolute_url }}</link>
+<atom:link href="{{ path | absolute_url }}" rel="self" type="application/rss+xml"/>
+<description>{{ site.description | xml_escape }} {% if include.label %}Every story from the {{ include.label | xml_escape }} desk{% else %}Every story on the front page{% endif %}, with its sources.</description>
+<language>{{ site.lang | default: 'en' }}</language>
+{%- if feed.generated %}
+<lastBuildDate>{{ feed.generated | date_to_rfc822 }}</lastBuildDate>
+{%- endif %}
+{%- for s in feed.board %}
+{%- if s.kind == "story" %}
+{%- if include.stream == nil or s.stream == include.stream %}
+{%- capture desc -%}
+<p>{{ s.summary | escape }}</p>
+{%- if s.why and s.why != "" %}<p><strong>Why it matters</strong> {{ s.why | escape }}</p>{% endif %}
+{%- if s.flags %}<p>Flagged by the desk: {% for f in s.flags %}{{ f.label | escape }}{% unless forloop.last %}, {% endunless %}{% endfor %}</p>{% endif %}
+{%- if s.sources %}<p>Sources: {% for src in s.sources %}<a href="{{ src.url | escape }}">{{ src.label | escape }}</a>{% unless forloop.last %}, {% endunless %}{% endfor %}</p>{% endif %}
+<p>{{ s.stream_label | escape }} desk · {{ s.tier_label | escape }} · {{ s.day_label | escape }}</p>
+{%- endcapture %}
+<item>
+<title>{{ s.headline | xml_escape }}</title>
+{%- if s.url and s.url != "" %}
+<link>{{ s.url | xml_escape }}</link>
+{%- endif %}
+<guid isPermaLink="false">{{ s.sid | default: s.id | xml_escape }}</guid>
+<pubDate>{{ s.date | date_to_rfc822 }}</pubDate>
+<category>{{ s.stream_label | xml_escape }}</category>
+{%- if s.topic_label %}
+<category>{{ s.topic_label | xml_escape }}</category>
+{%- endif %}
+<description>{{ desc | xml_escape }}</description>
+</item>
+{%- endif %}
+{%- endif %}
+{%- endfor %}
+</channel>
+</rss>
