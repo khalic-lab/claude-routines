@@ -12,6 +12,9 @@ environment ID, trigger IDs and Worker URLs, so they stay off the public Pages s
   Opus 5.5, Sports on Sonnet 5.5 — `routines/MANIFEST.md`).
 - [`SPIKE-writer-token-levers.md`](SPIKE-writer-token-levers.md) — the real token spend is the
   writers; output caps / skip-on-empty / instrumentation. **Proposed; not yet implemented.**
+- [`SPIKE-2026-10-05-cloudflare-web-search.md`](SPIKE-2026-10-05-cloudflare-web-search.md) —
+  Cloudflare Web Search API as a logged, scriptable search on embed-proxy; freshness probe first.
+  **Proposed 2026-10-05; parked.**
 
 ## `archive/` — dated point-in-time analysis (historical snapshots, not maintained)
 - `AUDIT-2026-05-31-briefs.md` — 7-day brief audit (the 37% cross-day repeat finding).
