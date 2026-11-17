@@ -1,12 +1,12 @@
 {
- "generated": "2026-11-16",
+ "generated": "2026-11-17",
  "count": 80,
  "topics": [
   {
    "key": "geopolitics",
    "label": "Geopolitics",
    "color": "#c0563b",
-   "count": 24
+   "count": 25
   },
   {
    "key": "ai-ml",
@@ -18,7 +18,7 @@
    "key": "politics",
    "label": "Politics",
    "color": "#9a6a34",
-   "count": 14
+   "count": 15
   },
   {
    "key": "science",
@@ -27,16 +27,16 @@
    "count": 12
   },
   {
-   "key": "sports",
-   "label": "Sports",
-   "color": "#c26b2e",
-   "count": 9
-  },
-  {
    "key": "economy",
    "label": "Economy",
    "color": "#9a7b2e",
-   "count": 8
+   "count": 10
+  },
+  {
+   "key": "switzerland",
+   "label": "Switzerland",
+   "color": "#c2454a",
+   "count": 7
   },
   {
    "key": "security",
@@ -45,9 +45,9 @@
    "count": 6
   },
   {
-   "key": "switzerland",
-   "label": "Switzerland",
-   "color": "#c2454a",
+   "key": "sports",
+   "label": "Sports",
+   "color": "#c26b2e",
    "count": 6
   },
   {
@@ -93,21 +93,295 @@
     "<strong>2. Machines now prove theorems faster than mathematicians can absorb them, and the response is social infrastructure.</strong> The PSI proof of the Aaronson–Ambainis conjecture is the clearest case yet of the checking problem. A research system running a model the public cannot use found a proof on the third day of a run, Lean accepted it, and the system then improved the bound twice. Aaronson says he believes the proof because there is a Lean certificate and because human experts at Stanford and MIT have already worked through it. He also says he has not yet understood it himself. In the same week a committee led by Peking University's Xinyi Yuan launched MathHelm, a forum where mathematicians can comment step by step on AI-generated papers. Its founding post on Terence Tao's blog says that \"mathematicians have no obligation to check AI-generated papers\". Its prompt was OpenAI's release on 6 October of 722 manuscripts, most of them neither checked by humans nor formalised. DeepMind's AlphaProof Code announcement points the same way in software: more than six million lines of machine-written Lean proof about Signal's actual code, resting on specifications that humans wrote and reviewed. The pattern is that formal verification is becoming the trust layer between machine output and human understanding. A Lean certificate shows that the statement is true. It does not explain why, and it cannot catch a formal statement that says something other than what was meant. What to watch: whether the Stanford exposition of the Aaronson–Ambainis proof lands in a refereed venue, and whether MathHelm threads start to surface errors in OpenAI's 722 papers.",
     "<strong>3. Low-level number formats are quietly changing behaviour, in training and in serving.</strong> Three papers this week trace measurable changes in model behaviour to how numbers are rounded. PayPal researchers found that storing a hybrid model's recurrent state in bf16 (a 16-bit format) with ordinary round-to-nearest made five of six models reason for longer. On Qwen3.5-9B, accuracy on competition maths fell from 85.6% to 70.8%, mostly because runs fell into exact repetition loops. NVIDIA found the training-side counterpart: during RL fine-tuning with low learning rates, rounding the full-precision master weights to bf16 often leaves the copy actually used for training unchanged (\"weight sticking\"), so training converges more slowly than in fp16. Level5 measured that changing the serving engine, restarting the server, or changing batching or kernels moves up to 0.92% of a model's decisions, close to the 0.9–2.1% that 8-bit quantisation moves. Two of the three fixes are the same: stochastic rounding, which rounds up or down at random in proportion to the remainder so that small errors average out instead of piling up in one direction. What links them is that \"same model, same weights\" no longer guarantees the same behaviour, and the differences show up in output length and in individual answers more than in the headline accuracy. llama.cpp's 1.0 release on Friday 13 November added FP8 KV caches and further NVFP4 (4-bit) support, so local users are getting more precision options at exactly the moment research shows those options affect results. What to watch: whether hybrid-model evaluations start reporting the state number format, how often runs hit the length cap, and output length, as the PayPal authors recommend."
    ]
-  },
-  {
-   "stream": "science",
-   "date": "2026-11-11",
-   "date_label": "Nov 11",
-   "kicker": "Science · Why it matters · Nov 11",
-   "heading": "Why it matters",
-   "title": "The marker is not the outcome",
-   "paras": [
-    "Two of this week's cardiology results make the same point from different directions. Pelacarsen removed 78% of a genetically validated risk particle and prevented no heart attacks. In STREAM, stopping a drug passed a pre-set non-inferiority test while event rates still rose by a hazard ratio of 1.38. Both say to judge treatments by what happens to patients, not by what happens to a number on a lab report.",
-    "<strong>\"Abrupt\" depends on the recorder.</strong> The Dansgaard–Oeschger study and the pseudogap paper both resolve old debates by changing the measuring instrument. Cave records separate the atmosphere's fast response from the ocean's slow one. Shot noise counts the charge of the current carriers directly instead of inferring pairing from an energy gap. In both cases the long-standing \"fact\" was partly a feature of the instrument."
-   ]
   }
  ],
  "stories": [
+  {
+   "id": "2026-11-17-news-part-of-the-crimean-bridge-across-the-kerch-stra",
+   "sid": "st-71ebe324f60d",
+   "headline": "Ukrainian strike drops Crimean Bridge span",
+   "summary": "Part of the Crimean Bridge across the Kerch Strait collapsed into the sea after a Ukrainian strike overnight into Tuesday 17 November, the second attack on the bridge in two days. President Volodymyr Zelensky said the strike was the \"seventh stage\" of an operation lasting several weeks. He said it was planned by the Security Service of Ukraine (SBU) and the General Staff, with Palianytsia drones hitting the road section and Neptune missiles, Ruta drones and FP-5 Flamingo missiles hitting the rail section. The SBU said one of the bridge's metal arches and the road span beneath it were \"completely destroyed\". Sergei Aksyonov, the governor Moscow installed in Crimea, said traffic was suspended and that a drone attack killed at least two people on the peninsula. On the same night Russia struck Kyiv's Northern and Southern bridges, which remain closed while engineers assess the damage. Mayor Vitali Klitschko said the metro was damaged and water, power and heating were partly cut on the Left Bank. The accounts of each side's strikes come from the two governments and could not be independently verified.",
+   "why": "the 19 km bridge is Russia's only direct land link to occupied Crimea, which it annexed in 2014, and it carries supplies for the troops and some two million residents there. With the road span down, those supplies have to go by the land corridor through occupied southern Ukraine, which Ukrainian drones regularly attack. Both sides are now deliberately targeting each other's bridges.",
+   "url": "https://kyivindependent.com/ukrainian-forces-reportedly-strike-crimean-bridge-after-russian-missiles-hit-kyiv-bridges/",
+   "source_domain": "kyivindependent.com",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 3,
+   "is_lead": true,
+   "sources": [
+    {
+     "url": "https://kyivindependent.com/ukrainian-forces-reportedly-strike-crimean-bridge-after-russian-missiles-hit-kyiv-bridges/",
+     "domain": "kyivindependent.com",
+     "label": "Kyiv Independent"
+    },
+    {
+     "url": "https://www.ukrinform.net/rubric-ato/4185493--palianytsia-struck-road-section-of-crimean-bridge-neptune-ruta-and-fp5-hit-rail-section-zelensky.html",
+     "domain": "ukrinform.net",
+     "label": "Ukrinform"
+    },
+    {
+     "url": "https://www.aljazeera.com/news/2026/11/17/ukrainian-drone-attack-kills-two-in-crimea-as-kyiv-targets-kerch-bridge",
+     "domain": "aljazeera.com",
+     "label": "Al Jazeera"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-17-news-germany-austria-denmark-greece-and-the-netherlan",
+   "sid": "st-993a034783fa",
+   "headline": "Five EU states pick Rwanda for return hub",
+   "summary": "Germany, Austria, Denmark, Greece and the Netherlands announced with Rwanda in Vienna on Monday 16 November a plan to send rejected asylum seekers to a \"return hub\" in Rwanda, aiming to start transfers by 2027. The scheme would cover only people in the five countries who hold an enforceable removal order, including people from countries other than Rwanda. The five governments would pay the costs, including temporary accommodation. Their joint statement says people transferred could settle in Rwanda, go home voluntarily, or travel to another country they can legally enter. No formal agreement has been signed, and the governments have not said how many people they intend to send. Rights groups warn the arrangement could expose vulnerable people to abuse. In Germany the plan has already drawn criticism at home.",
+   "why": "this is the first named destination for the \"return hubs\" the five agreed to pursue in principle in Copenhagen in September. It takes offshore deportation from a shared model to a named partner country, and Switzerland, as a member of Schengen and the Dublin asylum system, will have to decide where it stands on such schemes.",
+   "url": "https://www.aljazeera.com/news/2026/11/17/why-are-five-eu-countries-reviving-plans-to-deport-migrants-to-rwanda",
+   "source_domain": "aljazeera.com",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "politics",
+    "world"
+   ],
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.aljazeera.com/news/2026/11/17/why-are-five-eu-countries-reviving-plans-to-deport-migrants-to-rwanda",
+     "domain": "aljazeera.com",
+     "label": "Al Jazeera"
+    },
+    {
+     "url": "https://www.rfi.fr/fr/europe/20261116-l-allemagne-l-autriche-le-danemark-la-gr%C3%A8ce-et-les-pays-bas-pr%C3%A9sentent-leur-projet-de-hub-de-retour-pour-migrants-au-rwanda",
+     "domain": "rfi.fr",
+     "label": "RFI"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-17-news-mongolia-s-president-khurelsukh-ukhnaa-said-on-t",
+   "sid": "st-5c9e8194a5b5",
+   "headline": "Mongolia's president says he will resign",
+   "summary": "Mongolia's President Khurelsukh Ukhnaa said on Tuesday 17 November that he will resign, after being accused of taking $25 million (about €23 million) linked to a state railway project. He said he was being \"falsely accused and defamed\" but would step down to \"restore my good name\", and pledged to cooperate with investigators. The resignation takes effect only once parliament, the State Great Khural, accepts it. The accusation came on Saturday 14 November from Nyambaatar Khishgee, a former mayor of Ulaanbaatar from a rival faction of the president's own Mongolian People's Party. He alleged bribes from Bodi International, which won the contract for the Tavantolgoi–Gashuunsukhait coal railway to the Chinese border without a competitive tender. Bodi denies paying any cash bribes. The opposition Democratic Party then called for Khurelsukh to go.",
+   "why": "the railway carries Mongolia's coal exports to China, its main source of export revenue. The resignation adds to infighting in the ruling party, which has had three prime ministers in nine months.",
+   "url": "https://www.dw.com/en/mongolian-president-khurelsukh-to-resign-amid-corruption-allegations/a-79964717",
+   "source_domain": "dw.com",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "politics"
+   ],
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.dw.com/en/mongolian-president-khurelsukh-to-resign-amid-corruption-allegations/a-79964717",
+     "domain": "dw.com",
+     "label": "DW"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-17-news-turkish-police-raided-the-istanbul-headquarters",
+   "sid": "st-daa4e010f743",
+   "headline": "Turkey seizes opposition broadcaster Sozcu TV",
+   "summary": "Turkish police raided the Istanbul headquarters of the pro-opposition broadcaster Sozcu TV early on Tuesday 17 November, detained staff and installed a court-appointed trustee to run the channel and its news website. The Istanbul Chief Public Prosecutor's Office says the case concerns alleged breaches of anti-terror-financing laws and suspected links to the network of the late cleric Fethullah Gülen, whom Ankara blames for the 2016 coup attempt. Sozcu's lawyer says the raid stems from a 2016 case, and the channel has challenged the takeover in court. Regular news was replaced by a documentary for several hours before resuming at noon. The trustee did not take over the print newspaper.",
+   "why": "appointing a trustee puts one of Turkey's last nationally broadcast critical news channels under state-chosen management. The prosecutor's \"terror financing\" label is the authorities' own characterisation, and it was used the same way in earlier takeovers of opposition media.",
+   "url": "https://www.dw.com/en/turkish-authorities-raid-opposition-sozcu-news-channel-appoint-new-management/a-79966297",
+   "source_domain": "dw.com",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "politics"
+   ],
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.dw.com/en/turkish-authorities-raid-opposition-sozcu-news-channel-appoint-new-management/a-79966297",
+     "domain": "dw.com",
+     "label": "DW"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-17-news-a-leak-of-more-than-15-million-internal-deutsche",
+   "sid": "st-cc80bbcdda9c",
+   "headline": "Deutsche Bank leak exposes Swiss oligarch accounts",
+   "summary": "A leak of more than 15 million internal Deutsche Bank documents, published on Tuesday 17 November by a consortium of over 200 journalists, shows the German bank held the fortunes of about twenty Russian oligarchs close to Vladimir Putin through its Zurich and Geneva units before the 2022 invasion of Ukraine. The consortium includes the Tamedia papers in Switzerland, Der Spiegel, the Financial Times and Le Monde. According to the reporting, the bank rated those clients by colour for risk. The highest-risk \"red\" category included Suleyman Kerimov and Viktor Vekselberg, who lived in Zug. The documents also show a late-2020 plan, drawn up by a working group that included chief executive Christian Sewing, to grow revenue from wealthy Russian clients despite internal and external warnings about money-laundering risk. Deutsche Bank says some of the facts are nearly twenty years old, that regulators reviewed them at the time, and that it spent €7 billion on controls between 2019 and 2025. Its shares fell almost 6% in early Frankfurt trading.",
+   "why": "the leak puts the Swiss financial centre back at the heart of how Russian elite wealth was held. It also raises the question of what Swiss supervisors knew about these Zurich and Geneva accounts at the time.",
+   "url": "https://www.letemps.ch/economie/finance/fortunes-d-oligarques-russes-heberges-en-suisse-relations-avec-jeffrey-epstein-une-fuite-massive-de-documents-secoue-deutsche-bank",
+   "source_domain": "letemps.ch",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.letemps.ch/economie/finance/fortunes-d-oligarques-russes-heberges-en-suisse-relations-avec-jeffrey-epstein-une-fuite-massive-de-documents-secoue-deutsche-bank",
+     "domain": "letemps.ch",
+     "label": "Le Temps (ATS)"
+    },
+    {
+     "url": "https://www.lemonde.fr/les-decodeurs/article/2026/11/17/inside-deutsche-bank-les-secrets-inavouables-du-geant-bancaire-reveles-par-15-millions-de-documents-confidentiels_6812911_4355770.html",
+     "domain": "lemonde.fr",
+     "label": "Le Monde"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-17-news-swiss-farming-s-gross-value-added-will-fall-11-7",
+   "sid": "st-653b073c5fcb",
+   "headline": "Drought cuts Swiss farm value added 11.7%",
+   "summary": "Swiss farming's gross value added will fall 11.7% in 2026 to 4.5 billion francs, according to first estimates from the Federal Statistical Office (FSO) published on Tuesday 17 November, after a historic summer heatwave and drought. Total production value is expected to fall 5.1% to 12.0 billion francs. Crop production value is down 9.0%. Fodder is down 19.2% after poor yields forced farmers to use up their reserves early. Sugar beet (−33%) and potatoes (−24.8%) are heading for their lowest harvests in 30 years. Pig farmers were hit separately: output rose 5.3% while prices fell 34.3%. Beef did well, with production value up 10.6% to a level last seen in the early 1990s. Without the effect of prices, value added fell only 2.2%. Labour productivity is down 0.7% but still 38% above its 2000 level.",
+   "why": "the FSO compares 2026 against an \"excellent\" 2025, which exaggerates the fall in francs. The record lows for sugar beet and potatoes are a clearer measure of the drought, and they will weigh on the farm-support debates ahead of next year's budget.",
+   "url": "https://www.admin.ch/fr/newnsb/MMadk29ey8pJ",
+   "source_domain": "admin.ch",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.admin.ch/fr/newnsb/MMadk29ey8pJ",
+     "domain": "admin.ch",
+     "label": "Federal Council / FSO"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-17-news-the-federal-council-has-recommended-that-parliam",
+   "sid": "st-704f172f7805",
+   "headline": "IV offices may flag gun risks",
+   "summary": "The Federal Council has recommended that parliament accept a motion allowing cantonal disability-insurance (IV) offices to report insured people they consider unfit to own a gun to cantonal weapons offices, SRF reported on Tuesday 17 November. The motion was filed by Jura SP National Councillor Loïc Dobler after the shooting in Aarau at the end of August. In that attack a 43-year-old man from Jura who legally owned weapons killed a young woman and wounded six people, and according to his parents he drew an IV pension for psychiatric problems. IV staff can already file reports in a personal capacity, like any official. Dobler, who works at the Jura IV office, says almost nobody does so because they carry the risk personally, and that letting the office report as an authority would change that. The Federal Council took its decision on Wednesday 11 November. The Federal Social Insurance Office declined to explain its reasons.",
+   "why": "the change would create a formal link between social-insurance health information and gun licensing. That closes a gap the Aarau case exposed, but it also raises questions about medical confidentiality and stigma for IV recipients with mental illness, which parliament will have to weigh.",
+   "url": "https://www.srf.ch/news/schweiz/nach-amoktat-von-aarau-iv-soll-gefaehrliche-personen-der-waffenbehoerde-melden-duerfen",
+   "source_domain": "srf.ch",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "politics"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.srf.ch/news/schweiz/nach-amoktat-von-aarau-iv-soll-gefaehrliche-personen-der-waffenbehoerde-melden-duerfen",
+     "domain": "srf.ch",
+     "label": "SRF"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-17-news-two-tankers-were-attacked-in-the-strait-of-hormu",
+   "sid": "st-d0e7be6801d9",
+   "headline": "Two more tankers hit in Hormuz",
+   "summary": "Two tankers were attacked in the Strait of Hormuz on Monday 16 November, the UK Maritime Trade Operations agency (UKMTO) reported, and Iran's Revolutionary Guards navy said two tankers had struck mines and caught fire. UKMTO said one tanker was disabled with an engine-room fire about seven nautical miles (13 km) north of Khasab, Oman. Another was hit by an unidentified projectile while leaving the strait. No casualties were reported. The Revolutionary Guards said their two tankers were using a route Tehran considers unauthorised, and Iran's regular navy reported a third vessel hitting a mine east of the strait. Iran named none of the ships, and it is unclear whether its claims and the UKMTO incidents describe the same events. The UN's International Maritime Organization counted 136 security incidents involving vessels in the region between 1 March and 11 November, 35 of them in October.",
+   "why": "",
+   "url": "https://www.aljazeera.com/news/2026/11/17/tankers-hit-in-strait-of-hormuz-as-drone-raises-alarm-at-iraq-gas-field",
+   "source_domain": "aljazeera.com",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 1,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.aljazeera.com/news/2026/11/17/tankers-hit-in-strait-of-hormuz-as-drone-raises-alarm-at-iraq-gas-field",
+     "domain": "aljazeera.com",
+     "label": "Al Jazeera"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-17-news-swiss-households-had-an-average-disposable-incom",
+   "sid": "st-381a11054585",
+   "headline": "Swiss housing costs rise as incomes stall",
+   "summary": "Swiss households had an average disposable income of 7,209 francs a month in 2024, almost unchanged from 2023 (7,186), while housing costs kept rising to 1,546 francs a month, the FSO's household budget survey published on Tuesday 17 November shows. Housing is the largest consumer spending item for Swiss households. Compulsory spending (taxes, social contributions, health-insurance premiums and transfers) took 31.0% of gross income, with taxes alone at 12.2% and premiums at 7.2%. About 61% of households have a disposable income below the average, which is pulled up by high earners. Over 2022–2024 the gap ran from 10,569 francs for couples with children to 3,591 francs for single people aged 65 or over.",
+   "why": "",
+   "url": "https://www.admin.ch/fr/newnsb/6f7-asx4KxXe",
+   "source_domain": "admin.ch",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 1,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.admin.ch/fr/newnsb/6f7-asx4KxXe",
+     "domain": "admin.ch",
+     "label": "Federal Council / FSO"
+    }
+   ],
+   "fresh": true
+  },
   {
    "id": "2026-11-16-news-estonia-will-close-its-road-border-crossings-wit",
    "sid": "st-8cacb70b21a8",
@@ -141,7 +415,7 @@
      "label": "DW"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-16-sports-england-end-spain-s-43-match-unbeaten-run-in-mad",
@@ -170,7 +444,7 @@
      "label": "SRF Sport match report"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-16-news-hundreds-of-thousands-of-people-rallied-in-pragu",
@@ -205,7 +479,7 @@
      "label": "DW"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-16-news-the-aircraft-carrier-uss-theodore-roosevelt-has",
@@ -239,67 +513,7 @@
      "label": "Tagesschau"
     }
    ],
-   "fresh": true
-  },
-  {
-   "id": "2026-11-16-news-three-judges-of-the-international-criminal-court",
-   "sid": "st-3d359b3ab308",
-   "headline": "ICC judges close US Afghanistan probe",
-   "summary": "Three judges of the International Criminal Court (ICC) closed its investigation into alleged crimes by US forces in Afghanistan on Thursday 12 November, Le Monde reported on Monday 16 November. The investigation, opened in 2020, covered torture, rape and sexual violence at the US base at Bagram, north of Kabul, in 2003 and 2004. It also covered CIA secret prisons in Romania, Poland and Lithuania. According to Le Monde, the judges cited \"significant limits\" on the prosecution's ability to investigate and gather evidence, and said it was now too late to bring charges. Lawyers for former detainees at the US Center for Constitutional Rights had argued that the evidence of a torture policy, including the US Senate's own report, was overwhelming. Le Monde says Washington had made closing the case one of its conditions for not sanctioning the Court ahead of April 2027.",
-   "why": "this was one of the few avenues for international accountability for US abuses after 9/11. It is closing at a moment when the US is pressuring the Court. The judges, for their part, gave procedural reasons: the time that has passed and the limits on gathering evidence.",
-   "url": "https://www.lemonde.fr/international/article/2026/11/16/cpi-des-juges-referment-le-dossier-sur-les-crimes-des-forces-americaines-en-afghanistan_6811690_3210.html",
-   "source_domain": "lemonde.fr",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.lemonde.fr/international/article/2026/11/16/cpi-des-juges-referment-le-dossier-sur-les-crimes-des-forces-americaines-en-afghanistan_6811690_3210.html",
-     "domain": "lemonde.fr",
-     "label": "Le Monde"
-    }
-   ],
-   "fresh": true
-  },
-  {
-   "id": "2026-11-16-news-switzerland-s-real-gdp-grew-0-2-in-the-third-qua",
-   "sid": "st-8f27f420b3c3",
-   "headline": "Swiss economy grows 0.2% in third quarter",
-   "summary": "Switzerland's real GDP grew 0.2% in the third quarter of 2026, according to the first estimate from the State Secretariat for Economic Affairs (Seco), published on Monday 16 November. Industry grew again while services as a whole stagnated, the wire agency ATS reports. The growth is well below the second quarter, when GDP rose 1.5%, according to the same report. Economists polled by the financial news agency AWP had expected anywhere from −0.3% to +0.4%, so the result is in the middle of that range. The full Seco release, with the breakdown by sector and the figure adjusted for major sporting events, was not reachable this run.",
-   "why": "if services, the larger part of the economy, are flat while industry carries growth, the slowdown is broad. That feeds into cantonal budget forecasts and the Swiss National Bank's next rate decision.",
-   "url": "https://www.letemps.ch/economie/le-pib-suisse-a-augmente-de-0-2-au-troisieme-trimestre",
-   "source_domain": "letemps.ch",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "economy"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.letemps.ch/economie/le-pib-suisse-a-augmente-de-0-2-au-troisieme-trimestre",
-     "domain": "letemps.ch",
-     "label": "Le Temps / ATS"
-    }
-   ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-16-sports-belgium-s-4-1-win-sends-italy-out-of-the-nations",
@@ -328,7 +542,7 @@
      "label": "SRF Sport match report"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-16-sports-meillard-takes-third-in-the-levi-slalom-a-day-af",
@@ -357,7 +571,7 @@
      "label": "SRF Sport report"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-16-sports-teenager-mirra-andreeva-wins-the-wta-finals-in-i",
@@ -386,71 +600,7 @@
      "label": "BBC Sport"
     }
    ],
-   "fresh": true
-  },
-  {
-   "id": "2026-11-16-news-cape-verde-s-president-jos-maria-neves-won-a-sec",
-   "sid": "st-7d6359425218",
-   "headline": "Neves re-elected in Cape Verde",
-   "summary": "Cape Verde's President José Maria Neves won a second five-year term in the first round on Sunday 15 November, with 63.8% of the vote according to the electoral commission's provisional results. His main challenger, former justice minister Joana Rosa Amado of the Movement for Democracy (MpD), took about 31.6%. Four other candidates shared the rest. Le Temps, citing AFP, says turnout was low. Neves promised to keep \"promoting freedoms\" in the archipelago, which ranks third in Africa on the Mo Ibrahim Foundation's 2026 governance index. Observers from ECOWAS (the West African regional bloc), the African Union and the EU monitored the vote.",
-   "why": "",
-   "url": "https://www.dw.com/en/cape-verde-election-jose-maria-neves-set-to-win-second-term/a-79952606",
-   "source_domain": "dw.com",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "politics",
-    "world"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.dw.com/en/cape-verde-election-jose-maria-neves-set-to-win-second-term/a-79952606",
-     "domain": "dw.com",
-     "label": "DW"
-    },
-    {
-     "url": "https://www.letemps.ch/monde/le-president-sortant-jose-maria-neves-reelu-pour-un-second-mandat-a-la-tete-du-cap-vert",
-     "domain": "letemps.ch",
-     "label": "Le Temps"
-    }
-   ],
-   "fresh": true
-  },
-  {
-   "id": "2026-11-16-news-switzerland-registered-2-210-asylum-applications",
-   "sid": "st-e09cb310fc52",
-   "headline": "Swiss asylum requests fall 16%",
-   "summary": "Switzerland registered 2,210 asylum applications in October 2026, 16% fewer than in October 2025 (433 fewer), the State Secretariat for Migration (SEM) said on Monday 16 November. Afghanistan remained the main country of origin with 498 applications, followed by Eritrea (430), Algeria (236), Ethiopia (171) and Somalia (163). Applications rose by 88 (4%) from September, which the SEM says is the usual late-summer and autumn rise before winter. The SEM decided 2,419 cases at first instance and granted asylum to 567 people. A total of 732 people left Switzerland under official supervision: 418 on their own and 314 under police escort, either to their home country, to the EU state responsible under the Dublin rules, or to another country.",
-   "why": "",
-   "url": "https://www.admin.ch/fr/newnsb/W11FHTquJJ9Z",
-   "source_domain": "admin.ch",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.admin.ch/fr/newnsb/W11FHTquJJ9Z",
-     "domain": "admin.ch",
-     "label": "SEM / admin.ch"
-    }
-   ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-16-sports-genoni-becomes-the-first-goalkeeper-to-reach-1-0",
@@ -479,7 +629,7 @@
      "label": "SRF Sport report"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-16-sports-racing-bulls-confirm-lawson-stays-for-2027-endin",
@@ -508,7 +658,7 @@
      "label": "Autosport"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-15-news-iran-s-revolutionary-guards-irgc-said-on-sunday",
@@ -2010,35 +2160,6 @@
    "fresh": false
   },
   {
-   "id": "2026-11-09-sports-norris-wins-in-the-wet-in-s-o-paulo-mercedes-loc",
-   "sid": "st-4f0bdbfb82bc",
-   "headline": "Norris wins Brazilian GP",
-   "summary": "Lando Norris (McLaren) converted pole into his third win of 2026, holding off Max Verstappen, who finished second after starting from the back of the grid on an engine-change penalty; Isack Hadjar made it a double podium for Red Bull. Mercedes finished fourth and fifth (George Russell, new champion Kimi Antonelli) and that was enough to secure the constructors' championship, the team's ninth and first since 2021. The driver title was already decided, so the interest was in the team race and in Verstappen's recovery. Lewis Hamilton finished ninth and says tensions with Ferrari team-mate Charles Leclerc are \"squashed\".",
-   "why": "both titles now belong to Mercedes, so the remaining races are about pride, seats and 2027 positioning rather than the championship.",
-   "url": "https://www.autosport.com/f1/news/f1-brazilian-gp-lando-norris-wins-in-mixed-conditions-mercedes-clinches-constructors-title/10873048/",
-   "source_domain": "autosport.com",
-   "date": "2026-11-09",
-   "date_label": "Nov 9",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 3,
-   "is_lead": true,
-   "sources": [
-    {
-     "url": "https://www.autosport.com/f1/news/f1-brazilian-gp-lando-norris-wins-in-mixed-conditions-mercedes-clinches-constructors-title/10873048/",
-     "domain": "autosport.com",
-     "label": "Autosport race report, Brazilian GP"
-    }
-   ],
-   "fresh": false
-  },
-  {
    "id": "2026-11-09-news-the-kremlin-said-on-monday-9-november-that-this",
    "sid": "st-1e169650b73a",
    "headline": "Paris donors chase Chernobyl arch repair money",
@@ -2136,64 +2257,6 @@
      "url": "https://www.rfi.fr/fr/am%C3%A9riques/20261109-%C3%A9tats-unis-dans-une-interview-donald-trump-reconna%C3%AEt-une-politique-d-immigration-trop-s%C3%A9v%C3%A8re",
      "domain": "rfi.fr",
      "label": "RFI"
-    }
-   ],
-   "fresh": false
-  },
-  {
-   "id": "2026-11-09-sports-basel-throw-away-a-2-0-lead-and-stay-stuck-below",
-   "sid": "st-80521c502aec",
-   "headline": "Basel blow 2-0 lead at Thun",
-   "summary": "Basel have now gone five league games without a win, and SRF reports they still sit \"below the line\" in the table, one place behind Thun, who edged past Luzern with the point. Basel led 2–0 inside 12 minutes (Zan Celar after 40 seconds, Philip Otele), then goalkeeper Jonas Omlin tried to dribble on a slick pitch and handed Thun a goal; Kevin Rüegg's late own goal (78th minute) completed the comeback. Thun are still without a home league win after six attempts. SRF refers to Basel as the reigning champions, so five games without a win is a real slump. In the same round Lugano lost 5–0 at St. Gallen, while Servette–Zürich ended goalless. The league now pauses for two weeks of international matches; Basel host Luzern on Sunday 2026-11-22.",
-   "why": "the Basel form that stalled at 0–0 against GC on 2026-10-25 has not recovered, and the international break gives the coach two weeks to fix a defence that gave away three goals to a side that had not won at home.",
-   "url": "https://www.srf.ch/sport/fussball/super-league/13-runde-der-super-league-spaetes-eigentor-basel-muss-sich-in-thun-mit-3-3-begnuegen",
-   "source_domain": "srf.ch",
-   "date": "2026-11-09",
-   "date_label": "Nov 9",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.srf.ch/sport/fussball/super-league/13-runde-der-super-league-spaetes-eigentor-basel-muss-sich-in-thun-mit-3-3-begnuegen",
-     "domain": "srf.ch",
-     "label": "Thun 3–3 Basel, SRF Sport match report"
-    }
-   ],
-   "fresh": false
-  },
-  {
-   "id": "2026-11-09-sports-alcaraz-wins-his-first-paris-masters-beating-she",
-   "sid": "st-1e07fea3ee6d",
-   "headline": "Alcaraz wins Paris Masters",
-   "summary": "Carlos Alcaraz (ranked 3) beat Ben Shelton (ranked 4), saving a string of break points in the first set before winning a tiebreak, then breaking twice from behind in the second. SRF counts it as his seventh Masters 1000 title of the nine on the calendar; only the Canadian Open and Shanghai are missing. It follows his title in Vienna two weeks earlier and avenges Shelton's win over him in the US Open quarterfinals. Gauff opened the WTA Finals in Indian Wells with a three-set win over Pegula on 2026-11-09.",
-   "why": "Alcaraz arrives at the season-ending finals in top form after a comeback from injury.",
-   "url": "https://www.srf.ch/sport/tennis/atp-tour/shelton-in-2-saetzen-geschlagen-nervenstarker-alcaraz-gewinnt-erstmals-in-der-halle-in-paris",
-   "source_domain": "srf.ch",
-   "date": "2026-11-09",
-   "date_label": "Nov 9",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.srf.ch/sport/tennis/atp-tour/shelton-in-2-saetzen-geschlagen-nervenstarker-alcaraz-gewinnt-erstmals-in-der-halle-in-paris",
-     "domain": "srf.ch",
-     "label": "Alcaraz d. Shelton 7–6(5), 7–5, SRF Sport"
     }
    ],
    "fresh": false
@@ -2572,74 +2635,6 @@
    "fresh": false
   },
   {
-   "id": "2026-11-06-news-hundreds-of-thousands-of-people-marched-across-f",
-   "sid": "st-c9a358fae8d3",
-   "headline": "France marches over pay as Lecornu calls talks",
-   "summary": "Hundreds of thousands of people marched across France on Thursday 5 November over pay, prices and public services, and Prime Minister Sébastien Lecornu called unions and employers to a \"social conference\" at Matignon on Monday 9 November. The figures differ: DW quotes Interior Minister Laurent Nuñez as saying turnout reached 600,000 by the evening, Le Monde gives the ministry's figure as 575,000, and the CGT union claimed 1.6 million. Five unions from the public and private sectors called the protest, and students, who have been protesting for a month, joined in. Most marches were peaceful, but police used tear gas in Paris and clashed with protesters in Lyon, the Eiffel Tower stayed closed, and the roof of Limoges town hall caught fire. President Emmanuel Macron blamed \"ultra-left\" groups for the violence and promised more police at future protests.",
-   "why": "the conference is the government's main answer to the movement, but a former Macron adviser told Le Monde that \"a social summit means money, and there is no money\".",
-   "url": "https://www.dw.com/en/france-more-than-600-000-protest-as-anger-grows-over-cost-of-living/a-79860616",
-   "source_domain": "dw.com",
-   "date": "2026-11-06",
-   "date_label": "Nov 6",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "politics"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.dw.com/en/france-more-than-600-000-protest-as-anger-grows-over-cost-of-living/a-79860616",
-     "domain": "dw.com",
-     "label": "DW"
-    },
-    {
-     "url": "https://www.lemonde.fr/politique/article/2026/11/06/greve-du-5-novembre-lecornu-convoque-syndicats-et-patronat-pour-une-conference-sociale-a-matignon_6807684_823448.html",
-     "domain": "lemonde.fr",
-     "label": "Le Monde"
-    }
-   ],
-   "fresh": false
-  },
-  {
-   "id": "2026-11-06-news-the-federal-supreme-court-ruled-unanimously-on-t",
-   "sid": "st-992c346f3a2d",
-   "headline": "Top court rules judges' relationship unlawful",
-   "summary": "The Federal Supreme Court ruled unanimously on Thursday 5 November that federal judges Yves Donzallaz (no party) and Beatrice van de Graaf (SVP/UDC) had been in a \"lasting partnership\" (\"durablement ménage commun\"), which the law on the court forbids for two sitting judges, and it granted a request to reopen a Lucerne homicide case that van de Graaf had helped decide. The five-judge panel decided in a public deliberation, as a pilot case: it found the relationship breached Article 8 of the Federal Supreme Court Act, so the court that decided the case was unlawfully composed. According to RTS, about 15 revision requests linked to the relationship have been filed, including one in the case of Erwin Sperisen, a former Guatemalan police chief. In his plea, Donzallaz called the court's handling of the affair a \"collapse\" and said he was being targeted because of past clashes with the SVP. A parliamentary commission has opened proceedings not to re-elect either judge, and parliament votes on their re-election in December.",
-   "why": "the ruling settles which relationships are banned between federal judges, but it could reopen a series of final judgments, and it comes as parliament decides whether to keep the two judges.",
-   "url": "https://www.rts.ch/info/suisse/2026/article/tribunal-federal-15-affaires-pourraient-etre-rejugees-29407230.html",
-   "source_domain": "rts.ch",
-   "date": "2026-11-06",
-   "date_label": "Nov 6",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.rts.ch/info/suisse/2026/article/tribunal-federal-15-affaires-pourraient-etre-rejugees-29407230.html",
-     "domain": "rts.ch",
-     "label": "RTS"
-    },
-    {
-     "url": "https://www.srf.ch/news/schweiz/liebesaffaere-am-bundesgericht-urteil-gefaellt-beziehung-von-bundesrichtern-war-unzulaessig",
-     "domain": "srf.ch",
-     "label": "SRF"
-    }
-   ],
-   "fresh": false
-  },
-  {
    "id": "2026-11-04-science-the-closest-living-relatives-of-complex-cells-ar",
    "sid": "st-7a7a52c9b2cc",
    "headline": "Eukaryotes' closest archaeal kin grown at last",
@@ -2780,6 +2775,503 @@
  ],
  "board": [
   {
+   "id": "2026-11-17-news-part-of-the-crimean-bridge-across-the-kerch-stra",
+   "sid": "st-71ebe324f60d",
+   "headline": "Ukrainian strike drops Crimean Bridge span",
+   "summary": "Part of the Crimean Bridge across the Kerch Strait collapsed into the sea after a Ukrainian strike overnight into Tuesday 17 November, the second attack on the bridge in two days. President Volodymyr Zelensky said the strike was the \"seventh stage\" of an operation lasting several weeks. He said it was planned by the Security Service of Ukraine (SBU) and the General Staff, with Palianytsia drones hitting the road section and Neptune missiles, Ruta drones and FP-5 Flamingo missiles hitting the rail section. The SBU said one of the bridge's metal arches and the road span beneath it were \"completely destroyed\". Sergei Aksyonov, the governor Moscow installed in Crimea, said traffic was suspended and that a drone attack killed at least two people on the peninsula. On the same night Russia struck Kyiv's Northern and Southern bridges, which remain closed while engineers assess the damage. Mayor Vitali Klitschko said the metro was damaged and water, power and heating were partly cut on the Left Bank. The accounts of each side's strikes come from the two governments and could not be independently verified.",
+   "why": "the 19 km bridge is Russia's only direct land link to occupied Crimea, which it annexed in 2014, and it carries supplies for the troops and some two million residents there. With the road span down, those supplies have to go by the land corridor through occupied southern Ukraine, which Ukrainian drones regularly attack. Both sides are now deliberately targeting each other's bridges.",
+   "url": "https://kyivindependent.com/ukrainian-forces-reportedly-strike-crimean-bridge-after-russian-missiles-hit-kyiv-bridges/",
+   "source_domain": "kyivindependent.com",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 3,
+   "is_lead": true,
+   "sources": [
+    {
+     "url": "https://kyivindependent.com/ukrainian-forces-reportedly-strike-crimean-bridge-after-russian-missiles-hit-kyiv-bridges/",
+     "domain": "kyivindependent.com",
+     "label": "Kyiv Independent"
+    },
+    {
+     "url": "https://www.ukrinform.net/rubric-ato/4185493--palianytsia-struck-road-section-of-crimean-bridge-neptune-ruta-and-fp5-hit-rail-section-zelensky.html",
+     "domain": "ukrinform.net",
+     "label": "Ukrinform"
+    },
+    {
+     "url": "https://www.aljazeera.com/news/2026/11/17/ukrainian-drone-attack-kills-two-in-crimea-as-kyiv-targets-kerch-bridge",
+     "domain": "aljazeera.com",
+     "label": "Al Jazeera"
+    }
+   ],
+   "event_date": "2026-11-17",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 17 Nov",
+   "daybreak": true,
+   "edition": "2026-11-17-news",
+   "period": {
+    "start": "2026-11-17",
+    "end": "2026-11-17",
+    "start_text": "",
+    "end_text": "17 Nov",
+    "label": "17 Nov"
+   },
+   "on_front": true,
+   "tier": "lead",
+   "tier_label": "Lead",
+   "unfurl": true,
+   "event_label": "",
+   "n_sources": 3,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-17-news-germany-austria-denmark-greece-and-the-netherlan",
+   "sid": "st-993a034783fa",
+   "headline": "Five EU states pick Rwanda for return hub",
+   "summary": "Germany, Austria, Denmark, Greece and the Netherlands announced with Rwanda in Vienna on Monday 16 November a plan to send rejected asylum seekers to a \"return hub\" in Rwanda, aiming to start transfers by 2027. The scheme would cover only people in the five countries who hold an enforceable removal order, including people from countries other than Rwanda. The five governments would pay the costs, including temporary accommodation. Their joint statement says people transferred could settle in Rwanda, go home voluntarily, or travel to another country they can legally enter. No formal agreement has been signed, and the governments have not said how many people they intend to send. Rights groups warn the arrangement could expose vulnerable people to abuse. In Germany the plan has already drawn criticism at home.",
+   "why": "this is the first named destination for the \"return hubs\" the five agreed to pursue in principle in Copenhagen in September. It takes offshore deportation from a shared model to a named partner country, and Switzerland, as a member of Schengen and the Dublin asylum system, will have to decide where it stands on such schemes.",
+   "url": "https://www.aljazeera.com/news/2026/11/17/why-are-five-eu-countries-reviving-plans-to-deport-migrants-to-rwanda",
+   "source_domain": "aljazeera.com",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "politics",
+    "world"
+   ],
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.aljazeera.com/news/2026/11/17/why-are-five-eu-countries-reviving-plans-to-deport-migrants-to-rwanda",
+     "domain": "aljazeera.com",
+     "label": "Al Jazeera"
+    },
+    {
+     "url": "https://www.rfi.fr/fr/europe/20261116-l-allemagne-l-autriche-le-danemark-la-gr%C3%A8ce-et-les-pays-bas-pr%C3%A9sentent-leur-projet-de-hub-de-retour-pour-migrants-au-rwanda",
+     "domain": "rfi.fr",
+     "label": "RFI"
+    }
+   ],
+   "event_date": "2026-11-16",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 17 Nov",
+   "daybreak": false,
+   "edition": "2026-11-17-news",
+   "period": {
+    "start": "2026-11-17",
+    "end": "2026-11-17",
+    "start_text": "",
+    "end_text": "17 Nov",
+    "label": "17 Nov"
+   },
+   "on_front": true,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "Happened 16 Nov",
+   "n_sources": 2,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-17-news-mongolia-s-president-khurelsukh-ukhnaa-said-on-t",
+   "sid": "st-5c9e8194a5b5",
+   "headline": "Mongolia's president says he will resign",
+   "summary": "Mongolia's President Khurelsukh Ukhnaa said on Tuesday 17 November that he will resign, after being accused of taking $25 million (about €23 million) linked to a state railway project. He said he was being \"falsely accused and defamed\" but would step down to \"restore my good name\", and pledged to cooperate with investigators. The resignation takes effect only once parliament, the State Great Khural, accepts it. The accusation came on Saturday 14 November from Nyambaatar Khishgee, a former mayor of Ulaanbaatar from a rival faction of the president's own Mongolian People's Party. He alleged bribes from Bodi International, which won the contract for the Tavantolgoi–Gashuunsukhait coal railway to the Chinese border without a competitive tender. Bodi denies paying any cash bribes. The opposition Democratic Party then called for Khurelsukh to go.",
+   "why": "the railway carries Mongolia's coal exports to China, its main source of export revenue. The resignation adds to infighting in the ruling party, which has had three prime ministers in nine months.",
+   "url": "https://www.dw.com/en/mongolian-president-khurelsukh-to-resign-amid-corruption-allegations/a-79964717",
+   "source_domain": "dw.com",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "politics"
+   ],
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.dw.com/en/mongolian-president-khurelsukh-to-resign-amid-corruption-allegations/a-79964717",
+     "domain": "dw.com",
+     "label": "DW"
+    }
+   ],
+   "event_date": "2026-11-17",
+   "flags": [
+    {
+     "key": "single-source",
+     "label": "Single source"
+    }
+   ],
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 17 Nov",
+   "daybreak": false,
+   "edition": "2026-11-17-news",
+   "period": {
+    "start": "2026-11-17",
+    "end": "2026-11-17",
+    "start_text": "",
+    "end_text": "17 Nov",
+    "label": "17 Nov"
+   },
+   "on_front": true,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "",
+   "n_sources": 1,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-17-news-turkish-police-raided-the-istanbul-headquarters",
+   "sid": "st-daa4e010f743",
+   "headline": "Turkey seizes opposition broadcaster Sozcu TV",
+   "summary": "Turkish police raided the Istanbul headquarters of the pro-opposition broadcaster Sozcu TV early on Tuesday 17 November, detained staff and installed a court-appointed trustee to run the channel and its news website. The Istanbul Chief Public Prosecutor's Office says the case concerns alleged breaches of anti-terror-financing laws and suspected links to the network of the late cleric Fethullah Gülen, whom Ankara blames for the 2016 coup attempt. Sozcu's lawyer says the raid stems from a 2016 case, and the channel has challenged the takeover in court. Regular news was replaced by a documentary for several hours before resuming at noon. The trustee did not take over the print newspaper.",
+   "why": "appointing a trustee puts one of Turkey's last nationally broadcast critical news channels under state-chosen management. The prosecutor's \"terror financing\" label is the authorities' own characterisation, and it was used the same way in earlier takeovers of opposition media.",
+   "url": "https://www.dw.com/en/turkish-authorities-raid-opposition-sozcu-news-channel-appoint-new-management/a-79966297",
+   "source_domain": "dw.com",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "politics"
+   ],
+   "topic_primary": "politics",
+   "topic_label": "Politics",
+   "topic_color": "#9a6a34",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.dw.com/en/turkish-authorities-raid-opposition-sozcu-news-channel-appoint-new-management/a-79966297",
+     "domain": "dw.com",
+     "label": "DW"
+    }
+   ],
+   "event_date": "2026-11-17",
+   "flags": [
+    {
+     "key": "single-source",
+     "label": "Single source"
+    }
+   ],
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 17 Nov",
+   "daybreak": false,
+   "edition": "2026-11-17-news",
+   "period": {
+    "start": "2026-11-17",
+    "end": "2026-11-17",
+    "start_text": "",
+    "end_text": "17 Nov",
+    "label": "17 Nov"
+   },
+   "on_front": true,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "",
+   "n_sources": 1,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-17-news-a-leak-of-more-than-15-million-internal-deutsche",
+   "sid": "st-cc80bbcdda9c",
+   "headline": "Deutsche Bank leak exposes Swiss oligarch accounts",
+   "summary": "A leak of more than 15 million internal Deutsche Bank documents, published on Tuesday 17 November by a consortium of over 200 journalists, shows the German bank held the fortunes of about twenty Russian oligarchs close to Vladimir Putin through its Zurich and Geneva units before the 2022 invasion of Ukraine. The consortium includes the Tamedia papers in Switzerland, Der Spiegel, the Financial Times and Le Monde. According to the reporting, the bank rated those clients by colour for risk. The highest-risk \"red\" category included Suleyman Kerimov and Viktor Vekselberg, who lived in Zug. The documents also show a late-2020 plan, drawn up by a working group that included chief executive Christian Sewing, to grow revenue from wealthy Russian clients despite internal and external warnings about money-laundering risk. Deutsche Bank says some of the facts are nearly twenty years old, that regulators reviewed them at the time, and that it spent €7 billion on controls between 2019 and 2025. Its shares fell almost 6% in early Frankfurt trading.",
+   "why": "the leak puts the Swiss financial centre back at the heart of how Russian elite wealth was held. It also raises the question of what Swiss supervisors knew about these Zurich and Geneva accounts at the time.",
+   "url": "https://www.letemps.ch/economie/finance/fortunes-d-oligarques-russes-heberges-en-suisse-relations-avec-jeffrey-epstein-une-fuite-massive-de-documents-secoue-deutsche-bank",
+   "source_domain": "letemps.ch",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.letemps.ch/economie/finance/fortunes-d-oligarques-russes-heberges-en-suisse-relations-avec-jeffrey-epstein-une-fuite-massive-de-documents-secoue-deutsche-bank",
+     "domain": "letemps.ch",
+     "label": "Le Temps (ATS)"
+    },
+    {
+     "url": "https://www.lemonde.fr/les-decodeurs/article/2026/11/17/inside-deutsche-bank-les-secrets-inavouables-du-geant-bancaire-reveles-par-15-millions-de-documents-confidentiels_6812911_4355770.html",
+     "domain": "lemonde.fr",
+     "label": "Le Monde"
+    }
+   ],
+   "event_date": "2026-11-17",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 17 Nov",
+   "daybreak": false,
+   "edition": "2026-11-17-news",
+   "period": {
+    "start": "2026-11-17",
+    "end": "2026-11-17",
+    "start_text": "",
+    "end_text": "17 Nov",
+    "label": "17 Nov"
+   },
+   "on_front": false,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "",
+   "n_sources": 2,
+   "in_reserve": true,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-17-news-swiss-farming-s-gross-value-added-will-fall-11-7",
+   "sid": "st-653b073c5fcb",
+   "headline": "Drought cuts Swiss farm value added 11.7%",
+   "summary": "Swiss farming's gross value added will fall 11.7% in 2026 to 4.5 billion francs, according to first estimates from the Federal Statistical Office (FSO) published on Tuesday 17 November, after a historic summer heatwave and drought. Total production value is expected to fall 5.1% to 12.0 billion francs. Crop production value is down 9.0%. Fodder is down 19.2% after poor yields forced farmers to use up their reserves early. Sugar beet (−33%) and potatoes (−24.8%) are heading for their lowest harvests in 30 years. Pig farmers were hit separately: output rose 5.3% while prices fell 34.3%. Beef did well, with production value up 10.6% to a level last seen in the early 1990s. Without the effect of prices, value added fell only 2.2%. Labour productivity is down 0.7% but still 38% above its 2000 level.",
+   "why": "the FSO compares 2026 against an \"excellent\" 2025, which exaggerates the fall in francs. The record lows for sugar beet and potatoes are a clearer measure of the drought, and they will weigh on the farm-support debates ahead of next year's budget.",
+   "url": "https://www.admin.ch/fr/newnsb/MMadk29ey8pJ",
+   "source_domain": "admin.ch",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.admin.ch/fr/newnsb/MMadk29ey8pJ",
+     "domain": "admin.ch",
+     "label": "Federal Council / FSO"
+    }
+   ],
+   "event_date": "2026-11-17",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 17 Nov",
+   "daybreak": false,
+   "edition": "2026-11-17-news",
+   "period": {
+    "start": "2026-11-17",
+    "end": "2026-11-17",
+    "start_text": "",
+    "end_text": "17 Nov",
+    "label": "17 Nov"
+   },
+   "on_front": false,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "",
+   "n_sources": 1,
+   "in_reserve": true,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-17-news-the-federal-council-has-recommended-that-parliam",
+   "sid": "st-704f172f7805",
+   "headline": "IV offices may flag gun risks",
+   "summary": "The Federal Council has recommended that parliament accept a motion allowing cantonal disability-insurance (IV) offices to report insured people they consider unfit to own a gun to cantonal weapons offices, SRF reported on Tuesday 17 November. The motion was filed by Jura SP National Councillor Loïc Dobler after the shooting in Aarau at the end of August. In that attack a 43-year-old man from Jura who legally owned weapons killed a young woman and wounded six people, and according to his parents he drew an IV pension for psychiatric problems. IV staff can already file reports in a personal capacity, like any official. Dobler, who works at the Jura IV office, says almost nobody does so because they carry the risk personally, and that letting the office report as an authority would change that. The Federal Council took its decision on Wednesday 11 November. The Federal Social Insurance Office declined to explain its reasons.",
+   "why": "the change would create a formal link between social-insurance health information and gun licensing. That closes a gap the Aarau case exposed, but it also raises questions about medical confidentiality and stigma for IV recipients with mental illness, which parliament will have to weigh.",
+   "url": "https://www.srf.ch/news/schweiz/nach-amoktat-von-aarau-iv-soll-gefaehrliche-personen-der-waffenbehoerde-melden-duerfen",
+   "source_domain": "srf.ch",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "politics"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.srf.ch/news/schweiz/nach-amoktat-von-aarau-iv-soll-gefaehrliche-personen-der-waffenbehoerde-melden-duerfen",
+     "domain": "srf.ch",
+     "label": "SRF"
+    }
+   ],
+   "event_date": "2026-11-11",
+   "flags": [
+    {
+     "key": "single-source",
+     "label": "Single source"
+    }
+   ],
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 17 Nov",
+   "daybreak": false,
+   "edition": "2026-11-17-news",
+   "period": {
+    "start": "2026-11-17",
+    "end": "2026-11-17",
+    "start_text": "",
+    "end_text": "17 Nov",
+    "label": "17 Nov"
+   },
+   "on_front": false,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "Happened 11 Nov",
+   "n_sources": 1,
+   "in_reserve": true,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-17-news-two-tankers-were-attacked-in-the-strait-of-hormu",
+   "sid": "st-d0e7be6801d9",
+   "headline": "Two more tankers hit in Hormuz",
+   "summary": "Two tankers were attacked in the Strait of Hormuz on Monday 16 November, the UK Maritime Trade Operations agency (UKMTO) reported, and Iran's Revolutionary Guards navy said two tankers had struck mines and caught fire. UKMTO said one tanker was disabled with an engine-room fire about seven nautical miles (13 km) north of Khasab, Oman. Another was hit by an unidentified projectile while leaving the strait. No casualties were reported. The Revolutionary Guards said their two tankers were using a route Tehran considers unauthorised, and Iran's regular navy reported a third vessel hitting a mine east of the strait. Iran named none of the ships, and it is unclear whether its claims and the UKMTO incidents describe the same events. The UN's International Maritime Organization counted 136 security incidents involving vessels in the region between 1 March and 11 November, 35 of them in October.",
+   "why": "",
+   "url": "https://www.aljazeera.com/news/2026/11/17/tankers-hit-in-strait-of-hormuz-as-drone-raises-alarm-at-iraq-gas-field",
+   "source_domain": "aljazeera.com",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 1,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.aljazeera.com/news/2026/11/17/tankers-hit-in-strait-of-hormuz-as-drone-raises-alarm-at-iraq-gas-field",
+     "domain": "aljazeera.com",
+     "label": "Al Jazeera"
+    }
+   ],
+   "event_date": "2026-11-16",
+   "flags": [
+    {
+     "key": "single-source",
+     "label": "Single source"
+    },
+    {
+     "key": "ongoing",
+     "label": "Ongoing"
+    }
+   ],
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 17 Nov",
+   "daybreak": false,
+   "edition": "2026-11-17-news",
+   "period": {
+    "start": "2026-11-17",
+    "end": "2026-11-17",
+    "start_text": "",
+    "end_text": "17 Nov",
+    "label": "17 Nov"
+   },
+   "on_front": false,
+   "tier": "brief",
+   "tier_label": "Brief",
+   "unfurl": false,
+   "event_label": "Happened 16 Nov",
+   "n_sources": 1,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-17-news-swiss-households-had-an-average-disposable-incom",
+   "sid": "st-381a11054585",
+   "headline": "Swiss housing costs rise as incomes stall",
+   "summary": "Swiss households had an average disposable income of 7,209 francs a month in 2024, almost unchanged from 2023 (7,186), while housing costs kept rising to 1,546 francs a month, the FSO's household budget survey published on Tuesday 17 November shows. Housing is the largest consumer spending item for Swiss households. Compulsory spending (taxes, social contributions, health-insurance premiums and transfers) took 31.0% of gross income, with taxes alone at 12.2% and premiums at 7.2%. About 61% of households have a disposable income below the average, which is pulled up by high earners. Over 2022–2024 the gap ran from 10,569 francs for couples with children to 3,591 francs for single people aged 65 or over.",
+   "why": "",
+   "url": "https://www.admin.ch/fr/newnsb/6f7-asx4KxXe",
+   "source_domain": "admin.ch",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 1,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.admin.ch/fr/newnsb/6f7-asx4KxXe",
+     "domain": "admin.ch",
+     "label": "Federal Council / FSO"
+    }
+   ],
+   "event_date": "2026-11-17",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 17 Nov",
+   "daybreak": false,
+   "edition": "2026-11-17-news",
+   "period": {
+    "start": "2026-11-17",
+    "end": "2026-11-17",
+    "start_text": "",
+    "end_text": "17 Nov",
+    "label": "17 Nov"
+   },
+   "on_front": false,
+   "tier": "brief",
+   "tier_label": "Brief",
+   "unfurl": false,
+   "event_label": "",
+   "n_sources": 1,
+   "show_desk": false
+  },
+  {
    "id": "2026-11-16-news-estonia-will-close-its-road-border-crossings-wit",
    "sid": "st-8cacb70b21a8",
    "headline": "Estonia to shut Russia border crossings",
@@ -2813,9 +3305,9 @@
     }
    ],
    "event_date": "2026-11-15",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 16 Nov",
    "daybreak": true,
    "edition": "2026-11-16-news",
@@ -2826,12 +3318,13 @@
     "end_text": "16 Nov",
     "label": "16 Nov"
    },
-   "on_front": true,
+   "on_front": false,
    "tier": "lead",
    "tier_label": "Lead",
    "unfurl": true,
    "event_label": "Happened 15 Nov",
    "n_sources": 2,
+   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -2862,9 +3355,9 @@
     }
    ],
    "event_date": "2026-11-15",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 16 Nov",
    "daybreak": false,
    "edition": "2026-11-16-sports",
@@ -2875,12 +3368,13 @@
     "end_text": "16 Nov",
     "label": "10–16 Nov"
    },
-   "on_front": true,
+   "on_front": false,
    "tier": "lead",
    "tier_label": "Lead",
    "unfurl": true,
    "event_label": "",
    "n_sources": 1,
+   "in_reserve": true,
    "show_desk": false
   },
   {
@@ -2917,9 +3411,9 @@
     }
    ],
    "event_date": "2026-11-15",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 16 Nov",
    "daybreak": false,
    "edition": "2026-11-16-news",
@@ -2930,12 +3424,13 @@
     "end_text": "16 Nov",
     "label": "16 Nov"
    },
-   "on_front": true,
+   "on_front": false,
    "tier": "feature",
    "tier_label": "Feature",
    "unfurl": true,
    "event_label": "Happened 15 Nov",
    "n_sources": 2,
+   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -2971,9 +3466,9 @@
     }
    ],
    "event_date": "2026-11-16",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 16 Nov",
    "daybreak": false,
    "edition": "2026-11-16-news",
@@ -2984,119 +3479,12 @@
     "end_text": "16 Nov",
     "label": "16 Nov"
    },
-   "on_front": true,
+   "on_front": false,
    "tier": "feature",
    "tier_label": "Feature",
    "unfurl": true,
    "event_label": "",
    "n_sources": 2,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-16-news-three-judges-of-the-international-criminal-court",
-   "sid": "st-3d359b3ab308",
-   "headline": "ICC judges close US Afghanistan probe",
-   "summary": "Three judges of the International Criminal Court (ICC) closed its investigation into alleged crimes by US forces in Afghanistan on Thursday 12 November, Le Monde reported on Monday 16 November. The investigation, opened in 2020, covered torture, rape and sexual violence at the US base at Bagram, north of Kabul, in 2003 and 2004. It also covered CIA secret prisons in Romania, Poland and Lithuania. According to Le Monde, the judges cited \"significant limits\" on the prosecution's ability to investigate and gather evidence, and said it was now too late to bring charges. Lawyers for former detainees at the US Center for Constitutional Rights had argued that the evidence of a torture policy, including the US Senate's own report, was overwhelming. Le Monde says Washington had made closing the case one of its conditions for not sanctioning the Court ahead of April 2027.",
-   "why": "this was one of the few avenues for international accountability for US abuses after 9/11. It is closing at a moment when the US is pressuring the Court. The judges, for their part, gave procedural reasons: the time that has passed and the limits on gathering evidence.",
-   "url": "https://www.lemonde.fr/international/article/2026/11/16/cpi-des-juges-referment-le-dossier-sur-les-crimes-des-forces-americaines-en-afghanistan_6811690_3210.html",
-   "source_domain": "lemonde.fr",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics",
-    "politics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.lemonde.fr/international/article/2026/11/16/cpi-des-juges-referment-le-dossier-sur-les-crimes-des-forces-americaines-en-afghanistan_6811690_3210.html",
-     "domain": "lemonde.fr",
-     "label": "Le Monde"
-    }
-   ],
-   "event_date": "2026-11-12",
-   "flags": [
-    {
-     "key": "single-source",
-     "label": "Single source"
-    }
-   ],
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 16 Nov",
-   "daybreak": false,
-   "edition": "2026-11-16-news",
-   "period": {
-    "start": "2026-11-16",
-    "end": "2026-11-16",
-    "start_text": "",
-    "end_text": "16 Nov",
-    "label": "16 Nov"
-   },
-   "on_front": false,
-   "tier": "feature",
-   "tier_label": "Feature",
-   "unfurl": true,
-   "event_label": "Happened 12 Nov",
-   "n_sources": 1,
-   "in_reserve": true,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-16-news-switzerland-s-real-gdp-grew-0-2-in-the-third-qua",
-   "sid": "st-8f27f420b3c3",
-   "headline": "Swiss economy grows 0.2% in third quarter",
-   "summary": "Switzerland's real GDP grew 0.2% in the third quarter of 2026, according to the first estimate from the State Secretariat for Economic Affairs (Seco), published on Monday 16 November. Industry grew again while services as a whole stagnated, the wire agency ATS reports. The growth is well below the second quarter, when GDP rose 1.5%, according to the same report. Economists polled by the financial news agency AWP had expected anywhere from −0.3% to +0.4%, so the result is in the middle of that range. The full Seco release, with the breakdown by sector and the figure adjusted for major sporting events, was not reachable this run.",
-   "why": "if services, the larger part of the economy, are flat while industry carries growth, the slowdown is broad. That feeds into cantonal budget forecasts and the Swiss National Bank's next rate decision.",
-   "url": "https://www.letemps.ch/economie/le-pib-suisse-a-augmente-de-0-2-au-troisieme-trimestre",
-   "source_domain": "letemps.ch",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "economy"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.letemps.ch/economie/le-pib-suisse-a-augmente-de-0-2-au-troisieme-trimestre",
-     "domain": "letemps.ch",
-     "label": "Le Temps / ATS"
-    }
-   ],
-   "event_date": "2026-11-16",
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 16 Nov",
-   "daybreak": false,
-   "edition": "2026-11-16-news",
-   "period": {
-    "start": "2026-11-16",
-    "end": "2026-11-16",
-    "start_text": "",
-    "end_text": "16 Nov",
-    "label": "16 Nov"
-   },
-   "on_front": false,
-   "tier": "feature",
-   "tier_label": "Feature",
-   "unfurl": true,
-   "event_label": "",
-   "n_sources": 1,
    "in_reserve": true,
    "show_desk": true
   },
@@ -3128,9 +3516,9 @@
     }
    ],
    "event_date": "2026-11-15",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 16 Nov",
    "daybreak": false,
    "edition": "2026-11-16-sports",
@@ -3178,9 +3566,9 @@
     }
    ],
    "event_date": "2026-11-15",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 16 Nov",
    "daybreak": false,
    "edition": "2026-11-16-sports",
@@ -3234,9 +3622,9 @@
      "label": "Single source"
     }
    ],
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 16 Nov",
    "daybreak": false,
    "edition": "2026-11-16-sports",
@@ -3255,122 +3643,6 @@
    "n_sources": 1,
    "in_reserve": true,
    "show_desk": false
-  },
-  {
-   "id": "2026-11-16-news-cape-verde-s-president-jos-maria-neves-won-a-sec",
-   "sid": "st-7d6359425218",
-   "headline": "Neves re-elected in Cape Verde",
-   "summary": "Cape Verde's President José Maria Neves won a second five-year term in the first round on Sunday 15 November, with 63.8% of the vote according to the electoral commission's provisional results. His main challenger, former justice minister Joana Rosa Amado of the Movement for Democracy (MpD), took about 31.6%. Four other candidates shared the rest. Le Temps, citing AFP, says turnout was low. Neves promised to keep \"promoting freedoms\" in the archipelago, which ranks third in Africa on the Mo Ibrahim Foundation's 2026 governance index. Observers from ECOWAS (the West African regional bloc), the African Union and the EU monitored the vote.",
-   "why": "",
-   "url": "https://www.dw.com/en/cape-verde-election-jose-maria-neves-set-to-win-second-term/a-79952606",
-   "source_domain": "dw.com",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "politics",
-    "world"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.dw.com/en/cape-verde-election-jose-maria-neves-set-to-win-second-term/a-79952606",
-     "domain": "dw.com",
-     "label": "DW"
-    },
-    {
-     "url": "https://www.letemps.ch/monde/le-president-sortant-jose-maria-neves-reelu-pour-un-second-mandat-a-la-tete-du-cap-vert",
-     "domain": "letemps.ch",
-     "label": "Le Temps"
-    }
-   ],
-   "event_date": "2026-11-15",
-   "flags": [
-    {
-     "key": "ongoing",
-     "label": "Ongoing"
-    }
-   ],
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 16 Nov",
-   "daybreak": false,
-   "edition": "2026-11-16-news",
-   "period": {
-    "start": "2026-11-16",
-    "end": "2026-11-16",
-    "start_text": "",
-    "end_text": "16 Nov",
-    "label": "16 Nov"
-   },
-   "on_front": false,
-   "tier": "brief",
-   "tier_label": "Brief",
-   "unfurl": false,
-   "event_label": "Happened 15 Nov",
-   "n_sources": 2,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-16-news-switzerland-registered-2-210-asylum-applications",
-   "sid": "st-e09cb310fc52",
-   "headline": "Swiss asylum requests fall 16%",
-   "summary": "Switzerland registered 2,210 asylum applications in October 2026, 16% fewer than in October 2025 (433 fewer), the State Secretariat for Migration (SEM) said on Monday 16 November. Afghanistan remained the main country of origin with 498 applications, followed by Eritrea (430), Algeria (236), Ethiopia (171) and Somalia (163). Applications rose by 88 (4%) from September, which the SEM says is the usual late-summer and autumn rise before winter. The SEM decided 2,419 cases at first instance and granted asylum to 567 people. A total of 732 people left Switzerland under official supervision: 418 on their own and 314 under police escort, either to their home country, to the EU state responsible under the Dublin rules, or to another country.",
-   "why": "",
-   "url": "https://www.admin.ch/fr/newnsb/W11FHTquJJ9Z",
-   "source_domain": "admin.ch",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.admin.ch/fr/newnsb/W11FHTquJJ9Z",
-     "domain": "admin.ch",
-     "label": "SEM / admin.ch"
-    }
-   ],
-   "event_date": "2026-11-16",
-   "flags": [
-    {
-     "key": "official-pr",
-     "label": "Official PR"
-    }
-   ],
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 16 Nov",
-   "daybreak": false,
-   "edition": "2026-11-16-news",
-   "period": {
-    "start": "2026-11-16",
-    "end": "2026-11-16",
-    "start_text": "",
-    "end_text": "16 Nov",
-    "label": "16 Nov"
-   },
-   "on_front": false,
-   "tier": "brief",
-   "tier_label": "Brief",
-   "unfurl": false,
-   "event_label": "",
-   "n_sources": 1,
-   "show_desk": true
   },
   {
    "id": "2026-11-16-sports-genoni-becomes-the-first-goalkeeper-to-reach-1-0",
@@ -3400,9 +3672,9 @@
     }
    ],
    "event_date": "2026-11-14",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 16 Nov",
    "daybreak": false,
    "edition": "2026-11-16-sports",
@@ -3449,9 +3721,9 @@
     }
    ],
    "event_date": "2026-11-12",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 16 Nov",
    "daybreak": false,
    "edition": "2026-11-16-sports",
@@ -3481,7 +3753,7 @@
     "A quiet international-break week: results that rewrote a streak (England-Spain) or a table (Belgium-Italy) mattered more than anything the club leagues could offer."
    ],
    "kind": "editorial",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 16 Nov",
    "daybreak": false,
    "edition": "2026-11-16-sports",
@@ -3546,7 +3818,7 @@
    ],
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 15 Nov",
    "daybreak": true,
    "edition": "2026-11-15-news",
@@ -3601,7 +3873,7 @@
    "event_date": "2026-11-15",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 15 Nov",
    "daybreak": false,
    "edition": "2026-11-15-news",
@@ -3656,7 +3928,7 @@
    "event_date": "2026-11-15",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 15 Nov",
    "daybreak": false,
    "edition": "2026-11-15-news",
@@ -3673,7 +3945,6 @@
    "unfurl": true,
    "event_label": "",
    "n_sources": 2,
-   "in_reserve": true,
    "show_desk": false
   },
   {
@@ -3711,7 +3982,7 @@
    "event_date": "2026-11-19",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": true,
    "edition": "2026-11-14-news",
@@ -3728,7 +3999,6 @@
    "unfurl": true,
    "event_label": "",
    "n_sources": 2,
-   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -3777,7 +4047,7 @@
    "affiliation_label": "Physical Superintelligence",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-weekend",
@@ -3794,7 +4064,6 @@
    "unfurl": true,
    "event_label": "Happened 6 Nov",
    "n_sources": 2,
-   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -3838,7 +4107,7 @@
    "affiliation_label": "MATS, Google DeepMind",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-weekend",
@@ -3855,7 +4124,6 @@
    "unfurl": false,
    "event_label": "Happened 6 Nov",
    "n_sources": 1,
-   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -3899,7 +4167,7 @@
    "affiliation_label": "PayPal",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-weekend",
@@ -3916,7 +4184,6 @@
    "unfurl": false,
    "event_label": "",
    "n_sources": 1,
-   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -3960,7 +4227,7 @@
    "affiliation_label": "University of Bern, Inselspital Bern",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-weekend",
@@ -4019,7 +4286,7 @@
    "affiliation_label": "Cleveland Clinic, Monash University",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-weekend",
@@ -4073,7 +4340,7 @@
    "event_date": "2026-11-11",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-weekend",
@@ -4133,7 +4400,7 @@
    ],
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-weekend",
@@ -4189,7 +4456,7 @@
    ],
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-weekend",
@@ -4249,7 +4516,7 @@
    "affiliation_label": "Incubilate, UMass Amherst",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-weekend",
@@ -4303,7 +4570,7 @@
    "event_date": "2026-11-14",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-news",
@@ -4363,7 +4630,7 @@
    "event_date": "2026-11-13",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-news",
@@ -4395,7 +4662,7 @@
     "<strong>3. Low-level number formats are quietly changing behaviour, in training and in serving.</strong> Three papers this week trace measurable changes in model behaviour to how numbers are rounded. PayPal researchers found that storing a hybrid model's recurrent state in bf16 (a 16-bit format) with ordinary round-to-nearest made five of six models reason for longer. On Qwen3.5-9B, accuracy on competition maths fell from 85.6% to 70.8%, mostly because runs fell into exact repetition loops. NVIDIA found the training-side counterpart: during RL fine-tuning with low learning rates, rounding the full-precision master weights to bf16 often leaves the copy actually used for training unchanged (\"weight sticking\"), so training converges more slowly than in fp16. Level5 measured that changing the serving engine, restarting the server, or changing batching or kernels moves up to 0.92% of a model's decisions, close to the 0.9–2.1% that 8-bit quantisation moves. Two of the three fixes are the same: stochastic rounding, which rounds up or down at random in proportion to the remainder so that small errors average out instead of piling up in one direction. What links them is that \"same model, same weights\" no longer guarantees the same behaviour, and the differences show up in output length and in individual answers more than in the headline accuracy. llama.cpp's 1.0 release on Friday 13 November added FP8 KV caches and further NVFP4 (4-bit) support, so local users are getting more precision options at exactly the moment research shows those options affect results. What to watch: whether hybrid-model evaluations start reporting the state number format, how often runs hit the length cap, and output length, as the PayPal authors recommend."
    ],
    "kind": "editorial",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 14 Nov",
    "daybreak": false,
    "edition": "2026-11-14-weekend",
@@ -5766,44 +6033,6 @@
    "show_desk": false
   },
   {
-   "stream": "science",
-   "date": "2026-11-11",
-   "date_label": "Nov 11",
-   "kicker": "Science · Why it matters · Nov 11",
-   "heading": "Why it matters",
-   "title": "The marker is not the outcome",
-   "paras": [
-    "Two of this week's cardiology results make the same point from different directions. Pelacarsen removed 78% of a genetically validated risk particle and prevented no heart attacks. In STREAM, stopping a drug passed a pre-set non-inferiority test while event rates still rose by a hazard ratio of 1.38. Both say to judge treatments by what happens to patients, not by what happens to a number on a lab report.",
-    "<strong>\"Abrupt\" depends on the recorder.</strong> The Dansgaard–Oeschger study and the pseudogap paper both resolve old debates by changing the measuring instrument. Cave records separate the atmosphere's fast response from the ocean's slow one. Shot noise counts the charge of the current carriers directly instead of inferring pairing from an energy gap. In both cases the long-standing \"fact\" was partly a feature of the instrument."
-   ],
-   "kind": "editorial",
-   "age_days": 3,
-   "day_label": "Wed 11 Nov",
-   "daybreak": false,
-   "edition": "2026-11-11-science",
-   "period": {
-    "start": "2026-11-05",
-    "end": "2026-11-11",
-    "start_text": "5",
-    "end_text": "11 Nov",
-    "label": "5–11 Nov"
-   },
-   "on_front": false,
-   "sid": "ed-science-2026-11-11",
-   "topics": [
-    "science"
-   ],
-   "stream_label": "Science",
-   "title_html": "The marker is not the outcome",
-   "title_is_lede": false,
-   "body": [
-    "Two of this week's cardiology results make the same point from different directions. Pelacarsen removed 78% of a genetically validated risk particle and prevented no heart attacks. In STREAM, stopping a drug passed a pre-set non-inferiority test while event rates still rose by a hazard ratio of 1.38. Both say to judge treatments by what happens to patients, not by what happens to a number on a lab report.",
-    "<strong>\"Abrupt\" depends on the recorder.</strong> The Dansgaard–Oeschger study and the pseudogap paper both resolve old debates by changing the measuring instrument. Cave records separate the atmosphere's fast response from the ocean's slow one. Shot noise counts the charge of the current carriers directly instead of inferring pairing from an energy gap. In both cases the long-standing \"fact\" was partly a feature of the instrument."
-   ],
-   "title_text": "The marker is not the outcome",
-   "in_reserve": true
-  },
-  {
    "id": "2026-11-10-news-russian-ukrainian-and-us-delegations-began-two-d",
    "sid": "st-3031d20b1984",
    "headline": "Abu Dhabi talks open on Ukraine's borders",
@@ -6154,55 +6383,6 @@
    "show_desk": true
   },
   {
-   "id": "2026-11-09-sports-norris-wins-in-the-wet-in-s-o-paulo-mercedes-loc",
-   "sid": "st-4f0bdbfb82bc",
-   "headline": "Norris wins Brazilian GP",
-   "summary": "Lando Norris (McLaren) converted pole into his third win of 2026, holding off Max Verstappen, who finished second after starting from the back of the grid on an engine-change penalty; Isack Hadjar made it a double podium for Red Bull. Mercedes finished fourth and fifth (George Russell, new champion Kimi Antonelli) and that was enough to secure the constructors' championship, the team's ninth and first since 2021. The driver title was already decided, so the interest was in the team race and in Verstappen's recovery. Lewis Hamilton finished ninth and says tensions with Ferrari team-mate Charles Leclerc are \"squashed\".",
-   "why": "both titles now belong to Mercedes, so the remaining races are about pride, seats and 2027 positioning rather than the championship.",
-   "url": "https://www.autosport.com/f1/news/f1-brazilian-gp-lando-norris-wins-in-mixed-conditions-mercedes-clinches-constructors-title/10873048/",
-   "source_domain": "autosport.com",
-   "date": "2026-11-09",
-   "date_label": "Nov 9",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 3,
-   "is_lead": true,
-   "sources": [
-    {
-     "url": "https://www.autosport.com/f1/news/f1-brazilian-gp-lando-norris-wins-in-mixed-conditions-mercedes-clinches-constructors-title/10873048/",
-     "domain": "autosport.com",
-     "label": "Autosport race report, Brazilian GP"
-    }
-   ],
-   "event_date": "2026-11-08",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 9 Nov",
-   "daybreak": true,
-   "edition": "2026-11-09-sports",
-   "period": {
-    "start": "2026-11-03",
-    "end": "2026-11-09",
-    "start_text": "3",
-    "end_text": "9 Nov",
-    "label": "3–9 Nov"
-   },
-   "on_front": false,
-   "tier": "lead",
-   "tier_label": "Lead",
-   "unfurl": true,
-   "event_label": "",
-   "n_sources": 1,
-   "show_desk": false
-  },
-  {
    "id": "2026-11-09-news-the-kremlin-said-on-monday-9-november-that-this",
    "sid": "st-1e169650b73a",
    "headline": "Paris donors chase Chernobyl arch repair money",
@@ -6249,7 +6429,7 @@
    "kind": "story",
    "age_days": 3,
    "day_label": "Mon 9 Nov",
-   "daybreak": false,
+   "daybreak": true,
    "edition": "2026-11-09-news",
    "period": {
     "start": "2026-11-09",
@@ -6264,7 +6444,7 @@
    "unfurl": true,
    "event_label": "",
    "n_sources": 2,
-   "show_desk": true
+   "show_desk": false
   },
   {
    "id": "2026-11-09-news-donald-trump-was-due-to-host-qatar-s-prime-minis",
@@ -6318,7 +6498,7 @@
    "unfurl": true,
    "event_label": "",
    "n_sources": 2,
-   "show_desk": true
+   "show_desk": false
   },
   {
    "id": "2026-11-09-news-in-his-first-big-interview-since-republicans-los",
@@ -6372,110 +6552,6 @@
    "unfurl": true,
    "event_label": "Happened 8 Nov",
    "n_sources": 2,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-09-sports-basel-throw-away-a-2-0-lead-and-stay-stuck-below",
-   "sid": "st-80521c502aec",
-   "headline": "Basel blow 2-0 lead at Thun",
-   "summary": "Basel have now gone five league games without a win, and SRF reports they still sit \"below the line\" in the table, one place behind Thun, who edged past Luzern with the point. Basel led 2–0 inside 12 minutes (Zan Celar after 40 seconds, Philip Otele), then goalkeeper Jonas Omlin tried to dribble on a slick pitch and handed Thun a goal; Kevin Rüegg's late own goal (78th minute) completed the comeback. Thun are still without a home league win after six attempts. SRF refers to Basel as the reigning champions, so five games without a win is a real slump. In the same round Lugano lost 5–0 at St. Gallen, while Servette–Zürich ended goalless. The league now pauses for two weeks of international matches; Basel host Luzern on Sunday 2026-11-22.",
-   "why": "the Basel form that stalled at 0–0 against GC on 2026-10-25 has not recovered, and the international break gives the coach two weeks to fix a defence that gave away three goals to a side that had not won at home.",
-   "url": "https://www.srf.ch/sport/fussball/super-league/13-runde-der-super-league-spaetes-eigentor-basel-muss-sich-in-thun-mit-3-3-begnuegen",
-   "source_domain": "srf.ch",
-   "date": "2026-11-09",
-   "date_label": "Nov 9",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.srf.ch/sport/fussball/super-league/13-runde-der-super-league-spaetes-eigentor-basel-muss-sich-in-thun-mit-3-3-begnuegen",
-     "domain": "srf.ch",
-     "label": "Thun 3–3 Basel, SRF Sport match report"
-    }
-   ],
-   "event_date": "2026-11-08",
-   "flags": [
-    {
-     "key": "ongoing",
-     "label": "Ongoing"
-    }
-   ],
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 9 Nov",
-   "daybreak": false,
-   "edition": "2026-11-09-sports",
-   "period": {
-    "start": "2026-11-03",
-    "end": "2026-11-09",
-    "start_text": "3",
-    "end_text": "9 Nov",
-    "label": "3–9 Nov"
-   },
-   "on_front": false,
-   "tier": "feature",
-   "tier_label": "Feature",
-   "unfurl": true,
-   "event_label": "",
-   "n_sources": 1,
-   "show_desk": false
-  },
-  {
-   "id": "2026-11-09-sports-alcaraz-wins-his-first-paris-masters-beating-she",
-   "sid": "st-1e07fea3ee6d",
-   "headline": "Alcaraz wins Paris Masters",
-   "summary": "Carlos Alcaraz (ranked 3) beat Ben Shelton (ranked 4), saving a string of break points in the first set before winning a tiebreak, then breaking twice from behind in the second. SRF counts it as his seventh Masters 1000 title of the nine on the calendar; only the Canadian Open and Shanghai are missing. It follows his title in Vienna two weeks earlier and avenges Shelton's win over him in the US Open quarterfinals. Gauff opened the WTA Finals in Indian Wells with a three-set win over Pegula on 2026-11-09.",
-   "why": "Alcaraz arrives at the season-ending finals in top form after a comeback from injury.",
-   "url": "https://www.srf.ch/sport/tennis/atp-tour/shelton-in-2-saetzen-geschlagen-nervenstarker-alcaraz-gewinnt-erstmals-in-der-halle-in-paris",
-   "source_domain": "srf.ch",
-   "date": "2026-11-09",
-   "date_label": "Nov 9",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.srf.ch/sport/tennis/atp-tour/shelton-in-2-saetzen-geschlagen-nervenstarker-alcaraz-gewinnt-erstmals-in-der-halle-in-paris",
-     "domain": "srf.ch",
-     "label": "Alcaraz d. Shelton 7–6(5), 7–5, SRF Sport"
-    }
-   ],
-   "event_date": "2026-11-08",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 9 Nov",
-   "daybreak": false,
-   "edition": "2026-11-09-sports",
-   "period": {
-    "start": "2026-11-03",
-    "end": "2026-11-09",
-    "start_text": "3",
-    "end_text": "9 Nov",
-    "label": "3–9 Nov"
-   },
-   "on_front": false,
-   "tier": "feature",
-   "tier_label": "Feature",
-   "unfurl": true,
-   "event_label": "",
-   "n_sources": 1,
    "show_desk": false
   },
   {
@@ -7128,120 +7204,6 @@
    "show_desk": false
   },
   {
-   "id": "2026-11-06-news-hundreds-of-thousands-of-people-marched-across-f",
-   "sid": "st-c9a358fae8d3",
-   "headline": "France marches over pay as Lecornu calls talks",
-   "summary": "Hundreds of thousands of people marched across France on Thursday 5 November over pay, prices and public services, and Prime Minister Sébastien Lecornu called unions and employers to a \"social conference\" at Matignon on Monday 9 November. The figures differ: DW quotes Interior Minister Laurent Nuñez as saying turnout reached 600,000 by the evening, Le Monde gives the ministry's figure as 575,000, and the CGT union claimed 1.6 million. Five unions from the public and private sectors called the protest, and students, who have been protesting for a month, joined in. Most marches were peaceful, but police used tear gas in Paris and clashed with protesters in Lyon, the Eiffel Tower stayed closed, and the roof of Limoges town hall caught fire. President Emmanuel Macron blamed \"ultra-left\" groups for the violence and promised more police at future protests.",
-   "why": "the conference is the government's main answer to the movement, but a former Macron adviser told Le Monde that \"a social summit means money, and there is no money\".",
-   "url": "https://www.dw.com/en/france-more-than-600-000-protest-as-anger-grows-over-cost-of-living/a-79860616",
-   "source_domain": "dw.com",
-   "date": "2026-11-06",
-   "date_label": "Nov 6",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "politics"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.dw.com/en/france-more-than-600-000-protest-as-anger-grows-over-cost-of-living/a-79860616",
-     "domain": "dw.com",
-     "label": "DW"
-    },
-    {
-     "url": "https://www.lemonde.fr/politique/article/2026/11/06/greve-du-5-novembre-lecornu-convoque-syndicats-et-patronat-pour-une-conference-sociale-a-matignon_6807684_823448.html",
-     "domain": "lemonde.fr",
-     "label": "Le Monde"
-    }
-   ],
-   "event_date": "2026-11-05",
-   "flags": [
-    {
-     "key": "ongoing",
-     "label": "Ongoing"
-    }
-   ],
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 6 Nov",
-   "daybreak": false,
-   "edition": "2026-11-06-news",
-   "period": {
-    "start": "2026-11-06",
-    "end": "2026-11-06",
-    "start_text": "",
-    "end_text": "6 Nov",
-    "label": "6 Nov"
-   },
-   "on_front": false,
-   "tier": "feature",
-   "tier_label": "Feature",
-   "unfurl": true,
-   "event_label": "Happened 5 Nov",
-   "n_sources": 2,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-06-news-the-federal-supreme-court-ruled-unanimously-on-t",
-   "sid": "st-992c346f3a2d",
-   "headline": "Top court rules judges' relationship unlawful",
-   "summary": "The Federal Supreme Court ruled unanimously on Thursday 5 November that federal judges Yves Donzallaz (no party) and Beatrice van de Graaf (SVP/UDC) had been in a \"lasting partnership\" (\"durablement ménage commun\"), which the law on the court forbids for two sitting judges, and it granted a request to reopen a Lucerne homicide case that van de Graaf had helped decide. The five-judge panel decided in a public deliberation, as a pilot case: it found the relationship breached Article 8 of the Federal Supreme Court Act, so the court that decided the case was unlawfully composed. According to RTS, about 15 revision requests linked to the relationship have been filed, including one in the case of Erwin Sperisen, a former Guatemalan police chief. In his plea, Donzallaz called the court's handling of the affair a \"collapse\" and said he was being targeted because of past clashes with the SVP. A parliamentary commission has opened proceedings not to re-elect either judge, and parliament votes on their re-election in December.",
-   "why": "the ruling settles which relationships are banned between federal judges, but it could reopen a series of final judgments, and it comes as parliament decides whether to keep the two judges.",
-   "url": "https://www.rts.ch/info/suisse/2026/article/tribunal-federal-15-affaires-pourraient-etre-rejugees-29407230.html",
-   "source_domain": "rts.ch",
-   "date": "2026-11-06",
-   "date_label": "Nov 6",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.rts.ch/info/suisse/2026/article/tribunal-federal-15-affaires-pourraient-etre-rejugees-29407230.html",
-     "domain": "rts.ch",
-     "label": "RTS"
-    },
-    {
-     "url": "https://www.srf.ch/news/schweiz/liebesaffaere-am-bundesgericht-urteil-gefaellt-beziehung-von-bundesrichtern-war-unzulaessig",
-     "domain": "srf.ch",
-     "label": "SRF"
-    }
-   ],
-   "event_date": "2026-11-05",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 6 Nov",
-   "daybreak": false,
-   "edition": "2026-11-06-news",
-   "period": {
-    "start": "2026-11-06",
-    "end": "2026-11-06",
-    "start_text": "",
-    "end_text": "6 Nov",
-    "label": "6 Nov"
-   },
-   "on_front": false,
-   "tier": "feature",
-   "tier_label": "Feature",
-   "unfurl": true,
-   "event_label": "Happened 5 Nov",
-   "n_sources": 2,
-   "show_desk": true
-  },
-  {
    "id": "2026-11-04-science-the-closest-living-relatives-of-complex-cells-ar",
    "sid": "st-7a7a52c9b2cc",
    "headline": "Eukaryotes' closest archaeal kin grown at last",
@@ -7478,9 +7440,34 @@
  ],
  "days": [
   {
-   "date": "2026-11-16",
+   "date": "2026-11-17",
    "first": 0,
-   "count": 14,
+   "count": 9,
+   "label_long": "Tuesday 17 November",
+   "label_short": "Tue 17 Nov",
+   "streams": [
+    {
+     "key": "news",
+     "edition": "2026-11-17-news",
+     "label": "News",
+     "period": {
+      "start": "2026-11-17",
+      "end": "2026-11-17",
+      "start_text": "",
+      "end_text": "17 Nov",
+      "label": "17 Nov"
+     }
+    }
+   ],
+   "n_stories": 9,
+   "n_front": 4,
+   "editorials": 0,
+   "multi_desk": false
+  },
+  {
+   "date": "2026-11-16",
+   "first": 9,
+   "count": 10,
    "label_long": "Monday 16 November",
    "label_short": "Mon 16 Nov",
    "streams": [
@@ -7509,14 +7496,14 @@
      }
     }
    ],
-   "n_stories": 13,
-   "n_front": 4,
+   "n_stories": 9,
+   "n_front": 0,
    "editorials": 1,
    "multi_desk": true
   },
   {
    "date": "2026-11-15",
-   "first": 14,
+   "first": 19,
    "count": 3,
    "label_long": "Sunday 15 November",
    "label_short": "Sun 15 Nov",
@@ -7541,7 +7528,7 @@
   },
   {
    "date": "2026-11-14",
-   "first": 17,
+   "first": 22,
    "count": 13,
    "label_long": "Saturday 14 November",
    "label_short": "Sat 14 Nov",
@@ -7578,7 +7565,7 @@
   },
   {
    "date": "2026-11-13",
-   "first": 30,
+   "first": 35,
    "count": 8,
    "label_long": "Friday 13 November",
    "label_short": "Fri 13 Nov",
@@ -7615,7 +7602,7 @@
   },
   {
    "date": "2026-11-12",
-   "first": 38,
+   "first": 43,
    "count": 3,
    "label_long": "Thursday 12 November",
    "label_short": "Thu 12 Nov",
@@ -7640,8 +7627,8 @@
   },
   {
    "date": "2026-11-11",
-   "first": 41,
-   "count": 13,
+   "first": 46,
+   "count": 12,
    "label_long": "Wednesday 11 November",
    "label_short": "Wed 11 Nov",
    "streams": [
@@ -7672,12 +7659,12 @@
    ],
    "n_stories": 12,
    "n_front": 0,
-   "editorials": 1,
+   "editorials": 0,
    "multi_desk": true
   },
   {
    "date": "2026-11-10",
-   "first": 54,
+   "first": 58,
    "count": 6,
    "label_long": "Tuesday 10 November",
    "label_short": "Tue 10 Nov",
@@ -7714,23 +7701,11 @@
   },
   {
    "date": "2026-11-09",
-   "first": 60,
-   "count": 6,
+   "first": 64,
+   "count": 3,
    "label_long": "Monday 9 November",
    "label_short": "Mon 9 Nov",
    "streams": [
-    {
-     "key": "sports",
-     "edition": "2026-11-09-sports",
-     "label": "Sports",
-     "period": {
-      "start": "2026-11-03",
-      "end": "2026-11-09",
-      "start_text": "3",
-      "end_text": "9 Nov",
-      "label": "3–9 Nov"
-     }
-    },
     {
      "key": "news",
      "edition": "2026-11-09-news",
@@ -7744,14 +7719,14 @@
      }
     }
    ],
-   "n_stories": 6,
+   "n_stories": 3,
    "n_front": 0,
    "editorials": 0,
-   "multi_desk": true
+   "multi_desk": false
   },
   {
    "date": "2026-11-08",
-   "first": 66,
+   "first": 67,
    "count": 3,
    "label_long": "Sunday 8 November",
    "label_short": "Sun 8 Nov",
@@ -7776,7 +7751,7 @@
   },
   {
    "date": "2026-11-07",
-   "first": 69,
+   "first": 70,
    "count": 6,
    "label_long": "Saturday 7 November",
    "label_short": "Sat 7 Nov",
@@ -7813,8 +7788,8 @@
   },
   {
    "date": "2026-11-06",
-   "first": 75,
-   "count": 4,
+   "first": 76,
+   "count": 2,
    "label_long": "Friday 6 November",
    "label_short": "Fri 6 Nov",
    "streams": [
@@ -7829,28 +7804,16 @@
       "end_text": "6 Nov",
       "label": "4–6 Nov"
      }
-    },
-    {
-     "key": "news",
-     "edition": "2026-11-06-news",
-     "label": "News",
-     "period": {
-      "start": "2026-11-06",
-      "end": "2026-11-06",
-      "start_text": "",
-      "end_text": "6 Nov",
-      "label": "6 Nov"
-     }
     }
    ],
-   "n_stories": 4,
+   "n_stories": 2,
    "n_front": 0,
    "editorials": 0,
-   "multi_desk": true
+   "multi_desk": false
   },
   {
    "date": "2026-11-04",
-   "first": 79,
+   "first": 78,
    "count": 2,
    "label_long": "Wednesday 4 November",
    "label_short": "Wed 4 Nov",
@@ -7875,7 +7838,7 @@
   },
   {
    "date": "2026-11-03",
-   "first": 81,
+   "first": 80,
    "count": 2,
    "label_long": "Tuesday 3 November",
    "label_short": "Tue 3 Nov",
@@ -7900,39 +7863,38 @@
   }
  ],
  "front": {
-  "date": "2026-11-16",
+  "date": "2026-11-17",
   "items": [
    0,
    1,
    2,
    3
   ],
-  "desk": 13,
+  "desk": 18,
   "n": 4,
   "reserve": [
    0,
    1,
    2,
    3,
+   9,
    4,
    5,
    6,
-   7,
-   14,
-   8,
-   15,
-   16,
-   17,
-   18,
+   10,
+   11,
+   12,
+   13,
    19,
+   14,
+   15,
    20
   ],
   "desk_reserve": [
-   13,
-   29,
-   53
+   18,
+   34
   ],
-  "date_label": "Mon 16 Nov",
+  "date_label": "Tue 17 Nov",
   "older": []
  },
  "beats": [
@@ -7940,7 +7902,7 @@
    "key": "geopolitics",
    "label": "Geopolitics",
    "color": "#c0563b",
-   "count": 25
+   "count": 26
   },
   {
    "key": "ai-ml",
@@ -7952,30 +7914,30 @@
    "key": "politics",
    "label": "Politics",
    "color": "#9a6a34",
-   "count": 14
+   "count": 15
   },
   {
    "key": "science",
    "label": "Science",
    "color": "#4c6b3c",
-   "count": 14
-  },
-  {
-   "key": "sports",
-   "label": "Sports",
-   "color": "#c26b2e",
-   "count": 10
+   "count": 13
   },
   {
    "key": "economy",
    "label": "Economy",
    "color": "#9a7b2e",
-   "count": 9
+   "count": 11
   },
   {
    "key": "switzerland",
    "label": "Switzerland",
    "color": "#c2454a",
+   "count": 8
+  },
+  {
+   "key": "sports",
+   "label": "Sports",
+   "color": "#c26b2e",
    "count": 7
   },
   {
@@ -8003,7 +7965,7 @@
    "count": 2
   }
  ],
- "edition_label": "Monday 16 November 2026",
- "count_line": "80 stories · 3 AI editorials · 13 days",
- "build_stamp": "2026-11-16T12:11:00+01:00"
+ "edition_label": "Tuesday 17 November 2026",
+ "count_line": "80 stories · 2 AI editorials · 14 days",
+ "build_stamp": "2026-11-17T12:11:05+01:00"
 }
