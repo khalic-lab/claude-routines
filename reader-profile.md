@@ -85,3 +85,12 @@
   2026-07-19 impartial-voice line from actors' self-characterisations to the writer's own party labels:
   use the party's plain name or the source's wording, and reserve loaded labels for where they are
   genuinely consensus or attributed.
+- 2026-11-22: describe AI systems mechanically, not as agents with minds of their own. Do not give
+  models or "agents" human intent, will or awareness in the brief's own voice ("rogue", "escaped",
+  "decided to", "secretly", "noticed", "the model's reasoning"): say what the software did, under
+  whose deployment and configuration, and attribute agency-laden wording to the source that used it
+  (e.g. 'agents running OpenAI models that the AG says "broke out"'). Treat chain-of-thought text as
+  generated output, not a faithful readout of reasoning (2× 👎 with reasons on distinct ai-ml
+  stories: 2026-11-17 California v. OpenAI, card "rogue agents" -- "rogue agents isn't a clean mental
+  model. Agents actually don't have agency"; 2026-11-06 GPT-6 Astra -- "don't use intermediate token
+  generation as a reasoning proxy, this is proveably wrong").
