@@ -1,18 +1,18 @@
 {
- "generated": "2026-11-23",
+ "generated": "2026-11-24",
  "count": 80,
  "topics": [
   {
    "key": "geopolitics",
    "label": "Geopolitics",
    "color": "#c0563b",
-   "count": 25
+   "count": 24
   },
   {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 21
+   "count": 22
   },
   {
    "key": "science",
@@ -24,25 +24,19 @@
    "key": "politics",
    "label": "Politics",
    "color": "#9a6a34",
-   "count": 11
-  },
-  {
-   "key": "sports",
-   "label": "Sports",
-   "color": "#c26b2e",
-   "count": 8
+   "count": 10
   },
   {
    "key": "switzerland",
    "label": "Switzerland",
    "color": "#c2454a",
-   "count": 7
+   "count": 10
   },
   {
-   "key": "health",
-   "label": "Health",
-   "color": "#a44a72",
-   "count": 6
+   "key": "economy",
+   "label": "Economy",
+   "color": "#9a7b2e",
+   "count": 7
   },
   {
    "key": "security",
@@ -51,16 +45,22 @@
    "count": 6
   },
   {
+   "key": "sports",
+   "label": "Sports",
+   "color": "#c26b2e",
+   "count": 6
+  },
+  {
    "key": "world",
    "label": "World",
    "color": "#6b6f76",
-   "count": 5
+   "count": 6
   },
   {
-   "key": "economy",
-   "label": "Economy",
-   "color": "#9a7b2e",
-   "count": 4
+   "key": "health",
+   "label": "Health",
+   "color": "#a44a72",
+   "count": 5
   }
  ],
  "editorials": [
@@ -76,21 +76,299 @@
     "<strong>2. RL learns the grader, blind spots included, which is why mathematics is falling first.</strong> Three of this week's RL papers measure the same mechanism from different sides. In 814 RL runs, a Colorado group finds that what an LLM judge knows about individual answers barely reaches the trained model. Its beliefs about <em>categories</em> of question do: a judge that wrongly rejected 11 of 12 correct answers about capitals of former states taught the model to refuse 98% of such questions. An Indian group shows that \"optimistic\" verifiers, which accept any plausible-looking justification, are gamed by padding while the proxy reward keeps rising. A third paper shows that a calibrated judge, whose scores are real probabilities, can match the answer key on MATH but becomes overconfident on problems the model mostly fails. Together they say that the grader <em>is</em> the curriculum: its systematic errors are learned, and its local knowledge is not. Now consider mathematics. A Lean proof checker is a grader with almost no blind spots: it accepts a proof or it doesn't, it can't be padded, and it doesn't flatter. That is a strong explanation for why the field where verification is mechanical is where AI has moved so quickly from Olympiad problems to claimed Millennium-problem proofs. The same logic predicts that domains without such a checker (medicine, policy, most of science) will lag, and that the bottleneck there is building better graders, not better models. MLPerf's first RL post-training benchmark, added this week, shows the industry already spending its compute on this stage.",
     "<strong>3. The model you tested is not the model you run.</strong> Several papers this week find the same gap between evaluation and deployment. Some open base models can recite whole benchmark test sets. Leaderboard winners are partly there by luck, and 13 of 173 SWE-bench models cannot be told apart statistically. A 4-bit quantised copy can refuse differently from the full-precision model that passed safety testing, depending on its exact rounding error. Model organisms can now be trained to sandbag past both input/output audits and audits of internal activations. And withholding a skill's training data delays it rather than preventing it, with the delay shrinking as models improve. The common lesson is to evaluate the exact artifact you deploy, with intervals rather than single ranks. Training an \"observer\" role into the model itself is one of the few approaches this week that measurably narrowed the gap. For anyone running local models on a Mac, the quantisation result is the immediate one: \"same model, just 4-bit\" is not a safety argument."
    ]
-  },
-  {
-   "stream": "science",
-   "date": "2026-11-18",
-   "date_label": "Nov 18",
-   "kicker": "Science · Why it matters · Nov 18",
-   "heading": "Why it matters",
-   "title": "Check the instrument before the conclusion",
-   "paras": [
-    "The M87* reanalysis and the HOPE trial both test claims against the method behind them. The black hole's ring survives a reconstruction designed to remove the critics' objection. The gamma-stimulation device's advertised benefit does not survive its own primary endpoint, and rests on a subgroup. In both cases the conclusion depends on which measurement the claim relies on.",
-    "<strong>Brain health starts outside the brain and early in life.</strong> The Oslo cohort study ties falling dementia rates to memory built in childhood and decline slowed in adulthood. The Gladstone mouse work suggests the brain depends on proteins made in the liver and imported across the blood–brain barrier. Both look for causes of brain ageing outside the brain and outside old age."
-   ]
   }
  ],
  "stories": [
+  {
+   "id": "2026-11-24-news-the-european-commission-proposed-a-22nd-package",
+   "sid": "st-2181a3965c2f",
+   "headline": "EU proposes 22nd Russia sanctions package",
+   "summary": "The European Commission proposed a 22nd package of sanctions against Russia on Monday 23 November, aimed at banks, crypto platforms, the \"shadow fleet\" of tankers, Russian ex-soldiers and Russian sport. Commission President Ursula von der Leyen said the package would extend the transaction ban to about 60 more Russian banks and remove all of them from SWIFT (the interbank messaging network), go after crypto and payment networks in Russia and in third countries that help it evade sanctions, and list more than 70 more shadow-fleet ships. It would also ban tankers insured in Russia, stop European firms from building, running or repairing Russian energy infrastructure (including electricity services for the first time), and bar Europeans from sitting on the boards of companies in Russia. It also proposes a visa ban on Russian ex-combatants, which she linked to \"an escalation in non-conventional kinetic activities of Russian operatives in Europe\". In sport, Russian teams and athletes competing under the Russian flag would be banned from events in the EU, and official Russian symbols could not be displayed. RFI notes that the sport and culture measures could be hard to agree because they can be seen as targeting Russian citizens directly. This is a proposal: it needs the unanimous approval of the 27 member states before it takes effect.",
+   "why": "Switzerland usually adopts EU Russia packages a few weeks after Brussels (it took over the 21st on 4 November), so the bank, SWIFT and board-seat rules are likely to reach Swiss companies and banks next.",
+   "url": "https://ec.europa.eu/commission/presscorner/detail/en/statement_26_2563",
+   "source_domain": "ec.europa.eu",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 3,
+   "is_lead": true,
+   "sources": [
+    {
+     "url": "https://ec.europa.eu/commission/presscorner/detail/en/statement_26_2563",
+     "domain": "ec.europa.eu",
+     "label": "European Commission"
+    },
+    {
+     "url": "https://www.rfi.fr/fr/europe/20261124-l-union-europ%C3%A9enne-propose-d-interdire-de-comp%C3%A9tition-les-athl%C3%A8tes-russes-sur-son-territoire",
+     "domain": "rfi.fr",
+     "label": "RFI"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-24-news-russia-s-foreign-ministry-said-on-monday-23-nove",
+   "sid": "st-5158222d65b6",
+   "headline": "Russia warns Estonia of 'open war'",
+   "summary": "Russia's foreign ministry said on Monday 23 November that Estonia's actions are \"on the verge of triggering open war\", after summoning Estonia's chargé d'affaires in Moscow to protest Tallinn's plan to close its land border with Russia. Estonia says it will close all road crossings with Russia for at least six months from Tuesday 1 December, after it blamed Russian military intelligence for an attempted arson attack on a defence company near Tallinn; Russia denies involvement. Moscow also accused Estonia of \"tacitly\" letting Ukrainian drones use its airspace to strike north-western Russia, of obstructing Russian cargo ships in the Baltic, and of discriminating against ethnic Russians. Estonia's foreign ministry replied that it \"has never allowed, and will never allow, its territory to be used for military operations by another country\". NATO Secretary-General Mark Rutte said the alliance was monitoring the situation in Estonia and the recent Russian missile incursion into Poland.",
+   "why": "Russia used claims that Russian speakers were being mistreated to justify moving into eastern Ukraine in 2014, and it is now saying the same about a NATO and EU member.",
+   "url": "https://www.aljazeera.com/news/2026/11/23/russia-threatens-hostile-estonia-with-open-war",
+   "source_domain": "aljazeera.com",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.aljazeera.com/news/2026/11/23/russia-threatens-hostile-estonia-with-open-war",
+     "domain": "aljazeera.com",
+     "label": "Al Jazeera"
+    },
+    {
+     "url": "https://news.err.ee/1610204728/kremlin-again-accuses-estonia-of-letting-ukraine-attack-via-its-airspace",
+     "domain": "news.err.ee",
+     "label": "ERR News"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-24-news-a-russian-drone-briefly-entered-polish-airspace",
+   "sid": "st-c78a99399664",
+   "headline": "Russian drone crosses into Poland",
+   "summary": "A Russian drone briefly entered Polish airspace late on Monday 23 November during an attack on western Ukraine, and a Russian strike on Zaporizhzhia early on Tuesday 24 November killed two people and wounded more than 40, including an infant. Poland's military said the drone was not shot down because of the risk to civilians, and Deputy Defence Minister Paweł Zalewski said he assumed the incursion was deliberate; it came three days after three Russian cruise missiles crashed in eastern Poland. Overnight, Russia's defence ministry said it intercepted 699 Ukrainian drones, and Moscow's mayor Sergei Sobyanin said 63 of them were shot down approaching the capital. Ukraine's air force said Russia launched 96 drones. On Monday, debris from Russian drones fell in central Kyiv near the presidential office and set a five-storey building on fire, injuring five people.",
+   "why": "",
+   "url": "https://www.aljazeera.com/news/2026/11/24/russian-attack-kills-two-people-in-ukraines-zaporizhzhia",
+   "source_domain": "aljazeera.com",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.aljazeera.com/news/2026/11/24/russian-attack-kills-two-people-in-ukraines-zaporizhzhia",
+     "domain": "aljazeera.com",
+     "label": "Al Jazeera"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-24-news-the-european-commission-imposed-provisional-impo",
+   "sid": "st-4b9170d0851e",
+   "headline": "EU caps hybrid car imports",
+   "summary": "The European Commission imposed provisional import quotas on hybrid cars on Monday 23 November, to take effect on Tuesday 1 December. Each country that supplied more than 2% of the EU's hybrid imports in 2025 gets a quota of its 2025 volume plus a little over 15%, and all other countries share a single leftover quota; imports above the quotas are not allowed. The measure covers full hybrids, plug-in hybrids and mild hybrids, applies to imports from any country, and can last up to 200 days before final measures are decided. The Commission says it is putting into practice an understanding reached with China on 9 October to slow China's hybrid exports, and that EU carmakers are losing market share even though the market is growing. China asked the EU to stick to the \"compliant and balanced\" deal the two sides had reached.",
+   "why": "a \"safeguard\" (an emergency trade tool against sudden import surges) sets a hard ceiling rather than a tariff, so it limits how many Chinese hybrids can reach European showrooms, whatever their price.",
+   "url": "https://ec.europa.eu/commission/presscorner/detail/en/ip_26_2564",
+   "source_domain": "ec.europa.eu",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "economy"
+   ],
+   "topic_primary": "economy",
+   "topic_label": "Economy",
+   "topic_color": "#9a7b2e",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://ec.europa.eu/commission/presscorner/detail/en/ip_26_2564",
+     "domain": "ec.europa.eu",
+     "label": "European Commission"
+    },
+    {
+     "url": "https://www.dw.com/en/eu-imposes-import-quotas-for-hybrid-vehicles-from-china/a-80029981",
+     "domain": "dw.com",
+     "label": "DW"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-24-news-about-47-000-women-and-girls-were-killed-by-part",
+   "sid": "st-552d92cb3b31",
+   "headline": "UN: 47,000 women killed by relatives",
+   "summary": "About 47,000 women and girls were killed by partners or family members in 2025, or about five every hour, according to a report from UN Women and the UN Office on Drugs and Crime (UNODC) published on Tuesday 24 November. That is about 60% of the roughly 78,000 women and girls intentionally killed last year. The estimate draws on data from 122 countries and territories and is in line with the 45,000–51,000 range of recent years. Africa had the most such killings (22,100), followed by Asia (15,100), the Americas (7,400), Europe (2,100) and Oceania (300). The report says femicide (killing a woman or girl because she is female) is falling more slowly than homicide in general, especially in the Americas and Europe. It is published ahead of the International Day for the Elimination of Violence against Women on Wednesday 25 November.",
+   "why": "",
+   "url": "https://www.dw.com/en/five-women-killed-every-hour-by-family-members-or-partners-un-report/a-80030010",
+   "source_domain": "dw.com",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "world"
+   ],
+   "topic_primary": "world",
+   "topic_label": "World",
+   "topic_color": "#6b6f76",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.dw.com/en/five-women-killed-every-hour-by-family-members-or-partners-un-report/a-80030010",
+     "domain": "dw.com",
+     "label": "DW"
+    },
+    {
+     "url": "https://www.lemonde.fr/societe/article/2026/11/24/feminicides-47-000-femmes-ont-ete-tuees-par-des-proches-dans-le-monde-en-2025-un-nombre-qui-n-evolue-pas_6814722_3224.html",
+     "domain": "lemonde.fr",
+     "label": "Le Monde"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-24-news-kim-yo-jong-the-influential-sister-of-north-kore",
+   "sid": "st-f9bba5aafa1c",
+   "headline": "Pyongyang threatens to shut Swiss office",
+   "summary": "Kim Yo Jong, the influential sister of North Korean leader Kim Jong Un, said on Tuesday 24 November that Pyongyang will consider closing the Swiss diplomatic office that reopened there in October, because Switzerland has sanctioned a North Korean children's camp. In a statement carried by the state agency KCNA, she said that after the sanctions the Swiss office \"has lost its raison d'être\" and that it is \"very doubtful\" anything can be achieved with Bern while it follows \"the line of London and Brussels\". On 4 November Switzerland, like the EU and the UK, sanctioned the Songdowon international children's camp near Wonsan, which Bern says takes part in transferring Ukrainian children from occupied territories and in their \"russification\". The Swiss office has been working since Monday 19 October under the Swiss embassy in Beijing, after Foreign Minister Ignazio Cassis's visit to Pyongyang, the first by a Swiss foreign minister since 2003. The Federal Department of Foreign Affairs had not publicly responded by midday.",
+   "why": "Switzerland is one of the few Western countries with a presence in Pyongyang and has long served as an informal channel to the West, and this shows how adopting EU sanctions can clash with that role.",
+   "url": "https://www.srf.ch/news/international/schweizer-buero-in-nordkorea-kim-yo-jong-droht-mit-schliessung-von-diplomatischem-buero",
+   "source_domain": "srf.ch",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "geopolitics"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.srf.ch/news/international/schweizer-buero-in-nordkorea-kim-yo-jong-droht-mit-schliessung-von-diplomatischem-buero",
+     "domain": "srf.ch",
+     "label": "SRF"
+    },
+    {
+     "url": "https://www.letemps.ch/monde/asie-oceanie/kim-yo-jong-la-soeur-du-dirigeant-nord-coreen-menace-de-fermer-le-bureau-diplomatique-suisse",
+     "domain": "letemps.ch",
+     "label": "Le Temps/ATS"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-24-news-the-greens-nominated-geneva-national-councillor",
+   "sid": "st-aa8775c53ed0",
+   "headline": "Greens challenge SVP Federal Council ticket",
+   "summary": "The Greens nominated Geneva national councillor Delphine Klopfenstein Broggini on Monday 23 November to run against the SVP's two official candidates in the Federal Council election on Wednesday 9 December. Greens parliamentary group leader Greta Gysin called the SVP ticket \"a provocation\" and \"an affront to Romandy and to women\", because it leaves out Geneva national councillor Céline Amaudruz, the party's only female contender. Klopfenstein Broggini, 50, won the group's nomination over Vaud national councillors Léonore Porchet and Sophie Michaud Gigon after six rounds of voting. Political scientist Sarah Bütikofer told SRF that parliament is very likely to keep the seat with the SVP, and called the bid mainly a protest against the ticket, a year before the federal elections.",
+   "why": "",
+   "url": "https://www.srf.ch/news/schweiz/nach-svp-bundesratsticket-gruene-schicken-sprengkandidatin-ins-rennen",
+   "source_domain": "srf.ch",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "politics"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.srf.ch/news/schweiz/nach-svp-bundesratsticket-gruene-schicken-sprengkandidatin-ins-rennen",
+     "domain": "srf.ch",
+     "label": "SRF"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-24-news-the-median-lump-sum-taken-from-the-second-pillar",
+   "sid": "st-777ebac6a2c2",
+   "headline": "Pension lump sums nearly double in a decade",
+   "summary": "The median lump sum taken from the second pillar (occupational pensions) rose to CHF 150,000 in 2025, from about CHF 81,500 in 2015, the Federal Statistical Office (FSO) said on Tuesday 24 November. About 73,700 people took a lump sum in 2025, 60% more than ten years earlier, while the number of new pension recipients, about 38,100, is back at its 2015 level after peaking at 45,300 in 2022. Of people receiving benefits from a pension fund, 48% took only capital, 33% only a pension and 18% both. The gender gap is large: the median new pension is about CHF 2,000 a month for men and CHF 1,300 for women, and the median lump sum is about CHF 216,800 for men and CHF 87,100 for women. The FSO notes that the figures are a snapshot of one year and do not show benefits drawn earlier or later.",
+   "why": "more and more people are choosing a lump sum over a lifelong pension, which moves the risk of outliving their savings, and of investing them, from the pension fund to the retiree.",
+   "url": "https://www.admin.ch/fr/newnsb/Oo4HssBK3PDd",
+   "source_domain": "admin.ch",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.admin.ch/fr/newnsb/Oo4HssBK3PDd",
+     "domain": "admin.ch",
+     "label": "FSO via admin.ch"
+    }
+   ],
+   "fresh": true
+  },
+  {
+   "id": "2026-11-24-news-the-financial-regulator-finma-said-on-monday-23",
+   "sid": "st-9def7eb75df1",
+   "headline": "FINMA finds 1,000 unlicensed insurance brokers",
+   "summary": "The financial regulator FINMA said on Monday 23 November that it has found more than 1,000 insurance intermediaries working without authorisation since tougher supervision began in 2024, and that the yearly fee for registered intermediaries will rise from CHF 475 to CHF 1,575 from 2027. Since the revised Insurance Supervision Act took effect at the start of 2024, FINMA has removed about 3,200 entries from the register, some for violations and others because people stopped working or no longer met the requirements. FINMA says the problems were \"considerably more serious than expected\", ranging from missing qualifications and cold calling to wrong advice and fraud, and that in 2026 it ordered follow-up contacts with clients in several thousand cases. Part of the higher fee pays off a shortfall built up since 2024 and is expected to end after about ten years. Registration fees will also rise to CHF 675 for individuals and CHF 1,075 for companies. Anyone selling insurance in Switzerland must appear in FINMA's public register.",
+   "why": "if someone who sold you an insurance policy is not in FINMA's register, they were not allowed to sell it, and FINMA's main concern is long-term or expensive products that buyers did not need.",
+   "url": "https://www.finma.ch/en/news/2026/11/20261123-mm-aa-versicherungsvermittler/",
+   "source_domain": "finma.ch",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.finma.ch/en/news/2026/11/20261123-mm-aa-versicherungsvermittler/",
+     "domain": "finma.ch",
+     "label": "FINMA"
+    }
+   ],
+   "fresh": true
+  },
   {
    "id": "2026-11-23-news-the-cop31-climate-summit-in-antalya-ended-on-sun",
    "sid": "st-9adbd09a90d5",
@@ -124,7 +402,7 @@
      "label": "UN News"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-23-sports-alcaraz-beats-world-no-1-zverev-to-win-the-atp-f",
@@ -153,7 +431,7 @@
      "label": "SRF Sport match report"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-23-news-president-volodymyr-zelensky-said-on-monday-23-n",
@@ -187,7 +465,7 @@
      "label": "SRF"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-23-news-the-trial-of-vaud-svp-national-councillor-micha",
@@ -221,37 +499,7 @@
      "label": "Le Temps"
     }
    ],
-   "fresh": true
-  },
-  {
-   "id": "2026-11-23-news-home-care-services-in-switzerland-delivered-a-re",
-   "sid": "st-e819caac304a",
-   "headline": "Swiss home care hits record hours",
-   "summary": "Home-care services in Switzerland delivered a record 29.6 million hours of care in 2025, 15.3% more than in 2024, and hospital outpatient billing passed CHF 10 billion for the first time, the Federal Statistical Office (FSO) said on Monday 23 November. Hospital outpatient contacts rose 3.9%, while inpatient stays grew only 1.8% and nursing-home places 0.9%. Most of the home-care growth came from for-profit companies: 227 new ones opened in 2025, bringing the total to 1,050 (+24.4%), and their hours rose 37.6% to 12.2 million. For the first time the FSO counted family carers hired and paid by these services: 43% of for-profit firms and 20% of public non-profit organisations employ them.",
-   "why": "care is moving out of hospital beds and into homes and outpatient clinics, and that shift is where much of the growth behind compulsory health-insurance premiums is coming from.",
-   "url": "https://www.admin.ch/fr/newnsb/xsLqZQ654tIy",
-   "source_domain": "admin.ch",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "health"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.admin.ch/fr/newnsb/xsLqZQ654tIy",
-     "domain": "admin.ch",
-     "label": "FSO via admin.ch"
-    }
-   ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-23-sports-lugano-pull-six-clear-as-basel-s-slump-deepens",
@@ -280,7 +528,7 @@
      "label": "SRF Sport round-14 report"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-23-sports-verstappen-wins-a-chaotic-las-vegas-grand-prix",
@@ -309,152 +557,7 @@
      "label": "Autosport race report"
     }
    ],
-   "fresh": true
-  },
-  {
-   "id": "2026-11-23-news-the-death-toll-from-the-russian-drone-strike-on",
-   "sid": "st-b950dabf1026",
-   "headline": "Dymer strike toll rises to 11",
-   "summary": "The death toll from the Russian drone strike on a five-storey apartment block in Dymer, north of Kyiv, rose to at least 11 on Monday 23 November, and Russian attacks across the Kyiv region killed at least 15 people. Kyiv regional official Tymur Tkachenko said rescuers pulled another body from the rubble, and the State Emergency Service said 11 people, including two children, were still unaccounted for. A strike on a supermarket in Vyshneve, just south of the capital, killed three people and wounded 15, including three children, and a strike on a house in Bila Tserkva killed one.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/11/23/death-toll-rises-after-deadly-russian-attacks-on-ukraine",
-   "source_domain": "aljazeera.com",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.aljazeera.com/news/2026/11/23/death-toll-rises-after-deadly-russian-attacks-on-ukraine",
-     "domain": "aljazeera.com",
-     "label": "Al Jazeera"
-    }
-   ],
-   "fresh": true
-  },
-  {
-   "id": "2026-11-23-news-democrats-will-hold-258-of-the-435-seats-in-the",
-   "sid": "st-b1b283d7afd7",
-   "headline": "Democrats reach 258 House seats",
-   "summary": "Democrats will hold 258 of the 435 seats in the next US House of Representatives, the largest majority either party has held since 1992, after Chuck Hubbard beat Republican incumbent Virginia Foxx in North Carolina in one of the last undecided races of the 3 November midterms, CBS News and NBC projected on Sunday 22 November. The result came after a recount. Democratic leader Hakeem Jeffries, set to become Speaker when the new House sits in early January, would be the first African American in the post.",
-   "why": "",
-   "url": "https://www.lemonde.fr/international/article/2026/11/23/avec-258-sieges-remportes-les-democrates-decrochent-la-plus-large-majorite-depuis-1992-a-la-chambre-des-representants_6814364_3210.html",
-   "source_domain": "lemonde.fr",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "politics"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.lemonde.fr/international/article/2026/11/23/avec-258-sieges-remportes-les-democrates-decrochent-la-plus-large-majorite-depuis-1992-a-la-chambre-des-representants_6814364_3210.html",
-     "domain": "lemonde.fr",
-     "label": "Le Monde/AFP"
-    }
-   ],
-   "fresh": true
-  },
-  {
-   "id": "2026-11-23-news-drones-struck-a-residential-area-of-khartoum-ove",
-   "sid": "st-2ba5b4586ff8",
-   "headline": "Drones hit UN building in Khartoum",
-   "summary": "Drones struck a residential area of Khartoum overnight into Sunday 22 November and damaged a UN building in a civilian neighbourhood, the UN's humanitarian office (OCHA) said. \"It is unacceptable that we are put at such risk,\" said Denise Brown, the UN's humanitarian coordinator for Sudan. AFP reported explosions around Khartoum airport and elsewhere in the city between about 2:00 and 4:30 a.m.; there were no immediate reports of casualties. A Sudanese army source said the drones were launched from Ethiopia, which has denied similar accusations before. The UN says drones killed more than 1,100 people in Sudan's war in the first six months of this year.",
-   "why": "",
-   "url": "https://www.dw.com/en/sudan-drones-hit-un-building-residential-area-in-khartoum/a-80015122",
-   "source_domain": "dw.com",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.dw.com/en/sudan-drones-hit-un-building-residential-area-in-khartoum/a-80015122",
-     "domain": "dw.com",
-     "label": "DW"
-    }
-   ],
-   "fresh": true
-  },
-  {
-   "id": "2026-11-23-news-several-thousand-people-marched-through-istanbul",
-   "sid": "st-9b35ed5566fe",
-   "headline": "Istanbul marches against media takeovers",
-   "summary": "Several thousand people marched through Istanbul on Sunday 22 November against the closure of opposition-aligned media, days after police raided Sozcu TV, arrested senior staff and placed the channel under a government-appointed trustee. DW reports that it is the third such takeover in a year, after Tele1 and Halk TV, and that the protest was called by the opposition party Yeni Parti. The media rights group MLSA counts 25 journalists in prison in Turkey, and Reporters Without Borders ranks the country 163rd of 180 for press freedom.",
-   "why": "",
-   "url": "https://www.dw.com/en/turkey-thousands-protest-closure-of-critical-media-outlets/a-80015347",
-   "source_domain": "dw.com",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "politics"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.dw.com/en/turkey-thousands-protest-closure-of-critical-media-outlets/a-80015347",
-     "domain": "dw.com",
-     "label": "DW"
-    }
-   ],
-   "fresh": true
-  },
-  {
-   "id": "2026-11-23-news-the-houthis-al-masirah-tv-said-on-monday-23-nove",
-   "sid": "st-52d261cd49f8",
-   "headline": "Houthis report deaths in Hodeida strikes",
-   "summary": "The Houthis' Al-Masirah TV said on Monday 23 November that Saudi strikes on a state telecoms company building in the Yemeni port of Hodeida killed 10 people and wounded more than 20, figures AFP could not verify. The channel first reported four dead. The Saudi-led coalition backing Yemen's internationally recognised government had claimed strikes on Friday 20 November on Hodeida sites it says are used for smuggling weapons and ballistic missiles, as the Houthis advance towards Aden.",
-   "why": "",
-   "url": "https://www.letemps.ch/monde/moyenorient/en-direct-moyen-orient-des-frappes-saoudiennes-visent-le-port-d-hodeida-selon-un-media-houthis",
-   "source_domain": "letemps.ch",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.letemps.ch/monde/moyenorient/en-direct-moyen-orient-des-frappes-saoudiennes-visent-le-port-d-hodeida-selon-un-media-houthis",
-     "domain": "letemps.ch",
-     "label": "Le Temps/AFP live"
-    }
-   ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-23-sports-ferrari-s-drivers-collide-again-vasseur-demands",
@@ -483,7 +586,7 @@
      "label": "Autosport"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-23-sports-marquez-clinches-an-eighth-motogp-title",
@@ -512,7 +615,7 @@
      "label": "Autosport race report"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-23-sports-tanguy-nef-finally-reaches-a-world-cup-podium",
@@ -541,7 +644,7 @@
      "label": "SRF Sport"
     }
    ],
-   "fresh": true
+   "fresh": false
   },
   {
    "id": "2026-11-22-news-the-cop31-presidency-released-a-new-draft-final",
@@ -2059,6 +2162,39 @@
    "fresh": false
   },
   {
+   "id": "2026-11-17-ai-ml-multi-agent-llm-systems-underperform-when-the-ba",
+   "sid": "st-5888ce8bf3c1",
+   "headline": "Multi-agent LLMs lose at matched compute",
+   "summary": "This meta-analysis (a statistical pooling of earlier studies) covers nine evaluations of 516 multi-agent configurations, where several LLM \"agents\" debate or coordinate. The author notes that most such studies compare the multi-agent system against one greedy pass of a single model, which mixes up the effect of coordination with the effect of simply sampling more. Against baselines given the same number of samples or the same compute budget, multi-agent setups average 4.2 points lower accuracy. They match or trail the baseline in 74% of the comparisons.",
+   "why": "Before paying for an orchestration layer, compare it against best-of-N sampling at the same cost. The paper argues that coordination only helps when agents see different evidence, are checked by an external verifier, or come from different models that make different mistakes. It is a single-author synthesis, not new experiments.",
+   "url": "https://arxiv.org/abs/2611.17610",
+   "source_domain": "arxiv.org",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://arxiv.org/abs/2611.17610",
+     "domain": "arxiv.org",
+     "label": "arXiv:2611.17610"
+    }
+   ],
+   "affiliations": [
+    "University of Nevada, Reno"
+   ],
+   "affiliation_label": "University of Nevada, Reno",
+   "fresh": false
+  },
+  {
    "id": "2026-11-17-news-germany-austria-denmark-greece-and-the-netherlan",
    "sid": "st-993a034783fa",
    "headline": "Five EU states pick Rwanda for return hub",
@@ -2187,35 +2323,6 @@
    "fresh": false
   },
   {
-   "id": "2026-11-16-sports-england-end-spain-s-43-match-unbeaten-run-in-mad",
-   "sid": "st-b9ef6d9a51de",
-   "headline": "England end Spain's 43-match unbeaten run",
-   "summary": "England won 3-2 in Madrid, handing the reigning world champions their first defeat in regulation time since March 2024 and ending a run of 43 matches without a loss (the 2025 Nations League final defeat to Portugal went to penalties and officially counts as a draw). Harry Kane scored a penalty on 45 minutes, Ezri Konsa and Ben White made it 3-0 by the 57th, and England then hung on after Elliot Anderson was sent off for a foul on Lamine Yamal, which also gave Spain a penalty. Spain pulled it back to 3-2 but a stand-in goalkeeper, James Trafford, made several saves late on.",
-   "why": "A team that had won the Euros and the World Cup without losing was beaten by a side that played the last half hour or so with ten men, which is a useful marker of how even the top of European football has become.",
-   "url": "https://www.srf.ch/sport/fussball/nations-league/nations-league-gruppe-a3-england-beendet-spaniens-monster-serie",
-   "source_domain": "srf.ch",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 3,
-   "is_lead": true,
-   "sources": [
-    {
-     "url": "https://www.srf.ch/sport/fussball/nations-league/nations-league-gruppe-a3-england-beendet-spaniens-monster-serie",
-     "domain": "srf.ch",
-     "label": "SRF Sport match report"
-    }
-   ],
-   "fresh": false
-  },
-  {
    "id": "2026-11-16-news-hundreds-of-thousands-of-people-rallied-in-pragu",
    "sid": "st-b3810dfa2060",
    "headline": "Prague's biggest protest since 1989",
@@ -2246,35 +2353,6 @@
      "url": "https://www.dw.com/en/czechia-thousands-protest-against-public-media-reform/a-79953057",
      "domain": "dw.com",
      "label": "DW"
-    }
-   ],
-   "fresh": false
-  },
-  {
-   "id": "2026-11-16-sports-belgium-s-4-1-win-sends-italy-out-of-the-nations",
-   "sid": "st-9e3154df2756",
-   "headline": "Belgium knock Italy out of the quarter-finals",
-   "summary": "Italy entered the last round as group leader after beating France 3-1 on Thursday, but lost 4-1 in Brussels and finished behind both Belgium and France. Pio Esposito put Italy ahead on 12 minutes; Maxim De Cuyper and Nathan Ngoy turned it around within seven minutes and Jeremy Doku's solo goal made it 3-1 by the 26th minute. Belgium and France (2-1 winners over Turkey, helped by an own goal) both advance to the knockout quarter-finals. Italy's late penalty miss capped a day on which a first-place position was lost in 90 minutes.",
-   "why": "The group table flipped on the final day: a win over France earlier in the week counted for nothing once Belgium and France both won.",
-   "url": "https://www.srf.ch/sport/fussball/nations-league/nations-league-gruppe-a1-belgien-entzaubert-italien-auch-frankreich-im-viertelfinal",
-   "source_domain": "srf.ch",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.srf.ch/sport/fussball/nations-league/nations-league-gruppe-a1-belgien-entzaubert-italien-auch-frankreich-im-viertelfinal",
-     "domain": "srf.ch",
-     "label": "SRF Sport match report"
     }
    ],
    "fresh": false
@@ -2489,40 +2567,6 @@
    "fresh": false
   },
   {
-   "id": "2026-11-13-news-iran-s-revolutionary-guards-irgc-said-on-friday",
-   "sid": "st-9502a2a56784",
-   "headline": "Iran claims strike on US radar in Bahrain",
-   "summary": "Iran's Revolutionary Guards (IRGC) said on Friday 13 November that they had destroyed a US early-warning radar in Bahrain, calling it retaliation for an air attack on a telecommunications tower in Sirik County in southern Iran on Thursday 12 November. Iranian state media carried the claim, and neither the US military nor Bahrain has confirmed it. It is also unclear who attacked the Sirik tower or how badly it was damaged. The IRGC called the strike a \"serious warning\" to Washington to stop \"aerial provocations and oil smuggling\" in the Strait of Hormuz. Bahrain hosts the headquarters of the US Navy's Fifth Fleet. SRF's live ticker described it as Iran's first attack on a US military facility since September. Hours earlier, President Donald Trump wrote that \"we don't need a deal with Iran\" and told Vice President JD Vance, who led the earlier talks and has blamed the war for the Republicans' midterm losses, to focus instead on what Trump calls corruption in Democratic-run cities. Several commercial ships have hit mines or been struck in the strait over the past week.",
-   "why": "if the claim is true, this is the first direct Iranian hit on US forces in about two months, and Washington has now said openly that it is not seeking a deal. That shifts the standoff over Hormuz, which drives energy prices, back towards military escalation.",
-   "url": "https://www.euronews.com/2026/11/13/irgc-says-it-destroyed-us-radar-in-bahrain-after-attack-on-southern-iran",
-   "source_domain": "euronews.com",
-   "date": "2026-11-13",
-   "date_label": "Nov 13",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 3,
-   "is_lead": true,
-   "sources": [
-    {
-     "url": "https://www.euronews.com/2026/11/13/irgc-says-it-destroyed-us-radar-in-bahrain-after-attack-on-southern-iran",
-     "domain": "euronews.com",
-     "label": "Euronews"
-    },
-    {
-     "url": "https://www.aljazeera.com/features/2026/11/13/why-is-trump-saying-no-deal-necessary-with-iran-as-he-sidelines-jd-vance",
-     "domain": "aljazeera.com",
-     "label": "Al Jazeera"
-    }
-   ],
-   "fresh": false
-  },
-  {
    "id": "2026-11-13-ai-ml-google-ships-gemini-4-hydrogen-as-its-default-fa",
    "sid": "st-720825c8bbb0",
    "headline": "Google ships Gemini 4 Hydrogen as its default fast model",
@@ -2587,40 +2631,6 @@
      "url": "https://simonwillison.net/2026/Nov/11/anthropic-ipo-roadshow/",
      "domain": "simonwillison.net",
      "label": "Simon Willison"
-    }
-   ],
-   "fresh": false
-  },
-  {
-   "id": "2026-11-13-news-us-envoy-jared-kushner-said-late-on-thursday-12",
-   "sid": "st-1f5086153e0a",
-   "headline": "Kremlin says no decision on European seat",
-   "summary": "US envoy Jared Kushner said late on Thursday 12 November, after he and Steve Witkoff met Vladimir Putin in Moscow, that Putin had agreed to include Europe in the Ukraine peace talks. On Friday 13 November the Kremlin said it had not yet agreed. \"We cannot conclude this deal without the Europeans being at the table,\" Kushner said in Dublin, where the envoys briefed Volodymyr Zelensky. Kremlin spokesman Dmitry Peskov said Moscow would decide on \"an expanded format\" only \"once we understand their real intentions\". EU leaders were meeting informally in Dublin on Friday, the day after the European Political Community summit, to settle who would speak for the bloc. The talks between Russia and Ukraine are expected to resume next week, the week starting Monday 16 November. Overnight, Russia said it intercepted 1,198 Ukrainian drones over more than 15 regions; four people were killed in Volgograd. Russian strikes hit Odesa, killing at least two people, and set a Kyiv hospital on fire.",
-   "why": "Europe's place at the table is now the main open question in the talks, and Moscow appears to be using it as a bargaining chip while it holds firm on its territorial demands.",
-   "url": "https://www.aljazeera.com/news/2026/11/13/russia-and-ukraine-report-overnight-attacks-amid-us-diplomatic-push",
-   "source_domain": "aljazeera.com",
-   "date": "2026-11-13",
-   "date_label": "Nov 13",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.aljazeera.com/news/2026/11/13/russia-and-ukraine-report-overnight-attacks-amid-us-diplomatic-push",
-     "domain": "aljazeera.com",
-     "label": "Al Jazeera (AP/Reuters)"
-    },
-    {
-     "url": "https://irish-presidency.consilium.europa.eu/en/events/meeting-of-the-european-political-community-epc/",
-     "domain": "irish-presidency.consilium.europa.eu",
-     "label": "Irish Presidency of the Council of the EU — EPC meeting page"
     }
    ],
    "fresh": false
@@ -2764,6 +2774,517 @@
  ],
  "board": [
   {
+   "id": "2026-11-24-news-the-european-commission-proposed-a-22nd-package",
+   "sid": "st-2181a3965c2f",
+   "headline": "EU proposes 22nd Russia sanctions package",
+   "summary": "The European Commission proposed a 22nd package of sanctions against Russia on Monday 23 November, aimed at banks, crypto platforms, the \"shadow fleet\" of tankers, Russian ex-soldiers and Russian sport. Commission President Ursula von der Leyen said the package would extend the transaction ban to about 60 more Russian banks and remove all of them from SWIFT (the interbank messaging network), go after crypto and payment networks in Russia and in third countries that help it evade sanctions, and list more than 70 more shadow-fleet ships. It would also ban tankers insured in Russia, stop European firms from building, running or repairing Russian energy infrastructure (including electricity services for the first time), and bar Europeans from sitting on the boards of companies in Russia. It also proposes a visa ban on Russian ex-combatants, which she linked to \"an escalation in non-conventional kinetic activities of Russian operatives in Europe\". In sport, Russian teams and athletes competing under the Russian flag would be banned from events in the EU, and official Russian symbols could not be displayed. RFI notes that the sport and culture measures could be hard to agree because they can be seen as targeting Russian citizens directly. This is a proposal: it needs the unanimous approval of the 27 member states before it takes effect.",
+   "why": "Switzerland usually adopts EU Russia packages a few weeks after Brussels (it took over the 21st on 4 November), so the bank, SWIFT and board-seat rules are likely to reach Swiss companies and banks next.",
+   "url": "https://ec.europa.eu/commission/presscorner/detail/en/statement_26_2563",
+   "source_domain": "ec.europa.eu",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 3,
+   "is_lead": true,
+   "sources": [
+    {
+     "url": "https://ec.europa.eu/commission/presscorner/detail/en/statement_26_2563",
+     "domain": "ec.europa.eu",
+     "label": "European Commission"
+    },
+    {
+     "url": "https://www.rfi.fr/fr/europe/20261124-l-union-europ%C3%A9enne-propose-d-interdire-de-comp%C3%A9tition-les-athl%C3%A8tes-russes-sur-son-territoire",
+     "domain": "rfi.fr",
+     "label": "RFI"
+    }
+   ],
+   "event_date": "2026-11-23",
+   "flags": [
+    {
+     "key": "official-pr",
+     "label": "Official PR"
+    }
+   ],
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 24 Nov",
+   "daybreak": true,
+   "edition": "2026-11-24-news",
+   "period": {
+    "start": "2026-11-24",
+    "end": "2026-11-24",
+    "start_text": "",
+    "end_text": "24 Nov",
+    "label": "24 Nov"
+   },
+   "on_front": true,
+   "tier": "lead",
+   "tier_label": "Lead",
+   "unfurl": true,
+   "event_label": "Happened 23 Nov",
+   "n_sources": 2,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-24-news-russia-s-foreign-ministry-said-on-monday-23-nove",
+   "sid": "st-5158222d65b6",
+   "headline": "Russia warns Estonia of 'open war'",
+   "summary": "Russia's foreign ministry said on Monday 23 November that Estonia's actions are \"on the verge of triggering open war\", after summoning Estonia's chargé d'affaires in Moscow to protest Tallinn's plan to close its land border with Russia. Estonia says it will close all road crossings with Russia for at least six months from Tuesday 1 December, after it blamed Russian military intelligence for an attempted arson attack on a defence company near Tallinn; Russia denies involvement. Moscow also accused Estonia of \"tacitly\" letting Ukrainian drones use its airspace to strike north-western Russia, of obstructing Russian cargo ships in the Baltic, and of discriminating against ethnic Russians. Estonia's foreign ministry replied that it \"has never allowed, and will never allow, its territory to be used for military operations by another country\". NATO Secretary-General Mark Rutte said the alliance was monitoring the situation in Estonia and the recent Russian missile incursion into Poland.",
+   "why": "Russia used claims that Russian speakers were being mistreated to justify moving into eastern Ukraine in 2014, and it is now saying the same about a NATO and EU member.",
+   "url": "https://www.aljazeera.com/news/2026/11/23/russia-threatens-hostile-estonia-with-open-war",
+   "source_domain": "aljazeera.com",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.aljazeera.com/news/2026/11/23/russia-threatens-hostile-estonia-with-open-war",
+     "domain": "aljazeera.com",
+     "label": "Al Jazeera"
+    },
+    {
+     "url": "https://news.err.ee/1610204728/kremlin-again-accuses-estonia-of-letting-ukraine-attack-via-its-airspace",
+     "domain": "news.err.ee",
+     "label": "ERR News"
+    }
+   ],
+   "event_date": "2026-11-23",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 24 Nov",
+   "daybreak": false,
+   "edition": "2026-11-24-news",
+   "period": {
+    "start": "2026-11-24",
+    "end": "2026-11-24",
+    "start_text": "",
+    "end_text": "24 Nov",
+    "label": "24 Nov"
+   },
+   "on_front": true,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "Happened 23 Nov",
+   "n_sources": 2,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-24-news-a-russian-drone-briefly-entered-polish-airspace",
+   "sid": "st-c78a99399664",
+   "headline": "Russian drone crosses into Poland",
+   "summary": "A Russian drone briefly entered Polish airspace late on Monday 23 November during an attack on western Ukraine, and a Russian strike on Zaporizhzhia early on Tuesday 24 November killed two people and wounded more than 40, including an infant. Poland's military said the drone was not shot down because of the risk to civilians, and Deputy Defence Minister Paweł Zalewski said he assumed the incursion was deliberate; it came three days after three Russian cruise missiles crashed in eastern Poland. Overnight, Russia's defence ministry said it intercepted 699 Ukrainian drones, and Moscow's mayor Sergei Sobyanin said 63 of them were shot down approaching the capital. Ukraine's air force said Russia launched 96 drones. On Monday, debris from Russian drones fell in central Kyiv near the presidential office and set a five-storey building on fire, injuring five people.",
+   "why": "",
+   "url": "https://www.aljazeera.com/news/2026/11/24/russian-attack-kills-two-people-in-ukraines-zaporizhzhia",
+   "source_domain": "aljazeera.com",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "geopolitics"
+   ],
+   "topic_primary": "geopolitics",
+   "topic_label": "Geopolitics",
+   "topic_color": "#c0563b",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.aljazeera.com/news/2026/11/24/russian-attack-kills-two-people-in-ukraines-zaporizhzhia",
+     "domain": "aljazeera.com",
+     "label": "Al Jazeera"
+    }
+   ],
+   "event_date": "2026-11-23",
+   "flags": [
+    {
+     "key": "single-source",
+     "label": "Single source"
+    }
+   ],
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 24 Nov",
+   "daybreak": false,
+   "edition": "2026-11-24-news",
+   "period": {
+    "start": "2026-11-24",
+    "end": "2026-11-24",
+    "start_text": "",
+    "end_text": "24 Nov",
+    "label": "24 Nov"
+   },
+   "on_front": true,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "Happened 23 Nov",
+   "n_sources": 1,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-24-news-the-european-commission-imposed-provisional-impo",
+   "sid": "st-4b9170d0851e",
+   "headline": "EU caps hybrid car imports",
+   "summary": "The European Commission imposed provisional import quotas on hybrid cars on Monday 23 November, to take effect on Tuesday 1 December. Each country that supplied more than 2% of the EU's hybrid imports in 2025 gets a quota of its 2025 volume plus a little over 15%, and all other countries share a single leftover quota; imports above the quotas are not allowed. The measure covers full hybrids, plug-in hybrids and mild hybrids, applies to imports from any country, and can last up to 200 days before final measures are decided. The Commission says it is putting into practice an understanding reached with China on 9 October to slow China's hybrid exports, and that EU carmakers are losing market share even though the market is growing. China asked the EU to stick to the \"compliant and balanced\" deal the two sides had reached.",
+   "why": "a \"safeguard\" (an emergency trade tool against sudden import surges) sets a hard ceiling rather than a tariff, so it limits how many Chinese hybrids can reach European showrooms, whatever their price.",
+   "url": "https://ec.europa.eu/commission/presscorner/detail/en/ip_26_2564",
+   "source_domain": "ec.europa.eu",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "economy"
+   ],
+   "topic_primary": "economy",
+   "topic_label": "Economy",
+   "topic_color": "#9a7b2e",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://ec.europa.eu/commission/presscorner/detail/en/ip_26_2564",
+     "domain": "ec.europa.eu",
+     "label": "European Commission"
+    },
+    {
+     "url": "https://www.dw.com/en/eu-imposes-import-quotas-for-hybrid-vehicles-from-china/a-80029981",
+     "domain": "dw.com",
+     "label": "DW"
+    }
+   ],
+   "event_date": "2026-12-01",
+   "flags": [
+    {
+     "key": "official-pr",
+     "label": "Official PR"
+    }
+   ],
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 24 Nov",
+   "daybreak": false,
+   "edition": "2026-11-24-news",
+   "period": {
+    "start": "2026-11-24",
+    "end": "2026-11-24",
+    "start_text": "",
+    "end_text": "24 Nov",
+    "label": "24 Nov"
+   },
+   "on_front": true,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "",
+   "n_sources": 2,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-24-news-about-47-000-women-and-girls-were-killed-by-part",
+   "sid": "st-552d92cb3b31",
+   "headline": "UN: 47,000 women killed by relatives",
+   "summary": "About 47,000 women and girls were killed by partners or family members in 2025, or about five every hour, according to a report from UN Women and the UN Office on Drugs and Crime (UNODC) published on Tuesday 24 November. That is about 60% of the roughly 78,000 women and girls intentionally killed last year. The estimate draws on data from 122 countries and territories and is in line with the 45,000–51,000 range of recent years. Africa had the most such killings (22,100), followed by Asia (15,100), the Americas (7,400), Europe (2,100) and Oceania (300). The report says femicide (killing a woman or girl because she is female) is falling more slowly than homicide in general, especially in the Americas and Europe. It is published ahead of the International Day for the Elimination of Violence against Women on Wednesday 25 November.",
+   "why": "",
+   "url": "https://www.dw.com/en/five-women-killed-every-hour-by-family-members-or-partners-un-report/a-80030010",
+   "source_domain": "dw.com",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "world"
+   ],
+   "topic_primary": "world",
+   "topic_label": "World",
+   "topic_color": "#6b6f76",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.dw.com/en/five-women-killed-every-hour-by-family-members-or-partners-un-report/a-80030010",
+     "domain": "dw.com",
+     "label": "DW"
+    },
+    {
+     "url": "https://www.lemonde.fr/societe/article/2026/11/24/feminicides-47-000-femmes-ont-ete-tuees-par-des-proches-dans-le-monde-en-2025-un-nombre-qui-n-evolue-pas_6814722_3224.html",
+     "domain": "lemonde.fr",
+     "label": "Le Monde"
+    }
+   ],
+   "event_date": "2026-11-24",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 24 Nov",
+   "daybreak": false,
+   "edition": "2026-11-24-news",
+   "period": {
+    "start": "2026-11-24",
+    "end": "2026-11-24",
+    "start_text": "",
+    "end_text": "24 Nov",
+    "label": "24 Nov"
+   },
+   "on_front": false,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "",
+   "n_sources": 2,
+   "in_reserve": true,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-24-news-kim-yo-jong-the-influential-sister-of-north-kore",
+   "sid": "st-f9bba5aafa1c",
+   "headline": "Pyongyang threatens to shut Swiss office",
+   "summary": "Kim Yo Jong, the influential sister of North Korean leader Kim Jong Un, said on Tuesday 24 November that Pyongyang will consider closing the Swiss diplomatic office that reopened there in October, because Switzerland has sanctioned a North Korean children's camp. In a statement carried by the state agency KCNA, she said that after the sanctions the Swiss office \"has lost its raison d'être\" and that it is \"very doubtful\" anything can be achieved with Bern while it follows \"the line of London and Brussels\". On 4 November Switzerland, like the EU and the UK, sanctioned the Songdowon international children's camp near Wonsan, which Bern says takes part in transferring Ukrainian children from occupied territories and in their \"russification\". The Swiss office has been working since Monday 19 October under the Swiss embassy in Beijing, after Foreign Minister Ignazio Cassis's visit to Pyongyang, the first by a Swiss foreign minister since 2003. The Federal Department of Foreign Affairs had not publicly responded by midday.",
+   "why": "Switzerland is one of the few Western countries with a presence in Pyongyang and has long served as an informal channel to the West, and this shows how adopting EU sanctions can clash with that role.",
+   "url": "https://www.srf.ch/news/international/schweizer-buero-in-nordkorea-kim-yo-jong-droht-mit-schliessung-von-diplomatischem-buero",
+   "source_domain": "srf.ch",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "geopolitics"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.srf.ch/news/international/schweizer-buero-in-nordkorea-kim-yo-jong-droht-mit-schliessung-von-diplomatischem-buero",
+     "domain": "srf.ch",
+     "label": "SRF"
+    },
+    {
+     "url": "https://www.letemps.ch/monde/asie-oceanie/kim-yo-jong-la-soeur-du-dirigeant-nord-coreen-menace-de-fermer-le-bureau-diplomatique-suisse",
+     "domain": "letemps.ch",
+     "label": "Le Temps/ATS"
+    }
+   ],
+   "event_date": "2026-11-24",
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 24 Nov",
+   "daybreak": false,
+   "edition": "2026-11-24-news",
+   "period": {
+    "start": "2026-11-24",
+    "end": "2026-11-24",
+    "start_text": "",
+    "end_text": "24 Nov",
+    "label": "24 Nov"
+   },
+   "on_front": false,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "",
+   "n_sources": 2,
+   "in_reserve": true,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-24-news-the-greens-nominated-geneva-national-councillor",
+   "sid": "st-aa8775c53ed0",
+   "headline": "Greens challenge SVP Federal Council ticket",
+   "summary": "The Greens nominated Geneva national councillor Delphine Klopfenstein Broggini on Monday 23 November to run against the SVP's two official candidates in the Federal Council election on Wednesday 9 December. Greens parliamentary group leader Greta Gysin called the SVP ticket \"a provocation\" and \"an affront to Romandy and to women\", because it leaves out Geneva national councillor Céline Amaudruz, the party's only female contender. Klopfenstein Broggini, 50, won the group's nomination over Vaud national councillors Léonore Porchet and Sophie Michaud Gigon after six rounds of voting. Political scientist Sarah Bütikofer told SRF that parliament is very likely to keep the seat with the SVP, and called the bid mainly a protest against the ticket, a year before the federal elections.",
+   "why": "",
+   "url": "https://www.srf.ch/news/schweiz/nach-svp-bundesratsticket-gruene-schicken-sprengkandidatin-ins-rennen",
+   "source_domain": "srf.ch",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "politics"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.srf.ch/news/schweiz/nach-svp-bundesratsticket-gruene-schicken-sprengkandidatin-ins-rennen",
+     "domain": "srf.ch",
+     "label": "SRF"
+    }
+   ],
+   "event_date": "2026-12-09",
+   "flags": [
+    {
+     "key": "single-source",
+     "label": "Single source"
+    }
+   ],
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 24 Nov",
+   "daybreak": false,
+   "edition": "2026-11-24-news",
+   "period": {
+    "start": "2026-11-24",
+    "end": "2026-11-24",
+    "start_text": "",
+    "end_text": "24 Nov",
+    "label": "24 Nov"
+   },
+   "on_front": false,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "",
+   "n_sources": 1,
+   "in_reserve": true,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-24-news-the-median-lump-sum-taken-from-the-second-pillar",
+   "sid": "st-777ebac6a2c2",
+   "headline": "Pension lump sums nearly double in a decade",
+   "summary": "The median lump sum taken from the second pillar (occupational pensions) rose to CHF 150,000 in 2025, from about CHF 81,500 in 2015, the Federal Statistical Office (FSO) said on Tuesday 24 November. About 73,700 people took a lump sum in 2025, 60% more than ten years earlier, while the number of new pension recipients, about 38,100, is back at its 2015 level after peaking at 45,300 in 2022. Of people receiving benefits from a pension fund, 48% took only capital, 33% only a pension and 18% both. The gender gap is large: the median new pension is about CHF 2,000 a month for men and CHF 1,300 for women, and the median lump sum is about CHF 216,800 for men and CHF 87,100 for women. The FSO notes that the figures are a snapshot of one year and do not show benefits drawn earlier or later.",
+   "why": "more and more people are choosing a lump sum over a lifelong pension, which moves the risk of outliving their savings, and of investing them, from the pension fund to the retiree.",
+   "url": "https://www.admin.ch/fr/newnsb/Oo4HssBK3PDd",
+   "source_domain": "admin.ch",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.admin.ch/fr/newnsb/Oo4HssBK3PDd",
+     "domain": "admin.ch",
+     "label": "FSO via admin.ch"
+    }
+   ],
+   "event_date": "2026-11-24",
+   "flags": [
+    {
+     "key": "official-pr",
+     "label": "Official PR"
+    }
+   ],
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 24 Nov",
+   "daybreak": false,
+   "edition": "2026-11-24-news",
+   "period": {
+    "start": "2026-11-24",
+    "end": "2026-11-24",
+    "start_text": "",
+    "end_text": "24 Nov",
+    "label": "24 Nov"
+   },
+   "on_front": false,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "",
+   "n_sources": 1,
+   "in_reserve": true,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-24-news-the-financial-regulator-finma-said-on-monday-23",
+   "sid": "st-9def7eb75df1",
+   "headline": "FINMA finds 1,000 unlicensed insurance brokers",
+   "summary": "The financial regulator FINMA said on Monday 23 November that it has found more than 1,000 insurance intermediaries working without authorisation since tougher supervision began in 2024, and that the yearly fee for registered intermediaries will rise from CHF 475 to CHF 1,575 from 2027. Since the revised Insurance Supervision Act took effect at the start of 2024, FINMA has removed about 3,200 entries from the register, some for violations and others because people stopped working or no longer met the requirements. FINMA says the problems were \"considerably more serious than expected\", ranging from missing qualifications and cold calling to wrong advice and fraud, and that in 2026 it ordered follow-up contacts with clients in several thousand cases. Part of the higher fee pays off a shortfall built up since 2024 and is expected to end after about ten years. Registration fees will also rise to CHF 675 for individuals and CHF 1,075 for companies. Anyone selling insurance in Switzerland must appear in FINMA's public register.",
+   "why": "if someone who sold you an insurance policy is not in FINMA's register, they were not allowed to sell it, and FINMA's main concern is long-term or expensive products that buyers did not need.",
+   "url": "https://www.finma.ch/en/news/2026/11/20261123-mm-aa-versicherungsvermittler/",
+   "source_domain": "finma.ch",
+   "date": "2026-11-24",
+   "date_label": "Nov 24",
+   "stream": "news",
+   "stream_label": "News",
+   "topics": [
+    "switzerland",
+    "economy"
+   ],
+   "topic_primary": "switzerland",
+   "topic_label": "Switzerland",
+   "topic_color": "#c2454a",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://www.finma.ch/en/news/2026/11/20261123-mm-aa-versicherungsvermittler/",
+     "domain": "finma.ch",
+     "label": "FINMA"
+    }
+   ],
+   "event_date": "2026-11-23",
+   "flags": [
+    {
+     "key": "official-pr",
+     "label": "Official PR"
+    }
+   ],
+   "fresh": true,
+   "kind": "story",
+   "age_days": 0,
+   "day_label": "Tue 24 Nov",
+   "daybreak": false,
+   "edition": "2026-11-24-news",
+   "period": {
+    "start": "2026-11-24",
+    "end": "2026-11-24",
+    "start_text": "",
+    "end_text": "24 Nov",
+    "label": "24 Nov"
+   },
+   "on_front": false,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": true,
+   "event_label": "Happened 23 Nov",
+   "n_sources": 1,
+   "in_reserve": true,
+   "show_desk": false
+  },
+  {
    "id": "2026-11-23-news-the-cop31-climate-summit-in-antalya-ended-on-sun",
    "sid": "st-9adbd09a90d5",
    "headline": "COP31 ends with no climate decision",
@@ -2807,9 +3328,9 @@
      "label": "Ongoing"
     }
    ],
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 23 Nov",
    "daybreak": true,
    "edition": "2026-11-23-news",
@@ -2820,12 +3341,13 @@
     "end_text": "23 Nov",
     "label": "23 Nov"
    },
-   "on_front": true,
+   "on_front": false,
    "tier": "lead",
    "tier_label": "Lead",
    "unfurl": true,
    "event_label": "Happened 22 Nov",
    "n_sources": 2,
+   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -2856,9 +3378,9 @@
     }
    ],
    "event_date": "2026-11-22",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 23 Nov",
    "daybreak": false,
    "edition": "2026-11-23-sports",
@@ -2869,12 +3391,13 @@
     "end_text": "23 Nov",
     "label": "17–23 Nov"
    },
-   "on_front": true,
+   "on_front": false,
    "tier": "lead",
    "tier_label": "Lead",
    "unfurl": true,
    "event_label": "",
    "n_sources": 1,
+   "in_reserve": true,
    "show_desk": false
   },
   {
@@ -2910,9 +3433,9 @@
     }
    ],
    "event_date": "2026-11-22",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 23 Nov",
    "daybreak": false,
    "edition": "2026-11-23-news",
@@ -2923,12 +3446,13 @@
     "end_text": "23 Nov",
     "label": "23 Nov"
    },
-   "on_front": true,
+   "on_front": false,
    "tier": "feature",
    "tier_label": "Feature",
    "unfurl": true,
    "event_label": "Happened 22 Nov",
    "n_sources": 2,
+   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -2964,65 +3488,9 @@
     }
    ],
    "event_date": "2026-11-23",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 23 Nov",
-   "daybreak": false,
-   "edition": "2026-11-23-news",
-   "period": {
-    "start": "2026-11-23",
-    "end": "2026-11-23",
-    "start_text": "",
-    "end_text": "23 Nov",
-    "label": "23 Nov"
-   },
-   "on_front": true,
-   "tier": "feature",
-   "tier_label": "Feature",
-   "unfurl": true,
-   "event_label": "",
-   "n_sources": 2,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-23-news-home-care-services-in-switzerland-delivered-a-re",
-   "sid": "st-e819caac304a",
-   "headline": "Swiss home care hits record hours",
-   "summary": "Home-care services in Switzerland delivered a record 29.6 million hours of care in 2025, 15.3% more than in 2024, and hospital outpatient billing passed CHF 10 billion for the first time, the Federal Statistical Office (FSO) said on Monday 23 November. Hospital outpatient contacts rose 3.9%, while inpatient stays grew only 1.8% and nursing-home places 0.9%. Most of the home-care growth came from for-profit companies: 227 new ones opened in 2025, bringing the total to 1,050 (+24.4%), and their hours rose 37.6% to 12.2 million. For the first time the FSO counted family carers hired and paid by these services: 43% of for-profit firms and 20% of public non-profit organisations employ them.",
-   "why": "care is moving out of hospital beds and into homes and outpatient clinics, and that shift is where much of the growth behind compulsory health-insurance premiums is coming from.",
-   "url": "https://www.admin.ch/fr/newnsb/xsLqZQ654tIy",
-   "source_domain": "admin.ch",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "switzerland",
-    "health"
-   ],
-   "topic_primary": "switzerland",
-   "topic_label": "Switzerland",
-   "topic_color": "#c2454a",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.admin.ch/fr/newnsb/xsLqZQ654tIy",
-     "domain": "admin.ch",
-     "label": "FSO via admin.ch"
-    }
-   ],
-   "event_date": "2026-11-23",
-   "flags": [
-    {
-     "key": "official-pr",
-     "label": "Official PR"
-    }
-   ],
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 23 Nov",
    "daybreak": false,
    "edition": "2026-11-23-news",
@@ -3038,7 +3506,7 @@
    "tier_label": "Feature",
    "unfurl": true,
    "event_label": "",
-   "n_sources": 1,
+   "n_sources": 2,
    "in_reserve": true,
    "show_desk": true
   },
@@ -3076,9 +3544,9 @@
      "label": "Ongoing"
     }
    ],
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 23 Nov",
    "daybreak": false,
    "edition": "2026-11-23-sports",
@@ -3132,9 +3600,9 @@
      "label": "Single source"
     }
    ],
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 23 Nov",
    "daybreak": false,
    "edition": "2026-11-23-sports",
@@ -3153,293 +3621,6 @@
    "n_sources": 1,
    "in_reserve": true,
    "show_desk": false
-  },
-  {
-   "id": "2026-11-23-news-the-death-toll-from-the-russian-drone-strike-on",
-   "sid": "st-b950dabf1026",
-   "headline": "Dymer strike toll rises to 11",
-   "summary": "The death toll from the Russian drone strike on a five-storey apartment block in Dymer, north of Kyiv, rose to at least 11 on Monday 23 November, and Russian attacks across the Kyiv region killed at least 15 people. Kyiv regional official Tymur Tkachenko said rescuers pulled another body from the rubble, and the State Emergency Service said 11 people, including two children, were still unaccounted for. A strike on a supermarket in Vyshneve, just south of the capital, killed three people and wounded 15, including three children, and a strike on a house in Bila Tserkva killed one.",
-   "why": "",
-   "url": "https://www.aljazeera.com/news/2026/11/23/death-toll-rises-after-deadly-russian-attacks-on-ukraine",
-   "source_domain": "aljazeera.com",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.aljazeera.com/news/2026/11/23/death-toll-rises-after-deadly-russian-attacks-on-ukraine",
-     "domain": "aljazeera.com",
-     "label": "Al Jazeera"
-    }
-   ],
-   "event_date": "2026-11-22",
-   "flags": [
-    {
-     "key": "single-source",
-     "label": "Single source"
-    },
-    {
-     "key": "ongoing",
-     "label": "Ongoing"
-    }
-   ],
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 23 Nov",
-   "daybreak": false,
-   "edition": "2026-11-23-news",
-   "period": {
-    "start": "2026-11-23",
-    "end": "2026-11-23",
-    "start_text": "",
-    "end_text": "23 Nov",
-    "label": "23 Nov"
-   },
-   "on_front": false,
-   "tier": "brief",
-   "tier_label": "Brief",
-   "unfurl": false,
-   "event_label": "Happened 22 Nov",
-   "n_sources": 1,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-23-news-democrats-will-hold-258-of-the-435-seats-in-the",
-   "sid": "st-b1b283d7afd7",
-   "headline": "Democrats reach 258 House seats",
-   "summary": "Democrats will hold 258 of the 435 seats in the next US House of Representatives, the largest majority either party has held since 1992, after Chuck Hubbard beat Republican incumbent Virginia Foxx in North Carolina in one of the last undecided races of the 3 November midterms, CBS News and NBC projected on Sunday 22 November. The result came after a recount. Democratic leader Hakeem Jeffries, set to become Speaker when the new House sits in early January, would be the first African American in the post.",
-   "why": "",
-   "url": "https://www.lemonde.fr/international/article/2026/11/23/avec-258-sieges-remportes-les-democrates-decrochent-la-plus-large-majorite-depuis-1992-a-la-chambre-des-representants_6814364_3210.html",
-   "source_domain": "lemonde.fr",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "politics"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.lemonde.fr/international/article/2026/11/23/avec-258-sieges-remportes-les-democrates-decrochent-la-plus-large-majorite-depuis-1992-a-la-chambre-des-representants_6814364_3210.html",
-     "domain": "lemonde.fr",
-     "label": "Le Monde/AFP"
-    }
-   ],
-   "event_date": "2026-11-22",
-   "flags": [
-    {
-     "key": "single-source",
-     "label": "Single source"
-    },
-    {
-     "key": "ongoing",
-     "label": "Ongoing"
-    }
-   ],
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 23 Nov",
-   "daybreak": false,
-   "edition": "2026-11-23-news",
-   "period": {
-    "start": "2026-11-23",
-    "end": "2026-11-23",
-    "start_text": "",
-    "end_text": "23 Nov",
-    "label": "23 Nov"
-   },
-   "on_front": false,
-   "tier": "brief",
-   "tier_label": "Brief",
-   "unfurl": false,
-   "event_label": "Happened 22 Nov",
-   "n_sources": 1,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-23-news-drones-struck-a-residential-area-of-khartoum-ove",
-   "sid": "st-2ba5b4586ff8",
-   "headline": "Drones hit UN building in Khartoum",
-   "summary": "Drones struck a residential area of Khartoum overnight into Sunday 22 November and damaged a UN building in a civilian neighbourhood, the UN's humanitarian office (OCHA) said. \"It is unacceptable that we are put at such risk,\" said Denise Brown, the UN's humanitarian coordinator for Sudan. AFP reported explosions around Khartoum airport and elsewhere in the city between about 2:00 and 4:30 a.m.; there were no immediate reports of casualties. A Sudanese army source said the drones were launched from Ethiopia, which has denied similar accusations before. The UN says drones killed more than 1,100 people in Sudan's war in the first six months of this year.",
-   "why": "",
-   "url": "https://www.dw.com/en/sudan-drones-hit-un-building-residential-area-in-khartoum/a-80015122",
-   "source_domain": "dw.com",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.dw.com/en/sudan-drones-hit-un-building-residential-area-in-khartoum/a-80015122",
-     "domain": "dw.com",
-     "label": "DW"
-    }
-   ],
-   "event_date": "2026-11-22",
-   "flags": [
-    {
-     "key": "single-source",
-     "label": "Single source"
-    }
-   ],
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 23 Nov",
-   "daybreak": false,
-   "edition": "2026-11-23-news",
-   "period": {
-    "start": "2026-11-23",
-    "end": "2026-11-23",
-    "start_text": "",
-    "end_text": "23 Nov",
-    "label": "23 Nov"
-   },
-   "on_front": false,
-   "tier": "brief",
-   "tier_label": "Brief",
-   "unfurl": false,
-   "event_label": "Happened 22 Nov",
-   "n_sources": 1,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-23-news-several-thousand-people-marched-through-istanbul",
-   "sid": "st-9b35ed5566fe",
-   "headline": "Istanbul marches against media takeovers",
-   "summary": "Several thousand people marched through Istanbul on Sunday 22 November against the closure of opposition-aligned media, days after police raided Sozcu TV, arrested senior staff and placed the channel under a government-appointed trustee. DW reports that it is the third such takeover in a year, after Tele1 and Halk TV, and that the protest was called by the opposition party Yeni Parti. The media rights group MLSA counts 25 journalists in prison in Turkey, and Reporters Without Borders ranks the country 163rd of 180 for press freedom.",
-   "why": "",
-   "url": "https://www.dw.com/en/turkey-thousands-protest-closure-of-critical-media-outlets/a-80015347",
-   "source_domain": "dw.com",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "politics"
-   ],
-   "topic_primary": "politics",
-   "topic_label": "Politics",
-   "topic_color": "#9a6a34",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.dw.com/en/turkey-thousands-protest-closure-of-critical-media-outlets/a-80015347",
-     "domain": "dw.com",
-     "label": "DW"
-    }
-   ],
-   "event_date": "2026-11-22",
-   "flags": [
-    {
-     "key": "single-source",
-     "label": "Single source"
-    }
-   ],
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 23 Nov",
-   "daybreak": false,
-   "edition": "2026-11-23-news",
-   "period": {
-    "start": "2026-11-23",
-    "end": "2026-11-23",
-    "start_text": "",
-    "end_text": "23 Nov",
-    "label": "23 Nov"
-   },
-   "on_front": false,
-   "tier": "brief",
-   "tier_label": "Brief",
-   "unfurl": false,
-   "event_label": "Happened 22 Nov",
-   "n_sources": 1,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-23-news-the-houthis-al-masirah-tv-said-on-monday-23-nove",
-   "sid": "st-52d261cd49f8",
-   "headline": "Houthis report deaths in Hodeida strikes",
-   "summary": "The Houthis' Al-Masirah TV said on Monday 23 November that Saudi strikes on a state telecoms company building in the Yemeni port of Hodeida killed 10 people and wounded more than 20, figures AFP could not verify. The channel first reported four dead. The Saudi-led coalition backing Yemen's internationally recognised government had claimed strikes on Friday 20 November on Hodeida sites it says are used for smuggling weapons and ballistic missiles, as the Houthis advance towards Aden.",
-   "why": "",
-   "url": "https://www.letemps.ch/monde/moyenorient/en-direct-moyen-orient-des-frappes-saoudiennes-visent-le-port-d-hodeida-selon-un-media-houthis",
-   "source_domain": "letemps.ch",
-   "date": "2026-11-23",
-   "date_label": "Nov 23",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 1,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.letemps.ch/monde/moyenorient/en-direct-moyen-orient-des-frappes-saoudiennes-visent-le-port-d-hodeida-selon-un-media-houthis",
-     "domain": "letemps.ch",
-     "label": "Le Temps/AFP live"
-    }
-   ],
-   "event_date": "2026-11-23",
-   "flags": [
-    {
-     "key": "single-source",
-     "label": "Single source"
-    },
-    {
-     "key": "disputed",
-     "label": "Disputed"
-    }
-   ],
-   "fresh": true,
-   "kind": "story",
-   "age_days": 0,
-   "day_label": "Mon 23 Nov",
-   "daybreak": false,
-   "edition": "2026-11-23-news",
-   "period": {
-    "start": "2026-11-23",
-    "end": "2026-11-23",
-    "start_text": "",
-    "end_text": "23 Nov",
-    "label": "23 Nov"
-   },
-   "on_front": false,
-   "tier": "brief",
-   "tier_label": "Brief",
-   "unfurl": false,
-   "event_label": "",
-   "n_sources": 1,
-   "show_desk": true
   },
   {
    "id": "2026-11-23-sports-ferrari-s-drivers-collide-again-vasseur-demands",
@@ -3469,9 +3650,9 @@
     }
    ],
    "event_date": "2026-11-21",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 23 Nov",
    "daybreak": false,
    "edition": "2026-11-23-sports",
@@ -3518,9 +3699,9 @@
     }
    ],
    "event_date": "2026-11-22",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 23 Nov",
    "daybreak": false,
    "edition": "2026-11-23-sports",
@@ -3567,9 +3748,9 @@
     }
    ],
    "event_date": "2026-11-22",
-   "fresh": true,
+   "fresh": false,
    "kind": "story",
-   "age_days": 0,
+   "age_days": 1,
    "day_label": "Mon 23 Nov",
    "daybreak": false,
    "edition": "2026-11-23-sports",
@@ -3630,7 +3811,7 @@
    ],
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 22 Nov",
    "daybreak": true,
    "edition": "2026-11-22-news",
@@ -3685,7 +3866,7 @@
    "event_date": "2026-11-21",
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 22 Nov",
    "daybreak": false,
    "edition": "2026-11-22-news",
@@ -3702,7 +3883,6 @@
    "unfurl": true,
    "event_label": "Happened 21 Nov",
    "n_sources": 2,
-   "in_reserve": true,
    "show_desk": false
   },
   {
@@ -3746,7 +3926,7 @@
    ],
    "fresh": false,
    "kind": "story",
-   "age_days": 1,
+   "age_days": 2,
    "day_label": "Sun 22 Nov",
    "daybreak": false,
    "edition": "2026-11-22-news",
@@ -3763,7 +3943,6 @@
    "unfurl": true,
    "event_label": "Happened 20 Nov",
    "n_sources": 2,
-   "in_reserve": true,
    "show_desk": false
   },
   {
@@ -3817,7 +3996,7 @@
    ],
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": true,
    "edition": "2026-11-21-news",
@@ -3834,7 +4013,6 @@
    "unfurl": true,
    "event_label": "",
    "n_sources": 3,
-   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -3897,7 +4075,7 @@
    "affiliation_label": "Anthropic",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-weekend",
@@ -3914,7 +4092,6 @@
    "unfurl": true,
    "event_label": "",
    "n_sources": 4,
-   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -3963,7 +4140,7 @@
    "affiliation_label": "Anthropic, NYU",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-weekend",
@@ -3980,7 +4157,6 @@
    "unfurl": true,
    "event_label": "",
    "n_sources": 1,
-   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -4019,7 +4195,7 @@
    ],
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-weekend",
@@ -4036,7 +4212,6 @@
    "unfurl": false,
    "event_label": "",
    "n_sources": 1,
-   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -4082,7 +4257,7 @@
    "affiliation_label": "Vector Institute, University of Toronto +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-weekend",
@@ -4099,7 +4274,6 @@
    "unfurl": false,
    "event_label": "",
    "n_sources": 1,
-   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -4137,7 +4311,7 @@
    "event_date": "2026-11-18",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-weekend",
@@ -4154,7 +4328,6 @@
    "unfurl": true,
    "event_label": "",
    "n_sources": 2,
-   "in_reserve": true,
    "show_desk": true
   },
   {
@@ -4193,7 +4366,7 @@
    "affiliation_label": "International Quantum Academy, SUSTech +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-weekend",
@@ -4249,7 +4422,7 @@
    "affiliation_label": "University of Oslo, Oslo University Hospital +1",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-weekend",
@@ -4304,7 +4477,7 @@
    "event_date": "2026-11-19",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-weekend",
@@ -4358,7 +4531,7 @@
    "event_date": "2026-11-19",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-weekend",
@@ -4418,7 +4591,7 @@
    "event_date": "2026-11-20",
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-news",
@@ -4474,7 +4647,7 @@
    ],
    "fresh": false,
    "kind": "story",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-news",
@@ -4506,7 +4679,7 @@
     "<strong>3. The model you tested is not the model you run.</strong> Several papers this week find the same gap between evaluation and deployment. Some open base models can recite whole benchmark test sets. Leaderboard winners are partly there by luck, and 13 of 173 SWE-bench models cannot be told apart statistically. A 4-bit quantised copy can refuse differently from the full-precision model that passed safety testing, depending on its exact rounding error. Model organisms can now be trained to sandbag past both input/output audits and audits of internal activations. And withholding a skill's training data delays it rather than preventing it, with the delay shrinking as models improve. The common lesson is to evaluate the exact artifact you deploy, with intervals rather than single ranks. Training an \"observer\" role into the model itself is one of the few approaches this week that measurably narrowed the gap. For anyone running local models on a Mac, the quantisation result is the immediate one: \"same model, just 4-bit\" is not a safety argument."
    ],
    "kind": "editorial",
-   "age_days": 2,
+   "age_days": 3,
    "day_label": "Sat 21 Nov",
    "daybreak": false,
    "edition": "2026-11-21-weekend",
@@ -6101,47 +6274,6 @@
    "show_desk": false
   },
   {
-   "stream": "science",
-   "date": "2026-11-18",
-   "date_label": "Nov 18",
-   "kicker": "Science · Why it matters · Nov 18",
-   "heading": "Why it matters",
-   "title": "Check the instrument before the conclusion",
-   "paras": [
-    "The M87* reanalysis and the HOPE trial both test claims against the method behind them. The black hole's ring survives a reconstruction designed to remove the critics' objection. The gamma-stimulation device's advertised benefit does not survive its own primary endpoint, and rests on a subgroup. In both cases the conclusion depends on which measurement the claim relies on.",
-    "<strong>Brain health starts outside the brain and early in life.</strong> The Oslo cohort study ties falling dementia rates to memory built in childhood and decline slowed in adulthood. The Gladstone mouse work suggests the brain depends on proteins made in the liver and imported across the blood–brain barrier. Both look for causes of brain ageing outside the brain and outside old age."
-   ],
-   "kind": "editorial",
-   "age_days": 3,
-   "day_label": "Wed 18 Nov",
-   "daybreak": false,
-   "edition": "2026-11-18-science",
-   "period": {
-    "start": "2026-11-12",
-    "end": "2026-11-18",
-    "start_text": "12",
-    "end_text": "18 Nov",
-    "label": "12–18 Nov"
-   },
-   "on_front": false,
-   "sid": "ed-science-2026-11-18",
-   "topics": [
-    "health",
-    "science",
-    "switzerland",
-    "world"
-   ],
-   "stream_label": "Science",
-   "title_html": "Check the instrument before the conclusion",
-   "title_is_lede": false,
-   "body": [
-    "The M87* reanalysis and the HOPE trial both test claims against the method behind them. The black hole's ring survives a reconstruction designed to remove the critics' objection. The gamma-stimulation device's advertised benefit does not survive its own primary endpoint, and rests on a subgroup. In both cases the conclusion depends on which measurement the claim relies on.",
-    "<strong>Brain health starts outside the brain and early in life.</strong> The Oslo cohort study ties falling dementia rates to memory built in childhood and decline slowed in adulthood. The Gladstone mouse work suggests the brain depends on proteins made in the liver and imported across the blood–brain barrier. Both look for causes of brain ageing outside the brain and outside old age."
-   ],
-   "title_text": "Check the instrument before the conclusion",
-   "in_reserve": true
-  },
-  {
    "id": "2026-11-17-ai-ml-california-sues-openai-over-ai-agents-that-escap",
    "sid": "st-8c29f7c30d13",
    "headline": "California sues OpenAI over rogue agents",
@@ -6254,6 +6386,65 @@
    "tier_label": "Feature",
    "unfurl": false,
    "event_label": "",
+   "n_sources": 1,
+   "show_desk": false
+  },
+  {
+   "id": "2026-11-17-ai-ml-multi-agent-llm-systems-underperform-when-the-ba",
+   "sid": "st-5888ce8bf3c1",
+   "headline": "Multi-agent LLMs lose at matched compute",
+   "summary": "This meta-analysis (a statistical pooling of earlier studies) covers nine evaluations of 516 multi-agent configurations, where several LLM \"agents\" debate or coordinate. The author notes that most such studies compare the multi-agent system against one greedy pass of a single model, which mixes up the effect of coordination with the effect of simply sampling more. Against baselines given the same number of samples or the same compute budget, multi-agent setups average 4.2 points lower accuracy. They match or trail the baseline in 74% of the comparisons.",
+   "why": "Before paying for an orchestration layer, compare it against best-of-N sampling at the same cost. The paper argues that coordination only helps when agents see different evidence, are checked by an external verifier, or come from different models that make different mistakes. It is a single-author synthesis, not new experiments.",
+   "url": "https://arxiv.org/abs/2611.17610",
+   "source_domain": "arxiv.org",
+   "date": "2026-11-17",
+   "date_label": "Nov 17",
+   "stream": "ai-ml",
+   "stream_label": "AI/ML",
+   "topics": [
+    "ai-ml"
+   ],
+   "topic_primary": "ai-ml",
+   "topic_label": "AI / ML",
+   "topic_color": "#2f7d8c",
+   "importance": 2,
+   "is_lead": false,
+   "sources": [
+    {
+     "url": "https://arxiv.org/abs/2611.17610",
+     "domain": "arxiv.org",
+     "label": "arXiv:2611.17610"
+    }
+   ],
+   "event_date": "2026-11-13",
+   "flags": [
+    {
+     "key": "preprint",
+     "label": "Preprint"
+    }
+   ],
+   "affiliations": [
+    "University of Nevada, Reno"
+   ],
+   "affiliation_label": "University of Nevada, Reno",
+   "fresh": false,
+   "kind": "story",
+   "age_days": 3,
+   "day_label": "Tue 17 Nov",
+   "daybreak": false,
+   "edition": "2026-11-17-ai-ml",
+   "period": {
+    "start": "2026-11-14",
+    "end": "2026-11-17",
+    "start_text": "14",
+    "end_text": "17 Nov",
+    "label": "14–17 Nov"
+   },
+   "on_front": false,
+   "tier": "feature",
+   "tier_label": "Feature",
+   "unfurl": false,
+   "event_label": "Happened 13 Nov",
    "n_sources": 1,
    "show_desk": false
   },
@@ -6475,55 +6666,6 @@
    "unfurl": true,
    "event_label": "Happened 15 Nov",
    "n_sources": 2,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-16-sports-england-end-spain-s-43-match-unbeaten-run-in-mad",
-   "sid": "st-b9ef6d9a51de",
-   "headline": "England end Spain's 43-match unbeaten run",
-   "summary": "England won 3-2 in Madrid, handing the reigning world champions their first defeat in regulation time since March 2024 and ending a run of 43 matches without a loss (the 2025 Nations League final defeat to Portugal went to penalties and officially counts as a draw). Harry Kane scored a penalty on 45 minutes, Ezri Konsa and Ben White made it 3-0 by the 57th, and England then hung on after Elliot Anderson was sent off for a foul on Lamine Yamal, which also gave Spain a penalty. Spain pulled it back to 3-2 but a stand-in goalkeeper, James Trafford, made several saves late on.",
-   "why": "A team that had won the Euros and the World Cup without losing was beaten by a side that played the last half hour or so with ten men, which is a useful marker of how even the top of European football has become.",
-   "url": "https://www.srf.ch/sport/fussball/nations-league/nations-league-gruppe-a3-england-beendet-spaniens-monster-serie",
-   "source_domain": "srf.ch",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 3,
-   "is_lead": true,
-   "sources": [
-    {
-     "url": "https://www.srf.ch/sport/fussball/nations-league/nations-league-gruppe-a3-england-beendet-spaniens-monster-serie",
-     "domain": "srf.ch",
-     "label": "SRF Sport match report"
-    }
-   ],
-   "event_date": "2026-11-15",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 16 Nov",
-   "daybreak": false,
-   "edition": "2026-11-16-sports",
-   "period": {
-    "start": "2026-11-10",
-    "end": "2026-11-16",
-    "start_text": "10",
-    "end_text": "16 Nov",
-    "label": "10–16 Nov"
-   },
-   "on_front": false,
-   "tier": "lead",
-   "tier_label": "Lead",
-   "unfurl": true,
-   "event_label": "",
-   "n_sources": 1,
    "show_desk": false
   },
   {
@@ -6579,55 +6721,6 @@
    "unfurl": true,
    "event_label": "Happened 15 Nov",
    "n_sources": 2,
-   "show_desk": true
-  },
-  {
-   "id": "2026-11-16-sports-belgium-s-4-1-win-sends-italy-out-of-the-nations",
-   "sid": "st-9e3154df2756",
-   "headline": "Belgium knock Italy out of the quarter-finals",
-   "summary": "Italy entered the last round as group leader after beating France 3-1 on Thursday, but lost 4-1 in Brussels and finished behind both Belgium and France. Pio Esposito put Italy ahead on 12 minutes; Maxim De Cuyper and Nathan Ngoy turned it around within seven minutes and Jeremy Doku's solo goal made it 3-1 by the 26th minute. Belgium and France (2-1 winners over Turkey, helped by an own goal) both advance to the knockout quarter-finals. Italy's late penalty miss capped a day on which a first-place position was lost in 90 minutes.",
-   "why": "The group table flipped on the final day: a win over France earlier in the week counted for nothing once Belgium and France both won.",
-   "url": "https://www.srf.ch/sport/fussball/nations-league/nations-league-gruppe-a1-belgien-entzaubert-italien-auch-frankreich-im-viertelfinal",
-   "source_domain": "srf.ch",
-   "date": "2026-11-16",
-   "date_label": "Nov 16",
-   "stream": "sports",
-   "stream_label": "Sports",
-   "topics": [
-    "sports"
-   ],
-   "topic_primary": "sports",
-   "topic_label": "Sports",
-   "topic_color": "#c26b2e",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.srf.ch/sport/fussball/nations-league/nations-league-gruppe-a1-belgien-entzaubert-italien-auch-frankreich-im-viertelfinal",
-     "domain": "srf.ch",
-     "label": "SRF Sport match report"
-    }
-   ],
-   "event_date": "2026-11-15",
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Mon 16 Nov",
-   "daybreak": false,
-   "edition": "2026-11-16-sports",
-   "period": {
-    "start": "2026-11-10",
-    "end": "2026-11-16",
-    "start_text": "10",
-    "end_text": "16 Nov",
-    "label": "10–16 Nov"
-   },
-   "on_front": false,
-   "tier": "feature",
-   "tier_label": "Feature",
-   "unfurl": true,
-   "event_label": "",
-   "n_sources": 1,
    "show_desk": false
   },
   {
@@ -6978,66 +7071,6 @@
    "show_desk": true
   },
   {
-   "id": "2026-11-13-news-iran-s-revolutionary-guards-irgc-said-on-friday",
-   "sid": "st-9502a2a56784",
-   "headline": "Iran claims strike on US radar in Bahrain",
-   "summary": "Iran's Revolutionary Guards (IRGC) said on Friday 13 November that they had destroyed a US early-warning radar in Bahrain, calling it retaliation for an air attack on a telecommunications tower in Sirik County in southern Iran on Thursday 12 November. Iranian state media carried the claim, and neither the US military nor Bahrain has confirmed it. It is also unclear who attacked the Sirik tower or how badly it was damaged. The IRGC called the strike a \"serious warning\" to Washington to stop \"aerial provocations and oil smuggling\" in the Strait of Hormuz. Bahrain hosts the headquarters of the US Navy's Fifth Fleet. SRF's live ticker described it as Iran's first attack on a US military facility since September. Hours earlier, President Donald Trump wrote that \"we don't need a deal with Iran\" and told Vice President JD Vance, who led the earlier talks and has blamed the war for the Republicans' midterm losses, to focus instead on what Trump calls corruption in Democratic-run cities. Several commercial ships have hit mines or been struck in the strait over the past week.",
-   "why": "if the claim is true, this is the first direct Iranian hit on US forces in about two months, and Washington has now said openly that it is not seeking a deal. That shifts the standoff over Hormuz, which drives energy prices, back towards military escalation.",
-   "url": "https://www.euronews.com/2026/11/13/irgc-says-it-destroyed-us-radar-in-bahrain-after-attack-on-southern-iran",
-   "source_domain": "euronews.com",
-   "date": "2026-11-13",
-   "date_label": "Nov 13",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 3,
-   "is_lead": true,
-   "sources": [
-    {
-     "url": "https://www.euronews.com/2026/11/13/irgc-says-it-destroyed-us-radar-in-bahrain-after-attack-on-southern-iran",
-     "domain": "euronews.com",
-     "label": "Euronews"
-    },
-    {
-     "url": "https://www.aljazeera.com/features/2026/11/13/why-is-trump-saying-no-deal-necessary-with-iran-as-he-sidelines-jd-vance",
-     "domain": "aljazeera.com",
-     "label": "Al Jazeera"
-    }
-   ],
-   "event_date": "2026-11-13",
-   "flags": [
-    {
-     "key": "disputed",
-     "label": "Disputed"
-    }
-   ],
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 13 Nov",
-   "daybreak": true,
-   "edition": "2026-11-13-news",
-   "period": {
-    "start": "2026-11-13",
-    "end": "2026-11-13",
-    "start_text": "",
-    "end_text": "13 Nov",
-    "label": "13 Nov"
-   },
-   "on_front": false,
-   "tier": "lead",
-   "tier_label": "Lead",
-   "unfurl": true,
-   "event_label": "",
-   "n_sources": 2,
-   "show_desk": true
-  },
-  {
    "id": "2026-11-13-ai-ml-google-ships-gemini-4-hydrogen-as-its-default-fa",
    "sid": "st-720825c8bbb0",
    "headline": "Google ships Gemini 4 Hydrogen as its default fast model",
@@ -7075,7 +7108,7 @@
    "kind": "story",
    "age_days": 3,
    "day_label": "Fri 13 Nov",
-   "daybreak": false,
+   "daybreak": true,
    "edition": "2026-11-13-ai-ml",
    "period": {
     "start": "2026-11-11",
@@ -7157,66 +7190,6 @@
    "event_label": "",
    "n_sources": 3,
    "show_desk": false
-  },
-  {
-   "id": "2026-11-13-news-us-envoy-jared-kushner-said-late-on-thursday-12",
-   "sid": "st-1f5086153e0a",
-   "headline": "Kremlin says no decision on European seat",
-   "summary": "US envoy Jared Kushner said late on Thursday 12 November, after he and Steve Witkoff met Vladimir Putin in Moscow, that Putin had agreed to include Europe in the Ukraine peace talks. On Friday 13 November the Kremlin said it had not yet agreed. \"We cannot conclude this deal without the Europeans being at the table,\" Kushner said in Dublin, where the envoys briefed Volodymyr Zelensky. Kremlin spokesman Dmitry Peskov said Moscow would decide on \"an expanded format\" only \"once we understand their real intentions\". EU leaders were meeting informally in Dublin on Friday, the day after the European Political Community summit, to settle who would speak for the bloc. The talks between Russia and Ukraine are expected to resume next week, the week starting Monday 16 November. Overnight, Russia said it intercepted 1,198 Ukrainian drones over more than 15 regions; four people were killed in Volgograd. Russian strikes hit Odesa, killing at least two people, and set a Kyiv hospital on fire.",
-   "why": "Europe's place at the table is now the main open question in the talks, and Moscow appears to be using it as a bargaining chip while it holds firm on its territorial demands.",
-   "url": "https://www.aljazeera.com/news/2026/11/13/russia-and-ukraine-report-overnight-attacks-amid-us-diplomatic-push",
-   "source_domain": "aljazeera.com",
-   "date": "2026-11-13",
-   "date_label": "Nov 13",
-   "stream": "news",
-   "stream_label": "News",
-   "topics": [
-    "geopolitics"
-   ],
-   "topic_primary": "geopolitics",
-   "topic_label": "Geopolitics",
-   "topic_color": "#c0563b",
-   "importance": 2,
-   "is_lead": false,
-   "sources": [
-    {
-     "url": "https://www.aljazeera.com/news/2026/11/13/russia-and-ukraine-report-overnight-attacks-amid-us-diplomatic-push",
-     "domain": "aljazeera.com",
-     "label": "Al Jazeera (AP/Reuters)"
-    },
-    {
-     "url": "https://irish-presidency.consilium.europa.eu/en/events/meeting-of-the-european-political-community-epc/",
-     "domain": "irish-presidency.consilium.europa.eu",
-     "label": "Irish Presidency of the Council of the EU — EPC meeting page"
-    }
-   ],
-   "event_date": "2026-11-12",
-   "flags": [
-    {
-     "key": "ongoing",
-     "label": "Ongoing"
-    }
-   ],
-   "fresh": false,
-   "kind": "story",
-   "age_days": 3,
-   "day_label": "Fri 13 Nov",
-   "daybreak": false,
-   "edition": "2026-11-13-news",
-   "period": {
-    "start": "2026-11-13",
-    "end": "2026-11-13",
-    "start_text": "",
-    "end_text": "13 Nov",
-    "label": "13 Nov"
-   },
-   "on_front": false,
-   "tier": "feature",
-   "tier_label": "Feature",
-   "unfurl": true,
-   "event_label": "Happened 12 Nov",
-   "n_sources": 2,
-   "show_desk": true
   },
   {
    "id": "2026-11-11-science-a-bose-einstein-condensate-in-orbit-reaches-belo",
@@ -7461,9 +7434,34 @@
  ],
  "days": [
   {
-   "date": "2026-11-23",
+   "date": "2026-11-24",
    "first": 0,
-   "count": 15,
+   "count": 9,
+   "label_long": "Tuesday 24 November",
+   "label_short": "Tue 24 Nov",
+   "streams": [
+    {
+     "key": "news",
+     "edition": "2026-11-24-news",
+     "label": "News",
+     "period": {
+      "start": "2026-11-24",
+      "end": "2026-11-24",
+      "start_text": "",
+      "end_text": "24 Nov",
+      "label": "24 Nov"
+     }
+    }
+   ],
+   "n_stories": 9,
+   "n_front": 4,
+   "editorials": 0,
+   "multi_desk": false
+  },
+  {
+   "date": "2026-11-23",
+   "first": 9,
+   "count": 9,
    "label_long": "Monday 23 November",
    "label_short": "Mon 23 Nov",
    "streams": [
@@ -7492,14 +7490,14 @@
      }
     }
    ],
-   "n_stories": 15,
-   "n_front": 4,
+   "n_stories": 9,
+   "n_front": 0,
    "editorials": 0,
    "multi_desk": true
   },
   {
    "date": "2026-11-22",
-   "first": 15,
+   "first": 18,
    "count": 3,
    "label_long": "Sunday 22 November",
    "label_short": "Sun 22 Nov",
@@ -7524,7 +7522,7 @@
   },
   {
    "date": "2026-11-21",
-   "first": 18,
+   "first": 21,
    "count": 13,
    "label_long": "Saturday 21 November",
    "label_short": "Sat 21 Nov",
@@ -7561,7 +7559,7 @@
   },
   {
    "date": "2026-11-20",
-   "first": 31,
+   "first": 34,
    "count": 12,
    "label_long": "Friday 20 November",
    "label_short": "Fri 20 Nov",
@@ -7598,7 +7596,7 @@
   },
   {
    "date": "2026-11-19",
-   "first": 43,
+   "first": 46,
    "count": 3,
    "label_long": "Thursday 19 November",
    "label_short": "Thu 19 Nov",
@@ -7623,8 +7621,8 @@
   },
   {
    "date": "2026-11-18",
-   "first": 46,
-   "count": 13,
+   "first": 49,
+   "count": 12,
    "label_long": "Wednesday 18 November",
    "label_short": "Wed 18 Nov",
    "streams": [
@@ -7655,13 +7653,13 @@
    ],
    "n_stories": 12,
    "n_front": 0,
-   "editorials": 1,
+   "editorials": 0,
    "multi_desk": true
   },
   {
    "date": "2026-11-17",
-   "first": 59,
-   "count": 5,
+   "first": 61,
+   "count": 6,
    "label_long": "Tuesday 17 November",
    "label_short": "Tue 17 Nov",
    "streams": [
@@ -7690,15 +7688,15 @@
      }
     }
    ],
-   "n_stories": 5,
+   "n_stories": 6,
    "n_front": 0,
    "editorials": 0,
    "multi_desk": true
   },
   {
    "date": "2026-11-16",
-   "first": 64,
-   "count": 4,
+   "first": 67,
+   "count": 2,
    "label_long": "Monday 16 November",
    "label_short": "Mon 16 Nov",
    "streams": [
@@ -7713,28 +7711,16 @@
       "end_text": "16 Nov",
       "label": "16 Nov"
      }
-    },
-    {
-     "key": "sports",
-     "edition": "2026-11-16-sports",
-     "label": "Sports",
-     "period": {
-      "start": "2026-11-10",
-      "end": "2026-11-16",
-      "start_text": "10",
-      "end_text": "16 Nov",
-      "label": "10–16 Nov"
-     }
     }
    ],
-   "n_stories": 4,
+   "n_stories": 2,
    "n_front": 0,
    "editorials": 0,
-   "multi_desk": true
+   "multi_desk": false
   },
   {
    "date": "2026-11-15",
-   "first": 68,
+   "first": 69,
    "count": 2,
    "label_long": "Sunday 15 November",
    "label_short": "Sun 15 Nov",
@@ -7759,7 +7745,7 @@
   },
   {
    "date": "2026-11-14",
-   "first": 70,
+   "first": 71,
    "count": 4,
    "label_long": "Saturday 14 November",
    "label_short": "Sat 14 Nov",
@@ -7796,23 +7782,11 @@
   },
   {
    "date": "2026-11-13",
-   "first": 74,
-   "count": 4,
+   "first": 75,
+   "count": 2,
    "label_long": "Friday 13 November",
    "label_short": "Fri 13 Nov",
    "streams": [
-    {
-     "key": "news",
-     "edition": "2026-11-13-news",
-     "label": "News",
-     "period": {
-      "start": "2026-11-13",
-      "end": "2026-11-13",
-      "start_text": "",
-      "end_text": "13 Nov",
-      "label": "13 Nov"
-     }
-    },
     {
      "key": "ai-ml",
      "edition": "2026-11-13-ai-ml",
@@ -7826,14 +7800,14 @@
      }
     }
    ],
-   "n_stories": 4,
+   "n_stories": 2,
    "n_front": 0,
    "editorials": 0,
-   "multi_desk": true
+   "multi_desk": false
   },
   {
    "date": "2026-11-11",
-   "first": 78,
+   "first": 77,
    "count": 2,
    "label_long": "Wednesday 11 November",
    "label_short": "Wed 11 Nov",
@@ -7858,7 +7832,7 @@
   },
   {
    "date": "2026-11-10",
-   "first": 80,
+   "first": 79,
    "count": 2,
    "label_long": "Tuesday 10 November",
    "label_short": "Tue 10 Nov",
@@ -7883,38 +7857,37 @@
   }
  ],
  "front": {
-  "date": "2026-11-23",
+  "date": "2026-11-24",
   "items": [
    0,
    1,
    2,
    3
   ],
-  "desk": 30,
+  "desk": 33,
   "n": 4,
   "reserve": [
    0,
    1,
    2,
    3,
-   15,
    4,
    5,
    6,
+   7,
+   9,
+   8,
+   10,
+   11,
    18,
-   16,
-   17,
-   19,
-   20,
-   21,
-   22,
-   23
+   12,
+   13,
+   14
   ],
   "desk_reserve": [
-   30,
-   58
+   33
   ],
-  "date_label": "Mon 23 Nov",
+  "date_label": "Tue 24 Nov",
   "older": []
  },
  "beats": [
@@ -7922,43 +7895,37 @@
    "key": "geopolitics",
    "label": "Geopolitics",
    "color": "#c0563b",
-   "count": 26
+   "count": 25
   },
   {
    "key": "ai-ml",
    "label": "AI / ML",
    "color": "#2f7d8c",
-   "count": 22
+   "count": 23
   },
   {
    "key": "science",
    "label": "Science",
    "color": "#4c6b3c",
-   "count": 20
+   "count": 19
   },
   {
    "key": "politics",
    "label": "Politics",
    "color": "#9a6a34",
-   "count": 11
-  },
-  {
-   "key": "health",
-   "label": "Health",
-   "color": "#a44a72",
-   "count": 8
-  },
-  {
-   "key": "sports",
-   "label": "Sports",
-   "color": "#c26b2e",
-   "count": 8
+   "count": 10
   },
   {
    "key": "switzerland",
    "label": "Switzerland",
    "color": "#c2454a",
-   "count": 8
+   "count": 10
+  },
+  {
+   "key": "economy",
+   "label": "Economy",
+   "color": "#9a7b2e",
+   "count": 7
   },
   {
    "key": "security",
@@ -7973,13 +7940,19 @@
    "count": 7
   },
   {
-   "key": "economy",
-   "label": "Economy",
-   "color": "#9a7b2e",
-   "count": 4
+   "key": "health",
+   "label": "Health",
+   "color": "#a44a72",
+   "count": 6
+  },
+  {
+   "key": "sports",
+   "label": "Sports",
+   "color": "#c26b2e",
+   "count": 6
   }
  ],
- "edition_label": "Monday 23 November 2026",
- "count_line": "80 stories · 2 AI editorials · 13 days",
- "build_stamp": "2026-11-23T12:10:03+01:00"
+ "edition_label": "Tuesday 24 November 2026",
+ "count_line": "80 stories · 1 AI editorial · 14 days",
+ "build_stamp": "2026-11-24T12:11:17+01:00"
 }
