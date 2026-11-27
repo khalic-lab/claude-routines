@@ -10,8 +10,8 @@ Chain: direct `curl -fsSL` first (the egress path that works from the routine
 sandbox -- WebFetch and python urllib do not share it, so this MUST shell out to
 curl), then the fetch-proxy Worker with the bearer from $FETCH_PROXY_TOKEN.
 `--proxy` skips the direct attempt for hosts known to 403 the sandbox IP.
-No token in the environment -> the proxy step is skipped silently (the Evaluator
-holds no bearer by design).
+No token in the environment -> the proxy step is skipped silently (e.g. a run whose
+shim injected no bearer).
 
 Every ATTEMPT appends one JSON line to $FETCH_LOG (default /tmp/fetch.log):
   {"ts": "...Z", "url": ..., "method": "curl"|"proxy", "status": 200|403|"ERR:6", "ok": bool}

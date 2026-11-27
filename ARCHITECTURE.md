@@ -26,7 +26,7 @@
 ║  │  • Science (non-AI, weekly)   0 17 * * 3     _posts/{d}-science.md               │   ║
 ║  │  • Weekend Deep Read          30 9 * * 6     _posts/{d}-weekend.md              │   ║
 ║  │  • Sports (claude-sonnet-5-5) 0 9 * * 1      _posts/{d}-sports.md                │   ║
-║  │  WATCH (claude-opus-5-5)      27 2-22/4 * * * pending-notifications/             │   ║
+║  │  WATCH (claude-haiku-4-5)     27 2-22/4 * * * pending-notifications/             │   ║
 ║  │      reads watches.yml → on match writes stub + updates last_fired              │    ║
 ║  │  EVALUATOR (claude-opus-5-5)  30 11 * * 0     _posts/{d}-evaluator.md           │   ║
 ║  │  ⮑ all triggers (except Watch) are BOOTSTRAP SHIMS → git pull + read              │   ║
@@ -166,6 +166,9 @@
 > falls between windows); link check splits broken / blocked / unreachable; the stale-reach re-probe
 > step is retired. **Crons** are stored as `CRON_TZ=Europe/Zurich`, so UTC fire times move with DST
 > (the "one hour later since late October" was DST, not drift); the tables above show Zurich time.
+> Owner decisions the same day: the Evaluator shim now carries the fetch-proxy token (link checks
+> retry through the proxy; the scout fetches with `tools/fetch.py`), and Watch runs
+> `claude-haiku-4-5` again at the same cadence (it was 17% of spend for 5 fires a quarter on Opus).
 >
 > **Changed 2026-10-04: one model for every routine but Sports.** News, AI/ML, Science, Weekend,
 > the Weekly Evaluator and Watch now run `claude-opus-5-5`; Sports runs `claude-sonnet-5-5`. This
@@ -777,7 +780,7 @@
 > at Step D. **Caps + discovery quota are REPORT-ONLY** until armed (SPIKE step 5, data-gated).
 > **Evaluator:** `tools/evaluator/metrics.py` → `_data/health.json` computes the mechanical dimensions;
 > proposals also machine-readable (`proposals/*-{date}.{json,yml}`, `applied:true` stamp protocol);
-> Sunday source-scout duty (≤20 fetches, WebFetch-based — the evaluator holds no fetch-proxy token by
+> Sunday source-scout duty (≤20 fetches through tools/fetch.py; the evaluator holds the fetch-proxy token since 2026-11-27, previously none by
 > design). Spec suite: `python3 -m unittest discover -s tools/tests` (212+ tests, RED/GREEN-committed).
 
 > **Added 2026-07-03: Pages deploy self-heal + News moved to midday.** *(Self-heal superseded

@@ -4,7 +4,9 @@
 Collects every http(s) link from the window's writer briefs, draws a
 DETERMINISTIC sample (seeded by the window end date -- same week, same sample,
 so a re-run mid-review checks the same links), and with --check resolves each
-via `curl -sIL` (the sandbox egress path that works; no bearer needed).
+direct first (`curl -I`, a HEAD 404/405/410 confirmed by GET), then once through the
+fetch proxy when $FETCH_PROXY_TOKEN holds a real bearer. Each result is classed pass,
+broken (404/410), blocked (other HTTP) or unreachable (no answer).
 
 The Weekend's "Week in headlines" recap links are ALWAYS listed (and checked),
 on top of the random sample and excluded from its pool: that recap is where the

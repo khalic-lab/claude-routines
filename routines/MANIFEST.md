@@ -27,7 +27,7 @@ via RemoteTrigger and `routines/watch.md` mirrors it byte-for-byte in spirit (AS
 | Weekend Deep Read | `weekend.md` | `trig_01XKzge4DxP6wTjLwtkoYeqj` | `30 9 * * 6` (09:30 Zurich, Sat) | `claude-opus-5-5` | yes |
 | Sports | `sports.md` | `trig_01PfmuHXkgjhZREW6XfztZrb` | `0 9 * * 1` (09:00 Zurich, Mon) | `claude-sonnet-5-5` | yes |
 | Weekly Evaluator | `weekly-evaluator.md` | `trig_01F5npsKTQTLKekAZ5BczKtG` | `30 11 * * 0` (11:30 Zurich, Sun) | `claude-opus-5-5` | yes |
-| Watch | `watch.md` | `trig_01FgrFMfsreu597nKUXEEQMt` | `27 2,6,10,14,18,22 * * *` (every 4h at :27 Zurich) | `claude-opus-5-5` | no (full inline) |
+| Watch | `watch.md` | `trig_01FgrFMfsreu597nKUXEEQMt` | `27 2,6,10,14,18,22 * * *` (every 4h at :27 Zurich) | `claude-haiku-4-5` (since 2026-11-27) | no (full inline) |
 
 > **Retired 2026-06-29** (trigger IDs REUSED above): `morning-overview.md` → retargeted to **News** (daily,
 > CH+world — evening until 2026-07-03, midday since); `cyber-papers.md` → retargeted to **Science** (weekly Wed, non-AI science). Security
@@ -53,8 +53,9 @@ If `git pull` fails or `routines/{file}.md` is missing or unreadable, do NOT fab
 short post (and a notification stub) noting the routine prompt was unreadable, then stop.
 ```
 
-The **Weekly Evaluator** shim omits step 3's token line (it makes no fetch-proxy calls) and says "review"
-rather than "brief".
+The **Weekly Evaluator** shim says "review" rather than "brief". It carries step 3's token line since
+2026-11-27 (owner decision): its link checks retry through the fetch proxy and its Sunday scout fetches
+candidates with `tools/fetch.py`.
 
 ## Full `session_context` per routine (verbatim — required to reconstruct a schedule/shim/session update)
 
@@ -124,7 +125,7 @@ rather than "brief".
 ```json
 {
   "allowed_tools": ["WebFetch", "WebSearch", "Read", "Write", "Bash", "Edit", "Glob", "Grep"],
-  "model": "claude-opus-5-5",
+  "model": "claude-haiku-4-5",
   "sources": [{"git_repository": {"url": "https://github.com/khalic-lab/claude-routines"}}]
 }
 ```
