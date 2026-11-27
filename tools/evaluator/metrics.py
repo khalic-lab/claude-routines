@@ -574,6 +574,39 @@ def build_off_main(root, window_start):
         return {"available": False}
 
 
+def build_lost_editions(root, window_start, window_end):
+    """Editions a writer session measured but `_posts/` does not hold (2026-10-06 News: a
+    10-minute run with a stage:"publish" usage record and no post; the 10-11 review called it a
+    skipped fire because nothing else could see it). The usage ledger is written by the Stop
+    hook even when the edition commit never reaches origin, so `edition` on any usage record
+    in the window with no matching post is a lost edition, whatever lost it."""
+    lost = {}
+    for path in sorted(glob.glob(os.path.join(root, "index", "usage", "*.jsonl"))):
+        try:
+            fh = open(path, encoding="utf-8")
+        except OSError:
+            continue
+        with fh:
+            for line in fh:
+                try:
+                    rec = json.loads(line)
+                except ValueError:
+                    continue
+                edition = rec.get("edition") if isinstance(rec, dict) else None
+                if not edition or not _EDITION_RE.match(edition):
+                    continue
+                if not (window_start <= edition[:10] <= window_end):
+                    continue
+                if os.path.exists(os.path.join(root, "_posts", edition + ".md")):
+                    continue
+                row = lost.setdefault(edition, {"edition": edition,
+                                                "session_id": rec.get("session_id"),
+                                                "started": rec.get("started"), "stages": []})
+                if rec.get("stage") not in row["stages"]:
+                    row["stages"].append(rec.get("stage"))
+    return [lost[k] for k in sorted(lost)]
+
+
 def build_continuity(root, week_end):
     """Most recent `_posts/*-evaluator.md` dated strictly before week.end
     (POSIX-relative path), deliberately "most recent prior post" rather than
@@ -598,6 +631,7 @@ def compute_health(root, week_arg):
     occurrences = dedup_publishes(events)
     continuity = build_continuity(root, window_end)
     continuity["off_main"] = build_off_main(root, window_start)
+    continuity["lost_editions"] = build_lost_editions(root, window_start, window_end)
     briefs = build_briefs(root, window_start, window_end)
     briefs["reach_drift"] = build_reach_drift(root, briefs["feeds"])
     return {

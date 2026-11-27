@@ -28,6 +28,8 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
+from urllib.parse import urlparse
 
 PROXY_URL = "https://fetch-proxy.khalic-lab.workers.dev/"
 DEFAULT_LOG = os.environ.get("FETCH_LOG", "/tmp/fetch.log")
@@ -48,7 +50,9 @@ def _log(path, url, method, status, ok):
 def _curl(argv, out_path, max_time):
     """Run curl writing the body to out_path, HTTP code on stdout.
     Returns (ok, status) where status is an int HTTP code or "ERR:<curl exit>"."""
-    cmd = ["curl", "-sSL", "--max-time", str(max_time),
+    # -g (--globoff): without it curl expands [..] and {..} in the URL locally and exits 3
+    # before any request -- the arXiv submittedDate:[A TO B] range query failed that way.
+    cmd = ["curl", "-gsSL", "--max-time", str(max_time),
            "-o", out_path, "-w", "%{http_code}"] + argv
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True)
@@ -64,11 +68,84 @@ def _curl(argv, out_path, max_time):
     return (proc.returncode == 0 and 200 <= status < 300), status
 
 
+# Hosts whose API terms ask for spacing between calls (arXiv: one request every 3 s). The
+# writers' sweep of 5 RSS categories + the Atom API in one burst drew 26 HTTP 429s and 7 502s
+# from export.arxiv.org over 2026-10-01..11-27 (fetch-log footers).
+PACED_HOSTS = {"export.arxiv.org": 4}
+# A host that has answered 429 this many times since its last success in THIS run, the latest
+# under RATE_LIMIT_HOLD_S ago, is rate-limiting us: further calls fail at once, logged as
+# SKIP:429, instead of repeating the storm (api.openalex.org: 12-18 consecutive 429s per Science
+# run, 0 successes, 2026-10/11). The hold lapses, so a host can recover inside a run; paced hosts
+# are exempt -- arXiv 429s come from bursts, and pacing is their remedy (10-02 AI/ML: 19 x 429
+# beside 15 successes).
+RATE_LIMIT_TRIP = 3
+RATE_LIMIT_HOLD_S = 600
+
+
+def _host(url):
+    netloc = urlparse(url).netloc.lower()
+    return netloc[4:] if netloc.startswith("www.") else netloc
+
+
+def _host_history(log_path, host):
+    """This run's logged attempts for `host`, oldest first (the log is per-sandbox)."""
+    out = []
+    try:
+        with open(log_path, encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    rec = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(rec, dict) and _host(rec.get("url") or "") == host:
+                    out.append(rec)
+    except OSError:
+        pass
+    return out
+
+
+def _ts(rec):
+    try:
+        return dt.datetime.strptime(rec["ts"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc)
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _rate_limited(history, now=None):
+    now = now or dt.datetime.now(dt.timezone.utc)
+    n, latest = 0, None
+    for rec in reversed(history):
+        if rec.get("ok"):
+            break
+        if rec.get("status") == 429:
+            n += 1
+            latest = latest or _ts(rec)
+    return (n >= RATE_LIMIT_TRIP and latest is not None
+            and (now - latest).total_seconds() < RATE_LIMIT_HOLD_S)
+
+
+def _pace(history, gap):
+    last = _ts(history[-1]) if history else None
+    if last is None:
+        return
+    wait = gap - (dt.datetime.now(dt.timezone.utc) - last).total_seconds()
+    if wait > 0:
+        time.sleep(wait)
+
+
 def fetch(url, proxy_first=False, max_time=25, log_path=DEFAULT_LOG):
     """Returns (ok, body_path). Caller reads/streams body_path on ok."""
     token = os.environ.get("FETCH_PROXY_TOKEN", "")
     fd, body_path = tempfile.mkstemp(prefix="fetch-", suffix=".body")
     os.close(fd)
+
+    host = _host(url)
+    history = _host_history(log_path, host)
+    if host not in PACED_HOSTS and _rate_limited(history):
+        _log(log_path, url, "skip", "SKIP:429", False)
+        return False, body_path
+    if host in PACED_HOSTS:
+        _pace(history, PACED_HOSTS[host])
 
     if not proxy_first:
         ok, status = _curl([url], body_path, max_time)

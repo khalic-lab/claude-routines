@@ -177,10 +177,14 @@ the format below are load-bearing.
   `(affiliation not listed)`.
 - **bioRxiv / medRxiv preprints:** the details-API response you already fetch includes
   `author_corresponding_institution` — use it (no extra fetch).
-- **Published papers (journal DOI) — OpenAlex:**
-  `https://api.openalex.org/works?filter=doi:<doi>&select=authorships` returns resolved
-  institution names (measured: complete for fresh Nature papers). On a miss, take them from
-  the publisher/press page you are already reading; else the sentinel.
+- **Published papers (journal DOI) — OpenAlex, ONE batched call per edition:** collect the
+  edition's journal DOIs first, then fetch once:
+  `https://api.openalex.org/works?filter=doi:<doi1>|<doi2>|<doi3>&select=doi,authorships&per-page=50`
+  (`|` ORs the DOIs; verified 2026-11-27). It returns resolved institution names (measured:
+  complete for fresh Nature papers). If that call fails or returns HTTP 429, do NOT retry it and
+  do NOT fall back to per-DOI calls (2026-10/11: 12–29 per-DOI calls per Science run, all 429 in
+  7 of 8 editions). On a miss, take them from the publisher/press page you are already reading;
+  else the sentinel.
 - **Budget: at most ONE extra fetch per selected paper.** Never web-search individual authors,
   never guess from an email domain or a lab's reputation — `(affiliation not listed)` is
   always the correct fallback; never fabricate.
@@ -343,4 +347,5 @@ python3 tools/publish.py --slug ai-ml --date {YYYY-MM-DD} \
 
 - `{teaser}` rules: ≤200 chars. Most interesting item from this brief — typically a striking arXiv paper, a major lab release, a notable open-weight model drop, a significant benchmark result, or a regulatory/funding event. Concrete and specific (e.g. "New RLVR method tops MATH in today's arXiv batch; Anthropic ships Claude Opus 4.8; EU AI Office opens probe into Meta"), not generic. Pass it as a plain shell argument; no quote-escaping.
 - Omit `--final` if dedup was unavailable — note "dedup unavailable" in the Gaps line first.
-- It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the edition is committed but not on origin (retry `git push origin HEAD:refs/heads/main` before the session ends). Never redo its steps by hand.
+- It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the edition is NOT on origin. If the log says `rebase left unmerged paths`, HEAD is origin's own tip and a bare push publishes nothing: resolve each listed path (in an append-only file such as `sources/registry.yml` keep BOTH sides' entries), `git add` it, run `git -c core.editor=true rebase --continue`, and only then `git push origin HEAD:refs/heads/main`. Otherwise retry `git push origin HEAD:refs/heads/main` before the session ends. Never redo its steps by hand.
+- If the edition is still not on origin when you stop, call the PushNotification tool once — `{Edition} {YYYY-MM-DD} NOT published: <the FAILED line>` — the only operator channel out of this sandbox. Use PushNotification for nothing else; readers are notified by the stub.

@@ -662,8 +662,9 @@ def cmd_sync(args):
     # No-op guard (2026-07-18): sync runs on EVERY edition since the publish-tail
     # rollout, but the SPIKE's write-contention design assumed only the low-frequency
     # Evaluator rewrites registry.yml. When nothing folded, leave the YAML untouched --
-    # an unchanged file can't merge-conflict, so the residual same-day race shrinks to
-    # the rare both-editions-added-a-domain case. The buffers are still PURGED: every
+    # an unchanged file can't merge-conflict, so the residual same-day race shrinks to the
+    # both-editions-added-a-domain case -- not rare: 6 of 16 Tue/Fri News+AI/ML slots in
+    # 2026-10/11 -- which publish.py's retry resolves with `registry.py resolve`. The buffers are still PURGED: every
     # entry provably folded to nothing (candidate already registered, last_cited not
     # newer), and leaving them would inflate candidates_open in source-health forever.
     if added == 0 and folded == 0:
@@ -687,6 +688,89 @@ def cmd_sync(args):
     return 0
 
 
+# --- conflict resolution (2026-11) ------------------------------------------------------------
+# News and AI/ML share the Tue/Fri slot; when both append a new candidate at EOF, the second
+# desk's `pull --rebase` stops on sources/registry.yml with a textual conflict whose answer is
+# mechanical. On all six 2026-10/11 conflict days both desks had appended new candidates
+# (+1 or +2 each): pure EOF appends. merge_registry() is a 3-way merge on the parsed records
+# that keeps both sides' additions and reconciles a record both sides edited field by field.
+
+def _union_list(a, b):
+    out = list(a or [])
+    for x in (b or []):
+        if x not in out:
+            out.append(x)
+    return out
+
+
+def merge_registry(base, ours, theirs):
+    """3-way merge of parsed registry dicts. In a rebase `ours` is upstream (already on origin)
+    and `theirs` is this edition. A domain either side added is kept; a record only one side
+    edited takes that side; both edited -> last_cited is the max, list fields are unioned,
+    any other field keeps upstream's value."""
+    import copy
+    out = copy.deepcopy(ours)
+    for domain, t in theirs.items():
+        b = base.get(domain)
+        if t == b:
+            continue
+        o = out.get(domain)
+        if o is None:
+            if b is None:
+                out[domain] = copy.deepcopy(t)
+            continue
+        if o == b or not isinstance(o, dict) or not isinstance(t, dict):
+            out[domain] = copy.deepcopy(t)
+            continue
+        merged = copy.deepcopy(o)
+        for key, tv in t.items():
+            bv = (b or {}).get(key) if isinstance(b, dict) else None
+            ov = o.get(key)
+            if tv == bv or tv == ov:
+                continue
+            if ov == bv:
+                merged[key] = copy.deepcopy(tv)
+            elif key == "last_cited":
+                merged[key] = max(x for x in (ov, tv) if x)
+            elif isinstance(ov, list) and isinstance(tv, list):
+                merged[key] = _union_list(ov, tv)
+        out[domain] = merged
+    return out
+
+
+def cmd_resolve(args):
+    """Resolve an unmerged sources/registry.yml left by a stopped rebase/merge, in place, and
+    stage it. A no-op (exit 0) when the file is not unmerged; exit 1 when a stage is missing
+    or does not parse, leaving the conflict for the caller's unmerged-index check."""
+    import subprocess
+    rel = os.path.join("sources", "registry.yml")
+    unmerged = subprocess.run(["git", "ls-files", "-u", "--", rel], cwd=args.root,
+                              capture_output=True, text=True).stdout.strip()
+    if not unmerged:
+        print("resolve: %s is not unmerged; nothing to do" % rel)
+        return 0
+    stages = {}
+    for n in (1, 2, 3):
+        proc = subprocess.run(["git", "show", ":%d:%s" % (n, rel)], cwd=args.root,
+                              capture_output=True, text=True)
+        if proc.returncode != 0:
+            print("resolve: stage %d of %s missing; left unresolved" % (n, rel))
+            return 1
+        loaded = yaml_load(proc.stdout) if proc.stdout.strip() else {}
+        if not isinstance(loaded, dict):
+            print("resolve: stage %d of %s does not parse; left unresolved" % (n, rel))
+            return 1
+        stages[n] = loaded
+    merged = merge_registry(stages[1], stages[2], stages[3])
+    with open(os.path.join(args.root, rel), "w") as f:
+        f.write(yaml_dump(merged))
+    subprocess.run(["git", "add", "--", rel], cwd=args.root, check=False)
+    added = sorted(set(merged) - set(stages[2]))
+    print("resolve: %s merged (%d record(s) from this edition kept: %s)"
+          % (rel, len(added), ", ".join(added) or "edits only"))
+    return 0
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -698,6 +782,10 @@ def main():
     s = sub.add_parser("sync", help="fold candidates/last-cited jsonl buffers into registry.yml")
     s.add_argument("--root", default=".")
     s.set_defaults(func=cmd_sync)
+
+    r = sub.add_parser("resolve", help="3-way merge an unmerged sources/registry.yml and stage it")
+    r.add_argument("--root", default=".")
+    r.set_defaults(func=cmd_resolve)
 
     args = p.parse_args()
     return args.func(args)

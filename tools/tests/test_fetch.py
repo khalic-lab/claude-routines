@@ -18,6 +18,10 @@ FETCH = os.path.join(TOOLS, "fetch.py")
 FAKE_CURL = """#!%s
 import os, sys
 args = sys.argv[1:]
+# real curl globs [..] / {..} in a URL unless -g is given, and exits 3 before any request
+if not any(a.startswith("-") and not a.startswith("--") and "g" in a for a in args) and any(
+        ("[" in a or "{" in a) and "://" in a for a in args):
+    sys.exit(3)
 out = args[args.index("-o") + 1]
 is_proxy = "-G" in args
 status = os.environ.get("FAKE_PROXY_STATUS" if is_proxy else "FAKE_DIRECT_STATUS", "200")
@@ -62,6 +66,13 @@ class FetchTest(unittest.TestCase):
                          [("curl", 200, True)])
         self.assertEqual(lines[0]["url"], "https://ok.example/feed")
 
+    def test_bracketed_query_url_is_not_globbed(self):
+        url = ("http://export.arxiv.org/api/query?search_query=cat:cs.LG+AND+"
+               "submittedDate:[202611190000+TO+202611260000]&max_results=100")
+        proc = self.run_fetch([url])
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual([(l["method"], l["status"]) for l in self.log_lines()], [("curl", 200)])
+
     def test_direct_403_falls_back_to_proxy_and_logs_both(self):
         proc = self.run_fetch(["https://blocked.example/page"], direct="403")
         self.assertEqual(proc.returncode, 0)
@@ -92,6 +103,43 @@ class FetchTest(unittest.TestCase):
         self.assertEqual(proc.returncode, 22)
         self.assertEqual([(l["method"], l["ok"]) for l in self.log_lines()],
                          [("curl", False), ("proxy", False)])
+
+class RateLimitTest(unittest.TestCase):
+    # FetchTest's curl shim and helpers, without re-running FetchTest's own tests
+    setUp = FetchTest.setUp
+    run_fetch = FetchTest.run_fetch
+    log_lines = FetchTest.log_lines
+
+    def test_three_429s_trip_the_breaker_for_that_host_only(self):
+        for _ in range(2):   # each call: direct 429 + proxy 429 -> 2 logged 429s per call
+            self.assertEqual(self.run_fetch(["https://api.ratelimited.example/w?x"],
+                                            direct="429", proxy="429").returncode, 22)
+        proc = self.run_fetch(["https://api.ratelimited.example/w?y"], direct="200")
+        self.assertEqual(proc.returncode, 22, "a tripped host must not be called again")
+        self.assertEqual(self.log_lines()[-1]["status"], "SKIP:429")
+        other = self.run_fetch(["https://fine.example/feed"])
+        self.assertEqual(other.returncode, 0, "the breaker is per host")
+
+    def test_a_success_resets_the_breaker(self):
+        self.run_fetch(["https://flaky.example/a"], direct="429", proxy="200")
+        self.run_fetch(["https://flaky.example/b"], direct="429", proxy="429")
+        proc = self.run_fetch(["https://flaky.example/c"], direct="200")
+        self.assertEqual(proc.returncode, 0)
+
+    def test_breaker_lapses_after_the_hold(self):
+        with open(self.log, "w") as fh:
+            for _ in range(3):
+                fh.write(json.dumps({"ts": "2026-01-01T00:00:00Z", "url": "https://old.example/x",
+                                     "method": "proxy", "status": 429, "ok": False}) + "\n")
+        self.assertEqual(self.run_fetch(["https://old.example/y"]).returncode, 0)
+
+    def test_paced_host_is_never_tripped(self):
+        with open(self.log, "w") as fh:
+            for _ in range(3):
+                fh.write(json.dumps({"ts": "2026-01-01T00:00:00Z",
+                                     "url": "https://export.arxiv.org/api/query?a",
+                                     "method": "curl", "status": 429, "ok": False}) + "\n")
+        self.assertEqual(self.run_fetch(["https://export.arxiv.org/rss/cs.LG"]).returncode, 0)
 
 
 if __name__ == "__main__":

@@ -140,5 +140,46 @@ class RegistrySchemaTest(unittest.TestCase):
                                     "stream %s has only %d usable sources" % (stream, len(usable)))
 
 
+
+class ScalarQuotingTest(unittest.TestCase):
+    """Values a plain YAML scalar cannot hold are quoted, and a quoted value survives any number
+    of load/dump cycles unchanged (the loader undoes the dumper's escapes)."""
+
+    def test_strict_yaml_hazards_are_quoted_and_round_trip(self):
+        for value in ('sports: https://www.letemps.ch/sport.rss verified', 'say "hi": now',
+                      'a\\b: c', 'ends:', '- dash first', 'x #y', 'plain text'):
+            text = registry.yaml_dump({"x.org": {"note": value}})
+            for _ in range(3):
+                text = registry.yaml_dump(registry.yaml_load(text))
+            self.assertEqual(registry.yaml_load(text)["x.org"]["note"], value)
+            if value != 'plain text':
+                self.assertIn('note: "', text)
+
+
+class MergeRegistryTest(unittest.TestCase):
+    BASE = {"a.org": {"status": "candidate", "streams": ["news"], "last_cited": "2026-11-01"}}
+
+    def test_both_desks_appending_keeps_both(self):
+        ours = dict(self.BASE, **{"b.org": {"status": "candidate"}})
+        theirs = dict(self.BASE, **{"c.org": {"status": "candidate"}})
+        self.assertEqual(sorted(registry.merge_registry(self.BASE, ours, theirs)),
+                         ["a.org", "b.org", "c.org"])
+
+    def test_both_sides_editing_one_record_merges_field_wise(self):
+        ours = {"a.org": {"status": "probation", "streams": ["news", "ai-ml"],
+                          "last_cited": "2026-11-03"}}
+        theirs = {"a.org": {"status": "candidate", "streams": ["news", "weekend"],
+                            "last_cited": "2026-11-05"}}
+        got = registry.merge_registry(self.BASE, ours, theirs)["a.org"]
+        self.assertEqual(got, {"status": "probation", "streams": ["news", "ai-ml", "weekend"],
+                               "last_cited": "2026-11-05"})
+
+    def test_one_side_edit_wins_and_upstream_deletion_holds(self):
+        theirs = {"a.org": dict(self.BASE["a.org"], status="established")}
+        self.assertEqual(registry.merge_registry(self.BASE, self.BASE, theirs)["a.org"]["status"],
+                         "established")
+        self.assertNotIn("a.org", registry.merge_registry(self.BASE, {}, theirs))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -248,6 +248,18 @@ class FindTest(unittest.TestCase):
         self.assertEqual(path, want)
         self.assertEqual(scanned, 3)
 
+    def test_find_live_transcript_skips_trailing_metadata_lines(self):
+        """A live transcript whose final lines are cwd-less metadata (the common shape after a
+        Write) must still be found from its last stamped line."""
+        now = dt.datetime(2026, 9, 13, 12, 0, 0, tzinfo=dt.timezone.utc)
+        fresh = (now - dt.timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        want = self._write_transcript("live.jsonl", self.root, fresh)
+        with open(want, "a") as fh:
+            fh.write(json.dumps({"type": "file-history-snapshot", "messageId": "x"}) + "\n")
+            fh.write(json.dumps({"type": "last-prompt", "lastPrompt": "y"}) + "\n")
+        path, _ = record.find_live_transcript([self.cfg], self.root, now=now)
+        self.assertEqual(path, want)
+
     def test_find_none_when_all_stale(self):
         now = dt.datetime(2026, 9, 13, 12, 0, 0, tzinfo=dt.timezone.utc)
         stale = (now - dt.timedelta(minutes=45)).strftime("%Y-%m-%dT%H:%M:%SZ")

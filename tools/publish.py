@@ -488,6 +488,11 @@ def commit_and_push(root, slug, message, no_push, dry_run):
     # rebase, REGENERATE the feed from the merged tree, continue, push again.
     say("push failed -- rebase + feed regeneration retry")
     run_step("git-pull-rebase", git(root, slug, ["pull", "--rebase", "origin", "main"]), root, dry_run)
+    # registry-sync EOF-appends this edition's new candidates; the other desk appended its own at
+    # the same EOF, so the rebase stops there (6 of 16 Tue/Fri slots, 2026-10/11). Resolve it on
+    # the parsed records BEFORE the rebuilds below read the registry. A no-op when not unmerged.
+    run_step("registry-resolve", [sys.executable, "tools/sources/registry.py", "resolve",
+                                  "--root", "."], root, dry_run)
     run_step("feed-rebuild", [sys.executable, "tools/build_stories_feed.py"], root, dry_run)
     run_step("health-rebuild", [sys.executable, "tools/sources/health.py"], root, dry_run)
     run_step("git-add-data", git(root, slug, ["add", "_data/"]), root, dry_run)
@@ -500,14 +505,17 @@ def commit_and_push(root, slug, message, no_push, dry_run):
     # `git ls-files -u` (the unmerged index) is the load-bearing check, not the presence of
     # .git/rebase-merge: the unmerged index is what makes BOTH `rebase --continue` and
     # `commit --amend` fail above, and it reads correctly where `.git` is a file (worktrees).
-    # The retry regenerates and stages `_data/` only, so a conflict anywhere else -- e.g.
-    # sources/registry.yml, EOF-appended by registry-sync on every writer run -- survives it.
+    # The retry regenerates `_data/` and 3-way merges sources/registry.yml (registry-resolve);
+    # a conflict anywhere else survives it.
     if not dry_run:
         unmerged = subprocess.run(["git", "ls-files", "-u"], cwd=root,
                                   capture_output=True, text=True).stdout.strip()
         if unmerged:
-            say("push: FAILED -- rebase left unmerged paths; HEAD is origin's own tip, not this "
-                "edition. Resolve the conflict and push HEAD:refs/heads/main manually.")
+            say("push: FAILED -- rebase left unmerged paths: %s. HEAD is origin's own tip, not "
+                "this edition: pushing HEAD now publishes NOTHING. Resolve each path, `git add` it, "
+                "`git -c core.editor=true rebase --continue`, then `git push origin "
+                "HEAD:refs/heads/main`." % ", ".join(sorted({l.split("\t", 1)[-1]
+                                                             for l in unmerged.splitlines()})))
             return "push-failed"
     # Re-resolve: the rebase moved HEAD, and the amend fallback above moved it again.
     if push_commit(root, slug, "git-push-retry", _rev_parse(root, "HEAD"), dry_run):
@@ -622,8 +630,10 @@ def main(argv=None):
         # commit_and_push's docstring for why a note in the body could only ever read as false.
         # HEAD:refs/heads/main, not `main`: the retry instruction must not be the very
         # command whose stale-ref behaviour lost editions in the first place (R1).
-        say("FAILED (push -- edition committed locally but NOT on origin; "
-            "retry `git push origin HEAD:refs/heads/main` before the session ends)")
+        say("FAILED (push -- edition NOT on origin. If the log above says 'rebase left unmerged "
+            "paths', HEAD is origin's tip and a bare push publishes nothing: resolve + `git add` "
+            "each path and `git -c core.editor=true rebase --continue` FIRST. Then retry "
+            "`git push origin HEAD:refs/heads/main` before the session ends)")
         return 1
     say("DONE")
     return 0

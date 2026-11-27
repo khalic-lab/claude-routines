@@ -317,6 +317,31 @@ class UnmergedRebaseTest(PushBase):
                          _origin_file(self.origin, "_posts/2026-08-07-news.md"),
                          "the edition never reached origin; nothing may report otherwise")
 
+    def test_registry_eof_conflict_is_resolved_and_published(self):
+        """The same both-desks-append-at-EOF race, in a tree that carries the registry tool:
+        the retry's registry-resolve step merges the parsed records, so the edition publishes
+        and origin keeps all three domains (seed, the other desk's, this edition's)."""
+        os.makedirs(os.path.join(self.work, "tools", "sources"))
+        shutil.copy2(os.path.join(TOOLS, "sources", "registry.py"),
+                     os.path.join(self.work, "tools", "sources", "registry.py"))
+        _git(self.work, "add", "-A")
+        _git(self.work, "commit", "-q", "-m", "carry the registry tool")
+        _git(self.work, "push", "-q", "origin", "main")
+        _git(self.work, "checkout", "-q", "--detach", "HEAD")
+        self._other_routine_appends()
+        with open(os.path.join(self.work, self.REGISTRY), "a", encoding="utf-8") as fh:
+            fh.write(self.ENTRY % ("newsdesk.example", "news"))
+        self._write_post("Edition body.\n")
+        outcome, out = self._capture(publish.commit_and_push, self.work, "news",
+                                     "News — 2026-08-07", False, False)
+        self.assertEqual(outcome, "ok", out)
+        self.assertIn("registry-resolve", out)
+        reg = _origin_file(self.origin, self.REGISTRY)
+        for domain in ("acoup.blog:", "fcc.gov:", "newsdesk.example:"):
+            self.assertIn(domain, reg)
+        self.assertNotIn("<<<<<<<", reg)
+        self.assertIn("Edition body.", _origin_file(self.origin, "_posts/2026-08-07-news.md"))
+
     def test_conflict_free_concurrent_append_still_publishes(self):
         """The guard must not turn every rebase into a failure: when the concurrent commit
         touches a different file, the retry resolves it and the edition publishes as before."""

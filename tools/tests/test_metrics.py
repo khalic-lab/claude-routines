@@ -459,8 +459,30 @@ class MetricsHealthMainFixtureTest(unittest.TestCase):
                 "previous_evaluator_found": True,
                 "previous_evaluator_path": "_posts/2026-06-28-evaluator.md",
                 "off_main": {"available": False},
+                "lost_editions": [],
             },
         )
+
+    def test_lost_edition_is_a_usage_record_without_a_post(self):
+        """A measured writer session whose edition has no `_posts/` file is reported lost;
+        one whose post exists is not."""
+        root = tempfile.mkdtemp(prefix="lost-ed-")
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        os.makedirs(os.path.join(root, "index", "usage"))
+        os.makedirs(os.path.join(root, "_posts"))
+        open(os.path.join(root, "_posts", "2026-10-07-news.md"), "w").close()
+        with open(os.path.join(root, "index", "usage", "2026-10-news.jsonl"), "w") as fh:
+            for ed, stage in (("2026-10-06-news", "publish"), ("2026-10-06-news", "stop"),
+                              ("2026-10-07-news", "stop"), ("2026-09-01-news", "stop")):
+                fh.write(json.dumps({"session_id": "s-" + ed, "stage": stage, "edition": ed,
+                                     "started": ed[:10] + "T10:13:18Z"}) + "\n")
+        spec = importlib.util.spec_from_file_location("_metrics_lost", METRICS_PATH)
+        metrics = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(metrics)
+        got = metrics.build_lost_editions(root, "2026-10-05", "2026-10-11")
+        self.assertEqual(got, [{"edition": "2026-10-06-news", "session_id": "s-2026-10-06-news",
+                                "started": "2026-10-06T10:13:18Z",
+                                "stages": ["publish", "stop"]}])
 
     # --- "prints it" + determinism ---------------------------------------
 
@@ -542,7 +564,7 @@ class MetricsGracefulDegradationTest(unittest.TestCase):
         self.assertEqual(
             self.health_nc["continuity"],
             {"previous_evaluator_found": False, "previous_evaluator_path": None,
-             "off_main": {"available": False}},
+             "off_main": {"available": False}, "lost_editions": []},
         )
 
     def test_missing_source_health_json_degrades_to_marker(self):

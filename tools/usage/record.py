@@ -187,21 +187,26 @@ def commit_and_push(root, routine, started, stage):
 # ---- --find: locate the live transcript --------------------------------------------------
 
 def _last_json_line(path):
+    """The LAST line that carries both `cwd` and `timestamp`. A transcript usually ends in
+    metadata lines that carry neither (file-history-snapshot after a Write, last-prompt,
+    ai-title, cost-state...): reading only the final line missed the live transcript on 17 of
+    107 publishing runs in 2026-10/11, which then landed no stage:"publish" record."""
     last = None
     try:
         with open(path, encoding="utf-8") as fh:
             for line in fh:
                 line = line.strip()
-                if line:
-                    last = line
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(rec, dict) and rec.get("cwd") and rec.get("timestamp"):
+                    last = rec
     except OSError:
         return None
-    if not last:
-        return None
-    try:
-        return json.loads(last)
-    except json.JSONDecodeError:
-        return None
+    return last
 
 
 def _age_seconds(ts, now):

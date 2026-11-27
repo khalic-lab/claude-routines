@@ -13,10 +13,14 @@ the format below are load-bearing.
   `(affiliation not listed)`.
 - **bioRxiv / medRxiv preprints:** the details-API response you already fetch includes
   `author_corresponding_institution` — use it (no extra fetch).
-- **Published papers (journal DOI) — OpenAlex:**
-  `https://api.openalex.org/works?filter=doi:<doi>&select=authorships` returns resolved
-  institution names (measured: complete for fresh Nature papers). On a miss, take them from
-  the publisher/press page you are already reading; else the sentinel.
+- **Published papers (journal DOI) — OpenAlex, ONE batched call per edition:** collect the
+  edition's journal DOIs first, then fetch once:
+  `https://api.openalex.org/works?filter=doi:<doi1>|<doi2>|<doi3>&select=doi,authorships&per-page=50`
+  (`|` ORs the DOIs; verified 2026-11-27). It returns resolved institution names (measured:
+  complete for fresh Nature papers). If that call fails or returns HTTP 429, do NOT retry it and
+  do NOT fall back to per-DOI calls (2026-10/11: 12–29 per-DOI calls per Science run, all 429 in
+  7 of 8 editions). On a miss, take them from the publisher/press page you are already reading;
+  else the sentinel.
 - **Budget: at most ONE extra fetch per selected paper.** Never web-search individual authors,
   never guess from an email domain or a lab's reputation — `(affiliation not listed)` is
   always the correct fallback; never fabricate.
