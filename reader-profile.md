@@ -1,8 +1,9 @@
 # Reader profile — Rafael (standing editorial brief)
 
 > **Writers read this at compose time** to weight what matters *to this reader* (not generic
-> newsworthiness). "Favor", "Demote / cut" and "Tone" are guidance. **"Learned preferences" are
-> binding**: each line corrects an error the reader caught in a published brief. **How it
+> newsworthiness). "Favor", "Demote / cut" and "Tone" are guidance. **A "Learned preferences" line
+> that corrects an error the reader caught in a published brief (a wrong word, label, date,
+> attribution or source) is binding**; a line about what to select or emphasise is strong guidance. **How it
 > changes:** the Weekly Evaluator appends dated lines to "Learned preferences" under a bounded
 > grant (Rafael, 2026-07-10: append-only, real reader feedback only, never a single bare tap);
 > every other edit is Rafael's. Keep it short, concrete, and in plain language.
@@ -28,7 +29,7 @@
   sourcing gaps. Better to omit than to dilute.
 
 ## Learned preferences (Evaluator-maintained — append below)
-<!-- The Weekly Evaluator proposes additions here from feedback; Rafael applies them. e.g.:
+<!-- The Weekly Evaluator appends dated lines here from reader feedback (append-only, bounded grant). e.g.:
 - 2026-06-15: less SpaceX launch detail on weekends (3× 👎, "too long"). -->
 - 2026-06-28: for "AI/science changes how we think/work" stories, anchor on the underlying study
   (journal article / preprint), not a Nature blog/news restatement, and avoid sensational framing —
@@ -96,7 +97,7 @@
   stories: 2026-11-17 California v. OpenAI, card "rogue agents" -- "rogue agents isn't a clean mental
   model. Agents actually don't have agency"; 2026-11-06 GPT-6 Astra -- "don't use intermediate token
   generation as a reasoning proxy, this is proveably wrong").
-- 2026-11-27: describe an event by what most participants did, with the numbers. Nationwide
+- 2026-11-27: describe an event by what most participants did, with the source's numbers where it gives them. Nationwide
   protests with looting in some cities are "protests, with rioting and looting in X", not "riots";
   leave "riot" and "mob" to the official who used them, in quotes. Never leave a bare category
   ("jihadists", "terrorists", "militants") to describe a group: name it and say in a clause what it

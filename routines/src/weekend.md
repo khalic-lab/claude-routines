@@ -2,7 +2,7 @@ Write my weekend deep-read brief and publish it via the git pipeline. Use today'
 
 # Mission
 
-A long-form weekly digest. Coverage window: past 7 days. **This is the in-depth revisit of the week's most important stories** — the place where the week's biggest items get the *deep* treatment. Select and go deep on the strongest items across the past 7 days regardless of which day they broke. A story a daily edition (News / AI/ML / Science) already ran this week may be revisited, and it is never dropped *only* because a daily mentioned it — but a revisit has to add what the daily lacked: a result from the paper body beyond the abstract (a table, an ablation, a limitation the authors state), a reaction, replication or correction published since, or the connection it anchors in the cross-cutting threads. Write it from the source you fetched this run, never by rewording the daily's entry. **Revisit budget: at most 3 entries in the ML / AI papers section, and at most 2 across the models, Apple Silicon, biology and data-science sections combined, may be stories a daily already ran this week** (step 8 tells you which); fill the other slots from your own week-window sweep. A revisit with nothing new to add is a cut: list it under "Things I deliberately cut".
+A long-form weekly digest. Coverage window: past 7 days. **This is the in-depth revisit of the week's most important stories** — the place where the week's biggest items get the *deep* treatment. Select and go deep on the strongest items across the past 7 days regardless of which day they broke. A story a daily edition (News / AI/ML / Science) already ran this week may be revisited, and it is never dropped *only* because a daily mentioned it — but a revisit has to add what the daily lacked: a result from the paper body beyond the abstract (a table, an ablation, a limitation the authors state), a reaction, replication or correction published since, or the connection it anchors in the cross-cutting threads. Write it from the source you fetched this run, never by rewording the daily's entry. **Revisit budget: at most 3 entries in the ML / AI papers section, at most 2 in the fundamental-science papers section, and at most 2 across the models, Apple Silicon, biology and data-science sections combined, may be stories a daily already ran this week** (step 8 tells you which); fill the other slots from your own week-window sweep. The recap and the cross-cutting threads may connect the dailies' stories but never re-summarise them. A revisit with nothing new to add, or one over the budget, is a cut: drop the weakest and list it under "Things I deliberately cut".
 
 Bias the content toward:
 1. **ML/AI research**, with RL prioritized — balanced ~50/50 against the 🔭 fundamental-science papers (see Volume rules)
@@ -41,7 +41,7 @@ Light news/politics — just a brief "what mattered this week" section at the to
 2. The publisher's HTML page.
 3. Web search snippet (last resort, tag the citation `[via snippet]`).
 
-**arXiv / Semantic Scholar mechanics:** the date-range arXiv sweep (`python3 tools/arxiv_window.py --cat <cat> --from … --to …`) works for `math.*`, `physics.*`, `astro-ph.*`, `quant-ph` and `q-bio.*` too. Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors` (triangulation and citation counts — NOT affiliations; those follow the block below).
+**arXiv / Semantic Scholar mechanics:** the date-range arXiv sweep (`python3 tools/arxiv_window.py --cat <cat> --from … --to …`) works for the science categories too, but only with exact category names: an archive name alone (`astro-ph`, `math`, `cond-mat`) returns zero papers (measured 2026-11-27), so name the subcategories, as the 🔭 command below does. Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors` (triangulation and citation counts — NOT affiliations; those follow the block below).
 
 <!-- include: _shared/affiliations.md -->
 
@@ -103,7 +103,7 @@ The fetch is for reading, not only for the link: write each bullet from the page
 
 **Feed-first sources:**
 - **arXiv RSS per category**: `https://export.arxiv.org/rss/cs.LG`, `cs.AI`, `cs.CL`, `cs.CV`, `stat.ML`. Hit all five.
-- **arXiv Atom API, whole-week sweep**: `python3 tools/arxiv_window.py --cat cs.LG --cat cs.AI --cat cs.CL --cat cs.CV --cat stat.ML --from {YYYYMMDD of today-7} --to {YYYYMMDD of today} --max 150`. It pages the server-side submittedDate range (the old "100 newest, filter client-side" query covered about one day of cs.LG, not the week) and prints one line per paper (id, date, primary category, title), spread over the week's days, cross-lists listed once. Use `--grep '<regex>'` to search the whole week for a topic. Shortlist from the titles, then fetch abstracts only for the shortlist; still check each paper's date before citing. A header marked `(INCOMPLETE)` means a call failed: say so in Gaps.
+- **arXiv Atom API, whole-week sweep**: `python3 tools/arxiv_window.py --cat cs.LG --cat cs.AI --cat cs.CL --cat cs.CV --cat stat.ML --from {YYYYMMDD of today-6} --to {YYYYMMDD of today} --max 60`. It pages the server-side submittedDate range (the old "100 newest, filter client-side" query covered about one day of cs.LG, not the week) and prints one line per paper (id, date, primary category, title), spread over the week's days, cross-lists listed once. Use `--grep '<regex>'` to search the whole week for a topic. Shortlist from the titles, then fetch abstracts only for the shortlist; still check each paper's date before citing. A header marked `(INCOMPLETE …)` means a call failed and `(CAPPED …)` that the week's oldest papers were not fetched: say which in Gaps.
 - **Semantic Scholar** to triangulate which papers are getting attention this week.
 
 T1 (HTML fallback): arxiv.org listings, huggingface.co/papers. (Not openreview.net — measured
@@ -126,7 +126,7 @@ For each paper:
 ## 🔭 Fundamental science papers of the week
 
 **Feed-first sources:**
-- **arXiv API per category**, week-windowed: math.AG, math.AT, math.CO, math.NT, math.PR, math.ST; physics (cond-mat, hep-ph, hep-th, gr-qc, quant-ph, nucl-th); astro-ph.*.
+- **arXiv API per category**, week-windowed, one command: `python3 tools/arxiv_window.py --cat math.AG --cat math.AT --cat math.CO --cat math.NT --cat math.PR --cat math.ST --cat cond-mat.str-el --cat cond-mat.mes-hall --cat cond-mat.supr-con --cat hep-ph --cat hep-th --cat gr-qc --cat quant-ph --cat nucl-th --cat astro-ph.CO --cat astro-ph.GA --cat astro-ph.HE --cat astro-ph.EP --cat astro-ph.SR --from {YYYYMMDD of today-6} --to {YYYYMMDD of today} --max 15`.
 - **Quanta Magazine RSS** — heavy weight here, math + fundamental physics.
 - **Nature journals RSS**: nature.rss, nphys.rss (Nature Physics), natastron.rss (Nature Astronomy).
 

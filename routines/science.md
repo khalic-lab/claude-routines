@@ -53,9 +53,9 @@ Before composing, read two human-gated files from the repo root and let them sha
 SELECT and how you WEIGHT it — not just wording:
 - `reader-profile.md` — a standing editorial brief for this specific reader (Rafael). Favor
   what it says to favor, demote/cut what it says to demote; it reflects the reader, not generic
-  newsworthiness. Its "Learned preferences" are binding, not guidance: each corrects an error
-  the reader caught in a published brief. Check your draft against them, headlines and decks
-  included, before publishing.
+  newsworthiness. A "Learned preferences" line that corrects an error the reader caught in a
+  published brief (a wrong word, label, date, attribution or source) is binding, not guidance:
+  check your draft against those lines, headlines and decks included, before publishing.
 - `reader-profile/source-weights.yml` — two domain lists, matched on a story's primary source
   domain (lowercased host, leading "www." stripped):
   - `never:` — HARD filter: drop any story whose primary source is one of these domains.
@@ -355,5 +355,5 @@ python3 tools/publish.py --slug science --date {YYYY-MM-DD} \
 
 - `{teaser}` rules: ≤200 chars. The single most striking finding in this brief — typically the headline physics/quantum result, a major astronomy discovery, or a notable clinical/biology readout. Concrete and specific (e.g. "JWST resolves the missing-baryon problem; PRX Quantum demo of below-threshold error correction on 105 qubits"), not generic. Pass it as a plain shell argument; no quote-escaping.
 - Omit `--final` if dedup was unavailable — note "dedup unavailable" in the Gaps line first.
-- It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the edition is NOT on origin. If the log says `rebase left unmerged paths`, HEAD is origin's own tip and a bare push publishes nothing: resolve each listed path (in an append-only file such as `sources/registry.yml` keep BOTH sides' entries), `git add` it, run `git -c core.editor=true rebase --continue`, and only then `git push origin HEAD:refs/heads/main`. Otherwise retry `git push origin HEAD:refs/heads/main` before the session ends. Never redo its steps by hand.
+- It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the edition is NOT on origin. If the log says `rebase left unmerged paths`, HEAD is origin's own tip and a bare push publishes nothing: resolve each listed path (for `sources/registry.yml` run `python3 tools/sources/registry.py resolve --root .`, which merges both sides' entries and stages the file; never hand-merge it), `git add` the others, run `git -c core.editor=true rebase --continue`, and only then `git push origin HEAD:refs/heads/main`. Otherwise retry `git push origin HEAD:refs/heads/main` before the session ends. Never redo its steps by hand.
 - If the edition is still not on origin when you stop, call the PushNotification tool once — `{Edition} {YYYY-MM-DD} NOT published: <the FAILED line>` — the only operator channel out of this sandbox. Use PushNotification for nothing else; readers are notified by the stub.

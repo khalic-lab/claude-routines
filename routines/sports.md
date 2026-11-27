@@ -66,9 +66,9 @@ Before composing, read two human-gated files from the repo root and let them sha
 SELECT and how you WEIGHT it — not just wording:
 - `reader-profile.md` — a standing editorial brief for this specific reader (Rafael). Favor
   what it says to favor, demote/cut what it says to demote; it reflects the reader, not generic
-  newsworthiness. Its "Learned preferences" are binding, not guidance: each corrects an error
-  the reader caught in a published brief. Check your draft against them, headlines and decks
-  included, before publishing.
+  newsworthiness. A "Learned preferences" line that corrects an error the reader caught in a
+  published brief (a wrong word, label, date, attribution or source) is binding, not guidance:
+  check your draft against those lines, headlines and decks included, before publishing.
 - `reader-profile/source-weights.yml` — two domain lists, matched on a story's primary source
   domain (lowercased host, leading "www." stripped):
   - `never:` — HARD filter: drop any story whose primary source is one of these domains.
@@ -177,7 +177,7 @@ ATP/WTA tournament outcomes and Grand Slams, ranking moves, and Swiss players. E
 
 ## ⛷️🏒 Winter sports & the rest
 
-Alpine skiing World Cup (favour Swiss racers), Swiss National League + NHL headlines, and a catch-all for cycling (Tour de Suisse / de France), athletics, and other notable events. In-season only; omit anything with nothing new. Hockey runs Sep–Apr: in season, check the Swiss National League round every edition before deciding to omit the desk — fetch the sihf.ch game-center (`python3 tools/fetch.py "https://www.sihf.ch/de/game-center/"`) or its news page (`https://www.sihf.ch/de/news/`) and SRF Sport's hockey page; the game-center is a JavaScript app, so if it returns only a shell, say so in Gaps and use the news page and SRF. When you run a National League result, anchor it on sihf.ch if that page loaded (T1), with SRF Sport as the second source. A quiet round is a valid omit; an unchecked one is not.
+Alpine skiing World Cup (favour Swiss racers), Swiss National League + NHL headlines, and a catch-all for cycling (Tour de Suisse / de France), athletics, and other notable events. In-season only; omit anything with nothing new. Hockey runs Sep–Apr: in season, check the Swiss National League round every edition before deciding to omit the desk — fetch the sihf.ch game-center (`python3 tools/fetch.py --proxy "https://www.sihf.ch/de/game-center/"`) or its news page (`https://www.sihf.ch/de/news/`) and SRF Sport's hockey page; the game-center is a JavaScript app, so if it returns only a shell, say so in Gaps and use the news page and SRF. When you run a National League result, anchor it on sihf.ch if that page loaded (T1), with SRF Sport as the second source. A quiet round is a valid omit; an unchecked one is not.
 
 ## 🧠 Why it matters (the one place to be opinionated — include only if warranted)
 
@@ -272,5 +272,5 @@ python3 tools/publish.py --slug sports --date {YYYY-MM-DD} \
 
 - `{teaser}` rules: ≤200 chars. The single most significant thing this week — the result that moved a title race, a marquee transfer confirmed, an F1 championship swing, a Swiss athlete's win. Concrete (e.g. "Basel go 4 clear at the top; Verstappen cuts the gap to 12 after Spa; Wimbledon final set"), not generic. Pass it as a plain shell argument; no quote-escaping.
 - Omit `--final` if dedup was unavailable — note "dedup unavailable" in the Gaps line first.
-- It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the edition is NOT on origin. If the log says `rebase left unmerged paths`, HEAD is origin's own tip and a bare push publishes nothing: resolve each listed path (in an append-only file such as `sources/registry.yml` keep BOTH sides' entries), `git add` it, run `git -c core.editor=true rebase --continue`, and only then `git push origin HEAD:refs/heads/main`. Otherwise retry `git push origin HEAD:refs/heads/main` before the session ends. Never redo its steps by hand.
+- It ends `DONE`, or `FAILED (…)` — which needs a reaction: a commit failure means NOTHING was published (fix the reported error, rerun the same command); a push failure means the edition is NOT on origin. If the log says `rebase left unmerged paths`, HEAD is origin's own tip and a bare push publishes nothing: resolve each listed path (for `sources/registry.yml` run `python3 tools/sources/registry.py resolve --root .`, which merges both sides' entries and stages the file; never hand-merge it), `git add` the others, run `git -c core.editor=true rebase --continue`, and only then `git push origin HEAD:refs/heads/main`. Otherwise retry `git push origin HEAD:refs/heads/main` before the session ends. Never redo its steps by hand.
 - If the edition is still not on origin when you stop, call the PushNotification tool once — `{Edition} {YYYY-MM-DD} NOT published: <the FAILED line>` — the only operator channel out of this sandbox. Use PushNotification for nothing else; readers are notified by the stub.

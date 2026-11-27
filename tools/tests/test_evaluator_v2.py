@@ -119,6 +119,17 @@ class LinkcheckClassTest(unittest.TestCase):
         self.assertIn("unreachable 2", line)
         self.assertIn("measurable 1/3", line)
 
+    def test_a_head_404_is_confirmed_by_get_before_it_counts_as_broken(self):
+        seen = []
+        orig = linkcheck._curl_code
+        linkcheck._curl_code = lambda args, max_time, header_file=None: (
+            seen.append(args) or ("404" if "-I" in args else "200"))
+        try:
+            self.assertEqual(linkcheck.resolve("https://headless.example/a"), "200")
+        finally:
+            linkcheck._curl_code = orig
+        self.assertEqual(len(seen), 2)
+
     def test_unsubstituted_token_placeholder_never_reaches_the_proxy(self):
         calls = []
         orig = linkcheck._curl_code

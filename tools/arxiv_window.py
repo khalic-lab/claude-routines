@@ -12,7 +12,7 @@ footer's Feeds hit counts it; export.arxiv.org is paced there), one retry after 
 
 Output, per category: a `# arXiv <cat> <from>..<to>: total N ...` header, then
 `<id>\t<YYYY-MM-DD>\t<primary category>\t<title>` lines. A paper already printed under an
-earlier --cat is not repeated. Without --grep the --max lines are spread evenly over the
+earlier --cat is not repeated (a paper only fetched, not printed, there stays eligible). Without --grep the --max lines are spread evenly over the
 window's days (newest first inside a day), so a week is never just its last day; with --grep
 (case-insensitive, over title + abstract) the matches are listed newest first up to --max.
 Shortlist from the titles, then fetch abstracts only for the shortlist.
@@ -71,7 +71,8 @@ def parse_feed(xml_text):
 
 def collect(cat, start_day, end_day, fetch_text, page_size=500, max_pages=6):
     """All entries of one category's window, newest first, paging until exhausted or capped.
-    Returns (total, entries, pages, complete)."""
+    Returns (total, entries, pages, state): state is complete, capped (max_pages reached, the
+    oldest papers of the window are missing) or failed (a call failed after its retry)."""
     entries, total, pages = [], 0, 0
     while pages < max_pages:
         text = fetch_text(query_url(cat, start_day, end_day, pages * page_size, page_size))
@@ -82,7 +83,9 @@ def collect(cat, start_day, end_day, fetch_text, page_size=500, max_pages=6):
         entries.extend(batch)
         if not batch or len(entries) >= total:
             break
-    return total, entries, pages, pages > 0 and len(entries) >= total
+    if pages > 0 and len(entries) >= total:
+        return total, entries, pages, "complete"
+    return total, entries, pages, ("capped" if pages >= max_pages else "failed")
 
 
 def spread(entries, n):
@@ -107,9 +110,10 @@ def run(cats, start_day, end_day, fetch_text, max_lines=120, grep=None, page_siz
     span = "%s-%s-%s..%s-%s-%s" % (start_day[:4], start_day[4:6], start_day[6:],
                                    end_day[:4], end_day[4:6], end_day[6:])
     for cat in cats:
-        total, entries, pages, complete = collect(cat, start_day, end_day, fetch_text,
-                                                  page_size, max_pages)
+        total, entries, pages, state = collect(cat, start_day, end_day, fetch_text,
+                                               page_size, max_pages)
         fresh = [e for e in entries if e["id"] not in seen]
+        repeated = len(entries) - len(fresh)
         if rx:
             fresh = [e for e in fresh if rx.search(e["title"] + " " + e["summary"])]
             shown = fresh[:max_lines]
@@ -118,13 +122,15 @@ def run(cats, start_day, end_day, fetch_text, max_lines=120, grep=None, page_siz
             shown = spread(fresh, max_lines)
             how = "showing %d spread over %d day(s)" % (
                 len(shown), len({e["date"] for e in shown}))
+        flag = {"complete": "", "capped": " (CAPPED: the window's oldest papers were not fetched)",
+                "failed": " (INCOMPLETE: a call failed)"}[state]
         print("# arXiv %s %s: total %d, fetched %d in %d page(s)%s; %d already listed above; %s"
-              % (cat, span, total, len(entries), pages, "" if complete else " (INCOMPLETE)",
-                 len(entries) - len([e for e in entries if e["id"] not in seen]), how),
+              % (cat, span, total, len(entries), pages, flag, repeated, how),
               file=out, flush=True)
         for e in shown:
             print("%s\t%s\t%s\t%s" % (e["id"], e["date"], e["primary"], e["title"]), file=out)
-        seen.update(e["id"] for e in entries)
+        seen.update(e["id"] for e in shown)  # only what was PRINTED: an unprinted cross-list
+        # must stay eligible under a later category, or it is listed nowhere
 
 
 def _live_fetch_text():

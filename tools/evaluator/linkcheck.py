@@ -151,6 +151,12 @@ def resolve(url, max_time=15):
     status = _curl_code(["-I", url], max_time)
     if _passed(status):
         return status
+    if status in ("404", "405", "410"):
+        # some servers answer HEAD with 404/405 yet serve the page to a GET; a "broken" verdict
+        # is a fabrication candidate, so confirm it with the GET the writer's fetch made
+        status = _curl_code([url], max_time)
+        if _passed(status) or status in ("404", "410"):
+            return status
     token = os.environ.get("FETCH_PROXY_TOKEN", "")
     if not token or token.startswith("${"):
         return status

@@ -4,9 +4,9 @@ Before composing, read two human-gated files from the repo root and let them sha
 SELECT and how you WEIGHT it — not just wording:
 - `reader-profile.md` — a standing editorial brief for this specific reader (Rafael). Favor
   what it says to favor, demote/cut what it says to demote; it reflects the reader, not generic
-  newsworthiness. Its "Learned preferences" are binding, not guidance: each corrects an error
-  the reader caught in a published brief. Check your draft against them, headlines and decks
-  included, before publishing.
+  newsworthiness. A "Learned preferences" line that corrects an error the reader caught in a
+  published brief (a wrong word, label, date, attribution or source) is binding, not guidance:
+  check your draft against those lines, headlines and decks included, before publishing.
 - `reader-profile/source-weights.yml` — two domain lists, matched on a story's primary source
   domain (lowercased host, leading "www." stripped):
   - `never:` — HARD filter: drop any story whose primary source is one of these domains.

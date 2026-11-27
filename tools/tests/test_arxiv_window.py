@@ -69,7 +69,23 @@ class ArxivWindowTest(unittest.TestCase):
     def test_a_failed_fetch_reports_incomplete_instead_of_crashing(self):
         out = io.StringIO()
         aw.run(["cs.LG"], "20261126", "20261126", lambda u: None, out=out)
-        self.assertIn("fetched 0 in 0 page(s) (INCOMPLETE)", out.getvalue())
+        self.assertIn("fetched 0 in 0 page(s) (INCOMPLETE: a call failed)", out.getvalue())
+
+    def test_a_cross_list_fetched_but_not_printed_stays_eligible_later(self):
+        lg = [("2611.%05d" % k, "2026-11-26", "LG %d" % k, "s", "cs.LG") for k in range(5)]
+        ai = [("2611.00004", "2026-11-26", "LG 4", "s", "cs.LG")]   # printed nowhere under cs.LG
+        pages = {"cs.LG": _feed(5, lg), "cs.AI": _feed(1, ai)}
+        out = io.StringIO()
+        aw.run(["cs.LG", "cs.AI"], "20261126", "20261126",
+               lambda u: pages[u.split("cat:")[1].split("+")[0]], max_lines=2, out=out)
+        ids = [l.split("\t")[0] for l in out.getvalue().splitlines() if not l.startswith("#")]
+        self.assertIn("2611.00004", ids)
+
+    def test_hitting_the_page_cap_is_reported_as_capped(self):
+        feed = _feed(9, [("2611.%d" % k, "2026-11-26", "t", "s", "cs.LG") for k in range(2)])
+        out = io.StringIO()
+        aw.run(["cs.LG"], "20261126", "20261126", lambda u: feed, page_size=2, max_pages=1, out=out)
+        self.assertIn("(CAPPED", out.getvalue())
 
 
 if __name__ == "__main__":
