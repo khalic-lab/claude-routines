@@ -546,7 +546,18 @@ def normalize_domain(raw):
     d = str(raw or "").strip().lower().rstrip(".")
     if d.startswith("www."):
         d = d[4:]
-    return d if _HOST_RE.match(d) else None
+    return d if _HOST_RE.match(d) and key_ok(d) else None
+
+
+def write_registry(path, reg):
+    """Dump to a temp file and rename it over `path`: a dumper that raises (an unsafe key) must
+    leave the old file intact. open(path, "w") truncates first, and publish stages sources/
+    wholesale, so a crash there would commit an EMPTY registry (cold review 2026-11-27)."""
+    text = yaml_dump(reg)
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(text)
+    os.replace(tmp, path)
 
 
 def _candidate_probe(domain, url, reach):
@@ -569,7 +580,8 @@ def _scout_fetched(rec):
     hint means the evaluator's egress never reached the URL, so it is unverified: the
     2026-11-27 sweep found 7 of 80 such scout URLs dead (404 / dead host). Those stay in
     the lifecycle note and never become a probe, which preflight would hand to writers."""
-    return rec.get("via") == "scout" and rec.get("reach") in ("direct", "proxy")
+    return rec.get("via") == "scout" and isinstance(rec.get("reach"), str) \
+        and rec.get("reach") in ("direct", "proxy")
 
 
 def _candidate_note(rec, url):
@@ -585,6 +597,19 @@ def _candidate_note(rec, url):
 
 
 AUTO_REACH_WINDOW_DAYS = 7
+
+
+def _last_reach_change(rec):
+    """Date of the entry's newest reach-changing lifecycle event, or "" (any reach-flip, a
+    `set reach` admin edit, or a note recording a move to direct)."""
+    last = ""
+    for item in rec.get("lifecycle") or []:
+        if not isinstance(item, dict):
+            continue
+        ev, note = str(item.get("event") or ""), str(item.get("note") or "")
+        if ev == "reach-flip" or ev.startswith("set reach") or "-> direct" in note:
+            last = max(last, str(item.get("date") or ""))
+    return last
 
 
 def _load_metrics():
@@ -624,6 +649,11 @@ def auto_reach_flips(root, reg, today):
         if (domain not in prev or not isinstance(rec, dict) or rec.get("reach") != "direct"
                 or rec.get("status") == "retired"):
             continue
+        if _last_reach_change(rec) >= s1.isoformat():
+            # telemetry from before a reach change says nothing about the new setting: while an
+            # entry was `proxy`, writers skipped curl, so 0 ok-curl there would undo a human
+            # proxy -> direct correction on the next publish
+            continue
         rec["reach"] = "proxy"
         probe = rec.get("probe")
         if isinstance(probe, dict) and probe.get("method") != REACH_METHOD["proxy"]:
@@ -658,9 +688,12 @@ def cmd_sync(args):
     added = 0
     fresh = {}  # domain -> entry created by THIS sync; later records for it merge in
     for rec in read_jsonl(candidates_path):
+        if not isinstance(rec, dict):
+            print("sync: WARN skipped a candidate line that is not an object", file=sys.stderr)
+            continue
         domain = normalize_domain(rec.get("domain"))
         stream = rec.get("stream")
-        if domain is None or stream not in LIVE_STREAMS:
+        if domain is None or not isinstance(stream, str) or stream not in LIVE_STREAMS:
             print("sync: WARN skipped candidate %r (bad domain, or stream %r not live)"
                   % (rec.get("domain"), stream), file=sys.stderr)
             continue
@@ -668,7 +701,7 @@ def cmd_sync(args):
             continue  # never downgrades an already-registered domain back to candidate
         cited = rec.get("via") != "scout"  # a scout vets a page; it cites nothing
         url = rec.get("url") if isinstance(rec.get("url"), str) else None
-        first_seen = rec.get("first_seen") if cited else None
+        first_seen = rec.get("first_seen") if cited and isinstance(rec.get("first_seen"), str) else None
         if domain in fresh:  # a second record for a domain this sync just added
             entry = fresh[domain]
             if stream not in entry["streams"]:
@@ -686,7 +719,8 @@ def cmd_sync(args):
                 item["note"] = "%s | %s" % (item.get("note", ""), note)
             continue
         cls = classify_domain(domain)
-        reach = CANDIDATE_REACH.get(rec.get("reach"), "direct")
+        hint = rec.get("reach")
+        reach = CANDIDATE_REACH.get(hint, "direct") if isinstance(hint, str) else "direct"
         entry = {
             "class": cls,
             "tier": "T1" if cls == "hub" else "T2",
@@ -763,8 +797,7 @@ def cmd_sync(args):
               ("; %d dead buffer(s) purged" % purged if purged else ""))
         return 0
 
-    with open(path, "w") as f:
-        f.write(yaml_dump(reg))
+    write_registry(path, reg)
 
     for p in (candidates_path, last_cited_path):
         if os.path.exists(p):
@@ -822,6 +855,8 @@ def merge_registry(base, ours, theirs):
                 merged[key] = max(x for x in (ov, tv) if x)
             elif isinstance(ov, list) and isinstance(tv, list):
                 merged[key] = _union_list(ov, tv)
+        if "lifecycle" in merged:
+            merged["lifecycle"] = merged.pop("lifecycle")  # canonical order: lifecycle last
         out[domain] = merged
     return out
 
@@ -850,8 +885,16 @@ def cmd_resolve(args):
             return 1
         stages[n] = loaded
     merged = merge_registry(stages[1], stages[2], stages[3])
-    with open(os.path.join(args.root, rel), "w") as f:
-        f.write(yaml_dump(merged))
+    # a record both sides edited can come out inconsistent (upstream's reach, this edition's
+    # probe method): such a record takes upstream's copy whole, which was valid on origin
+    bad = {v.split(":", 1)[0] for v in validate(merged)}
+    for domain in bad & set(stages[2]):
+        merged[domain] = stages[2][domain]
+    try:
+        write_registry(os.path.join(args.root, rel), merged)
+    except ValueError as exc:
+        print("resolve: %s not written (%s); left unresolved" % (rel, exc))
+        return 1
     subprocess.run(["git", "add", "--", rel], cwd=args.root, check=False)
     added = sorted(set(merged) - set(stages[2]))
     print("resolve: %s merged (%d record(s) from this edition kept: %s)"

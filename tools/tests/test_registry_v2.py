@@ -179,6 +179,32 @@ class SyncCandidateFieldsTest(unittest.TestCase):
         self.assertEqual(e["class"], "institutional")
         self.assertIn("https://www.state.gov/releases/x/", e["lifecycle"][0]["note"])
 
+    def test_a_host_the_dumper_cannot_key_is_skipped_and_the_registry_survives(self):
+        # cold review 2026-11-27: '21.co' passed the host check, the dumper refused the key AFTER
+        # open(path, "w") had truncated the file, and the next publish committed it empty
+        reg, proc = self.sync([{"domain": "21.co", "first_seen": "2026-11-20", "via": "writer",
+                                "stream": "news", "url": "https://21.co/a"},
+                               {"domain": "93.184.216.34", "first_seen": "2026-11-20",
+                                "via": "writer", "stream": "news"},
+                               {"domain": "fine.example", "first_seen": "2026-11-20",
+                                "via": "writer", "stream": "news"}])
+        self.assertIn("srf.ch", reg)
+        self.assertIn("fine.example", reg)
+        self.assertNotIn("21.co", reg)
+        self.assertNotIn("93.184.216.34", reg)
+
+    def test_wrongly_typed_fields_are_skipped_not_fatal(self):
+        reg, proc = self.sync([{"domain": "a.example", "first_seen": "2026-11-20", "via": "scout",
+                                "stream": ["news"]},
+                               {"domain": "b.example", "first_seen": ["2026-11-20"], "via": "writer",
+                                "stream": "news", "reach": ["proxy-needed"]}],
+                              raw_lines=['["not", "an", "object"]'])
+        self.assertNotIn("a.example", reg)
+        self.assertEqual(reg["b.example"]["reach"], "direct")
+        self.assertIsNone(reg["b.example"].get("last_cited"))
+        with open(os.path.join(self.root, "sources", "candidates.jsonl")) as f:
+            self.assertEqual(f.read(), "", "the buffer is purged, so one bad line cannot wedge sync")
+
     def test_fetched_scout_url_becomes_a_probe(self):
         reg, _ = self.sync([dict(self.SCOUT, reach="direct")])
         e = reg["cerncourier.com"]

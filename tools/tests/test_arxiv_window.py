@@ -81,6 +81,24 @@ class ArxivWindowTest(unittest.TestCase):
         ids = [l.split("\t")[0] for l in out.getvalue().splitlines() if not l.startswith("#")]
         self.assertIn("2611.00004", ids)
 
+    def test_an_empty_page_mid_window_is_a_failure_not_a_short_week(self):
+        first = _feed(1200, [("2611.%d" % k, "2026-11-26", "t", "s", "cs.LG") for k in range(3)])
+        empty = _feed(0, [])
+        out = io.StringIO()
+        aw.run(["cs.LG"], "20261126", "20261126",
+               lambda u: first if "start=0&" in u else empty, page_size=3, out=out)
+        self.assertIn("total 1200, fetched 3 in 2 page(s) (INCOMPLETE", out.getvalue())
+
+    def test_a_non_xml_body_marks_the_category_failed_and_the_next_one_still_runs(self):
+        good = _feed(1, [("2611.9", "2026-11-26", "t", "s", "cs.AI")])
+        out = io.StringIO()
+        aw.run(["cs.LG", "cs.AI"], "20261126", "20261126",
+               lambda u: "<html>busy</html" if "cat:cs.LG" in u else good, out=out)
+        text = out.getvalue()
+        self.assertIn("cs.LG", text)
+        self.assertIn("(INCOMPLETE", text.splitlines()[0])
+        self.assertIn("2611.9", text)
+
     def test_hitting_the_page_cap_is_reported_as_capped(self):
         feed = _feed(9, [("2611.%d" % k, "2026-11-26", "t", "s", "cs.LG") for k in range(2)])
         out = io.StringIO()

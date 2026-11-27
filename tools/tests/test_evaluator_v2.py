@@ -97,6 +97,14 @@ class AutoReachFlipTest(unittest.TestCase):
         self.assertEqual(registry.auto_reach_flips(self.root, reg, self.TODAY), [])
         self.assertEqual(reg["walled.example"]["reach"], "direct")
 
+    def test_a_recent_human_correction_to_direct_is_not_undone(self):
+        self.write_post("2026-11-15", self.walled())
+        self.write_post("2026-11-24", self.walled())
+        reg = self.load()
+        reg["walled.example"]["lifecycle"].append(
+            {"date": "2026-11-20", "event": "set reach", "note": "proxy -> direct (admin: curl works now)"})
+        self.assertEqual(registry.auto_reach_flips(self.root, reg, self.TODAY), [])
+
     def test_missing_posts_dir_degrades_to_no_flip(self):
         shutil.rmtree(os.path.join(self.root, "_posts"))
         reg = self.load()

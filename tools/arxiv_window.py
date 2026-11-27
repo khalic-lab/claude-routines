@@ -73,19 +73,41 @@ def collect(cat, start_day, end_day, fetch_text, page_size=500, max_pages=6):
     """All entries of one category's window, newest first, paging until exhausted or capped.
     Returns (total, entries, pages, state): state is complete, capped (max_pages reached, the
     oldest papers of the window are missing) or failed (a call failed after its retry)."""
-    entries, total, pages = [], 0, 0
+    entries, total, pages, failed = [], 0, 0, False
     while pages < max_pages:
-        text = fetch_text(query_url(cat, start_day, end_day, pages * page_size, page_size))
-        if text is None:
+        url = query_url(cat, start_day, end_day, pages * page_size, page_size)
+        parsed = _parse_or_none(fetch_text(url))
+        if parsed is not None and pages == 0 and not parsed[1]:
+            # arXiv sometimes answers an empty page (totalResults 0) under load: ask once more
+            parsed = _parse_or_none(fetch_text(url)) or parsed
+        if parsed is None:
+            failed = True
             break
         pages += 1
-        total, batch = parse_feed(text)
+        page_total, batch = parsed
+        total = max(total, page_total)  # a transient empty page reports 0; keep the real total
         entries.extend(batch)
-        if not batch or len(entries) >= total:
+        if not batch:
+            failed = len(entries) < total
             break
-    if pages > 0 and len(entries) >= total:
+        if len(entries) >= total:
+            break
+    if failed:
+        return total, entries, pages, "failed"
+    if len(entries) >= total:
         return total, entries, pages, "complete"
-    return total, entries, pages, ("capped" if pages >= max_pages else "failed")
+    return total, entries, pages, "capped"
+
+
+def _parse_or_none(text):
+    """parse_feed, or None for a failed fetch or a body that is not Atom XML (an HTML busy
+    page, a proxy error), so one bad answer marks that category failed instead of aborting."""
+    if text is None:
+        return None
+    try:
+        return parse_feed(text)
+    except ET.ParseError:
+        return None
 
 
 def spread(entries, n):
