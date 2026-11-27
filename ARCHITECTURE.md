@@ -20,15 +20,15 @@
 ║                                                                                      ║
 ║  env_018zypSdRSdGdrZ8J5usqCWA   (network settings changed 2026-05-25 → Custom)        ║
 ║  ┌────────────────────────────────────────────────────────────────────────────┐     ║
-║  │ WRITERS (claude-opus-5-5)      cron (UTC)        output file                    │    ║
-║  │  • News (CH + world, noon)    0 10 * * *     _posts/{d}-news.md                  │   ║
-║  │  • AI/ML (+ arXiv papers)     0 10 * * 2,5   _posts/{d}-ai-ml.md                 │   ║
-║  │  • Science (non-AI, weekly)   0 15 * * 3     _posts/{d}-science.md               │   ║
-║  │  • Weekend Deep Read          30 7 * * 6     _posts/{d}-weekend.md              │   ║
-║  │  • Sports (claude-sonnet-5-5) 0 7 * * 1      _posts/{d}-sports.md                │   ║
-║  │  WATCH (claude-opus-5-5)      27 */4 * * *   pending-notifications/              │   ║
+║  │ WRITERS (claude-opus-5-5)      cron (Zurich)     output file                    │    ║
+║  │  • News (CH + world, noon)    0 12 * * *     _posts/{d}-news.md                  │   ║
+║  │  • AI/ML (+ arXiv papers)     0 12 * * 2,5   _posts/{d}-ai-ml.md                 │   ║
+║  │  • Science (non-AI, weekly)   0 17 * * 3     _posts/{d}-science.md               │   ║
+║  │  • Weekend Deep Read          30 9 * * 6     _posts/{d}-weekend.md              │   ║
+║  │  • Sports (claude-sonnet-5-5) 0 9 * * 1      _posts/{d}-sports.md                │   ║
+║  │  WATCH (claude-opus-5-5)      27 2-22/4 * * * pending-notifications/             │   ║
 ║  │      reads watches.yml → on match writes stub + updates last_fired              │    ║
-║  │  EVALUATOR (claude-opus-5-5)  30 9 * * 0     _posts/{d}-evaluator.md            │   ║
+║  │  EVALUATOR (claude-opus-5-5)  30 11 * * 0     _posts/{d}-evaluator.md           │   ║
 ║  │  ⮑ all triggers (except Watch) are BOOTSTRAP SHIMS → git pull + read              │   ║
 ║  │     routines/<slug>.md at fire time (see routines/MANIFEST.md)                    │   ║
 ║  │      reads last 7d of _posts → Health table + Patch proposals (human-applied)   │    ║
@@ -143,6 +143,29 @@
 > `ethz.ch`/`epfl.ch`/`psi.ch` (they publish AI research and the desk had no institutional Swiss
 > route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
 > `hklaw.com`, `macrumors.com`, `wtvbam.com`.
+>
+> **Changed 2026-11-27: the 2026-10-04..11-22 review backlog applied, and the registry made
+> self-maintaining.** Eight weekly reviews had re-proposed the same items; an audit checked each
+> against live state (`proposals/*` stamped per item, with notes where applied in modified form).
+> **Registry:** the dumper quotes every scalar a strict YAML parser would misread (the file now
+> parses under Ruby Psych / YAML::PP); `registry.py sync` validates candidate records, keeps the
+> scout's note and URL (a URL becomes a probe only when the scout fetched it), sets `last_cited`
+> only for writer citations, **promotes on live index citations** (candidate → probation, ≥5 →
+> established) and **auto-applies a direct → proxy reach flip** when `metrics.build_reach_drift`'s
+> rule holds in both 7-day windows ending yesterday (a curl probe moves to proxy with it). The class
+> rule covers public-body domain structure (gov/gob/gouv/mil/edu/ac SLDs, `.int`, cantons, courts,
+> parliaments, IGOs) and every consumer reads the registry's own class first. One-time data pass:
+> 101 reach flips over the 10-01..11-27 telemetry, 61 class fixes, 100 promotions, the arXiv Atom
+> probe moved to `export.arxiv.org`, three dead probe URLs replaced, `bbc.co.uk` registered.
+> **Publish/fetch:** the Tue/Fri News+AI/ML push race is resolved by `registry.py resolve` (3-way
+> merge on parsed records) inside publish.py's retry; `fetch.py` runs curl `-g`, breaks after 3
+> consecutive 429s per host for 10 min, and spaces `export.arxiv.org` calls 4 s;
+> `tools/arxiv_window.py` pages the arXiv `submittedDate` range for AI/ML and the Weekend.
+> **Evaluator:** new computed keys (`briefs.t1_share`, `feeds_walled`, `lint`, `weekend_revisits`,
+> `continuity.lost_editions`, `feedback.reasoned` with per-event dispositions so no reasoned vote
+> falls between windows); link check splits broken / blocked / unreachable; the stale-reach re-probe
+> step is retired. **Crons** are stored as `CRON_TZ=Europe/Zurich`, so UTC fire times move with DST
+> (the "one hour later since late October" was DST, not drift); the tables above show Zurich time.
 >
 > **Changed 2026-10-04: one model for every routine but Sports.** News, AI/ML, Science, Weekend,
 > the Weekly Evaluator and Watch now run `claude-opus-5-5`; Sports runs `claude-sonnet-5-5`. This
@@ -745,8 +768,10 @@
 > drain) — resolution direct/legacy/url, `ev:"feedback"` appended BEFORE `consumed:true` flips; the
 > Evaluator's 7-day window arithmetic is retired (the 27%-orphaning class is structurally impossible).
 > **Sources:** `sources/registry.yml` (bootstrapped citation-driven from live streams, retired-pipeline
-> domains excluded; credibility lifecycle candidate→probation→established, human-gated transitions;
-> machine appends go to `sources/{candidates,last-cited}.jsonl`, folded by `registry.py sync`).
+> domains excluded; credibility lifecycle candidate→probation→established; since 2026-11-27 sync
+> promotes on index citations and applies two-week computed reach flips, and judgment transitions stay
+> human-gated; machine appends go to `sources/candidates.jsonl`, folded by `registry.py sync`;
+> `last-cited.jsonl` has no producer, so preflight computes dormancy from the index).
 > Writers' first research action = `tools/sources/preflight.py --slug {slug}`; `lint.py` checks
 > `[new source]` tags / Discovery footer / caps at Step C.25; `health.py` → `_data/source-health.json`
 > at Step D. **Caps + discovery quota are REPORT-ONLY** until armed (SPIKE step 5, data-gated).
@@ -822,7 +847,7 @@
 | Reader feedback | `feedback/{YYYY-MM}.jsonl` | `{id, ts, reader, brief, story_id, vote 1/-1/0, reason, surface, source_domain, consumed}` | widget→Worker→bridge → `fold.py` → ledger → Evaluator |
 | Reader profile | `reader-profile.md` + `reader-profile/source-weights.yml` (`never:`/`reduce:`) | NL editorial brief + domain lists | Evaluator proposes (human-gated) → writers read |
 | Story ledger | `index/ledger/{YYYY-MM-DD}.jsonl` (ingest day, append-only, merge=union) | `{ev: seen\|update\|publish\|status\|feedback\|notify, ts, actor, …}` — record schema in SPIKE 2026-07-07 §3.1 | dedup.py dual-write + backfill + fold.py → `store.py materialize` (all consumers) |
-| Source registry | `sources/registry.yml` (+ `sources/{candidates,last-cited}.jsonl` machine appends) | per-domain `{class, tier, status, reach, probe, streams, last_cited, subsources, lifecycle}` | `registry.py bootstrap/sync` + human → `preflight.py`/`lint.py`/writers |
+| Source registry | `sources/registry.yml` (+ `sources/candidates.jsonl` machine appends; `last-cited.jsonl` has no producer — dormancy comes from the index) | per-domain `{class, tier, status, reach, probe, streams, last_cited, subsources, lifecycle}` | `registry.py bootstrap/sync` + human → `preflight.py`/`lint.py`/writers |
 | Source health | `_data/source-health.json` | per-stream 30d `{stories, unique_domains, new_domains, top5_share, saturated, waiver_rate}` | `health.py` (writer Step D) → Evaluator + homepage-adjacent tooling |
 | Evaluator metrics | `_data/health.json` | `{week, streams, feedback, sources, continuity}` | `tools/evaluator/metrics.py` (evaluator fire start) → Evaluator |
 | Machine proposals | `proposals/{name}-{date}.json` | `[{id, dimension, target, change, evidence, applied, applied_by?}]` | Evaluator emits → human/auto applies + stamps → next Evaluator verifies |

@@ -7,21 +7,30 @@
    "target": "routines/src/weekend.md",
    "action": "Replace the 'arXiv Atom API for week-window queries' feed line (max_results=100, client-side date filter) with a server-side range query: search_query=cat:<cat>+AND+submittedDate:[{today-7}0000+TO+{today}2359]&max_results=200&sortBy=submittedDate&sortOrder=descending, paging start=200,400,... until a short page, ~3 s between calls; still check <published> before citing.",
    "evidence": "2026-11-21 weekend Gaps: 'The arXiv API returned only the last 1-3 days per ML category, so ML papers from 14-17 November come from the AI/ML sibling briefs'; same on 2026-11-14. Weekend repeat_rate 0.54 (20/37) after 0.59; 6-7 of 8 ML papers re-run from ai-ml editions.",
-   "applied": false
+   "applied": true,
+   "applied_on": "2026-11-27",
+   "applied_by": "rafael-apply-pass",
+   "applied_note": "modified: tools/arxiv_window.py pages the server-side submittedDate range (pacing lives in fetch.py, curl runs -g); the prompt calls the tool"
   },
   {
    "id": "rm-2",
    "target": "routines/src/ai-ml.md",
    "action": "Replace the 'arXiv Atom API for date confirmation' feed line (max_results=30) with the submittedDate-range query over the coverage window (max_results=200, paged), ~3 s between calls, on HTTP 429 wait 10 s and retry once; when RSS is empty sweep all five categories this way.",
    "evidence": "2026-11-17 ai-ml Gaps: 'arXiv RSS returned empty channels for all five categories; the sweep used the Atom API for cs.LG, cs.AI and cs.CL ... so cs.CV and stat.ML were not swept'. 2026-11-20 Gaps: 'The arXiv cs.LG Atom API returned 429, so cs.LG papers ... are covered only through cs.AI/cs.CL cross-lists'. export.arxiv.org 9 fail (6x HTTP 429) this window.",
-   "applied": false
+   "applied": true,
+   "applied_on": "2026-11-27",
+   "applied_by": "rafael-apply-pass",
+   "applied_note": "modified: same tool, every run, all five categories"
   },
   {
    "id": "rm-3",
    "target": "routines/src/ai-ml.md",
    "action": "In # Constraints, extend '- Tag `[vendor PR]` aggressively -- most lab blog posts are PR.' with: 'A `[vendor PR]` item gets a full entry only if it carries at least one independent check you actually read (a third-party leaderboard or evaluation, a hands-on review, released weights/code/model card you inspected, or a quality outlet's own reporting beyond the release). Without one, keep it to a single sentence plus link at the end of its section. Within a section, lead with an independently sourced item whenever one exists.'",
    "evidence": "Section M vendor-PR-lead share: 7/14 (2026-11-15 review) then 6/12 this week (11-17: 2/6; 11-20: 4/6), over the ~40% guard two weeks running. Items with no independent check: 11-17 Hugging Face/OpenRouter ('market-share figures come from the two partners themselves'), 11-20 OpenAI misalignment report; last week 4 (11-13).",
-   "applied": false
+   "applied": true,
+   "applied_on": "2026-11-27",
+   "applied_by": "rafael-apply-pass",
+   "applied_note": "plus the vendor-led / vendor-only metric in weekly-evaluator.md §M"
   },
   {
    "id": "rm-4",

@@ -19,15 +19,15 @@ still carries its full prompt inline in the trigger (not shimmed). **2026-07-18:
 `last_fired` + commit/push; the model only judges snippets): the trigger content was updated in place
 via RemoteTrigger and `routines/watch.md` mirrors it byte-for-byte in spirit (ASCII inline copy).
 
-| Routine | prompt file | trigger_id | cron (UTC / CEST) | model | shim? |
+| Routine | prompt file | trigger_id | cron (stored as `CRON_TZ=Europe/Zurich`, so UTC moves with DST) | model | shim? |
 |---|---|---|---|---|---|
-| News | `news.md` | `trig_012KfuF2Fc8KxNRS9KT1iuYb` | `0 10 * * *` (10:00 / 12:00, daily — moved from `0 17` on 2026-07-03) | `claude-opus-5-5` | yes |
-| AI/ML | `ai-ml.md` | `trig_01QVL6eSmHTUrmnSLHrpNN9Q` | `0 10 * * 2,5` (10:00 / 12:00, Tue+Fri) | `claude-opus-5-5` | yes |
-| Science | `science.md` | `trig_01YLiCr5YJ2XNh2QyPbkyzQP` | `0 15 * * 3` (15:00 / 17:00, Wed) | `claude-opus-5-5` | yes |
-| Weekend Deep Read | `weekend.md` | `trig_01XKzge4DxP6wTjLwtkoYeqj` | `30 7 * * 6` (07:30 / 09:30, Sat) | `claude-opus-5-5` | yes |
-| Sports | `sports.md` | `trig_01PfmuHXkgjhZREW6XfztZrb` | `0 7 * * 1` (07:00 / 09:00, Mon) | `claude-sonnet-5-5` | yes |
-| Weekly Evaluator | `weekly-evaluator.md` | `trig_01F5npsKTQTLKekAZ5BczKtG` | `30 9 * * 0` (09:30 / 11:30, Sun) | `claude-opus-5-5` | yes |
-| Watch | `watch.md` | `trig_01FgrFMfsreu597nKUXEEQMt` | `27 */4 * * *` (every 4h, at :27) | `claude-opus-5-5` | no (full inline) |
+| News | `news.md` | `trig_012KfuF2Fc8KxNRS9KT1iuYb` | `0 12 * * *` (12:00 Zurich, daily; 10:00 UTC summer / 11:00 winter) | `claude-opus-5-5` | yes |
+| AI/ML | `ai-ml.md` | `trig_01QVL6eSmHTUrmnSLHrpNN9Q` | `0 12 * * 2,5` (12:00 Zurich, Tue+Fri — same slot as News; publish.py resolves the registry.yml race) | `claude-opus-5-5` | yes |
+| Science | `science.md` | `trig_01YLiCr5YJ2XNh2QyPbkyzQP` | `0 17 * * 3` (17:00 Zurich, Wed) | `claude-opus-5-5` | yes |
+| Weekend Deep Read | `weekend.md` | `trig_01XKzge4DxP6wTjLwtkoYeqj` | `30 9 * * 6` (09:30 Zurich, Sat) | `claude-opus-5-5` | yes |
+| Sports | `sports.md` | `trig_01PfmuHXkgjhZREW6XfztZrb` | `0 9 * * 1` (09:00 Zurich, Mon) | `claude-sonnet-5-5` | yes |
+| Weekly Evaluator | `weekly-evaluator.md` | `trig_01F5npsKTQTLKekAZ5BczKtG` | `30 11 * * 0` (11:30 Zurich, Sun) | `claude-opus-5-5` | yes |
+| Watch | `watch.md` | `trig_01FgrFMfsreu597nKUXEEQMt` | `27 2,6,10,14,18,22 * * *` (every 4h at :27 Zurich) | `claude-opus-5-5` | no (full inline) |
 
 > **Retired 2026-06-29** (trigger IDs REUSED above): `morning-overview.md` → retargeted to **News** (daily,
 > CH+world — evening until 2026-07-03, midday since); `cyber-papers.md` → retargeted to **Science** (weekly Wed, non-AI science). Security

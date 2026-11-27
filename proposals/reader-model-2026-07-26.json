@@ -15,21 +15,30 @@
    "target": "routines/_shared/*.md (ai-ml + weekend sourcing block)",
    "action": "When a vendor's own announcement/blog is the correct primary but its page is JS-rendered and yields no fetchable text, still attach the canonical primary URL (e.g. poolside.ai/blog/<slug>) as a second link alongside the reachable secondary, rather than citing the secondary alone. The reader wants the primary reference even when the body text had to come from a secondary.",
    "evidence": "1 downvote with a specific written reason on ai-ml 2026-07-24 Poolside Laguna S 2.1 item: \"this is a secondary source!!! the poolside announcement would be the correct source\". The 07-24 footer confirms the writer DID try the primary (poolside.ai) but it was JS-rendered and yielded no text, so it fell to The Decoder alone. The cheap fix is to link the primary URL even when its text is unfetchable. Not auto-applied (prompt patch, human-gated); connects to the ai-ml single-source rate of 30.6% this window, driven by The Decoder-only industry items.",
-   "applied": false
+   "applied": true,
+   "applied_on": "2026-11-27",
+   "applied_by": "rafael-apply-pass",
+   "applied_note": "modified: routines/src/ai-ml.md sourcing rule 1 (vendor release links the vendor post first, write-up alongside); not added to the Weekend"
   },
   {
    "id": "rm-3",
    "target": "tools/evaluator/metrics.py (build_off_main)",
    "action": "CARRIED OVER UNAPPLIED from 2026-07-19 rm-3: in build_off_main(), compare against origin/main (the published line) rather than the local 'main' ref. The routine runs in detached HEAD after 'git pull --ff-only'; when origin/main is force-updated the local 'main' pointer stays stale, so 'git log --all --not main' reports every pulled commit as off-main.",
    "evidence": "This run reproduced the exact false positive: continuity.off_main.commits_not_on_main listed 20 commits (all 'home:'/'deck:'/'docs:' UI work provably on origin/main; remote_branches []). After 'git checkout -B main origin/main' and re-running metrics.py the count dropped to 0. The 07-19 pull was a forced update (c57bdab...ae324a6), leaving local main 34 commits behind. Guard still cries wolf every detached-HEAD run after a force-push.",
-   "applied": false
+   "applied": true,
+   "applied_on": "2026-08-07",
+   "applied_by": "rafael-apply-pass",
+   "applied_note": "landed 2026-08-07 (carried copy of 2026-07-19 rm-3)"
   },
   {
    "id": "rm-4",
    "target": "tools/evaluator/metrics.py (section-vitality parser)",
    "action": "CARRIED OVER UNAPPLIED from 2026-07-19 rm-4: do not count an analytical/prose section as empty merely because it carries no story-anchor (st-) markup. Detect emptiness by absence of body text, not absence of anchors.",
    "evidence": "This run flagged TWO false-positive empty sections in 2026-07-25-weekend.md: '🧠 Cross-cutting threads' (four substantial synthesis paragraphs, lines 14-20) and '🍎 Apple Silicon / local inference ecosystem' (a full paragraph on llama.cpp, line 140, whose single citation uses a plain markdown link with no st- anchor). Both are non-empty; the parser keys on st- anchors. The false-positive class has grown from 1 to 2 section types since the patch was proposed.",
-   "applied": false
+   "applied": true,
+   "applied_on": "2026-08-07",
+   "applied_by": "rafael-apply-pass",
+   "applied_note": "landed 2026-08-07 (carried copy of 2026-07-19 rm-4)"
   }
  ]
 }

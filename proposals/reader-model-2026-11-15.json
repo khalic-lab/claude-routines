@@ -7,14 +7,19 @@
    "target": "routines/_shared/feed-first-source-order.md",
    "action": "In the Pressure bullet, replace 'and cite no outlet domain more than twice in one edition (hubs exempt).' with 'and anchor no more than two stories in one edition on the same outlet domain (hubs exempt). The cap counts ANCHORS (the first link of a story) only: a second, corroborating link to a capped outlet is always allowed and never a reason to drop a story or leave it [single-source].'",
    "evidence": "News single-source rate 28.3% (17/60), over the 25% per-stream bar (21.8% last week). The writers read the cap as a per-citation limit: 11-12 news Gaps 'The Kohat attack ... was left out because Dawn's article did not load and Al Jazeera had reached the per-edition outlet cap'; 11-10 news Gaps 'The Bund's planned drone-protection duty ... was cut to keep SRF to two citations'. Only SRF, Al Jazeera and Le Temps reach by curl, so a per-citation cap on them removes the cheapest corroboration. tools/sources/lint.py extract_citations already attributes a line to its FIRST link only ('a second, corroborating link never counts'), so the prompt is stricter than the tooling.",
-   "applied": false
+   "applied": true,
+   "applied_on": "2026-11-27",
+   "applied_by": "rafael-apply-pass"
   },
   {
    "id": "rm-2",
    "target": "routines/src/sports.md",
    "action": "In '## Coverage footer', after the '- Discovery: {met (...) | waived -- <concrete reason>}' template line, add: 'A waiver must name at least two official league/federation pages from the fetch list that you actually tried this run (via the proxy) and what each returned; \"not fetched\" is not a reason.'",
    "evidence": "2026-11-09 sports: 'Discovery: waived -- did not reach any new primary domain this run; official sites on the fetch list were not fetched'. Fetch log shows no attempt on any official league/federation host (only srf.ch, bbc.co.uk, autosport.com, kicker, wikipedia). Footer: T1 = 0 of 5 citations. Sports is the worst diversity stream for the 3rd week (4 unique domains 30d, 1 new vs target 3, srf.ch 48% and bbc.co.uk 30% saturated). The 11-02 edition, by contrast, did probe five primaries before waiving.",
-   "applied": false
+   "applied": true,
+   "applied_on": "2026-11-27",
+   "applied_by": "rafael-apply-pass",
+   "applied_note": "modified: placed as a sourcing bullet (fetch two official pages every run, name them in a waiver), not inside the footer template the writer copies"
   }
  ]
 }

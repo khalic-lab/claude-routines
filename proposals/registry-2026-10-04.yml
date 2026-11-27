@@ -1,5 +1,7 @@
 date: 2026-10-04
-applied: false
+applied: true
+# APPLIED (2026-11-27 apply pass): every item stamped below; reach flips through registry.py's
+#   dumper with dated lifecycle entries, judgment items as noted per item.
 # Reach flips below are ALL from health.json -> briefs.reach_drift.flips (min_proxy=3): every
 # registry domain recorded reach: direct whose writer fetches this window were 0 ok-curl, >=1 fail,
 # and >=3 ok-proxy (subdomains folded into their registry domain). These rest on WRITER-side fetch
@@ -14,6 +16,8 @@ applied: false
 # registry entry and is correctly reach: direct (58 ok-curl this window); do NOT flip it.
 patches:
   - domain: arxiv.org
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
@@ -21,16 +25,22 @@ patches:
       0 ok-curl / 25 ok-proxy / 3 fail this window (health.json briefs.feeds). Abstract-page host only;
       export.arxiv.org (the RSS API host, a distinct registry entry) stays reach: direct at 58 ok-curl.
   - domain: arstechnica.com
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
     evidence: 0 ok-curl / 16 ok-proxy / 16 fail (all fails ERR:56). Curl never succeeded; proxy carried every hit.
   - domain: lemonde.fr
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
     evidence: 0 ok-curl / 14 ok-proxy / 14 fail. Proxy-only in practice.
   - domain: parlament.ch
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
@@ -39,46 +49,64 @@ patches:
       JavaScript-rendered and unparseable even via proxy -- see 2026-10-03-news Gaps -- so proxy reachability
       is necessary but may not be sufficient; the writer anchors parliamentary stories on SRF.)
   - domain: finma.ch
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
     evidence: 0 ok-curl / 5 ok-proxy / 5 fail.
   - domain: glamos.ch
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
     evidence: 0 ok-curl / 5 ok-proxy / 9 fail (64% fail rate overall). Proxy-only.
   - domain: theguardian.com
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
     evidence: 0 ok-curl / 5 ok-proxy / 7 fail. A high-volume news source the writers lean on; cutting the doomed curl attempt saves fetch budget.
   - domain: blog.google
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
     evidence: 0 ok-curl / 3 ok-proxy / 3 fail.
   - domain: huggingface.co
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
     evidence: 0 ok-curl / 3 ok-proxy / 3 fail (aggregated across ai-ml + weekend).
   - domain: newsroom.amd.com
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
     evidence: 0 ok-curl / 3 ok-proxy / 2 fail. (This domain also entered via [new source] on 2026-09-29-ai-ml; it is a genuine primary and the flip just records how it is reachable.)
   - domain: nzz.ch
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
     evidence: 0 ok-curl / 3 ok-proxy / 3 fail.
   - domain: rfi.fr
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
     evidence: 0 ok-curl / 3 ok-proxy / 5 fail.
   - domain: simonwillison.net
+    applied: true
+    applied_on: 2026-11-27
     field: reach
     from: direct
     to: proxy
@@ -97,6 +125,9 @@ patches:
   # broaden the chemistry bench but the binding constraint stays reachability (this window the science
   # writer's own feeds eso.org/home.cern/physics.aps.org/link.aps.org/api.openalex.org all failed).
   - domain: pubs.acs.org
+    applied: true
+    applied_on: 2026-11-27
+    applied_note: "registered by registry.py sync as a candidate; reach kept direct: a proxy-needed hint records the evaluator egress wall, and sync now flips reach from writer telemetry"
     action: add
     proposed_status: candidate
     reach: proxy-needed
@@ -106,6 +137,9 @@ patches:
       Chem., Chem. Mater.). Genuine primary publisher absent from the registry; the science stream has no
       chemistry-primary anchor beyond the chemrxiv preprint server. Needs a probation cycle.
   - domain: pubs.rsc.org
+    applied: true
+    applied_on: 2026-11-27
+    applied_note: "registered by registry.py sync as a candidate; reach kept direct: a proxy-needed hint records the evaluator egress wall, and sync now flips reach from writer telemetry"
     action: add
     proposed_status: candidate
     reach: proxy-needed

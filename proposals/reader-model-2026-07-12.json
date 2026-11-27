@@ -24,14 +24,20 @@
    "target": "routines/src/weekend.md",
    "action": "Week in headlines: when stating an elapsed interval ('a year after', 'months since', 'anniversary of'), compute it from the event's carried date and sanity-check; do not assert a duration not derived from a dated fact in this pipeline.",
    "evidence": "Same st-dd9d52b17487 downvote; the rm-2 (2026-07-05) date-anchor patch made the writer add temporal framing and it produced a wrong interval. _posts/2026-07-12-evaluator.md Patch 2.",
-   "applied": false
+   "applied": true,
+   "applied_on": "2026-07-12",
+   "applied_by": "rafael-apply-pass",
+   "applied_note": "covered by the reader-profile.md 2026-07-12 elapsed-time line and the recap event-date rule in routines/src/weekend.md"
   },
   {
    "id": "rm-4",
    "target": "routines/_shared/affiliations.md",
    "action": "arXiv preprints: if the paper's HTML author block does not render, query OpenAlex works API (api.openalex.org/works?search=<title>) and then Semantic Scholar BEFORE marking '(affiliation not listed)'; only mark unlisted when all three fail. Never guess.",
    "evidence": "2026-07-11-weekend ran ~37% '(affiliation not listed)' (7 of ~19 papers) because HTML author blocks did not render, while 2026-07-10 AI/ML ran ~15%. The single-method chain marks unlisted instead of falling back. _posts/2026-07-12-evaluator.md Patch 3.",
-   "applied": false
+   "applied": false,
+   "disposition": "superseded",
+   "decided_on": "2026-11-27",
+   "applied_note": "the affiliation chain was rewritten since: arXiv HTML author block first, OpenAlex now one batched DOI call for journal papers only"
   }
  ]
 }
