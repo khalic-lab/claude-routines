@@ -58,8 +58,8 @@ aiweekly.co:
 alignment.openai.com:
   class: outlet
   tier: T2
-  status: probation
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-06-19
@@ -67,6 +67,13 @@ alignment.openai.com:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 7 ok-proxy / 7 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 aljazeera.com:
   class: outlet
   tier: T2
@@ -167,16 +174,19 @@ arstechnica.com:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   probe:
     url: https://arstechnica.com/feed/
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-11
       event: seed
       note: prompt-table backfill (ai-ml fossil-table fix)
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 38 ok-proxy / 38 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 artificialanalysis.ai:
   class: outlet
   tier: T2
@@ -193,19 +203,22 @@ arxiv.org:
   class: hub
   tier: T1
   status: established
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
     - science
     - weekend
   last_cited: 2026-07-04
-  probe:
-    url: http://export.arxiv.org/api/query?search_query=all&max_results=1
-    method: curl
   lifecycle:
     - date: 2026-07-07
       event: bootstrap
       status: established
+    - date: 2026-11-27
+      event: set probe
+      note: "export API probe moved to export.arxiv.org: writer telemetry 10-01..11-27 shows export.arxiv.org 283 ok-curl while arxiv.org abstract/HTML pages are 0 ok-curl (evaluator 2026-10-04 judgment, corrected)"
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 250 ok-proxy / 16 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 asimov.press:
   class: outlet
   tier: T2
@@ -286,7 +299,7 @@ blog.google:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-06-05
@@ -294,6 +307,9 @@ blog.google:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 19 ok-proxy / 19 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 blog.newlimit.com:
   class: outlet
   tier: T2
@@ -477,7 +493,7 @@ consilium.europa.eu:
   class: institutional
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-05-27
@@ -485,6 +501,9 @@ consilium.europa.eu:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 6 ok-proxy / 32 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 csoonline.com:
   class: outlet
   tier: T2
@@ -512,7 +531,7 @@ decrypt.co:
 deepmind.google:
   class: outlet
   tier: T2
-  status: probation
+  status: established
   reach: proxy
   streams:
     - ai-ml
@@ -524,6 +543,10 @@ deepmind.google:
     - date: 2026-07-11
       event: seed
       note: prompt-table backfill (ai-ml fossil-table fix)
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 deepswe.datacurve.ai:
   class: outlet
   tier: T2
@@ -591,7 +614,7 @@ doi.org:
   class: hub
   tier: T1
   status: established
-  reach: direct
+  reach: proxy
   streams:
     - weekend
   last_cited: 2026-07-04
@@ -599,6 +622,9 @@ doi.org:
     - date: 2026-07-07
       event: bootstrap
       status: established
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 34 ok-proxy / 49 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 dxc.com:
   class: outlet
   tier: T2
@@ -614,8 +640,8 @@ dxc.com:
 ec.europa.eu:
   class: institutional
   tier: T2
-  status: probation
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - news
   last_cited: 2026-06-30
@@ -623,6 +649,13 @@ ec.europa.eu:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 22 ok-proxy / 19 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 endpts.com:
   class: outlet
   tier: T2
@@ -660,10 +693,10 @@ enr.com:
       event: bootstrap
       status: probation
 esa.int:
-  class: outlet
+  class: institutional
   tier: T1
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - science
   last_cited: null
@@ -671,11 +704,17 @@ esa.int:
     - date: 2026-07-10
       event: seed-2026-07-10 (science venue list from routines/src/science.md)
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 14 ok-proxy / 16 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 eso.org:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - science
   last_cited: 2026-07-08
@@ -683,6 +722,9 @@ eso.org:
     - date: 2026-07-10
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 9 ok-proxy / 6 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 eu.36kr.com:
   class: outlet
   tier: T2
@@ -722,7 +764,7 @@ euromaidanpress.com:
 euronews.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: proxy
   streams:
     - news
@@ -734,18 +776,33 @@ euronews.com:
     - date: 2026-10-01
       event: reach-flip
       note: direct -> proxy; writer telemetry 0 ok-curl / 5 ok-proxy / 5 fail -- evaluator registry patch 2026-09-27
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 export.arxiv.org:
-  class: outlet
-  tier: T2
+  class: hub
+  tier: T1
   status: probation
   reach: direct
   streams:
     - ai-ml
+    - science
+    - weekend
   last_cited: 2026-06-12
+  probe:
+    url: http://export.arxiv.org/api/query?search_query=all&max_results=1
+    method: curl
   lifecycle:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: set probe
+      note: Atom API probe moved here from arxiv.org (method curl, the one path that works from the writer sandbox); streams + science, weekend
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> hub (class rule 2026-11: primary-artifact host)"
 fortune.com:
   class: outlet
   tier: T2
@@ -800,7 +857,7 @@ github.com:
   class: hub
   tier: T1
   status: established
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
     - weekend
@@ -809,8 +866,11 @@ github.com:
     - date: 2026-07-07
       event: bootstrap
       status: established
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 41 ok-proxy / 51 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 gov.uk:
-  class: outlet
+  class: institutional
   tier: T2
   status: probation
   reach: direct
@@ -821,6 +881,9 @@ gov.uk:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 hamel.dev:
   class: outlet
   tier: T2
@@ -889,7 +952,7 @@ huggingface.co:
   class: hub
   tier: T1
   status: established
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-06-28
@@ -897,6 +960,9 @@ huggingface.co:
     - date: 2026-07-07
       event: bootstrap
       status: established
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 82 ok-proxy / 86 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 ideogram.ai:
   class: outlet
   tier: T2
@@ -975,8 +1041,8 @@ journals.aps.org:
 kyivindependent.com:
   class: outlet
   tier: T2
-  status: probation
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-06
@@ -984,11 +1050,18 @@ kyivindependent.com:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 21 ok-proxy / 26 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 lesswrong.com:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - weekend
   last_cited: 2026-06-27
@@ -996,6 +1069,9 @@ lesswrong.com:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 4 ok-proxy / 4 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 letemps.ch:
   class: outlet
   tier: T2
@@ -1083,7 +1159,7 @@ machinelearning.apple.com:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - weekend
   last_cited: 2026-06-27
@@ -1091,6 +1167,9 @@ machinelearning.apple.com:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 7 ok-proxy / 7 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 macrumors.com:
   class: outlet
   tier: T2
@@ -1165,7 +1244,7 @@ mistral.ai:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-06-23
@@ -1173,6 +1252,9 @@ mistral.ai:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 11 ok-proxy / 11 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 msrc.microsoft.com:
   class: outlet
   tier: T2
@@ -1189,7 +1271,7 @@ nasa.gov:
   class: institutional
   tier: T1
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - science
   last_cited: null
@@ -1197,8 +1279,11 @@ nasa.gov:
     - date: 2026-07-10
       event: seed-2026-07-10 (science venue list from routines/src/science.md)
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 8 ok-proxy / 6 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 nato.int:
-  class: outlet
+  class: institutional
   tier: T2
   status: probation
   reach: direct
@@ -1209,6 +1294,9 @@ nato.int:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 nature.com:
   class: outlet
   tier: T2
@@ -1236,7 +1324,7 @@ nejm.org:
   class: outlet
   tier: T1
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - science
   last_cited: null
@@ -1244,6 +1332,9 @@ nejm.org:
     - date: 2026-07-10
       event: seed-2026-07-10 (science venue list from routines/src/science.md)
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 8 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 netflixtechblog.com:
   class: outlet
   tier: T2
@@ -1296,7 +1387,7 @@ openai.com:
   class: outlet
   tier: T2
   status: established
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-07-03
@@ -1304,11 +1395,14 @@ openai.com:
     - date: 2026-07-07
       event: bootstrap
       status: established
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 20 ok-proxy / 76 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 phys.org:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - science
   last_cited: 2026-06-15
@@ -1316,6 +1410,9 @@ phys.org:
     - date: 2026-07-10
       event: backfill-retired-streams (cited 4x in overview/cyber-papers history; prevents false [new source] novelty)
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 10 ok-proxy / 6 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 primeintellect.ai:
   class: outlet
   tier: T2
@@ -1401,7 +1498,7 @@ reuters.com:
       event: seed
       note: prompt-table backfill (ai-ml fossil-table fix)
 reutersinstitute.politics.ox.ac.uk:
-  class: outlet
+  class: institutional
   tier: T2
   status: probation
   reach: direct
@@ -1412,10 +1509,13 @@ reutersinstitute.politics.ox.ac.uk:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 rts.ch:
   class: outlet
   tier: T2
-  status: probation
+  status: established
   reach: proxy
   streams:
     - news
@@ -1427,6 +1527,10 @@ rts.ch:
     - date: 2026-09-25
       event: reach-flip
       note: direct -> proxy; writer telemetry 0 ok-curl / 2 ok-proxy / 7 fail -- evaluator registry patch 2026-09-20
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 science.org:
   class: outlet
   tier: T1
@@ -1446,7 +1550,7 @@ scottaaronson.blog:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - science
   last_cited: null
@@ -1454,6 +1558,9 @@ scottaaronson.blog:
     - date: 2026-07-10
       event: seed-2026-07-10 (science venue list from routines/src/science.md)
       status: probation
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 3 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 sentinelone.com:
   class: outlet
   tier: T2
@@ -1482,7 +1589,7 @@ simonwillison.net:
   class: outlet
   tier: T2
   status: established
-  reach: direct
+  reach: proxy
   streams:
     - weekend
   last_cited: 2026-07-04
@@ -1490,6 +1597,9 @@ simonwillison.net:
     - date: 2026-07-07
       event: bootstrap
       status: established
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 33 ok-proxy / 35 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 skyandtelescope.org:
   class: outlet
   tier: T2
@@ -1503,7 +1613,7 @@ skyandtelescope.org:
       event: seed-2026-07-10 (science venue list from routines/src/science.md)
       status: probation
 snb.ch:
-  class: outlet
+  class: institutional
   tier: T2
   status: probation
   reach: direct
@@ -1514,6 +1624,9 @@ snb.ch:
     - date: 2026-07-07
       event: bootstrap
       status: probation
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 spaceflightnow.com:
   class: outlet
   tier: T2
@@ -1561,8 +1674,8 @@ srf.ch:
 state.gov:
   class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-09
@@ -1570,6 +1683,13 @@ state.gov:
     - date: 2026-07-10
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 4 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 statnews.com:
   class: outlet
   tier: T2
@@ -1627,7 +1747,7 @@ techcrunch.com:
   class: outlet
   tier: T2
   status: established
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-06-09
@@ -1635,6 +1755,9 @@ techcrunch.com:
     - date: 2026-07-07
       event: bootstrap
       status: established
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 67 ok-proxy / 74 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 techstartups.com:
   class: outlet
   tier: T2
@@ -1665,8 +1788,8 @@ techtimes.com:
 terrytao.wordpress.com:
   class: outlet
   tier: T1
-  status: probation
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - science
     - weekend
@@ -1678,9 +1801,16 @@ terrytao.wordpress.com:
     - date: 2026-09-12
       event: seed
       note: "Terence Tao's own research blog -- primary for his results and expository essays, T1 alongside blog.eleuther.ai (a researcher's own blog is a lab blog). Added the working RSS probe (feed 200, verified 2026-09-12) and the weekend stream. Seeded 2026-07-10 but never cited: no probe URL meant nothing in the plan pointed at it."
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 25 ok-proxy / 24 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
   probe:
     url: https://terrytao.wordpress.com/feed/
-    method: curl
+    method: proxy
 the-decoder.com:
   class: outlet
   tier: T2
@@ -1688,7 +1818,7 @@ the-decoder.com:
   reach: proxy
   streams:
     - ai-ml
-  last_cited: 2026-06-19
+  last_cited: 2026-11-20
   lifecycle:
     - date: 2026-07-07
       event: bootstrap
@@ -1696,6 +1826,9 @@ the-decoder.com:
     - date: 2026-09-25
       event: reach-flip
       note: direct -> proxy; writer telemetry 0 ok-curl / 12 ok-proxy / 12 fail -- evaluator registry patch 2026-09-20
+    - date: 2026-11-27
+      event: set last_cited
+      note: "2026-06-19 -> 2026-11-20 (newest index citation; nothing refreshes last_cited)"
 thehackernews.com:
   class: outlet
   tier: T2
@@ -1723,8 +1856,8 @@ thehill.com:
 thenationalnews.com:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-07
@@ -1732,6 +1865,13 @@ thenationalnews.com:
     - date: 2026-07-10
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 thenextweb.com:
   class: outlet
   tier: T2
@@ -1772,21 +1912,24 @@ theverge.com:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   probe:
     url: https://www.theverge.com/rss/index.xml
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-11
       event: seed
       note: prompt-table backfill (ai-ml fossil-table fix)
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 39 ok-proxy / 39 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 timesofisrael.com:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-10
@@ -1794,6 +1937,9 @@ timesofisrael.com:
     - date: 2026-07-10
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 4 ok-proxy / 12 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 tomsguide.com:
   class: outlet
   tier: T2
@@ -1954,10 +2100,10 @@ x.com:
       event: bootstrap
       status: probation
 centcom.mil:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-12
@@ -1965,11 +2111,21 @@ centcom.mil:
     - date: 2026-07-12
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 9 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ethz.ch:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - science
     - ai-ml
@@ -1985,11 +2141,14 @@ ethz.ch:
       event: promoted
       status: probation
       note: ETH Zuerich -- Swiss research institution, primary for science/ai-ml. Evaluator registry patch 2026-07-12 never applied; direct GET 200 re-verified 2026-09-12
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 16 ok-proxy / 17 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 epfl.ch:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - science
     - ai-ml
@@ -2005,6 +2164,9 @@ epfl.ch:
       event: promoted
       status: probation
       note: EPFL -- Swiss research institution, primary for science/ai-ml. Evaluator registry patch 2026-07-12 never applied; direct GET 200 re-verified 2026-09-12
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 17 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 psi.ch:
   class: outlet
   tier: T2
@@ -2089,10 +2251,10 @@ globenewswire.com:
       event: candidate
       status: candidate
 hudoc.echr.coe.int:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-16
@@ -2100,6 +2262,16 @@ hudoc.echr.coe.int:
     - date: 2026-07-16
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 10 ok-proxy / 12 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 kimi.com:
   class: outlet
   tier: T2
@@ -2142,16 +2314,19 @@ bbc.com:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - sports
   probe:
     url: https://feeds.bbci.co.uk/sport/rss.xml
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-17
       event: seed
       note: BBC Sport — directly-fetchable T2 secondary for triangulation (sports bootstrap)
+    - date: 2026-11-27
+      event: reach-flip
+      note: "direct -> proxy (judgment): the feeds.bbci.co.uk probe fails curl in every sports edition; the drift mapping cannot fold that host into bbc.com -- 2026-11-01 review"
 fia.com:
   class: outlet
   tier: T1
@@ -2272,12 +2447,15 @@ sihf.ch:
   streams:
     - sports
   probe:
-    url: https://www.sihf.ch/de/game-center/national-league/
+    url: https://www.sihf.ch/de/news/
     method: proxy
   lifecycle:
     - date: 2026-07-17
       event: seed
       note: Swiss Ice Hockey — National League results (sports bootstrap)
+    - date: 2026-11-27
+      event: set probe
+      note: https://www.sihf.ch/de/game-center/national-league/ -> https://www.sihf.ch/de/news/ (old game-center/national-league/ 404; news page 200)
 tas-cas.org:
   class: outlet
   tier: T1
@@ -2398,7 +2576,7 @@ unibe.ch:
   class: outlet
   tier: T2
   status: probation
-  reach: direct
+  reach: proxy
   streams:
     - science
   last_cited: 2026-07-19
@@ -2410,11 +2588,14 @@ unibe.ch:
       event: promoted
       status: probation
       note: "Universitaet Bern -- Swiss research institution, primary for science (streams: science only). Evaluator registry patch 2026-07-19 never applied; direct GET 200 re-verified 2026-09-12"
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 9 ok-proxy / 13 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 theguardian.com:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-20
@@ -2422,11 +2603,18 @@ theguardian.com:
     - date: 2026-07-20
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 34 ok-proxy / 41 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 justice.gov:
   class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-21
@@ -2434,11 +2622,18 @@ justice.gov:
     - date: 2026-07-21
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 6 ok-proxy / 7 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ustr.gov:
   class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-24
@@ -2446,8 +2641,15 @@ ustr.gov:
     - date: 2026-07-24
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 6 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 aisi.gov.uk:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -2458,21 +2660,27 @@ aisi.gov.uk:
     - date: 2026-07-24
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 elifesciences.org:
   class: outlet
   tier: T1
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - science
     - weekend
   probe:
     url: https://elifesciences.org/rss/recent.xml
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest undated, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 13 ok-proxy / 11 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 journals.plos.org:
   class: outlet
   tier: T1
@@ -2492,17 +2700,20 @@ pnas.org:
   class: outlet
   tier: T1
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - science
     - weekend
   probe:
     url: https://www.pnas.org/rss/current.xml
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest undated, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 9 ok-proxy / 7 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 newscenter.lbl.gov:
   class: institutional
   tier: T1
@@ -2525,12 +2736,15 @@ ornl.gov:
   streams:
     - science
   probe:
-    url: https://www.ornl.gov/rss.xml
+    url: https://www.ornl.gov/news/feed/
     method: curl
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest undated, direct
+    - date: 2026-11-27
+      event: set probe
+      note: https://www.ornl.gov/rss.xml -> https://www.ornl.gov/news/feed/ (old /rss.xml 404; news feed 200, newest item 2026-11-24)
 iopscience.iop.org:
   class: outlet
   tier: T1
@@ -2563,30 +2777,40 @@ kicker.de:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - sports
   probe:
     url: https://newsfeed.kicker.de/news/aktuell
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest undated, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 autosport.com:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - sports
   probe:
     url: https://www.autosport.com/rss/feed/all
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest undated, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 47 ok-proxy / 51 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 espn.com:
   class: outlet
   tier: T2
@@ -2604,7 +2828,7 @@ espn.com:
 news.un.org:
   class: institutional
   tier: T1
-  status: candidate
+  status: established
   reach: proxy
   streams:
     - news
@@ -2618,10 +2842,14 @@ news.un.org:
     - date: 2026-09-25
       event: reach-flip
       note: direct -> proxy; writer telemetry 0 ok-curl / 13 ok-proxy / 17 fail -- evaluator registry patch 2026-09-20
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 ecb.europa.eu:
   class: institutional
   tier: T1
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -2632,52 +2860,77 @@ ecb.europa.eu:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 0d, direct
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 lemonde.fr:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - news
   probe:
     url: https://www.lemonde.fr/rss/une.xml
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 0d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 127 ok-proxy / 130 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 elpais.com:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   probe:
     url: https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 0d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 42 ok-proxy / 50 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ansa.it:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   probe:
     url: https://www.ansa.it/sito/ansait_rss.xml
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 0d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 46 ok-proxy / 56 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 dw.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: established
   reach: proxy
   streams:
     - news
@@ -2691,20 +2944,31 @@ dw.com:
     - date: 2026-10-01
       event: reach-flip
       note: direct -> proxy; writer telemetry 0 ok-curl / 18 ok-proxy / 15 fail (feed host rss.dw.com 0 / 12 / 8) -- evaluator registry patch 2026-09-27
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 rfi.fr:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - news
   probe:
     url: https://www.rfi.fr/fr/rss
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 0d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 109 ok-proxy / 132 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 api.semanticscholar.org:
   class: hub
   tier: T1
@@ -2725,16 +2989,19 @@ news.fnal.gov:
   class: institutional
   tier: T1
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - science
   probe:
     url: https://news.fnal.gov/feed/
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 2d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 8 ok-proxy / 7 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 noaa.gov:
   class: institutional
   tier: T1
@@ -2752,59 +3019,79 @@ noaa.gov:
 earthquake.usgs.gov:
   class: institutional
   tier: T1
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - science
   probe:
     url: https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.atom
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 0d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 noirlab.edu:
   class: institutional
   tier: T1
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - science
   probe:
     url: https://noirlab.edu/public/news/feed/
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 8d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 13 ok-proxy / 9 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 public.nrao.edu:
   class: institutional
   tier: T1
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - science
   probe:
     url: https://public.nrao.edu/feed/
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 7d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 7 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 aasnova.org:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - science
   probe:
     url: https://aasnova.org/feed/
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 0d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 6 ok-proxy / 3 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 physics.aps.org:
   class: outlet
   tier: T2
@@ -2837,46 +3124,59 @@ blogs.nvidia.com:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   probe:
     url: https://blogs.nvidia.com/feed/
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 0d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 16 ok-proxy / 16 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 mlcommons.org:
   class: institutional
   tier: T1
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - ai-ml
     - weekend
   probe:
     url: https://mlcommons.org/feed/
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 2d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 13 ok-proxy / 13 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 nist.gov:
   class: institutional
   tier: T1
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
     - science
   probe:
     url: https://www.nist.gov/news-events/news/rss.xml
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 2d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 9 ok-proxy / 8 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 aclanthology.org:
   class: hub
   tier: T1
@@ -2896,36 +3196,42 @@ epoch.ai:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
     - weekend
   probe:
     url: https://epoch.ai/
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 html, direct; no feed
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 7 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 hai.stanford.edu:
   class: institutional
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
     - weekend
   probe:
     url: https://hai.stanford.edu/news
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 html, direct; no feed
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 4 ok-proxy / 4 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 cohere.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -2936,6 +3242,10 @@ cohere.com:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 html, direct; no feed
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 deepseek.com:
   class: outlet
   tier: T2
@@ -2944,12 +3254,15 @@ deepseek.com:
   streams:
     - ai-ml
   probe:
-    url: https://api-docs.deepseek.com/news/
+    url: https://api-docs.deepseek.com/updates
     method: curl
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 html, direct; no feed
+    - date: 2026-11-27
+      event: set probe
+      note: https://api-docs.deepseek.com/news/ -> https://api-docs.deepseek.com/updates (old /news/ 404; /updates 200 with dated entries to 2026-11-13)
 tourdesuisse.ch:
   class: institutional
   tier: T1
@@ -3023,46 +3336,59 @@ letour.fr:
 europarl.europa.eu:
   class: institutional
   tier: T1
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   probe:
     url: https://www.europarl.europa.eu/rss/doc/press-releases/en.xml
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 0d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 22 ok-proxy / 21 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ungeneva.org:
   class: institutional
   tier: T1
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   probe:
     url: https://www.ungeneva.org/en/news-media/press-releases-list/rss.xml
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 16d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 15 ok-proxy / 14 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 who.int:
   class: institutional
   tier: T1
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
     - science
   probe:
     url: https://www.who.int/rss-feeds/news-english.xml
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 1d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 12 ok-proxy / 12 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 wto.org:
   class: institutional
   tier: T1
@@ -3094,17 +3420,24 @@ fedlex.admin.ch:
 finma.ch:
   class: institutional
   tier: T1
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   probe:
     url: https://www.finma.ch/en/rss/news/
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 feed, newest 4d, direct
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 4 ok-proxy / 4 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 bis.org:
   class: institutional
   tier: T1
@@ -3122,17 +3455,24 @@ bis.org:
 vd.ch:
   class: institutional
   tier: T1
-  status: candidate
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - news
   probe:
     url: https://www.vd.ch/communiques
-    method: curl
+    method: proxy
   lifecycle:
     - date: 2026-07-25
       event: seed
       note: registry expansion -- probed 200 html, direct; canton Vaud press releases, no feed
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 61 ok-proxy / 61 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 esv.ch:
   class: outlet
   tier: T2
@@ -3168,8 +3508,8 @@ uci.ch:
 nzz.ch:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-26
@@ -3177,6 +3517,13 @@ nzz.ch:
     - date: 2026-07-26
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 26 ok-proxy / 25 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 abcnews.com:
   class: outlet
   tier: T2
@@ -3205,7 +3552,7 @@ japantimes.co.jp:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-07-29
@@ -3213,6 +3560,9 @@ japantimes.co.jp:
     - date: 2026-07-29
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 14 ok-proxy / 14 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 simonsfoundation.org:
   class: outlet
   tier: T2
@@ -3265,7 +3615,7 @@ physicsworld.com:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - science
   last_cited: 2026-08-02
@@ -3273,6 +3623,9 @@ physicsworld.com:
     - date: 2026-08-02
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 symmetrymagazine.org:
   class: outlet
   tier: T2
@@ -3310,9 +3663,9 @@ glasgow2026.com:
       event: candidate
       status: candidate
 wfp.org:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -3321,6 +3674,13 @@ wfp.org:
     - date: 2026-08-05
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 nbcnews.com:
   class: outlet
   tier: T2
@@ -3336,8 +3696,8 @@ nbcnews.com:
 balkaninsight.com:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-08-07
@@ -3345,6 +3705,13 @@ balkaninsight.com:
     - date: 2026-08-07
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 swiss-ai.org:
   class: outlet
   tier: T1
@@ -3422,7 +3789,7 @@ blog.eleuther.ai:
 admin.ch:
   class: institutional
   tier: T1
-  status: candidate
+  status: established
   reach: proxy
   streams:
     - news
@@ -3437,6 +3804,10 @@ admin.ch:
     - date: 2026-09-25
       event: probe
       note: www.admin.ch 403s the fetch-proxy browser UA (WAF client check); the proxy now retries a 403 with an honest UA -> 200, verified from the Cloudflare edge. Probe = the Federal Council communique feed (newsd RSS, 200 through the proxy); items link to www.admin.ch/<lang>/newnsb/<id>
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 rsi.ch:
   class: outlet
   tier: T2
@@ -3475,9 +3846,9 @@ bfs.admin.ch:
       event: candidate
       note: scout 2026-08-07 (state review)
 bger.ch:
-  class: outlet
+  class: institutional
   tier: T1
-  status: candidate
+  status: probation
   reach: proxy
   streams:
     - news
@@ -3486,6 +3857,13 @@ bger.ch:
     - date: 2026-08-07
       event: candidate
       note: scout 2026-08-07 (state review)
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 snf.ch:
   class: outlet
   tier: T1
@@ -3623,7 +4001,7 @@ reportagen.com:
 noemamag.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: proxy
   streams:
     - weekend
@@ -3633,6 +4011,10 @@ noemamag.com:
     - date: 2026-08-07
       event: candidate
       note: scout 2026-08-07 (state review)
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 scipost.org:
   class: outlet
   tier: T2
@@ -3732,8 +4114,8 @@ sudantribune.com:
 nvidianews.nvidia.com:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-08-11
@@ -3741,6 +4123,13 @@ nvidianews.nvidia.com:
     - date: 2026-08-11
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 8 ok-proxy / 8 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 nna-leb.gov.lb:
   class: outlet
   tier: T2
@@ -3802,7 +4191,7 @@ european-athletics.com:
       event: candidate
       status: candidate
 bvger.ch:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -3813,8 +4202,11 @@ bvger.ch:
     - date: 2026-08-20
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 gr.ch:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -3825,6 +4217,9 @@ gr.ch:
     - date: 2026-08-21
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 generalistai.com:
   class: outlet
   tier: T2
@@ -3838,7 +4233,7 @@ generalistai.com:
       event: candidate
       status: candidate
 skao.int:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -3849,6 +4244,9 @@ skao.int:
     - date: 2026-08-23
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 aip.de:
   class: outlet
   tier: T2
@@ -3862,7 +4260,7 @@ aip.de:
       event: candidate
       status: candidate
 digitaleconomy.stanford.edu:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -3873,6 +4271,9 @@ digitaleconomy.stanford.edu:
     - date: 2026-08-25
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 pewresearch.org:
   class: outlet
   tier: T2
@@ -3970,7 +4371,7 @@ weltklassezuerich.ch:
       event: candidate
       status: candidate
 bwo.admin.ch:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -3981,8 +4382,11 @@ bwo.admin.ch:
     - date: 2026-09-01
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 dnb.nl:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -3993,11 +4397,14 @@ dnb.nl:
     - date: 2026-09-03
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 sec.gov:
   class: institutional
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-09-04
@@ -4005,6 +4412,9 @@ sec.gov:
     - date: 2026-09-04
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 9 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 ipwatchdog.com:
   class: outlet
   tier: T2
@@ -4030,7 +4440,7 @@ isaraerospace.com:
       event: candidate
       status: candidate
 oecd.org:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4041,6 +4451,9 @@ oecd.org:
     - date: 2026-09-08
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 laskerfoundation.org:
   class: outlet
   tier: T2
@@ -4090,7 +4503,7 @@ turkishminute.com:
       event: candidate
       status: candidate
 riksdagen.se:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4101,6 +4514,9 @@ riksdagen.se:
     - date: 2026-09-12
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 iop.org:
   class: outlet
   tier: T2
@@ -4189,10 +4605,10 @@ worldathletics.org:
       event: candidate
       status: candidate
 parlament.ch:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-09-14
@@ -4200,10 +4616,20 @@ parlament.ch:
     - date: 2026-09-14
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 14 ok-proxy / 20 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 rte.ie:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -4212,6 +4638,10 @@ rte.ie:
     - date: 2026-09-14
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 defence-industry.eu:
   class: outlet
   tier: T2
@@ -4237,7 +4667,7 @@ elevenlabs.io:
       event: candidate
       status: candidate
 gov.wales:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4248,6 +4678,9 @@ gov.wales:
     - date: 2026-09-15
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 microsoft.ai:
   class: outlet
   tier: T2
@@ -4357,7 +4790,7 @@ cyclingnews.com:
       event: candidate
       status: candidate
 vbs.admin.ch:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4368,8 +4801,11 @@ vbs.admin.ch:
     - date: 2026-09-21
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 un.org:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4380,6 +4816,9 @@ un.org:
     - date: 2026-09-22
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 bfl.ai:
   class: outlet
   tier: T2
@@ -4456,7 +4895,7 @@ glamos.ch:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-01
@@ -4464,11 +4903,14 @@ glamos.ch:
     - date: 2026-10-01
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 9 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 newsroom.amd.com:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-10-02
@@ -4476,11 +4918,14 @@ newsroom.amd.com:
     - date: 2026-10-02
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 2 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 iea.org:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-03
@@ -4488,6 +4933,12 @@ iea.org:
     - date: 2026-10-03
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 pubs.acs.org:
   class: outlet
   tier: T2
@@ -4513,10 +4964,10 @@ pubs.rsc.org:
       event: candidate
       status: candidate
 lamoncloa.gob.es:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-05
@@ -4524,6 +4975,12 @@ lamoncloa.gob.es:
     - date: 2026-10-05
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 7 ok-proxy / 7 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 aleph-alpha.com:
   class: outlet
   tier: T2
@@ -4564,7 +5021,7 @@ nobelprize.org:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - science
   last_cited: 2026-10-07
@@ -4572,8 +5029,11 @@ nobelprize.org:
     - date: 2026-10-07
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 11 ok-proxy / 11 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 bwl.admin.ch:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4584,8 +5044,11 @@ bwl.admin.ch:
     - date: 2026-10-09
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 eccc.weizmann.ac.il:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4596,11 +5059,14 @@ eccc.weizmann.ac.il:
     - date: 2026-10-10
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 icecube.wisc.edu:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - weekend
   last_cited: 2026-10-10
@@ -4608,7 +5074,28 @@ icecube.wisc.edu:
     - date: 2026-10-10
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 3 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 ofac.treasury.gov:
+  class: institutional
+  tier: T2
+  status: candidate
+  reach: proxy
+  streams:
+    - news
+  last_cited: 2026-10-10
+  lifecycle:
+    - date: 2026-10-10
+      event: candidate
+      status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 6 ok-proxy / 8 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+english.president.gov.tw:
   class: institutional
   tier: T2
   status: candidate
@@ -4620,18 +5107,9 @@ ofac.treasury.gov:
     - date: 2026-10-10
       event: candidate
       status: candidate
-english.president.gov.tw:
-  class: outlet
-  tier: T2
-  status: candidate
-  reach: direct
-  streams:
-    - news
-  last_cited: 2026-10-10
-  lifecycle:
-    - date: 2026-10-10
-      event: candidate
-      status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 embl.org:
   class: outlet
   tier: T2
@@ -4645,7 +5123,7 @@ embl.org:
       event: candidate
       status: candidate
 ista.ac.at:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4656,8 +5134,11 @@ ista.ac.at:
     - date: 2026-10-11
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 weizmann.ac.il:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4668,6 +5149,9 @@ weizmann.ac.il:
     - date: 2026-10-11
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 riken.jp:
   class: outlet
   tier: T2
@@ -4681,7 +5165,7 @@ riken.jp:
       event: candidate
       status: candidate
 iom.int:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4692,11 +5176,14 @@ iom.int:
     - date: 2026-10-11
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 volitve.dvk-rs.si:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-12
@@ -4704,11 +5191,14 @@ volitve.dvk-rs.si:
     - date: 2026-10-12
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 12 ok-proxy / 14 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 research.meta.ai:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-10-13
@@ -4716,11 +5206,18 @@ research.meta.ai:
     - date: 2026-10-13
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 imf.org:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-13
@@ -4728,11 +5225,17 @@ imf.org:
     - date: 2026-10-13
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 7 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 efk.admin.ch:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-13
@@ -4740,11 +5243,17 @@ efk.admin.ch:
     - date: 2026-10-13
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 3 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 vaticannews.va:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-14
@@ -4752,11 +5261,14 @@ vaticannews.va:
     - date: 2026-10-14
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 home.treasury.gov:
   class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-14
@@ -4764,6 +5276,13 @@ home.treasury.gov:
     - date: 2026-10-14
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 12 ok-proxy / 14 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 swarmcha.se:
   class: outlet
   tier: T2
@@ -4780,7 +5299,7 @@ enav.it:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-16
@@ -4788,11 +5307,14 @@ enav.it:
     - date: 2026-10-16
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 6 ok-proxy / 8 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 bipm.org:
   class: outlet
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - weekend
   last_cited: 2026-10-17
@@ -4800,6 +5322,9 @@ bipm.org:
     - date: 2026-10-17
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 6 ok-proxy / 6 fail -- evaluator reach_drift backlog 2026-10-04..11-22
 iucn.org:
   class: outlet
   tier: T2
@@ -4825,10 +5350,10 @@ xenaproject.wordpress.com:
       event: candidate
       status: candidate
 gov.br:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
-  reach: direct
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-17
@@ -4836,6 +5361,12 @@ gov.br:
     - date: 2026-10-17
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 1 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 sotomo.ch:
   class: outlet
   tier: T2
@@ -4885,7 +5416,7 @@ csic.es:
       event: candidate
       status: candidate
 cam.ac.uk:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4896,6 +5427,9 @@ cam.ac.uk:
     - date: 2026-10-18
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 fz-juelich.de:
   class: outlet
   tier: T2
@@ -4909,7 +5443,7 @@ fz-juelich.de:
       event: candidate
       status: candidate
 news.mit.edu:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4920,8 +5454,11 @@ news.mit.edu:
     - date: 2026-10-18
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 caltech.edu:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -4932,10 +5469,13 @@ caltech.edu:
     - date: 2026-10-18
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 efta.int:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -4944,10 +5484,17 @@ efta.int:
     - date: 2026-10-18
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 haasf1team.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - sports
@@ -4956,10 +5503,14 @@ haasf1team.com:
     - date: 2026-10-19
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 stats.gov.cn:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -4968,10 +5519,17 @@ stats.gov.cn:
     - date: 2026-10-19
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 itm.nrw:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -4980,11 +5538,15 @@ itm.nrw:
     - date: 2026-10-20
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 unep.org:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-21
@@ -4992,10 +5554,20 @@ unep.org:
     - date: 2026-10-21
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 4 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 eida.ethz.ch:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5004,10 +5576,14 @@ eida.ethz.ch:
     - date: 2026-10-22
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 thephp.foundation:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5016,10 +5592,14 @@ thephp.foundation:
     - date: 2026-10-23
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 claude.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5028,11 +5608,15 @@ claude.com:
     - date: 2026-10-23
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 gfsbern.ch:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-23
@@ -5040,11 +5624,18 @@ gfsbern.ch:
     - date: 2026-10-23
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 6 ok-proxy / 6 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 merck.com:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - weekend
   last_cited: 2026-10-24
@@ -5052,11 +5643,18 @@ merck.com:
     - date: 2026-10-24
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 3 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 svp.ch:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-24
@@ -5064,8 +5662,15 @@ svp.ch:
     - date: 2026-10-24
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 7 ok-proxy / 6 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ox.ac.uk:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -5076,6 +5681,9 @@ ox.ac.uk:
     - date: 2026-10-25
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 helmholtz.de:
   class: outlet
   tier: T2
@@ -5089,7 +5697,7 @@ helmholtz.de:
       event: candidate
       status: candidate
 ucl.ac.uk:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -5100,8 +5708,11 @@ ucl.ac.uk:
     - date: 2026-10-25
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 imperial.ac.uk:
-  class: outlet
+  class: institutional
   tier: T2
   status: candidate
   reach: direct
@@ -5112,6 +5723,9 @@ imperial.ac.uk:
     - date: 2026-10-25
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
 nih.gov:
   class: institutional
   tier: T2
@@ -5137,10 +5751,10 @@ pasteur.fr:
       event: candidate
       status: candidate
 elysee.fr:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-25
@@ -5148,11 +5762,21 @@ elysee.fr:
     - date: 2026-10-25
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 4 ok-proxy / 4 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 rik.parlament.gov.rs:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-26
@@ -5160,10 +5784,20 @@ rik.parlament.gov.rs:
     - date: 2026-10-26
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 4 ok-proxy / 4 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 kimi.ai:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5172,10 +5806,14 @@ kimi.ai:
     - date: 2026-10-27
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ubs.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5184,11 +5822,15 @@ ubs.com:
     - date: 2026-10-28
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 insee.fr:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-30
@@ -5196,11 +5838,18 @@ insee.fr:
     - date: 2026-10-30
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 7 ok-proxy / 9 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ukrinform.net:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-30
@@ -5208,11 +5857,18 @@ ukrinform.net:
     - date: 2026-10-30
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 34 ok-proxy / 32 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 agmai.org:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - weekend
   last_cited: 2026-10-31
@@ -5220,11 +5876,18 @@ agmai.org:
     - date: 2026-10-31
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 3 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 press.un.org:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-31
@@ -5232,11 +5895,21 @@ press.un.org:
     - date: 2026-10-31
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 4 ok-proxy / 6 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 pm.gc.ca:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-10-31
@@ -5244,6 +5917,16 @@ pm.gc.ca:
     - date: 2026-10-31
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 nationalleague.ch:
   class: outlet
   tier: T2
@@ -5317,10 +6000,10 @@ laliga.com:
       event: candidate
       status: candidate
 polizei.bs.ch:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-11-01
@@ -5328,10 +6011,20 @@ polizei.bs.ch:
     - date: 2026-11-01
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 3 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 uvek-gis.admin.ch:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5340,10 +6033,17 @@ uvek-gis.admin.ch:
     - date: 2026-11-02
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 mausam.imd.gov.in:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5352,10 +6052,17 @@ mausam.imd.gov.in:
     - date: 2026-11-03
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 datatracker.ietf.org:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5364,10 +6071,14 @@ datatracker.ietf.org:
     - date: 2026-11-03
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 cursor.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5376,11 +6087,15 @@ cursor.com:
     - date: 2026-11-03
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ina.gl:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-11-04
@@ -5388,10 +6103,17 @@ ina.gl:
     - date: 2026-11-04
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 3 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 tuomioistuimet.fi:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5400,11 +6122,15 @@ tuomioistuimet.fi:
     - date: 2026-11-05
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 swisstph.ch:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-11-06
@@ -5412,10 +6138,17 @@ swisstph.ch:
     - date: 2026-11-06
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 3 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 newsletter.semianalysis.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5424,10 +6157,14 @@ newsletter.semianalysis.com:
     - date: 2026-11-06
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 adweek.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5436,10 +6173,14 @@ adweek.com:
     - date: 2026-11-06
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ricursive.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - weekend
@@ -5448,10 +6189,14 @@ ricursive.com:
     - date: 2026-11-07
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 blog.redwoodresearch.org:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - weekend
@@ -5460,10 +6205,14 @@ blog.redwoodresearch.org:
     - date: 2026-11-07
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 fincen.gov:
   class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5472,10 +6221,14 @@ fincen.gov:
     - date: 2026-11-07
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 president.gov.il:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5484,11 +6237,18 @@ president.gov.il:
     - date: 2026-11-08
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 tagesschau.de:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: established
+  reach: proxy
   streams:
     - news
   last_cited: 2026-11-09
@@ -5496,10 +6256,17 @@ tagesschau.de:
     - date: 2026-11-09
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 23 ok-proxy / 23 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
 unia.ch:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5508,10 +6275,14 @@ unia.ch:
     - date: 2026-11-09
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 nousresearch.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5520,10 +6291,14 @@ nousresearch.com:
     - date: 2026-11-10
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 news.met.police.uk:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5532,10 +6307,17 @@ news.met.police.uk:
     - date: 2026-11-11
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ccpi.org:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5544,10 +6326,14 @@ ccpi.org:
     - date: 2026-11-11
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 renaissancecapital.com:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5556,11 +6342,15 @@ renaissancecapital.com:
     - date: 2026-11-13
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 pm.gov.au:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - ai-ml
   last_cited: 2026-11-13
@@ -5568,10 +6358,20 @@ pm.gov.au:
     - date: 2026-11-13
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 3 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 psi.inc:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - weekend
@@ -5580,6 +6380,10 @@ psi.inc:
     - date: 2026-11-14
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 mathhelm.org:
   class: outlet
   tier: T2
@@ -5593,9 +6397,9 @@ mathhelm.org:
       event: candidate
       status: candidate
 iletisim.gov.tr:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5604,10 +6408,17 @@ iletisim.gov.tr:
     - date: 2026-11-14
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 radiotamazuj.org:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5616,6 +6427,10 @@ radiotamazuj.org:
     - date: 2026-11-14
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 swissunihockey.ch:
   class: outlet
   tier: T2
@@ -5679,8 +6494,8 @@ nhl.com:
 news.err.ee:
   class: outlet
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-11-16
@@ -5688,10 +6503,17 @@ news.err.ee:
     - date: 2026-11-16
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 oag.ca.gov:
   class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5700,10 +6522,14 @@ oag.ca.gov:
     - date: 2026-11-17
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 media.bis.gov:
   class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5712,10 +6538,14 @@ media.bis.gov:
     - date: 2026-11-17
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ic3.gov:
   class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5724,11 +6554,15 @@ ic3.gov:
     - date: 2026-11-17
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 en.kremlin.ru:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-11-18
@@ -5736,10 +6570,20 @@ en.kremlin.ru:
     - date: 2026-11-18
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 7 ok-proxy / 5 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 elections.alaska.gov:
   class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5748,11 +6592,15 @@ elections.alaska.gov:
     - date: 2026-11-18
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 icj-cij.org:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-11-19
@@ -5760,10 +6608,20 @@ icj-cij.org:
     - date: 2026-11-19
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 5 ok-proxy / 25 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 ft.dk:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5772,10 +6630,17 @@ ft.dk:
     - date: 2026-11-19
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 alpo.ge:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - weekend
@@ -5784,10 +6649,14 @@ alpo.ge:
     - date: 2026-11-21
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 cims.nyu.edu:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - weekend
@@ -5796,6 +6665,13 @@ cims.nyu.edu:
     - date: 2026-11-21
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 daviscup.com:
   class: outlet
   tier: T2
@@ -5821,10 +6697,10 @@ swisscurling.ch:
       event: candidate
       status: candidate
 gob.mx:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
-  reach: direct
+  status: probation
+  reach: proxy
   streams:
     - news
   last_cited: 2026-11-22
@@ -5832,10 +6708,20 @@ gob.mx:
     - date: 2026-11-22
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: reach-flip
+      note: direct -> proxy; writer telemetry 2026-10-01..2026-11-27 0 ok-curl / 3 ok-proxy / 3 fail -- evaluator reach_drift backlog 2026-10-04..11-22
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 doj.state.or.us:
-  class: outlet
+  class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5844,10 +6730,17 @@ doj.state.or.us:
     - date: 2026-11-24
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: set class
+      note: "outlet -> institutional (class rule 2026-11: public-body domain)"
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 aanda.org:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - science
@@ -5856,10 +6749,14 @@ aanda.org:
     - date: 2026-11-25
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 esteri.it:
   class: outlet
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - news
@@ -5868,10 +6765,14 @@ esteri.it:
     - date: 2026-11-27
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
 governor.ny.gov:
   class: institutional
   tier: T2
-  status: candidate
+  status: probation
   reach: direct
   streams:
     - ai-ml
@@ -5880,3 +6781,24 @@ governor.ny.gov:
     - date: 2026-11-27
       event: candidate
       status: candidate
+    - date: 2026-11-27
+      event: promoted
+      status: probation
+      note: earned on live citations in the index window
+bbc.co.uk:
+  class: outlet
+  tier: T2
+  status: established
+  reach: proxy
+  streams:
+    - sports
+  last_cited: 2026-11-23
+  lifecycle:
+    - date: 2026-11-27
+      event: added
+      status: probation
+      note: registered (evaluator 2026-11-08 proposal; 11-15/11-22 revised it to blocked, but the proxy served 6 of 8 sports editions incl. 11-23, so proxy); was cited unregistered and counted as saturated
+    - date: 2026-11-27
+      event: promoted
+      status: established
+      note: earned on live citations in the index window
