@@ -27,12 +27,16 @@ import random
 import re
 import subprocess
 import sys
+import tempfile
 
 _POST_NAME_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})-([a-z0-9-]+)\.md$")
 _LINK_RE = re.compile(r"\]\((https?://[^)\s]+)")
 _SLUGS = ("news", "ai-ml", "science", "weekend", "sports")
 _WINDOW_DAYS = 7
 _RECAP_HEADING = "Week in headlines"
+PROXY_URL = "https://fetch-proxy.khalic-lab.workers.dev/"
+# Direct answers worth a second path: egress refusals are ERR:*, these are anti-bot / HEAD-refused.
+_RETRY_VIA_PROXY = ("403", "405", "429", "451")
 
 
 def collect_links(root, start, end):
@@ -79,22 +83,89 @@ def collect_recap_links(root, start, end):
     return links
 
 
+def _code(status):
+    """The HTTP digits of a status string; a proxied result carries a trailing 'p'."""
+    return status[:-1] if status.endswith("p") else status
+
+
 def _passed(status):
-    return status.isdigit() and 200 <= int(status) < 400
+    code = _code(status)
+    return code.isdigit() and 200 <= int(code) < 400
 
 
-def resolve(url, max_time=15):
+def classify(status):
+    """pass | broken (404/410: the page is gone -- the fabrication signal) | blocked (any other
+    HTTP answer: the host refused us, the page may exist) | unreachable (ERR:* / PROXY:*: no
+    HTTP answer from the target at all, so nothing is known about the page)."""
+    code = _code(status)
+    if code.isdigit():
+        n = int(code)
+        if 200 <= n < 400:
+            return "pass"
+        return "broken" if n in (404, 410) else "blocked"
+    return "unreachable"
+
+
+def _curl_code(args, max_time, header_file=None):
+    cmd = ["curl", "-gsL", "--max-time", str(max_time), "-o", os.devnull, "-w", "%{http_code}"]
+    if header_file:
+        cmd += ["-D", header_file]
     try:
-        proc = subprocess.run(
-            ["curl", "-sIL", "--max-time", str(max_time), "-o", os.devnull,
-             "-w", "%{http_code}", url],
-            capture_output=True, text=True)
+        proc = subprocess.run(cmd + args, capture_output=True, text=True)
     except OSError as exc:
         return "ERR:%s" % exc
     code = (proc.stdout or "").strip()
     if proc.returncode != 0 and code in ("", "000"):
         return "ERR:%d" % proc.returncode
     return code
+
+
+def _via_proxy(url, token, max_time):
+    """GET through the fetch-proxy Worker (GET-only). The Worker mirrors the upstream status and
+    stamps X-Proxy-Upstream-Status; an answer WITHOUT that header is the Worker's own (401 bad
+    bearer, 400/403 refused target, 502 upstream unreachable) and says nothing about the page,
+    so it comes back as PROXY:<code>, never as a page status."""
+    fd, hdr = tempfile.mkstemp(prefix="linkcheck-", suffix=".hdr")
+    os.close(fd)
+    try:
+        code = _curl_code(["-G", PROXY_URL, "--data-urlencode", "url=%s" % url,
+                           "-H", "Authorization: Bearer %s" % token], max_time, hdr)
+        with open(hdr, encoding="latin-1") as fh:
+            mirrored = any(l.lower().startswith("x-proxy-upstream-status:") for l in fh)
+    except OSError:
+        mirrored = False
+    finally:
+        try:
+            os.unlink(hdr)
+        except OSError:
+            pass
+    if code.startswith("ERR:") or not mirrored:
+        return "PROXY:%s" % code
+    return code + "p"
+
+
+def resolve(url, max_time=15):
+    """Direct HEAD first. On an egress refusal (ERR:*) or an anti-bot answer, one GET through
+    the fetch proxy when $FETCH_PROXY_TOKEN holds a real bearer (an unsubstituted
+    `${FETCH_PROXY_TOKEN}` placeholder counts as none). Proxied statuses end in 'p'."""
+    status = _curl_code(["-I", url], max_time)
+    if _passed(status):
+        return status
+    token = os.environ.get("FETCH_PROXY_TOKEN", "")
+    if not token or token.startswith("${"):
+        return status
+    if status.startswith("ERR:") or status in _RETRY_VIA_PROXY:
+        return _via_proxy(url, token, max_time + 10)
+    return status
+
+
+def _tally_line(statuses):
+    c = {"pass": 0, "broken": 0, "blocked": 0, "unreachable": 0}
+    for s in statuses:
+        c[classify(s)] += 1
+    measurable = c["pass"] + c["broken"] + c["blocked"]
+    return ("; broken (404/410) %d, blocked %d, unreachable %d; measurable %d/%d"
+            % (c["broken"], c["blocked"], c["unreachable"], c["pass"], measurable))
 
 
 def main(argv=None):
@@ -115,18 +186,19 @@ def main(argv=None):
     recap_urls = {u for _, u in recap}
     pool = [l for l in links if l[1] not in recap_urls]
 
-    recap_ok = 0
+    recap_ok, recap_st = 0, []
     for post, url in recap:
         if args.check:
             status = resolve(url)
             recap_ok += _passed(status)
+            recap_st.append(status)
             print("%s  %s  (%s) [recap]" % (status.rjust(7), url, post), flush=True)
         else:
             print("%s  (%s) [recap]" % (url, post))
     if recap:
         if args.check:
-            print("linkcheck: recap %d/%d resolve (2xx/3xx) — Weekend \"%s\", always checked."
-                  % (recap_ok, len(recap), _RECAP_HEADING))
+            print("linkcheck: recap %d/%d resolve (2xx/3xx) — Weekend \"%s\", always checked%s."
+                  % (recap_ok, len(recap), _RECAP_HEADING, _tally_line(recap_st)))
         else:
             print("linkcheck: %d Weekend recap link(s) always included, outside the sample."
                   % len(recap))
@@ -134,17 +206,22 @@ def main(argv=None):
     rng = random.Random(end)  # deterministic per window
     sample = rng.sample(pool, min(args.sample, len(pool)))
 
-    ok = 0
+    ok, sample_st = 0, []
     for post, url in sample:
         if args.check:
             status = resolve(url)
             ok += _passed(status)
+            sample_st.append(status)
             print("%s  %s  (%s)" % (status.rjust(7), url, post), flush=True)
         else:
             print("%s  (%s)" % (url, post))
     if args.check:
-        print("linkcheck: %d/%d resolve (2xx/3xx) — window [%s, %s], %d links total."
-              % (ok, len(sample), start, end, len(links)))
+        print("linkcheck: %d/%d resolve (2xx/3xx) — window [%s, %s], %d links total%s."
+              % (ok, len(sample), start, end, len(links), _tally_line(sample_st)))
+        down = sorted({s for s in recap_st + sample_st if s.startswith("PROXY:")})
+        if down:
+            print("linkcheck: proxy unavailable (%s) -- proxied links count as unreachable."
+                  % ", ".join(down))
     else:
         print("linkcheck: sampled %d of %d links — window [%s, %s] (run with --check to resolve)."
               % (len(sample), len(links), start, end))

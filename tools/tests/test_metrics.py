@@ -593,7 +593,7 @@ class MetricsGracefulDegradationTest(unittest.TestCase):
         self.assertEqual(self.health_empty["streams"], {})
         self.assertEqual(
             self.health_empty["feedback"],
-            {"unconsumed_total": 0, "notify_count": 0, "by_stream": {}},
+            {"unconsumed_total": 0, "notify_count": 0, "by_stream": {}, "reasoned": []},
         )
 
     def test_empty_root_week_window_still_computed(self):

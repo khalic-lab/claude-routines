@@ -54,6 +54,7 @@ _HEADING_CITE_RE = re.compile(r"^\*\*\[")
 _LINK_RE = re.compile(r"\]\((https?://[^)\s]+)")
 _SECTION_RE = re.compile(r"^##\s+(.*)$")
 _FOOTER_HEADING = "## Coverage footer"
+_TIERS_RE = re.compile(r"^- Sources used: T1 = (\d+), T2 = (\d+), untiered = (\d+)", re.M)
 _WORDS_RE = re.compile(r"^- Word count:\s*~?([\d,]+)", re.M)
 _CALLS_RE = re.compile(r"tool calls[^:]*:\s*~?(\d+)")
 _DIRECT_RE = re.compile(r"Direct fetches:\s*~?(\d+)\s*\|\s*via-snippet citations:\s*~?(\d+)")
@@ -176,13 +177,14 @@ def compute_repeat_flags(occurrences, thread_map):
         ordered = sorted(occs, key=lambda o: o["ts"])
         for i, occ in enumerate(ordered):
             cur = _parse_dt(occ["ts"])
-            repeat = False
+            repeat = False   # False, or the earlier occurrence's stream ("?" when unknown)
             if cur is not None:
                 for prior in ordered[:i]:
                     prior_dt = _parse_dt(prior["ts"])
                     if prior_dt is not None and cur - prior_dt <= dt.timedelta(days=_LOOKBACK_DAYS):
-                        repeat = True
-                        break
+                        repeat = prior.get("stream") or "?"
+                        if repeat == occ.get("stream"):
+                            break   # a same-stream prior is the finding; stop looking
             flags[(occ["id"], occ["edition"])] = repeat
     return flags
 
@@ -200,11 +202,15 @@ def build_streams(occurrences, window_start, window_end, thread_map):
         stream = occ["stream"]
         if not stream:
             continue
-        s = acc.setdefault(stream, {"citations": 0, "anchors": set(), "repeats": 0, "by_edition": {}})
+        s = acc.setdefault(stream, {"citations": 0, "anchors": set(), "repeats": 0,
+                                    "repeats_same_stream": 0, "by_edition": {}})
         s["citations"] += 1
         s["anchors"].add(occ["id"])
-        if flags.get((occ["id"], occ["edition"])):
+        prior = flags.get((occ["id"], occ["edition"]))
+        if prior:
             s["repeats"] += 1
+            if prior == stream:
+                s["repeats_same_stream"] += 1
         be = s["by_edition"].setdefault(occ["edition"], {"citations": 0, "anchors": set()})
         be["citations"] += 1
         be["anchors"].add(occ["id"])
@@ -220,6 +226,9 @@ def build_streams(occurrences, window_start, window_end, thread_map):
             "anchors": len(s["anchors"]),
             "repeats": s["repeats"],
             "repeat_rate": (s["repeats"] / citations) if citations else 0.0,
+            # split of `repeats`: an earlier telling in THIS stream (a re-run) vs in another
+            # stream (for the Weekend, a revisit of a daily -- allowed within its budget)
+            "repeats_same_stream": s["repeats_same_stream"],
             "by_edition": by_edition,
         }
     return streams
@@ -267,6 +276,59 @@ def build_feedback(events, root, window_start, window_end):
                     unconsumed_total += 1
 
     return {"unconsumed_total": unconsumed_total, "notify_count": notify_count, "by_stream": by_stream}
+
+
+_FEEDBACK_CARRY_DAYS = 120
+
+
+def _feedback_dispositions(root):
+    """{fb_id: disposition} from every proposals/reader-model-*.json `dispositions` list
+    (file = date order, later files win)."""
+    out = {}
+    for path in sorted(glob.glob(os.path.join(root, "proposals", "reader-model-*.json"))):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                doc = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        rows = doc.get("dispositions") if isinstance(doc, dict) else None
+        for row in rows or []:
+            if isinstance(row, dict) and row.get("fb_id"):
+                out[row["fb_id"]] = str(row.get("disposition") or "").lower()
+    return out
+
+
+def build_reasoned(events, root, window_start, window_end):
+    """Every reasoned ev:"feedback" event the review still owes a disposition, oldest first:
+    dated within _FEEDBACK_CARRY_DAYS of window_end (not after it) and not dispositioned
+    `applied`/`rejected` in a reader-model file. Keyed on fb_id, not the window: a vote cast on
+    a Sunday AFTER that review ran sat in no 7-day window (20 votes, 4 reasoned, 07-19..10-18),
+    and a deferred signal must stay visible so a second one on the same theme or source can
+    combine with it. carried = dated before window_start."""
+    disp = _feedback_dispositions(root)
+    floor = (dt.date.fromisoformat(window_end)
+             - dt.timedelta(days=_FEEDBACK_CARRY_DAYS)).isoformat()
+    latest = {}
+    for ev in events:
+        if ev.get("ev") != "feedback" or not ev.get("fb_id"):
+            continue
+        latest[ev["fb_id"]] = ev  # a re-folded event (same fb_id) keeps its newest form
+    out = []
+    for ev in latest.values():
+        if not str(ev.get("reason") or "").strip():
+            continue
+        day = _date_of(ev.get("ts"))
+        if not day or day < floor or day > window_end:
+            continue
+        prior = disp.get(ev.get("fb_id"))
+        if prior in ("applied", "rejected"):
+            continue
+        out.append({"fb_id": ev.get("fb_id"), "ts": ev.get("ts"), "story_id": ev.get("id"),
+                    "brief": ev.get("brief"), "vote": ev.get("vote"),
+                    "reason": ev.get("reason"), "carried": day < window_start,
+                    "prior": prior})
+    out.sort(key=lambda r: r["ts"] or "")
+    return out
 
 
 def refresh_source_health(root):
@@ -335,14 +397,23 @@ def _sections(body):
     title lives in front matter), so that is the same-or-higher-level
     boundary in practice."""
     sections = []
+    after_h3 = False   # a `### ` entry's own `**[cite](url)**` line is part of that entry
     for line in body.split("\n"):
         m = _SECTION_RE.match(line)
         if m:
             sections.append([m.group(1).strip(), 0, 0])
+            after_h3 = False
         elif sections:
-            if (_BULLET_RE.match(line) or _HEADING_CITE_RE.match(line)
-                    or line.startswith("### ")):
+            if line.startswith("### "):
                 sections[-1][1] += 1
+                after_h3 = True
+            elif _HEADING_CITE_RE.match(line) and after_h3:
+                after_h3 = False
+            elif _BULLET_RE.match(line) or _HEADING_CITE_RE.match(line):
+                sections[-1][1] += 1
+                after_h3 = False
+            elif line.strip():
+                after_h3 = False
             sections[-1][2] += len("".join(line.split()))
     return [(name, count, text_len) for name, count, text_len in sections]
 
@@ -370,6 +441,118 @@ def _mean(values):
     return round(sum(values) / len(values)) if values else None
 
 
+_SID_RE = re.compile(r'(?:\{#|<a id=")(st-[0-9a-f]{12})')
+_RECAP_UNFETCHED_RE = re.compile(r"Recap links not fetched this run: (\d+)")
+
+
+def _story_blocks(body):
+    """sid -> (section, text) for every `### ... {#st-...}` entry and `- <a id="st-...">` bullet."""
+    out, section, cur, buf = {}, None, None, []
+    for line in body.split("\n"):
+        m = _SECTION_RE.match(line)
+        if m:
+            if cur:
+                out[cur] = (section, "\n".join(buf))
+            section, cur, buf = m.group(1).strip(), None, []
+            continue
+        sm = _SID_RE.search(line)
+        if sm and (line.startswith("### ") or line.startswith("- ")):
+            if cur:
+                out[cur] = (section, "\n".join(buf))
+            cur, buf = sm.group(1), [line]
+        elif cur:
+            buf.append(line)
+    if cur:
+        out[cur] = (section, "\n".join(buf))
+    return out
+
+
+def _shingles(text, n=5):
+    w = re.findall(r"[a-z0-9']+", text.lower())
+    return {tuple(w[i:i + n]) for i in range(len(w) - n + 1)}
+
+
+def build_weekend_revisits(posts):
+    """Per Weekend section: `entries`, `revisits` (entries whose story id a News / AI/ML /
+    Science post of the same span already ran) and `containment_mean` -- the share of a
+    revisit's 5-word sequences that appear verbatim in the daily's text (0..1). A reworded
+    re-summary scores high; an entry written from the source scores low."""
+    daily = {}
+    for _, slug, text in posts:
+        if slug in ("news", "ai-ml", "science"):
+            for sid, (_, block) in _story_blocks(_split_footer(text)[0]).items():
+                daily[sid] = block
+    out = {}
+    for date, slug, text in posts:
+        if slug != "weekend":
+            continue
+        for sid, (section, block) in _story_blocks(_split_footer(text)[0]).items():
+            s = out.setdefault(section or "?", {"entries": 0, "revisits": 0, "_c": []})
+            s["entries"] += 1
+            if sid in daily:
+                s["revisits"] += 1
+                sh = _shingles(block)
+                s["_c"].append(len(sh & _shingles(daily[sid])) / max(1, len(sh)))
+    for s in out.values():
+        c = s.pop("_c")
+        s["containment_mean"] = round(sum(c) / len(c), 2) if c else None
+    return out
+
+
+def build_feeds_walled(feeds):
+    """Feeds the curl -> proxy chain cannot reach: failures beyond one rescued curl miss per
+    proxy success outnumber all successes. The raw >50%-fail ratio is not a finding, because
+    every proxy-only host fails curl once per success (29-47 feeds tripped it each week)."""
+    out = []
+    for label, c in feeds.items():
+        ok = c.get("ok_curl", 0) + c.get("ok_proxy", 0) + c.get("ok_webfetch", 0) + c.get("ok_mcp", 0)
+        fail = c.get("fail", 0)
+        if fail - c.get("ok_proxy", 0) > ok:
+            out.append({"feed": label, "ok": ok, "fail": fail})
+    out.sort(key=lambda r: (-r["fail"], r["feed"]))
+    return out
+
+
+_LINT_ITEM_CAP = 80
+
+
+def _lint_post(acc, reg, post_name, slug, date, text):
+    """Replay tools/sources/lint.py's checks over one window post, in process and read-only
+    (novelty is judged as of the post's own date). The publish-time lint never fails a publish,
+    so its violations -- a false `met` discovery claim, an outlet-cap breach -- went unseen."""
+    if reg is None:
+        return
+    try:
+        lint = _load_lint()
+        violations = lint.compute_violations(text, lint.extract_citations(text), reg, slug, date)
+    except Exception:  # noqa: BLE001 -- a lint replay must never break the health build
+        return
+    for category, message in violations:
+        acc["by_category"][category] = acc["by_category"].get(category, 0) + 1
+        per = acc["by_stream"].setdefault(slug, {})
+        per[category] = per.get(category, 0) + 1
+        if len(acc["items"]) < _LINT_ITEM_CAP:
+            acc["items"].append({"post": post_name, "category": category, "message": message})
+
+
+_LINT_MOD = []
+
+
+def _load_lint():
+    if not _LINT_MOD:
+        import importlib.util
+        sources = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                "..", "sources"))
+        if sources not in sys.path:
+            sys.path.insert(0, sources)  # lint.py does a plain `import registry`
+        tool = os.path.join(sources, "lint.py")
+        spec = importlib.util.spec_from_file_location("_lint_m", tool)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        _LINT_MOD.append(mod)
+    return _LINT_MOD[0]
+
+
 def build_briefs(root, window_start, window_end):
     """Dimensions the evaluator used to hand-count from the week's briefs:
     aggregator leakage (B), section vitality (D), single-source rate (F), tag
@@ -387,6 +570,8 @@ def build_briefs(root, window_start, window_end):
 
     leakage, feeds = [], {}
     by_stream = {}
+    reg_for_lint = _load_registry(root)
+    lint_acc = {"by_category": {}, "by_stream": {}, "items": []}
     weekend_ml, weekend_sci = 0, 0
     weekend_seen = False
 
@@ -398,7 +583,7 @@ def build_briefs(root, window_start, window_end):
             "tags": {t: 0 for t in _TRACKED_TAGS},
             "sections": 0, "empty_sections": [],
             "direct_fetches": 0, "via_snippet": 0,
-            "_words": [], "_calls": []})
+            "_words": [], "_calls": [], "_tiers": [0, 0, 0]})
         s["posts"] += 1
 
         for url in _LINK_RE.findall(body):
@@ -436,7 +621,15 @@ def build_briefs(root, window_start, window_end):
             cm = _CALLS_RE.search(text[wm.start():wm.start() + 200])
             if cm:
                 s["_calls"].append(int(cm.group(1)))
+        tm = _TIERS_RE.search(footer)
+        if tm:
+            for k in range(3):
+                s["_tiers"][k] += int(tm.group(k + 1))
+        _lint_post(lint_acc, reg_for_lint, post_name, slug, date, text)
         _parse_feeds(footer, feeds)
+        rm = _RECAP_UNFETCHED_RE.search(footer)
+        if rm:
+            s["recap_unfetched"] = s.get("recap_unfetched", 0) + int(rm.group(1))
 
     for slug, s in by_stream.items():
         fetches = s["direct_fetches"] + s["via_snippet"]
@@ -447,6 +640,9 @@ def build_briefs(root, window_start, window_end):
         s["words_mean"] = _mean(s.pop("_words"))
         s["calls_mean"] = _mean(s.pop("_calls"))
         s["words_mean_prev_week"] = _mean(prev_words.get(slug, []))
+        t1, t2, untiered = s.pop("_tiers")
+        s["tiers"] = {"T1": t1, "T2": t2, "untiered": untiered}
+        s["t1_share"] = round(t1 / (t1 + t2 + untiered), 3) if (t1 + t2 + untiered) else None
 
     if weekend_seen and (weekend_ml + weekend_sci):
         balance = {"ml_items": weekend_ml, "science_items": weekend_sci,
@@ -454,8 +650,14 @@ def build_briefs(root, window_start, window_end):
     else:
         balance = {"available": False}
 
+    # A Saturday Weekend's siblings run Sunday..Friday, so reach one day before the window.
+    span_start = (dt.date.fromisoformat(window_start) - dt.timedelta(days=1)).isoformat()
+    tiers = [sum(v["tiers"][k] for v in by_stream.values()) for k in ("T1", "T2", "untiered")]
     return {"aggregator_leakage": leakage, "by_stream": by_stream,
-            "feeds": feeds, "weekend_balance": balance}
+            "t1_share": round(tiers[0] / sum(tiers), 3) if sum(tiers) else None,
+            "feeds": feeds, "feeds_walled": build_feeds_walled(feeds),
+            "lint": lint_acc, "weekend_balance": balance,
+            "weekend_revisits": build_weekend_revisits(_window_posts(root, span_start, window_end))}
 
 
 # A `reach: direct` registry domain is drifting when the window's writer fetch log never reached
@@ -479,6 +681,15 @@ def _load_registry(root):
     except (OSError, ValueError, ImportError, AttributeError, SyntaxError):
         return None
     return reg if isinstance(reg, dict) else None
+
+
+def window_feeds(root, window_start, window_end):
+    """The writers' per-host fetch counts ("Feeds hit" footer lines) over [start, end], in the
+    shape build_reach_drift takes. registry.py sync reads it for the bounded auto reach flip."""
+    feeds = {}
+    for _date, _slug, text in _window_posts(root, window_start, window_end):
+        _parse_feeds(_split_footer(text)[1], feeds)
+    return feeds
 
 
 def build_reach_drift(root, feeds):
@@ -637,7 +848,8 @@ def compute_health(root, week_arg):
     return {
         "week": {"start": window_start, "end": window_end},
         "streams": build_streams(occurrences, window_start, window_end, thread_map),
-        "feedback": build_feedback(events, root, window_start, window_end),
+        "feedback": dict(build_feedback(events, root, window_start, window_end),
+                         reasoned=build_reasoned(events, root, window_start, window_end)),
         "sources": build_sources(root),
         "continuity": continuity,
         "briefs": briefs,

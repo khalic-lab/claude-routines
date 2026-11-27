@@ -403,6 +403,7 @@ class FoldOrphanedJuneRealWorldTests(unittest.TestCase):
         self.assertEqual(still_unconsumed, [], f"unresolved orphans remain: {still_unconsumed}")
 
 
+@unittest.skipIf(hasattr(os, "geteuid") and os.geteuid() == 0, "chmod cannot deny root")
 class FoldCrashSafetyTests(unittest.TestCase):
     """FINDING 1 (CRITICAL): fold.py's docstring promises append-before-rewrite ("a run that
     appended but died before rewriting feedback/*.jsonl won't double-append on retry") — a

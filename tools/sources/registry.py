@@ -22,6 +22,7 @@ Usage: registry.py bootstrap --root PATH
 """
 import argparse
 import datetime
+import importlib.util
 import json
 import os
 import re
@@ -583,6 +584,59 @@ def _candidate_note(rec, url):
     return "; ".join(parts)
 
 
+AUTO_REACH_WINDOW_DAYS = 7
+
+
+def _load_metrics():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "evaluator", "metrics.py")
+    spec = importlib.util.spec_from_file_location("_metrics_for_sync", os.path.normpath(path))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def auto_reach_flips(root, reg, today):
+    """Bounded auto-apply of the evaluator's computed reach drift (2026-11-27). A `reach: direct`
+    entry flips to proxy when metrics.build_reach_drift's rule (0 curl successes, >= 3 proxy
+    successes, >= 1 failure) holds in BOTH 7-day windows ending YESTERDAY. Excluding today makes
+    every same-day edition compute the same flips with the same note, so concurrent desks write
+    identical hunks. A curl probe moves to method proxy with it (validate pins the pair); class,
+    tier and status are never touched, and the reverse direction (proxy -> direct) stays a
+    human judgment. Mutates `reg` and returns the flipped domains; any error returns [] --
+    a publish must never fail on telemetry."""
+    try:
+        m = _load_metrics()
+        end = datetime.date.fromisoformat(today) - datetime.timedelta(days=1)
+        windows = []
+        for k in (0, 1):
+            w_end = end - datetime.timedelta(days=AUTO_REACH_WINDOW_DAYS * k)
+            w_start = w_end - datetime.timedelta(days=AUTO_REACH_WINDOW_DAYS - 1)
+            drift = m.build_reach_drift(root, m.window_feeds(root, w_start.isoformat(),
+                                                             w_end.isoformat()))
+            windows.append(({d["domain"]: d for d in drift.get("flips", [])}, w_start, w_end))
+    except Exception as exc:  # noqa: BLE001 -- degrade, never block the publish
+        print("sync: auto reach flip skipped (%s)" % exc, file=sys.stderr)
+        return []
+    (cur, s0, e0), (prev, s1, e1) = windows
+    flipped = []
+    for domain in sorted(cur):
+        rec = reg.get(domain)
+        if (domain not in prev or not isinstance(rec, dict) or rec.get("reach") != "direct"
+                or rec.get("status") == "retired"):
+            continue
+        rec["reach"] = "proxy"
+        probe = rec.get("probe")
+        if isinstance(probe, dict) and probe.get("method") != REACH_METHOD["proxy"]:
+            probe["method"] = REACH_METHOD["proxy"]
+        lifecycle_append(rec, today, "reach-flip", note=(
+            "direct -> proxy (auto); writer telemetry 0 ok-curl / %d ok-proxy / %d fail %s..%s "
+            "and 0 ok-curl / %d ok-proxy / %d fail %s..%s -- registry.py sync"
+            % (cur[domain]["ok_proxy"], cur[domain]["fail"], s0, e0,
+               prev[domain]["ok_proxy"], prev[domain]["fail"], s1, e1)))
+        flipped.append(domain)
+    return flipped
+
+
 def cmd_sync(args):
     root = args.root
     path = registry_path(root)
@@ -667,7 +721,8 @@ def cmd_sync(args):
     # 2026-10/11 -- which publish.py's retry resolves with `registry.py resolve`. The buffers are still PURGED: every
     # entry provably folded to nothing (candidate already registered, last_cited not
     # newer), and leaving them would inflate candidates_open in source-health forever.
-    if added == 0 and folded == 0:
+    flipped = auto_reach_flips(root, reg, today)
+    if added == 0 and folded == 0 and not flipped:
         purged = 0
         for p in (candidates_path, last_cited_path):
             if os.path.exists(p) and os.path.getsize(p) > 0:
@@ -684,7 +739,8 @@ def cmd_sync(args):
         if os.path.exists(p):
             open(p, "w").close()  # truncate, not delete -- sync is idempotent on empty files
 
-    print("sync: %d new candidate(s), %d last_cited fold(s)" % (added, folded))
+    print("sync: %d new candidate(s), %d last_cited fold(s), %d auto reach flip(s)%s"
+          % (added, folded, len(flipped), (" (" + ", ".join(flipped) + ")") if flipped else ""))
     return 0
 
 

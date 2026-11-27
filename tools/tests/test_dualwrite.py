@@ -266,6 +266,7 @@ class LedgerFailureNonFatalTests(unittest.TestCase):
         self.root = _new_skeleton()
         self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
 
+    @unittest.skipIf(hasattr(os, "geteuid") and os.geteuid() == 0, "chmod cannot deny root")
     def test_unwritable_ledger_dir_does_not_abort_record(self):
         """An OSError from store.append_event (unwritable index/ledger/ dir) must be caught
         and printed as a non-fatal warning -- the legacy file must still be written, byte-

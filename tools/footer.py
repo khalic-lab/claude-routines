@@ -42,7 +42,8 @@ VIA_SNIPPET = "[via snippet]"
 COMMENT_HEADER = ("<!-- operational telemetry — machine/evaluator-read; computed by "
                   "tools/footer.py at publish time; hidden from the rendered page")
 COMPUTED_PREFIXES = ("- Sources used:", "- Direct fetches:", "- Word count:",
-                     "- Token estimate", "- Feeds hit")
+                     "- Token estimate", "- Feeds hit", "- Recap links not fetched")
+RECAP_HEADING = "Week in headlines"
 
 # Third citation register, beyond the lint's bullet/heading-cite pair: a bold-lead
 # PARAGRAPH story (ai-ml's industry / new-models items) -- `**Story lead sentence.**
@@ -154,6 +155,23 @@ def feeds_hit_line(attempts):
     return "; ".join(segments)
 
 
+def recap_unfetched(body, attempts):
+    """Weekend "Week in headlines" links with no successful tools/fetch.py attempt in this
+    run's log. The recap rule (routines/src/weekend.md) is "a URL you fetched this run", so
+    this is the exact check; trailing slash and #fragment are ignored."""
+    def norm(u):
+        return u.split("#")[0].rstrip("/")
+    ok = {norm(a["url"]) for a in attempts if a.get("ok")}
+    missing, in_recap = [], False
+    for line in body.split("\n"):
+        if line.startswith("## "):
+            in_recap = RECAP_HEADING in line
+            continue
+        if in_recap:
+            missing.extend(u for u in _lint.LINK_RE.findall(line) if norm(u) not in ok)
+    return missing
+
+
 def build_comment(post_path, root, fetch_log, text):
     _, body, footer = split_post(text)
     reg = _lint.load_registry(root)
@@ -180,6 +198,10 @@ def build_comment(post_path, root, fetch_log, text):
         "the claude.ai run history." % format(round(total_words / 0.75), ",d"))
     if attempts:
         lines.append("- Feeds hit (from fetch log): %s" % feeds_hit_line(attempts))
+    if attempts and any(l.startswith("## ") and RECAP_HEADING in l for l in body.split("\n")):
+        missing = recap_unfetched(body, attempts)
+        lines.append("- Recap links not fetched this run: %d%s"
+                     % (len(missing), (" -- " + " ".join(missing)) if missing else ""))
     return lines
 
 
