@@ -76,10 +76,13 @@ def survey(root, today, days):
     if os.path.exists(feed_path):
         with open(feed_path, encoding="utf-8") as fh:
             feed = json.load(fh)
-    cards = {}
+    cards, card_at = {}, {}
     for s in feed.get("stories") or []:
         key = (s.get("date"), s.get("stream"))
         cards[key] = cards.get(key, 0) + 1
+        nu = b.norm_url(s.get("url")) if s.get("url") else None
+        if nu:
+            card_at[nu] = key
 
     # The builder prints its lede-fallback WARNs while parsing; capture, never echo raw.
     buf = io.StringIO()
@@ -96,20 +99,30 @@ def survey(root, today, days):
     rows, flags = [], []
     for date, stream, path in editions:
         with open(path, encoding="utf-8") as fh:
-            n_post = len(b.parse_post(fh.read()) or [])
+            parsed = b.parse_post(fh.read()) or []
+        n_post = len(parsed)
+        # A story a NEWER edition of another desk re-told is still on the page, as that desk's
+        # card (load_recent's supersede rule) -- the Weekend re-cites the week's papers. It is
+        # not missing, so it counts toward the floor (10-07 Science, 11-13 AI/ML false SHORTs).
+        retold = 0
+        for st in parsed:
+            at = card_at.get(b.norm_url(st["url"])) if st.get("url") else None
+            if at and at[1] != stream and at[0] > date:
+                retold += 1
         ed = "%s-%s" % (date, stream)
         row = {"edition": ed, "post": n_post,
                "kept": _count_lines(os.path.join(root, "index", "stories", ed + ".jsonl")),
-               "cards": cards.get((date, stream), 0),
+               "cards": cards.get((date, stream), 0), "retold": retold,
                "unmapped": len(misses.get(ed, [])),
                "warns": sum(1 for p, _ in warns if os.path.basename(p) == ed + ".md"),
                "newest": date == latest.get(stream)}
         rows.append(row)
         if row["unmapped"]:
             flags.append("PARITY %s: %d kept record(s) reached no card" % (ed, row["unmapped"]))
-        if row["newest"] and row["cards"] < min(n_post, floor):
-            flags.append("SHORT %s: newest edition shows %d card(s) of %d stories (floor %d)"
-                         % (ed, row["cards"], n_post, floor))
+        if row["newest"] and row["cards"] + retold < min(n_post, floor):
+            flags.append("SHORT %s: newest edition shows %d card(s) of %d stories (floor %d%s)"
+                         % (ed, row["cards"], n_post, floor,
+                            "; %d more re-told by a newer desk" % retold if retold else ""))
     for post, sid in warns:
         flags.append("WARN %s story %s: no body parsed, card shows its lede" % (post, sid))
 

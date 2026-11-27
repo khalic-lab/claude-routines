@@ -376,6 +376,38 @@ class RecordDerivationTests(unittest.TestCase):
         self.assertEqual(len(pubs), 1)
         self.assertEqual(pubs[0]["fields"]["why"], "\"opening quote\" carries the point.")
 
+    def test_a_url_cited_second_never_steals_the_story_whose_primary_it_is(self):
+        """2026-10-18 News: the settlers item cited Rubio's state.gov remarks as its SECOND link,
+        ahead of the Rubio story whose primary that url is; first-telling-wins over every url
+        gave the Rubio card the settlers body (the reader's "Wrong title" vote)."""
+        g, st, x = ("https://guardian.example/settlers", "https://state.example/rubio",
+                    "https://aljazeera.example/rubio")
+        post = FRONT + (
+            "- <a id=\"st-aaaaaaaaaaaa\" class=\"st-a\"></a>**Settlers attack diplomats.** The "
+            "settlers body. [Guardian, 18 Oct 2026](%s) · [State, 18 Oct 2026](%s)\n"
+            "- <a id=\"st-bbbbbbbbbbbb\" class=\"st-a\"></a>**Rubio rules out Starshield.** The "
+            "Rubio body. [State, 18 Oct 2026](%s) · [Al Jazeera, 18 Oct 2026](%s)\n" % (g, st, st, x))
+        with open(os.path.join(self.root, "_posts", "2026-10-18-news.md"), "w") as f:
+            f.write(post)
+        rubio = dict(DRIFTED, headline="Rubio rules out Starshield", url=st, display_body="payload")
+        alt_only = dict(DRIFTED, headline="Settlers attack diplomats", url=g, display_body="payload")
+        recs = _record(self.root, f"dedup_{id(self)}_primary", [rubio, alt_only],
+                       "2026-10-18", "news")
+        by_url = {r["url"]: r for r in recs}
+        self.assertIn("The Rubio body.", by_url[st]["display_body"])
+        self.assertIn("The settlers body.", by_url[g]["display_body"])
+
+    def test_an_alternate_only_url_still_joins(self):
+        x = "https://aljazeera.example/rubio"
+        post = FRONT + ("- <a id=\"st-bbbbbbbbbbbb\" class=\"st-a\"></a>**Rubio rules out "
+                        "Starshield.** The Rubio body. [State, 18 Oct 2026](https://state.example/r)"
+                        " · [Al Jazeera, 18 Oct 2026](%s)\n" % x)
+        with open(os.path.join(self.root, "_posts", "2026-10-18-news.md"), "w") as f:
+            f.write(post)
+        recs = _record(self.root, f"dedup_{id(self)}_alt", [dict(DRIFTED, url=x, display_body="p")],
+                       "2026-10-18", "news")
+        self.assertIn("The Rubio body.", recs[0]["display_body"])
+
     def test_without_a_post_on_disk_the_payload_records_verbatim(self):
         recs = _record(self.root, f"dedup_{id(self)}_b", [dict(DRIFTED)],
                        "2026-07-28", "news")

@@ -182,3 +182,31 @@ class NothingDropsSilentlyTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NestedParenAndInlineWhyTailTest(unittest.TestCase):
+    """2026-11-27: two shapes still emptied a story's body. (a) A `Why it matters:` continuation
+    after the citation run made the whole paragraph read as a byline, because the meta test ran
+    before the split. (b) A trailing "([arXiv:…](u) · Authors (affiliation not listed))" holds a
+    nested parenthesis the link walk could not peel. Fixtures are the verbatim live blocks."""
+
+    CASES = {
+        "2026-10-24-weekend-st-5745ce974a94.md": "A NeurIPS 2026 workshop paper tests four families",
+        "2026-10-30-news-st-fb7d688d5a1f.md": "A government needs 61 seats.",
+        "2026-10-30-news-st-9fa21cc3d182.md": "Economists had expected slight growth.",
+        "2026-10-31-weekend-st-c71b778862b5.md": "Mamba layers are a state-space alternative",
+    }
+
+    def test_each_story_keeps_its_prose(self):
+        for name, start in self.CASES.items():
+            with self.subTest(name=name):
+                stories = bsf.parse_post(fixture(name) + "\n")
+                self.assertEqual(len(stories), 1)
+                self.assertTrue(stories[0]["body"].startswith(start), stories[0]["body"][:120])
+                self.assertNotIn("](http", stories[0]["body"])
+
+    def test_a_parenthetical_sentence_opening_on_a_link_stays_prose(self):
+        line = ("- **A result.** The team reports a gain (see [the appendix](https://x.example/a), "
+                "which lists every ablation run and every seed the authors tried over the month "
+                "of the study, and the gain holds for each of them) on all four benchmarks.")
+        self.assertIn("ablation", one(line)["body"])

@@ -141,6 +141,7 @@ safety net, not a requirement — supply them if you already have them, otherwis
 - **`affiliations`** (papers only; SPIKE-2026-07-10): the institutions from the story's byline
   parenthetical, verbatim — same canonical short names, same order, ≤3 (`AUTHORS (Inst1; Inst2)`
   → `["Inst1","Inst2"]`). **Omit the key** for non-papers and for `(affiliation not listed)`.
+  `(Independent researcher)` IS an affiliation: record `["Independent Researcher"]`.
   It feeds the homepage card's institution-first source label and `sources/institutions.yml`;
   the Affiliations block in your prompt has the retrieval chain and format law.
 - **`display_body` / `why`** are the story's PUBLISHED prose, copied verbatim from the brief you just

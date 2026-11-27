@@ -187,6 +187,7 @@ but the byline the reader sees should be canonical from the start):
 - `MosaicML` → **Databricks**
 - `DeepMind` → **Google DeepMind**
 - `Google Brain` → **Google Research**
+- `Independent researcher` / `independent researchers` → **Independent Researcher**
 - `FAIR` / `Meta FAIR` → **Meta AI**
 - `MSR` → **Microsoft Research**
 - `JPL` / `Jet Propulsion Laboratory` → **NASA JPL**

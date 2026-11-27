@@ -1042,7 +1042,7 @@ def post_prose(date, slug):
         mod = feed()
         with open(path) as f:
             parsed = mod.parse_post(f.read())
-        prose = {}
+        prose, alts = {}, {}
         for s in parsed:
             printed = {"display_body": (s.get("display_body") or "").strip(),
                        "why": (s.get("why") or "").strip()}
@@ -1051,10 +1051,18 @@ def post_prose(date, slug):
             # the one the desk treated as primary, which is not always the one that appears
             # first in the prose. First-url-only left 3 of the 2026-08-07 AI/ML edition's 13
             # records unjoined -- i.e. silently stuck on the hand-copy this fix exists to drop.
-            for u in mod._URL_RE.findall(s.get("raw") or ""):
-                nu = mod.norm_url(u)
-                if nu and nu not in prose:              # first telling wins, as the feed's does
-                    prose[nu] = printed
+            # But a story's OWN first url claims first, and an alternate url only fills a gap
+            # (2026-11-27): first-telling-wins over all urls let the 2026-10-18 settlers item,
+            # which cites Rubio's state.gov remarks second, hand its body to the Rubio record
+            # whose primary that url is (the reader's "Wrong title" vote).
+            urls = [nu for nu in (mod.norm_url(u) for u in mod._URL_RE.findall(s.get("raw") or ""))
+                    if nu]
+            if urls and urls[0] not in prose:
+                prose[urls[0]] = printed
+            for nu in urls[1:]:
+                alts.setdefault(nu, printed)            # first telling wins among alternates
+        for nu, printed in alts.items():
+            prose.setdefault(nu, printed)
         return prose
     except Exception as e:
         # Same posture as the ledger dual-write below: enrichment must never cost an edition.

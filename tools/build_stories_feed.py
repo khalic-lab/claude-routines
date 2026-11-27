@@ -343,14 +343,14 @@ def _split_inline_why(paras):
     _pick_body / _pick_why both resolve through the single _WHY_RE they already share."""
     out = []
     for p in paras:
-        if _WHY_RE.match(p) or _is_meta_para(p):
+        if _WHY_RE.match(p):
             out.append(p)
             continue
         m = _INLINE_WHY_RE.search(p)
-        if not m:
+        head = p[:m.start()].rstrip() if m else ""
+        if not m or (_TAG_RE.sub("", head).strip() and _is_meta_para(head)):
             out.append(p)
             continue
-        head = p[:m.start()].rstrip()
         if head:
             out.append(head)
         out.append(_WHY_LABEL + p[m.end():])
@@ -382,6 +382,32 @@ _CITE_EDGE = " \t([{;,:·—–-"
 _ANY_LINK_RE = re.compile(r"\[\[[^\[\]]+\]\([^)]*\)\]|\[[^\[\]]+\]\([^)]*\)")
 
 
+def _trailing_cited_paren(text):
+    """Start index of a balanced trailing parenthetical that OPENS on a link and continues with a
+    middot byline -- "([arXiv:2610.38095](u) · NVIDIA · `[preprint]`)", "([arXiv:…](u) · K. Yemets
+    et al. (affiliation not listed))" -- or None. Bounded (<= 200 chars after the link) so a
+    parenthetical sentence that merely starts with a link stays prose."""
+    t = text.rstrip()
+    if not _TAG_RE.sub("", t).rstrip().endswith(")"):
+        return None
+    depth = 0
+    for i in range(len(t) - 1, -1, -1):
+        if t[i] == ")":
+            depth += 1
+        elif t[i] == "(":
+            depth -= 1
+            if depth == 0:
+                if i == 0 or t[i - 1] not in " \t":
+                    return None
+                inner = t[i + 1:].lstrip()
+                m = re.match(r"\*{0,2}\[[^\[\]]+\]\([^)]*\)\*{0,2}", inner)
+                if not m:
+                    return None
+                rest = _TAG_RE.sub("", inner[m.end():]).strip().rstrip(")").strip()
+                return i if rest.startswith("·") and len(rest) <= 200 else None
+    return None
+
+
 def strip_trailing_citations(text):
     """Drop the run of citation links a paragraph ENDS on, and only that run: the walk starts
     at the last link and stops at the first gap that is not furniture, so a dated link in the
@@ -400,6 +426,9 @@ def strip_trailing_citations(text):
     Until 2026-09-25 only dated links counted and "25.09.2026" was not a date, so a two-source
     tail ("[Euronews, 25.09.2026](u) · [SRF, 25.09.2026](u)") stayed in the paragraph, its
     middot and bare domains read as a byline, and the story lost its body and was dropped."""
+    paren = _trailing_cited_paren(text)
+    if paren is not None:
+        return text[:paren].rstrip(_CITE_EDGE)
     toks = []
     for m in _ANY_LINK_RE.finditer(text):
         d = _CITE_LINK_RE.match(text, m.start())       # a dated link (or link + date after it)

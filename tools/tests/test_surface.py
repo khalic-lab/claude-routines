@@ -108,6 +108,19 @@ class SurfaceTest(unittest.TestCase):
         r = surface.survey(root, "2026-06-10", 14)
         self.assertTrue([f for f in r["flags"] if f.startswith("SHORT 2026-06-10-news")])
 
+    def test_a_story_retold_by_a_newer_desk_is_not_missing(self):
+        # 2026-11-27: the Weekend re-cites a daily's papers and its newer card supersedes the
+        # daily's in place -- the story is still on the page, so the floor must not flag it
+        root = self._root({"2026-06-10-news.md": GOOD},
+                          {"2026-06-10-news.jsonl": [_rec("https://ex.test/one"),
+                                                     _rec("https://ex.test/two")]},
+                          [{"date": "2026-06-10", "stream": "news", "url": "https://ex.test/one"},
+                           {"date": "2026-06-13", "stream": "weekend", "url": "https://ex.test/two"}])
+        r = surface.survey(root, "2026-06-13", 14)
+        self.assertEqual([f for f in r["flags"] if f.startswith("SHORT 2026-06-10-news")], [])
+        row = [x for x in r["rows"] if x["edition"] == "2026-06-10-news"][0]
+        self.assertEqual((row["cards"], row["retold"]), (1, 1))
+
     def test_overdue_desk_and_stale_feed(self):
         root = self._root({"2026-06-07-news.md": GOOD}, {}, [], generated="2026-06-01")
         r = surface.survey(root, "2026-06-10", 14)
