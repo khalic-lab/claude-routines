@@ -46,6 +46,7 @@ Most official sports sites (uefa.com, fifa.com, premierleague.com, formula1.com,
 - **Feeds and secondaries are your reliable spine:** BBC Sport RSS (`https://feeds.bbci.co.uk/sport/rss.xml`) and SRF Sport carry results and reports with links back to the primary; cite the official page as the primary where you can reach it, the outlet as T2 where you cannot.
 - **Wikipedia season/results pages** (e.g. "2026 Formula One World Championship", "2025–26 Swiss Super League") are comprehensive and reachable — use them to **cross-check** scores, standings and dates, but Wikipedia is tertiary: never cite it as the primary, and prefer the official result page for the citation.
 - **Official news/press-release pages** (fia.com/news, wada-ama.org/en/news, tas-cas.org media releases, club press rooms) are usually more reachable than the live-scores SPA and are the correct primary for announcements and rulings.
+- **Every run, fetch at least two official league/federation pages from the plan's fetch list** for this week's in-season desks with `python3 tools/fetch.py --proxy "<probe URL>"` (e.g. sfl.ch, sihf.ch, fis-ski.com, fia.com/news, atptour.com, plus any sports `candidates_to_try`). A JS shell or an error is an acceptable outcome, but the attempt must happen. The footer's `Feeds hit` line is computed from the fetch log, so a Gaps or Discovery line that says official sites were tried or "were JS shells" when none appears there is a false claim. A Discovery waiver names the pages tried and what each returned; "not fetched" is not a reason.
 - If you genuinely cannot reach a primary and rely on a T2 report for a result, tag the item `[single-source]` and name the outlet; note unreachable official sites in the Gaps footer.
 
 # Research methodology
@@ -75,7 +76,7 @@ ATP/WTA tournament outcomes and Grand Slams, ranking moves, and Swiss players. E
 
 ## ⛷️🏒 Winter sports & the rest
 
-Alpine skiing World Cup (favour Swiss racers), Swiss National League + NHL headlines, and a catch-all for cycling (Tour de Suisse / de France), athletics, and other notable events. In-season only; omit anything with nothing new.
+Alpine skiing World Cup (favour Swiss racers), Swiss National League + NHL headlines, and a catch-all for cycling (Tour de Suisse / de France), athletics, and other notable events. In-season only; omit anything with nothing new. Hockey runs Sep–Apr: in season, check the Swiss National League round every edition before deciding to omit the desk — fetch the sihf.ch game-center (`python3 tools/fetch.py "https://www.sihf.ch/de/game-center/"`) or its news page (`https://www.sihf.ch/de/news/`) and SRF Sport's hockey page; the game-center is a JavaScript app, so if it returns only a shell, say so in Gaps and use the news page and SRF. When you run a National League result, anchor it on sihf.ch if that page loaded (T1), with SRF Sport as the second source. A quiet round is a valid omit; an unchecked one is not.
 
 ## 🧠 Why it matters (the one place to be opinionated — include only if warranted)
 

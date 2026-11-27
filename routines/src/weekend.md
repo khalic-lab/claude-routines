@@ -2,7 +2,7 @@ Write my weekend deep-read brief and publish it via the git pipeline. Use today'
 
 # Mission
 
-A long-form weekly digest. Coverage window: past 7 days. **This is the in-depth revisit of the week's most important stories** — the place where the week's biggest items get the *deep* treatment. Select and go deep on the strongest items across the past 7 days regardless of which day they broke, **including stories the daily editions (News / AI/ML / Science) already flagged this week.** Do NOT avoid a story just because a daily edition mentioned it — this is exactly where it gets revisited: go deeper than the daily did, with fuller analysis, the complete paper summary, and connection-drawing across stories.
+A long-form weekly digest. Coverage window: past 7 days. **This is the in-depth revisit of the week's most important stories** — the place where the week's biggest items get the *deep* treatment. Select and go deep on the strongest items across the past 7 days regardless of which day they broke. A story a daily edition (News / AI/ML / Science) already ran this week may be revisited, and it is never dropped *only* because a daily mentioned it — but a revisit has to add what the daily lacked: a result from the paper body beyond the abstract (a table, an ablation, a limitation the authors state), a reaction, replication or correction published since, or the connection it anchors in the cross-cutting threads. Write it from the source you fetched this run, never by rewording the daily's entry. **Revisit budget: at most 3 entries in the ML / AI papers section, and at most 2 across the models, Apple Silicon, biology and data-science sections combined, may be stories a daily already ran this week** (step 8 tells you which); fill the other slots from your own week-window sweep. A revisit with nothing new to add is a cut: list it under "Things I deliberately cut".
 
 Bias the content toward:
 1. **ML/AI research**, with RL prioritized — balanced ~50/50 against the 🔭 fundamental-science papers (see Volume rules)
@@ -27,7 +27,7 @@ Light news/politics — just a brief "what mattered this week" section at the to
 
 **Volume rules for weekend brief:**
 - Sections aren't capped at 4–7. Quality is the cap.
-- **Depth, not exhaustiveness.** Aim mid-range of the 4000–8000-word target. When the paper pool is deep, keep the highest-signal items rather than extending every desk; go past ~7000 words only when the week genuinely warrants it, and say why in the intro.
+- **Depth, not exhaustiveness.** Aim mid-range of the 4000–8000-word target. When the paper pool is deep, keep the highest-signal items rather than extending every desk; go past ~7000 words only when the week genuinely warrants it, and say why in the intro. The recap and the revisits are never that reason: both are capped (see Mission and Week in headlines).
 - **Paper balance.** Aim for ~50/50 between the two paper sections: 📄 ML/AI papers vs 🔭 fundamental-science papers. The evaluator computes ML's share over those two sections only — the entries under 📄 vs the entries under 🔭 — against a 35–65% band; 🧬 Biology and every other desk sit outside the measured band and move neither side. When the ML pool is deep, widen the 🔭 net (physics, quantum, astro, math) before adding another ML paper. If the 📄/🔭 split still lands outside the band, say so and why in the intro.
 - Each paper covered gets a 3–5 sentence summary in your own words.
 - Each essay gets 2–3 sentence summary + your read on whether it's worth the full read.
@@ -41,7 +41,7 @@ Light news/politics — just a brief "what mattered this week" section at the to
 2. The publisher's HTML page.
 3. Web search snippet (last resort, tag the citation `[via snippet]`).
 
-**arXiv / Semantic Scholar mechanics:** the date-filtered arXiv Atom API (`https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending`) works for `math.*`, `physics.*`, `astro-ph.*` too — swap the `cat:` filter and window the `<published>` dates client-side. Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors` (triangulation and citation counts — NOT affiliations; those follow the block below).
+**arXiv / Semantic Scholar mechanics:** the date-range arXiv sweep (`python3 tools/arxiv_window.py --cat <cat> --from … --to …`) works for `math.*`, `physics.*`, `astro-ph.*`, `quant-ph` and `q-bio.*` too. Semantic Scholar: `https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors` (triangulation and citation counts — NOT affiliations; those follow the block below).
 
 <!-- include: _shared/affiliations.md -->
 
@@ -81,12 +81,13 @@ The weekend brief warrants more aggressive iteration than the dailies. Per topic
 5. **Triangulate aggressively.** Significant findings should appear across at least 2 independent sources or be confirmable from primary docs.
 6. **Don't trust your own first take.** Re-query with different framings to surface what your first query missed.
 7. **Document exhausted leads** in the gaps footer.
-8. **Sibling-brief consultation (do BEFORE tagging items `[single-source]`).** Read the daily briefs from the past 7 days, which now live in the local repo at `_posts/`. For each date D in {today-6, today-5, ..., today-1} (today=Saturday is the current run, so don't include it), check for `_posts/{D}-news.md`, `_posts/{D}-ai-ml.md`, `_posts/{D}-science.md`. Use the Read tool on each that exists. If any sibling brief covered the same story with multiple independent sources, do NOT tag it `[single-source]` here. (Note: sibling coverage informs sourcing/triangulation only — it is NOT a reason to drop or skip a story; see the dedup-relaxation note below.) If sibling briefs are unavailable, proceed and note in Gaps.
+8. **Sibling-brief consultation (do BEFORE tagging items `[single-source]`).** Read the daily briefs from the past 7 days, which now live in the local repo at `_posts/`. For each date D in {today-6, today-5, ..., today-1} (today=Saturday is the current run, so don't include it), check for `_posts/{D}-news.md`, `_posts/{D}-ai-ml.md`, `_posts/{D}-science.md`. Use the Read tool on each that exists. If any sibling brief covered the same story with multiple independent sources, do NOT tag it `[single-source]` here. (Note: sibling coverage informs sourcing and triangulation, and tells you which entries count against the Mission's revisit budget — it is never by itself a reason to drop a story; see the dedup-relaxation note below.) If sibling briefs are unavailable, proceed and note in Gaps.
 
 # Sections (in order)
 
 ## 📰 Week in headlines (short)
-Brief recap, ~5 bullets. World + Switzerland combined. Just the things that mattered structurally.
+Brief recap, ~5 bullets of at most ~70 words each (the section stays under ~400 words). World + Switzerland combined. Just the things that mattered structurally.
+This is the week-later view, not a reprint of the News edition: lead each bullet with where the story stands today (the outcome, the final count, the follow-up), or say plainly that nothing has moved since it broke, and give the original event one clause.
 Every bullet states what happened AND WHEN it happened — the date of the underlying event, not just
 the date of the latest development. For a death, attack, ruling, or launch, name the event date
 explicitly ("X died on {date}" / "the {date} strike"), even when the news peg is a later
@@ -94,6 +95,7 @@ funeral/anniversary/reaction. If the daily briefs carried the event date, carry 
 Each recap link must be a URL you fetched this run through `tools/fetch.py` — for an item a daily
 brief covered (step 8), fetch and reuse that brief's exact URL. Never rebuild an outlet slug from
 memory; no live fetch → drop the bullet (fewer than 5 is fine).
+The fetch is for reading, not only for the link: write each bullet from the page you fetched this run, never by rewording the daily's bullet. First read the daily's `Gaps:` line for that story; any fact it names as missing at the daily's run (a vote count, a final tally, an official text not yet out) is the first thing to look for in the re-fetched page or its primary, because pages are updated after the daily runs.
 
 **Feed-first sources:** Al Jazeera RSS, SRF DE RSS, Le Temps FR RSS.
 
@@ -101,7 +103,7 @@ memory; no live fetch → drop the bullet (fewer than 5 is fine).
 
 **Feed-first sources:**
 - **arXiv RSS per category**: `https://export.arxiv.org/rss/cs.LG`, `cs.AI`, `cs.CL`, `cs.CV`, `stat.ML`. Hit all five.
-- **arXiv Atom API for week-window queries**: `https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=100&sortBy=submittedDate&sortOrder=descending` — then filter the returned `<published>` dates client-side to the past 7 days.
+- **arXiv Atom API, whole-week sweep**: `python3 tools/arxiv_window.py --cat cs.LG --cat cs.AI --cat cs.CL --cat cs.CV --cat stat.ML --from {YYYYMMDD of today-7} --to {YYYYMMDD of today} --max 150`. It pages the server-side submittedDate range (the old "100 newest, filter client-side" query covered about one day of cs.LG, not the week) and prints one line per paper (id, date, primary category, title), spread over the week's days, cross-lists listed once. Use `--grep '<regex>'` to search the whole week for a topic. Shortlist from the titles, then fetch abstracts only for the shortlist; still check each paper's date before citing. A header marked `(INCOMPLETE)` means a call failed: say so in Gaps.
 - **Semantic Scholar** to triangulate which papers are getting attention this week.
 
 T1 (HTML fallback): arxiv.org listings, huggingface.co/papers. (Not openreview.net — measured
@@ -231,7 +233,7 @@ _Coverage: {date 7 days ago} to {today}. Generated {timestamp} Europe/Zurich._
 
 Before composing AND after writing the brief, follow `tools/dedup/DEDUP.md` exactly. It dedupes your candidate stories against the rolling embeddings index so a story isn't re-run for days. **This routine's slug is `weekend`.** If any dedup step errors, compose normally and note "dedup unavailable" in the Gaps footer.
 
-**Weekend dedup is deliberately scoped to Weekend's own history.** Weekend exists to revisit the week's most important stories *in depth*, so a daily edition having already touched a story is expected — not a reason to drop it. Per `DEDUP.md` Step A, **append `--only-slug weekend` to the check command** so dedup compares your candidates ONLY against prior *Weekend* editions: a `news`/`ai-ml`/`science` story from earlier this week therefore never comes back as a REPEAT — it's exactly the story to revisit and go deeper than the daily did. Then apply the Step-B verdicts normally — with the flag, any REPEAT is a genuine prior-Weekend repeat to skip, so no special-casing is needed.
+**Weekend dedup is deliberately scoped to Weekend's own history.** Weekend exists to revisit the week's most important stories *in depth*, so a daily edition having already touched a story is expected — not a reason to drop it. Per `DEDUP.md` Step A, **append `--only-slug weekend` to the check command** so dedup compares your candidates ONLY against prior *Weekend* editions: a `news`/`ai-ml`/`science` story from earlier this week therefore never comes back as a REPEAT — it is a revisit candidate, subject to the Mission's revisit budget and its add-something rule. Then apply the Step-B verdicts normally — with the flag, any REPEAT is a genuine prior-Weekend repeat to skip, so no special-casing is needed.
 
 <!-- include: _shared/date-discipline.md -->
 

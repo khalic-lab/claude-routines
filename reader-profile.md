@@ -1,9 +1,11 @@
 # Reader profile — Rafael (standing editorial brief)
 
 > **Writers read this at compose time** to weight what matters *to this reader* (not generic
-> newsworthiness). **It is human-gated:** it changes ONLY when Rafael applies a patch the Weekly
-> Evaluator proposes from `feedback/*.jsonl` — never auto-mutated from a single tap. Keep it short,
-> concrete, and in plain language; the writer follows it as guidance, not hard rules.
+> newsworthiness). "Favor", "Demote / cut" and "Tone" are guidance. **"Learned preferences" are
+> binding**: each line corrects an error the reader caught in a published brief. **How it
+> changes:** the Weekly Evaluator appends dated lines to "Learned preferences" under a bounded
+> grant (Rafael, 2026-07-10: append-only, real reader feedback only, never a single bare tap);
+> every other edit is Rafael's. Keep it short, concrete, and in plain language.
 
 ## Who the reader is
 - Based in **Switzerland** (Europe/Zurich); cares about Swiss federal/cantonal politics and how
@@ -94,3 +96,18 @@
   stories: 2026-11-17 California v. OpenAI, card "rogue agents" -- "rogue agents isn't a clean mental
   model. Agents actually don't have agency"; 2026-11-06 GPT-6 Astra -- "don't use intermediate token
   generation as a reasoning proxy, this is proveably wrong").
+- 2026-11-27: describe an event by what most participants did, with the numbers. Nationwide
+  protests with looting in some cities are "protests, with rioting and looting in X", not "riots";
+  leave "riot" and "mob" to the official who used them, in quotes. Never leave a bare category
+  ("jihadists", "terrorists", "militants") to describe a group: name it and say in a clause what it
+  is and who calls it that (2× 👎 with reasons on distinct news stories, both missed by the review
+  window and recovered by the 2026-11-27 feedback audit: 2026-10-18 France protests, card "riots" --
+  "Riots? No, not riots. These are demonstrations, with a few bad apples"; 2026-07-19 -- "Using
+  "jihadists" without developing is an incredible lack of journalistic ethics. MAJOR FLAW").
+- 2026-11-27: never use "AGI" or "superintelligence" as a description in the brief's own voice,
+  headline and deck included. When a company or a government uses the word, quote it and say what
+  it refers to: a vendor's claim about its own model, or a brand name (2× 👎 with reasons on
+  distinct ai-ml stories: 2026-09-04 GPT-6 Astra, headline "floats the AGI word" -- "any claim of
+  AGI is bullshit until proven wrong"; 2026-10-06 "Trump launches a Super Intelligence Force", whose
+  card dropped the source's own "has nothing to do with actual superintelligence" -- "Don't you
+  dare call it Super Intelligence..").

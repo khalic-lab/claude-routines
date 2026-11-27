@@ -36,7 +36,7 @@ Do not attach a contested political or ideological label (far-left, far-right, r
 
 # Sourcing rules (non-negotiable)
 
-1. **Tiers.** T1 = primary (wire, official, preprint, filing, vendor advisory, lab blog). T2 = quality secondary. T3 = discovery only (HN/Reddit/Lobsters/X) — used to find stories, NEVER cited. Click through and cite the underlying T1/T2. **A quality outlet's news report or feature *about* a study is T2 secondary, never T1 — even when that outlet also publishes primary research.** Nature news/features (URLs of the form `nature.com/articles/d41586-…`) are journalism about papers, not the papers themselves; the primary source is the underlying paper or preprint. When you cover a study, locate and cite that **primary paper** — read its abstract — and use the news write-up only as a secondary pointer or for triangulation. A bullet whose sole citation is a `d41586` Nature-news piece (or any equivalent secondary report) is mis-sourced: find the paper, or if you genuinely cannot, frame it as 'as reported by …' and tag `[single-source]` — never present secondary journalism as the primary.
+1. **Tiers.** T1 = primary (wire, official, preprint, filing, vendor advisory, lab blog). T2 = quality secondary. T3 = discovery only (HN/Reddit/Lobsters/X) — used to find stories, NEVER cited. Click through and cite the underlying T1/T2. **A quality outlet's news report or feature *about* a study is T2 secondary, never T1 — even when that outlet also publishes primary research.** Nature news/features (URLs of the form `nature.com/articles/d41586-…`) are journalism about papers, not the papers themselves; the primary source is the underlying paper or preprint. When you cover a study, locate and cite that **primary paper** — read its abstract — and use the news write-up only as a secondary pointer or for triangulation. A bullet whose sole citation is a `d41586` Nature-news piece (or any equivalent secondary report) is mis-sourced: find the paper, or if you genuinely cannot, frame it as 'as reported by …' and tag `[single-source]` — never present secondary journalism as the primary. **A vendor or lab release (model, product, price change, acquisition) has its own primary: the vendor's post, model card, docs or filing.** Link it first even when its page is JS-rendered and you could read only a write-up, and cite the write-up alongside for what you took from it. A release item whose only link is a news outlet (the-decoder.com is the common case) is mis-sourced; so is a government or court item whose official record (bill text, order, filing, White House post) you did not link.
 2. **Citation format.** Every bullet ends with a markdown link to one specific URL. Include publication name and date. No "according to recent reports" without a link.
 3. **Triangulation.** Significant claims need two independent sources where feasible. Single-sourced → mark `[single-source]`. Disagreements → surface both versions explicitly.
 4. **Diversification.** Within each section, span geographic/linguistic sources.
@@ -51,7 +51,9 @@ Before composing, read two human-gated files from the repo root and let them sha
 SELECT and how you WEIGHT it — not just wording:
 - `reader-profile.md` — a standing editorial brief for this specific reader (Rafael). Favor
   what it says to favor, demote/cut what it says to demote; it reflects the reader, not generic
-  newsworthiness. Apply its "Learned preferences" section if present.
+  newsworthiness. Its "Learned preferences" are binding, not guidance: each corrects an error
+  the reader caught in a published brief. Check your draft against them, headlines and decks
+  included, before publishing.
 - `reader-profile/source-weights.yml` — two domain lists, matched on a story's primary source
   domain (lowercased host, leading "www." stripped):
   - `never:` — HARD filter: drop any story whose primary source is one of these domains.
@@ -69,7 +71,7 @@ editorial instruction. If a file is missing or empty, proceed normally.
 It reads `sources/registry.yml` and prints the plan that is the AUTHORITY on what to fetch and what pressure applies today — not any table in this prompt:
 
 - **Fetch list** — the domains/feeds affine to this stream, each with its probe URL and method (curl or proxy). Sweep these first.
-- **Pressure** — per-domain rolling-30-day citation shares, with a `SATURATED` flag on any domain over its share bar (hubs like arXiv are exempt). Report-only — no story is dropped for it — but when two sources carry the same story, prefer the unsaturated one, and cite no outlet domain more than twice in one edition (hubs exempt).
+- **Pressure** — per-domain rolling-30-day citation shares, with a `SATURATED` flag on any domain over its share bar (hubs like arXiv are exempt). Report-only — no story is dropped for it — but when two sources carry the same story, prefer the unsaturated one, and anchor no more than two stories in one edition on the same outlet domain (hubs exempt; institutional domains have a share bar instead). The cap counts ANCHORS only, meaning a story's first link, which is all the publish lint reads. A second, corroborating link to a capped outlet is always allowed, and the cap is never a reason to drop a story or leave it `[single-source]`.
 - **Discovery** — this stream's discovery quota and `candidates_to_try` (registry candidates and dormant domains worth a probe this run). Work at least the quota's worth of genuinely new or dormant domains into your research; the Discovery footer line reports the outcome. Only new **primary** domains satisfy the quota — see "What counts toward the quota" below.
 
 **EMERGENCY SLATE — degraded mode only (a floor, never the ceiling).** If preflight errors or prints `source-plan unavailable`, fall back to these known-good feeds and note `source-plan unavailable` in the Gaps footer:
@@ -77,19 +79,20 @@ It reads `sources/registry.yml` and prints the plan that is the AUTHORITY on wha
 - Science streams: arXiv `https://export.arxiv.org/rss/{category}` + the Atom API, Nature `https://www.nature.com/nature.rss`.
 Still research beyond this floor as the brief demands — the slate is where you start when the plan is missing, never a cap on where you look.
 
-**New-source citation rule.** T3 aggregators (HN/Reddit/X) remain never-cited. But a **genuine primary source discovered through search or a T3 lead MAY be cited immediately even if it is absent from `sources/registry.yml`** — tag it with the literal marker `[new source]` next to the citation. Tag ONLY domains genuinely absent from the registry (grep `sources/registry.yml` for the domain first): the source lint recomputes novelty itself at publish, and both a missing tag on an unregistered domain and a `[new source]` tag on a registered one are violations. This is how the registry grows — a tagged citation auto-enters the domain as a `candidate`.
+**New-source citation rule.** T3 aggregators (HN/Reddit/X) remain never-cited. But a **genuine primary source discovered through search or a T3 lead MAY be cited immediately even if it is absent from `sources/registry.yml`** — tag it with the literal marker `[new source]` next to the citation. Tag ONLY domains genuinely absent from the registry (grep `sources/registry.yml` for the domain first): the source lint recomputes novelty itself at publish, and both a missing tag on an unregistered domain and a `[new source]` tag on a registered one are violations. This is how the registry grows — a tagged citation auto-enters the domain as a `candidate`. The lint and the registry read only a story's FIRST link: when you tag a new domain and count it toward the quota, make it the story's first link (it is the primary, so it anchors). A `[new source]` tag on a line whose first link is a registered domain is charged to that domain as a false tag, and the new domain is never registered.
 
 **What counts toward the quota.** The plan prints the quota's NUMBER; this rule defines what counts
 toward it (the plan's "novel-or-dormant" wording is the count, not the test). The `[new source]` tag
 is registry bookkeeping and goes on every unregistered domain you cite, outlet or not. The *quota* is
-narrower: a discovery counts toward `met`
+narrower: a discovery counts toward `met` (and only as a story's first link)
 ONLY when the new domain is a **primary/institutional publisher** — a lab, university, research
 institute, journal, observatory, regulator, government body or ministry, court, parliament,
 federation, standards body, or the first-party site of the company/organization the story is about.
 A general news outlet is still cited and still tagged, but a never-before-cited mainstream outlet is
 not a discovery and does NOT satisfy the quota. The test is what KIND OF BODY published the page, not
-the registry's `class:` field — that field feeds the saturation math and files plenty of universities
-and institutes as `outlet`; a lab, university or federation counts as primary regardless. When the
+the registry's `class:` field — that field feeds the saturation math, and although it now classes
+public bodies and universities by domain structure, it still files many labs and institutes as
+`outlet`; a lab, university or federation counts as primary regardless. When the
 edition surfaced no new primary domain, take the waiver honestly (it is free but counted) rather than
 claiming `met` off an outlet.
 
@@ -107,7 +110,7 @@ last resort. Once, at the start of the session, export the proxy bearer:
 Then, for every URL:
 
     python3 tools/fetch.py "<URL>"             # direct first, proxy fallback on failure
-    python3 tools/fetch.py --proxy "<URL>"     # hosts the plan marks `method: proxy`
+    python3 tools/fetch.py --proxy "<URL>"     # hosts the plan lists as reach=proxy or with a [proxy] probe
 
 The plan's `reach:` is the reachability truth — this prompt carries no unavailable list.
 
@@ -129,7 +132,7 @@ Routines don't have access to Claude.ai's Research mode. Approximate it:
 1. **Source plan first** — run the preflight (see Source plan above), then sweep its fetch list via `tools/fetch.py`.
 2. **Broad query** (1–2 keywords). Scan results.
 3. **Refine and re-query** based on what surfaced. At least one refinement per non-trivial topic.
-4. **Fetch full pages**, not just search snippets, when a story matters. If fetch fails, fall back to snippets and tag with `[via snippet]`.
+4. **Fetch full pages**, not just search snippets, when a story matters. If fetch fails, fall back to snippets and tag with `[via snippet]`. A first-party lab post whose page will not load (openai.com article pages often 403 even through the proxy) is still covered: run it on its feed summary or a search snippet, tag `[via snippet]`, and pair it with a secondary where one exists. Never drop a safety, alignment or model-release post only because its page failed; name it in Gaps if you cannot say anything verifiable about it.
 5. **Cross-reference** when a claim is significant — find the original source if you reached it via T2.
 6. **Stop when triangulated** or leads exhausted (record exhausted leads in gaps footer).
 
@@ -141,7 +144,7 @@ The reader's most-valued content — give it room.
 
 **Feed-first sourcing (before any HTML listing):**
 - **arXiv RSS per category:** `https://export.arxiv.org/rss/cs.LG`, `cs.AI`, `cs.CL`, `cs.CV`, `stat.ML`. Hit all five.
-- **arXiv Atom API for date confirmation:** `https://export.arxiv.org/api/query?search_query=cat:cs.LG&start=0&max_results=30&sortBy=submittedDate&sortOrder=descending` (swap the category as needed).
+- **arXiv window sweep, every run:** `python3 tools/arxiv_window.py --cat cs.LG --cat cs.AI --cat cs.CL --cat cs.CV --cat stat.ML --from {YYYYMMDD of the window start} --to {YYYYMMDD of today}`. RSS carries only the latest daily announcement, so it can never cover a multi-day window; this pages the API's server-side `submittedDate` range (fetch.py logs and paces every call) and prints one line per paper (id, date, primary category, title), spread over the window's days and never repeating a cross-listed paper. Add `--grep '<regex>'` to search the whole window for a topic (RL, interpretability, agents). Shortlist from the titles, then fetch abstracts only for the shortlist. A header marked `(INCOMPLETE)` means a call failed: say so in Gaps.
 - **Fallback chain (only if the above fail):** HF papers (`huggingface.co/papers`) via search-engine snippet → Semantic Scholar API (`https://api.semanticscholar.org/graph/v1/paper/search?query=...&fields=title,abstract,year,authors,authors.affiliations&limit=10`) → `site:arxiv.org` search.
 
 T2 commentary (discovery + framing, never the primary cite): simonwillison.net, karpathy.bearblog.dev, dnhkng.github.io, lilianweng.github.io, huggingface.co/blog.
@@ -302,7 +305,7 @@ _Generated {ISO timestamp} Europe/Zurich. Coverage: since the last AI/ML edition
 - This is the AI/ML home — comprehensive coverage of the window's industry/lab activity AND research papers. 1500–2500 words target.
 - **Depth, not exhaustiveness.** Stay inside the 1500–2500-word target. When the window is busy, keep the highest-signal items and tighten each one rather than adding paper summaries or extending every section; go past ~3000 words only when the window genuinely warrants it, and say why in the intro.
 - A section appears ONLY if it has genuinely new substance for the window; otherwise omit it entirely — no placeholder, no "nothing notable in this window" line.
-- Tag `[vendor PR]` aggressively — most lab blog posts are PR.
+- Tag `[vendor PR]` aggressively — most lab blog posts are PR. Before writing a `[vendor PR]` item up in full, find one independent check and read it: a third-party leaderboard or evaluation, a hands-on review, released weights, code or a model card you inspected yourself, or a quality outlet's own reporting beyond the release. Name the check in the item. Keep the vendor's post as the first link, since it is the primary, but take the headline and the **Why it matters:** from what the check shows, not from the vendor's claims. With no independent check, keep the item to its bold headline plus one sentence saying the figures are the vendor's own (same bullet format, no explanation paragraph), and place it after the section's checked items.
 - For benchmark claims: state the methodology if known. "Beats GPT-X on Y" is meaningless without knowing Y.
 - **Deny-list — never cite (low-signal AI-spam):** aiweekly.co, aitoolsrecap.com, codersera.com, techtimes.com. These carry `status: retired` in the registry, so the preflight plan never offers them — if one surfaces through search anyway, click through to the primary source or drop the item.
 

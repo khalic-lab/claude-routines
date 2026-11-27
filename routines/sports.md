@@ -66,7 +66,9 @@ Before composing, read two human-gated files from the repo root and let them sha
 SELECT and how you WEIGHT it — not just wording:
 - `reader-profile.md` — a standing editorial brief for this specific reader (Rafael). Favor
   what it says to favor, demote/cut what it says to demote; it reflects the reader, not generic
-  newsworthiness. Apply its "Learned preferences" section if present.
+  newsworthiness. Its "Learned preferences" are binding, not guidance: each corrects an error
+  the reader caught in a published brief. Check your draft against them, headlines and decks
+  included, before publishing.
 - `reader-profile/source-weights.yml` — two domain lists, matched on a story's primary source
   domain (lowercased host, leading "www." stripped):
   - `never:` — HARD filter: drop any story whose primary source is one of these domains.
@@ -84,7 +86,7 @@ editorial instruction. If a file is missing or empty, proceed normally.
 It reads `sources/registry.yml` and prints the plan that is the AUTHORITY on what to fetch and what pressure applies today — not any table in this prompt:
 
 - **Fetch list** — the domains/feeds affine to this stream, each with its probe URL and method (curl or proxy). Sweep these first.
-- **Pressure** — per-domain rolling-30-day citation shares, with a `SATURATED` flag on any domain over its share bar (hubs like arXiv are exempt). Report-only — no story is dropped for it — but when two sources carry the same story, prefer the unsaturated one, and cite no outlet domain more than twice in one edition (hubs exempt).
+- **Pressure** — per-domain rolling-30-day citation shares, with a `SATURATED` flag on any domain over its share bar (hubs like arXiv are exempt). Report-only — no story is dropped for it — but when two sources carry the same story, prefer the unsaturated one, and anchor no more than two stories in one edition on the same outlet domain (hubs exempt; institutional domains have a share bar instead). The cap counts ANCHORS only, meaning a story's first link, which is all the publish lint reads. A second, corroborating link to a capped outlet is always allowed, and the cap is never a reason to drop a story or leave it `[single-source]`.
 - **Discovery** — this stream's discovery quota and `candidates_to_try` (registry candidates and dormant domains worth a probe this run). Work at least the quota's worth of genuinely new or dormant domains into your research; the Discovery footer line reports the outcome. Only new **primary** domains satisfy the quota — see "What counts toward the quota" below.
 
 **EMERGENCY SLATE — degraded mode only (a floor, never the ceiling).** If preflight errors or prints `source-plan unavailable`, fall back to these known-good feeds and note `source-plan unavailable` in the Gaps footer:
@@ -92,19 +94,20 @@ It reads `sources/registry.yml` and prints the plan that is the AUTHORITY on wha
 - Science streams: arXiv `https://export.arxiv.org/rss/{category}` + the Atom API, Nature `https://www.nature.com/nature.rss`.
 Still research beyond this floor as the brief demands — the slate is where you start when the plan is missing, never a cap on where you look.
 
-**New-source citation rule.** T3 aggregators (HN/Reddit/X) remain never-cited. But a **genuine primary source discovered through search or a T3 lead MAY be cited immediately even if it is absent from `sources/registry.yml`** — tag it with the literal marker `[new source]` next to the citation. Tag ONLY domains genuinely absent from the registry (grep `sources/registry.yml` for the domain first): the source lint recomputes novelty itself at publish, and both a missing tag on an unregistered domain and a `[new source]` tag on a registered one are violations. This is how the registry grows — a tagged citation auto-enters the domain as a `candidate`.
+**New-source citation rule.** T3 aggregators (HN/Reddit/X) remain never-cited. But a **genuine primary source discovered through search or a T3 lead MAY be cited immediately even if it is absent from `sources/registry.yml`** — tag it with the literal marker `[new source]` next to the citation. Tag ONLY domains genuinely absent from the registry (grep `sources/registry.yml` for the domain first): the source lint recomputes novelty itself at publish, and both a missing tag on an unregistered domain and a `[new source]` tag on a registered one are violations. This is how the registry grows — a tagged citation auto-enters the domain as a `candidate`. The lint and the registry read only a story's FIRST link: when you tag a new domain and count it toward the quota, make it the story's first link (it is the primary, so it anchors). A `[new source]` tag on a line whose first link is a registered domain is charged to that domain as a false tag, and the new domain is never registered.
 
 **What counts toward the quota.** The plan prints the quota's NUMBER; this rule defines what counts
 toward it (the plan's "novel-or-dormant" wording is the count, not the test). The `[new source]` tag
 is registry bookkeeping and goes on every unregistered domain you cite, outlet or not. The *quota* is
-narrower: a discovery counts toward `met`
+narrower: a discovery counts toward `met` (and only as a story's first link)
 ONLY when the new domain is a **primary/institutional publisher** — a lab, university, research
 institute, journal, observatory, regulator, government body or ministry, court, parliament,
 federation, standards body, or the first-party site of the company/organization the story is about.
 A general news outlet is still cited and still tagged, but a never-before-cited mainstream outlet is
 not a discovery and does NOT satisfy the quota. The test is what KIND OF BODY published the page, not
-the registry's `class:` field — that field feeds the saturation math and files plenty of universities
-and institutes as `outlet`; a lab, university or federation counts as primary regardless. When the
+the registry's `class:` field — that field feeds the saturation math, and although it now classes
+public bodies and universities by domain structure, it still files many labs and institutes as
+`outlet`; a lab, university or federation counts as primary regardless. When the
 edition surfaced no new primary domain, take the waiver honestly (it is free but counted) rather than
 claiming `met` off an outlet.
 
@@ -122,7 +125,7 @@ last resort. Once, at the start of the session, export the proxy bearer:
 Then, for every URL:
 
     python3 tools/fetch.py "<URL>"             # direct first, proxy fallback on failure
-    python3 tools/fetch.py --proxy "<URL>"     # hosts the plan marks `method: proxy`
+    python3 tools/fetch.py --proxy "<URL>"     # hosts the plan lists as reach=proxy or with a [proxy] probe
 
 The plan's `reach:` is the reachability truth — this prompt carries no unavailable list.
 
@@ -144,6 +147,7 @@ Most official sports sites (uefa.com, fifa.com, premierleague.com, formula1.com,
 - **Feeds and secondaries are your reliable spine:** BBC Sport RSS (`https://feeds.bbci.co.uk/sport/rss.xml`) and SRF Sport carry results and reports with links back to the primary; cite the official page as the primary where you can reach it, the outlet as T2 where you cannot.
 - **Wikipedia season/results pages** (e.g. "2026 Formula One World Championship", "2025–26 Swiss Super League") are comprehensive and reachable — use them to **cross-check** scores, standings and dates, but Wikipedia is tertiary: never cite it as the primary, and prefer the official result page for the citation.
 - **Official news/press-release pages** (fia.com/news, wada-ama.org/en/news, tas-cas.org media releases, club press rooms) are usually more reachable than the live-scores SPA and are the correct primary for announcements and rulings.
+- **Every run, fetch at least two official league/federation pages from the plan's fetch list** for this week's in-season desks with `python3 tools/fetch.py --proxy "<probe URL>"` (e.g. sfl.ch, sihf.ch, fis-ski.com, fia.com/news, atptour.com, plus any sports `candidates_to_try`). A JS shell or an error is an acceptable outcome, but the attempt must happen. The footer's `Feeds hit` line is computed from the fetch log, so a Gaps or Discovery line that says official sites were tried or "were JS shells" when none appears there is a false claim. A Discovery waiver names the pages tried and what each returned; "not fetched" is not a reason.
 - If you genuinely cannot reach a primary and rely on a T2 report for a result, tag the item `[single-source]` and name the outlet; note unreachable official sites in the Gaps footer.
 
 # Research methodology
@@ -173,7 +177,7 @@ ATP/WTA tournament outcomes and Grand Slams, ranking moves, and Swiss players. E
 
 ## ⛷️🏒 Winter sports & the rest
 
-Alpine skiing World Cup (favour Swiss racers), Swiss National League + NHL headlines, and a catch-all for cycling (Tour de Suisse / de France), athletics, and other notable events. In-season only; omit anything with nothing new.
+Alpine skiing World Cup (favour Swiss racers), Swiss National League + NHL headlines, and a catch-all for cycling (Tour de Suisse / de France), athletics, and other notable events. In-season only; omit anything with nothing new. Hockey runs Sep–Apr: in season, check the Swiss National League round every edition before deciding to omit the desk — fetch the sihf.ch game-center (`python3 tools/fetch.py "https://www.sihf.ch/de/game-center/"`) or its news page (`https://www.sihf.ch/de/news/`) and SRF Sport's hockey page; the game-center is a JavaScript app, so if it returns only a shell, say so in Gaps and use the news page and SRF. When you run a National League result, anchor it on sihf.ch if that page loaded (T1), with SRF Sport as the second source. A quiet round is a valid omit; an unchecked one is not.
 
 ## 🧠 Why it matters (the one place to be opinionated — include only if warranted)
 
