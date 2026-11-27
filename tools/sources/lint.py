@@ -61,8 +61,9 @@ DATE_RE = re.compile(r"^date:\s*(\d{4}-\d{2}-\d{2})", re.M)
 
 
 def domain_of(url):
-    netloc = urlparse(url).netloc.lower()
-    return netloc[4:] if netloc.startswith("www.") else netloc
+    # hostname, not netloc: a port or user@ in a cited URL must never reach a registry key
+    host = (urlparse(url).hostname or "").lower()
+    return host[4:] if host.startswith("www.") else host
 
 
 def extract_citations(text):
@@ -188,7 +189,7 @@ def compute_violations(text, citations, reg, slug, post_date=None):
         counts[c["domain"]] = counts.get(c["domain"], 0) + 1
     for domain in sorted(counts):
         count = counts[domain]
-        cls = reg.get(domain, {}).get("class") or registry.classify_domain(domain)
+        cls = registry.class_of(domain, reg)
         if cls == "hub":
             continue
         if cls == "institutional":
@@ -216,7 +217,7 @@ def compute_violations(text, citations, reg, slug, post_date=None):
             # registered same-day by this edition's own sync. A same-day SIBLING
             # registration reads 'registered' and never satisfies the quota.
             if c["tagged"] and asof != "registered":
-                cls = registry.classify_domain(c["domain"])
+                cls = registry.class_of(c["domain"], reg)
                 if slug == "ai-ml" and cls == "hub":
                     continue  # ai-ml's quota is explicitly non-hub (SPIKE §3.4)
                 novel.add(c["domain"])

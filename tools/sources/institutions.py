@@ -126,9 +126,10 @@ def cmd_sync(args):
         counted_editions.add(edition)
         for name in affs:
             name = str(name).strip()
-            # yamllite keys can't contain ':' and a leading '-' reads as a sequence item;
-            # such a "name" is a malformed byline capture anyway -- skip, never crash the step
-            if not name or ":" in name or name.startswith("-"):
+            # a name the dumper cannot write as a plain key (':' anywhere, a leading YAML
+            # indicator such as '-' '*' '&' '!', ' #', a bool/null/number word) is a malformed
+            # byline capture anyway -- skip it; registry.yaml_dump refuses such a key outright
+            if not registry.key_ok(name):
                 continue
             name = aliases.get(name, name)
             e = inst.get(name)

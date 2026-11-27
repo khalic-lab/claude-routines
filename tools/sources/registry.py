@@ -24,6 +24,7 @@ import argparse
 import datetime
 import json
 import os
+import re
 import sys
 
 LIVE_STREAMS = {"news", "ai-ml", "science", "weekend", "sports"}
@@ -36,10 +37,30 @@ LIVE_STREAMS = {"news", "ai-ml", "science", "weekend", "sports"}
 RETIRED_DOMAINS = {"nvd.nist.gov", "cisa.gov", "ecb.europa.eu"}
 
 # class fixed rule sets (SPIKE §3.4): hub (independent primary-artifact host) > institutional
-# (*.gov / *.europa.eu wildcards + admin.ch literal) > outlet (the default).
+# (public bodies by domain structure + a short evidence-backed literal list) > outlet (the default).
+# Every match is label-bounded and covers subdomains (export.arxiv.org, bfs.admin.ch, news.un.org).
+# This is only the DEFAULT for a domain the registry has not classed yet: a registry entry's own
+# `class:` always wins (class_of below), so a hand-curated override is never re-derived away.
 HUB_DOMAINS = {"arxiv.org", "hf.co", "huggingface.co", "github.com", "doi.org", "biorxiv.org"}
-INSTITUTIONAL_LITERALS = {"admin.ch"}
-INSTITUTIONAL_SUFFIXES = (".gov", ".europa.eu")
+# TLDs whose every registrant is a government, military, intergovernmental or US-accredited
+# higher-education body.
+INSTITUTIONAL_TLDS = {"gov", "mil", "int", "edu"}
+# Second-level labels reserved, directly under a two-letter ccTLD, for government, military or
+# academia: gov.uk, gov.br, gob.mx, gob.es, gouv.fr, ac.uk, ac.at, ac.il, edu.au, mil.<cc>.
+INSTITUTIONAL_SLDS = {"gov", "gob", "gouv", "mil", "edu", "ac"}
+# The 26 cantonal administrations (vd.ch, gr.ch, polizei.bs.ch ...).
+SWISS_CANTON_CODES = {"ag", "ai", "ar", "be", "bl", "bs", "fr", "ge", "gl", "gr", "ju", "lu", "ne",
+                      "nw", "ow", "sg", "sh", "so", "sz", "tg", "ti", "ur", "vd", "vs", "zg", "zh"}
+# Public bodies outside those structures, each one cited or proposed in this pipeline: EU and
+# Swiss federal hosts, Swiss courts / parliament / central bank / regulator, intergovernmental
+# organisations on .org, foreign presidencies and parliaments, a central bank.
+INSTITUTIONAL_LITERALS = {
+    "europa.eu", "admin.ch", "gov.wales", "police.uk", "gc.ca",
+    "parlament.ch", "bger.ch", "bvger.ch", "snb.ch", "finma.ch",
+    "un.org", "ungeneva.org", "unep.org", "wfp.org", "wto.org", "imf.org", "oecd.org", "bis.org",
+    "iea.org", "icj-cij.org",
+    "elysee.fr", "kremlin.ru", "riksdagen.se", "ft.dk", "dnb.nl",
+} | {code + ".ch" for code in SWISS_CANTON_CODES}
 
 ESTABLISHED_MIN_CITATIONS = 5
 
@@ -66,13 +87,35 @@ NATURE_SUBSOURCES = [
 ]
 
 
+def _under(domain, base):
+    return domain == base or domain.endswith("." + base)
+
+
 def classify_domain(domain):
-    """class: hub (fixed set) > institutional (*.gov / *.europa.eu / admin.ch) > outlet."""
-    if domain in HUB_DOMAINS:
+    """Default class for a domain: hub (fixed set) > institutional (public-body domain
+    structure or literal) > outlet."""
+    d = str(domain or "").lower().rstrip(".")
+    if any(_under(d, hub) for hub in HUB_DOMAINS):
         return "hub"
-    if domain in INSTITUTIONAL_LITERALS or any(domain.endswith(suf) for suf in INSTITUTIONAL_SUFFIXES):
+    labels = d.split(".")
+    if labels[-1] in INSTITUTIONAL_TLDS:
+        return "institutional"
+    if len(labels) >= 2 and len(labels[-1]) == 2 and labels[-2] in INSTITUTIONAL_SLDS:
+        return "institutional"
+    if len(labels) >= 4 and labels[-1] == "us" and labels[-3] == "state":
+        return "institutional"  # US state government: <agency>.state.<st>.us
+    if any(_under(d, lit) for lit in INSTITUTIONAL_LITERALS):
         return "institutional"
     return "outlet"
+
+
+def class_of(domain, reg):
+    """The class every consumer must use: the registry entry's own `class:` when it has one
+    (hand-curated overrides included), else the classify_domain() default."""
+    entry = (reg or {}).get(domain)
+    if isinstance(entry, dict) and entry.get("class"):
+        return entry["class"]
+    return classify_domain(domain)
 
 
 def registry_path(root):
@@ -84,7 +127,46 @@ def registry_path(root):
 # (and real PyYAML, if ever installed) reads this file back faithfully. No flow collections
 # (`[a, b]`), no multiline block scalars -- every registry field fits the block subset.
 
-def _scalar_dump(v):
+# A plain (unquoted) scalar is emitted only when a strict YAML 1.1/1.2 parser (PyYAML, Ruby Psych)
+# reads it back as the very same string; anything else is double-quoted with JSON escapes, which
+# are valid YAML double-quoted escapes, and _scalar_load reverses them with json.loads.
+_YAML_INDICATORS = set("-?:,[]{}#&*!|>'\"%@`")
+_YAML_RESERVED = {"", "~", "null", "true", "false", "yes", "no", "on", "off", "y", "n"}
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# YAML 1.1 numbers Python's int()/float() reject: hex/octal/binary, sexagesimal, comma/underscore
+# grouping, .inf/.nan, plus non-canonical timestamps (2026-7-5, 2026-07-05T10:00:00Z).
+# Deliberately broader than any one resolver: every digit-led run of number characters is quoted.
+_YAML_NUMLIKE_RE = re.compile(r"^(?=[-+.]?[0-9])[-+0-9a-fxob_,.:]+$"
+                              r"|^[-+]?\.(inf|nan)$"
+                              r"|^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}([ tT].*)?$", re.I)
+_YAML_LINEBREAKS = ("\x85", "\u2028", "\u2029", "\ufeff")
+
+
+def _plain_ok(s, in_list=False):
+    """True when `s` may be written unquoted and still load back as the same string -- under
+    this module's own loader, tools/tests/yamllite.py, and any strict YAML parser."""
+    if s.lower() in _YAML_RESERVED or s != s.strip():
+        return False
+    if s[0] in _YAML_INDICATORS:
+        return False
+    if ": " in s or " #" in s or s.endswith(":") or (in_list and ":" in s):
+        return False  # in a list item our loader reads any ':' as a key separator
+    if any(ord(c) < 0x20 or c == "\x7f" or c in _YAML_LINEBREAKS for c in s):
+        return False
+    if _ISO_DATE_RE.match(s):
+        return True  # canonical date: strict parsers give a date, normalised back to this string
+    if _YAML_NUMLIKE_RE.match(s):
+        return False
+    for caster in (int, float):
+        try:
+            caster(s)
+            return False
+        except ValueError:
+            pass
+    return True
+
+
+def _scalar_dump(v, in_list=False):
     if v is None:
         return "null"
     if isinstance(v, bool):
@@ -92,15 +174,19 @@ def _scalar_dump(v):
     if isinstance(v, int):
         return str(v)
     s = str(v)
-    if s == "" or s.strip() != s or s.lower() in ("null", "true", "false", "~"):
-        return '"%s"' % s.replace("\\", "\\\\").replace('"', '\\"')
-    for caster in (int, float):
-        try:
-            caster(s)
-            return '"%s"' % s
-        except ValueError:
-            pass
-    return s
+    if _plain_ok(s, in_list):
+        return s
+    q = json.dumps(s, ensure_ascii=False)
+    for ch in _YAML_LINEBREAKS:
+        q = q.replace(ch, "\\u%04x" % ord(ch))
+    return q
+
+
+def key_ok(key):
+    """True when `key` can be written as a plain mapping key this loader reads back intact (it
+    splits a line at its FIRST ':') and a strict parser keeps as the same string."""
+    s = str(key)
+    return bool(s) and ":" not in s and _plain_ok(s)
 
 
 def yaml_dump(data, _indent=0):
@@ -110,6 +196,8 @@ def yaml_dump(data, _indent=0):
         if not data:
             return pad + "{}\n"
         for key, val in data.items():
+            if not key_ok(key):
+                raise ValueError("unsafe YAML mapping key %r" % (key,))
             if isinstance(val, dict) and val:
                 lines.append("%s%s:" % (pad, key))
                 lines.append(yaml_dump(val, _indent + 1).rstrip("\n"))
@@ -130,7 +218,7 @@ def yaml_dump(data, _indent=0):
                     lines.append("%s- %s" % (pad, sub[0].strip()))
                     lines.extend(sub[1:])
             else:
-                lines.append("%s- %s" % (pad, _scalar_dump(item)))
+                lines.append("%s- %s" % (pad, _scalar_dump(item, in_list=True)))
     return "\n".join(lines) + "\n"
 
 
@@ -142,8 +230,13 @@ def _scalar_load(s):
         return True
     if s in ("false", "False", "FALSE"):
         return False
-    if len(s) >= 2 and s[0] == s[-1] and s[0] in ("'", '"'):
-        return s[1:-1]
+    if len(s) >= 2 and s[0] == s[-1] == '"':
+        try:
+            return json.loads(s)  # the dumper's own JSON-escaped form
+        except ValueError:
+            return s[1:-1]  # a hand-written YAML-only escape (\x41, \e): kept verbatim
+    if len(s) >= 2 and s[0] == s[-1] == "'":
+        return s[1:-1].replace("''", "'")
     if s == "[]":
         return []
     if s == "{}":
@@ -240,14 +333,24 @@ def load_story_records(root):
 
 
 def read_jsonl(path):
+    """JSON objects from an append-only buffer. A malformed or non-object line is skipped with a
+    warning instead of raising: one bad append must not crash sync/health on every edition."""
     if not os.path.exists(path):
         return []
     out = []
     with open(path) as f:
-        for line in f:
+        for n, line in enumerate(f, 1):
             line = line.strip()
-            if line:
-                out.append(json.loads(line))
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except ValueError:
+                rec = None
+            if isinstance(rec, dict):
+                out.append(rec)
+            else:
+                print("WARN %s:%d: skipped malformed line %r" % (path, n, line[:120]), file=sys.stderr)
     return out
 
 
@@ -424,6 +527,62 @@ def cmd_bootstrap(args):
 
 # --- sync -----------------------------------------------------------------------------------
 
+# candidates.jsonl `reach` hint -> registry reach. The scout writes "proxy-needed" when the
+# EVALUATOR's egress could not fetch the page -- an allowlist wall (ERR:56 / CONNECT 403 on nearly
+# every host), not a site verdict: all 67 scout records carry it, while seven of them (ethz.ch,
+# epfl.ch, psi.ch, unige.ch, empa.ch, wsl.ch, unibe.ch) were later re-verified direct. A wrong
+# `direct` self-heals (fetch.py falls back to the proxy; metrics' reach_drift proposes the flip
+# from writer telemetry); a wrong `proxy` sticks (its probe method makes writers run
+# `fetch.py --proxy`, which never tries curl, and reach_drift only detects direct -> proxy).
+# The hint is kept verbatim in the lifecycle note either way.
+CANDIDATE_REACH = {"direct": "direct", "proxy": "proxy", "proxy-needed": "direct"}
+_HOST_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$")
+
+
+def normalize_domain(raw):
+    """A bare lowercase registry key (www./trailing dot stripped), or None when `raw` is not a
+    host at all (a URL, a host:port, whitespace) -- such a key would fail the schema suite."""
+    d = str(raw or "").strip().lower().rstrip(".")
+    if d.startswith("www."):
+        d = d[4:]
+    return d if _HOST_RE.match(d) else None
+
+
+def _candidate_probe(domain, url, reach):
+    """A probe block from a scout record's vetted page/feed URL, or None unless the URL is
+    absolute http(s) on the domain itself or one of its subdomains (stricter than the schema's
+    last-two-labels check, which lets any *.ac.uk host pass for any *.ac.uk domain)."""
+    from urllib.parse import urlparse
+    if not isinstance(url, str) or not re.match(r"^https?://", url):
+        return None
+    host = (urlparse(url).hostname or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+    if not _under(host, domain):
+        return None
+    return {"url": url, "method": REACH_METHOD.get(reach, "curl")}
+
+
+def _scout_fetched(rec):
+    """True only for a scout record whose page the scout actually fetched. A `proxy-needed`
+    hint means the evaluator's egress never reached the URL, so it is unverified: the
+    2026-11-27 sweep found 7 of 80 such scout URLs dead (404 / dead host). Those stay in
+    the lifecycle note and never become a probe, which preflight would hand to writers."""
+    return rec.get("via") == "scout" and rec.get("reach") in ("direct", "proxy")
+
+
+def _candidate_note(rec, url):
+    parts = ["via %s" % (rec.get("via") or "unknown")]
+    if rec.get("reach"):
+        parts.append("reach hint %s" % rec["reach"])
+    note = str(rec.get("note") or "").strip()
+    if note:
+        parts.append(note)
+    if url:
+        parts.append(url)
+    return "; ".join(parts)
+
+
 def cmd_sync(args):
     root = args.root
     path = registry_path(root)
@@ -443,20 +602,51 @@ def cmd_sync(args):
     today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
 
     added = 0
+    fresh = {}  # domain -> entry created by THIS sync; later records for it merge in
     for rec in read_jsonl(candidates_path):
-        domain = rec.get("domain")
-        if not domain or domain in reg:
+        domain = normalize_domain(rec.get("domain"))
+        stream = rec.get("stream")
+        if domain is None or stream not in LIVE_STREAMS:
+            print("sync: WARN skipped candidate %r (bad domain, or stream %r not live)"
+                  % (rec.get("domain"), stream), file=sys.stderr)
+            continue
+        if domain in reg and domain not in fresh:
             continue  # never downgrades an already-registered domain back to candidate
+        cited = rec.get("via") != "scout"  # a scout vets a page; it cites nothing
+        url = rec.get("url") if isinstance(rec.get("url"), str) else None
+        first_seen = rec.get("first_seen") if cited else None
+        if domain in fresh:  # a second record for a domain this sync just added
+            entry = fresh[domain]
+            if stream not in entry["streams"]:
+                entry["streams"].append(stream)  # append: streams[0] stays the creation stream
+            if first_seen and (not entry.get("last_cited") or first_seen > entry["last_cited"]):
+                entry["last_cited"] = first_seen
+            if "probe" not in entry and _scout_fetched(rec):
+                probe = _candidate_probe(domain, url, entry["reach"])
+                if probe:
+                    entry["probe"] = probe
+                    entry["lifecycle"] = entry.pop("lifecycle")  # canonical order: lifecycle last
+            note = str(rec.get("note") or "").strip()
+            item = entry["lifecycle"][0]
+            if note and note not in item.get("note", ""):
+                item["note"] = "%s | %s" % (item.get("note", ""), note)
+            continue
         cls = classify_domain(domain)
-        reg[domain] = {
+        reach = CANDIDATE_REACH.get(rec.get("reach"), "direct")
+        entry = {
             "class": cls,
             "tier": "T1" if cls == "hub" else "T2",
             "status": "candidate",
-            "reach": "direct",
-            "streams": [rec["stream"]] if rec.get("stream") else [],
-            "last_cited": rec.get("first_seen"),
-            "lifecycle": [{"date": today, "event": "candidate", "status": "candidate"}],
+            "reach": reach,
+            "streams": [stream],
+            "last_cited": first_seen,
         }
+        probe = _candidate_probe(domain, url, reach) if _scout_fetched(rec) else None
+        if probe:
+            entry["probe"] = probe
+        lifecycle_append(entry, today, "candidate", status="candidate",
+                         note=_candidate_note(rec, url))
+        reg[domain] = fresh[domain] = entry
         added += 1
 
     folded = 0

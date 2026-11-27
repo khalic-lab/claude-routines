@@ -34,6 +34,9 @@ WINDOW_DAYS = 30
 CLUSTER_SIZE = 5
 CLUSTER_MIN_COUNT = 2
 CLUSTER_MIN_SHARE = 0.03
+# reach values where neither curl nor the proxy is expected to work: the plan says so on the line,
+# and such a domain is never offered as a discovery anchor (a quota anchor has to be fetched).
+SNIPPET_ONLY_REACH = {"blocked", "blocked-paywall", "search-only"}
 
 EMERGENCY_FLOOR = """## Fetch list
 source-plan unavailable -- degrading to the emergency slate (SRF, LeTemps, Al Jazeera, arXiv,
@@ -62,10 +65,7 @@ def load_registry(root):
 
 
 def class_of(domain, reg):
-    entry = reg.get(domain)
-    if entry and entry.get("class"):
-        return entry["class"]
-    return registry.classify_domain(domain)
+    return registry.class_of(domain, reg)
 
 
 def build_fetch_section(slug, reg):
@@ -78,8 +78,11 @@ def build_fetch_section(slug, reg):
         rec = reg[d]
         probe = rec.get("probe") or {}
         probe_note = " -- probe: %s [%s]" % (probe["url"], probe.get("method")) if probe.get("url") else ""
-        lines.append("- %s (%s, %s, reach=%s)%s" %
-                     (d, rec.get("status"), rec.get("class"), rec.get("reach"), probe_note))
+        snippet_note = (" -- snippet-only: cite [via snippet] unless fetch.py exits 0"
+                        if rec.get("reach") in SNIPPET_ONLY_REACH else "")
+        lines.append("- %s (%s, %s, reach=%s)%s%s" %
+                     (d, rec.get("status"), rec.get("class"), rec.get("reach"), probe_note,
+                      snippet_note))
     return "\n".join(lines)
 
 
@@ -121,7 +124,19 @@ def build_pressure_section(slug, reg, root):
     return "\n".join(lines)
 
 
-def build_discovery_section(slug, reg):
+def last_cited_index(root):
+    """Each domain's newest citation date in the live index. registry.yml's last_cited is set
+    once (bootstrap / candidate creation) and never refreshed -- nothing writes
+    sources/last-cited.jsonl -- so on its own it calls the stream's most-cited outlets dormant."""
+    last = {}
+    for rec in registry.load_story_records(root):
+        d, date = rec.get("source_domain"), rec.get("date")
+        if d and isinstance(date, str) and date > last.get(d, ""):
+            last[d] = date
+    return last
+
+
+def build_discovery_section(slug, reg, root="."):
     lines = ["## Discovery"]
     quota = QUOTA[slug]
     non_hub_note = " (non-hub)" if slug == "ai-ml" else ""
@@ -131,6 +146,7 @@ def build_discovery_section(slug, reg):
                  "first-time mainstream outlet." %
                  (slug, quota, non_hub_note))
     candidates = []
+    indexed = last_cited_index(root)
     for domain, rec in reg.items():
         if slug not in (rec.get("streams") or []):
             continue
@@ -138,7 +154,10 @@ def build_discovery_section(slug, reg):
         if status in ("demoted", "retired"):
             continue  # same exclusion as the fetch list: a dormant retired/deny-listed
                       # domain must not resurface as a discovery candidate
-        last_cited = rec.get("last_cited")
+        if rec.get("reach") in SNIPPET_ONLY_REACH:
+            continue
+        last_cited = max([d for d in (rec.get("last_cited"), indexed.get(domain))
+                          if isinstance(d, str) and d] or [None])
         is_dormant = False
         if last_cited:
             try:
@@ -169,7 +188,7 @@ def main():
         sections = [
             build_fetch_section(args.slug, reg),
             build_pressure_section(args.slug, reg, args.root),
-            build_discovery_section(args.slug, reg),
+            build_discovery_section(args.slug, reg, args.root),
         ]
         print("\n\n".join(sections))
     except Exception as exc:  # report-only: a crash degrades, never blocks the writer (§4)

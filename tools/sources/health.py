@@ -85,7 +85,7 @@ def _candidates_open(root, slug):
     return sum(1 for r in registry.read_jsonl(path) if r.get("stream") == slug)
 
 
-def compute_stream_metrics(root, slug, all_records, today):
+def compute_stream_metrics(root, slug, all_records, today, reg=None):
     in_window = [r for r in all_records if r.get("stream") == slug and r.get("date")
                  and _in_window(r["date"], today)]
     counts = {}
@@ -108,14 +108,17 @@ def compute_stream_metrics(root, slug, all_records, today):
     new_domains = sum(1 for d in counts if d in earliest and _in_window(earliest[d], today))
 
     all_total = sum(counts.values())
-    outlet_counts = {d: c for d, c in counts.items() if registry.classify_domain(d) == "outlet"}
+    # the registry's own class first (hand-curated institutional/hub overrides), exactly as
+    # preflight's pressure section and lint's caps read it -- never the bare default rule
+    classes = {d: registry.class_of(d, reg) for d in counts}
+    outlet_counts = {d: c for d, c in counts.items() if classes[d] == "outlet"}
     outlet_total = sum(outlet_counts.values())
     top5 = sorted(outlet_counts.items(), key=lambda kv: (-kv[1], kv[0]))[:TOP_N]
     top5_share = (sum(c for _, c in top5) / outlet_total) if outlet_total else 0.0
 
     saturated = []
     for d, c in counts.items():
-        cls = registry.classify_domain(d)
+        cls = classes[d]
         if cls == "hub":
             continue
         bar = INSTITUTIONAL_BAR if cls == "institutional" else OUTLET_BAR
@@ -143,8 +146,10 @@ def main():
 
     today = datetime.datetime.now(datetime.timezone.utc).date()
     all_records = list(registry.load_story_records(args.root))
+    reg = lint.load_registry(args.root)
 
-    streams = {slug: compute_stream_metrics(args.root, slug, all_records, today) for slug in LIVE_STREAMS}
+    streams = {slug: compute_stream_metrics(args.root, slug, all_records, today, reg)
+               for slug in LIVE_STREAMS}
     overall = {
         "stories": sum(s["stories"] for s in streams.values()),
         "unique_domains_sum": sum(s["unique_domains"] for s in streams.values()),

@@ -14,6 +14,7 @@ empty `[]`/`{}`. It is intentionally not a general YAML parser — flow-style no
 collections (`[a, b]`) and multiline block scalars are out of scope; every field in the
 registry/sources contract can be expressed in the covered subset.
 """
+import json
 import re
 
 
@@ -25,8 +26,13 @@ def _scalar(s):
         return True
     if s in ("false", "False", "FALSE"):
         return False
-    if len(s) >= 2 and s[0] == s[-1] and s[0] in ("'", '"'):
-        return s[1:-1]
+    if len(s) >= 2 and s[0] == s[-1] == '"':
+        try:
+            return json.loads(s)  # registry.py's dumper writes JSON-escaped double quotes
+        except ValueError:
+            return s[1:-1]
+    if len(s) >= 2 and s[0] == s[-1] == "'":
+        return s[1:-1].replace("''", "'")
     if s == "[]":
         return []
     if s == "{}":
@@ -143,7 +149,9 @@ def load(text):
     return _isoify(yaml.safe_load(text))
 
 
-def _dump_scalar(v):
+def _dump_scalar(v, in_list=False):
+    """Same quoting rule as registry.py's _scalar_dump (kept independent on purpose -- this module
+    is the cross-check): plain only when every loader reads it back as the same string."""
     if v is None:
         return "null"
     if isinstance(v, bool):
@@ -151,9 +159,35 @@ def _dump_scalar(v):
     if isinstance(v, (int, float)):
         return str(v)
     s = str(v)
-    if s == "" or s in ("~", "null", "true", "false") or s != s.strip():
-        return repr(s).replace("'", '"') if '"' not in s else "'%s'" % s
-    return s
+    if _plain_ok(s, in_list):
+        return s
+    q = json.dumps(s, ensure_ascii=False)
+    for ch in ("\x85", "\u2028", "\u2029", "\ufeff"):
+        q = q.replace(ch, "\\u%04x" % ord(ch))
+    return q
+
+
+def _plain_ok(s, in_list=False):
+    if s.lower() in ("", "~", "null", "true", "false", "yes", "no", "on", "off", "y", "n"):
+        return False
+    if s != s.strip() or s[0] in "-?:,[]{}#&*!|>'\"%@`":
+        return False
+    if ": " in s or " #" in s or s.endswith(":") or (in_list and ":" in s):
+        return False
+    if any(ord(c) < 0x20 or c in "\x7f\x85\u2028\u2029\ufeff" for c in s):
+        return False
+    if re.match(r"^\d{4}-\d{2}-\d{2}$", s):
+        return True
+    if re.match(r"^(?=[-+.]?[0-9])[-+0-9a-fxob_,.:]+$|^[-+]?\.(inf|nan)$"
+                r"|^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}([ tT].*)?$", s, re.I):
+        return False
+    for caster in (int, float):
+        try:
+            caster(s)
+            return False
+        except ValueError:
+            pass
+    return True
 
 
 def dump(data, _indent=0):
@@ -187,5 +221,5 @@ def dump(data, _indent=0):
                     for l in sub_lines[1:]:
                         lines.append(l)
             else:
-                lines.append(f"{pad}- {_dump_scalar(item)}")
+                lines.append(f"{pad}- {_dump_scalar(item, in_list=True)}")
     return "\n".join(lines) + "\n"
