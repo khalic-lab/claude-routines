@@ -7,7 +7,9 @@ both cache_creation shapes, and detecting the routine + edition. Pricing is list
 the cited official table; an unknown model costs null and lands in missing_models.
 """
 import importlib.util
+import json
 import os
+import tempfile
 import unittest
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -150,7 +152,7 @@ class PricingTest(unittest.TestCase):
                                       "cache_write_1h": 0, "cache_read": 0, "output": 0}}
         c = pricing.cost(models)
         self.assertAlmostEqual(c["total"], (100 * 5 + 200 * 6.25) / 1e6, places=9)
-        self.assertEqual(c["pricing_as_of"], "2026-09-13")
+        self.assertEqual(c["pricing_as_of"], "2026-11-28")
         self.assertEqual(c["missing_models"], [])
 
     def test_fable_cache_read_is_the_low_multiplier(self):
@@ -172,6 +174,42 @@ class PricingTest(unittest.TestCase):
         self.assertEqual(p["cache_write_1h"], 10.0)
         self.assertEqual(p["cache_read"], 0.50)
 
+    def test_haiku_5_5_both_prompt_length_rows_pinned(self):
+        # Pricing page 2026-11-28: prompts up to 100K $0.10 / $0.125 / $0.20 / $0.01 / $0.50;
+        # over 100K $0.50 / $0.625 / $1 / $0.05 / $2.50 (input, 5m, 1h, read, output).
+        short = pricing.PRICING["claude-haiku-5-5"]
+        long_ = pricing.PRICING["claude-haiku-5-5" + pricing.LONG_PROMPT_SUFFIX]
+        self.assertEqual([short[k] for k in ("input", "cache_write_5m", "cache_write_1h", "cache_read", "output")],
+                         [0.10, 0.125, 0.20, 0.01, 0.50])
+        self.assertEqual([long_[k] for k in ("input", "cache_write_5m", "cache_write_1h", "cache_read", "output")],
+                         [0.50, 0.625, 1.0, 0.05, 2.50])
+        self.assertEqual(pricing.LONG_PROMPT_THRESHOLD["claude-haiku-5-5"], 100_000)
+
+    def test_low_cache_read_models(self):
+        # 0.05x on Opus 5.5 / Sonnet 5.5, 0.025x on Fable 5.2 (pricing page 2026-11-28).
+        self.assertEqual(pricing.PRICING["claude-opus-5-5"]["cache_read"], 0.20)
+        self.assertEqual(pricing.PRICING["claude-sonnet-5-5"]["cache_read"], 0.10)
+        self.assertEqual(pricing.PRICING["claude-fable-5-2"],
+                         {"input": 8.0, "output": 40.0, "cache_write_5m": 10.0,
+                          "cache_write_1h": 16.0, "cache_read": 0.20})
+
+    def test_usage_key_splits_only_tiered_models_over_the_threshold(self):
+        k = pricing.usage_key
+        self.assertEqual(k("claude-haiku-5-5", 100_000), "claude-haiku-5-5")  # "over", not "at"
+        self.assertEqual(k("claude-haiku-5-5", 100_001), "claude-haiku-5-5" + pricing.LONG_PROMPT_SUFFIX)
+        self.assertEqual(k("claude-haiku-5-5-20261101", 150_000),
+                         "claude-haiku-5-5-20261101" + pricing.LONG_PROMPT_SUFFIX)
+        # 1M context at standard price on every other current model: never split.
+        self.assertEqual(k("claude-opus-5-5", 900_000), "claude-opus-5-5")
+        self.assertEqual(k("claude-haiku-4-5-20251001", 150_000), "claude-haiku-4-5-20251001")
+
+    def test_dated_snapshot_id_falls_back_to_its_dateless_row(self):
+        toks = {"input": 1_000_000, "output": 0, "cache_write_5m": 0, "cache_write_1h": 0, "cache_read": 0}
+        c = pricing.cost({"claude-haiku-5-5-20261101": dict(toks),
+                          "claude-haiku-5-5-20261101" + pricing.LONG_PROMPT_SUFFIX: dict(toks)})
+        self.assertEqual(c["missing_models"], [])
+        self.assertAlmostEqual(c["total"], 0.10 + 0.50, places=6)
+
     def test_unknown_model_is_null_and_listed(self):
         c = pricing.cost({"claude-opus-4-8": {"input": 1_000_000, "output": 0,
                                               "cache_write_5m": 0, "cache_write_1h": 0, "cache_read": 0},
@@ -181,6 +219,40 @@ class PricingTest(unittest.TestCase):
         self.assertIn("claude-made-up-9", c["missing_models"])
         # the known model still sums (5.0), the unknown does not zero the whole total.
         self.assertAlmostEqual(c["total"], 5.0, places=6)
+
+
+class LongPromptTest(unittest.TestCase):
+    """Haiku 5.5 is priced per REQUEST by prompt length: parse files each request under the
+    short or the long-prompt key on its own prompt, never on the run's totals."""
+
+    def _line(self, mid, inp, read, cw5, out):
+        return json.dumps({"type": "assistant", "uuid": mid, "sessionId": "s",
+                           "timestamp": "2026-11-28T01:27:00.000Z",
+                           "message": {"id": mid, "model": "claude-haiku-5-5", "content": [],
+                                       "usage": {"input_tokens": inp, "cache_read_input_tokens": read,
+                                                 "cache_creation_input_tokens": cw5,
+                                                 "output_tokens": out}}})
+
+    def test_requests_split_on_their_own_prompt(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, "s.jsonl")
+            with open(path, "w") as fh:
+                # 60K prompt -> short row; 80K read + 30K write = 110K -> long row. The two
+                # together (170K) must not move the first request onto the long row.
+                fh.write(self._line("m1", 1_000, 50_000, 9_000, 200) + "\n")
+                fh.write(self._line("m2", 1_000, 80_000, 30_000, 400) + "\n")
+            m = transcript.parse(path, routine="watch")
+        short = m["models"]["claude-haiku-5-5"]
+        long_ = m["models"]["claude-haiku-5-5" + pricing.LONG_PROMPT_SUFFIX]
+        self.assertEqual((short["messages"], short["cache_read"], short["output"]), (1, 50_000, 200))
+        self.assertEqual((long_["messages"], long_["cache_read"], long_["output"]), (1, 80_000, 400))
+        self.assertEqual(m["messages"], 2)
+        self.assertEqual(m["totals"]["cache_read"], 130_000)
+        c = pricing.cost(m["models"])
+        want = (1_000 * 0.10 + 50_000 * 0.01 + 9_000 * 0.125 + 200 * 0.50
+                + 1_000 * 0.50 + 80_000 * 0.05 + 30_000 * 0.625 + 400 * 2.50) / 1e6
+        self.assertAlmostEqual(c["total"], want, places=9)
+        self.assertEqual(c["missing_models"], [])
 
 
 if __name__ == "__main__":

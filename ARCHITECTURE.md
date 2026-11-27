@@ -26,7 +26,7 @@
 ║  │  • Science (non-AI, weekly)   0 17 * * 3     _posts/{d}-science.md               │   ║
 ║  │  • Weekend Deep Read          30 9 * * 6     _posts/{d}-weekend.md              │   ║
 ║  │  • Sports (claude-sonnet-5-5) 0 9 * * 1      _posts/{d}-sports.md                │   ║
-║  │  WATCH (claude-haiku-4-5)     27 2-22/4 * * * pending-notifications/             │   ║
+║  │  WATCH (claude-haiku-5-5)     27 2-22/4 * * * pending-notifications/             │   ║
 ║  │      reads watches.yml → on match writes stub + updates last_fired              │    ║
 ║  │  EVALUATOR (claude-opus-5-5)  30 11 * * 0     _posts/{d}-evaluator.md           │   ║
 ║  │  ⮑ all triggers (except Watch) are BOOTSTRAP SHIMS → git pull + read              │   ║
@@ -143,6 +143,17 @@
 > `ethz.ch`/`epfl.ch`/`psi.ch` (they publish AI research and the desk had no institutional Swiss
 > route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
 > `hklaw.com`, `macrumors.com`, `wtvbam.com`.
+>
+> **Changed 2026-11-28: Watch on Claude Haiku 5.5.** Watch's `session_context.model` moved
+> `claude-haiku-4-5` → `claude-haiku-5-5`, the current Haiku (list price $0.10 / $0.50 per MTok,
+> against $1 / $5 for Haiku 4.5); a quiet tick is two requests of about 50K prompt tokens each.
+> Every other routine already ran the newest model of its line (Opus 5.5; Sports on Sonnet 5.5).
+> `tools/usage/pricing.py`, checked against the pricing page the same day, gains Haiku 5.5 and
+> Fable 5.2, and Sonnet 5.5's cache read drops to its 0.05x rate ($0.10; the table had $0.20).
+> Haiku 5.5 bills a higher row for any request whose prompt is over 100K tokens, so
+> `transcript.parse` files such a request under `claude-haiku-5-5 (long prompt)`, decided per
+> request; a dated snapshot id falls back to its dateless row. Records already in `index/usage`
+> keep the cost they were written with.
 >
 > **Changed 2026-11-27: the 2026-10-04..11-22 review backlog applied, and the registry made
 > self-maintaining.** Eight weekly reviews had re-proposed the same items; an audit checked each

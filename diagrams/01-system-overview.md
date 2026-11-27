@@ -9,7 +9,7 @@ flowchart TB
   subgraph cloud["Anthropic Cloud · routines · env_018zypSdRSdGdrZ8J5usqCWA"]
     direction TB
     W["Writers — claude-opus-5-5 (Sports: claude-sonnet-5-5)<br/>News · AI/ML · Science · Weekend · Sports<br/>Write _posts/{date}-{slug}.md"]
-    WA["Watch — claude-opus-5-5<br/>reads watches.yml every 4h<br/>writes pending-notifications/*.json"]
+    WA["Watch — claude-haiku-5-5<br/>reads watches.yml every 4h<br/>writes pending-notifications/*.json"]
     EV["Weekly Evaluator — claude-opus-5-5<br/>reads 7d of _posts + feedback/*.jsonl<br/>writes _posts/{date}-evaluator.md"]
     step["per run: clone → git pull → curl/WebFetch + MCP → Write → commit → push main"]
   end

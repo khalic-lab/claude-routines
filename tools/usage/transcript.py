@@ -19,11 +19,19 @@ Two shapes of the file matter and are handled here:
 Only `type == "assistant"` lines whose `message.model` is a real string (not `"<synthetic>"`)
 and not `isApiErrorMessage` are counted. Metadata (session id, routine, edition, timing)
 comes from the main transcript only.
+
+A model priced by prompt length (Claude Haiku 5.5) gets a second `models` key for the
+requests whose own prompt is over its threshold -- `pricing.usage_key()` -- so the record
+can be costed per request rather than on run totals.
 """
 import glob
 import json
 import os
 import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pricing as _pricing  # noqa: E402  (same directory; record.py imports it the same way)
 
 
 # Routine prompt paths (in the run's first user message) -> slug.
@@ -238,7 +246,8 @@ def parse(path, routine=None):
     totals = {k: 0 for k in _TOKEN_KEYS}
     server_tools = {k: 0 for k in _SERVER_KEYS}
     for rec in by_id.values():
-        model = rec["model"]
+        prompt = rec["input"] + rec["cache_read"] + rec["cache_write_5m"] + rec["cache_write_1h"]
+        model = _pricing.usage_key(rec["model"], prompt)
         slot = models.get(model)
         if slot is None:
             slot = {k: 0 for k in _TOKEN_KEYS}
