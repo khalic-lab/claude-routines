@@ -26,7 +26,7 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 
-API = "http://export.arxiv.org/api/query"
+API = "https://export.arxiv.org/api/query"
 NS = {"a": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom",
       "os": "http://a9.com/-/spec/opensearch/1.1/"}
 RETRY_WAIT_S = 10

@@ -128,7 +128,7 @@ Tag counts per stream are in `health.json` → `briefs.by_stream.<slug>.tags` �
 **Identity integrity (deterministic; added 2026-07-10):** run `python3 tools/store/reconcile.py --root .` and read its output. Any `RECONCILE: flagged` or `RECONCILE: edition file missing` line means a story id in a publish event is absent from its edition's index file — the anchor/feedback target and the dedup-canonical id have forked (the 2026-07-07 Cuba defect class). Report every flagged sid in the review; `resolved-by-merge` lines are informational.
 
 ## J. Cross-week trend (if previous review exists)
-Write the trend once, in the "Cross-week trend" section of the output (source diversity, T1 share, T3 leakage, aggregator citations, section vitality, via-snippet and direct-fetch rates); §J has no separate subsection.
+Write the trend once, in the "Cross-week trend" section of the output (source diversity, T1 share, T3 leakage, aggregator citations, section vitality, via-snippet and direct-fetch rates); §J has no separate subsection. **Method break on 2026-11-27:** 61 domains moved from `outlet` to `institutional`/`hub` (top-5 outlet share and the outlet cap shift with them), T1 share is computed from the footers for the first time, 101 entries went `reach: proxy` and 100 were promoted. Mark the first review after that date as a method break in the trend, not as a regression or a recovery.
 
 ## K. Feed reachability and direct-fetch rate (binding-constraint metric; computed — read, don't recount)
 
