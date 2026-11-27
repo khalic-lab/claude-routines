@@ -80,9 +80,16 @@ def _waiver_counts(root, slug, today):
     return waived, editions
 
 
-def _candidates_open(root, slug):
+def _candidates_open(root, slug, reg=None):
+    """Unfolded buffer lines for the stream PLUS registry entries still at status candidate.
+    The buffer alone is always empty here: publish runs registry-sync (which truncates it)
+    before source-health, so the buffer-only count read 0 for every stream on every run."""
     path = os.path.join(root, "sources", "candidates.jsonl")
-    return sum(1 for r in registry.read_jsonl(path) if r.get("stream") == slug)
+    buffered = sum(1 for r in registry.read_jsonl(path) if r.get("stream") == slug)
+    registered = sum(1 for e in (reg or {}).values()
+                     if isinstance(e, dict) and e.get("status") == "candidate"
+                     and slug in (e.get("streams") or []))
+    return buffered + registered
 
 
 def compute_stream_metrics(root, slug, all_records, today, reg=None):
@@ -135,7 +142,7 @@ def compute_stream_metrics(root, slug, all_records, today, reg=None):
         "top5_share": round(top5_share, 4),
         "saturated": saturated,
         "waiver_rate": round(waived / editions, 4) if editions else 0.0,
-        "candidates_open": _candidates_open(root, slug),
+        "candidates_open": _candidates_open(root, slug, reg),
     }
 
 

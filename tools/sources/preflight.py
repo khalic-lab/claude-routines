@@ -37,6 +37,9 @@ CLUSTER_MIN_SHARE = 0.03
 # reach values where neither curl nor the proxy is expected to work: the plan says so on the line,
 # and such a domain is never offered as a discovery anchor (a quota anchor has to be fetched).
 SNIPPET_ONLY_REACH = {"blocked", "blocked-paywall", "search-only"}
+# candidates_to_try is a short list to act on, not the registry. The window rotates by date so
+# every entry on file surfaces within a few editions instead of the same alphabetical 20.
+CANDIDATES_SHOWN = 20
 
 EMERGENCY_FLOOR = """## Fetch list
 source-plan unavailable -- degrading to the emergency slate (SRF, LeTemps, Al Jazeera, arXiv,
@@ -136,7 +139,7 @@ def last_cited_index(root):
     return last
 
 
-def build_discovery_section(slug, reg, root="."):
+def build_discovery_section(slug, reg, root=".", today=None):
     lines = ["## Discovery"]
     quota = QUOTA[slug]
     non_hub_note = " (non-hub)" if slug == "ai-ml" else ""
@@ -169,8 +172,18 @@ def build_discovery_section(slug, reg, root="."):
     if not candidates:
         lines.append("- candidates_to_try: none on file for %s." % slug)
     else:
-        for domain, status, last_cited in sorted(candidates):
+        candidates.sort()
+        shown = candidates
+        if len(candidates) > CANDIDATES_SHOWN:
+            import datetime
+            day = (today or datetime.datetime.now(datetime.timezone.utc).date()).toordinal()
+            start = (day * CANDIDATES_SHOWN) % len(candidates)
+            shown = (candidates + candidates)[start:start + CANDIDATES_SHOWN]
+        for domain, status, last_cited in shown:
             lines.append("- candidates_to_try: %s (%s, last_cited=%s)" % (domain, status, last_cited))
+        if len(candidates) > CANDIDATES_SHOWN:
+            lines.append("- candidates_to_try: +%d more on file (the window rotates daily)."
+                         % (len(candidates) - CANDIDATES_SHOWN))
     return "\n".join(lines)
 
 

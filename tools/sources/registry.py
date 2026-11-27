@@ -713,6 +713,37 @@ def cmd_sync(args):
             reg[domain]["last_cited"] = date
             folded += 1
 
+    # Earned promotion from citation history -- ARCHITECTURE.md (2026-08-07 note): candidates
+    # enter "so preflight surfaces them and the lifecycle promotes them on real citations", but
+    # nothing did. A candidate the live index shows cited becomes probation; >= ESTABLISHED_MIN_
+    # CITATIONS live citations in the index window make it established (bootstrap's own bar).
+    # Promote-only and a pure function of the index, so re-running is a no-op; demotion and
+    # retirement stay human/evaluator judgment. The note is count-free on purpose: two editions
+    # promoting the same domain the same day then write identical lines, which merge.
+    cited = {}
+    for rec in load_story_records(root):
+        d = rec.get("source_domain")
+        if d in reg and rec.get("stream") in LIVE_STREAMS:
+            cited[d] = cited.get(d, 0) + 1
+    promoted = 0
+    for domain in sorted(cited):
+        entry = reg[domain]
+        if not isinstance(entry, dict):
+            continue
+        status = entry.get("status")
+        if status not in ("candidate", "probation"):
+            continue  # established stays; demoted/retired are judgment calls, never undone here
+        to = "established" if cited[domain] >= ESTABLISHED_MIN_CITATIONS else "probation"
+        if to == status:
+            continue
+        entry["status"] = to
+        if domain in fresh:
+            entry["lifecycle"][-1]["status"] = to  # entered and earned in one run: one audit line
+        else:
+            lifecycle_append(entry, today, "promoted", status=to,
+                             note="earned on live citations in the index window")
+        promoted += 1
+
     # No-op guard (2026-07-18): sync runs on EVERY edition since the publish-tail
     # rollout, but the SPIKE's write-contention design assumed only the low-frequency
     # Evaluator rewrites registry.yml. When nothing folded, leave the YAML untouched --
@@ -722,7 +753,7 @@ def cmd_sync(args):
     # entry provably folded to nothing (candidate already registered, last_cited not
     # newer), and leaving them would inflate candidates_open in source-health forever.
     flipped = auto_reach_flips(root, reg, today)
-    if added == 0 and folded == 0 and not flipped:
+    if added == 0 and folded == 0 and promoted == 0 and not flipped:
         purged = 0
         for p in (candidates_path, last_cited_path):
             if os.path.exists(p) and os.path.getsize(p) > 0:
@@ -739,8 +770,9 @@ def cmd_sync(args):
         if os.path.exists(p):
             open(p, "w").close()  # truncate, not delete -- sync is idempotent on empty files
 
-    print("sync: %d new candidate(s), %d last_cited fold(s), %d auto reach flip(s)%s"
-          % (added, folded, len(flipped), (" (" + ", ".join(flipped) + ")") if flipped else ""))
+    print("sync: %d new candidate(s), %d last_cited fold(s), %d promotion(s), %d auto reach flip(s)%s"
+          % (added, folded, promoted, len(flipped),
+             (" (" + ", ".join(flipped) + ")") if flipped else ""))
     return 0
 
 
