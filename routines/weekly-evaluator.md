@@ -105,6 +105,12 @@ Per stream from `_data/source-health.json` (also embedded verbatim in `health.js
 
 **Reading surface.** The homepage feed is the only place a reader sees a story. Run `python3 tools/evaluator/surface.py` (read-only, no network: it parses `_posts/` with the feed builder's own parser and compares against the committed `_data/homefeed.json`). It prints, per edition, stories in the post / records kept in the index / cards on the feed / kept records that reached no card, then `FLAG` lines: `PARITY` (a kept record reached no card), `WARN` (no prose parsed — the card shows only its lede), `SHORT` (a desk's newest edition shows fewer cards than its floor), `OVERDUE` (a desk's newest edition is older than its cadence), `STALE-FEED`. Paste its summary line and every FLAG. Fewer cards than stories on an OLDER edition is the builder's age-out/cap, not a finding. Your judgment: for each PARITY/WARN, read the post and say whether the writer broke the format contract or the parser missed a legal shape (the latter is a builder defect — name the shape); for OVERDUE, cross-check the cadence note above before calling a desk dead. If the script prints `surface: unavailable`, say so and spot-check the feed against the newest post by hand.
 
+**Rendered page (best effort; do it last in §D, after everything above).** A GitHub Actions job screenshots the live homepage every Sunday at 06:00 UTC and force-pushes the result to the `visual` branch: `capture.json` and six JPEGs (`phone-*` 390px wide, `desktop-*` 1280px; light and dark, top of the page; the light ones also one screen down as `*-2.jpg`). Fetch it with:
+
+    git fetch -q --depth 1 origin visual && mkdir -p /tmp/visual && for f in $(git ls-tree --name-only FETCH_HEAD); do git show "FETCH_HEAD:$f" > "/tmp/visual/$f"; done
+
+Read `/tmp/visual/capture.json`, then open each image with the Read tool. If `captured_at` is more than two days old, or `pages_build.commit` is not among the last three days of `main`, say the capture is stale and weigh it as such. Report at most three faults a reader would notice: overlapping or clipped text, an empty or broken region, a missing image, dark-mode text you cannot read, sideways scroll (`metrics.overflow_x` > 0), the newest edition missing from the top; add any `console_errors` / `failed_requests` (counts and the first sample). "Rendered page: clean" is a valid result. If the fetch fails or the branch is missing, write "rendered page: capture unavailable" and move on — this step never delays or blocks the rest of the review.
+
 ## E. Coverage gap recurrence
 Read the "Gaps" footer from each brief. Cluster recurring gaps. ≥3 times = structural. Flag and propose source additions.
 
@@ -204,6 +210,7 @@ _Files read: N news, N AI/ML (expect ~2), N science (expect ~1), N sports (expec
 | Single-source rate (portfolio)  |       | <20%   | 🟢🟡🔴 |
 | Empty section instances         |       | <5     | 🟢🟡🔴 |
 | Reading-surface flags (§D, surface.py) |  | 0      | 🟢🟡🔴 |
+| Rendered-page faults (§D, visual capture) | | 0   | 🟢🟡🔴⚪ |
 | Repeat rate (worst stream, health.json) |  | judge  | 🟢🟡🔴 |
 | Direct-fetch ratio (portfolio)  |       | ≥0.35  | 🟢🟡🔴 |
 | Feeds walled (briefs.feeds_walled) |    | 0      | 🟢🟡🔴 |

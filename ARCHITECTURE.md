@@ -144,6 +144,17 @@
 > route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
 > `hklaw.com`, `macrumors.com`, `wtvbam.com`.
 >
+> **Changed 2026-11-28: a weekly look at the rendered page.** `.github/workflows/visual-capture.yml`
+> (the repo's first Actions workflow) runs `tools/verify/capture.mjs` every Sunday at 06:00 UTC:
+> six JPEGs of the live homepage (phone 390px and desktop 1280px, light and dark) and a
+> `capture.json` with the Pages build it shows, overflow, broken images, console errors and failed
+> requests. It force-pushes them to the `visual` branch as one commit, so `main` gets no binaries
+> and no Pages build. The capture is read-only (non-GET requests are aborted and listed). The
+> Weekly Evaluator fetches the branch as the last, best-effort step of §D, views the images and
+> reports up to three faults a reader would notice, or "capture unavailable". (The workflow file
+> lands in a separate commit: pushing it needs a token with GitHub's `workflow` scope. Until it
+> lands, the evaluator reports "capture unavailable".)
+>
 > **Changed 2026-11-28: one idle Watch record a day.** Six ticks a day made six usage commits on
 > `main` (160 of November's commits), each a Pages build and a bridge pull that changed nothing.
 > `transcript.watch_idle` marks a tick idle only on positive proof (`due.py` ran and printed

@@ -153,3 +153,17 @@ Screenshots go to `$SHOTS` (default `/tmp/fp-shots`). Narrow a run with `WIDTHS=
 **Not covered here:** Safari's floating tab bar and real passkeys. Headless WebKit has no browser
 chrome, so those need the iPhone simulator (`?probe=1` prints the viewport numbers on the page)
 and a real phone on the production origin.
+
+## capture.mjs (weekly, against the live site)
+
+`.github/workflows/visual-capture.yml` runs it every Sunday at 06:00 UTC and force-pushes the
+result to the `visual` branch (never `main`): `capture.json` plus six JPEGs of the live
+homepage, phone 390px and desktop 1280px, light and dark. The Weekly Evaluator reads them in
+§D ("Rendered page"). The capture is read-only: no clicks, and every request that is not
+GET/HEAD/OPTIONS is aborted and listed, so it never writes to a Worker. To run it by hand:
+
+```sh
+cd tools/verify && npm ci
+node capture.mjs --out /tmp/visual --channel chrome   # your installed Chrome; CI uses Playwright's
+gh workflow run visual-capture.yml                    # or trigger the CI job
+```
