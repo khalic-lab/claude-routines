@@ -155,31 +155,76 @@ def _aggregate(lines):
     return by_id, tool_calls
 
 
-_PY_SCRIPT = re.compile(r"([A-Za-z0-9_.-]+\.py)\b")
 _SEGMENT_SPLIT = re.compile(r"[;&|\n]+")
-_SKIP_WORDS = {"export", "cd", "set", "mkdir", "then", "do", "done", "fi", "else", "{", "}", "("}
+_SKIP_WORDS = {"export", "cd", "set", "mkdir", "then", "do", "done", "fi", "else", "elif", "for",
+               "while", "until", "if", "case", "esac", "in", "time", "!", "{", "}"}
+_INTERPRETER = re.compile(r"^(python[0-9.]*|bash|sh|zsh|node|ruby|perl)$")
+_SCRIPT = re.compile(r"^[A-Za-z0-9_.-]+\.(py|sh|mjs|js)$")  # matched on the basename
+_WORD = re.compile(r"^[A-Za-z0-9_.-]+$")
+_HEREDOC = re.compile(r"<<-?\s*['\"]?([A-Za-z_][A-Za-z0-9_]*)['\"]?")
+
+
+def _command_lines(cmd):
+    """The shell's own lines: backslash continuations joined, heredoc bodies dropped (they
+    are data, e.g. a script's source)."""
+    lines, ends = [], []
+    for line in cmd.replace("\\\n", " ").split("\n"):
+        if ends:
+            if line.strip() == ends[0]:
+                ends.pop(0)
+            continue
+        lines.append(line)
+        ends.extend(_HEREDOC.findall(line))
+    return lines
+
+
+def _segment_label(words):
+    """(script, command) for one simple command whose leading assignments are gone: the
+    script an interpreter runs, or a script run directly, else the command word itself."""
+    head = os.path.basename(words[0])
+    if _SCRIPT.match(head):
+        return head, head
+    if _INTERPRETER.match(head):
+        rest = words[1:]
+        while rest and rest[0].startswith("-"):
+            flag = rest.pop(0)
+            if flag in ("-c", "-"):
+                return None, head  # inline code: nothing to name
+            if flag == "-m" and rest and _WORD.match(rest[0]):
+                return rest[0], head
+        if rest and _SCRIPT.match(os.path.basename(rest[0])):  # `$S/titles.py` -> titles.py
+            return os.path.basename(rest[0]), head
+    return None, head if _WORD.match(head) else None
 PROFILE_TOP = 12
 
 
 def tool_label(name, tool_input):
     """A SAFE label for one tool call: the tool name, plus for Bash the basenames of the
-    Python scripts it runs (else its first command word) and for Read the file's basename.
-    Never arguments: writer commands carry the fetch-proxy bearer in an `export`."""
+    scripts it runs (else its first command word) and for Read the file's basename.
+    Only a command word or the script an interpreter runs can become a label, never an
+    argument: writer commands carry the fetch-proxy bearer in an `export`, and URLs and
+    paths in their arguments."""
     tool_input = tool_input if isinstance(tool_input, dict) else {}
     if name == "Bash":
         cmd = tool_input.get("command") if isinstance(tool_input.get("command"), str) else ""
-        scripts = sorted(set(_PY_SCRIPT.findall(cmd)))
+        scripts, first = set(), None
+        for line in _command_lines(cmd):
+            for seg in _SEGMENT_SPLIT.split(line):
+                words = seg.replace("(", " ").replace(")", " ").split()
+                while words and ("=" in words[0] or words[0] in _SKIP_WORDS):
+                    if words[0] in ("export", "cd", "set", "mkdir", "case", "in", "for"):
+                        words = []  # `cd DIR`, `export X=...`, `for V in LIST`: no command here
+                        break
+                    words.pop(0)  # leading VAR=value, `if`, `for`, `do`, `time` ...
+                if not words:
+                    continue
+                script, command = _segment_label(words)
+                if script:
+                    scripts.add(script)
+                first = first or command
         if scripts:
-            return ("Bash " + "+".join(scripts))[:60]
-        for seg in _SEGMENT_SPLIT.split(cmd):
-            words = [w for w in seg.split()]
-            while words and "=" in words[0]:  # leading VAR=value assignments
-                words.pop(0)
-            if not words or words[0] in _SKIP_WORDS:  # `cd DIR`, `export X=…`: skip the segment
-                continue
-            if re.match(r"^[A-Za-z0-9_./-]+$", words[0]):
-                return ("Bash " + os.path.basename(words[0]))[:60]
-        return "Bash"
+            return ("Bash " + "+".join(sorted(scripts)))[:60]
+        return ("Bash " + first)[:60] if first else "Bash"
     if name == "Read" and isinstance(tool_input.get("file_path"), str):
         return ("Read " + os.path.basename(tool_input["file_path"]))[:60]
     return name or "unknown"

@@ -10,13 +10,16 @@ cache and re-read on every later turn. These two commands do the same job determ
   feeds.py titles [--hours H | --since ISO] [--max N] FILE...
       One line per feed item: `YYYY-MM-DD HH:MM | title | url`, newest first, items older
       than the window dropped. An item with no parsable date is KEPT and shown as `undated`
-      (a feed without dates must not vanish). Tracking parameters are stripped from URLs.
-      Reads RSS 2.0, Atom, RSS 1.0/RDF and JSON Feed. A header line per file gives
+      (a feed without dates must not vanish). Known tracking parameters (utm_*, fbclid, ...)
+      are dropped from URLs; everything else, fragment included, is kept as written. Reads
+      RSS 2.0, Atom, RSS 1.0/RDF (HTML entities such as &nbsp; tolerated), JSON Feed and a
+      bare JSON array of posts (WordPress REST). A header line per file gives
       `== NAME: kept/total in window`.
 
   feeds.py text [--max CHARS] FILE
       The article's readable text: <article>, else <main>, else <body>, without script,
-      style, nav, footer, aside, form and menu chrome. When that comes back shorter
+      style, nav, footer, aside, form and menu chrome. An <article> or <main> is read even
+      inside a wrapper whose class looks like chrome. When that comes back shorter
       than 400 characters (an unusual layout), it falls back to the whole page's text, so a
       page is never silently emptied. Output is capped at --max (default 6000) with a
       `[... cut at N of M characters]` marker.
@@ -27,6 +30,7 @@ import argparse
 import datetime as dt
 import email.utils
 import html
+import html.entities
 import html.parser
 import json
 import os
@@ -35,23 +39,30 @@ import sys
 import urllib.parse
 import xml.etree.ElementTree as ET
 
+# Only names that are tracking everywhere. `ref`, `src`, `feed` or `rss` can select the page
+# itself (?feed=rss2, ?src=...), so they stay.
 _TRACKING = re.compile(r"^(utm_[a-z]+|traffic_source|at_[a-z_]+|cmpid|ns_[a-z]+|ito|xtor|"
-                       r"fbclid|gclid|mc_[a-z]+|ref|rss|feed|ocid|src)$", re.I)
+                       r"fbclid|gclid|mc_[a-z]+|ocid)$", re.I)
 
 
 def clean_url(url):
-    """Drop tracking query parameters and fragments; keep everything else as written."""
+    """Drop known tracking query parameters. Every other byte stays as written: the other
+    parameters (even `?12345` with no `=`), their encoding and order, and the fragment (a
+    `#/article/99` route is the page)."""
     url = (url or "").strip()
     try:
         parts = urllib.parse.urlsplit(url)
     except ValueError:
         return url
-    if not parts.query and not parts.fragment:
+    if not parts.query:
         return url
-    q = [(k, v) for k, v in urllib.parse.parse_qsl(parts.query, keep_blank_values=True)
-         if not _TRACKING.match(k)]
-    return urllib.parse.urlunsplit((parts.scheme, parts.netloc, parts.path,
-                                    urllib.parse.urlencode(q), ""))
+    segs = parts.query.split("&")
+    kept = [seg for seg in segs
+            if seg and not _TRACKING.match(urllib.parse.unquote_plus(seg.split("=", 1)[0]))]
+    if kept == segs:
+        return url
+    return urllib.parse.urlunsplit((parts.scheme, parts.netloc, parts.path, "&".join(kept),
+                                    parts.fragment))
 
 
 def parse_date(s):
@@ -80,8 +91,26 @@ def _text(el):
     return re.sub(r"\s+", " ", html.unescape("".join(el.itertext()))).strip() if el is not None else ""
 
 
+_XML_ENTITIES = {b"amp", b"lt", b"gt", b"quot", b"apos"}
+
+
+def _html_entities_to_xml(raw):
+    """&nbsp; &eacute; ... are HTML, not XML; many feeds use them anyway. Turn each into a
+    numeric reference (an unknown name into literal text) so the feed parses."""
+    def repl(m):
+        name = m.group(1)
+        if name in _XML_ENTITIES:
+            return m.group(0)
+        cp = html.entities.name2codepoint.get(name.decode("ascii"))
+        return b"&#%d;" % cp if cp else b"&amp;" + name + b";"
+    return re.sub(rb"&([A-Za-z][A-Za-z0-9]*);", repl, raw)
+
+
 def _items_xml(raw):
-    root = ET.fromstring(raw)
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError:
+        root = ET.fromstring(_html_entities_to_xml(raw))
     out = []
     for el in root.iter():
         if _local(el.tag) not in ("item", "entry"):
@@ -107,13 +136,28 @@ def _items_xml(raw):
     return out
 
 
+def _str(v):
+    """A JSON field as text: WordPress REST nests it ({"rendered": "..."}) and may put HTML in it."""
+    if isinstance(v, dict):
+        v = v.get("rendered") or v.get("text") or ""
+    if v is None or isinstance(v, (list, dict, bool)):
+        return ""
+    return html.unescape(re.sub(r"<[^>]+>", "", str(v)))
+
+
 def _items_json(raw):
+    """JSON Feed ({"items": [...]}) or a bare array of posts (WordPress /wp-json/wp/v2/posts)."""
     data = json.loads(raw)
+    items = data if isinstance(data, list) else (data.get("items") if isinstance(data, dict) else None)
+    if not isinstance(items, list):
+        raise ValueError("no item list")
     out = []
-    for it in data.get("items") or []:
+    for it in items:
         if isinstance(it, dict):
-            out.append((it.get("title") or "", it.get("url") or it.get("external_url") or "",
-                        it.get("date_published") or it.get("date_modified") or ""))
+            out.append((_str(it.get("title")),
+                        _str(it.get("url") or it.get("external_url") or it.get("link")),
+                        _str(it.get("date_published") or it.get("date_modified")
+                             or it.get("date_gmt") or it.get("date"))))
     return out
 
 
@@ -136,8 +180,8 @@ def cmd_titles(a):
         name = os.path.splitext(os.path.basename(path))[0]
         try:
             items = read_items(path)
-        except (OSError, ValueError) as exc:
-            print("== %s: unreadable -- %s" % (name, exc))
+        except Exception as exc:  # one odd file must not end the sweep over the rest
+            print("== %s: unreadable -- %s" % (name, str(exc).split("\n")[0][:120]))
             continue
         kept = [i for i in items if i[2] is None or since is None or i[2] >= since]
         kept.sort(key=lambda i: i[2] or now, reverse=True)
@@ -159,55 +203,77 @@ _BLOCK = {"p", "div", "section", "article", "main", "li", "h1", "h2", "h3", "h4"
 _CHROME = re.compile(r"(^|[\s_-])(menu|nav|navigation|cookie|consent|banner|share|social|related|"
                      r"newsletter|subscribe|breadcrumb|footer|sidebar|promo|advert|paywall|"
                      r"contentinfo|complementary)([\s_-]|$)", re.I)
+# Class tokens that describe the CONTENT or the layout, not a chrome block: WordPress puts
+# tag-<slug> / category-<slug> on the article and body (tag-social-media), themes put
+# no-sidebar / has-sidebar on the page wrapper.
+_NOT_CHROME = re.compile(r"^(tag|category|no|not|without|has|is|with)[-_]", re.I)
+# Never skipped for a class or id: they ARE the regions (the article's own classes are
+# taxonomy), and an <article> or <main> inside a chrome-looking wrapper is still read.
+_STRUCTURAL = {"html", "body", "main", "article"}
 _VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source",
          "track", "wbr"}
 
 
+def _looks_like_chrome(attrs):
+    tokens = [t for key in ("class", "id") for t in (attrs.get(key) or "").split()
+              if not _NOT_CHROME.match(t)]
+    if attrs.get("role"):
+        tokens.append(attrs["role"])
+    return any(_CHROME.search(t) for t in tokens)
+
+
 class _Extract(html.parser.HTMLParser):
-    """Collects text per region (article / main / body), skipping chrome subtrees."""
+    """Collects text per region (article / main / body), skipping chrome subtrees.
+
+    Each open element carries a skip state: None (read), "tag" (script, nav, aside, hidden...:
+    skipped with everything inside), or "class" (a chrome-looking class or id: skipped, except
+    that an <article> or <main> inside it is read)."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
-        self.stack = []     # open tags, for skip-depth bookkeeping
-        self.skip = 0       # depth inside a skipped subtree
+        self.stack = []     # (tag, skip state, region it opened or None)
         self.regions = {"article": [], "main": [], "body": []}
         self.open = {"article": 0, "main": 0, "body": 0}
 
+    def _skip(self):
+        return self.stack[-1][1] if self.stack else None
+
     def handle_starttag(self, tag, attrs):
         if tag in _VOID:
-            if tag == "br":
+            if tag == "br" and self._skip() is None:
                 self._emit("\n")
             return
         attrs = dict(attrs)
-        chrome = _CHROME.search(" ".join(filter(None, (attrs.get("class"), attrs.get("id"),
-                                                       attrs.get("role")))))
-        hidden = attrs.get("aria-hidden") == "true" or "hidden" in attrs
-        self.stack.append(tag)
-        if self.skip or tag in _SKIP or chrome or hidden:
-            self.skip += 1
-            return
-        if tag in self.open:
-            self.open[tag] += 1
-        if tag in _BLOCK:
+        parent = self._skip()
+        if parent == "tag" or tag in _SKIP or attrs.get("aria-hidden") == "true" or "hidden" in attrs:
+            state = "tag"
+        elif tag in _STRUCTURAL:
+            state = None
+        elif parent == "class" or _looks_like_chrome(attrs):
+            state = "class"
+        else:
+            state = None
+        region = tag if state is None and tag in self.open else None
+        self.stack.append((tag, state, region))
+        if region:
+            self.open[region] += 1
+        if state is None and tag in _BLOCK:
             self._emit("\n")
 
     def handle_endtag(self, tag):
-        if tag in _VOID or tag not in self.stack:
+        if tag in _VOID or all(t != tag for t, _, _ in self.stack):
             return
         while self.stack:  # close up to the matching tag (tolerates unclosed children)
-            t = self.stack.pop()
-            if self.skip:
-                self.skip -= 1
-            else:
-                if t in self.open and self.open[t]:
-                    self.open[t] -= 1
-                if t in _BLOCK:
-                    self._emit("\n")
+            t, state, region = self.stack.pop()
+            if state is None and t in _BLOCK:
+                self._emit("\n")
+            if region:
+                self.open[region] -= 1
             if t == tag:
                 break
 
     def handle_data(self, data):
-        if not self.skip:
+        if self._skip() is None:
             self._emit(data)
 
     def _emit(self, s):

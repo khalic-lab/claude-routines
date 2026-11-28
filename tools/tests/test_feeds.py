@@ -1,13 +1,16 @@
 """Spec tests for tools/feeds.py (writer-side feed listing and article text).
 
-Contract: `titles` lists RSS 2.0 / Atom / RDF / JSON Feed items newest first, drops items
-older than the window, KEEPS undated items, strips tracking parameters, and reports an
-unreadable file instead of failing; `text` returns <article> > <main> > <body> text without
-chrome, keeps an article's own <header> headline, falls back to whole-page text when the
-cleaned region is short, and marks a cut.
+Contract: `titles` lists RSS 2.0 / Atom / RDF / JSON Feed / WordPress-REST items newest
+first, drops items older than the window, KEEPS undated items, strips only known tracking
+parameters (fragment and other parameters kept byte for byte), tolerates HTML entities in
+XML, and reports an unreadable file instead of failing -- the rest of the sweep still runs;
+`text` returns <article> > <main> > <body> text without chrome, keeps an article's own
+<header> headline, never drops an article for its taxonomy classes or a chrome-looking
+wrapper, falls back to whole-page text when the cleaned region is short, and marks a cut.
 """
 import contextlib
 import io
+import json
 import os
 import sys
 import tempfile
@@ -65,7 +68,7 @@ class TitlesTest(unittest.TestCase):
         self.assertEqual(rc, 0)
         lines = out.splitlines()
         self.assertEqual(lines[0], "== srf: 2/3 in window")
-        self.assertIn("2026-11-27 10:00 | Fresh story | https://ex.org/a?id=7", lines)
+        self.assertIn("2026-11-27 10:00 | Fresh story | https://ex.org/a?id=7#top", lines)
         self.assertIn("undated | No date | https://ex.org/c", lines)
         self.assertNotIn("Old story", out)
 
@@ -87,6 +90,33 @@ class TitlesTest(unittest.TestCase):
         self.assertEqual(out.count("unreadable"), 2)
 
 
+    def test_clean_url_drops_only_tracking(self):
+        c = feeds.clean_url
+        for same in ("https://ex.com/#/article/99", "https://ex.org/p?12345",
+                     "https://ex.org/?feed=rss2&src=home&ref=x", "https://ex.org/a"):
+            self.assertEqual(c(same), same)
+        self.assertEqual(c("https://ex.org/a?b=%20c&fbclid=1&utm_medium=x#s"), "https://ex.org/a?b=%20c#s")
+        self.assertEqual(c("https://ex.org/?utm_source=a"), "https://ex.org/")
+
+    def test_html_entities_in_xml_feed(self):
+        rss = RSS.replace("<title>Fresh story</title>", "<title>Caf&eacute;&nbsp;news &bogus;</title>")
+        rc, out = _run(["titles", self._f("e.xml", rss)])
+        self.assertIn("| Café news &bogus; |", out)
+        self.assertNotIn("unreadable", out)
+
+    def test_wordpress_array_and_odd_files_do_not_stop_the_sweep(self):
+        wp = json.dumps([{"title": {"rendered": "WP &amp; <em>post</em>"}, "link": "https://ex.org/wp",
+                          "date_gmt": "2026-11-27T09:00:00"}])
+        files = [self._f("wp.json", wp), self._f("odd.json", '{"items": 5}'),
+                 self._f("odd2.json", '[1, "x", {"title": ["a"]}]'), self._f("srf.xml", RSS)]
+        rc, out = _run(["titles", "--since", "2026-11-26T00:00:00Z"] + files)
+        self.assertEqual(rc, 0)
+        self.assertIn("2026-11-27 09:00 | WP & post | https://ex.org/wp", out)
+        self.assertIn("== odd: unreadable", out)
+        self.assertIn("== odd2: 1/1 in window", out)
+        self.assertIn("== srf: 2/3 in window", out)  # the file after the odd ones still read
+
+
 class TextTest(unittest.TestCase):
     def test_article_without_chrome_keeps_headline(self):
         t = feeds.extract_text(ARTICLE)
@@ -94,6 +124,23 @@ class TextTest(unittest.TestCase):
         self.assertIn("They meet again on 17 December.", t)
         for chrome in ("Untermenü", "Home | World", "Related:", "Share on X", "Impressum", "var x"):
             self.assertNotIn(chrome, t)
+
+    def test_taxonomy_classes_and_chrome_wrappers_keep_the_article(self):
+        body = "Real article text. " * 40
+        wp = ('<body class="single tag-social-media"><div class="site no-sidebar"><nav>Home</nav>'
+              '<article class="post tag-social-media category-related-news"><h1>Headline</h1><p>' + body +
+              '</p><div class="share-bar">Share</div></article>'
+              '<div class="related-posts"><h3>Teaser</h3></div></div></body>')
+        t = feeds.extract_text(wp)
+        self.assertTrue(t.startswith("Headline"), t[:80])
+        self.assertIn("Real article text.", t)
+        for chrome in ("Share", "Teaser", "Home"):
+            self.assertNotIn(chrome, t)
+        genesis = ('<body><div class="content-sidebar-wrap"><main class="content"><p>' + body +
+                   '</p></main><aside>Ads</aside></div></body>')
+        t = feeds.extract_text(genesis)
+        self.assertIn("Real article text.", t)
+        self.assertNotIn("Ads", t)
 
     def test_short_region_falls_back_to_page_text(self):
         page = "<html><body><article><p>Teaser.</p></article><div>" + "Body text. " * 60 + "</div></body></html>"

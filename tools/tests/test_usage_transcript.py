@@ -239,6 +239,21 @@ class ContextProfileTest(unittest.TestCase):
         for label in (lab("Bash", {"command": cmd}), lab("WebSearch", {"query": secret})):
             self.assertNotIn(secret, label)
 
+    def test_labels_never_come_from_arguments(self):
+        # Review 2026-11-28: a .py anywhere in the command used to become the label, and a
+        # backslash continuation put an exported token on a line of its own.
+        lab = lambda c: transcript.tool_label("Bash", {"command": c})
+        secret = "s3cr3tTOKEN"
+        self.assertEqual(lab("curl -s https://www.abc.com.py/x"), "Bash curl")
+        self.assertEqual(lab("cat /home/user/private_name.py | head"), "Bash cat")
+        self.assertEqual(lab("export FETCH_PROXY_TOKEN=\\\n%s" % secret), "Bash")
+        self.assertEqual(lab("export FETCH_PROXY_TOKEN=\\\n%s\npython3 tools/fetch.py u" % secret),
+                         "Bash fetch.py")
+        self.assertEqual(lab("python3 - <<'EOF'\n%s = 1\nEOF\necho ok" % secret), "Bash python3")
+        self.assertEqual(lab("./tools/verify/build.sh && node tools/verify/suite.mjs"),
+                         "Bash build.sh+suite.mjs")
+        self.assertEqual(lab("(cd tools && python3 -m unittest discover)"), "Bash unittest")
+
     def test_growth_goes_to_the_turn_that_caused_it(self):
         def line(mid, prompt_read, out, tools):
             return {"type": "assistant", "timestamp": "2026-11-28T11:00:00Z",

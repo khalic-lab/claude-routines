@@ -2,8 +2,8 @@
 
 Contract: the schedule comes from routines/MANIFEST.md's table (Zurich wall-clock crons);
 a writer fire at least `grace` old whose `_posts/{date}-{slug}.md` is missing is overdue,
-classed lost / no-post / no-run from the usage ledger; each overdue edition is printed once
-(state file), and the state forgets editions older than 14 days.
+classed lost / no-post / no-run from the usage ledger; an overdue edition is printed until
+the bridge marks it sent (state file), and the state forgets editions older than 14 days.
 """
 import contextlib
 import datetime as dt
@@ -115,25 +115,32 @@ class OverdueTest(unittest.TestCase):
         got = freshness.overdue(self.root, self.now)
         self.assertEqual(got[0]["reason"], "no-post")
 
-    def test_main_prints_each_edition_once_and_prunes_state(self):
+    def test_main_prints_until_marked_and_mark_prunes_state(self):
+        # An edition is printed on every run until the bridge marks it (ntfy took the push),
+        # so a push lost to an ntfy error is retried instead of never sent.
         state = os.path.join(self.root, "state.json")
         with open(state, "w") as fh:
             json.dump({"news|2026-10-01": "2026-10-01T14:00:00+02:00"}, fh)
         args = ["--root", self.root, "--state", state, "--now", self.now.isoformat()]
-        out1, out2 = io.StringIO(), io.StringIO()
-        with contextlib.redirect_stdout(out1):
-            freshness.main(args)
-        with contextlib.redirect_stdout(out2):
-            freshness.main(args)
-        lines = out1.getvalue().splitlines()
+
+        def run(extra=()):
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(freshness.main(args + list(extra)), 0)
+            return out.getvalue()
+        first = run()
+        lines = first.splitlines()
         self.assertEqual(len(lines), 1)
-        title, body = lines[0].split("\t")
-        self.assertEqual(title, "Missing edition: News 2026-11-28")
+        key, title, body = lines[0].split("\t")
+        self.assertEqual((key, title), ("news|2026-11-28", "Missing edition: News 2026-11-28"))
         self.assertIn("_posts/2026-11-28-news.md", body)
-        self.assertEqual(out2.getvalue(), "")
+        self.assertEqual(run(), first, "unmarked: printed again")
         with open(state) as fh:
-            kept = json.load(fh)
-        self.assertEqual(sorted(kept), ["news|2026-11-28"])  # 10-01 is past 14 days
+            self.assertEqual(sorted(json.load(fh)), ["news|2026-10-01"], "printing records nothing")
+        self.assertEqual(run(["--mark", key]), "")
+        self.assertEqual(run(), "", "marked: silent")
+        with open(state) as fh:
+            self.assertEqual(sorted(json.load(fh)), ["news|2026-11-28"])  # 10-01 is past 14 days
 
     def test_dry_run_writes_no_state(self):
         state = os.path.join(self.root, "state.json")

@@ -32,8 +32,11 @@
 # Alerts this script sends itself (ntfy, one per problem):
 #   - Pages deploy errored / rebuild not sticking / rebuild request failed (pages_selfheal)
 #   - local edits parked in git stash (restore_stash)
-#   - git pull failing PULL_FAIL_ALERT ticks in a row (~an hour), and once when it recovers
+#   - git pull failing 6 ticks in a row (~an hour), and once when it recovers
+#   - the edition check itself failing 3 ticks in a row, and once when it recovers
 #   - a writer edition overdue (tools/health/freshness.py; once per edition)
+# Each of these counts as sent only when ntfy answers 200; otherwise it is tried again on the
+# next tick (a 429 or a 5xx must not swallow the one alert a problem gets).
 
 set -euo pipefail
 
@@ -68,40 +71,54 @@ cd "$REPO"
 # Fail fast if creds aren't there instead of hanging on a TTY prompt from cron.
 export GIT_TERMINAL_PROMPT=0
 
-notify() {  # notify <title> <tags> <body> -- best effort, never fails the tick
-  curl -sS --max-time 15 -o /dev/null -H "Title: $1" -H "Tags: $2" -d "$3" \
-    "$NTFY_SERVER/$NTFY_TOPIC" || echo "WARN: ntfy alert '$1' failed to send"
+notify() {  # notify <title> <tags> <body> -- 0 only when ntfy answered 200; never fails the tick
+  local code
+  code=$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' -H "Title: $1" -H "Tags: $2" -d "$3" \
+    "$NTFY_SERVER/$NTFY_TOPIC" 2>/dev/null) || true
+  [ "$code" = "200" ] && return 0
+  echo "WARN: ntfy alert '$1' failed to send (HTTP ${code:-000})"
+  return 1
 }
 
-# --- pull-failure streak (2026-11-28) ---
+# --- failure streaks (2026-11-28) ---
 # A failing `git pull` aborts the tick, so drains, feedback and the edition check all stall.
 # 2026-10-28/29 it failed 62 ticks in a row (about 20 hours) and nothing said so. Six in a row
 # (an hour of ticks) alerts once; the first good pull after that sends a recovery note. In the
 # log since 2026-10-16 the only other streaks were 3 ticks or fewer (DNS blips after sleep).
 # The overnight cron gap is not a failure: no tick runs, so the count does not move.
-PULL_FAIL_ALERT=6
-PULL_FAIL_FILE="$SCRIPT_DIR/.pull-fail-count"
-pull_failed() {
-  local n
-  n=$(cat "$PULL_FAIL_FILE" 2>/dev/null || echo 0)
+# State per streak, next to this script: .<name>-fail-count, and .<name>-alerted once the
+# alert reached ntfy (so a failed send is retried, and the recovery note follows only a
+# delivered alert).
+streak_fail() {  # streak_fail <name> <threshold> <title> <body; %n = streak length>
+  local n file="$SCRIPT_DIR/.$1-fail-count"
+  n=$(cat "$file" 2>/dev/null || echo 0)
   case "$n" in ''|*[!0-9]*) n=0 ;; esac
   n=$((n + 1))
-  echo "$n" > "$PULL_FAIL_FILE" || true
-  echo "pull failure streak: $n"
-  if [ "$n" -eq "$PULL_FAIL_ALERT" ]; then
-    notify "Bridge: git pull failing" "warning" \
-      "git pull has failed $n bridge ticks in a row (about $((n * 10)) minutes). Notifications, reader feedback and the edition check are stalled until it pulls again. Last error: ${1:-unknown}"
+  echo "$n" > "$file" || true
+  echo "$1 failure streak: $n"
+  if [ "$n" -ge "$2" ] && [ ! -f "$SCRIPT_DIR/.$1-alerted" ]; then
+    if notify "$3" "warning" "${4//%n/$n}"; then
+      : > "$SCRIPT_DIR/.$1-alerted" || true
+    fi
   fi
 }
-pull_ok() {
-  local n
-  n=$(cat "$PULL_FAIL_FILE" 2>/dev/null || echo 0)
+streak_ok() {  # streak_ok <name> <title> <body; %n = streak length>
+  local n file="$SCRIPT_DIR/.$1-fail-count"
+  n=$(cat "$file" 2>/dev/null || echo 0)
   case "$n" in ''|*[!0-9]*) n=0 ;; esac
-  if [ "$n" -ge "$PULL_FAIL_ALERT" ]; then
-    notify "Bridge: pulling again" "white_check_mark" \
-      "git pull works again after $n failed ticks; the bridge has caught up."
+  if [ -f "$SCRIPT_DIR/.$1-alerted" ]; then
+    if notify "$2" "white_check_mark" "${3//%n/$n}"; then
+      rm -f "$SCRIPT_DIR/.$1-alerted" || true
+    fi
   fi
-  [ "$n" -eq 0 ] || echo 0 > "$PULL_FAIL_FILE" || true
+  [ "$n" -eq 0 ] || echo 0 > "$file" || true
+}
+pull_failed() {
+  streak_fail pull 6 "Bridge: git pull failing" \
+    "git pull has failed %n bridge ticks in a row. Notifications, reader feedback and the edition check are stalled until it pulls again. Last error: ${1:-unknown}"
+}
+pull_ok() {
+  streak_ok pull "Bridge: pulling again" "git pull works again; the bridge has caught up."
 }
 
 # --- GitHub Pages deploy self-heal (rewritten 2026-07-10; see pages-deploy-wedge memory) ---
@@ -273,17 +290,26 @@ if [ -f "$REPO/tools/bridge/bridge.sh" ] && ! cmp -s "${BASH_SOURCE[0]}" "$REPO/
 fi
 
 # Overdue editions (2026-11-28): a writer slot two hours past with no post on main. Runs only
-# after a good pull (a stale checkout would read as missing editions). One push per edition;
-# the state file next to this script remembers what already alerted. Non-fatal.
+# after a good pull (a stale checkout would read as missing editions). One push per edition:
+# an edition is marked in the state file next to this script only once ntfy took its push.
+# A crash of the check itself is a streak like the pull's (three ticks, half an hour).
+FRESHNESS_STATE="$SCRIPT_DIR/.freshness-alerted.json"
 if [ -f "$REPO/tools/health/freshness.py" ]; then
-  if fresh_out=$(python3 "$REPO/tools/health/freshness.py" --root "$REPO" --state "$SCRIPT_DIR/.freshness-alerted.json"); then
-    while IFS=$'\t' read -r f_title f_body; do
-      [ -n "$f_title" ] || continue
+  if fresh_out=$(python3 "$REPO/tools/health/freshness.py" --root "$REPO" --state "$FRESHNESS_STATE"); then
+    streak_ok freshness "Bridge: edition check works again" \
+      "tools/health/freshness.py runs again; missed-edition alerts are back on."
+    while IFS=$'\t' read -r f_key f_title f_body; do
+      [ -n "$f_key" ] && [ -n "$f_title" ] || continue
       echo "freshness: $f_title"
-      notify "$f_title" "warning,newspaper" "$f_body"
+      if notify "$f_title" "warning,newspaper" "$f_body"; then
+        python3 "$REPO/tools/health/freshness.py" --state "$FRESHNESS_STATE" --mark "$f_key" \
+          || echo "WARN: freshness could not record '$f_key' as sent (it will alert again)"
+      fi
     done <<< "$fresh_out"
   else
     echo "WARN: freshness check failed (non-fatal)"
+    streak_fail freshness 3 "Bridge: edition check failing" \
+      "tools/health/freshness.py has failed %n bridge ticks in a row, so a missed edition would go unnoticed. The traceback is in ~/Library/Logs/news-brief-bridge.log."
   fi
 fi
 

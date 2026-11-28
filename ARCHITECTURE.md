@@ -186,7 +186,9 @@
 > with no `_posts/{date}-{slug}.md` sends one push, classed from the usage ledger as lost (the
 > evaluator's `lost_editions` rule), no-post or no-run. Six failed pulls in a row (an hour of
 > ticks) send one push, and the first good pull a recovery note; 2026-10-28/29's 62-tick stall
-> said nothing. The tick log no longer prints the ntfy topic. `tools/health/schedule.py` parses
+> said nothing. Three crashes of the edition check in a row do the same. An alert counts as
+> sent only when ntfy answers 200, so one lost to a 429 or a 5xx goes out on a later tick. The
+> tick log no longer prints the ntfy topic. `tools/health/schedule.py` parses
 > the MANIFEST cron table for both this check and `test_docs_consistency`, which holds every
 > routine's model and cron in MANIFEST's blocks, the box above and both diagrams to the table.
 >
@@ -901,7 +903,7 @@
 | Missing-story alert state | `index/alerts/{sha1(key)[:16]}.json` (site-excluded) | `{key: "warn\|parity\|<edition>\|<story>", edition}` — one file per problem already alerted; pruned after 30 days | `publish.py` (after the feed step) → `publish.py` dedupe |
 | Watch registry | `watches.yml` | `[{id, query, match_when, cooldown_days, last_fired}]` | user + Watch (writes `last_fired`) |
 | Bridge config | `/usr/local/src/news-brief-ntfy-bridge/.env` | `NTFY_TOPIC, NTFY_SERVER, REPO, FEEDBACK_WORKER_URL, FEEDBACK_TOKEN` | bridge.sh |
-| Bridge state | `/usr/local/src/news-brief-ntfy-bridge/.pull-fail-count`, `.freshness-alerted.json` | pull-failure streak; editions already alerted (pruned at 14 days) | bridge.sh (source: `tools/bridge/bridge.sh`) |
+| Bridge state | `/usr/local/src/news-brief-ntfy-bridge/.{pull,freshness}-fail-count`, `.{pull,freshness}-alerted`, `.freshness-alerted.json` | failure streaks of the pull and of the edition check, and whether their alert reached ntfy; editions whose alert ntfy accepted (pruned at 14 days) | bridge.sh (source: `tools/bridge/bridge.sh`) |
 | Git creds | `…/git-credentials` (mode 600) | `https://x-access-token:<tok>@github.com` | bridge git push |
 | Legacy briefs | `briefs/{stream}/{date}.md` | pre-Pages layout, only May 2–4 | **deleted 2026-07-03** (recoverable from git history) |
 | Coverage footer | inside each brief | `Direct fetches: N \| via-snippet: M`, `Feeds hit`, `Gaps` | **the only health signal** — COMPUTED by `tools/footer.py` at publish since 2026-07-18 (writer authors only Languages/Gaps/Discovery + stream-specific lines) |

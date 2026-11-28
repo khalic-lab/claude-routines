@@ -14,13 +14,15 @@ the usage ledger:
   * no-run  -- nothing was recorded: the trigger did not fire, or the run died before its
                Stop hook
 
-Output: one line per overdue edition NOT already in the state file, `<title>\t<body>`,
-for the bridge to send as one ntfy push each; then the state file is updated so each
-edition alerts once. Exit 0 always unless the arguments are wrong -- the bridge treats any
-failure as a log line, never as a reason to stop draining notifications.
+Output: one line per overdue edition NOT already in the state file,
+`<key>\t<title>\t<body>`, for the bridge to send as one ntfy push each. Printing records
+nothing: the bridge runs `--mark KEY` only once ntfy has accepted that push, so an alert
+lost to an ntfy error is tried again on the next tick instead of never. A crash exits
+non-zero; the bridge counts those and alerts when the check keeps failing.
 
 usage: freshness.py [--root DIR] [--state PATH] [--now ISO] [--grace-min 120]
                     [--lookback-h 48] [--dry-run]
+       freshness.py --state PATH --mark KEY [KEY...]
 """
 import argparse
 import datetime as dt
@@ -138,21 +140,28 @@ def main(argv=None):
     ap.add_argument("--grace-min", type=int, default=120)
     ap.add_argument("--lookback-h", type=int, default=48)
     ap.add_argument("--dry-run", action="store_true", help="print every overdue edition; no state")
+    ap.add_argument("--mark", nargs="+", metavar="KEY",
+                    help="record these editions as alerted (after ntfy accepted the push)")
     a = ap.parse_args(argv)
     now = _parse_ts(a.now) if a.now else dt.datetime.now(dt.timezone.utc)
     if now is None:
         ap.error("--now must be an ISO timestamp")
     now = now.astimezone(schedule.ZURICH)
+    if a.mark:
+        if not a.state:
+            ap.error("--mark needs --state")
+        state = load_state(a.state)
+        for key in a.mark:
+            state[key] = now.isoformat(timespec="seconds")
+        save_state(a.state, state, now)
+        return 0
     items = overdue(a.root, now, a.grace_min, a.lookback_h)
     state = {} if (a.dry_run or not a.state) else load_state(a.state)
     for item in items:
         if item["key"] in state:
             continue
         title, body = message(item)
-        print("%s\t%s" % (title, body))
-        state[item["key"]] = now.isoformat(timespec="seconds")
-    if a.state and not a.dry_run:
-        save_state(a.state, state, now)
+        print("%s\t%s\t%s" % (item["key"], title, body))
     return 0
 
 
