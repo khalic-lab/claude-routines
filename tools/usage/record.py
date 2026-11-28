@@ -77,6 +77,7 @@ def build_record(measurement, stage, hook_event=None, edition=None, now=None):
         "totals": measurement.get("totals") or {},
         "server_tools": measurement.get("server_tools") or {},
         "tool_calls": tool_calls,
+        "context_profile": measurement.get("context_profile"),
         "cost_usd_list": pricing_mod.cost(measurement.get("models") or {}),
         "claude_version": measurement.get("claude_version"),
         "cwd": measurement.get("cwd"),

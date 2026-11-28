@@ -221,6 +221,48 @@ class PricingTest(unittest.TestCase):
         self.assertAlmostEqual(c["total"], 5.0, places=6)
 
 
+class ContextProfileTest(unittest.TestCase):
+    """The per-tool context profile: labels never carry arguments (writer commands export the
+    proxy bearer), and growth is attributed to the turn whose tool results caused it."""
+
+    def test_labels_are_safe(self):
+        lab = transcript.tool_label
+        secret = "b" * 64
+        cmd = "export FETCH_PROXY_TOKEN='%s'; S=/tmp/x; python3 tools/fetch.py https://ex.org/a > $S/a" % secret
+        self.assertEqual(lab("Bash", {"command": cmd}), "Bash fetch.py")
+        self.assertEqual(lab("Bash", {"command": "cd /repo && grep -c foo bar.txt"}), "Bash grep")
+        self.assertEqual(lab("Bash", {"command": "for f in a b; do python3 -I $S/titles.py $f; done"}),
+                         "Bash titles.py")
+        self.assertEqual(lab("Bash", {"command": "export X='%s'" % secret}), "Bash")
+        self.assertEqual(lab("Read", {"file_path": "/home/user/repo/routines/news.md"}), "Read news.md")
+        self.assertEqual(lab("WebSearch", {"query": secret}), "WebSearch")
+        for label in (lab("Bash", {"command": cmd}), lab("WebSearch", {"query": secret})):
+            self.assertNotIn(secret, label)
+
+    def test_growth_goes_to_the_turn_that_caused_it(self):
+        def line(mid, prompt_read, out, tools):
+            return {"type": "assistant", "timestamp": "2026-11-28T11:00:00Z",
+                    "message": {"id": mid, "model": "claude-opus-5-5",
+                                "usage": {"input_tokens": 0, "cache_read_input_tokens": prompt_read,
+                                          "output_tokens": out},
+                                "content": [{"type": "tool_use", "name": n, "input": i} for n, i in tools]}}
+        rows = [line("m1", 20000, 100, [("Read", {"file_path": "/r/news.md"})]),
+                line("m2", 28100, 200, [("Bash", {"command": "python3 tools/fetch.py u"}),
+                                        ("Bash", {"command": "python3 tools/fetch.py v"})]),
+                line("m3", 38300, 300, [])]
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "s.jsonl")
+            with open(p, "w") as fh:
+                fh.write(json.dumps({"type": "user", "message": {"content": "News routine"}}) + "\n")
+                for r in rows:
+                    fh.write(json.dumps(r) + "\n")
+            prof = transcript.parse(p)["context_profile"]
+        self.assertEqual((prof["start_tokens"], prof["turns"]), (20000, 3))
+        by = {r["tool"]: r for r in prof["by_tool"]}
+        self.assertEqual(by["Read news.md"], {"tool": "Read news.md", "calls": 1, "tokens": 8000})
+        self.assertEqual(by["Bash fetch.py"], {"tool": "Bash fetch.py", "calls": 2, "tokens": 10000})
+
+
 class LongPromptTest(unittest.TestCase):
     """Haiku 5.5 is priced per REQUEST by prompt length: parse files each request under the
     short or the long-prompt key on its own prompt, never on the run's totals."""

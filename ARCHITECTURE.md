@@ -144,6 +144,17 @@
 > route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
 > `hklaw.com`, `macrumors.com`, `wtvbam.com`.
 >
+> **Changed 2026-11-28: writer token tooling (prompts not switched yet).** About 40% of a writer
+> run's list cost is context written to the 1-hour cache and 37% re-reading it every turn (News:
+> $2.65 a run over 38 turns). Each usage record now carries `context_profile`: the starting prompt
+> and the tokens each kind of tool call added (labels are tool names and script basenames, never
+> arguments, because writer commands carry the proxy bearer). `tools/feeds.py` replaces the parsers
+> writers rewrote every run: `titles` lists feed items in the stream's window (undated items kept,
+> tracking parameters stripped) and `text` returns an article without its site chrome (Tagesschau,
+> 2026-11-27: 3.9K characters from the first line of the story, against 8.4K of tag-stripped page
+> that opened with 3,500 characters of menu). The shared prompt partial switches to it once every
+> desk has had a clean run on the 2026-11-27 prompt changes.
+>
 > **Changed 2026-11-28: a weekly look at the rendered page.** `.github/workflows/visual-capture.yml`
 > (the repo's first Actions workflow) runs `tools/verify/capture.mjs` every Sunday at 06:00 UTC:
 > six JPEGs of the live homepage (phone 390px and desktop 1280px, light and dark) and a

@@ -155,6 +155,75 @@ def _aggregate(lines):
     return by_id, tool_calls
 
 
+_PY_SCRIPT = re.compile(r"([A-Za-z0-9_.-]+\.py)\b")
+_SEGMENT_SPLIT = re.compile(r"[;&|\n]+")
+_SKIP_WORDS = {"export", "cd", "set", "mkdir", "then", "do", "done", "fi", "else", "{", "}", "("}
+PROFILE_TOP = 12
+
+
+def tool_label(name, tool_input):
+    """A SAFE label for one tool call: the tool name, plus for Bash the basenames of the
+    Python scripts it runs (else its first command word) and for Read the file's basename.
+    Never arguments: writer commands carry the fetch-proxy bearer in an `export`."""
+    tool_input = tool_input if isinstance(tool_input, dict) else {}
+    if name == "Bash":
+        cmd = tool_input.get("command") if isinstance(tool_input.get("command"), str) else ""
+        scripts = sorted(set(_PY_SCRIPT.findall(cmd)))
+        if scripts:
+            return ("Bash " + "+".join(scripts))[:60]
+        for seg in _SEGMENT_SPLIT.split(cmd):
+            words = [w for w in seg.split()]
+            while words and "=" in words[0]:  # leading VAR=value assignments
+                words.pop(0)
+            if not words or words[0] in _SKIP_WORDS:  # `cd DIR`, `export X=…`: skip the segment
+                continue
+            if re.match(r"^[A-Za-z0-9_./-]+$", words[0]):
+                return ("Bash " + os.path.basename(words[0]))[:60]
+        return "Bash"
+    if name == "Read" and isinstance(tool_input.get("file_path"), str):
+        return ("Read " + os.path.basename(tool_input["file_path"]))[:60]
+    return name or "unknown"
+
+
+def context_profile(main_lines, by_id):
+    """Where a run's context came from: the prompt it started with, then the tokens each kind
+    of tool call added. Turn i's growth is prompt(i+1) - prompt(i) - output(i), floored at 0,
+    split evenly over turn i's tool calls -- roughly the size of their results, which every
+    later turn re-reads from cache. Main thread only. Labels come from tool_label()."""
+    order, tools = [], {}
+    for rec in main_lines:
+        if rec.get("type") != "assistant" or not _is_counted_assistant(rec):
+            continue
+        msg = rec.get("message") or {}
+        mid = msg.get("id")
+        if not mid or mid not in by_id:
+            continue
+        if mid not in tools:
+            order.append(mid)
+            tools[mid] = []
+        for block in msg.get("content") or []:
+            if isinstance(block, dict) and block.get("type") == "tool_use":
+                tools[mid].append(tool_label(block.get("name"), block.get("input")))
+
+    def prompt(m):
+        r = by_id[m]
+        return r["input"] + r["cache_read"] + r["cache_write_5m"] + r["cache_write_1h"]
+
+    if not order:
+        return None
+    agg = {}
+    for i in range(len(order) - 1):
+        cur, nxt = order[i], order[i + 1]
+        grew = max(0, prompt(nxt) - prompt(cur) - by_id[cur]["output"])
+        labels = tools[cur] or ["(no tool)"]
+        for label in labels:
+            slot = agg.setdefault(label, {"tool": label, "calls": 0, "tokens": 0})
+            slot["calls"] += 1
+            slot["tokens"] += grew // len(labels)
+    rows = sorted(agg.values(), key=lambda r: (-r["tokens"], r["tool"]))
+    return {"start_tokens": prompt(order[0]), "turns": len(order), "by_tool": rows[:PROFILE_TOP]}
+
+
 def _bash_commands(lines):
     """Every Bash tool_use command string, in transcript order -- for routine/edition fallback."""
     cmds = []
@@ -311,6 +380,7 @@ def parse(path, routine=None):
         "totals": totals,
         "server_tools": server_tools,
         "tool_calls": tool_calls,
+        "context_profile": context_profile(main_lines, by_id),
         "routine": routine_slug,
         "edition": detect_edition(bash),
         # Watch only (None elsewhere): positive proof the tick was idle -- record.py keeps one
