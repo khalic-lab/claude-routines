@@ -144,6 +144,19 @@
 > route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
 > `hklaw.com`, `macrumors.com`, `wtvbam.com`.
 >
+> **Changed 2026-11-28: missed-edition and stalled-bridge alerts; the bridge is in the repo.**
+> `tools/bridge/bridge.sh` is now the bridge's source of truth (it lived only in
+> `/usr/local/src/news-brief-ntfy-bridge/`, with three `.bak` copies as its history); cron still
+> runs the installed copy there, and `tools/bridge/install.sh` installs a change (syntax check,
+> diff, timestamped backup, atomic replace). Every tick after a good pull runs
+> `tools/health/freshness.py`: a writer slot from `routines/MANIFEST.md` that is two hours past
+> with no `_posts/{date}-{slug}.md` sends one push, classed from the usage ledger as lost (the
+> evaluator's `lost_editions` rule), no-post or no-run. Six failed pulls in a row (an hour of
+> ticks) send one push, and the first good pull a recovery note; 2026-10-28/29's 62-tick stall
+> said nothing. The tick log no longer prints the ntfy topic. `tools/health/schedule.py` parses
+> the MANIFEST cron table for both this check and `test_docs_consistency`, which holds every
+> routine's model and cron in MANIFEST's blocks, the box above and both diagrams to the table.
+>
 > **Changed 2026-11-28: Watch on Claude Haiku 5.5.** Watch's `session_context.model` moved
 > `claude-haiku-4-5` → `claude-haiku-5-5`, the current Haiku (list price $0.10 / $0.50 per MTok,
 > against $1 / $5 for Haiku 4.5); a quiet tick is two requests of about 50K prompt tokens each.
@@ -855,6 +868,7 @@
 | Missing-story alert state | `index/alerts/{sha1(key)[:16]}.json` (site-excluded) | `{key: "warn\|parity\|<edition>\|<story>", edition}` — one file per problem already alerted; pruned after 30 days | `publish.py` (after the feed step) → `publish.py` dedupe |
 | Watch registry | `watches.yml` | `[{id, query, match_when, cooldown_days, last_fired}]` | user + Watch (writes `last_fired`) |
 | Bridge config | `/usr/local/src/news-brief-ntfy-bridge/.env` | `NTFY_TOPIC, NTFY_SERVER, REPO, FEEDBACK_WORKER_URL, FEEDBACK_TOKEN` | bridge.sh |
+| Bridge state | `/usr/local/src/news-brief-ntfy-bridge/.pull-fail-count`, `.freshness-alerted.json` | pull-failure streak; editions already alerted (pruned at 14 days) | bridge.sh (source: `tools/bridge/bridge.sh`) |
 | Git creds | `…/git-credentials` (mode 600) | `https://x-access-token:<tok>@github.com` | bridge git push |
 | Legacy briefs | `briefs/{stream}/{date}.md` | pre-Pages layout, only May 2–4 | **deleted 2026-07-03** (recoverable from git history) |
 | Coverage footer | inside each brief | `Direct fetches: N \| via-snippet: M`, `Feeds hit`, `Gaps` | **the only health signal** — COMPUTED by `tools/footer.py` at publish since 2026-07-18 (writer authors only Languages/Gaps/Discovery + stream-specific lines) |
