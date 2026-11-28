@@ -161,12 +161,37 @@ _SKIP_WORDS = {"export", "cd", "set", "mkdir", "then", "do", "done", "fi", "else
 _INTERPRETER = re.compile(r"^(python[0-9.]*|bash|sh|zsh|node|ruby|perl)$")
 _SCRIPT = re.compile(r"^[A-Za-z0-9_.-]+\.(py|sh|mjs|js)$")  # matched on the basename
 _WORD = re.compile(r"^[A-Za-z0-9_.-]+$")
+# A redirection and its target (`2>&1`, `> /tmp/out`, `<<EOF`): not a command, and its & is
+# not a separator.
+_REDIRECT = re.compile(r"(\d*|&)(>>?|<<?-?)(&\d+|&-|\s*[^\s;&|()]+)")
 _HEREDOC = re.compile(r"<<-?\s*['\"]?([A-Za-z_][A-Za-z0-9_]*)['\"]?")
+
+
+def _blank_quotes(text):
+    """Every quoted string emptied ('...' -> '', "..." -> ""), across lines: what is inside
+    quotes is an argument (a commit message, a User-Agent, a URL with & in it), never a
+    command, and its spaces, ; & | and newlines must not split it into fake commands."""
+    out, i, n = [], 0, len(text)
+    while i < n:
+        ch = text[i]
+        if ch == "\\":
+            out.append(text[i:i + 2])
+            i += 2
+        elif ch in "'\"":
+            j = i + 1
+            while j < n and text[j] != ch:
+                j += 2 if (ch == '"' and text[j] == "\\") else 1
+            out.append(ch + ch)
+            i = j + 1
+        else:
+            out.append(ch)
+            i += 1
+    return "".join(out)
 
 
 def _command_lines(cmd):
     """The shell's own lines: backslash continuations joined, heredoc bodies dropped (they
-    are data, e.g. a script's source)."""
+    are data, e.g. a script's source), then quoted strings emptied."""
     lines, ends = [], []
     for line in cmd.replace("\\\n", " ").split("\n"):
         if ends:
@@ -175,7 +200,7 @@ def _command_lines(cmd):
             continue
         lines.append(line)
         ends.extend(_HEREDOC.findall(line))
-    return lines
+    return [_REDIRECT.sub(" ", l) for l in _blank_quotes("\n".join(lines)).split("\n")]
 
 
 def _segment_label(words):

@@ -253,6 +253,14 @@ class ContextProfileTest(unittest.TestCase):
         self.assertEqual(lab("./tools/verify/build.sh && node tools/verify/suite.mjs"),
                          "Bash build.sh+suite.mjs")
         self.assertEqual(lab("(cd tools && python3 -m unittest discover)"), "Bash unittest")
+        # quoted strings are arguments, whatever spaces, & or newlines they hold
+        self.assertEqual(lab('CHROME="/Applications/Google Chrome.app/x"\n"$CHROME" --headless'), "Bash")
+        self.assertEqual(lab('curl -s "https://ex.org/rss?lang=de&org-nr=1&kind=M" https://ex.org/de'),
+                         "Bash curl")
+        self.assertEqual(lab("git commit -qm 'Title\n\n%s leaked; python3 evil.py'" % secret), "Bash git")
+        self.assertEqual(lab("UA='Mozilla/5.0 (Macintosh; Intel)'; curl -A \"$UA\" u"), "Bash curl")
+        self.assertEqual(lab("SP=/tmp/x 2>/dev/null\n\"$CHROME\" --headless 2>&1 | tail -3"), "Bash tail")
+        self.assertEqual(lab("python3 tools/fetch.py u > /tmp/src/a.xml 2>&1"), "Bash fetch.py")
 
     def test_growth_goes_to_the_turn_that_caused_it(self):
         def line(mid, prompt_read, out, tools):
