@@ -10,12 +10,24 @@ newest-first `recent` list.
 `cache_write` throughout is 5m + 1h writes summed; `cost_usd_list` is list-price dollars
 (tools/usage/pricing.py). Pass `as_of` (a date) explicitly to keep the windows deterministic;
 it defaults to today only for interactive use.
+
+Idle Watch ticks (since 2026-11-28): record.py keeps ONE idle record a day (`idle: true`) and
+skips the other idle ticks. Measured fields stay measured; the skipped ticks are reported
+apart as `estimated_idle` (ticks = the day's scheduled Watch fires from routines/MANIFEST.md
+minus the Watch runs on file, each costed at that day's idle sample).
 """
 import argparse
 import datetime as dt
 import glob
 import json
 import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "health"))
+try:
+    import schedule as _schedule  # tools/health/schedule.py
+except Exception:  # pragma: no cover -- a missing schedule only disables the estimate
+    _schedule = None
 
 
 _STAGE_RANK = {"session-end": 3, "stop": 2, "publish": 1}
@@ -82,9 +94,50 @@ def _as_of_date(as_of):
     return dt.date.fromisoformat(str(as_of)[:10])
 
 
-def fold(root, as_of=None):
-    """Fold the ledger under `root` into the summary dict (schema in §1.6 of the plan)."""
+def _watch_ticks(root, day, now):
+    """Scheduled Watch fires on `day` (Zurich) that are not after `now`, or None if unknown."""
+    if _schedule is None:
+        return None
+    try:
+        row = next(r for r in _schedule.load(root) if r["file"] == "watch.md")
+        d = dt.date.fromisoformat(day)
+    except (StopIteration, OSError, ValueError):
+        return None
+    z = _schedule.ZURICH
+    start = dt.datetime(d.year, d.month, d.day, tzinfo=z) - dt.timedelta(seconds=1)
+    n = d + dt.timedelta(days=1)
+    end = min(dt.datetime(n.year, n.month, n.day, tzinfo=z), now)
+    return len(_schedule.fires_between(row["cron"], start, end)) if end > start else 0
+
+
+def _estimated_idle(root, runs, now):
+    """{day: (ticks, usd)} for the idle Watch ticks record.py did not record."""
+    per_day = {}
+    for rec in runs:
+        if rec.get("routine") != "watch" or not _day(rec):
+            continue
+        slot = per_day.setdefault(_day(rec), {"recorded": 0, "sample": None})
+        slot["recorded"] += 1
+        if rec.get("idle") is True and slot["sample"] is None:
+            slot["sample"] = _cost(rec)
+    out = {}
+    for day, slot in per_day.items():
+        if slot["sample"] is None:  # no idle sample: every tick that day was recorded
+            continue
+        ticks = _watch_ticks(root, day, now)
+        if ticks is None:
+            continue
+        missing = max(0, ticks - slot["recorded"])
+        if missing:
+            out[day] = (missing, missing * slot["sample"])
+    return out
+
+
+def fold(root, as_of=None, now=None):
+    """Fold the ledger under `root` into the summary dict (schema in §1.6 of the plan).
+    `now` (aware datetime) bounds today's estimated idle Watch ticks; default: the clock."""
     as_of_date = _as_of_date(as_of)
+    now = now or dt.datetime.now(dt.timezone.utc)
 
     kept = {}
     records = 0
@@ -146,6 +199,29 @@ def fold(root, as_of=None):
                 windows["30d"]["runs"] += 1
                 _add_tokens(windows["30d"]["tokens"], tok)
                 windows["30d"]["cost_usd_list"] += cost
+
+    # idle Watch ticks that were deliberately not recorded: an estimate, kept apart
+    est_total = {"ticks": 0, "cost_usd_list": 0.0}
+    for w in windows.values():
+        w["estimated_idle_cost_usd_list"] = 0.0
+    for day, (ticks, usd) in _estimated_idle(root, runs, now).items():
+        est_total["ticks"] += ticks
+        est_total["cost_usd_list"] += usd
+        if day in by_day:
+            by_day[day]["estimated_idle_cost_usd_list"] = round(usd, 6)
+        try:
+            age = (as_of_date - dt.date.fromisoformat(day)).days
+        except ValueError:
+            age = None
+        if age is not None and 0 <= age < 7:
+            windows["7d"]["estimated_idle_cost_usd_list"] += usd
+        if age is not None and 0 <= age < 30:
+            windows["30d"]["estimated_idle_cost_usd_list"] += usd
+    for w in windows.values():
+        w["estimated_idle_cost_usd_list"] = round(w["estimated_idle_cost_usd_list"], 6)
+    if "watch" in by_routine:
+        by_routine["watch"]["estimated_idle"] = {"ticks": est_total["ticks"],
+                                                 "cost_usd_list": round(est_total["cost_usd_list"], 6)}
 
     # finalise per-routine averages
     for slot in by_routine.values():

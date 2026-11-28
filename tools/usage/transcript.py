@@ -169,6 +169,32 @@ def _bash_commands(lines):
     return cmds
 
 
+def _tool_result_texts(lines):
+    """The text of every tool_result block, in transcript order."""
+    out = []
+    for rec in lines:
+        if rec.get("type") != "user":
+            continue
+        content = (rec.get("message") or {}).get("content")
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "tool_result":
+                out.append(_text_of(block.get("content")))
+    return out
+
+
+def watch_idle(bash_commands, result_texts, tool_calls):
+    """True only on POSITIVE proof that a Watch tick did nothing: `tools/watch/due.py` ran and
+    printed `NONE DUE`, and the run neither searched, fetched nor touched `fire.py`. Anything
+    else -- a fire, an error, a transcript this cannot read -- is not idle, so it is recorded."""
+    ran_due = any("tools/watch/due.py" in c for c in bash_commands)
+    none_due = any("NONE DUE" in t for t in result_texts)
+    acted = (any("tools/watch/fire.py" in c for c in bash_commands)
+             or tool_calls.get("WebSearch", 0) or tool_calls.get("WebFetch", 0))
+    return bool(ran_due and none_due and not acted)
+
+
 def _first_user_text(lines):
     for rec in lines:
         if rec.get("type") == "user":
@@ -263,6 +289,7 @@ def parse(path, routine=None):
     bash = _bash_commands(all_lines)
     first_user = _first_user_text(main_lines)
     started, ended = _timing(main_lines)
+    routine_slug = routine or detect_routine(first_user, bash)
 
     # Session metadata: take the first line that carries each key.
     meta = {}
@@ -284,8 +311,12 @@ def parse(path, routine=None):
         "totals": totals,
         "server_tools": server_tools,
         "tool_calls": tool_calls,
-        "routine": routine or detect_routine(first_user, bash),
+        "routine": routine_slug,
         "edition": detect_edition(bash),
+        # Watch only (None elsewhere): positive proof the tick was idle -- record.py keeps one
+        # idle record a day and skips the rest (2026-11-28).
+        "idle": (watch_idle(bash, _tool_result_texts(all_lines), tool_calls)
+                 if routine_slug == "watch" else None),
         "transcript": os.path.abspath(path),
         "transcript_lines": len(main_lines),
     }

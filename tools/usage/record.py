@@ -59,10 +59,11 @@ def gate_open():
 
 
 def build_record(measurement, stage, hook_event=None, edition=None, now=None):
-    """Wrap a transcript.parse() measurement into the on-disk record schema (v1)."""
+    """Wrap a transcript.parse() measurement into the on-disk record schema (v1). A Watch
+    record also carries `idle` (transcript.watch_idle)."""
     tool_calls = {t: 0 for t in DEFAULT_TOOLS}
     tool_calls.update(measurement.get("tool_calls") or {})
-    return {
+    rec = {
         "v": 1,
         "session_id": measurement.get("session_id"),
         "stage": stage,
@@ -84,6 +85,9 @@ def build_record(measurement, stage, hook_event=None, edition=None, now=None):
         "hook_event": hook_event,
         "recorded_at": _now_iso(now),
     }
+    if measurement.get("idle") is not None:
+        rec["idle"] = bool(measurement["idle"])
+    return rec
 
 
 def usage_path(root, routine, started, recorded_at):
@@ -135,6 +139,25 @@ def hook_blocking_stage(path, session_id):
             if rec.get("session_id") == session_id and rec.get("stage") in _HOOK_STAGES:
                 return rec.get("stage")
     return None
+
+
+def idle_sample_on_file(path, day):
+    """True when `path` already holds an idle Watch record started on `day` (YYYY-MM-DD).
+
+    Every Watch tick falls on one UTC date in both winter (01:27-21:27Z) and summer
+    (00:27-20:27Z), so the UTC date of `started` is the Zurich date too."""
+    if not os.path.exists(path):
+        return False
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            try:
+                rec = json.loads(line)
+            except ValueError:
+                continue
+            if (isinstance(rec, dict) and rec.get("routine") == "watch" and rec.get("idle") is True
+                    and (rec.get("started") or "")[:10] == day):
+                return True
+    return False
 
 
 def append_record(path, record):
@@ -274,6 +297,13 @@ def cmd_hook(args):
     measurement["session_id"] = session_id
     record = build_record(measurement, stage, hook_event=hook_event)
     path = usage_path(root, record["routine"], record["started"], record["recorded_at"])
+    # Idle Watch ticks (2026-11-28): one record a day is the sample; the rest are not recorded,
+    # so six ticks a day stop making six commits and six Pages builds. tools/usage/fold.py
+    # reports the unrecorded ticks as an estimate, apart from the measured cost.
+    day = (record.get("started") or "")[:10]
+    if record.get("idle") is True and day and idle_sample_on_file(path, day):
+        sys.stderr.write("usage: idle Watch tick not recorded (%s already has its idle sample)\n" % day)
+        return 0
     blocking = hook_blocking_stage(path, session_id)
     if blocking is not None:
         sys.stderr.write("usage: already recorded (%s / %s); this %s hook is a no-op\n"

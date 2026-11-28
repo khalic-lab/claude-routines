@@ -144,6 +144,17 @@
 > route to it), and four low-signal bootstrap domains were retired: `deepswe.datacurve.ai`,
 > `hklaw.com`, `macrumors.com`, `wtvbam.com`.
 >
+> **Changed 2026-11-28: one idle Watch record a day.** Six ticks a day made six usage commits on
+> `main` (160 of November's commits), each a Pages build and a bridge pull that changed nothing.
+> `transcript.watch_idle` marks a tick idle only on positive proof (`due.py` ran and printed
+> `NONE DUE`; nothing searched, fetched or touched `fire.py`); `record.py --hook` keeps the day's
+> first idle tick as its sample (`idle: true`) and records nothing for the others. A tick that
+> fires, errors or cannot be read is always recorded. `tools/usage/fold.py` keeps measured cost
+> as measured and reports the skipped ticks apart, as `estimated_idle` (the day's scheduled Watch
+> fires from MANIFEST minus the Watch runs on file, each at the day's sample cost) and
+> `estimated_idle_cost_usd_list` in the 7- and 30-day windows; the admin page does not show the
+> estimate yet.
+>
 > **Changed 2026-11-28: missed-edition and stalled-bridge alerts; the bridge is in the repo.**
 > `tools/bridge/bridge.sh` is now the bridge's source of truth (it lived only in
 > `/usr/local/src/news-brief-ntfy-bridge/`, with three `.bak` copies as its history); cron still
